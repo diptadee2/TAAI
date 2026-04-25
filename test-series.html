@@ -742,6 +742,24 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .mentor-card { padding: 32px 24px; }
 }
 
+/* ── Mobile hamburger menu ──────────────────────────── */
+.nav-hamburger { display: none; flex-direction: column; gap: 5px; align-items: center; justify-content: center; width: 40px; height: 40px; border: none; background: none; cursor: pointer; border-radius: 8px; transition: background .2s; flex-shrink: 0; padding: 0; }
+.nav-hamburger:hover { background: rgba(139,92,246,0.08); }
+.nav-hamburger span { display: block; width: 22px; height: 2px; border-radius: 2px; background: var(--ink); transition: transform .3s cubic-bezier(.4,0,.2,1), opacity .2s; }
+.nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+.mobile-menu { position: fixed; top: 86px; left: 0; right: 0; z-index: 49; background: rgba(255,255,255,0.97); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--line); padding: 12px 16px 24px; display: flex; flex-direction: column; gap: 2px; transform: translateY(-10px); opacity: 0; pointer-events: none; transition: transform .28s cubic-bezier(.4,0,.2,1), opacity .22s ease; box-shadow: 0 8px 32px rgba(20,16,43,0.08); }
+.mobile-menu.open { transform: translateY(0); opacity: 1; pointer-events: auto; }
+.mobile-menu-link { display: block; padding: 13px 16px; border-radius: 10px; font-size: 15px; font-weight: 600; color: var(--ink-dim); text-decoration: none; letter-spacing: .04em; text-transform: uppercase; transition: background .18s, color .18s; }
+.mobile-menu-link:hover, .mobile-menu-link.active { background: rgba(139,92,246,0.08); color: var(--purple); }
+.mobile-menu-divider { height: 1px; background: var(--line); margin: 10px 4px; }
+.mobile-menu-actions { display: flex; flex-direction: column; gap: 8px; }
+.mobile-menu-actions .btn-nav-signin, .mobile-menu-actions .btn-nav-signup { display: flex !important; justify-content: center; width: 100%; border-radius: 10px; padding: 13px 22px; }
+.mobile-menu-contact { display: block; text-align: center; padding: 11px 16px; font-size: 13px; font-weight: 500; color: var(--ink-dim); text-decoration: none; border-radius: 10px; transition: color .18s, background .18s; }
+.mobile-menu-contact:hover { color: var(--purple); background: rgba(139,92,246,0.06); }
+@media (max-width: 768px) { .nav-hamburger { display: flex; } .nav-cta { display: none; } }
+
 /* ── Device pop label ────────────────────────────────── */
 .imac-pop-label {
   position: absolute;
@@ -865,26 +883,50 @@ function Nav() {
 
   React.useEffect(() => { reset(); }, [reset]);
 
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  React.useEffect(() => {
+    if (!menuOpen) return;
+    const close = e => { if (!e.target.closest('.nav') && !e.target.closest('.mobile-menu')) setMenuOpen(false); };
+    document.addEventListener('pointerdown', close);
+    return () => document.removeEventListener('pointerdown', close);
+  }, [menuOpen]);
+
   return (
-    <nav className="nav">
-      <div className="nav-inner" onMouseLeave={reset}>
-        <a href="index.html" className="nav-logo">
-          <TAAILogo />
-        </a>
-        <div className="nav-links" ref={linksRef}>
-          <div className="nav-pill" style={{ left: pill.left, width: pill.width, opacity: pill.visible ? 1 : 0 }} />
-          {NAV_LINKS.map((l) => (
-            <a key={l.href} href={l.href} className={l.active ? 'active' : ''}
-               onMouseEnter={(e) => moveTo(e.currentTarget)}>{l.label}</a>
-          ))}
+    <>
+      <nav className="nav">
+        <div className="nav-inner" onMouseLeave={reset}>
+          <a href="index.html" className="nav-logo">
+            <TAAILogo />
+          </a>
+          <div className="nav-links" ref={linksRef}>
+            <div className="nav-pill" style={{ left: pill.left, width: pill.width, opacity: pill.visible ? 1 : 0 }} />
+            {NAV_LINKS.map((l) => (
+              <a key={l.href} href={l.href} className={l.active ? 'active' : ''}
+                 onMouseEnter={(e) => moveTo(e.currentTarget)}>{l.label}</a>
+            ))}
+          </div>
+          <div className="nav-cta">
+            <a target="_blank" rel="noopener noreferrer" href="https://www.taai.live/learn/account/signin" className="btn-nav-signin">Sign In</a>
+            <a target="_blank" rel="noopener noreferrer" href="https://www.taai.live/learn/account/signup" className="btn-nav-signup">Sign Up</a>
+            <a href="contact.html" className="btn-nav-contact"><span className="phone-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></span>Contact Us</a>
+          </div>
+          <button className={`nav-hamburger${menuOpen ? ' open' : ''}`} onClick={() => setMenuOpen(o => !o)} aria-label="Toggle menu">
+            <span /><span /><span />
+          </button>
         </div>
-        <div className="nav-cta">
+      </nav>
+      <div className={`mobile-menu${menuOpen ? ' open' : ''}`}>
+        {NAV_LINKS.map(l => (
+          <a key={l.href} href={l.href} className={`mobile-menu-link${l.active ? ' active' : ''}`} onClick={() => setMenuOpen(false)}>{l.label}</a>
+        ))}
+        <div className="mobile-menu-divider" />
+        <div className="mobile-menu-actions">
           <a target="_blank" rel="noopener noreferrer" href="https://www.taai.live/learn/account/signin" className="btn-nav-signin">Sign In</a>
           <a target="_blank" rel="noopener noreferrer" href="https://www.taai.live/learn/account/signup" className="btn-nav-signup">Sign Up</a>
-          <a href="contact.html" className="btn-nav-contact"><span className="phone-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></span>Contact Us</a>
         </div>
+        <a href="contact.html" className="mobile-menu-contact">Contact Us</a>
       </div>
-    </nav>
+    </>
   );
 }
 
