@@ -327,7 +327,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .strip-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
 .strip-item { border-left: 1px solid rgba(255,255,255,0.22); padding-left: 28px; }
 .strip-item:first-child { border-left: none; padding-left: 0; }
-.strip-num { font-family: var(--font-display); font-size: 52px; font-weight: 600; letter-spacing: -0.04em; line-height: 1; margin-bottom: 6px; }
+.strip-num { font-family: var(--font-display); font-size: clamp(34px, 5vw, 52px); font-weight: 600; letter-spacing: -0.04em; line-height: 1; margin-bottom: 6px; }
 .strip-label { font-size: 13px; color: rgba(255,255,255,0.78); text-transform: uppercase; letter-spacing: .08em; }
 
 /* ── Section base ────────────────────────────────────── */
@@ -653,7 +653,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .pricing-title { font-family: var(--font-display); font-size: 36px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 14px; }
 .pricing-subtitle { font-size: 15px; opacity: 0.7; line-height: 1.6; margin-bottom: 28px; max-width: 400px; }
 .pricing-row { display: flex; align-items: baseline; gap: 12px; margin-bottom: 6px; }
-.pricing-amount { font-family: var(--font-display); font-size: 64px; font-weight: 600; letter-spacing: -0.04em; line-height: 1; }
+.pricing-amount { font-family: var(--font-display); font-size: clamp(44px, 6vw, 64px); font-weight: 600; letter-spacing: -0.04em; line-height: 1; }
 .pricing-validity { font-size: 13px; opacity: 0.6; }
 .pricing-right { position: relative; z-index: 1; }
 .pricing-includes { display: flex; flex-direction: column; gap: 14px; margin-bottom: 32px; }
@@ -740,6 +740,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .feat-dark,.feat-b,.feat-c,.feat-dark-blue,.feat-e,.feat-f { grid-column: span 1; }
   .feat-f { flex-direction: column; gap: 14px; padding: 28px; }
   .mentor-card { padding: 32px 24px; }
+  .disc-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .strip-grid { grid-template-columns: 1fr; }
 }
 
 /* ── Mobile hamburger menu ──────────────────────────── */

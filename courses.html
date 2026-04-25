@@ -242,8 +242,11 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 .btn-enroll:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(139,92,246,0.5); }
 @media (max-width: 768px) {
+  .flagship-poster { height: 320px; aspect-ratio: auto; }
   .flagship-overlay { padding: 28px 24px; }
-  .flagship-content { flex-direction: column; align-items: flex-start; }
+  .flagship-content { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .flagship-actions { flex-direction: column; width: 100%; }
+  .flagship-actions .btn-play, .flagship-actions .btn-enroll { justify-content: center; width: 100%; }
 }
 
 /* Faculty section */
@@ -561,7 +564,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .incl-ptitle { font-family: var(--font-display); font-size: clamp(26px,3vw,40px); font-weight: 600; letter-spacing: -0.035em; line-height: 1.06; color: #fff; margin-bottom: 16px; }
 .incl-pdesc { font-size: 15px; color: rgba(255,255,255,0.56); line-height: 1.66; margin-bottom: 32px; max-width: 400px; }
 .incl-pstat { display: flex; align-items: baseline; gap: 10px; }
-.incl-pstat-num { font-family: var(--font-display); font-size: 52px; font-weight: 600; letter-spacing: -0.05em; line-height: 1; }
+.incl-pstat-num { font-family: var(--font-display); font-size: clamp(34px, 5vw, 52px); font-weight: 600; letter-spacing: -0.05em; line-height: 1; }
 .incl-pstat-lbl { font-size: 13px; color: rgba(255,255,255,0.42); }
 @media (max-width: 1024px) { .incl-layout { grid-template-columns: 1fr; } }
 
@@ -591,6 +594,17 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .courses-grid { grid-template-columns: repeat(3, 1fr); }
   .included-grid { grid-template-columns: repeat(2, 1fr); }
 }
+/* Mobile accordion for "every course includes" */
+.incl-accordion { display: flex; flex-direction: column; gap: 8px; }
+.incl-accordion-item { border-radius: var(--radius-md); border: 1.5px solid var(--line); background: #fff; overflow: hidden; }
+.incl-accordion-btn { display: flex; align-items: center; gap: 14px; padding: 15px 16px; width: 100%; background: none; border: none; font-family: inherit; cursor: pointer; text-align: left; }
+.incl-accordion-item.active .incl-accordion-btn { border-bottom: 1px solid var(--line); }
+.incl-accordion-chevron { margin-left: auto; flex-shrink: 0; color: var(--purple); transition: transform .22s ease; }
+.incl-accordion-item.active .incl-accordion-chevron { transform: rotate(90deg); }
+.incl-accordion-body { padding: 24px 20px 28px; background: var(--ink); }
+.incl-accordion-body-title { font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 12px; }
+.incl-accordion-body-desc { font-size: 14px; color: rgba(255,255,255,0.56); line-height: 1.65; margin-bottom: 18px; }
+
 @media (max-width: 768px) {
   :root { --section-pad: 56px; }
   .nav-links { display: none; }
@@ -599,6 +613,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .included-grid { grid-template-columns: 1fr; }
   .placement-card { grid-template-columns: 1fr; padding: 36px 28px; }
   .placement-card::before { display: none; }
+  .placement-btns { flex-direction: column; }
+  .placement-btns .btn { justify-content: center; }
 }
 
 /* YouTube link wiggle */
@@ -954,7 +970,21 @@ function Flagship() {
 
 function IncludedShowcase() {
   const [active, setActive] = React.useState(0);
+  const [isMobile, setIsMobile] = React.useState(() => window.matchMedia('(max-width: 768px)').matches);
+  React.useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)');
+    const h = e => setIsMobile(e.matches);
+    mq.addEventListener('change', h);
+    return () => mq.removeEventListener('change', h);
+  }, []);
+
   const f = INCLUDED[active];
+  const ChevronRight = () => (
+    <svg className="incl-accordion-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="6 4 10 8 6 12" />
+    </svg>
+  );
+
   return (
     <section className="section" style={{ background: 'var(--bg-soft)' }}>
       <div className="container">
@@ -963,36 +993,64 @@ function IncludedShowcase() {
           More than just <em>video lectures</em>
         </h2>
         <p className="section-sub fade-in">Every TAAI course ships with the full support stack — not just recorded classes.</p>
-        <div className="incl-layout fade-in">
-          <div className="incl-tabs">
+
+        {isMobile ? (
+          <div className="incl-accordion fade-in">
             {INCLUDED.map((feat, i) => (
-              <button key={i} className={`incl-tab${active === i ? ' active' : ''}`} onClick={() => setActive(i)}>
-                <div className="incl-tab-icon" style={{ background: feat.grad }}>{feat.icon}</div>
-                <div className="incl-tab-info">
-                  <div className="incl-tab-label">{feat.label}</div>
-                  <div className="incl-tab-sub">{feat.sub}</div>
-                </div>
-                <svg className="incl-tab-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="6 4 10 8 6 12" />
-                </svg>
-              </button>
+              <div key={i} className={`incl-accordion-item${active === i ? ' active' : ''}`}>
+                <button className="incl-accordion-btn" onClick={() => setActive(active === i ? -1 : i)}>
+                  <div className="incl-tab-icon" style={{ background: feat.grad }}>{feat.icon}</div>
+                  <div className="incl-tab-info">
+                    <div className="incl-tab-label">{feat.label}</div>
+                    <div className="incl-tab-sub">{feat.sub}</div>
+                  </div>
+                  <ChevronRight />
+                </button>
+                {active === i && (
+                  <div className="incl-accordion-body">
+                    <div className="incl-accordion-body-title" style={{ color: feat.color }}>{feat.title}</div>
+                    <div className="incl-accordion-body-desc">{feat.desc}</div>
+                    <div className="incl-pstat">
+                      <div className="incl-pstat-num" style={{ color: feat.color }}>{feat.stat.num}</div>
+                      <div className="incl-pstat-lbl" style={{ color: 'rgba(255,255,255,0.42)' }}>{feat.stat.lbl}</div>
+                    </div>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
-          <div className="incl-panel">
-            <div className="incl-orb1" style={{ background: f.color }} />
-            <div className="incl-orb2" style={{ background: f.color }} />
-            <div className="incl-icon-bg">{f.icon}</div>
-            <div className="incl-content" key={active}>
-              <div className="incl-eyebrow">{f.eyebrow}</div>
-              <div className="incl-ptitle">{f.title}</div>
-              <div className="incl-pdesc">{f.desc}</div>
-              <div className="incl-pstat">
-                <div className="incl-pstat-num" style={{ color: f.color }}>{f.stat.num}</div>
-                <div className="incl-pstat-lbl">{f.stat.lbl}</div>
+        ) : (
+          <div className="incl-layout fade-in">
+            <div className="incl-tabs">
+              {INCLUDED.map((feat, i) => (
+                <button key={i} className={`incl-tab${active === i ? ' active' : ''}`} onClick={() => setActive(i)}>
+                  <div className="incl-tab-icon" style={{ background: feat.grad }}>{feat.icon}</div>
+                  <div className="incl-tab-info">
+                    <div className="incl-tab-label">{feat.label}</div>
+                    <div className="incl-tab-sub">{feat.sub}</div>
+                  </div>
+                  <svg className="incl-tab-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 4 10 8 6 12" />
+                  </svg>
+                </button>
+              ))}
+            </div>
+            <div className="incl-panel">
+              <div className="incl-orb1" style={{ background: f.color }} />
+              <div className="incl-orb2" style={{ background: f.color }} />
+              <div className="incl-icon-bg">{f.icon}</div>
+              <div className="incl-content" key={active}>
+                <div className="incl-eyebrow">{f.eyebrow}</div>
+                <div className="incl-ptitle">{f.title}</div>
+                <div className="incl-pdesc">{f.desc}</div>
+                <div className="incl-pstat">
+                  <div className="incl-pstat-num" style={{ color: f.color }}>{f.stat.num}</div>
+                  <div className="incl-pstat-lbl">{f.stat.lbl}</div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </section>
   );
