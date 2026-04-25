@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="en" data-density="normal" data-cards="shadowed">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAAI · GATE DA Courses</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Fraunces:ital,wght@0,400;0,500;0,600;1,500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #FFFFFF;
+  --bg-soft: #FBF9FF;
+  --ink: #14102B;
+  --ink-dim: #4A4270;
+  --ink-soft: #857CAE;
+  --line: #ECE6F8;
+  --card: #FFFFFF;
+
+  --pink: #FF7FB7;
+  --pink-soft: #FFD6E8;
+  --purple: #8B5CF6;
+  --purple-soft: #E6DCFF;
+  --blue: #4D8BFF;
+  --blue-soft: #D6E4FF;
+  --lilac: #C4B0FF;
+
+  --radius-md: 18px;
+  --radius-lg: 26px;
+  --radius-xl: 36px;
+
+  --shadow-sm: 0 1px 0 rgba(20,16,43,0.04), 0 2px 6px rgba(20,16,43,0.04);
+  --shadow-md: 0 2px 0 rgba(20,16,43,0.03), 0 12px 32px rgba(107,75,255,0.08);
+  --shadow-lg: 0 24px 60px rgba(107,75,255,0.16);
+
+  --font-display: 'Fraunces', ui-serif, serif;
+  --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
+
+  --gutter: 32px;
+  --section-pad: 96px;
+}
+
+[data-cards="shadowed"] .card { box-shadow: var(--shadow-md); border: 1px solid transparent; }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: var(--font-body); background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased; font-size: 16px; line-height: 1.5; }
+.mono { font-family: var(--font-mono); font-size: .78rem; letter-spacing: .02em; text-transform: uppercase; }
+.container { max-width: 1280px; margin: 0 auto; padding: 0 max(var(--gutter), 24px); }
+
+/* Nav */
+.nav { position: sticky; top: 0; z-index: 50; background: rgba(255,255,255,0.50); backdrop-filter: blur(20px); border-bottom: 1px solid var(--line); overflow: visible; }
+.nav-inner { display: flex; align-items: center; justify-content: space-between; height: 86px; padding: 0 32px 0 20px; overflow: visible; }
+.nav-logo {
+  display: flex; align-items: center; text-decoration: none;
+  transition: transform .22s ease-out, opacity .22s ease;
+}
+.nav-logo svg, .nav-logo img { height: 38px; width: auto; }
+.nav-logo:hover { transform: translateY(-2px); opacity: 0.82; }
+.nav-logo:active { transform: translateY(1px); opacity: 1; transition-duration: .08s; }
+.nav-links { display: flex; gap: 36px; font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; position: relative;}
+.nav-links a { color: var(--ink-dim); text-decoration: none; transition: color .2s; position: relative; z-index: 1; cursor: pointer; }
+.nav-links a::after { content: ''; position: absolute; inset: -14px -10px; z-index: 0; }
+.nav-links a:hover, .nav-links a.active { color: var(--purple); }
+.nav-pill {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  height: 34px; border-radius: 10px; pointer-events: none; z-index: 0;
+  overflow: hidden;
+  background: linear-gradient(
+    150deg,
+    rgba(255,255,255,0.36) 0%,
+    rgba(180,155,255,0.14) 40%,
+    rgba(139,92,246,0.10) 68%,
+    rgba(255,255,255,0.24) 100%
+  );
+  background-size: 300% 300%;
+  border: 1px solid rgba(255,255,255,0.55);
+  backdrop-filter: blur(14px) saturate(200%) brightness(1.05);
+  -webkit-backdrop-filter: blur(14px) saturate(200%) brightness(1.05);
+  box-shadow:
+    0 2px 12px rgba(139,92,246,0.10),
+    inset 0 1.5px 0 rgba(255,255,255,0.82),
+    inset 0 -1px 0 rgba(100,80,200,0.08),
+    inset 1px 0 0 rgba(255,255,255,0.32),
+    inset -1px 0 0 rgba(255,255,255,0.32);
+  animation: water-flow 4s ease-in-out infinite;
+  transition: left .3s cubic-bezier(0.34,1.2,0.64,1), width .28s cubic-bezier(0.34,1.15,0.64,1), opacity .2s ease;
+}
+.nav-pill::before {
+  content: '';
+  position: absolute; inset: 0; border-radius: inherit;
+  background: linear-gradient(125deg, rgba(255,255,255,0.62) 0%, rgba(255,255,255,0.0) 52%);
+  animation: glass-shine 5s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes water-flow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+@keyframes glass-shine {
+  0%, 100% { opacity: 1; transform: translateX(0); }
+  50% { opacity: 0.35; transform: translateX(10px); }
+}
+.nav-cta { display: flex; gap: 10px; align-items: center; }
+.btn-nav-signin { display: inline-flex; align-items: center; padding: 10px 22px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; background: rgba(139,92,246,0.07); color: var(--ink); border: 1px solid rgba(139,92,246,0.22); backdrop-filter: blur(10px) saturate(150%); -webkit-backdrop-filter: blur(10px) saturate(150%); box-shadow: 0 1px 2px rgba(139,92,246,0.06), inset 0 1px 0 rgba(255,255,255,0.7); transition: background .2s, transform .18s, box-shadow .2s; white-space: nowrap; }
+.btn-nav-signin:hover { background: rgba(139,92,246,0.13); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(139,92,246,0.15), inset 0 1px 0 rgba(255,255,255,0.7); }
+.btn-nav-signup { display: inline-flex; align-items: center; padding: 10px 22px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; background: linear-gradient(160deg, rgba(147,105,255,0.92), rgba(107,75,255,0.88)); color: #fff; border: 1px solid rgba(255,255,255,0.22); backdrop-filter: blur(10px) saturate(140%); -webkit-backdrop-filter: blur(10px) saturate(140%); box-shadow: 0 2px 10px rgba(107,75,255,0.28), inset 0 1px 0 rgba(255,255,255,0.28); transition: transform .18s, box-shadow .2s; white-space: nowrap; }
+.btn-nav-signup:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(107,75,255,0.38), inset 0 1px 0 rgba(255,255,255,0.28); }
+.btn-nav-contact { font-size: 14px; font-weight: 500; color: var(--ink-dim); text-decoration: none; padding: 10px 20px; border-radius: 8px; background: none; border: none; box-shadow: none; transition: color .2s, transform .18s; white-space: nowrap; }
+.btn-nav-contact:hover { color: var(--purple); background: rgba(139,92,246,0.07); transform: translateY(-1px); }
+.phone-icon { display: inline-flex; align-items: center; margin-right: 5px; transform-origin: 50% 55%; }
+.btn-nav-contact:hover .phone-icon { animation: phone-ring 0.52s ease-in-out; }
+@keyframes phone-ring {
+  0%,100% { transform: rotate(0); }
+  12%     { transform: rotate(-22deg); }
+  28%     { transform: rotate(18deg); }
+  44%     { transform: rotate(-12deg); }
+  60%     { transform: rotate(8deg); }
+  76%     { transform: rotate(-4deg); }
+  90%     { transform: rotate(2deg); }
+}
+/* Buttons */
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 999px; font-family: var(--font-body); font-size: 15px; font-weight: 500; text-decoration: none; border: none; cursor: pointer; transition: transform .15s ease, box-shadow .15s ease, background .15s, color .15s; white-space: nowrap; }
+.btn-primary { background: linear-gradient(135deg, var(--pink) 0%, var(--purple) 55%, var(--blue) 100%); color: #fff; box-shadow: 0 8px 24px rgba(139,92,246,0.25); }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(139,92,246,0.35); }
+.btn-ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--ink); }
+.btn-ghost:hover { background: var(--ink); color: #fff; }
+.btn-soft { background: var(--purple-soft); color: var(--ink); border: 1px solid transparent; }
+.btn-soft:hover { background: var(--lilac); }
+.btn-lg { padding: 15px 28px; font-size: 16px; }
+.btn-full { width: 100%; justify-content: center; }
+
+/* Page hero */
+.page-hero { padding: 72px 0 56px; position: relative; overflow: hidden; }
+.page-hero::before { content: ''; position: absolute; top: -120px; right: -120px; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, var(--pink-soft) 0%, transparent 70%); pointer-events: none; }
+.page-hero::after { content: ''; position: absolute; bottom: -120px; left: -100px; width: 460px; height: 460px; border-radius: 50%; background: radial-gradient(circle, var(--blue-soft) 0%, transparent 70%); pointer-events: none; }
+.page-hero-inner { position: relative; z-index: 1; }
+.page-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--purple); margin-bottom: 20px; }
+.page-eyebrow::before { content: ''; display: inline-block; width: 20px; height: 2px; background: linear-gradient(90deg, var(--pink), var(--purple)); border-radius: 2px; }
+.page-hero h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(42px, 5.5vw, 80px); line-height: 0.95; letter-spacing: -0.04em; margin-bottom: 22px; }
+.page-hero h1 em { font-style: normal; background: linear-gradient(120deg, var(--pink) 0%, var(--purple) 50%, var(--blue) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.page-hero-sub { font-size: 19px; color: var(--ink-dim); max-width: 600px; line-height: 1.5; margin-bottom: 36px; }
+
+/* Section */
+.section { padding: var(--section-pad) 0; }
+.section-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--purple); margin-bottom: 16px; }
+.section-eyebrow::before { content: ''; display: inline-block; width: 20px; height: 2px; background: linear-gradient(90deg, var(--pink), var(--purple)); border-radius: 2px; }
+.section h2 { font-family: var(--font-display); font-size: clamp(30px, 3.8vw, 52px); font-weight: 600; letter-spacing: -0.035em; line-height: 1; margin-bottom: 16px; }
+.section h2 em { font-style: normal; background: linear-gradient(120deg, var(--pink), var(--purple), var(--blue)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.section-sub { font-size: 17px; color: var(--ink-dim); line-height: 1.5; max-width: 560px; margin-bottom: 48px; }
+
+/* ── Flagship spotlight ──────────────────────────────── */
+.flagship { padding: 0 0 var(--section-pad); }
+.flagship-wrap {
+  position: relative;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: 0 32px 80px rgba(20,16,43,0.22), 0 0 0 1px rgba(20,16,43,0.06);
+}
+.flagship-poster { width: 100%; display: block; aspect-ratio: 16/9; object-fit: cover; }
+.flagship-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(14,10,36,0.92) 0%, rgba(14,10,36,0.45) 40%, transparent 70%);
+  display: flex; align-items: flex-end;
+  padding: 48px;
+}
+.flagship-content { width: 100%; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+.flagship-meta { display: flex; flex-direction: column; gap: 10px; }
+.flagship-eyebrow-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.flagship-eyebrow {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: rgba(255,224,67,0.13); border: 1px solid rgba(255,224,67,0.32);
+  border-radius: 999px; padding: 5px 13px 5px 9px;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #FFE043;
+  position: relative; overflow: hidden;
+}
+.flagship-eyebrow::after {
+  content: ''; position: absolute; top: 0; left: -80%; width: 55%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,224,67,0.28), transparent);
+  animation: badge-sweep 2.6s ease-in-out infinite 0.8s;
+}
+@keyframes badge-sweep { 0% { left: -80%; } 100% { left: 180%; } }
+.flagship-eyebrow-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: #FF6B35; flex-shrink: 0;
+  animation: dot-pulse 1.5s ease-in-out infinite;
+}
+@keyframes dot-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,107,53,0.8); }
+  60% { box-shadow: 0 0 0 5px rgba(255,107,53,0); }
+}
+.flagship-chart { display: inline-flex; align-items: flex-end; gap: 3px; height: 20px; padding: 0 2px; }
+.flagship-chart-bar {
+  width: 4px; border-radius: 2px 2px 1px 1px;
+  background: rgba(255,224,67,0.75);
+  transform-origin: bottom center;
+  animation: chart-pulse 1.9s ease-in-out infinite;
+}
+@keyframes chart-pulse {
+  0%, 100% { transform: scaleY(1); opacity: 0.65; }
+  50%       { transform: scaleY(1.22); opacity: 1; }
+}
+.flagship-label { font-family: var(--font-display); font-size: clamp(22px,3vw,36px); font-weight: 600; letter-spacing: -0.03em; color: #fff; line-height: 1.1; }
+.flagship-actions { display: flex; gap: 12px; flex-wrap: wrap; flex-shrink: 0; }
+.btn-play {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: rgba(255,255,255,0.18); backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.38); color: #fff;
+  padding: 12px 22px; border-radius: 999px;
+  font-size: 14px; font-weight: 600; text-decoration: none;
+  transition: background .2s, transform .15s, box-shadow .2s;
+  white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(255,255,255,0.1), inset 0 1px 0 rgba(255,255,255,0.25);
+}
+.btn-play:hover { background: rgba(255,255,255,0.26); transform: translateY(-1px); }
+.btn-play-dot { width: 28px; height: 28px; border-radius: 50%; background: #fff; display: grid; place-items: center; flex-shrink: 0; transition: opacity .24s ease, transform .32s cubic-bezier(.16,1,.3,1); }
+.btn-play-dot svg { color: var(--purple); margin-left: 2px; }
+.btn-play.btn-swap:hover .btn-play-dot { opacity: 0; transform: translateY(-120%); }
+.btn-swap { position: relative; overflow: hidden; }
+.btn-swap::before { content: attr(data-swap-hover); display: block; height: 0; overflow: hidden; visibility: hidden; pointer-events: none; }
+.btn-swap .swap-default, .btn-swap .swap-hover { display: block; transition: transform .32s cubic-bezier(.16,1,.3,1), opacity .24s ease; }
+.btn-swap .swap-hover { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; transform: translateY(100%); opacity: 0; }
+.btn-swap:hover .swap-default { transform: translateY(-100%); opacity: 0; }
+.btn-swap:hover .swap-hover   { transform: translateY(0);     opacity: 1; }
+.btn-play.btn-swap:hover { background: linear-gradient(135deg, #FF416C 0%, #FF0000 55%, #CC0022 100%); border-color: transparent; color: #fff; box-shadow: 0 8px 28px rgba(255,0,0,0.38), 0 2px 8px rgba(255,65,108,0.22); }
+.btn-primary.btn-swap:hover { background: linear-gradient(135deg, #FF416C 0%, #FF0000 55%, #CC0022 100%); box-shadow: 0 8px 28px rgba(255,0,0,0.38), 0 2px 8px rgba(255,65,108,0.22); }
+@keyframes btn-attract {
+  0%   { box-shadow: 0 8px 24px rgba(139,92,246,0.30), 0 0 0 0px  rgba(139,92,246,0.45); }
+  65%  { box-shadow: 0 8px 24px rgba(139,92,246,0.30), 0 0 0 12px rgba(139,92,246,0);    }
+  100% { box-shadow: 0 8px 24px rgba(139,92,246,0.30), 0 0 0 0px  rgba(139,92,246,0);    }
+}
+.btn-attract { animation: btn-attract 2.2s ease-out infinite; }
+.btn-attract:hover { animation: none; }
+.btn-enroll {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: linear-gradient(135deg, var(--pink), var(--purple));
+  color: #fff; padding: 12px 26px; border-radius: 999px;
+  font-size: 14px; font-weight: 600; text-decoration: none;
+  box-shadow: 0 4px 20px rgba(139,92,246,0.4);
+  transition: transform .15s, box-shadow .15s;
+  white-space: nowrap;
+}
+.btn-enroll:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(139,92,246,0.5); }
+@media (max-width: 768px) {
+  .flagship-overlay { padding: 28px 24px; }
+  .flagship-content { flex-direction: column; align-items: flex-start; }
+}
+
+/* Faculty section */
+.faculty-grid { display: grid; grid-template-columns: 1.42fr 1fr; gap: 20px; align-items: start; }
+.faculty-card { border-radius: var(--radius-xl); padding: 0; display: flex; flex-direction: column; overflow: hidden; position: relative; transition: transform .38s cubic-bezier(.34,1.05,.64,1), box-shadow .38s ease, opacity .32s ease; cursor: default; }
+.faculty-grid:has(.faculty-card:hover) .faculty-card:not(:hover) { opacity: 0.52; transform: scale(0.982); }
+.faculty-card:hover { transform: translateY(-7px) scale(1.006); }
+.faculty-primary:hover { box-shadow: 0 28px 72px rgba(139,92,246,0.34), 0 8px 24px rgba(139,92,246,0.2); }
+.faculty-secondary:hover { box-shadow: 0 22px 52px rgba(139,92,246,0.15), 0 6px 18px rgba(0,0,0,0.1); }
+.faculty-primary::after { content: ''; position: absolute; inset: 0; background: linear-gradient(108deg, transparent 28%, rgba(255,255,255,0.055) 50%, transparent 72%); transform: translateX(-110%); animation: faculty-shimmer 4.5s ease-in-out 1.5s infinite; pointer-events: none; }
+@keyframes faculty-shimmer { 0% { transform: translateX(-110%); } 28%, 100% { transform: translateX(110%); } }
+.faculty-photo-wrap { aspect-ratio: 3/2; overflow: hidden; flex-shrink: 0; }
+.faculty-photo-wrap img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; transition: transform .55s cubic-bezier(.25,.46,.45,.94); }
+.faculty-secondary .faculty-photo-wrap img { object-position: center center; }
+.faculty-card:hover .faculty-photo-wrap img { transform: scale(1.06); }
+.faculty-photo-placeholder { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+.faculty-primary .faculty-photo-placeholder { background: rgba(139,92,246,0.14); }
+.faculty-secondary .faculty-photo-placeholder { background: var(--purple-soft); }
+.faculty-photo-placeholder-icon { width: 44px; height: 44px; border-radius: 50%; border: 2px dashed; display: flex; align-items: center; justify-content: center; }
+.faculty-primary .faculty-photo-placeholder-icon { border-color: rgba(196,176,255,0.4); color: rgba(196,176,255,0.5); }
+.faculty-secondary .faculty-photo-placeholder-icon { border-color: rgba(139,92,246,0.3); color: rgba(139,92,246,0.4); }
+.faculty-photo-placeholder-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
+.faculty-primary .faculty-photo-placeholder-label { color: rgba(196,176,255,0.4); }
+.faculty-secondary .faculty-photo-placeholder-label { color: rgba(139,92,246,0.35); }
+.faculty-body { padding: 28px 32px 32px; display: flex; flex-direction: column; gap: 22px; flex: 1; }
+.faculty-primary { background: linear-gradient(150deg, #14102B 0%, #1e1152 55%, #170e45 100%); border: 1.5px solid rgba(139,92,246,0.28); }
+.faculty-secondary { background: var(--card); border: 1.5px solid var(--line); }
+.faculty-role { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; font-weight: 500; padding: 4px 11px; border-radius: 999px; margin-bottom: 14px; }
+.faculty-primary .faculty-role { color: var(--lilac); background: rgba(139,92,246,0.18); border: 1px solid rgba(139,92,246,0.25); }
+.faculty-secondary .faculty-role { color: var(--ink-soft); background: rgba(139,92,246,0.06); border: 1px solid var(--line); }
+.faculty-name { font-family: var(--font-display); font-size: clamp(22px, 2vw, 28px); font-weight: 600; letter-spacing: -0.025em; line-height: 1.1; margin-bottom: 8px; }
+.faculty-primary .faculty-name { color: #fff; }
+.faculty-secondary .faculty-name { color: var(--ink); }
+.faculty-blurb { font-size: 14px; line-height: 1.55; }
+.faculty-primary .faculty-blurb { color: rgba(255,255,255,0.48); }
+.faculty-secondary .faculty-blurb { color: var(--ink-dim); }
+.faculty-creds { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.faculty-cred-row { display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--ink-dim); }
+.faculty-cred-air { font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; background: linear-gradient(120deg, var(--pink), var(--lilac)); -webkit-background-clip: text; background-clip: text; color: transparent; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.faculty-subjects-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 10px; }
+.faculty-primary .faculty-subjects-label { color: rgba(255,255,255,0.32); }
+.faculty-secondary .faculty-subjects-label { color: var(--ink-soft); }
+.faculty-tags { display: flex; flex-wrap: wrap; gap: 7px; }
+.faculty-tag { font-size: 12.5px; font-weight: 500; padding: 5px 13px; border-radius: 999px; transition: transform .18s ease, background .18s ease, border-color .18s ease; animation: tag-pop .4s cubic-bezier(.34,1.3,.64,1) both; }
+@keyframes tag-pop { from { opacity: 0; transform: scale(0.8) translateY(4px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+.faculty-primary .faculty-tag { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.82); border: 1px solid rgba(255,255,255,0.12); }
+.faculty-secondary .faculty-tag { background: var(--purple-soft); color: var(--purple); border: 1px solid rgba(139,92,246,0.18); }
+.faculty-primary .faculty-tag:hover { background: rgba(255,255,255,0.16); border-color: rgba(255,255,255,0.28); transform: scale(1.09); }
+.faculty-secondary .faculty-tag:hover { background: rgba(139,92,246,0.18); border-color: rgba(139,92,246,0.38); transform: scale(1.09); }
+@media (max-width: 768px) { .faculty-grid { grid-template-columns: 1fr; } }
+
+/* Combos grid — redesigned */
+.combos-grid { display: grid; grid-template-columns: 1.42fr 1fr 1fr; gap: 20px; align-items: start; }
+.combo-card {
+  border-radius: var(--radius-xl); padding: 36px;
+  display: flex; flex-direction: column;
+  position: relative; overflow: hidden;
+  transition: transform .38s cubic-bezier(.4,0,.2,1), box-shadow .38s ease,
+              opacity .32s ease, filter .32s ease;
+  background: var(--card); border: 1.5px solid var(--line);
+}
+.combo-card:hover { transform: translateY(-10px); box-shadow: 0 28px 60px rgba(107,75,255,0.13); }
+.combo-card.featured {
+  background: linear-gradient(150deg, #14102B 0%, #221260 55%, #1a0d50 100%);
+  border-color: rgba(139,92,246,0.35);
+  box-shadow: 0 20px 60px rgba(107,75,255,0.28), inset 0 1px 0 rgba(255,255,255,0.07);
+}
+.combo-card.featured:hover { transform: translateY(-12px); box-shadow: 0 36px 80px rgba(107,75,255,0.44), inset 0 1px 0 rgba(255,255,255,0.07); }
+.combo-card.featured::before {
+  content: ''; position: absolute; top: -50px; right: -50px;
+  width: 220px; height: 220px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(139,92,246,0.32) 0%, transparent 70%);
+  pointer-events: none;
+}
+.combo-card.featured::after {
+  content: ''; position: absolute; bottom: -30px; left: -30px;
+  width: 160px; height: 160px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,127,183,0.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+.combo-accent { position: absolute; top: 0; left: 0; right: 0; height: 4px; }
+.combo-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 13px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+  align-self: flex-start; margin-bottom: 22px; position: relative; z-index: 1;
+}
+.combo-badge.best { background: linear-gradient(135deg, var(--pink), var(--purple)); color: #fff; box-shadow: 0 4px 14px rgba(139,92,246,0.4); }
+.combo-badge.popular { background: var(--purple-soft); color: var(--purple); }
+.combo-badge.combo { background: var(--blue-soft); color: var(--blue); }
+.combo-title { font-family: var(--font-display); font-size: 26px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 6px; position: relative; z-index: 1; }
+.combo-card.featured .combo-title { color: #fff; font-size: 30px; }
+.combo-validity { font-family: var(--font-mono); font-size: 10px; color: var(--ink-soft); margin-bottom: 18px; letter-spacing: .08em; position: relative; z-index: 1; }
+.combo-card.featured .combo-validity { color: rgba(255,255,255,0.38); }
+.combo-divider { height: 1px; background: var(--line); margin: 0 0 18px; position: relative; z-index: 1; }
+.combo-card.featured .combo-divider { background: rgba(255,255,255,0.1); }
+.combo-includes-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 14px; position: relative; z-index: 1; }
+.combo-card.featured .combo-includes-label { color: rgba(255,255,255,0.38); }
+.combo-includes { flex: 1; margin-bottom: 24px; position: relative; z-index: 1; }
+.combo-includes ul { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+.combo-includes li {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 14px; color: var(--ink-dim); line-height: 1.45;
+  opacity: 0.5; transform: translateX(-5px);
+  transition: opacity .28s ease var(--delay, 0ms), transform .28s ease var(--delay, 0ms);
+}
+.combo-card:hover .combo-includes li { opacity: 1; transform: translateX(0); }
+.combo-card.featured .combo-includes li { opacity: 1; transform: translateX(0); color: rgba(255,255,255,0.78); }
+.combo-check {
+  width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; margin-top: 2px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--purple-soft);
+}
+.combo-card.featured .combo-check { background: rgba(255,255,255,0.13); }
+.combo-check svg { width: 10px; height: 8px; overflow: visible; }
+.combo-check svg path {
+  stroke: var(--purple); fill: none;
+  stroke-dasharray: 14; stroke-dashoffset: 14;
+  transition: stroke-dashoffset .32s ease var(--delay, 0ms);
+}
+.combo-card:hover .combo-check svg path { stroke-dashoffset: 0; }
+.combo-card.featured .combo-check svg path { stroke: rgba(255,255,255,0.85); stroke-dashoffset: 0; }
+.combo-price-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 22px; position: relative; z-index: 1; }
+.combo-price { font-family: var(--font-display); font-size: 38px; font-weight: 600; letter-spacing: -0.04em; }
+.combo-card.featured .combo-price { color: #fff; font-size: 44px; }
+.combo-price-old { font-size: 15px; color: var(--ink-soft); text-decoration: line-through; }
+.combo-card.featured .combo-price-old { color: rgba(255,255,255,0.36); }
+.combo-discount { font-size: 11px; font-weight: 700; color: #fff; background: linear-gradient(135deg, var(--pink), var(--purple)); padding: 4px 10px; border-radius: 999px; }
+.combo-card .btn { position: relative; z-index: 1; }
+.combo-num {
+  position: absolute; top: 22px; right: 24px; z-index: 0;
+  font-family: var(--font-display); font-size: 52px; font-weight: 700;
+  letter-spacing: -0.05em; line-height: 1; pointer-events: none;
+  opacity: 0.08; transition: opacity .32s ease, color .32s ease;
+}
+.combo-card:hover .combo-num { opacity: 0.15; }
+.combo-card.featured .combo-num { opacity: 0.14; color: #fff; }
+.combo-card.featured:hover .combo-num { opacity: 0.22; }
+
+/* Individual courses — redesigned */
+.courses-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+.course-card {
+  border-radius: var(--radius-xl); padding: 28px 24px 24px;
+  display: flex; flex-direction: column;
+  position: relative; overflow: hidden;
+  border: 1.5px solid var(--line); background: var(--card);
+  transition: transform .38s cubic-bezier(.4,0,.2,1), box-shadow .38s ease;
+}
+.ticket-notch {
+  position: relative; height: 0;
+  margin: 16px -24px; z-index: 3;
+}
+.ticket-notch::before, .ticket-notch::after {
+  content: ''; position: absolute;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--bg);
+  top: 0;
+}
+.ticket-notch::before { left: 0; transform: translate(-50%, -50%); }
+.ticket-notch::after  { right: 0; transform: translate(50%, -50%); }
+.ticket-notch-line {
+  position: absolute; top: 0; left: 11px; right: 11px;
+  transform: translateY(-50%);
+  border-top: 1.5px dashed rgba(0,0,0,0.1);
+  transition: border-color .28s ease;
+}
+.course-card:hover .ticket-notch-line { border-color: rgba(255,255,255,0.22); }
+.course-card::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  background: var(--course-grad); opacity: 0.18;
+  transition: opacity .38s ease;
+}
+.course-card:hover { transform: translateY(-10px); box-shadow: 0 24px 56px var(--course-shadow, rgba(107,75,255,0.25)); }
+.course-card:hover::before { opacity: 1; }
+.course-accent { display: none; }
+.course-icon {
+  width: 48px; height: 48px; border-radius: 14px;
+  display: grid; place-items: center; color: #fff; margin-bottom: 20px;
+  position: relative; z-index: 1;
+  transition: transform .38s cubic-bezier(.34,1.3,0.64,1), box-shadow .38s ease;
+}
+.course-card:hover .course-icon { transform: scale(1.16) translateY(-3px); box-shadow: 0 10px 28px rgba(0,0,0,0.28); }
+.course-title {
+  font-family: var(--font-display); font-size: 20px; font-weight: 600;
+  letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 6px;
+  position: relative; z-index: 1; transition: color .28s ease;
+}
+.course-card:hover .course-title { color: #fff; }
+.course-validity {
+  font-family: var(--font-mono); font-size: 10px; color: var(--ink-soft);
+  margin-bottom: 14px; letter-spacing: .06em;
+  position: relative; z-index: 1; transition: color .28s ease;
+}
+.course-card:hover .course-validity { color: rgba(255,255,255,0.45); }
+.course-topics {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column; gap: 7px; margin-bottom: 0;
+  max-height: 0; overflow: hidden; opacity: 0;
+  transition: max-height .28s ease, opacity .2s ease, margin-bottom .28s ease;
+}
+.course-card:hover .course-topics {
+  max-height: 120px; opacity: 1; margin-bottom: 16px;
+  transition: max-height .55s cubic-bezier(0.25,0.46,0.45,0.94), opacity .4s ease .06s, margin-bottom .55s cubic-bezier(0.25,0.46,0.45,0.94);
+}
+.course-topic {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12px; color: rgba(255,255,255,0.82); line-height: 1.35;
+  transform: translateY(8px); opacity: 0;
+  transition: transform .22s ease, opacity .22s ease;
+}
+.course-card:hover .course-topic {
+  transform: translateY(0); opacity: 1;
+  transition: transform .42s cubic-bezier(0.25,0.46,0.45,0.94) var(--td, 0ms), opacity .38s ease var(--td, 0ms);
+}
+.course-topic::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.55); flex-shrink: 0; }
+.course-price-row {
+  display: flex; align-items: baseline; gap: 8px;
+  margin-top: auto; margin-bottom: 18px; position: relative; z-index: 1;
+}
+.course-price {
+  font-family: var(--font-display); font-size: 26px; font-weight: 600;
+  letter-spacing: -0.03em; transition: color .28s ease;
+}
+.course-card:hover .course-price { color: #fff; }
+.course-price-old { font-size: 13px; color: var(--ink-soft); text-decoration: line-through; transition: color .28s ease; }
+.course-card:hover .course-price-old { color: rgba(255,255,255,0.42); }
+.course-card .btn-ghost { position: relative; z-index: 1; transition: background .28s ease, color .28s ease, border-color .28s ease; }
+.course-card:hover .btn-ghost { background: rgba(255,255,255,0.18); color: #fff; border-color: rgba(255,255,255,0.42); }
+
+/* Coming soon card */
+.placement-card {
+  background: linear-gradient(150deg, #14102B 0%, #1c1255 55%, #0a1020 100%);
+  border-radius: var(--radius-xl); padding: 56px 64px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center;
+  border: 1.5px solid rgba(139,92,246,0.24);
+  position: relative; overflow: hidden;
+  transition: border-color .3s ease, box-shadow .3s ease;
+}
+.placement-card:hover { border-color: rgba(139,92,246,0.42); box-shadow: 0 32px 80px rgba(139,92,246,0.18); }
+.placement-card::before {
+  content: ''; position: absolute; width: 560px; height: 480px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(ellipse, rgba(139,92,246,0.14) 0%, transparent 70%);
+  top: -200px; right: -80px;
+}
+.placement-card::after {
+  content: ''; position: absolute; width: 320px; height: 280px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(ellipse, rgba(255,65,108,0.1) 0%, transparent 70%);
+  bottom: -100px; left: 80px;
+}
+.placement-left { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 0; }
+.placement-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 600;
+  background: rgba(139,92,246,0.14); border: 1px solid rgba(139,92,246,0.3);
+  color: var(--lilac); margin-bottom: 18px; align-self: flex-start;
+}
+.placement-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lilac); animation: live-blink 2s ease-in-out infinite; }
+.placement-title {
+  font-family: var(--font-display); font-size: clamp(26px,2.8vw,38px); font-weight: 600;
+  letter-spacing: -0.03em; line-height: 1.1; color: #fff; margin-bottom: 14px;
+}
+.placement-title em { background: linear-gradient(120deg, var(--purple), var(--lilac)); -webkit-background-clip: text; background-clip: text; color: transparent; font-style: normal; }
+.placement-desc { font-size: 14.5px; color: rgba(255,255,255,0.48); line-height: 1.65; margin-bottom: 28px; }
+.placement-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn-ghost-light { background: transparent; color: rgba(255,255,255,0.7); border: 1.5px solid rgba(255,255,255,0.22); }
+.btn-ghost-light:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.4); }
+.placement-right { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 20px; }
+.placement-cat-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,0.28); margin-bottom: 7px; }
+.placement-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.placement-chip {
+  padding: 6px 13px; border-radius: 999px; font-size: 12px; font-weight: 500;
+  border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.05);
+  transition: background .22s ease, border-color .22s ease, color .22s ease, transform .22s cubic-bezier(.34,1.3,.64,1);
+  cursor: default;
+}
+.placement-chip.chip-purple:hover { background: rgba(139,92,246,0.22); border-color: rgba(139,92,246,0.45); color: var(--lilac); transform: scale(1.07); }
+.placement-chip.chip-blue:hover   { background: rgba(77,139,255,0.18);  border-color: rgba(77,139,255,0.4);  color: #8FC8FF; transform: scale(1.07); }
+.placement-chip.chip-pink:hover   { background: rgba(255,127,183,0.18); border-color: rgba(255,127,183,0.4); color: var(--pink); transform: scale(1.07); }
+.placement-divider { height: 1px; background: rgba(255,255,255,0.07); }
+
+/* Every course includes — tab showcase (mirrors Why TAAI on landing page) */
+.incl-layout { display: grid; grid-template-columns: 360px 1fr; gap: 20px; align-items: stretch; }
+.incl-tabs { display: flex; flex-direction: column; gap: 6px; }
+.incl-tab {
+  display: flex; align-items: center; gap: 14px;
+  padding: 15px 16px; border-radius: var(--radius-md);
+  cursor: pointer; text-align: left; width: 100%;
+  background: none; border: 1.5px solid transparent;
+  transition: background .2s, border-color .2s, box-shadow .2s, transform .18s;
+  font-family: inherit;
+}
+.incl-tab:hover { background: #fff; border-color: var(--line); }
+.incl-tab.active { background: #fff; border-color: var(--line); box-shadow: var(--shadow-md); transform: translateX(5px); }
+.incl-tab-icon { width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0; display: grid; place-items: center; color: #fff; transition: transform .2s; }
+.incl-tab.active .incl-tab-icon { transform: scale(1.1); }
+.incl-tab-info { min-width: 0; flex: 1; }
+.incl-tab-label { font-family: var(--font-display); font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); line-height: 1.2; }
+.incl-tab-sub { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+.incl-tab-chevron { margin-left: auto; flex-shrink: 0; opacity: 0; transform: translateX(-4px); transition: opacity .2s, transform .2s; color: var(--purple); }
+.incl-tab.active .incl-tab-chevron { opacity: 1; transform: translateX(0); }
+.incl-panel {
+  border-radius: var(--radius-xl); background: var(--ink);
+  padding: 48px; position: relative; overflow: hidden;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  min-height: 440px;
+}
+.incl-orb1, .incl-orb2 { position: absolute; border-radius: 50%; pointer-events: none; transition: background .55s ease; }
+.incl-orb1 { width: 340px; height: 340px; top: -100px; right: -70px; opacity: 0.22; filter: blur(72px); }
+.incl-orb2 { width: 200px; height: 200px; bottom: -60px; left: -30px; opacity: 0.14; filter: blur(56px); }
+.incl-icon-bg { position: absolute; top: 36px; right: 36px; pointer-events: none; color: #fff; }
+.incl-icon-bg svg { width: 108px; height: 108px; opacity: 0.05; }
+@keyframes inclIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+.incl-content { position: relative; z-index: 1; animation: inclIn 0.32s cubic-bezier(.4,0,.2,1) both; }
+.incl-eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: .15em; text-transform: uppercase; color: rgba(255,255,255,0.38); margin-bottom: 14px; }
+.incl-ptitle { font-family: var(--font-display); font-size: clamp(26px,3vw,40px); font-weight: 600; letter-spacing: -0.035em; line-height: 1.06; color: #fff; margin-bottom: 16px; }
+.incl-pdesc { font-size: 15px; color: rgba(255,255,255,0.56); line-height: 1.66; margin-bottom: 32px; max-width: 400px; }
+.incl-pstat { display: flex; align-items: baseline; gap: 10px; }
+.incl-pstat-num { font-family: var(--font-display); font-size: 52px; font-weight: 600; letter-spacing: -0.05em; line-height: 1; }
+.incl-pstat-lbl { font-size: 13px; color: rgba(255,255,255,0.42); }
+@media (max-width: 1024px) { .incl-layout { grid-template-columns: 1fr; } }
+
+/* Scroll fade-in */
+.fade-in { opacity: 0; transform: translateY(24px); transition: opacity .7s cubic-bezier(.4,0,.2,1), transform .7s cubic-bezier(.4,0,.2,1); }
+.fade-in.visible { opacity: 1; transform: translateY(0); }
+
+/* Footer */
+.footer { padding: 40px 0; border-top: 1px solid var(--line); }
+.footer-inner { display: flex; flex-direction: row; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+.footer-socials { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.footer-socials a {
+  width: 54px; height: 54px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--bg-soft); color: var(--ink-dim);
+  border: 1px solid var(--line); text-decoration: none;
+  transition: background .28s cubic-bezier(.4,0,.2,1), color .28s cubic-bezier(.4,0,.2,1), transform .28s cubic-bezier(.34,1.15,.64,1), border-color .28s;
+}
+.footer-socials a:hover { background: var(--purple); color: #fff; border-color: var(--purple); transform: translateY(-3px); }
+.footer-socials a svg { display: block; width: 22px; height: 22px; }
+.footer-copy { font-size: 12px; color: var(--ink-soft); letter-spacing: .02em; }
+.footer-email { font-size: 12px; color: var(--ink-dim); text-decoration: none; letter-spacing: .02em; transition: color .2s; }
+.footer-email:hover { color: var(--purple); }
+
+@media (max-width: 1024px) {
+  .combos-grid { grid-template-columns: 1fr; }
+  .courses-grid { grid-template-columns: repeat(3, 1fr); }
+  .included-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  :root { --section-pad: 56px; }
+  .nav-links { display: none; }
+  .btn-nav-contact { display: none; }
+  .courses-grid { grid-template-columns: 1fr; }
+  .included-grid { grid-template-columns: 1fr; }
+  .placement-card { grid-template-columns: 1fr; padding: 36px 28px; }
+  .placement-card::before { display: none; }
+}
+
+/* YouTube link wiggle */
+@keyframes yt-wiggle {
+  0%   { transform: rotate(0deg); }
+  20%  { transform: rotate(-1.5deg); }
+  45%  { transform: rotate(1deg); }
+  68%  { transform: rotate(-0.5deg); }
+  85%  { transform: rotate(0.2deg); }
+  100% { transform: rotate(0deg); }
+}
+a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
+  animation: yt-wiggle 0.6s cubic-bezier(.4,0,.2,1);
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" data-presets="react">
+
+const Icon = {
+  ArrowRight: ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 16 16" fill="none"><path d="M3 8H13M13 8L8 3M13 8L8 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+  Check: ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+  Sparkle: ({ size = 14 }) => <svg width={size} height={size} viewBox="0 0 16 16" fill="none"><path d="M8 1L9.5 6.5L15 8L9.5 9.5L8 15L6.5 9.5L1 8L6.5 6.5L8 1Z" fill="currentColor" /></svg>,
+  Book:  () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 5C4 4 4.5 3 6 3H11V20H6C4.5 20 4 19 4 18V5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="M20 5C20 4 19.5 3 18 3H13V20H18C19.5 20 20 19 20 18V5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg>,
+  Chart: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 4V20H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><path d="M7 15L11 10L14 13L19 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+  Target: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.5" /><circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.5" /><circle cx="12" cy="12" r="1.5" fill="currentColor" /></svg>,
+  Video: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.5" /><path d="M16 10L21 7V17L16 14" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg>,
+  Users: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="8" cy="9" r="3" stroke="currentColor" strokeWidth="1.5" /><circle cx="16" cy="9" r="3" stroke="currentColor" strokeWidth="1.5" /><path d="M3 19C3 16 5 14 8 14C11 14 13 16 13 19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><path d="M13 19C13 16 15 14 18 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>,
+  Chat:  () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 6C4 4.9 4.9 4 6 4H18C19.1 4 20 4.9 20 6V15C20 16.1 19.1 17 18 17H13L9 21V17H6C4.9 17 4 16.1 4 15V6Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg>,
+  Discord: ({ size=20 }={}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.01.043.026.057a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .026-.055c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>,
+  Code:  () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M8 6L3 12L8 18M16 6L21 12L16 18M14 4L10 20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+  Note:  () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 4H20V16L16 20H4V4Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="M8 9H16M8 13H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>,
+};
+
+const NAV_LINKS = [
+  { label: 'Courses',      href: 'courses.html',      active: true },
+  { label: 'Test Series',  href: 'test-series.html'               },
+  { label: 'Testimonials', href: 'testimonials.html'              },
+];
+
+function TAAILogo() {
+  return <img src="logo.png" alt="TAAI" style={{ height: 150, width: 'auto' }} />;
+}
+
+function Nav() {
+  const linksRef = React.useRef(null);
+  const [pill, setPill] = React.useState({ left: 0, width: 0, visible: false });
+  const resetTimer = React.useRef(null);
+
+  const moveTo = React.useCallback((el) => {
+    if (resetTimer.current) { clearTimeout(resetTimer.current); resetTimer.current = null; }
+    if (!el) return;
+    setPill({ left: el.offsetLeft - 10, width: el.offsetWidth + 20, visible: true });
+  }, []);
+
+  const reset = React.useCallback(() => {
+    resetTimer.current = setTimeout(() => {
+      const active = linksRef.current && linksRef.current.querySelector('a.active');
+      if (active) moveTo(active); else setPill(p => ({ ...p, visible: false }));
+    }, 60);
+  }, [moveTo]);
+
+  React.useEffect(() => { reset(); }, [reset]);
+
+  return (
+    <nav className="nav">
+      <div className="nav-inner" onMouseLeave={reset}>
+        <a href="index.html" className="nav-logo">
+          <TAAILogo />
+        </a>
+        <div className="nav-links" ref={linksRef}>
+          <div className="nav-pill" style={{ left: pill.left, width: pill.width, opacity: pill.visible ? 1 : 0 }} />
+          {NAV_LINKS.map((l) => (
+            <a key={l.href} href={l.href} className={l.active ? 'active' : ''}
+               onMouseEnter={(e) => moveTo(e.currentTarget)}>{l.label}</a>
+          ))}
+        </div>
+        <div className="nav-cta">
+          <a target="_blank" rel="noopener noreferrer" href="https://www.taai.live/learn/account/signin" className="btn-nav-signin">Sign In</a>
+          <a target="_blank" rel="noopener noreferrer" href="https://www.taai.live/learn/account/signup" className="btn-nav-signup">Sign Up</a>
+          <a href="contact.html" className="btn-nav-contact"><span className="phone-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></span>Contact Us</a>
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+// ── COMBO PACKAGES ──────────────────────────────────────────────
+const COMBOS = [
+  {
+    num: '01',
+    badge: 'best', badgeLabel: 'Best value',
+    accent: 'linear-gradient(90deg, var(--pink), var(--purple), var(--blue))',
+    title: 'GATE 2027 Full Course',
+    validity: 'VALID UNTIL GATE 2027',
+    price: '₹12,999', priceOld: '₹14,999', discount: '20% off',
+    includes: [
+      'Complete GATE DA syllabus',
+      'Linear Algebra, Probability, Statistics, Calculus',
+      'Machine Learning — full coverage',
+      'GATE-level question bank (1,500+ questions)',
+      'Test series: 45 topic-wise + 10 subject-wise + 12 full-length',
+      'Live doubt sessions every week',
+      'Handwritten notes + video solutions',
+      'Active Discord community support',
+    ],
+    href: 'https://www.taai.live/learn/batch/GATE-2027?calendarInitialView=dayGridWeek',
+  },
+  {
+    num: '02',
+    badge: 'combo', badgeLabel: 'Combo',
+    accent: 'linear-gradient(90deg, var(--purple), var(--blue))',
+    title: 'Mathematics & ML Combo',
+    validity: 'VALID UNTIL FEB 20, 2027',
+    price: '₹7,999', priceOld: '₹9,999', discount: '20% off',
+    includes: [
+      'Linear Algebra',
+      'Probability',
+      'Statistics',
+      'Calculus',
+      'Machine Learning',
+      'LIVE doubt discussion sessions',
+      'Tests for all subjects',
+    ],
+    href: 'https://www.taai.live/learn/Maths--ML---AI-Bundle---GATE-2026',
+  },
+  {
+    num: '03',
+    badge: 'combo', badgeLabel: 'Combo',
+    accent: 'linear-gradient(90deg, var(--pink), var(--purple))',
+    title: 'Mathematics Combo',
+    validity: 'VALID UNTIL FEB 20, 2027',
+    price: '₹5,999', priceOld: '₹7,499', discount: '20% off',
+    includes: [
+      'Linear Algebra',
+      'Probability',
+      'Statistics',
+      'Calculus',
+      'Topic-wise tests included',
+    ],
+    href: 'https://www.taai.live/learn/Mathematics-Course-by-manoj-sir-gate-2026-gateda',
+  },
+];
+
+// ── INDIVIDUAL COURSES ───────────────────────────────────────────
+const INDIVIDUAL = [
+  { num: '01', title: 'Linear Algebra', price: '₹1,999', priceOld: '₹2,999', validity: 'FEB 20, 2027',
+    icon: <Icon.Chart />, grad: 'linear-gradient(145deg,#6B4AFF,#4D8BFF)', shadow: 'rgba(107,74,255,0.32)',
+    href: 'https://www.taai.live/learn/Linear-Algebra--Mathematics-',
+    topics: ['Matrices & determinants', 'Eigenvalues & vectors', 'Linear transformations'] },
+  { num: '02', title: 'Probability', price: '₹2,499', priceOld: '₹3,499', validity: 'FEB 20, 2027',
+    icon: <Icon.Target />, grad: 'linear-gradient(145deg,#FF7FB7,#8B5CF6)', shadow: 'rgba(255,127,183,0.32)',
+    href: 'https://www.taai.live/learn/Probability',
+    topics: ['Conditional probability', 'Random variables', 'Distributions'] },
+  { num: '03', title: 'Statistics', price: '₹1,499', priceOld: '₹2,499', validity: 'FEB 20, 2027',
+    icon: <Icon.Book />, grad: 'linear-gradient(145deg,#4D8BFF,#7FA8FF)', shadow: 'rgba(77,139,255,0.32)',
+    href: 'https://www.taai.live/learn/Probability',
+    topics: ['Hypothesis testing', 'Estimation theory', 'Regression basics'] },
+  { num: '04', title: 'Calculus', price: '₹1,499', priceOld: '₹2,499', validity: 'FEB 20, 2027',
+    icon: <Icon.Note />, grad: 'linear-gradient(145deg,#FF7FB7,#FF9ECB)', shadow: 'rgba(255,127,183,0.28)',
+    href: 'https://www.taai.live/learn/Calculus-and-Optimization',
+    topics: ['Limits & continuity', 'Differentiation', 'Optimization & integration'] },
+  { num: '05', title: 'Machine Learning', price: '₹3,999', priceOld: '₹4,999', validity: 'FEB 20, 2027',
+    icon: <Icon.Code />, grad: 'linear-gradient(145deg,#8B5CF6,#C4B0FF)', shadow: 'rgba(139,92,246,0.34)',
+    href: 'https://www.taai.live/learn/taAI-Machine-Learning-Full-Course',
+    topics: ['Supervised & unsupervised', 'Model evaluation', 'Neural networks basics'] },
+];
+
+// ── WHAT'S INCLUDED ──────────────────────────────────────────────
+const INCLUDED = [
+  { icon: <Icon.Video />, grad: 'linear-gradient(135deg,var(--pink),var(--purple))', color: '#FF7FB7',
+    label: 'Recorded classes.', sub: 'Visual-first lectures', eyebrow: 'Core content',
+    title: <>Learn at<br /><em style={{color:'var(--pink)'}}>your own pace.</em></>,
+    desc: 'High-quality, visual-first lectures you can re-watch anytime. Structured for GATE DA — concise, conceptual, focused.',
+    stat: { num: '100+', lbl: 'concept videos' } },
+  { icon: <Icon.Users />, grad: 'linear-gradient(135deg,var(--purple),var(--blue))', color: '#8B5CF6',
+    label: 'Live doubt sessions.', sub: 'Weekly, real-time', eyebrow: 'Live interactive',
+    title: <>Doubts cleared<br /><em style={{color:'var(--lilac)'}}>in real time.</em></>,
+    desc: 'Weekly live sessions per topic — clarify doubts, discuss logic, and get direct explanations from Manoj Sir.',
+    stat: { num: '67+', lbl: 'live sessions' } },
+  { icon: <Icon.Discord />, grad: 'linear-gradient(135deg,var(--blue),#7FA8FF)', color: '#4D8BFF',
+    label: 'Discord support.', sub: 'Mentors · any hour', eyebrow: 'Community',
+    title: <>Help available<br /><em style={{color:'#7EB3FF'}}>24 / 7.</em></>,
+    desc: 'Active Discord community with mentors and toppers. Late-night doubt? Someone always there — not a bot.',
+    stat: { num: '24/7', lbl: 'community support' } },
+  { icon: <Icon.Note />, grad: 'linear-gradient(135deg,var(--pink),#FF9ECB)', color: '#FF9ECB',
+    label: 'Handwritten notes.', sub: 'Exam-ready revision', eyebrow: 'Study material',
+    title: <>Every topic,<br /><em style={{color:'var(--pink)'}}>beautifully distilled.</em></>,
+    desc: 'Concise, exam-focused handwritten notes for every topic. Designed for fast revision, not re-reading lectures.',
+    stat: { num: '6', lbl: 'subjects covered' } },
+  { icon: <Icon.Target />, grad: 'linear-gradient(135deg,var(--purple),var(--lilac))', color: '#A78BFA',
+    label: 'Question bank.', sub: '1,500+ GATE-level Qs', eyebrow: 'Practice',
+    title: <>Quality over<br /><em style={{color:'var(--lilac)'}}>quantity.</em></>,
+    desc: '1,500+ conceptual questions with text and video solutions. Curated for GATE DA — no filler, every question earns its place.',
+    stat: { num: '1,500+', lbl: 'practice questions' } },
+  { icon: <Icon.Chart />, grad: 'linear-gradient(135deg,var(--blue),var(--purple))', color: '#4D8BFF',
+    label: '67 mock tests.', sub: 'Topic, subject & full-length', eyebrow: 'Test series',
+    title: <>Simulate the<br /><em style={{color:'#7EB3FF'}}>real exam.</em></>,
+    desc: '45 topic-wise + 10 subject-wise + 12 full-length mocks. GATE-like interface with detailed performance analysis.',
+    stat: { num: '67', lbl: 'mock tests included' } },
+];
+
+function ComboCard({ c }) {
+  const featured = c.badge === 'best';
+  const cls = 'combo-card card fade-in' + (featured ? ' featured' : '');
+  return (
+    <div className={cls}>
+      <div className="combo-num">{c.num}</div>
+      <div className="combo-accent" style={{ background: c.accent }} />
+      <div className={'combo-badge ' + c.badge}><Icon.Sparkle />{c.badgeLabel}</div>
+      <div className="combo-title">{c.title}</div>
+      <div className="combo-validity">{c.validity}</div>
+      <div className="combo-divider" />
+      <div className="combo-includes-label">What's included</div>
+      <div className="combo-includes">
+        <ul>
+          {c.includes.map((item, i) => (
+            <li key={i} style={{ '--delay': `${i * 48}ms` }}>
+              <span className="combo-check">
+                <svg viewBox="0 0 10 8" fill="none">
+                  <path d="M1 4l3 3 5-5" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+              {item}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="combo-price-row">
+        <div className="combo-price">{c.price}</div>
+        {c.priceOld && <div className="combo-price-old">{c.priceOld}</div>}
+        {c.discount && <div className="combo-discount">{c.discount}</div>}
+      </div>
+      <a href={c.href} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-full">Enrol now <Icon.ArrowRight /></a>
+    </div>
+  );
+}
+
+function CourseCard({ c }) {
+  return (
+    <div className="course-card card fade-in" style={{ '--course-grad': c.grad, '--course-shadow': c.shadow }}>
+      <div className="course-accent" style={{ background: c.grad }} />
+      <div className="course-icon" style={{ background: c.grad }}>{c.icon}</div>
+      <div className="course-title">{c.title}</div>
+      <div className="course-validity mono">VALID UNTIL {c.validity}</div>
+      <div className="course-topics">
+        {c.topics.map((t, i) => (
+          <div key={i} className="course-topic" style={{ '--td': `${i * 55}ms` }}>{t}</div>
+        ))}
+      </div>
+      <div className="course-price-row">
+        <div className="course-price">{c.price}</div>
+        <div className="course-price-old">{c.priceOld}</div>
+      </div>
+      <div className="ticket-notch"><div className="ticket-notch-line" /></div>
+      <a target="_blank" rel="noopener noreferrer" href={c.href} className="btn btn-ghost btn-full">Get course <Icon.ArrowRight /></a>
+    </div>
+  );
+}
+
+function Flagship() {
+  return (
+    <section className="flagship">
+      <div className="container">
+        <div className="flagship-wrap fade-in">
+          <img src="full-course-poster.jpg" alt="GATE DA 2027 Full Course by TAAI" className="flagship-poster" />
+          <div className="flagship-overlay">
+            <div className="flagship-content">
+              <div className="flagship-meta">
+                <div className="flagship-eyebrow-row">
+                  <div className="flagship-eyebrow">
+                    <span className="flagship-eyebrow-dot" />
+                    Most enrolled
+                  </div>
+                  <div className="flagship-chart">
+                    {[5,8,11,14,18].map((h,i) => (
+                      <div key={i} className="flagship-chart-bar" style={{ height: h, animationDelay: `${i*0.22}s` }} />
+                    ))}
+                  </div>
+                </div>
+                <div className="flagship-label">GATE DA 2027 Full Course</div>
+              </div>
+              <div className="flagship-actions">
+                <a
+                  href="https://www.youtube.com/live/C2m3iCctqaA?si=d_sWTgjt0lrjVXuz"
+                  target="_blank" rel="noopener noreferrer"
+                  className="btn-play btn-swap"
+                >
+                  <span className="btn-play-dot">
+                    <svg width="11" height="13" viewBox="0 0 11 13" fill="none">
+                      <path d="M1 1.5L10 6.5L1 11.5V1.5Z" fill="currentColor" />
+                    </svg>
+                  </span>
+                  <span className="swap-default">Watch free orientation</span>
+                  <span className="swap-hover">Your First Step to IIT</span>
+                </a>
+                <a href="https://www.taai.live/learn/batch/GATE-2027?calendarInitialView=dayGridWeek" target="_blank" rel="noopener noreferrer" className="btn-enroll">
+                  Enroll now →
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function IncludedShowcase() {
+  const [active, setActive] = React.useState(0);
+  const f = INCLUDED[active];
+  return (
+    <section className="section" style={{ background: 'var(--bg-soft)' }}>
+      <div className="container">
+        <div className="section-eyebrow fade-in">Every course includes</div>
+        <h2 className="fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 12 }}>
+          More than just <em>video lectures</em>
+        </h2>
+        <p className="section-sub fade-in">Every TAAI course ships with the full support stack — not just recorded classes.</p>
+        <div className="incl-layout fade-in">
+          <div className="incl-tabs">
+            {INCLUDED.map((feat, i) => (
+              <button key={i} className={`incl-tab${active === i ? ' active' : ''}`} onClick={() => setActive(i)}>
+                <div className="incl-tab-icon" style={{ background: feat.grad }}>{feat.icon}</div>
+                <div className="incl-tab-info">
+                  <div className="incl-tab-label">{feat.label}</div>
+                  <div className="incl-tab-sub">{feat.sub}</div>
+                </div>
+                <svg className="incl-tab-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 4 10 8 6 12" />
+                </svg>
+              </button>
+            ))}
+          </div>
+          <div className="incl-panel">
+            <div className="incl-orb1" style={{ background: f.color }} />
+            <div className="incl-orb2" style={{ background: f.color }} />
+            <div className="incl-icon-bg">{f.icon}</div>
+            <div className="incl-content" key={active}>
+              <div className="incl-eyebrow">{f.eyebrow}</div>
+              <div className="incl-ptitle">{f.title}</div>
+              <div className="incl-pdesc">{f.desc}</div>
+              <div className="incl-pstat">
+                <div className="incl-pstat-num" style={{ color: f.color }}>{f.stat.num}</div>
+                <div className="incl-pstat-lbl">{f.stat.lbl}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const MANOJ_SUBJECTS = ['Probability', 'Statistics', 'Linear Algebra', 'Calculus', 'Machine Learning', 'AI', 'Python', 'Data Structures'];
+const AMIT_SUBJECTS = ['DBMS', 'Algorithms', 'Logic (AI)'];
+
+function Faculty() {
+  const [airNum, setAirNum] = React.useState(94);
+  const airRaf = React.useRef(null);
+  const triggered = React.useRef(false);
+  const gridRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !triggered.current) {
+        triggered.current = true;
+        obs.disconnect();
+        const START = 560, END = 94, DURATION = 1300;
+        const t0 = performance.now();
+        const step = (now) => {
+          const p = Math.min((now - t0) / DURATION, 1);
+          const eased = 1 - Math.pow(1 - p, 3);
+          setAirNum(Math.round(START + (END - START) * eased));
+          if (p < 1) airRaf.current = requestAnimationFrame(step);
+        };
+        airRaf.current = requestAnimationFrame(step);
+      }
+    }, { threshold: 0.25 });
+    if (gridRef.current) obs.observe(gridRef.current);
+    return () => { obs.disconnect(); cancelAnimationFrame(airRaf.current); };
+  }, []);
+
+  return (
+    <section className="section" style={{ background: 'var(--bg-soft)', paddingTop: 'var(--section-pad)' }}>
+      <div className="container">
+        <div className="section-eyebrow fade-in">Faculty</div>
+        <h2 className="fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 12 }}>
+          Know your <em>instructors</em>
+        </h2>
+        <p className="section-sub fade-in">Every topic covered by a specialist — not a generalist.</p>
+        <div className="faculty-grid fade-in" ref={gridRef}>
+
+          <div className="faculty-card faculty-primary">
+            <div className="faculty-photo-wrap">
+              <img src="Manoj Kumar_Courses page.png" alt="Manoj Kumar" />
+            </div>
+            <div className="faculty-body">
+              <div>
+                <div className="faculty-role">★ AI/ML Specialist</div>
+                <div className="faculty-name">Manoj Kumar</div>
+                <div className="faculty-blurb">Covers the mathematics and ML core of GATE DA.</div>
+              </div>
+              <div>
+                <div className="faculty-subjects-label">Subjects</div>
+                <div className="faculty-tags">
+                  {MANOJ_SUBJECTS.map((s, i) => (
+                    <span key={s} className="faculty-tag" style={{ animationDelay: i * 52 + 'ms' }}>{s}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="faculty-card faculty-secondary">
+            <div className="faculty-photo-wrap">
+              <img src="Amit Khurana_Courses page.jpg" alt="Amit Khurana" />
+            </div>
+            <div className="faculty-body">
+              <div>
+                <div className="faculty-role">Core CSE Specialist</div>
+                <div className="faculty-name">Amit Khurana</div>
+                <div className="faculty-creds">
+                  <div className="faculty-cred-row">
+                    <span className="faculty-cred-air">AIR {airNum}</span>
+                    <span>GATE CSE</span>
+                  </div>
+                  <div className="faculty-cred-row">IIT Bombay &middot; CSE</div>
+                  <div className="faculty-cred-row">Founder &middot; GATE CSE by Amit Khurana</div>
+                </div>
+              </div>
+              <div>
+                <div className="faculty-subjects-label">Subjects</div>
+                <div className="faculty-tags">
+                  {AMIT_SUBJECTS.map((s, i) => (
+                    <span key={s} className="faculty-tag" style={{ animationDelay: i * 52 + 'ms' }}>{s}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function App() {
+  React.useEffect(() => {
+    const els = document.querySelectorAll('.fade-in');
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+
+  return (
+    <>
+      <Nav />
+
+      {/* Page hero */}
+      <section className="page-hero">
+        <div className="container page-hero-inner">
+          <div className="page-eyebrow">GATE DA 2027 Courses</div>
+          <h1 className="fade-in">Your career, all at<br /><em>One place.</em></h1>
+          <p className="hero-sub fade-in" style={{ fontSize: 19, color: 'var(--ink-dim)', maxWidth: 580, lineHeight: 1.5, marginBottom: 36 }}>
+            Conceptual, visualized, GATE-relevant. From individual subjects to the full course — pick what fits your prep. All by Manoj Sir.
+          </p>
+          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }} className="fade-in">
+            <a href="#combos" className="btn btn-primary btn-lg">Bundled courses</a>
+            <a href="#individual" className="btn btn-ghost btn-lg">Individual courses</a>
+          </div>
+        </div>
+      </section>
+
+      <Flagship />
+
+      {/* Combo packages */}
+      <section className="section" id="combos" style={{ paddingTop: 0 }}>
+        <div className="container">
+          <div className="section-eyebrow fade-in">Packages</div>
+          <h2 className="section fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 12, padding: 0 }}>
+            Best value <em>bundles</em>
+          </h2>
+          <p className="section-sub fade-in">Save more when you bundle. All combos include quizzes and full course includes quizzes and live doubt sessions.</p>
+          <div className="combos-grid">
+            {COMBOS.map((c, i) => <ComboCard key={i} c={c} />)}
+          </div>
+        </div>
+      </section>
+
+      <Faculty />
+
+      {/* Individual courses */}
+      <section className="section" id="individual" style={{ background: 'var(--bg)', paddingTop: 'var(--section-pad)' }}>
+        <div className="container">
+          <div className="section-eyebrow fade-in">Individual</div>
+          <h2 className="fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 12 }}>
+            Pick a <em>single subject</em>
+          </h2>
+          <p className="section-sub fade-in">Need to strengthen one area? Get any subject standalone.</p>
+          <div className="courses-grid">
+            {INDIVIDUAL.map((c, i) => <CourseCard key={i} c={c} />)}
+          </div>
+        </div>
+      </section>
+
+      {/* What's included */}
+      <IncludedShowcase />
+
+      {/* Placement coming soon */}
+      <section className="section" style={{ background: 'var(--bg)', paddingTop: 'var(--section-pad)' }}>
+        <div className="container">
+          <div className="section-eyebrow fade-in">What's next</div>
+          <h2 className="fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 12 }}>
+            From GATE to your <em>dream job</em>
+          </h2>
+          <p className="section-sub fade-in">GATE gets you the IIT tag. We'll help you convert it into a career in DS and AI.</p>
+          <div className="placement-card fade-in">
+            <div className="placement-left">
+              <div className="placement-badge">
+                <span className="placement-badge-dot" />
+                Coming Soon
+              </div>
+              <div className="placement-title">
+                Placement Series<br /><em>DS / AI</em>
+              </div>
+              <p className="placement-desc">
+                Career prep for AI and Data Science roles — end-to-end projects, mock interviews, resume reviews, and industry mentorship. Preview available on YouTube now.
+              </p>
+              <div className="placement-btns">
+                <a href="https://www.youtube.com/watch?v=iobgxxTluUc&list=PLZvuMBNC5r0UEjm31D56LdoYzd4L-vtaF" target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-swap btn-attract" data-swap-hover="ML Algorithms from Scratch">
+                  <span className="swap-default">Watch preview <Icon.ArrowRight /></span>
+                  <span className="swap-hover">ML Algorithms from Scratch</span>
+                </a>
+                <a target="_blank" rel="noopener noreferrer" href="https://discord.com/invite/AwZqYz9wvK" className="btn btn-ghost-light">Join waitlist</a>
+              </div>
+            </div>
+            <div className="placement-right">
+              {[
+                { label: 'Technical', color: 'purple', chips: ['ML Algorithms', 'Deep Learning', 'LLMs & Fine-tuning', 'System Design', 'SQL', 'Python'] },
+                { label: 'Projects',  color: 'blue',   chips: ['End-to-End Pipelines', 'GitHub Portfolio', 'Kaggle Competitions', 'Paper Implementation'] },
+                { label: 'Career',    color: 'pink',   chips: ['Mock Interviews', 'Resume Review', 'Industry Mentorship', 'Offer Strategy'] },
+              ].map((cat, ci) => (
+                <div key={ci}>
+                  {ci > 0 && <div className="placement-divider" style={{ marginBottom: 20 }} />}
+                  <div className="placement-cat-label">{cat.label}</div>
+                  <div className="placement-chips">
+                    {cat.chips.map((chip, i) => (
+                      <span key={i} className={`placement-chip chip-${cat.color}`}>{chip}</span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="footer">
+        <div className="container">
+          <div className="footer-inner">
+            <div className="footer-copy">© 2026 Tomorrow's Architect of AI</div>
+          <div className="footer-socials">
+              <a target="_blank" rel="noopener noreferrer" href="https://wa.me/9088553305" aria-label="WhatsApp"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884"/></svg></a>
+              <a target="_blank" rel="noopener noreferrer" href="https://discord.com/invite/AwZqYz9wvK" aria-label="Discord"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.031.057a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg></a>
+              <a target="_blank" rel="noopener noreferrer" href="https://t.me/ManojGateDA" aria-label="Telegram"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg></a>
+              <a href="https://www.youtube.com/@Manojkumar_TAAI" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
+              <a href="https://www.linkedin.com/company/taai-gate-da-placements/?viewAsMember=true" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>
+            </div>
+          <a href="mailto:support@taai.live" className="footer-email">support@taai.live</a>
+          </div>
+        </div>
+      </footer>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
