@@ -241,12 +241,20 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   white-space: nowrap;
 }
 .btn-enroll:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(139,92,246,0.5); }
+.flagship-mobile-actions { display: none; }
 @media (max-width: 768px) {
-  .flagship-poster { height: 320px; aspect-ratio: auto; }
-  .flagship-overlay { padding: 28px 24px; }
-  .flagship-content { flex-direction: column; align-items: flex-start; gap: 16px; }
-  .flagship-actions { flex-direction: column; width: 100%; }
-  .flagship-actions .btn-play, .flagship-actions .btn-enroll { justify-content: center; width: 100%; }
+  .flagship-poster { height: 300px; aspect-ratio: auto; }
+  .flagship-overlay { padding: 24px 20px; }
+  .flagship-content { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .flagship-actions { display: none; }
+  .flagship-mobile-actions {
+    display: flex; flex-direction: column; gap: 10px; margin-top: 16px;
+  }
+  .flagship-mobile-actions .btn-play,
+  .flagship-mobile-actions .btn-enroll { justify-content: center; width: 100%; }
+  .flagship-mobile-actions .btn-play {
+    background: var(--ink); border-color: rgba(255,255,255,0.12); color: #fff;
+  }
 }
 
 /* Faculty section */
@@ -646,6 +654,30 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 .mobile-menu-contact { display: block; text-align: center; padding: 11px 16px; font-size: 13px; font-weight: 500; color: var(--ink-dim); text-decoration: none; border-radius: 10px; transition: color .18s, background .18s; }
 .mobile-menu-contact:hover { color: var(--purple); background: rgba(139,92,246,0.06); }
 @media (max-width: 768px) { .nav-hamburger { display: flex; } .nav-cta { display: none; } }
+
+/* ── Disable hover animations on touch devices ──────── */
+@media (hover: none) {
+  .course-card:hover { transform: none; box-shadow: var(--shadow-sm); }
+  .course-card:hover::before { opacity: 0.18; }
+  .course-card:hover .course-title { color: var(--ink); }
+  .course-card:hover .course-validity { color: var(--ink-soft); }
+  .course-card:hover .course-price { color: var(--ink); }
+  .course-card:hover .course-price-old { color: var(--ink-soft); }
+  .course-card:hover .course-icon { transform: none; box-shadow: none; }
+  .course-card:hover .ticket-notch-line { border-color: rgba(0,0,0,0.1); }
+  .course-card:hover .btn-ghost { background: transparent; color: var(--ink); border-color: var(--ink); }
+  .course-topics { max-height: 200px; opacity: 1; margin-bottom: 14px; }
+  .course-topic { transform: none; opacity: 1; }
+  .faculty-grid:has(.faculty-card:hover) .faculty-card:not(:hover) { opacity: 1; transform: none; }
+  .faculty-card:hover { transform: none; box-shadow: none; }
+  .faculty-primary:hover { box-shadow: none; }
+  .faculty-secondary:hover { box-shadow: none; }
+  .combo-card:hover { transform: none; box-shadow: none; }
+  .combo-card.featured:hover { transform: none; box-shadow: 0 20px 60px rgba(107,75,255,0.28), inset 0 1px 0 rgba(255,255,255,0.07); }
+  .incl-tab:hover { background: none; border-color: transparent; }
+  .incl-tab.active { transform: none; }
+  .btn-enroll:hover { transform: none; box-shadow: 0 4px 20px rgba(139,92,246,0.4); }
+}
 </style>
 </head>
 <body>
@@ -962,6 +994,23 @@ function Flagship() {
               </div>
             </div>
           </div>
+        </div>
+        <div className="flagship-mobile-actions fade-in">
+          <a
+            href="https://www.youtube.com/live/C2m3iCctqaA?si=d_sWTgjt0lrjVXuz"
+            target="_blank" rel="noopener noreferrer"
+            className="btn-play"
+          >
+            <span className="btn-play-dot">
+              <svg width="11" height="13" viewBox="0 0 11 13" fill="none">
+                <path d="M1 1.5L10 6.5L1 11.5V1.5Z" fill="currentColor" />
+              </svg>
+            </span>
+            Watch free orientation
+          </a>
+          <a href="https://www.taai.live/learn/batch/GATE-2027?calendarInitialView=dayGridWeek" target="_blank" rel="noopener noreferrer" className="btn-enroll">
+            Enroll now →
+          </a>
         </div>
       </div>
     </section>
