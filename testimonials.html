@@ -152,12 +152,13 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .hero-stat-div { width: 1px; height: 40px; background: var(--line); }
 
 /* ── Stats strip ─────────────────────────────────────── */
-.strip { padding: 48px 0; background: linear-gradient(90deg, var(--pink) 0%, var(--purple) 50%, var(--blue) 100%); color: #fff; }
-.strip-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
-.strip-item { border-left: 1px solid rgba(255,255,255,0.22); padding-left: 28px; }
-.strip-item:first-child { border-left: none; padding-left: 0; }
-.strip-num { font-family: var(--font-display); font-size: 48px; font-weight: 600; letter-spacing: -0.04em; line-height: 1; margin-bottom: 6px; }
-.strip-label { font-size: 13px; color: rgba(255,255,255,0.78); text-transform: uppercase; letter-spacing: .08em; }
+.strip { padding: 56px 0; background: linear-gradient(120deg, var(--pink) 0%, var(--purple) 50%, var(--blue) 100%); color: #fff; position: relative; overflow: hidden; }
+.strip::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 120%, rgba(255,255,255,0.1) 0%, transparent 65%); pointer-events: none; }
+.strip-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; max-width: 720px; margin: 0 auto; }
+.strip-item { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 32px; position: relative; }
+.strip-item + .strip-item::before { content: ''; position: absolute; left: 0; top: 10%; height: 80%; width: 1px; background: rgba(255,255,255,0.22); }
+.strip-num { font-family: var(--font-display); font-size: 56px; font-weight: 600; letter-spacing: -0.04em; line-height: 1; margin-bottom: 8px; }
+.strip-label { font-size: 12px; color: rgba(255,255,255,0.72); text-transform: uppercase; letter-spacing: .1em; }
 
 /* ── Section base ────────────────────────────────────── */
 .section { padding: var(--section-pad) 0; }
@@ -382,8 +383,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .nav-links { display: none; }
   .btn-nav-contact { display: none; }
   .testi-grid { grid-template-columns: 1fr; }
-  .strip-grid { grid-template-columns: repeat(2,1fr); gap: 28px 16px; }
-  .strip-item { border-left: none; padding-left: 0; }
+  .strip-grid { grid-template-columns: repeat(3,1fr); gap: 0; }
+  .strip-item { padding: 0 16px; }
   .hero-stats { gap: 20px; }
   .hero-stat-div { display: none; }
   .feat-card { padding: 28px 24px; }
@@ -611,29 +612,8 @@ function Hero() {
         <div className="hero-eyebrow">Student Stories</div>
         <h1>Real students.<br /><em>Real ranks.</em></h1>
         <p className="hero-sub">
-          GATE DA 2026 — AIR 15 to AIR 296, all from one platform. 4 in Top 50, 7 in Top 100, 19 in Top 300.
+          Talk about overachieving — 22 students in the Top 300, 4 in the Top 50, all in our very first year.
         </p>
-        <div className="hero-stats">
-          <div className="hero-stat">
-            <div className="hero-stat-num">AIR 15</div>
-            <div className="hero-stat-label">Best rank 2026</div>
-          </div>
-          <div className="hero-stat-div" />
-          <div className="hero-stat">
-            <div className="hero-stat-num">4</div>
-            <div className="hero-stat-label">Top 50 ranks</div>
-          </div>
-          <div className="hero-stat-div" />
-          <div className="hero-stat">
-            <div className="hero-stat-num">7</div>
-            <div className="hero-stat-label">Top 100 ranks</div>
-          </div>
-          <div className="hero-stat-div" />
-          <div className="hero-stat">
-            <div className="hero-stat-num">19</div>
-            <div className="hero-stat-label">Top 300 ranks</div>
-          </div>
-        </div>
       </div>
     </section>
   );
@@ -645,7 +625,6 @@ function Strip() {
     { to: 4,  suffix: '',  label: 'Top 50 ranks' },
     { to: 7,  suffix: '',  label: 'Top 100 ranks' },
     { to: 19, suffix: '',  label: 'Top 300 ranks' },
-    { to: 5,  suffix: '/5', label: 'Overall rating' },
   ];
   return (
     <div className="strip">
