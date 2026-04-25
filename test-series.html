@@ -353,13 +353,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   display: flex; flex-direction: column; gap: 0;
   position: relative; overflow: hidden;
   background: var(--ink);
-  transition: transform .42s cubic-bezier(.34,1.15,.64,1), box-shadow .35s cubic-bezier(.4,0,.2,1);
+  transition: transform .35s cubic-bezier(.4,0,.2,1), box-shadow .35s cubic-bezier(.4,0,.2,1);
   box-shadow: 0 4px 24px rgba(0,0,0,0.10);
-  will-change: transform;
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-  -webkit-mask-image: -webkit-radial-gradient(white, black);
-  mask-image: radial-gradient(white, black);
 }
 .breakdown-card:hover {
   animation: bd-wiggle 1.2s cubic-bezier(.4,0,.2,1) forwards;
@@ -370,13 +365,33 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .breakdown-card::after {
   content: ''; position: absolute; border-radius: 50%; pointer-events: none;
   width: 320px; height: 320px; top: -100px; right: -70px;
-  opacity: 0.18; filter: blur(72px); -webkit-filter: blur(72px); transition: opacity .5s;
+  opacity: 0.18; filter: blur(72px); transition: opacity .5s;
 }
 .breakdown-card:hover::after { opacity: 0.32; }
 .bd-1::after { background: var(--pink); }
 .bd-2::after { background: var(--purple); }
 .bd-3::after { background: var(--blue); }
 
+/* Glass shine sweep: BL → TR — wide, slow, elegant */
+.breakdown-card::before {
+  content: ''; position: absolute; pointer-events: none; z-index: 1;
+  /* oversized so the beam is wide and bleeds off all edges */
+  inset: -60% -40%;
+  background: linear-gradient(
+    112deg,
+    transparent 28%,
+    rgba(255,255,255,0.04) 40%,
+    rgba(255,255,255,0.11) 50%,
+    rgba(255,255,255,0.04) 60%,
+    transparent 72%
+  );
+  transform: translateX(-110%) translateY(55%) rotate(0deg);
+  transition: transform 0s;
+}
+.breakdown-card:hover::before {
+  transform: translateX(110%) translateY(-55%) rotate(0deg);
+  transition: transform 1.1s cubic-bezier(.25,.46,.45,.94);
+}
 
 .breakdown-icon {
   width: 48px; height: 48px; border-radius: 13px;
@@ -718,8 +733,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .footer-email:hover { color: var(--purple); }
 
 /* ── Scroll fade ─────────────────────────────────────── */
-.fade-in { opacity: 0; -webkit-transform: translateY(20px); transform: translateY(20px); -webkit-transition: opacity .7s cubic-bezier(.4,0,.2,1), -webkit-transform .7s cubic-bezier(.4,0,.2,1); transition: opacity .7s cubic-bezier(.4,0,.2,1), transform .7s cubic-bezier(.4,0,.2,1); }
-.fade-in.visible { opacity: 1; -webkit-transform: translateY(0); transform: translateY(0); }
+.fade-in { opacity: 0; transform: translateY(20px); transition: opacity .7s cubic-bezier(.4,0,.2,1), transform .7s cubic-bezier(.4,0,.2,1); }
+.fade-in.visible { opacity: 1; transform: translateY(0); }
 
 /* ── Responsive ──────────────────────────────────────── */
 @media (max-width: 1024px) {
@@ -924,57 +939,6 @@ function MockInterface() {
     const s2 = setTimeout(() => { setIpadIdx( i => (i+1) % INTERFACE_IMGS.length); t2 = setInterval(() => setIpadIdx( i => (i+1) % INTERFACE_IMGS.length), 4400); }, 1800);
     const s3 = setTimeout(() => { setPhoneIdx(i => (i+1) % INTERFACE_IMGS.length); t3 = setInterval(() => setPhoneIdx(i => (i+1) % INTERFACE_IMGS.length), 3200); }, 900);
     return () => { clearTimeout(s1); clearTimeout(s2); clearTimeout(s3); clearInterval(t1); clearInterval(t2); clearInterval(t3); };
-  }, []);
-
-  // Safari fix: set explicit px heights on every element in the height:100% chain,
-  // since aspect-ratio alone doesn't give Safari a definite height to resolve against.
-  React.useEffect(() => {
-    const applyHeights = () => {
-      const mac = document.querySelector('.mac-carousel');
-      if (mac && mac.offsetWidth) {
-        const mh = Math.round(mac.offsetWidth * 9 / 16);
-        mac.style.height = mh + 'px';
-        mac.querySelectorAll('.mac-carousel-track, .mac-carousel-slide').forEach(el => {
-          el.style.height = mh + 'px';
-        });
-        mac.querySelectorAll('.mac-carousel-slide img').forEach(img => {
-          img.style.width = '100%';
-          img.style.height = mh + 'px';
-        });
-      }
-      const ipad = document.querySelector('.ipad-screen');
-      if (ipad && ipad.offsetWidth) {
-        const ih = Math.round(ipad.offsetWidth * 3 / 4);
-        ipad.style.height = ih + 'px';
-        ipad.querySelectorAll('.device-carousel, .device-carousel-track, .device-carousel-slide').forEach(el => {
-          el.style.height = ih + 'px';
-        });
-        ipad.querySelectorAll('.device-carousel-slide img').forEach(img => {
-          img.style.width = '100%';
-          img.style.height = ih + 'px';
-        });
-      }
-      const iphone = document.querySelector('.iphone-screen');
-      if (iphone && iphone.offsetWidth) {
-        const ph = Math.round(iphone.offsetWidth * 19.5 / 9);
-        iphone.style.height = ph + 'px';
-        iphone.querySelectorAll('.device-carousel, .device-carousel-track, .device-carousel-slide').forEach(el => {
-          el.style.height = ph + 'px';
-        });
-        iphone.querySelectorAll('.device-carousel-slide img').forEach(img => {
-          img.style.width = '100%';
-          img.style.height = ph + 'px';
-        });
-      }
-    };
-    // Double rAF ensures layout is complete before reading dimensions
-    requestAnimationFrame(() => requestAnimationFrame(applyHeights));
-    window.addEventListener('resize', applyHeights);
-    window.addEventListener('load', applyHeights);
-    return () => {
-      window.removeEventListener('resize', applyHeights);
-      window.removeEventListener('load', applyHeights);
-    };
   }, []);
   return (
     <div className="hero-visual">
