@@ -606,12 +606,23 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .incl-accordion { display: flex; flex-direction: column; gap: 8px; }
 .incl-accordion-item { border-radius: var(--radius-md); border: 1.5px solid var(--line); background: #fff; overflow: hidden; }
 .incl-accordion-btn { display: flex; align-items: center; gap: 14px; padding: 15px 16px; width: 100%; background: none; border: none; font-family: inherit; cursor: pointer; text-align: left; }
-.incl-accordion-item.active .incl-accordion-btn { border-bottom: 1px solid var(--line); }
-.incl-accordion-chevron { margin-left: auto; flex-shrink: 0; color: var(--purple); transition: transform .22s ease; }
+.incl-accordion-item.active .incl-accordion-btn { border-bottom: 1px solid rgba(255,255,255,0.1); }
+.incl-accordion-chevron { margin-left: auto; flex-shrink: 0; color: var(--purple); transition: transform .26s cubic-bezier(.4,0,.2,1); }
 .incl-accordion-item.active .incl-accordion-chevron { transform: rotate(90deg); }
-.incl-accordion-body { padding: 24px 20px 28px; background: var(--ink); }
-.incl-accordion-body-title { font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 12px; }
-.incl-accordion-body-desc { font-size: 14px; color: rgba(255,255,255,0.56); line-height: 1.65; margin-bottom: 18px; }
+.incl-accordion-body {
+  background: var(--ink);
+  max-height: 0; overflow: hidden;
+  padding: 0 20px;
+  transition: max-height .38s cubic-bezier(.4,0,.2,1), padding .34s cubic-bezier(.4,0,.2,1), opacity .28s ease;
+  opacity: 0;
+}
+.incl-accordion-item.active .incl-accordion-body {
+  max-height: 500px;
+  padding: 22px 20px 26px;
+  opacity: 1;
+}
+.incl-accordion-body-title { font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 10px; }
+.incl-accordion-body-desc { font-size: 14px; color: rgba(255,255,255,0.56); line-height: 1.65; margin-bottom: 16px; }
 
 @media (max-width: 768px) {
   :root { --section-pad: 56px; }
@@ -619,8 +630,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .btn-nav-contact { display: none; }
   .courses-grid { grid-template-columns: 1fr; }
   .included-grid { grid-template-columns: 1fr; }
-  .placement-card { grid-template-columns: 1fr; padding: 36px 28px; }
-  .placement-card::before { display: none; }
+  .placement-card { grid-template-columns: 1fr; gap: 32px; padding: 36px 24px 40px; align-items: start; overflow: visible; }
+  .placement-card::before, .placement-card::after { display: none; }
   .placement-btns { flex-direction: column; }
   .placement-btns .btn { justify-content: center; }
 }
@@ -1055,16 +1066,14 @@ function IncludedShowcase() {
                   </div>
                   <ChevronRight />
                 </button>
-                {active === i && (
-                  <div className="incl-accordion-body">
-                    <div className="incl-accordion-body-title" style={{ color: feat.color }}>{feat.title}</div>
-                    <div className="incl-accordion-body-desc">{feat.desc}</div>
-                    <div className="incl-pstat">
-                      <div className="incl-pstat-num" style={{ color: feat.color }}>{feat.stat.num}</div>
-                      <div className="incl-pstat-lbl" style={{ color: 'rgba(255,255,255,0.42)' }}>{feat.stat.lbl}</div>
-                    </div>
+                <div className="incl-accordion-body">
+                  <div className="incl-accordion-body-title" style={{ color: feat.color }}>{feat.title}</div>
+                  <div className="incl-accordion-body-desc">{feat.desc}</div>
+                  <div className="incl-pstat">
+                    <div className="incl-pstat-num" style={{ color: feat.color }}>{feat.stat.num}</div>
+                    <div className="incl-pstat-lbl" style={{ color: 'rgba(255,255,255,0.42)' }}>{feat.stat.lbl}</div>
                   </div>
-                )}
+                </div>
               </div>
             ))}
           </div>
