@@ -241,9 +241,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   font-family: var(--font-body); font-size: 11px; font-weight: 500;
   color: rgba(255,255,255,0.6); white-space: nowrap; pointer-events: none;
 }
-.mac-carousel-wrap { position: relative; width: 100%; padding-top: 56.25%; }
-.mac-carousel { position: absolute; inset: 0; overflow: hidden; }
-.mac-carousel-track { position: absolute; top: 0; left: 0; bottom: 0; width: 100%; display: flex; transition: transform 0.6s cubic-bezier(0.4,0,0.2,1); }
+.mac-carousel { position: relative; overflow: hidden; aspect-ratio: 16/9; }
+.mac-carousel-track { position: absolute; inset: 0; display: flex; transition: transform 0.6s cubic-bezier(0.4,0,0.2,1); }
 .mac-carousel-slide { min-width: 100%; flex-shrink: 0; position: relative; }
 .mac-carousel-slide img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
 .mac-carousel-dots {
@@ -297,7 +296,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   background: #1c1c1e; border-radius: 12px; padding: 7px;
   box-shadow: 0 16px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.06);
 }
-.ipad-screen { position: relative; padding-top: 75%; background: #000; border-radius: 6px; overflow: hidden; }
+.ipad-screen { position: relative; background: #000; border-radius: 6px; overflow: hidden; aspect-ratio: 4/3; }
 
 /* iPhone — bottom-right, shifted outside iMac edge */
 .iphone-group {
@@ -311,11 +310,11 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   position: relative;
 }
 
-.iphone-screen { position: relative; padding-top: 216.67%; background: #000; border-radius: 12px; overflow: hidden; }
+.iphone-screen { position: relative; background: #000; border-radius: 12px; overflow: hidden; aspect-ratio: 9/19.5; }
 
 /* Shared carousel for iPad + iPhone */
 .device-carousel { position: absolute; inset: 0; overflow: hidden; }
-.device-carousel-track { position: absolute; top: 0; left: 0; bottom: 0; width: 100%; display: flex; transition: transform 0.6s cubic-bezier(0.4,0,0.2,1); }
+.device-carousel-track { position: absolute; inset: 0; display: flex; transition: transform 0.6s cubic-bezier(0.4,0,0.2,1); }
 .device-carousel-slide { min-width: 100%; flex-shrink: 0; position: relative; }
 .device-carousel-slide img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
 
@@ -962,20 +961,18 @@ function MockInterface() {
                   </div>
                   <div className="mac-title">{INTERFACE_IMGS[imacIdx].label}</div>
                 </div>
-                <div className="mac-carousel-wrap">
-                  <div className="mac-carousel">
-                    <div className="mac-carousel-track" style={{ transform:`translateX(-${imacIdx * 100}%)` }}>
-                      {INTERFACE_IMGS.map((img, i) => (
-                        <div key={i} className="mac-carousel-slide">
-                          <img src={img.src} alt={img.label} />
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mac-carousel-dots">
-                      {INTERFACE_IMGS.map((_, i) => (
-                        <button key={i} className={`mac-carousel-dot${i===imacIdx?' active':''}`} onClick={() => setImacIdx(i)} />
-                      ))}
-                    </div>
+                <div className="mac-carousel">
+                  <div className="mac-carousel-track" style={{ transform:`translateX(-${imacIdx * 100}%)` }}>
+                    {INTERFACE_IMGS.map((img, i) => (
+                      <div key={i} className="mac-carousel-slide">
+                        <img src={img.src} alt={img.label} />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mac-carousel-dots">
+                    {INTERFACE_IMGS.map((_, i) => (
+                      <button key={i} className={`mac-carousel-dot${i===imacIdx?' active':''}`} onClick={() => setImacIdx(i)} />
+                    ))}
                   </div>
                 </div>
               </div>
