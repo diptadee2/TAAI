@@ -241,11 +241,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   font-family: var(--font-body); font-size: 11px; font-weight: 500;
   color: rgba(255,255,255,0.6); white-space: nowrap; pointer-events: none;
 }
-.mac-carousel-wrap { position: relative; width: 100%; padding-top: 56.25%; }
-.mac-carousel { position: absolute; inset: 0; overflow: hidden; }
-.mac-carousel-track { position: absolute; top: 0; left: 0; bottom: 0; width: 100%; display: flex; transition: transform 0.6s cubic-bezier(0.4,0,0.2,1); }
-.mac-carousel-slide { min-width: 100%; flex-shrink: 0; position: relative; }
-.mac-carousel-slide img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
+.mac-carousel { position: relative; overflow: hidden; aspect-ratio: 16/9; }
+.mac-carousel-track { display: flex; height: 100%; transition: transform 0.6s cubic-bezier(0.4,0,0.2,1); }
+.mac-carousel-slide { min-width: 100%; flex-shrink: 0; height: 100%; }
+.mac-carousel-slide img { width: 100%; height: 100%; display: block; object-fit: cover; }
 .mac-carousel-dots {
   position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
   display: flex; gap: 7px; z-index: 2;
@@ -297,7 +296,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   background: #1c1c1e; border-radius: 12px; padding: 7px;
   box-shadow: 0 16px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.06);
 }
-.ipad-screen { position: relative; padding-top: 75%; background: #000; border-radius: 6px; overflow: hidden; }
+.ipad-screen { background: #000; border-radius: 6px; overflow: hidden; aspect-ratio: 4/3; }
 
 /* iPhone — bottom-right, shifted outside iMac edge */
 .iphone-group {
@@ -311,13 +310,13 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   position: relative;
 }
 
-.iphone-screen { position: relative; padding-top: 216.67%; background: #000; border-radius: 12px; overflow: hidden; }
+.iphone-screen { background: #000; border-radius: 12px; overflow: hidden; aspect-ratio: 9/19.5; }
 
 /* Shared carousel for iPad + iPhone */
-.device-carousel { position: absolute; inset: 0; overflow: hidden; }
-.device-carousel-track { position: absolute; top: 0; left: 0; bottom: 0; width: 100%; display: flex; transition: transform 0.6s cubic-bezier(0.4,0,0.2,1); }
-.device-carousel-slide { min-width: 100%; flex-shrink: 0; position: relative; }
-.device-carousel-slide img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
+.device-carousel { position: relative; overflow: hidden; width: 100%; height: 100%; }
+.device-carousel-track { display: flex; height: 100%; transition: transform 0.6s cubic-bezier(0.4,0,0.2,1); }
+.device-carousel-slide { min-width: 100%; flex-shrink: 0; height: 100%; }
+.device-carousel-slide img { width: 100%; height: 100%; display: block; object-fit: cover; }
 
 /* ── Stats strip ─────────────────────────────────────── */
 .strip {
@@ -927,6 +926,56 @@ function MockInterface() {
     return () => { clearTimeout(s1); clearTimeout(s2); clearTimeout(s3); clearInterval(t1); clearInterval(t2); clearInterval(t3); };
   }, []);
 
+  // Safari fix: set explicit px heights on every element in the height:100% chain,
+  // since aspect-ratio alone doesn't give Safari a definite height to resolve against.
+  React.useEffect(() => {
+    const applyHeights = () => {
+      const mac = document.querySelector('.mac-carousel');
+      if (mac && mac.offsetWidth) {
+        const mh = Math.round(mac.offsetWidth * 9 / 16);
+        mac.style.height = mh + 'px';
+        mac.querySelectorAll('.mac-carousel-track, .mac-carousel-slide').forEach(el => {
+          el.style.height = mh + 'px';
+        });
+        mac.querySelectorAll('.mac-carousel-slide img').forEach(img => {
+          img.style.width = '100%';
+          img.style.height = mh + 'px';
+        });
+      }
+      const ipad = document.querySelector('.ipad-screen');
+      if (ipad && ipad.offsetWidth) {
+        const ih = Math.round(ipad.offsetWidth * 3 / 4);
+        ipad.style.height = ih + 'px';
+        ipad.querySelectorAll('.device-carousel, .device-carousel-track, .device-carousel-slide').forEach(el => {
+          el.style.height = ih + 'px';
+        });
+        ipad.querySelectorAll('.device-carousel-slide img').forEach(img => {
+          img.style.width = '100%';
+          img.style.height = ih + 'px';
+        });
+      }
+      const iphone = document.querySelector('.iphone-screen');
+      if (iphone && iphone.offsetWidth) {
+        const ph = Math.round(iphone.offsetWidth * 19.5 / 9);
+        iphone.style.height = ph + 'px';
+        iphone.querySelectorAll('.device-carousel, .device-carousel-track, .device-carousel-slide').forEach(el => {
+          el.style.height = ph + 'px';
+        });
+        iphone.querySelectorAll('.device-carousel-slide img').forEach(img => {
+          img.style.width = '100%';
+          img.style.height = ph + 'px';
+        });
+      }
+    };
+    // Double rAF ensures layout is complete before reading dimensions
+    requestAnimationFrame(() => requestAnimationFrame(applyHeights));
+    window.addEventListener('resize', applyHeights);
+    window.addEventListener('load', applyHeights);
+    return () => {
+      window.removeEventListener('resize', applyHeights);
+      window.removeEventListener('load', applyHeights);
+    };
+  }, []);
   return (
     <div className="hero-visual">
       <div className={`device-scene${sceneHovered ? ' scene-hover' : ''}`}
@@ -948,7 +997,6 @@ function MockInterface() {
                   </div>
                   <div className="mac-title">{INTERFACE_IMGS[imacIdx].label}</div>
                 </div>
-                <div className="mac-carousel-wrap">
                 <div className="mac-carousel">
                   <div className="mac-carousel-track" style={{ transform:`translateX(-${imacIdx * 100}%)` }}>
                     {INTERFACE_IMGS.map((img, i) => (
@@ -962,7 +1010,6 @@ function MockInterface() {
                       <button key={i} className={`mac-carousel-dot${i===imacIdx?' active':''}`} onClick={() => setImacIdx(i)} />
                     ))}
                   </div>
-                </div>
                 </div>
               </div>
             </div>
