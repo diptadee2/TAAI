@@ -827,12 +827,12 @@ body {
 .whyus-acc-item.open .whyus-acc-chevron { transform: rotate(90deg); }
 .whyus-acc-panel {
   background: var(--ink); border-radius: 0 0 var(--radius-md) var(--radius-md);
-  display: grid; grid-template-rows: 0fr;
-  transition: grid-template-rows .34s cubic-bezier(.4,0,.2,1);
+  max-height: 0; overflow: hidden;
+  transition: max-height .38s cubic-bezier(.4,0,.2,1);
 }
-.whyus-acc-item.open .whyus-acc-panel { grid-template-rows: 1fr; }
+.whyus-acc-item.open .whyus-acc-panel { max-height: 500px; }
 .whyus-acc-panel-inner {
-  overflow: hidden; min-height: 0; padding: 28px 24px 32px; color: #fff;
+  padding: 28px 24px 32px; color: #fff;
   opacity: 0; transition: opacity .22s ease .1s;
 }
 .whyus-acc-item.open .whyus-acc-panel-inner { opacity: 1; }
