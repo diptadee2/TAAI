@@ -903,8 +903,7 @@ function Nav() {
         </div>
       </nav>
       <div className={`mobile-menu${menuOpen ? ' open' : ''}`}>
-        <a href="index.html" className="mobile-menu-link" onClick={() => setMenuOpen(false)}>Home</a>
-        {NAV_LINKS.map(l => (
+        {[{ label: 'Home', href: 'index.html' }, ...NAV_LINKS].map(l => (
           <a key={l.href} href={l.href} className={`mobile-menu-link${l.active ? ' active' : ''}`} onClick={() => setMenuOpen(false)}>{l.label}</a>
         ))}
         <div className="mobile-menu-divider" />
