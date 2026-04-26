@@ -317,15 +317,29 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 /* Responsive */
 @media (max-width: 1024px) {
   .channel-grid { grid-template-columns: repeat(2, 1fr); }
-.offer-grid { grid-template-columns: repeat(2, 1fr); }
+  .offer-grid { grid-template-columns: repeat(2, 1fr); }
   .cta-banner { padding: 48px 40px; }
 }
 @media (max-width: 768px) {
-  :root { --section-pad: 64px; }
+  :root { --section-pad: 56px; }
+  .nav-inner { height: 64px; }
+  .mobile-menu { top: 64px; }
+  .contact-hero { padding: 44px 0 40px; }
+  .contact-hero h1 { font-size: clamp(36px, 9vw, 52px); }
+  .contact-hero-sub { font-size: 16px; margin-bottom: 28px; }
   .channel-grid { grid-template-columns: 1fr; }
   .offer-grid { grid-template-columns: 1fr; }
   .nav-links { display: none; }
   .cta-banner { flex-direction: column; align-items: flex-start; padding: 40px 28px; }
+  .footer-inner { flex-direction: column; align-items: center; text-align: center; }
+  .footer-socials a { width: 44px; height: 44px; }
+  /* Always show channel detail on touch */
+  .channel-detail-clip { grid-template-rows: 1fr; }
+  .channels-sidebar .channel-detail { opacity: 1; transform: translateY(0); padding-top: 8px; }
+  .channels-sidebar .channel-card { padding-bottom: 16px; }
+}
+@media (max-width: 480px) {
+  :root { --section-pad: 40px; }
 }
 
 /* YouTube wiggle */
