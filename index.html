@@ -794,11 +794,13 @@ body {
   .testi-grid::-webkit-scrollbar { display: none; }
   .testi-grid .gitem { display: none; }
   .testi-grid .testi {
-    flex: 0 0 85%; min-width: 0; scroll-snap-align: start;
+    flex: 0 0 88%; min-width: 0; scroll-snap-align: start;
+    min-height: 0; padding: 24px;
   }
+  .testi-quote { flex: 0; margin-bottom: 16px; }
   .testi-watch {
     position: static; opacity: 1; transform: none;
-    align-self: flex-start; margin-top: 16px;
+    align-self: flex-start; margin-top: 14px;
   }
   .gitem-play { opacity: 1; }
   .gitem-play-icon { transform: scale(1); }
@@ -912,7 +914,7 @@ const NAV_LINKS = [
 ];
 
 function TAAILogo() {
-  return <img src="logo.png" alt="TAAI" style={{ height: 150, width: 'auto' }} />;
+  return <img src="logo.png" alt="TAAI" style={{ height: 44, width: 'auto' }} />;
 }
 
 function Nav() {
