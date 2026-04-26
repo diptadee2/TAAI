@@ -699,9 +699,9 @@ body {
   transition: transform .44s cubic-bezier(.34,1.6,.64,1);
 }
 .faq-item.open .faq-icon { transform: rotate(45deg); }
-.faq-a { max-height: 0; overflow: hidden; transition: max-height .38s cubic-bezier(.4,0,.2,1); }
-.faq-item.open .faq-a { max-height: 800px; }
-.faq-a-inner { padding: 0 24px 20px; font-size: 15px; color: var(--ink-dim); line-height: 1.55; opacity: 0; transition: opacity .26s ease .08s; }
+.faq-a { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .34s cubic-bezier(.4,0,.2,1); }
+.faq-item.open .faq-a { grid-template-rows: 1fr; }
+.faq-a-inner { overflow: hidden; min-height: 0; padding: 0 24px 20px; font-size: 15px; color: var(--ink-dim); line-height: 1.55; opacity: 0; transition: opacity .22s ease .1s; }
 .faq-item.open .faq-a-inner { opacity: 1; }
 .faq-a-inner ul { padding-left: 18px; margin: 10px 0; }
 .faq-a-inner li { margin-bottom: 6px; }
@@ -792,7 +792,8 @@ body {
     align-items: flex-start;
   }
   .testi-grid::-webkit-scrollbar { display: none; }
-  .testi-grid .testi, .testi-grid .gitem {
+  .testi-grid .gitem { display: none; }
+  .testi-grid .testi {
     flex: 0 0 85%; min-width: 0; scroll-snap-align: start;
   }
   .testi-watch {
@@ -808,6 +809,35 @@ body {
   .results-grid { grid-template-columns: 1fr; }
   .section-head { margin-bottom: 28px; }
 }
+/* Why TAAI mobile accordion */
+.whyus-acc { display: flex; flex-direction: column; gap: 8px; }
+.whyus-acc-item .whyus-tab {
+  width: 100%; background: #fff; border: 1.5px solid var(--line);
+  box-shadow: var(--shadow-sm); border-radius: var(--radius-md);
+  transform: none !important;
+}
+.whyus-acc-item.open .whyus-tab {
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  border-bottom-color: transparent; box-shadow: none;
+}
+.whyus-acc-chevron {
+  margin-left: auto; flex-shrink: 0; color: var(--purple);
+  transition: transform .28s cubic-bezier(.4,0,.2,1);
+}
+.whyus-acc-item.open .whyus-acc-chevron { transform: rotate(90deg); }
+.whyus-acc-panel {
+  background: var(--ink); border-radius: 0 0 var(--radius-md) var(--radius-md);
+  display: grid; grid-template-rows: 0fr;
+  transition: grid-template-rows .34s cubic-bezier(.4,0,.2,1);
+}
+.whyus-acc-item.open .whyus-acc-panel { grid-template-rows: 1fr; }
+.whyus-acc-panel-inner {
+  overflow: hidden; min-height: 0; padding: 28px 24px 32px; color: #fff;
+  opacity: 0; transition: opacity .22s ease .1s;
+}
+.whyus-acc-item.open .whyus-acc-panel-inner { opacity: 1; }
+.whyus-acc-panel-inner .whyus-ptitle { font-size: clamp(22px, 5vw, 34px); }
+
 /* Show offer card detail bullets on touch devices */
 @media (hover: none) {
   .offer-detail { max-height: 200px; opacity: 1; }
@@ -1286,16 +1316,73 @@ const WHY_FEATURES = [
 
 function WhyUs() {
   const [active, setActive] = React.useState(0);
-  const f = WHY_FEATURES[active];
+  const [isMobile, setIsMobile] = React.useState(
+    window.matchMedia('(max-width: 1024px)').matches
+  );
+  React.useEffect(() => {
+    const mq = window.matchMedia('(max-width: 1024px)');
+    const fn = e => setIsMobile(e.matches);
+    mq.addEventListener('change', fn);
+    return () => mq.removeEventListener('change', fn);
+  }, []);
+
+  const toggle = i => setActive(prev => prev === i ? -1 : i);
+  const f = WHY_FEATURES[Math.max(0, active)];
+
+  const PanelContent = ({ feat }) => (
+    <>
+      <div className="whyus-eyebrow">{feat.eyebrow}</div>
+      <div className="whyus-ptitle">{feat.title}</div>
+      <div className="whyus-pdesc">{feat.desc}</div>
+      <div className="whyus-pstat">
+        <div className="whyus-pstat-num" style={{ color: feat.color }}>{feat.stat.num}</div>
+        <div className="whyus-pstat-lbl">{feat.stat.lbl}</div>
+      </div>
+    </>
+  );
+
+  const header = (
+    <div className="section-head fade-in">
+      <div className="section-head-left">
+        <div className="section-eyebrow">Why TAAI</div>
+        <h2>Not coaching.<br />Your <em>unfair advantage.</em></h2>
+      </div>
+    </div>
+  );
+
+  if (isMobile) return (
+    <section className="section" id="why" style={{ background: 'var(--bg-soft)' }}>
+      <div className="container">
+        {header}
+        <div className="whyus-acc fade-in">
+          {WHY_FEATURES.map((feat, i) => (
+            <div key={i} className={`whyus-acc-item${active === i ? ' open' : ''}`}>
+              <button className="whyus-tab" onClick={() => toggle(i)}>
+                <div className="whyus-tab-icon" style={{ background: feat.grad }}>{feat.icon}</div>
+                <div className="whyus-tab-info">
+                  <div className="whyus-tab-label">{feat.label}</div>
+                  <div className="whyus-tab-sub">{feat.sub}</div>
+                </div>
+                <svg className="whyus-acc-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+              <div className="whyus-acc-panel">
+                <div className="whyus-acc-panel-inner">
+                  <div className="whyus-content"><PanelContent feat={feat} /></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+
   return (
     <section className="section" id="why" style={{ background: 'var(--bg-soft)' }}>
       <div className="container">
-        <div className="section-head fade-in">
-          <div className="section-head-left">
-            <div className="section-eyebrow">Why TAAI</div>
-            <h2>Not coaching.<br />Your <em>unfair advantage.</em></h2>
-          </div>
-        </div>
+        {header}
         <div className="whyus-layout fade-in">
           <div className="whyus-tabs">
             {WHY_FEATURES.map((feat, i) => (
@@ -1315,15 +1402,7 @@ function WhyUs() {
             <div className="whyus-orb1" style={{ background: f.color }} />
             <div className="whyus-orb2" style={{ background: f.color }} />
             <div className="whyus-icon-bg">{React.cloneElement(f.icon, { style: { width: 108, height: 108 } })}</div>
-            <div className="whyus-content" key={active}>
-              <div className="whyus-eyebrow">{f.eyebrow}</div>
-              <div className="whyus-ptitle">{f.title}</div>
-              <div className="whyus-pdesc">{f.desc}</div>
-              <div className="whyus-pstat">
-                <div className="whyus-pstat-num" style={{ color: f.color }}>{f.stat.num}</div>
-                <div className="whyus-pstat-lbl">{f.stat.lbl}</div>
-              </div>
-            </div>
+            <div className="whyus-content" key={active}><PanelContent feat={f} /></div>
           </div>
         </div>
       </div>
