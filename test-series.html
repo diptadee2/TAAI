@@ -183,23 +183,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 .hero-sub { font-size: 18px; color: var(--ink-dim); line-height: 1.6; max-width: 480px; margin-bottom: 36px; }
 
-.hero-notify-form {
-  display: flex; gap: 0; max-width: 440px;
-  background: #fff; border-radius: 999px;
-  border: 1.5px solid var(--line);
-  padding: 5px;
-  box-shadow: var(--shadow-md);
-  overflow: hidden;
-}
-.hero-notify-form input {
-  flex: 1; border: none; background: none; outline: none;
-  padding: 11px 18px; font: inherit; font-size: 14px; color: var(--ink); min-width: 0;
-}
-.hero-notify-form input::placeholder { color: var(--ink-soft); }
-.hero-notify-msg { margin-top: 14px; font-size: 13px; min-height: 18px; color: var(--ink-soft); }
-.hero-notify-msg.success { color: var(--purple); font-weight: 500; }
-.hero-notify-msg.error { color: var(--pink); }
-
 .hero-trust { display: flex; gap: 24px; align-items: center; margin-top: 28px; flex-wrap: wrap; }
 .hero-trust-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-soft); }
 .hero-trust-dot { width: 6px; height: 6px; border-radius: 50%; background: linear-gradient(135deg, var(--purple), var(--pink)); }
@@ -663,26 +646,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
   display: grid; place-items: center;
 }
-.pricing-notify-form {
-  display: flex; gap: 0; background: rgba(255,255,255,0.12);
-  border-radius: 999px; padding: 5px;
-  border: 1px solid rgba(255,255,255,0.2);
-}
-.pricing-notify-form input {
-  flex: 1; border: none; background: none; outline: none;
-  padding: 11px 18px; font: inherit; font-size: 14px; color: #fff; min-width: 0;
-}
-.pricing-notify-form input::placeholder { color: rgba(255,255,255,0.4); }
-.pricing-notify-form .btn-white {
-  background: #fff; color: var(--ink); border-radius: 999px;
-  padding: 11px 22px; font-size: 14px; font-weight: 600;
-  border: none; cursor: pointer; white-space: nowrap;
-  transition: transform .15s;
-}
-.pricing-notify-form .btn-white:hover { transform: scale(1.03); }
-.pricing-msg { margin-top: 12px; font-size: 13px; opacity: 0.7; min-height: 18px; }
-.pricing-msg.success { opacity: 1; color: #86EFAC; }
-
 /* ── FAQ ─────────────────────────────────────────────── */
 .faq-layout { display: grid; grid-template-columns: 1fr 2fr; gap: 64px; }
 .faq-list { display: flex; flex-direction: column; gap: 10px; }
@@ -1073,39 +1036,6 @@ function MockInterface() {
 }
 
 // ── Hero ─────────────────────────────────────────────────────────
-function NotifyForm({ dark }) {
-  const [email, setEmail] = React.useState('');
-  const [msg, setMsg]   = React.useState({ type:'', text:'' });
-  const submit = e => {
-    e.preventDefault();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      setMsg({ type:'error', text:"Enter a valid email address." }); return;
-    }
-    setMsg({ type:'success', text:`You're on the list — we'll notify you at ${email}.` });
-    setEmail('');
-  };
-  if (dark) return (
-    <>
-      <form className="pricing-notify-form" onSubmit={submit} noValidate>
-        <input type="email" placeholder="you@college.edu" value={email} onChange={e => setEmail(e.target.value)} />
-        <button type="submit" className="btn-white">Notify me</button>
-      </form>
-      <div className={`pricing-msg ${msg.type}`}>{msg.text}</div>
-    </>
-  );
-  return (
-    <>
-      <form className="hero-notify-form" onSubmit={submit} noValidate>
-        <input type="email" placeholder="you@college.edu" value={email} onChange={e => setEmail(e.target.value)} />
-        <button type="submit" className="btn btn-primary" style={{ padding:'10px 20px', fontSize:14 }}>
-          Notify me <Icon.ArrowRight s={14} />
-        </button>
-      </form>
-      <div className={`hero-notify-msg ${msg.type}`}>{msg.text || 'Get notified the moment it launches. No spam.'}</div>
-    </>
-  );
-}
-
 function Hero() {
   return (
     <section className="hero">
@@ -1120,7 +1050,6 @@ function Hero() {
           <p className="hero-sub">
             67 GATE DA tests — topic-wise, subject-wise, full-length — all with a real GATE-like interface, performance analytics, and video solutions.
           </p>
-          <NotifyForm />
           <div className="hero-trust">
             <div className="hero-trust-item"><span className="hero-trust-dot"/>1,500+ questions</div>
             <div className="hero-trust-item"><span className="hero-trust-dot"/>GATE-like interface</div>
