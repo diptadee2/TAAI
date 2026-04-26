@@ -661,7 +661,8 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 /* ── Disable hover animations on touch devices ──────── */
 @media (hover: none) {
   .course-card:hover { transform: none; box-shadow: var(--shadow-sm); }
-  .course-card:hover::before { opacity: 0.18; }
+  .course-card::before { opacity: 0.35; }
+  .course-card:hover::before { opacity: 0.35; }
   .course-card:hover .course-title { color: var(--ink); }
   .course-card:hover .course-validity { color: var(--ink-soft); }
   .course-card:hover .course-price { color: var(--ink); }
@@ -670,7 +671,9 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   .course-card:hover .ticket-notch-line { border-color: rgba(0,0,0,0.1); }
   .course-card:hover .btn-ghost { background: transparent; color: var(--ink); border-color: var(--ink); }
   .course-topics { max-height: 200px; opacity: 1; margin-bottom: 14px; }
-  .course-topic { transform: none; opacity: 1; }
+  .course-topic { transform: none; opacity: 1; color: var(--ink-dim); }
+  .course-topic::before { background: var(--purple); }
+  .course-card:active { transform: scale(0.97); transition: transform .12s ease; }
   .faculty-grid:has(.faculty-card:hover) .faculty-card:not(:hover) { opacity: 1; transform: none; }
   .faculty-card:hover { transform: none; box-shadow: none; }
   .faculty-primary:hover { box-shadow: none; }
