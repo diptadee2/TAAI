@@ -699,9 +699,10 @@ body {
   transition: transform .44s cubic-bezier(.34,1.6,.64,1);
 }
 .faq-item.open .faq-icon { transform: rotate(45deg); }
-.faq-a { height: 0; overflow: hidden; transition: height .38s cubic-bezier(.34,1.05,.64,1); }
-.faq-a-inner { padding: 0 24px 20px; font-size: 15px; color: var(--ink-dim); line-height: 1.55; opacity: 0; transform: translateY(-6px); transition: opacity .28s ease .06s, transform .34s cubic-bezier(.34,1.1,.64,1) .03s; }
-.faq-item.open .faq-a-inner { opacity: 1; transform: translateY(0); }
+.faq-a { max-height: 0; overflow: hidden; transition: max-height .38s cubic-bezier(.4,0,.2,1); }
+.faq-item.open .faq-a { max-height: 800px; }
+.faq-a-inner { padding: 0 24px 20px; font-size: 15px; color: var(--ink-dim); line-height: 1.55; opacity: 0; transition: opacity .26s ease .08s; }
+.faq-item.open .faq-a-inner { opacity: 1; }
 .faq-a-inner ul { padding-left: 18px; margin: 10px 0; }
 .faq-a-inner li { margin-bottom: 6px; }
 
@@ -788,13 +789,16 @@ body {
     margin-left: -32px; margin-right: -32px;
     padding: 4px 32px 8px;
     -ms-overflow-style: none; scrollbar-width: none;
-    align-items: stretch;
+    align-items: flex-start;
   }
   .testi-grid::-webkit-scrollbar { display: none; }
   .testi-grid .testi, .testi-grid .gitem {
     flex: 0 0 85%; min-width: 0; scroll-snap-align: start;
   }
-  .testi-watch { opacity: 1; transform: translateY(0); }
+  .testi-watch {
+    position: static; opacity: 1; transform: none;
+    align-self: flex-start; margin-top: 16px;
+  }
   .gitem-play { opacity: 1; }
   .gitem-play-icon { transform: scale(1); }
 }
@@ -1455,15 +1459,13 @@ const FAQS = [
 ];
 
 function FaqItem({ f, isOpen, onToggle }) {
-  const ansRef = React.useRef(null);
   return (
     <div className={`faq-item${isOpen ? ' open' : ''}`}>
       <button className="faq-q" onClick={onToggle} aria-expanded={isOpen}>
         <span>{f.q}</span>
         <span className="faq-icon"><Icon.Plus size={12} /></span>
       </button>
-      <div className="faq-a" ref={ansRef}
-        style={{ height: isOpen ? (ansRef.current ? ansRef.current.scrollHeight + 'px' : 'auto') : 0 }}>
+      <div className="faq-a">
         <div className="faq-a-inner">{f.a}</div>
       </div>
     </div>
