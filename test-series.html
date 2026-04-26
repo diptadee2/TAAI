@@ -707,7 +707,13 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .features-bento { grid-template-columns: 1fr; }
   .feat-dark,.feat-b,.feat-c,.feat-dark-blue,.feat-e,.feat-f { grid-column: span 1; }
   .feat-f { flex-direction: column; gap: 14px; padding: 28px; }
-  .mentor-card { padding: 32px 24px; }
+  .mentor-card { padding: 0; }
+  .quality-left { padding: 28px 24px; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .quality-left::before, .quality-left::after { display: none; }
+  .mentor-right { padding: 24px; }
+  .mentor-commit { align-items: flex-start; }
+  .mentor-commit.commit-active { transform: none; }
+  .mentor-commit-num { font-size: 14px; padding-top: 3px; }
   .disc-grid { grid-template-columns: 1fr; }
   .pricing-card { grid-template-columns: 1fr; gap: 32px; padding: 32px 24px; }
   .footer-inner { flex-direction: column; align-items: center; text-align: center; }
