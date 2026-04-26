@@ -619,11 +619,13 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .btn-nav-contact { display: none; }
   .courses-grid { grid-template-columns: 1fr; }
   .included-grid { grid-template-columns: 1fr; }
-  .placement-card { grid-template-columns: 1fr; gap: 0; padding: 32px 24px 36px; align-items: start; overflow: hidden; }
+  .placement-card { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 32px 24px 36px; align-items: start; overflow: hidden; }
   .placement-card::before, .placement-card::after { display: none; }
+  .placement-left, .placement-right { min-width: 0; }
   .placement-right { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 28px; margin-top: 4px; gap: 16px; }
   .placement-btns { flex-direction: column; }
-  .placement-btns .btn { justify-content: center; }
+  .placement-btns .btn { justify-content: center; width: 100%; }
+  .placement-btns .btn-swap::before { content: none; }
 }
 
 /* YouTube link wiggle */
