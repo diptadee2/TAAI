@@ -660,7 +660,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .faq-q:hover { color: var(--purple); }
 .faq-icon { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, var(--purple), var(--blue)); color: #fff; display: grid; place-items: center; flex-shrink: 0; transition: transform .44s cubic-bezier(.34,1.6,.64,1); }
 .faq-item.open .faq-icon { transform: rotate(45deg); }
-.faq-a { overflow: hidden; height: 0; transition: height .38s cubic-bezier(.4,0,.2,1); }
+.faq-a { overflow: hidden; height: 0; will-change: height; transition: height .38s cubic-bezier(.4,0,.2,1); }
 .faq-a-inner { padding: 0 24px 20px; font-size: 14px; color: var(--ink-dim); line-height: 1.65; opacity: 0; transition: opacity .24s ease .08s; }
 .faq-item.open .faq-a-inner { opacity: 1; }
 
@@ -1480,13 +1480,17 @@ const FAQS = [
 
 function FaqItem({ f, isOpen, onToggle }) {
   const innerRef = React.useRef(null);
+  const [measuredH, setMeasuredH] = React.useState(0);
+  React.useEffect(() => {
+    if (innerRef.current) setMeasuredH(innerRef.current.scrollHeight);
+  }, [f]);
   return (
     <div className={`faq-item${isOpen ? ' open' : ''}`}>
       <button className="faq-q" onClick={onToggle} aria-expanded={isOpen}>
         <span>{f.q}</span>
         <span className="faq-icon"><Icon.Plus s={11}/></span>
       </button>
-      <div className="faq-a" style={{ height: isOpen ? (innerRef.current ? innerRef.current.scrollHeight + 'px' : 'auto') : 0 }}>
+      <div className="faq-a" style={{ height: isOpen ? (measuredH || 'auto') : 0 }}>
         <div className="faq-a-inner" ref={innerRef}>{f.a}</div>
       </div>
     </div>
@@ -1494,7 +1498,8 @@ function FaqItem({ f, isOpen, onToggle }) {
 }
 
 function FAQ() {
-  const [open, setOpen] = React.useState(0);
+  const [openSet, setOpenSet] = React.useState(() => new Set([0]));
+  const toggle = i => setOpenSet(prev => { const n = new Set(prev); n.has(i) ? n.delete(i) : n.add(i); return n; });
   return (
     <section className="section" id="faq">
       <div className="container">
@@ -1512,7 +1517,7 @@ function FAQ() {
           </div>
           <div className="faq-list fade-in">
             {FAQS.map((f, i) => (
-              <FaqItem key={i} f={f} isOpen={open === i} onToggle={() => setOpen(open === i ? -1 : i)} />
+              <FaqItem key={i} f={f} isOpen={openSet.has(i)} onToggle={() => toggle(i)} />
             ))}
           </div>
         </div>
