@@ -72,7 +72,9 @@ body {
   backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--line);
   overflow: visible;
+  transition: background .25s ease, backdrop-filter .25s ease;
 }
+.nav.menu-open { background: rgba(248,246,255,0.72); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px); }
 .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 86px; padding: 0 32px 0 20px; overflow: visible; }
 .nav-logo {
   display: flex; align-items: center; text-decoration: none;
@@ -1000,7 +1002,7 @@ function Nav() {
 
   return (
     <>
-      <nav className="nav">
+      <nav className={`nav${menuOpen ? ' menu-open' : ''}`}>
         <div className="nav-inner" onMouseLeave={reset}>
           <a href="#top" className="nav-logo">
             <TAAILogo />
