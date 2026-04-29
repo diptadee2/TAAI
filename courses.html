@@ -56,7 +56,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   display: flex; align-items: center; text-decoration: none;
   transition: transform .22s ease-out, opacity .22s ease;
 }
-.nav-logo svg, .nav-logo img { height: 56px; width: auto; }
+.nav-logo svg, .nav-logo img { width: 180px; height: auto; }
 .nav-logo:hover { transform: translateY(-2px); opacity: 0.82; }
 .nav-logo:active { transform: translateY(1px); opacity: 1; transition-duration: .08s; }
 .nav-links { display: flex; gap: 36px; font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; position: relative;}
@@ -680,7 +680,7 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 .mobile-menu-actions .btn-nav-signup:hover .mobile-btn-arrow, .mobile-menu-actions .btn-nav-signup:active .mobile-btn-arrow { transform: translateX(4px); }
 .mobile-menu-contact { display: flex; align-items: center; justify-content: center; gap: 7px; padding: 11px 16px; font-size: 13px; font-weight: 600; color: var(--ink-dim); text-decoration: none; border-radius: 10px; transition: color .18s, background .18s; letter-spacing: .04em; text-transform: uppercase; }
 .mobile-menu-contact:hover { color: var(--purple); background: rgba(139,92,246,0.06); }
-@media (max-width: 768px) { .nav-hamburger { display: flex; } .nav-cta { display: none; } .nav-inner { height: 64px; } .mobile-menu { top: 64px; } .nav-logo svg, .nav-logo img { height: 48px; } }
+@media (max-width: 768px) { .nav-hamburger { display: flex; } .nav-cta { display: none; } .nav-inner { height: 64px; } .mobile-menu { top: 64px; } .nav-logo svg, .nav-logo img { width: 150px; height: auto; } }
 
 /* ── Disable hover animations on touch devices ──────── */
 @media (hover: none) {
@@ -745,7 +745,7 @@ const MENU_ICONS = {
 };
 
 function TAAILogo() {
-  return <img src="logo.png" alt="TAAI" style={{ width: 'auto' }} />;
+  return <img src="logo.png" alt="TAAI" />;
 }
 
 function Nav() {
