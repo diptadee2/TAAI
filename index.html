@@ -361,6 +361,7 @@ body {
 .stat-item:first-child { border-left: none; padding-left: 0; }
 .stat-num { font-family: var(--font-display); font-size: clamp(36px, 8vw, 56px); font-weight: 600; letter-spacing: -0.04em; line-height: 1; margin-bottom: 6px; }
 .stat-label { font-size: 13px; color: rgba(255,255,255,0.8); text-transform: uppercase; letter-spacing: .08em; }
+.stat-sub { font-size: 11px; color: rgba(255,255,255,0.42); letter-spacing: .05em; margin-top: 4px; font-style: italic; }
 
 /* Sections */
 .section { padding: var(--section-pad) 0; position: relative; }
@@ -1237,9 +1238,9 @@ function Hero() {
 // ============ STATS ============
 function Stats() {
   const items = [
-    { num: 5,    suffix: '',  label: 'Top 50 ranks achieved' },
-    { num: 35,   suffix: '+', label: 'Top 250 ranks achieved' },
-    { num: 51,   suffix: '+', label: 'Top 500 ranks achieved' },
+    { num: 5,    suffix: '',  label: 'Top 50 ranks achieved',  sub: 'in just 1 year' },
+    { num: 35,   suffix: '+', label: 'Top 250 ranks achieved', sub: 'in just 1 year' },
+    { num: 51,   suffix: '+', label: 'Top 500 ranks achieved', sub: 'in just 1 year' },
     { num: 1500, suffix: '+', label: 'Quality questions' }
   ];
   return (
@@ -1249,6 +1250,7 @@ function Stats() {
           <div key={i} className="stat-item">
             <div className="stat-num"><AnimatedNum to={s.num} suffix={s.suffix} /></div>
             <div className="stat-label">{s.label}</div>
+            {s.sub && <div className="stat-sub">{s.sub}</div>}
           </div>
         ))}
       </div>
