@@ -858,6 +858,30 @@ body {
 a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   animation: yt-wiggle 0.6s cubic-bezier(.4,0,.2,1);
 }
+/* ── Auto-animate hover-only elements on touch devices ── */
+@keyframes pill-auto-expand {
+  0%   { width: 50px; }
+  100% { width: 252px; }
+}
+@keyframes pill-label-reveal {
+  0%   { opacity: 0; transform: translateX(10px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+@keyframes watch-pill-pulse {
+  0%, 100% { box-shadow: 0 2px 10px rgba(139,92,246,0.14); transform: scale(1); }
+  50%       { box-shadow: 0 4px 20px rgba(139,92,246,0.32); transform: scale(1.04); }
+}
+@media (hover: none) {
+  .instructor-play-btn {
+    animation: play-pulse-ring 2.2s ease-out infinite, pill-auto-expand 0.46s cubic-bezier(.34,1.08,.64,1) 1.2s forwards;
+  }
+  .instructor-play-label {
+    animation: pill-label-reveal 0.32s cubic-bezier(.34,1.1,.64,1) 1.36s forwards;
+  }
+  .testi-watch {
+    animation: watch-pill-pulse 2.6s ease-in-out 2s infinite;
+  }
+}
 /* ── Mobile hamburger menu ──────────────────────────── */
 .nav-hamburger { display: none; flex-direction: column; gap: 5px; align-items: center; justify-content: center; width: 40px; height: 40px; border: none; background: none; cursor: pointer; border-radius: 8px; transition: background .2s; flex-shrink: 0; padding: 0; }
 .nav-hamburger:hover { background: rgba(139,92,246,0.08); }
