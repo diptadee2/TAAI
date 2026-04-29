@@ -889,9 +889,9 @@ const COMBOS = [
   },
   {
     num: '02',
-    badge: 'combo', badgeLabel: 'Combo',
+    badge: 'combo', badgeLabel: 'Bundle',
     accent: 'linear-gradient(90deg, var(--purple), var(--blue))',
-    title: 'Mathematics & ML Combo',
+    title: 'Mathematics & ML Bundle',
     validity: 'VALID UNTIL FEB 20, 2027',
     price: '₹7,999', priceOld: '₹9,999', discount: '20% off',
     includes: [
@@ -906,9 +906,9 @@ const COMBOS = [
   },
   {
     num: '03',
-    badge: 'combo', badgeLabel: 'Combo',
+    badge: 'combo', badgeLabel: 'Bundle',
     accent: 'linear-gradient(90deg, var(--pink), var(--purple))',
-    title: 'Mathematics Combo',
+    title: 'Mathematics Bundle',
     validity: 'VALID UNTIL FEB 20, 2027',
     price: '₹5,999', priceOld: '₹7,499', discount: '20% off',
     includes: [
@@ -1329,7 +1329,7 @@ function App() {
           <h2 className="section fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 12, padding: 0 }}>
             Best value <em>bundles</em>
           </h2>
-          <p className="section-sub fade-in">Save more when you bundle. All combos include quizzes and full course includes quizzes and live doubt sessions.</p>
+          <p className="section-sub fade-in">Save more when you bundle. All bundles include quizzes and full course includes quizzes and live doubt sessions.</p>
           <div className="combos-grid">
             {COMBOS.map((c, i) => <ComboCard key={i} c={c} />)}
           </div>
