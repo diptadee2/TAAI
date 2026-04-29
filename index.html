@@ -286,8 +286,10 @@ body {
 }
 .hero-card-caption { font-size: 14px; color: rgba(255,255,255,0.48); max-width: 240px; margin-top: 6px; }
 .hero-card-progress { margin-top: 22px; display: flex; flex-direction: column; gap: 10px; }
-.hero-progress-row { display: flex; align-items: center; gap: 10px; font-size: 13px; color: rgba(255,255,255,0.7); }
-.hero-progress-bar { flex: 1; height: 7px; background: rgba(255,255,255,0.1); border-radius: 999px; overflow: hidden; }
+.hero-rank-row { display: flex; align-items: baseline; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.07); }
+.hero-rank-row:last-child { border-bottom: none; }
+.hero-rank-label { font-size: 12px; color: rgba(255,255,255,0.5); letter-spacing: .04em; }
+.hero-rank-count { font-family: var(--font-display); font-size: 20px; font-weight: 600; letter-spacing: -0.02em; background: linear-gradient(120deg, var(--pink), var(--lilac)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .hero-progress-fill {
   height: 100%; border-radius: 999px;
   background: linear-gradient(90deg, var(--pink) 0%, var(--purple) 50%, var(--blue) 100%);
@@ -1161,10 +1163,17 @@ function Hero() {
                 <div className="hero-card-stat"><AnimatedNum to={44} />+</div>
                 <div className="hero-card-caption">students ranked in Top&nbsp;300 across GATE DA 2025 &amp; 2026.</div>
                 <div className="hero-card-progress">
-                  <ProgressRow label="Top 50" pct={0.10} />
-                  <ProgressRow label="Top 250" pct={0.69} />
-                  <ProgressRow label="Top 300" pct={0.86} />
-                  <ProgressRow label="Top 500" pct={1.0} />
+                  {[
+                    { label: 'Top 50',  count: '5' },
+                    { label: 'Top 250', count: '35+' },
+                    { label: 'Top 300', count: '44+' },
+                    { label: 'Top 500', count: '51+' },
+                  ].map((r, i) => (
+                    <div key={i} className="hero-rank-row">
+                      <span className="hero-rank-label">{r.label}</span>
+                      <span className="hero-rank-count">{r.count}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
