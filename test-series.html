@@ -61,6 +61,11 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .nav-logo svg, .nav-logo img { width: 180px; height: auto; }
 .nav-logo:hover { transform: translateY(-2px); opacity: 0.82; }
 .nav-logo:active { transform: translateY(1px); opacity: 1; transition-duration: .08s; }
+@media (hover: hover) {
+  .nav-logo { position: relative; }
+  .nav-logo::after { content: 'Home'; position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%) translateY(4px); font-size: 11px; font-weight: 600; letter-spacing: .06em; color: var(--purple); background: rgba(248,246,255,0.92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(139,92,246,0.18); border-radius: 6px; padding: 3px 9px; opacity: 0; pointer-events: none; transition: opacity .18s ease, transform .18s ease; white-space: nowrap; }
+  .nav-logo:hover::after { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
 .nav-links { display: flex; gap: 36px; font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; position: relative;}
 .nav-links a { color: var(--ink-dim); text-decoration: none; transition: color .2s; position: relative; z-index: 1; cursor: pointer; }
 .nav-links a::after { content: ''; position: absolute; inset: -14px -10px; z-index: 0; }
