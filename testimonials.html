@@ -368,16 +368,24 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   100% { background-position: 0% 50%; }
 }
 @keyframes reveal {
-  from { opacity: 0; transform: translate(var(--tx, 0px), var(--ty, 28px)); }
-  to   { opacity: 1; transform: translate(0px, 0px); }
+  from { opacity: 0; transform: translate(var(--tx, 0px), var(--ty, 28px)) scale(var(--ts, 0.97)); }
+  to   { opacity: 1; transform: translate(0px, 0px) scale(1); }
 }
 
 /* ── Scroll reveal ───────────────────────────────────── */
 .fade-in {
-  animation: reveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) var(--delay, 0ms) both paused;
+  animation: reveal 0.78s cubic-bezier(0.16, 1, 0.3, 1) var(--delay, 0ms) both paused;
   will-change: transform, opacity;
 }
 .fade-in.visible { animation-play-state: running; }
+@media (max-width: 768px) {
+  .fade-in { animation-duration: .6s; animation-timing-function: cubic-bezier(.34,1.1,.64,1); }
+  /* reduce lateral slide on mobile — full width feels jarring */
+  .feat-card:nth-child(odd)  { --tx: -22px; --ty: 0px; }
+  .feat-card:nth-child(even) { --tx:  22px; --ty: 0px; }
+  .testi-card:nth-child(odd)  { --tx: -22px; --ty: 0px; }
+  .testi-card:nth-child(even) { --tx:  22px; --ty: 0px; }
+}
 
 /* ── Responsive ──────────────────────────────────────── */
 @media (max-width: 1024px) {
@@ -411,6 +419,15 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .feat-card:nth-child(even) { --tx:  44px; --ty: 0px; }
   .testi-card:nth-child(odd)  { --tx: -44px; --ty: 0px; }
   .testi-card:nth-child(even) { --tx:  44px; --ty: 0px; }
+}
+
+/* ── Touch-device overrides ──────────────────────────── */
+@media (hover: none) {
+  .testi-card:hover { transform: none; box-shadow: none; }
+  .testi-card:active { transform: scale(0.975); transition-duration: .12s; }
+  .result-card:hover { transform: none; }
+  .result-card:active { transform: scale(0.975); transition-duration: .12s; }
+  .gallery-item:hover .gallery-img-wrap { transform: none; box-shadow: 0 2px 8px rgba(20,16,43,0.06), 0 8px 28px rgba(255,127,183,0.2), 0 18px 52px rgba(139,92,246,0.14); }
 }
 
 /* YouTube link wiggle */
@@ -710,10 +727,10 @@ function Hero() {
   return (
     <section className="hero">
       <div className="hero-orb-1" /><div className="hero-orb-2" />
-      <div className="container hero-inner fade-in">
-        <div className="hero-eyebrow">Student Stories</div>
-        <h1>Real students.<br /><em>Real ranks.</em></h1>
-        <p className="hero-sub">
+      <div className="container hero-inner">
+        <div className="hero-eyebrow fade-in">Student Stories</div>
+        <h1 className="fade-in" style={{ '--delay': '140ms' }}>Real students.<br /><em>Real ranks.</em></h1>
+        <p className="hero-sub fade-in" style={{ '--delay': '280ms' }}>
           Talk about overachieving — 5 in the Top 50, 35+ in the Top 250, and 51+ in the Top 500. All in just 1 year.
         </p>
       </div>
@@ -732,7 +749,7 @@ function Strip() {
     <div className="strip">
       <div className="container strip-grid">
         {items.map((s, i) => (
-          <div key={i} className="strip-item">
+          <div key={i} className="strip-item fade-in" style={{ '--delay': `${i * 110}ms`, '--ty': '20px' }}>
             <div className="strip-num"><AnimatedNum to={s.to} suffix={s.suffix} /></div>
             <div className="strip-label">{s.label}</div>
             {s.sub && <div className="strip-sub">{s.sub}</div>}
@@ -791,7 +808,7 @@ function PreviousBatch() {
         </div>
 
         <div className="results-grid" style={{ marginBottom: 56 }}>
-          <div className="result-hero">
+          <div className="result-hero fade-in">
             <div className="result-hero-num">2.5</div>
             <div className="result-hero-text">
               <div className="result-hero-eyebrow">The TAAI edge</div>
@@ -805,7 +822,7 @@ function PreviousBatch() {
               { num: '35+', lbl: 'in Top 250 · GATE DA 2025 & 2026' },
               { num: '51+', lbl: 'in Top 500 · GATE DA 2025 & 2026' },
             ].map((r, i) => (
-              <div key={i} className="result-card">
+              <div key={i} className="result-card fade-in" style={{ '--delay': `${i * 90}ms` }}>
                 <div className="big">{r.num}</div>
                 <div className="lbl">{r.lbl}</div>
               </div>
@@ -915,8 +932,16 @@ function Footer() {
 // ── App ───────────────────────────────────────────────────────────
 function App() {
   React.useEffect(() => {
+    const mobile = window.matchMedia('(max-width: 768px)').matches;
     const io = new IntersectionObserver(entries => {
-      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+      const hit = entries.filter(e => e.isIntersecting);
+      hit.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+      hit.forEach((e, i) => {
+        io.unobserve(e.target);
+        const delay = Math.min(i, 5) * (mobile ? 80 : 40);
+        if (delay) setTimeout(() => e.target.classList.add('visible'), delay);
+        else e.target.classList.add('visible');
+      });
     }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
     document.querySelectorAll('.fade-in').forEach(el => io.observe(el));
     return () => io.disconnect();
