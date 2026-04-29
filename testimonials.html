@@ -217,6 +217,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   align-items: start;
 }
 .gallery-col { display: flex; flex-direction: column; gap: 24px; }
+.from-left  { --tx: -36px; }
+.from-right { --tx:  36px; }
 .gallery-item {
   position: relative;
 }
@@ -377,6 +379,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .video-cta { flex-direction: column; align-items: flex-start; }
   .video-cta-right { align-items: flex-start; }
   .gallery-masonry { grid-template-columns: 1fr; }
+  .gallery-col:first-child .gallery-item:nth-child(odd)  { --tx: -44px; }
+  .gallery-col:first-child .gallery-item:nth-child(even) { --tx:  44px; }
+  .gallery-col:last-child  .gallery-item:nth-child(odd)  { --tx: -44px; }
+  .gallery-col:last-child  .gallery-item:nth-child(even) { --tx:  44px; }
 }
 @media (max-width: 768px) {
   :root { --section-pad: 60px; }
@@ -394,6 +400,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .result-hero-num { font-size: 72px; }
   .result-hero-label { font-size: 24px; }
   .results-row { grid-template-columns: 1fr; }
+  .feat-card:nth-child(odd)  { --tx: -44px; --ty: 0px; }
+  .feat-card:nth-child(even) { --tx:  44px; --ty: 0px; }
+  .testi-card:nth-child(odd)  { --tx: -44px; --ty: 0px; }
+  .testi-card:nth-child(even) { --tx:  44px; --ty: 0px; }
 }
 
 /* YouTube link wiggle */
@@ -740,8 +750,7 @@ function ThisYearGallery() {
           {buildColumns(GALLERY_IMGS, 2).map((col, ci) => (
             <div key={ci} className="gallery-col">
               {col.map((img, ri) => (
-                <div key={img.src} className="gallery-item fade-in" style={{
-                  '--tx': ci === 0 ? '-36px' : '36px',
+                <div key={img.src} className={`gallery-item fade-in ${ci === 0 ? 'from-left' : 'from-right'}`} style={{
                   '--ty': '0px',
                   '--delay': `${ri * 70}ms`,
                 }}>
