@@ -574,6 +574,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 /* Scroll fade-in */
 .fade-in { opacity: 0; transform: translateY(24px); transition: opacity .7s cubic-bezier(.4,0,.2,1), transform .7s cubic-bezier(.4,0,.2,1); }
 .fade-in.visible { opacity: 1; transform: translateY(0); }
+@media (max-width: 768px) {
+  .fade-in { transform: translateY(36px) scale(0.96); transition: opacity .58s cubic-bezier(.34,1.1,.64,1), transform .58s cubic-bezier(.34,1.1,.64,1); }
+  .fade-in.visible { transform: translateY(0) scale(1); }
+}
 
 /* Footer */
 .footer { padding: 40px 0; border-top: 1px solid var(--line); }
@@ -632,6 +636,37 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .placement-btns { flex-direction: column; }
   .placement-btns .btn { justify-content: center; width: 100%; }
   .placement-btns .btn-swap::before { content: none; }
+}
+
+/* ── Touch-device interaction overrides ─────────────────────── */
+@media (hover: none) {
+  /* Kill hover lifts — replace with tap feedback */
+  .combo-card:hover,
+  .combo-card.featured:hover { transform: none; }
+  .combo-card:active { transform: scale(0.975); transition-duration: .12s; }
+  .combo-card.featured:active { transform: scale(0.975); transition-duration: .12s; }
+  .course-card:hover { transform: none; box-shadow: none; }
+  .course-card:hover::before { opacity: 0.18; }
+  .course-card:hover .course-icon { transform: none; box-shadow: none; }
+  .course-card:hover .course-title { color: inherit; }
+  .course-card:hover .course-validity { color: var(--ink-soft); }
+  .course-card:hover .course-topics { max-height: 0; opacity: 0; margin-bottom: 0; }
+  .course-card:active { transform: scale(0.975); transition-duration: .12s; }
+  /* Combo includes — show without hover */
+  .combo-includes li { opacity: 1; transform: translateX(0); }
+  .combo-check svg path { stroke-dashoffset: 0; }
+  /* Restore featured-card box-shadow */
+  .combo-card.featured:hover { box-shadow: 0 20px 60px rgba(107,75,255,0.28), inset 0 1px 0 rgba(255,255,255,0.07); }
+}
+
+/* ── Featured card float (mobile only, after reveal) ────────── */
+@keyframes card-float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%       { transform: translateY(-8px) scale(1); }
+}
+@media (max-width: 768px) {
+  .combo-card.featured.visible { animation: card-float 3.8s ease-in-out 0.5s infinite; }
+  .combo-card.featured.visible:active { animation-play-state: paused; transform: scale(0.975); }
 }
 
 /* YouTube link wiggle */
@@ -865,7 +900,6 @@ const COMBOS = [
       'Statistics',
       'Calculus',
       'Machine Learning',
-      'LIVE doubt discussion sessions',
       'Tests for all subjects',
     ],
     href: 'https://www.taai.live/learn/Maths--ML---AI-Bundle---GATE-2026',
@@ -1252,8 +1286,16 @@ function Faculty() {
 function App() {
   React.useEffect(() => {
     const els = document.querySelectorAll('.fade-in');
+    const mobile = window.matchMedia('(max-width: 768px)').matches;
     const io = new IntersectionObserver((entries) => {
-      entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+      const hit = entries.filter(e => e.isIntersecting);
+      hit.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+      hit.forEach((e, i) => {
+        io.unobserve(e.target);
+        const delay = mobile ? i * 75 : 0;
+        if (delay) setTimeout(() => e.target.classList.add('visible'), delay);
+        else e.target.classList.add('visible');
+      });
     }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
     els.forEach((el) => io.observe(el));
     return () => io.disconnect();
