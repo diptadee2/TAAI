@@ -682,8 +682,15 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .footer-email:hover { color: var(--purple); }
 
 /* ── Scroll fade ─────────────────────────────────────── */
-.fade-in { opacity: 0; transform: translateY(20px); transition: opacity .7s cubic-bezier(.4,0,.2,1), transform .7s cubic-bezier(.4,0,.2,1); }
-.fade-in.visible { opacity: 1; transform: translateY(0); }
+.fade-in { opacity: 0; transform: translateY(20px) scale(0.97); transition: opacity .7s cubic-bezier(.34,1.1,.64,1), transform .7s cubic-bezier(.34,1.1,.64,1); transition-delay: var(--delay, 0ms); }
+.fade-in.visible { opacity: 1; transform: translateY(0) scale(1); }
+@media (max-width: 768px) {
+  .fade-in { transform: translateY(36px) scale(0.96); transition-duration: .58s; }
+}
+@keyframes heroIn {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
 
 /* ── Responsive ──────────────────────────────────────── */
 @media (max-width: 1024px) {
@@ -732,6 +739,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 @media (hover: none) {
   .disc-play-btn { opacity: 1; }
   .disc-play-circle { transform: scale(1); }
+  .breakdown-card:hover { animation: none; transform: none; box-shadow: 0 4px 24px rgba(0,0,0,0.10); }
+  .breakdown-card:active { transform: scale(0.97) !important; transition-duration: .12s; }
+  .feat:hover { transform: none !important; box-shadow: none !important; }
+  .feat:active { transform: scale(0.97) !important; transition-duration: .12s; }
 }
 
 /* ── Mobile hamburger menu ──────────────────────────── */
@@ -1116,16 +1127,16 @@ function Hero() {
     <section className="hero">
       <div className="hero-bg-orb-1" /><div className="hero-bg-orb-2" /><div className="hero-bg-orb-3" />
       <div className="container hero-inner">
-        <div className="hero-text fade-in">
-          <div className="hero-coming-badge">
+        <div className="hero-text">
+          <div className="hero-coming-badge" style={{ animation: 'heroIn .6s cubic-bezier(.34,1.12,.64,1) .08s both' }}>
             <span className="hero-coming-dot" />
             Coming Soon
           </div>
-          <h1>The last test series<br />you'll ever <em>need.</em></h1>
-          <p className="hero-sub">
+          <h1 style={{ animation: 'heroIn .72s cubic-bezier(.34,1.12,.64,1) .20s both' }}>The last test series<br />you'll ever <em>need.</em></h1>
+          <p className="hero-sub" style={{ animation: 'heroIn .62s cubic-bezier(.34,1.12,.64,1) .34s both' }}>
             67 GATE DA tests — topic-wise, subject-wise, full-length — all with a real GATE-like interface, performance analytics, and video solutions.
           </p>
-          <div className="hero-trust">
+          <div className="hero-trust" style={{ animation: 'heroIn .60s cubic-bezier(.34,1.12,.64,1) .48s both' }}>
             <div className="hero-trust-item"><span className="hero-trust-dot"/>1,500+ questions</div>
             <div className="hero-trust-item"><span className="hero-trust-dot"/>GATE-like interface</div>
           </div>
@@ -1177,7 +1188,7 @@ function Strip() {
     <div className="strip">
       <div className="container strip-grid">
         {items.map((s, i) => (
-          <div key={i} className="strip-item">
+          <div key={i} className="strip-item fade-in">
             <div className="strip-num"><AnimatedNum to={s.to} suffix={s.suffix} /></div>
             <div className="strip-label">{s.label}</div>
           </div>
@@ -1606,8 +1617,15 @@ function Footer() {
 // ── App ──────────────────────────────────────────────────────────
 function App() {
   React.useEffect(() => {
+    const mobile = window.matchMedia('(max-width: 768px)').matches;
     const io = new IntersectionObserver(entries => {
-      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+      const vis = entries.filter(e => e.isIntersecting);
+      vis.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+      vis.forEach((e, i) => {
+        e.target.style.setProperty('--delay', Math.min(i, 5) * (mobile ? 80 : 40) + 'ms');
+        e.target.classList.add('visible');
+        io.unobserve(e.target);
+      });
     }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
     document.querySelectorAll('.fade-in').forEach(el => io.observe(el));
     return () => io.disconnect();
