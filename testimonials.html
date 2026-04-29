@@ -165,6 +165,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .strip-item + .strip-item::before { content: ''; position: absolute; left: 0; top: 10%; height: 80%; width: 1px; background: rgba(255,255,255,0.22); }
 .strip-num { font-family: var(--font-display); font-size: clamp(36px, 5vw, 56px); font-weight: 600; letter-spacing: -0.04em; line-height: 1; margin-bottom: 8px; }
 .strip-label { font-size: 12px; color: rgba(255,255,255,0.72); text-transform: uppercase; letter-spacing: .1em; }
+.strip-sub { font-size: 11px; color: rgba(255,255,255,0.42); letter-spacing: .05em; margin-top: 4px; font-style: italic; }
 
 /* ── Section base ────────────────────────────────────── */
 .section { padding: var(--section-pad) 0; }
@@ -723,9 +724,9 @@ function Hero() {
 // ── Stats Strip ──────────────────────────────────────────────────
 function Strip() {
   const items = [
-    { to: 5,  suffix: '',  label: 'Top 50 ranks' },
-    { to: 35, suffix: '+', label: 'Top 250 ranks' },
-    { to: 51, suffix: '+', label: 'Top 500 ranks' },
+    { to: 5,  suffix: '',  label: 'Top 50 ranks',  sub: 'in just 1 year of our existence' },
+    { to: 35, suffix: '+', label: 'Top 250 ranks', sub: 'in just 1 year of our existence' },
+    { to: 51, suffix: '+', label: 'Top 500 ranks', sub: 'in just 1 year of our existence' },
   ];
   return (
     <div className="strip">
@@ -734,6 +735,7 @@ function Strip() {
           <div key={i} className="strip-item">
             <div className="strip-num"><AnimatedNum to={s.to} suffix={s.suffix} /></div>
             <div className="strip-label">{s.label}</div>
+            {s.sub && <div className="strip-sub">{s.sub}</div>}
           </div>
         ))}
       </div>
