@@ -623,6 +623,30 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .mentor-commit-label { font-size: 13.5px; font-weight: 600; color: rgba(255,255,255,0.82); }
 .mentor-commit-sub { font-size: 11.5px; color: rgba(255,255,255,0.36); margin-top: 2px; }
 .mentor-commit-num { font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: -0.04em; color: var(--lilac); flex-shrink: 0; }
+.mentor-commit-progress {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--commit-color, var(--purple)), rgba(139,92,246,0.3));
+  transform-origin: left; transform: scaleX(0);
+  animation: commitProgress var(--dur, 3500ms) linear forwards;
+  border-radius: 0 0 14px 14px;
+}
+@keyframes commitProgress { to { transform: scaleX(1); } }
+@keyframes commitDetailIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.mentor-commit-detail {
+  width: 100%; padding-top: 12px; margin-top: 4px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  font-size: 13.5px; color: rgba(255,255,255,0.55); line-height: 1.65;
+  animation: commitDetailIn .32s cubic-bezier(.34,1.1,.64,1) both;
+}
+.mentor-commit-detail-chip {
+  display: inline-flex; align-items: center; gap: 5px; margin-top: 10px;
+  border-radius: 999px; padding: 4px 11px;
+  font-size: 11px; font-weight: 600; font-family: var(--font-mono);
+  border: 1px solid; opacity: 0.85;
+}
 
 /* ── Pricing ─────────────────────────────────────────── */
 .pricing-card {
@@ -720,11 +744,11 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .feat-dark,.feat-b,.feat-c,.feat-dark-blue,.feat-e,.feat-f { grid-column: span 1; }
   .feat-f { flex-direction: column; gap: 14px; padding: 28px; }
   .mentor-card { padding: 0; }
-  .quality-left { padding: 28px 24px; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.08); }
-  .quality-left::before, .quality-left::after { display: none; }
+  .quality-left { display: none; }
   .mentor-right { padding: 24px; }
-  .mentor-commit { align-items: flex-start; }
+  .mentor-commit { align-items: flex-start; cursor: pointer; }
   .mentor-commit.commit-active { transform: none; }
+  .mentor-commit.commit-inactive { opacity: 0.55; }
   .mentor-commit-num { font-size: 14px; padding-top: 3px; }
   .disc-grid { grid-template-columns: 1fr; }
   .pricing-card { grid-template-columns: 1fr; gap: 32px; padding: 32px 24px; }
@@ -1488,8 +1512,19 @@ const QUALITY_CRITERIA = [
 ];
 
 function Quality() {
+  const DURATION = 3500;
   const [active, setActive] = React.useState(0);
+  const [paused, setPaused] = React.useState(false);
+  const isMobile = window.matchMedia('(max-width: 768px)').matches;
   const c = QUALITY_CRITERIA[active];
+
+  const go = i => { setActive(i); setPaused(true); setTimeout(() => setPaused(false), 7000); };
+
+  React.useEffect(() => {
+    if (paused) return;
+    const id = setInterval(() => setActive(a => (a + 1) % QUALITY_CRITERIA.length), DURATION);
+    return () => clearInterval(id);
+  }, [paused, active]);
 
   return (
     <section className="section">
@@ -1499,15 +1534,17 @@ function Quality() {
           If it's not GATE-level,<br /><em>it doesn't ship.</em>
         </h2>
         <p className="section-sub fade-in">Every question is benchmarked against real GATE DA papers — the same difficulty, the same style, the same pressure you'll face on exam day.</p>
-        <div className="mentor-card fade-in">
+        <div className="mentor-card fade-in"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}>
           <div className="quality-left">
-            <div className="quality-icon-circle" style={{ background: c.color, boxShadow: `0 12px 40px ${c.glow}` }}>
+            <div className="quality-icon-circle" key={active} style={{ background: c.color, boxShadow: `0 12px 40px ${c.glow}` }}>
               {React.createElement(Icon[c.icon])}
             </div>
-            <div className="quality-headline">
+            <div className="quality-headline" key={`h-${active}`}>
               {c.leftLine.split('\n').map((line, i) => <span key={i}>{line}{i === 0 && <br/>}</span>)}
             </div>
-            <div className="quality-chip" style={{ borderColor: c.accent, color: c.accent, background: `color-mix(in srgb, ${c.accent} 12%, transparent)` }}>
+            <div className="quality-chip" key={`ch-${active}`} style={{ borderColor: c.accent, color: c.accent, background: `color-mix(in srgb, ${c.accent} 12%, transparent)` }}>
               <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6.5L4.5 9L10 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
               {c.val}
             </div>
@@ -1517,8 +1554,9 @@ function Quality() {
               {QUALITY_CRITERIA.map((cr, i) => (
                 <div key={i}
                   className={`mentor-commit${i === active ? ' commit-active' : ' commit-inactive'}`}
-                  style={{ borderLeftColor: i === active ? cr.accent : 'transparent' }}
-                  onMouseEnter={() => setActive(i)}
+                  style={{ borderLeftColor: i === active ? cr.accent : 'transparent', '--commit-color': cr.accent, position: 'relative' }}
+                  onMouseEnter={() => !isMobile && setActive(i)}
+                  onClick={() => go(i)}
                 >
                   <div className="mentor-commit-icon" style={{ background: cr.color }}>{React.createElement(Icon[cr.icon])}</div>
                   <div className="mentor-commit-text">
@@ -1526,6 +1564,19 @@ function Quality() {
                     <div className="mentor-commit-sub">{cr.sub}</div>
                   </div>
                   <div className="mentor-commit-num" style={{ fontSize:13, letterSpacing:0, color: cr.accent }}>{cr.val}</div>
+                  {i === active && !isMobile && (
+                    <div key={`p-${active}`} className="mentor-commit-progress"
+                      style={{ '--dur': `${DURATION}ms`, animationPlayState: paused ? 'paused' : 'running' }} />
+                  )}
+                  {i === active && isMobile && (
+                    <div key={`d-${active}`} className="mentor-commit-detail">
+                      {cr.leftLine.replace('\n', ' ')}
+                      <div className="mentor-commit-detail-chip" style={{ borderColor: cr.accent, color: cr.accent, background: `color-mix(in srgb, ${cr.accent} 10%, transparent)` }}>
+                        <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M2 6.5L4.5 9L10 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        {cr.val}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
