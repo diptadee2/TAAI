@@ -746,10 +746,12 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .mentor-card { padding: 0; }
   .quality-left { display: none; }
   .mentor-right { padding: 24px; }
-  .mentor-commit { align-items: flex-start; cursor: pointer; }
+  .mentor-commit { align-items: center; flex-wrap: wrap; cursor: pointer; gap: 10px; }
   .mentor-commit.commit-active { transform: none; }
   .mentor-commit.commit-inactive { opacity: 0.55; }
-  .mentor-commit-num { font-size: 14px; padding-top: 3px; }
+  .mentor-commit-num { display: none; }
+  .mentor-commit-text { min-width: 0; }
+  .mentor-commit-detail { flex-basis: 100%; margin-top: 0; padding-top: 10px; }
   .disc-grid { grid-template-columns: 1fr; }
   .pricing-card { grid-template-columns: 1fr; gap: 32px; padding: 32px 24px; }
   .footer-inner { flex-direction: column; align-items: center; text-align: center; }
