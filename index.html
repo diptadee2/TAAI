@@ -925,10 +925,15 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 }
 @media (hover: none) {
   .instructor-play-btn {
-    animation: play-pulse-ring 2.2s ease-out infinite, pill-auto-expand 0.46s cubic-bezier(.34,1.08,.64,1) 1.2s forwards;
+    left: 16px; right: 16px; width: auto;
+    justify-content: space-between;
+    padding-left: 20px;
+    animation: play-pulse-ring 2.2s ease-out infinite;
   }
   .instructor-play-label {
-    animation: pill-label-reveal 0.32s cubic-bezier(.34,1.1,.64,1) 1.36s forwards;
+    opacity: 1; transform: translateX(0);
+    transition: none; animation: none;
+    letter-spacing: -.01em;
   }
   .testi-watch {
     animation: watch-pill-pulse 2.6s ease-in-out 2s infinite;
