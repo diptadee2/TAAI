@@ -105,8 +105,15 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .section-eyebrow::before { content: ''; display: inline-block; width: 20px; height: 2px; background: linear-gradient(90deg, var(--pink), var(--purple)); border-radius: 2px; }
 
 /* Fade-in */
-.fade-in { opacity: 0; transform: translateY(20px); transition: opacity .7s cubic-bezier(.4,0,.2,1), transform .7s cubic-bezier(.4,0,.2,1); }
-.fade-in.visible { opacity: 1; transform: translateY(0); }
+.fade-in { opacity: 0; transform: translateY(20px) scale(0.97); transition: opacity .7s cubic-bezier(.34,1.1,.64,1), transform .7s cubic-bezier(.34,1.1,.64,1); transition-delay: var(--delay, 0ms); }
+.fade-in.visible { opacity: 1; transform: translateY(0) scale(1); }
+@media (max-width: 768px) {
+  .fade-in { transform: translateY(36px) scale(0.96); transition-duration: .58s; }
+}
+@keyframes heroIn {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
 
 /* ── Page hero ───────────────────────────────────────── */
 .contact-hero {
@@ -400,6 +407,16 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 .mobile-menu-actions .btn-nav-signup:hover .mobile-btn-arrow, .mobile-menu-actions .btn-nav-signup:active .mobile-btn-arrow { transform: translateX(4px); }
 .mobile-menu-contact { display: flex; align-items: center; justify-content: center; gap: 7px; padding: 11px 16px; font-size: 13px; font-weight: 600; color: var(--ink-dim); text-decoration: none; border-radius: 10px; transition: color .18s, background .18s; letter-spacing: .04em; text-transform: uppercase; }
 .mobile-menu-contact:hover { color: var(--purple); background: rgba(139,92,246,0.06); }
+@media (hover: none) {
+  .channel-card:hover { transform: none; box-shadow: 0 4px 24px rgba(0,0,0,0.10); }
+  .channel-card:active { transform: scale(0.97) !important; transition-duration: .12s; }
+  .channels-sidebar .channel-card:hover { padding-bottom: 0; }
+  .channels-sidebar .channel-card .channel-detail-clip { grid-template-rows: 1fr; }
+  .channels-sidebar .channel-card .channel-detail { opacity: 1; transform: translateY(0); }
+  .offer-card:hover { transform: none; border-color: var(--line); }
+  .offer-card:hover::after { opacity: 0; transform: none; }
+  .offer-card:active { transform: scale(0.97) !important; transition-duration: .12s; }
+}
 @media (max-width: 768px) { .nav-hamburger { display: flex; } .nav-cta { display: none; } .nav-inner { height: 64px; padding: 0 14px; position: relative; justify-content: flex-end; } .mobile-menu { top: 64px; } .nav-logo { position: absolute; left: 50%; transform: translateX(-50%); } .nav-logo:hover { transform: translateX(-50%) translateY(-2px); } .nav-logo:active { transform: translateX(-50%) translateY(1px); } .nav-logo svg, .nav-logo img { width: 150px; height: auto; } .nav-hamburger span { background: var(--purple); } }
 </style>
 <script type="module" id="lyst-widgets" src="https://res-cdn-g.learnyst.com/widgets/pro/src/raven/index.js" async></script>
@@ -602,11 +619,17 @@ function Footer() {
 
 function App() {
   React.useEffect(() => {
-    const els = document.querySelectorAll('.fade-in');
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+    const mobile = window.matchMedia('(max-width: 768px)').matches;
+    const io = new IntersectionObserver(entries => {
+      const vis = entries.filter(e => e.isIntersecting);
+      vis.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+      vis.forEach((e, i) => {
+        e.target.style.setProperty('--delay', Math.min(i, 5) * (mobile ? 80 : 40) + 'ms');
+        e.target.classList.add('visible');
+        io.unobserve(e.target);
+      });
     }, { threshold: 0.12 });
-    els.forEach(el => io.observe(el));
+    document.querySelectorAll('.fade-in').forEach(el => io.observe(el));
     return () => io.disconnect();
   }, []);
 
@@ -625,9 +648,9 @@ function App() {
       {/* Hero */}
       <div className="contact-hero">
         <div className="container contact-hero-inner">
-          <div className="contact-eyebrow fade-in">Get in touch</div>
-          <h1 className="fade-in">We are here<br />to <em>help you.</em></h1>
-          <p className="contact-hero-sub fade-in">
+          <div className="contact-eyebrow" style={{ animation: 'heroIn .6s cubic-bezier(.34,1.12,.64,1) .08s both' }}>Get in touch</div>
+          <h1 style={{ animation: 'heroIn .72s cubic-bezier(.34,1.12,.64,1) .20s both' }}>We are here<br />to <em>help you.</em></h1>
+          <p className="contact-hero-sub" style={{ animation: 'heroIn .62s cubic-bezier(.34,1.12,.64,1) .34s both' }}>
             Whether it's a course question, a doubt, or just a hello — reach out through any channel and we'll get back to you fast.
           </p>
 
@@ -650,7 +673,7 @@ function App() {
             <div className="channels-sidebar">
               {channels.map((c, i) => (
                 <a key={i} href={c.href} target="_blank" rel="noopener noreferrer"
-                   className={`channel-card ${c.cls}`}>
+                   className={`channel-card ${c.cls} fade-in`}>
                   <div className="channel-card-row">
                     <div className="channel-icon">{c.icon}</div>
                     <div className="channel-name">{c.name}</div>
