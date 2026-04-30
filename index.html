@@ -254,21 +254,7 @@ body {
   font-size: 13px; font-weight: 600; color: var(--ink);
 }
 .hero-avatar:first-child { margin-left: 0; }
-.hero-rating {
-  display: flex; flex-direction: column; gap: 4px;
-  padding: 9px 13px; border-radius: 14px;
-  background: linear-gradient(135deg, rgba(245,158,11,0.08) 0%, rgba(251,191,36,0.05) 100%);
-  border: 1px solid rgba(245,158,11,0.22);
-  cursor: default;
-  transition: background .22s, border-color .22s, box-shadow .22s, transform .18s cubic-bezier(.34,1.15,.64,1);
-}
-.hero-rating:hover {
-  background: linear-gradient(135deg, rgba(245,158,11,0.14) 0%, rgba(251,191,36,0.09) 100%);
-  border-color: rgba(245,158,11,0.38);
-  box-shadow: 0 4px 18px rgba(245,158,11,0.14);
-  transform: translateY(-2px);
-}
-.hero-rating:active { transform: scale(0.97); }
+.hero-rating { display: flex; flex-direction: column; gap: 4px; cursor: default; }
 .hero-rating-top { display: flex; align-items: center; gap: 8px; }
 .hero-rating-num {
   font-family: var(--font-display); font-size: 19px; font-weight: 700;
