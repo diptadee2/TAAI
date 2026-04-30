@@ -508,18 +508,30 @@ body {
   padding: 15px 16px; border-radius: var(--radius-md);
   cursor: pointer; text-align: left; width: 100%;
   background: none; border: 1.5px solid transparent;
-  transition: background .2s, border-color .2s, box-shadow .2s, transform .18s;
-  font-family: inherit;
+  border-left: 3px solid transparent;
+  transition: background .2s, border-color .2s, box-shadow .2s, transform .22s cubic-bezier(.34,1.1,.64,1);
+  font-family: inherit; position: relative; overflow: hidden;
+  animation: tabSlideIn .38s cubic-bezier(.34,1.1,.64,1) calc(var(--i,0) * 55ms + 100ms) both;
 }
-.whyus-tab:hover { background: #fff; border-color: var(--line); }
-.whyus-tab.active { background: #fff; border-color: var(--line); box-shadow: var(--shadow-md); transform: translateX(5px); }
-.whyus-tab-icon { width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0; display: grid; place-items: center; color: #fff; transition: transform .2s; }
-.whyus-tab.active .whyus-tab-icon { transform: scale(1.1); }
+@keyframes tabSlideIn { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: translateX(0); } }
+.whyus-tab:hover { background: #fff; border-color: var(--line); border-left-color: var(--tab-color, var(--purple)); transform: translateX(3px); }
+.whyus-tab.active { background: #fff; border-color: var(--line); border-left-color: var(--tab-color, var(--purple)); box-shadow: var(--shadow-md); transform: translateX(5px); }
+.whyus-tab-icon { width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0; display: grid; place-items: center; color: #fff; transition: transform .22s cubic-bezier(.34,1.2,.64,1); }
+.whyus-tab.active .whyus-tab-icon { transform: scale(1.12) rotate(-4deg); }
+.whyus-tab:hover:not(.active) .whyus-tab-icon { transform: scale(1.06); }
 .whyus-tab-info { min-width: 0; flex: 1; }
 .whyus-tab-label { font-family: var(--font-display); font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); line-height: 1.2; }
-.whyus-tab-sub { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
-.whyus-tab-chevron { margin-left: auto; flex-shrink: 0; opacity: 0; transform: translateX(-4px); transition: opacity .2s, transform .2s; color: var(--purple); }
+.whyus-tab-sub { font-size: 12px; color: var(--ink-soft); margin-top: 2px; transition: color .2s; }
+.whyus-tab.active .whyus-tab-sub { color: var(--tab-color, var(--purple)); }
+.whyus-tab-chevron { margin-left: auto; flex-shrink: 0; opacity: 0; transform: translateX(-4px); transition: opacity .2s, transform .22s cubic-bezier(.34,1.1,.64,1); color: var(--tab-color, var(--purple)); }
 .whyus-tab.active .whyus-tab-chevron { opacity: 1; transform: translateX(0); }
+.whyus-tab-progress {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--tab-color, var(--purple)), rgba(139,92,246,0.4));
+  transform-origin: left; transform: scaleX(0);
+  animation: wyProgress var(--dur, 4500ms) linear forwards;
+}
+@keyframes wyProgress { to { transform: scaleX(1); } }
 
 .whyus-panel {
   border-radius: var(--radius-xl); background: var(--ink);
@@ -532,14 +544,18 @@ body {
 .whyus-orb2 { width: 200px; height: 200px; bottom: -60px; left: -30px; opacity: 0.14; filter: blur(56px); }
 .whyus-icon-bg { position: absolute; top: 36px; right: 36px; pointer-events: none; color: #fff; }
 .whyus-icon-bg svg { width: 108px; height: 108px; opacity: 0.05; }
-@keyframes wyIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-.whyus-content { position: relative; z-index: 1; animation: wyIn 0.32s cubic-bezier(.4,0,.2,1) both; }
+@keyframes wyIn { from { opacity: 0; transform: translateY(18px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.whyus-content { position: relative; z-index: 1; animation: wyIn .38s cubic-bezier(.34,1.1,.64,1) both; }
 .whyus-eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: .15em; text-transform: uppercase; color: rgba(255,255,255,0.38); margin-bottom: 14px; }
 .whyus-ptitle { font-family: var(--font-display); font-size: clamp(26px,3vw,40px); font-weight: 600; letter-spacing: -0.035em; line-height: 1.06; color: #fff; margin-bottom: 16px; }
 .whyus-pdesc { font-size: 15px; color: rgba(255,255,255,0.56); line-height: 1.66; margin-bottom: 32px; max-width: 400px; }
 .whyus-pstat { display: flex; align-items: baseline; gap: 10px; }
 .whyus-pstat-num { font-family: var(--font-display); font-size: 52px; font-weight: 600; letter-spacing: -0.05em; line-height: 1; }
 .whyus-pstat-lbl { font-size: 13px; color: rgba(255,255,255,0.42); }
+/* Dot indicators */
+.whyus-dots { display: flex; gap: 6px; position: absolute; bottom: 20px; right: 24px; z-index: 2; }
+.whyus-dot { width: 6px; height: 6px; border-radius: 999px; background: rgba(255,255,255,0.22); transition: background .3s, width .3s cubic-bezier(.34,1.1,.64,1); cursor: pointer; }
+.whyus-dot.active { width: 18px; background: #fff; }
 @media (max-width: 1024px) { .whyus-layout { grid-template-columns: 1fr; } }
 
 /* Results highlight row */
@@ -1477,10 +1493,11 @@ const WHY_FEATURES = [
 ];
 
 function WhyUs() {
+  const DURATION = 4500;
   const [active, setActive] = React.useState(0);
-  const [isMobile, setIsMobile] = React.useState(
-    window.matchMedia('(max-width: 1024px)').matches
-  );
+  const [paused, setPaused] = React.useState(false);
+  const [isMobile, setIsMobile] = React.useState(window.matchMedia('(max-width: 1024px)').matches);
+
   React.useEffect(() => {
     const mq = window.matchMedia('(max-width: 1024px)');
     const fn = e => setIsMobile(e.matches);
@@ -1488,6 +1505,24 @@ function WhyUs() {
     return () => mq.removeEventListener('change', fn);
   }, []);
 
+  // Auto-advance — resets whenever active changes or paused toggles
+  React.useEffect(() => {
+    if (paused || isMobile) return;
+    const id = setInterval(() => setActive(a => (a + 1) % WHY_FEATURES.length), DURATION);
+    return () => clearInterval(id);
+  }, [paused, isMobile, active]);
+
+  // Keyboard navigation
+  React.useEffect(() => {
+    const onKey = e => {
+      if (e.key === 'ArrowUp')   setActive(a => Math.max(0, a - 1));
+      if (e.key === 'ArrowDown') setActive(a => Math.min(WHY_FEATURES.length - 1, a + 1));
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const go = i => { setActive(i); setPaused(true); setTimeout(() => setPaused(false), 8000); };
   const toggle = i => setActive(prev => prev === i ? -1 : i);
   const f = WHY_FEATURES[Math.max(0, active)];
 
@@ -1519,7 +1554,7 @@ function WhyUs() {
         <div className="whyus-acc fade-in">
           {WHY_FEATURES.map((feat, i) => (
             <div key={i} className={`whyus-acc-item${active === i ? ' open' : ''}`}>
-              <button className="whyus-tab" onClick={() => toggle(i)}>
+              <button className="whyus-tab" style={{ '--tab-color': feat.color }} onClick={() => toggle(i)}>
                 <div className="whyus-tab-icon" style={{ background: feat.grad }}>{feat.icon}</div>
                 <div className="whyus-tab-info">
                   <div className="whyus-tab-label">{feat.label}</div>
@@ -1542,13 +1577,17 @@ function WhyUs() {
   );
 
   return (
-    <section className="section" id="why" style={{ background: 'var(--bg-soft)' }}>
+    <section className="section" id="why" style={{ background: 'var(--bg-soft)' }}
+      onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
       <div className="container">
         {header}
         <div className="whyus-layout fade-in">
           <div className="whyus-tabs">
             {WHY_FEATURES.map((feat, i) => (
-              <button key={i} className={`whyus-tab${active === i ? ' active' : ''}`} onClick={() => setActive(i)}>
+              <button key={i}
+                className={`whyus-tab${active === i ? ' active' : ''}`}
+                style={{ '--tab-color': feat.color, '--i': i }}
+                onClick={() => go(i)}>
                 <div className="whyus-tab-icon" style={{ background: feat.grad }}>{feat.icon}</div>
                 <div className="whyus-tab-info">
                   <div className="whyus-tab-label">{feat.label}</div>
@@ -1557,6 +1596,7 @@ function WhyUs() {
                 <svg className="whyus-tab-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
+                {active === i && <div key={`p-${active}`} className="whyus-tab-progress" style={{ '--dur': `${DURATION}ms`, animationPlayState: paused ? 'paused' : 'running' }} />}
               </button>
             ))}
           </div>
@@ -1565,6 +1605,11 @@ function WhyUs() {
             <div className="whyus-orb2" style={{ background: f.color }} />
             <div className="whyus-icon-bg">{React.cloneElement(f.icon, { style: { width: 108, height: 108 } })}</div>
             <div className="whyus-content" key={active}><PanelContent feat={f} /></div>
+            <div className="whyus-dots">
+              {WHY_FEATURES.map((_, i) => (
+                <div key={i} className={`whyus-dot${active === i ? ' active' : ''}`} onClick={() => go(i)} />
+              ))}
+            </div>
           </div>
         </div>
       </div>
