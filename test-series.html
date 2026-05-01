@@ -719,6 +719,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .ts-testi-footer { display: flex; align-items: center; gap: 10px; }
 .ts-testi-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--pink), var(--purple)); display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 12px; flex-shrink: 0; }
 .ts-testi-name { font-size: 13px; font-weight: 700; color: var(--ink); }
+.ts-testi-more { display: inline-flex; align-items: center; gap: 4px; margin-top: 20px; font-size: 13px; color: var(--purple); font-weight: 600; text-decoration: none; opacity: 0.8; transition: opacity .2s; }
+.ts-testi-more:hover { opacity: 1; }
 @media (max-width: 1024px) { .ts-testi-grid { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 768px) { .ts-testi-grid { grid-template-columns: 1fr; } }
 
@@ -1660,6 +1662,7 @@ function TSTestimonials() {
             </div>
           ))}
         </div>
+        <a href="testimonials.html" className="ts-testi-more fade-in">51+ student stories <Icon.ArrowRight /></a>
       </div>
     </section>
   );
