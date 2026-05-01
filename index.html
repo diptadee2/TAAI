@@ -427,6 +427,7 @@ body {
 .stat-num { font-family: var(--font-display); font-size: clamp(36px, 8vw, 56px); font-weight: 600; letter-spacing: -0.04em; line-height: 1; margin-bottom: 6px; }
 .stat-label { font-size: 13px; color: rgba(255,255,255,0.8); text-transform: uppercase; letter-spacing: .08em; }
 .stat-sub { font-size: 11px; color: rgba(255,255,255,0.42); letter-spacing: .05em; margin-top: 4px; font-style: italic; }
+.stats-note { text-align: center; grid-column: 1 / -1; font-size: 12px; color: rgba(255,255,255,0.35); letter-spacing: .05em; font-style: italic; margin-top: 8px; }
 
 /* Sections */
 .section { padding: var(--section-pad) 0; position: relative; }
@@ -698,6 +699,8 @@ body {
 .testimonials { position: relative; overflow: hidden; }
 .testi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; align-items: start; }
 .testi-grid .gitem { grid-column: span 2; }
+.testi-grid .testi { grid-column: span 2; }
+.testi-grid .gitem-wide { grid-column: span 4; }
 .testi {
   background: #fff;
   border-radius: var(--radius-lg); padding: 30px;
@@ -1036,6 +1039,23 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 .mobile-menu-contact { display: flex; align-items: center; justify-content: center; gap: 7px; padding: 11px 16px; font-size: 13px; font-weight: 600; color: var(--ink-dim); text-decoration: none; border-radius: 10px; transition: color .18s, background .18s; letter-spacing: .04em; text-transform: uppercase; }
 .mobile-menu-contact:hover { color: var(--purple); background: rgba(139,92,246,0.06); }
 @media (max-width: 768px) { .nav-hamburger { display: flex; } .nav-cta { display: none; } .nav-inner { height: 64px; padding: 0 14px; position: relative; justify-content: flex-end; } .mobile-menu { top: 64px; } .nav-logo { position: absolute; left: 50%; transform: translateX(-50%); } .nav-logo:hover { transform: translateX(-50%) translateY(-2px); } .nav-logo:active { transform: translateX(-50%) translateY(1px); } .nav-logo svg, .nav-logo img { width: 150px; height: auto; } .nav-hamburger span { background: var(--purple); } }
+/* ── Mobile sticky CTA ──────────────────────────────── */
+.mobile-sticky-cta { display: none; }
+@media (max-width: 768px) {
+  body { padding-bottom: 72px; }
+  .mobile-sticky-cta {
+    display: flex; align-items: center; justify-content: space-between;
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(248,246,255,0.94);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(139,92,246,0.15);
+    padding: 10px 20px calc(10px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -4px 24px rgba(20,16,43,0.08);
+  }
+  .msc-label { font-size: 13px; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
+  .msc-sub { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+  .msc-btn { flex-shrink: 0; padding: 9px 18px; font-size: 13px; gap: 5px; }
+}
 </style>
 </head>
 <body>
@@ -1354,9 +1374,9 @@ function Hero() {
 // ============ STATS ============
 function Stats() {
   const items = [
-    { num: 5,    suffix: '',  label: 'Top 50 ranks achieved',  sub: 'in 1.25 years of TAAI\'s existence' },
-    { num: 35,   suffix: '+', label: 'Top 250 ranks achieved', sub: 'in 1.25 years of TAAI\'s existence' },
-    { num: 51,   suffix: '+', label: 'Top 500 ranks achieved', sub: 'in 1.25 years of TAAI\'s existence' },
+    { num: 5,    suffix: '',  label: 'Top 50 ranks achieved' },
+    { num: 35,   suffix: '+', label: 'Top 250 ranks achieved' },
+    { num: 51,   suffix: '+', label: 'Top 500 ranks achieved' },
     { num: 1500, suffix: '+', label: 'Quality questions' }
   ];
   return (
@@ -1366,9 +1386,9 @@ function Stats() {
           <div key={i} className="stat-item fade-in">
             <div className="stat-num"><AnimatedNum to={s.num} suffix={s.suffix} /></div>
             <div className="stat-label">{s.label}</div>
-            {s.sub && <div className="stat-sub">{s.sub}</div>}
           </div>
         ))}
+        <p className="stats-note">All ranks achieved in 1.25 years of TAAI's existence.</p>
       </div>
     </section>
   );
@@ -1684,11 +1704,11 @@ function Instructor() {
 
 // ============ TESTIMONIALS ============
 const MIXED_TESTIMONIALS = [
-  { type: 'image', src: 'testimonials/15 AIR.png', air: 15 },
   { type: 'quote', air: 38, ytLink: 'https://www.youtube.com/watch?v=p5Rnv2XklDQ&list=PLZvuMBNC5r0WNKW_nqAD703PwYRd0UqQH&index=2', quote: "The most GATE DA specific practice I've found, with really excellent coverage of the content. The clarity in teaching, structured approach, and constant support from the team made all the difference. Grateful to Manoj Sir and the entire TAAI team for shaping my success.", name: 'Sanved Bangale', role: 'IIT Madras · M.Tech Data Science & AI', grad: 'linear-gradient(135deg,var(--pink),var(--purple))' },
   { type: 'quote', air: 49, ytLink: 'https://www.youtube.com/watch?v=6vQ6V39y7lA&list=PLZvuMBNC5r0WNKW_nqAD703PwYRd0UqQH&index=3', quote: "Preparing for GATE DA was tough; I wasted significant time on ineffective resources. Your course was a complete game-changer, bridging the gap between concepts and application. The intuitive approach to problem-solving transformed my understanding of Maths, making Linear Algebra and Probability my strongest areas.", name: 'Yash Raj', role: 'IIT Madras · M.Tech Data Science & AI', grad: 'linear-gradient(135deg,var(--purple),var(--blue))' },
-  { type: 'image', src: 'testimonials/23 AIR.png', air: 23, ytLink: 'https://www.youtube.com/watch?v=8wks9zdLvDc&list=PLZvuMBNC5r0WNKW_nqAD703PwYRd0UqQH&index=5&t=754s' },
-  { type: 'image', src: 'testimonials/46 AIR.png', air: 46, ytLink: 'https://www.youtube.com/watch?v=MSzQvLGT8wo&list=PLZvuMBNC5r0WNKW_nqAD703PwYRd0UqQH&index=10&t=3491s' },
+  { type: 'image', src: 'testimonials/15 AIR.webp', air: 15 },
+  { type: 'image', src: 'testimonials/23 AIR.webp', air: 23, ytLink: 'https://www.youtube.com/watch?v=8wks9zdLvDc&list=PLZvuMBNC5r0WNKW_nqAD703PwYRd0UqQH&index=5&t=754s' },
+  { type: 'image', src: 'testimonials/46 AIR.webp', air: 46, ytLink: 'https://www.youtube.com/watch?v=MSzQvLGT8wo&list=PLZvuMBNC5r0WNKW_nqAD703PwYRd0UqQH&index=10&t=3491s', wide: true },
 ];
 
 function Testimonials() {
@@ -1708,7 +1728,7 @@ function Testimonials() {
         </div>
         <div className="testi-grid fade-in">
           {MIXED_TESTIMONIALS.map((t, i) => t.type === 'image' ? (
-            <div key={i} className="gitem">
+            <div key={i} className={`gitem${t.wide ? ' gitem-wide' : ''}`}>
               <div style={{ position: 'relative' }}>
                 <img src={t.src} alt={`AIR ${t.air} GATE DA`} loading="lazy" />
                 {t.ytLink && (
@@ -1823,6 +1843,19 @@ function CTA() {
   );
 }
 
+// ============ MOBILE STICKY CTA ============
+function MobileStickyCTA() {
+  return (
+    <div className="mobile-sticky-cta">
+      <div className="msc-text">
+        <div className="msc-label">GATE DA 2027 Full Course</div>
+        <div className="msc-sub">Limited seats · Enroll now</div>
+      </div>
+      <a href="courses.html" className="btn btn-primary msc-btn">Enroll <Icon.ArrowRight /></a>
+    </div>
+  );
+}
+
 // ============ FOOTER ============
 function Footer() {
   return (
@@ -1875,6 +1908,7 @@ function App() {
       <FAQ />
       <CTA />
       <Footer />
+      <MobileStickyCTA />
     </>
   );
 }
