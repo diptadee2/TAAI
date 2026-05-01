@@ -44,7 +44,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .container { max-width: 1280px; margin: 0 auto; padding: 0 max(var(--gutter), 24px); }
 
 /* ── Nav ─────────────────────────────────────────────── */
-.nav { position: sticky; top: 0; z-index: 50; background: rgba(255,255,255,0.50); backdrop-filter: blur(20px); border-bottom: 1px solid var(--line); overflow: visible; transition: background .25s ease, backdrop-filter .25s ease; }
+.nav { position: sticky; top: 0; z-index: 50; background: rgba(255,255,255,0.50); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--line); overflow: visible; transition: background .25s ease, backdrop-filter .25s ease; }
 .nav.menu-open { background: rgba(248,246,255,0.72); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px); }
 .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 86px; padding: 0 32px 0 20px; overflow: visible; }
 .nav-logo {
