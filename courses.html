@@ -161,7 +161,9 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .page-hero { padding: 72px 0 56px; position: relative; overflow: hidden; }
 .page-hero::before { content: ''; position: absolute; top: -120px; right: -120px; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, var(--pink-soft) 0%, transparent 70%); pointer-events: none; }
 .page-hero::after { content: ''; position: absolute; bottom: -120px; left: -100px; width: 460px; height: 460px; border-radius: 50%; background: radial-gradient(circle, var(--blue-soft) 0%, transparent 70%); pointer-events: none; }
-.page-hero-inner { position: relative; z-index: 1; }
+.page-hero-inner { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
+.page-hero-left { min-width: 0; }
+.page-hero-right { min-width: 0; }
 .page-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--purple); margin-bottom: 20px; }
 .page-eyebrow::before { content: ''; display: inline-block; width: 20px; height: 2px; background: linear-gradient(90deg, var(--pink), var(--purple)); border-radius: 2px; }
 .page-hero h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(42px, 5.5vw, 80px); line-height: 0.95; letter-spacing: -0.04em; margin-bottom: 22px; }
@@ -169,8 +171,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .page-hero-sub { font-size: 19px; color: var(--ink-dim); max-width: 600px; line-height: 1.5; margin-bottom: 36px; }
 
 /* Hero proof strip */
-.hero-proof-row { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 32px; }
-.hero-proof { padding: 20px 24px; background: var(--card); border: 1px solid var(--line); border-radius: 18px; max-width: 540px; flex: 1 1 260px; transition: transform .22s cubic-bezier(.34,1.05,.64,1), box-shadow .22s ease, border-color .22s ease; cursor: default; }
+.hero-proof-row { display: flex; flex-direction: column; gap: 16px; }
+.hero-proof { padding: 20px 24px; background: var(--card); border: 1px solid var(--line); border-radius: 18px; transition: transform .22s cubic-bezier(.34,1.05,.64,1), box-shadow .22s ease, border-color .22s ease; cursor: default; }
 .hero-proof:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(139,92,246,.14), 0 4px 16px rgba(0,0,0,.06); border-color: rgba(139,92,246,.3); }
 .hero-proof-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .hero-proof-rank { font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--purple); background: var(--purple-soft); padding: 3px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: .08em; }
@@ -183,9 +185,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .hero-proof-link { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--purple); font-weight: 600; text-decoration: none; white-space: nowrap; opacity: 0.8; transition: opacity .2s; flex-shrink: 0; }
 .hero-proof-link:hover { opacity: 1; }
 @media (max-width: 768px) {
-  .hero-proof-row { flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; margin-left: calc(-1 * max(var(--gutter), 24px)); margin-right: calc(-1 * max(var(--gutter), 24px)); padding-left: max(var(--gutter), 24px); padding-right: max(var(--gutter), 24px); padding-bottom: 4px; gap: 12px; }
+  .page-hero-inner { grid-template-columns: 1fr; gap: 36px; }
+  .hero-proof-row { flex-direction: row; flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; margin-left: calc(-1 * max(var(--gutter), 24px)); margin-right: calc(-1 * max(var(--gutter), 24px)); padding-left: max(var(--gutter), 24px); padding-right: max(var(--gutter), 24px); padding-bottom: 4px; gap: 12px; }
   .hero-proof-row::-webkit-scrollbar { display: none; }
-  .hero-proof { flex: 0 0 82vw; scroll-snap-align: start; max-width: none; }
+  .hero-proof { flex: 0 0 82vw; scroll-snap-align: start; }
 }
 
 /* Section */
@@ -1350,40 +1353,44 @@ function App() {
       {/* Page hero */}
       <section className="page-hero">
         <div className="container page-hero-inner">
-          <div className="page-eyebrow">GATE DA 2027 Courses</div>
-          <h1 className="fade-in">Your career, all at<br /><em>One place.</em></h1>
-          <p className="hero-sub fade-in" style={{ fontSize: 19, color: 'var(--ink-dim)', maxWidth: 580, lineHeight: 1.5, marginBottom: 36 }}>
-            The only GATE DA prep that teaches mathematics the way the exam actually tests it — visual, conceptual, and built for DA from scratch. Not repurposed CSE content.
-          </p>
-          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }} className="fade-in">
-            <a href="#combos" className="btn btn-primary btn-lg">Bundled courses</a>
-            <a href="#individual" className="btn btn-ghost btn-lg">Individual courses</a>
-          </div>
-          <div className="hero-proof-row fade-in">
-            <div className="hero-proof">
-              <div className="hero-proof-top">
-                <div className="hero-proof-rank">AIR 91 · GATE DA 2026</div>
-                <div className="hero-proof-stars">★★★★★</div>
-              </div>
-              <p className="hero-proof-quote">"The way Manoj Sir taught Maths and ML made even tough topics feel much easier to understand. I never really felt scared of Maths or ML while preparing for the exam. The courses and guidance from TAAI played a big role in my journey."</p>
-              <div className="hero-proof-footer">
-                <div className="hero-proof-avatar">TP</div>
-                <div>
-                  <div className="hero-proof-name">Tapan Patel</div>
-                </div>
-                <a href="testimonials.html" className="hero-proof-link">51+ stories <Icon.ArrowRight /></a>
-              </div>
+          <div className="page-hero-left">
+            <div className="page-eyebrow">GATE DA 2027 Courses</div>
+            <h1 className="fade-in">Your career, all at<br /><em>One place.</em></h1>
+            <p className="hero-sub fade-in" style={{ fontSize: 19, color: 'var(--ink-dim)', maxWidth: 580, lineHeight: 1.5, marginBottom: 36 }}>
+              The only GATE DA prep that teaches mathematics the way the exam actually tests it — visual, conceptual, and built for DA from scratch. Not repurposed CSE content.
+            </p>
+            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }} className="fade-in">
+              <a href="#combos" className="btn btn-primary btn-lg">Bundled courses</a>
+              <a href="#individual" className="btn btn-ghost btn-lg">Individual courses</a>
             </div>
-            <div className="hero-proof">
-              <div className="hero-proof-top">
-                <div className="hero-proof-rank">AIR 102 · GATE DA 2026</div>
-                <div className="hero-proof-stars">★★★★★</div>
+          </div>
+          <div className="page-hero-right">
+            <div className="hero-proof-row fade-in">
+              <div className="hero-proof">
+                <div className="hero-proof-top">
+                  <div className="hero-proof-rank">AIR 91 · GATE DA 2026</div>
+                  <div className="hero-proof-stars">★★★★★</div>
+                </div>
+                <p className="hero-proof-quote">"The way Manoj Sir taught Maths and ML made even tough topics feel much easier to understand. I never really felt scared of Maths or ML while preparing for the exam. The courses and guidance from TAAI played a big role in my journey."</p>
+                <div className="hero-proof-footer">
+                  <div className="hero-proof-avatar">TP</div>
+                  <div>
+                    <div className="hero-proof-name">Tapan Patel</div>
+                  </div>
+                  <a href="testimonials.html" className="hero-proof-link">51+ stories <Icon.ArrowRight /></a>
+                </div>
               </div>
-              <p className="hero-proof-quote">"The lectures felt just right — clear, to the point, and not overloaded with unnecessary content. Concepts were explained so intuitively, with plenty of examples. Manoj Sir's personal support truly stood out and made a big difference in my learning."</p>
-              <div className="hero-proof-footer">
-                <div className="hero-proof-avatar">PR</div>
-                <div>
-                  <div className="hero-proof-name">Parinay Rana</div>
+              <div className="hero-proof">
+                <div className="hero-proof-top">
+                  <div className="hero-proof-rank">AIR 102 · GATE DA 2026</div>
+                  <div className="hero-proof-stars">★★★★★</div>
+                </div>
+                <p className="hero-proof-quote">"The lectures felt just right — clear, to the point, and not overloaded with unnecessary content. Concepts were explained so intuitively, with plenty of examples. Manoj Sir's personal support truly stood out and made a big difference in my learning."</p>
+                <div className="hero-proof-footer">
+                  <div className="hero-proof-avatar">PR</div>
+                  <div>
+                    <div className="hero-proof-name">Parinay Rana</div>
+                  </div>
                 </div>
               </div>
             </div>
