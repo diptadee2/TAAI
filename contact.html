@@ -47,8 +47,9 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .container { max-width: 1200px; margin: 0 auto; padding: 0 max(var(--gutter), 24px); }
 
 /* Nav */
-.nav { position: sticky; top: 0; z-index: 50; background: rgba(255,255,255,0.50); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--line); overflow: visible; transition: background .25s ease, backdrop-filter .25s ease; }
-.nav.menu-open { background: rgba(248,246,255,0.72); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px); }
+.nav { position: sticky; top: 0; z-index: 50; background: transparent; border-bottom: 1px solid var(--line); overflow: visible; }
+.nav::before { content: ''; position: absolute; inset: 0; background: rgba(255,255,255,0.72); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); z-index: -1; transition: background .25s ease; }
+.nav.menu-open::before { background: rgba(248,246,255,0.85); }
 .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 86px; padding: 0 32px 0 20px; overflow: visible; }
 .nav-logo { display: flex; align-items: center; text-decoration: none; transition: transform .22s ease-out, opacity .22s ease; }
 .nav-logo svg, .nav-logo img { width: 180px; height: auto; }
