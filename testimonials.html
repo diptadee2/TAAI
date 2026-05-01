@@ -60,9 +60,9 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .nav-logo:hover::after { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
 }
 .nav-links { display: flex; gap: 36px; font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; position: relative;}
-.nav-links a { color: var(--ink-dim); text-decoration: none; transition: color .2s; position: relative; z-index: 1; cursor: pointer; }
+.nav-links a { color: var(--ink-dim); text-decoration: none; transition: color .2s, transform .3s cubic-bezier(.34,1.1,.64,1); position: relative; z-index: 1; cursor: pointer; display: inline-block; }
 .nav-links a::after { content: ''; position: absolute; inset: -14px -10px; z-index: 0; }
-.nav-links a:hover, .nav-links a.active { color: var(--purple); }
+.nav-links a:hover, .nav-links a.active { color: var(--purple); transform: scale(1.08) translateY(-1px); }
 .nav-pill {
   position: absolute; top: 50%; transform: translateY(-50%);
   height: 34px; border-radius: 10px; pointer-events: none; z-index: 0;
@@ -103,14 +103,34 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   50% { opacity: 0.35; transform: translateX(10px); }
 }
 .nav-cta { display: flex; gap: 10px; align-items: center; }
-.btn-nav-signin { display: inline-flex; align-items: center; padding: 10px 22px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; background: rgba(139,92,246,0.07); color: var(--ink); border: 1px solid rgba(139,92,246,0.22); backdrop-filter: blur(10px) saturate(150%); -webkit-backdrop-filter: blur(10px) saturate(150%); box-shadow: 0 1px 2px rgba(139,92,246,0.06), inset 0 1px 0 rgba(255,255,255,0.7); transition: background .2s, transform .18s, box-shadow .2s; white-space: nowrap; }
-.btn-nav-signin:hover { background: rgba(139,92,246,0.13); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(139,92,246,0.15), inset 0 1px 0 rgba(255,255,255,0.7); }
-.btn-nav-signup { display: inline-flex; align-items: center; padding: 10px 22px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; background: linear-gradient(160deg, rgba(147,105,255,0.92), rgba(107,75,255,0.88)); color: #fff; border: 1px solid rgba(255,255,255,0.22); backdrop-filter: blur(10px) saturate(140%); -webkit-backdrop-filter: blur(10px) saturate(140%); box-shadow: 0 2px 10px rgba(107,75,255,0.28), inset 0 1px 0 rgba(255,255,255,0.28); transition: transform .18s, box-shadow .2s; white-space: nowrap; }
-.btn-nav-signup:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(107,75,255,0.38), inset 0 1px 0 rgba(255,255,255,0.28); }
-.btn-nav-contact { font-size: 14px; font-weight: 500; color: var(--ink-dim); text-decoration: none; padding: 10px 20px; border-radius: 8px; background: none; border: none; box-shadow: none; transition: color .2s, transform .18s; white-space: nowrap; }
-.btn-nav-contact:hover { color: var(--purple); background: rgba(139,92,246,0.07); transform: translateY(-1px); }
+.btn-nav-signin { display: inline-flex; align-items: center; padding: 10px 22px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; background: rgba(139,92,246,0.07); color: var(--ink); border: 1px solid rgba(139,92,246,0.22); backdrop-filter: blur(10px) saturate(150%); -webkit-backdrop-filter: blur(10px) saturate(150%); box-shadow: 0 1px 2px rgba(139,92,246,0.06), inset 0 1px 0 rgba(255,255,255,0.7); transition: background .2s, transform .32s cubic-bezier(.34,1.1,.64,1), box-shadow .2s, backdrop-filter .2s; white-space: nowrap; }
+.btn-nav-signin:hover { background: rgba(139,92,246,0.13); transform: scale(1.06) translateY(-1px); backdrop-filter: blur(18px) saturate(220%) brightness(1.04); -webkit-backdrop-filter: blur(18px) saturate(220%) brightness(1.04); box-shadow: 0 6px 20px rgba(139,92,246,0.18), inset 0 1px 0 rgba(255,255,255,0.85), 0 0 0 1px rgba(139,92,246,0.12); }
+.btn-nav-signup { display: inline-flex; align-items: center; padding: 10px 22px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; background: linear-gradient(160deg, rgba(147,105,255,0.92), rgba(107,75,255,0.88)); color: #fff; border: 1px solid rgba(255,255,255,0.22); backdrop-filter: blur(10px) saturate(140%); -webkit-backdrop-filter: blur(10px) saturate(140%); box-shadow: 0 2px 10px rgba(107,75,255,0.28), inset 0 1px 0 rgba(255,255,255,0.28); transition: transform .32s cubic-bezier(.34,1.1,.64,1), box-shadow .2s; white-space: nowrap; }
+.btn-nav-signup:hover { transform: scale(1.06) translateY(-1px); box-shadow: 0 8px 24px rgba(107,75,255,0.45), inset 0 1px 0 rgba(255,255,255,0.36); }
+.btn-nav-contact { font-size: 14px; font-weight: 500; color: var(--ink-dim); text-decoration: none; padding: 10px 20px; border-radius: 8px; background: none; border: none; box-shadow: none; transition: color .2s, transform .32s cubic-bezier(.34,1.1,.64,1), background .2s; white-space: nowrap; }
+.btn-nav-contact:hover { color: var(--purple); background: rgba(139,92,246,0.07); transform: scale(1.06) translateY(-1px); }
 .phone-icon { display: inline-flex; align-items: center; margin-right: 5px; transform-origin: 50% 55%; }
 .btn-nav-contact:hover .phone-icon { animation: phone-ring 0.52s ease-in-out; }
+.nav-cta .btn-nav-signin,
+.nav-cta .btn-nav-signup,
+.nav-cta .btn-nav-contact { position: relative; overflow: hidden; }
+.nav-cta .btn-nav-signin::before,
+.nav-cta .btn-nav-signup::before,
+.nav-cta .btn-nav-contact::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(108deg, transparent 20%, rgba(255,255,255,0.42) 48%, rgba(210,195,255,0.25) 56%, transparent 74%);
+  transform: translateX(-120%) skewX(-12deg);
+  pointer-events: none;
+  border-radius: inherit;
+  transition: none;
+}
+.nav-cta .btn-nav-signin:hover::before,
+.nav-cta .btn-nav-signup:hover::before,
+.nav-cta .btn-nav-contact:hover::before {
+  transform: translateX(220%) skewX(-12deg);
+  transition: transform .52s cubic-bezier(.2,.8,.4,1);
+}
 @keyframes phone-ring {
   0%,100% { transform: rotate(0); }
   12%     { transform: rotate(-22deg); }
