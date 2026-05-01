@@ -349,7 +349,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 
 /* Responsive */
 @media (max-width: 1024px) {
-  .channel-grid { grid-template-columns: repeat(2, 1fr); }
+  .channel-grid { grid-template-columns: repeat(3, 1fr); }
   .offer-grid { grid-template-columns: repeat(2, 1fr); }
   .cta-banner { padding: 48px 40px; }
 }
@@ -360,7 +360,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .contact-hero { padding: 44px 0 40px; }
   .contact-hero h1 { font-size: clamp(36px, 9vw, 52px); }
   .contact-hero-sub { font-size: 16px; margin-bottom: 28px; }
-  .channel-grid { grid-template-columns: 1fr; }
+  .channel-grid { grid-template-columns: repeat(2, 1fr); }
   .offer-grid { grid-template-columns: 1fr; }
   .nav-links { display: none; }
   .cta-banner { flex-direction: column; align-items: flex-start; padding: 40px 28px; }
@@ -637,6 +637,14 @@ function Footer() {
   );
 }
 
+const CHANNELS = [
+  { cls: 'ch-email',    icon: <Icon.Mail />,     label: 'Email',     name: 'support@taai.live',   detail: 'For detailed queries, billing, or anything that needs a paper trail.',                   cta: 'Send an email',   href: 'mailto:support@taai.live' },
+  { cls: 'ch-whatsapp', icon: <Icon.WhatsApp />, label: 'WhatsApp',  name: '+91 90885 53305',     detail: "Fastest way to reach us. Drop a message and we'll reply in minutes.",                   cta: 'Chat now',        href: 'https://wa.me/9088553305' },
+  { cls: 'ch-discord',  icon: <Icon.Discord />,  label: 'Discord',   name: 'Discord',             detail: 'Join 700+ GATE aspirants. Mentors are active around the clock.',                       cta: 'Join server',     href: 'https://discord.com/invite/AwZqYz9wvK' },
+  { cls: 'ch-telegram', icon: <Icon.Telegram />, label: 'Telegram',  name: 'Telegram',            detail: 'Announcements, free resources, and study material drops.',                             cta: 'Open channel',    href: 'https://t.me/ManojGateDA' },
+  { cls: 'ch-linkedin', icon: <Icon.LinkedIn />, label: 'LinkedIn',  name: 'LinkedIn',            detail: 'Follow us for company updates, placement success stories, and industry news.',         cta: 'Follow us',       href: 'https://www.linkedin.com/company/taai-gate-da-placements/?viewAsMember=true' },
+];
+
 function App() {
   React.useEffect(() => {
     const mobile = window.matchMedia('(max-width: 768px)').matches;
@@ -653,14 +661,6 @@ function App() {
     return () => io.disconnect();
   }, []);
 
-  const channels = [
-    { cls: 'ch-email', icon: <Icon.Mail />, label: 'Email', name: 'support@taai.live', detail: 'For detailed queries, billing, or anything that needs a paper trail.', cta: 'Send an email', href: 'mailto:support@taai.live' },
-    { cls: 'ch-whatsapp', icon: <Icon.WhatsApp />, label: 'WhatsApp', name: '+91 90885 53305', detail: 'Fastest way to reach us. Drop a message and we\'ll reply in minutes.', cta: 'Chat now', href: 'https://wa.me/9088553305' },
-    { cls: 'ch-discord', icon: <Icon.Discord />, label: 'Discord', name: 'Discord', detail: 'Join 700+ GATE aspirants. Mentors are active around the clock.', cta: 'Join server', href: 'https://discord.com/invite/AwZqYz9wvK' },
-    { cls: 'ch-telegram', icon: <Icon.Telegram />, label: 'Telegram', name: 'Telegram', detail: 'Announcements, free resources, and study material drops.', cta: 'Open channel', href: 'https://t.me/ManojGateDA' },
-    { cls: 'ch-linkedin', icon: <Icon.LinkedIn />, label: 'LinkedIn', name: 'LinkedIN', detail: 'Follow us for company updates, placement success stories, and industry news.', cta: 'Follow us', href: 'https://www.linkedin.com/company/taai-gate-da-placements/?viewAsMember=true' },
-  ];
-
   return (
     <>
       <Nav />
@@ -673,43 +673,35 @@ function App() {
           <p className="contact-hero-sub" style={{ animation: 'heroIn .62s cubic-bezier(.34,1.12,.64,1) .34s both' }}>
             Whether it's a course question, a doubt, or just a hello — reach out through any channel and we'll get back to you fast.
           </p>
-
-
+          <div className="channel-grid" style={{ marginTop: 48 }}>
+            {CHANNELS.map((c, i) => (
+              <a key={i} href={c.href} target="_blank" rel="noopener noreferrer"
+                 className={`channel-card ${c.cls}`}
+                 style={{ animation: `heroIn .62s cubic-bezier(.34,1.12,.64,1) ${0.44 + i * 0.08}s both` }}>
+                <div className="channel-icon">{c.icon}</div>
+                <div className="channel-label">{c.label}</div>
+                <div className="channel-name">{c.name}</div>
+                <div className="channel-detail">{c.detail}</div>
+                <div className="channel-cta">{c.cta} <Icon.ArrowRight /></div>
+              </a>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Form + channels side by side */}
+      {/* Contact form */}
       <section className="section">
         <div className="container">
           <div style={{ marginBottom: 36 }}>
-            <div className="section-eyebrow fade-in">Get in touch</div>
             <h2 className="fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(26px,3vw,42px)', fontWeight: 600, letterSpacing: '-0.03em', lineHeight: 1.05, marginBottom: 8 }}>
-              Have queries?<br /><em style={{ fontStyle: 'normal', background: 'linear-gradient(120deg,var(--pink),var(--purple))', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>We'll reach out to you.</em>
+              Have a query?<br /><em style={{ fontStyle: 'normal', background: 'linear-gradient(120deg,var(--pink),var(--purple))', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>We'll reach out to you.</em>
             </h2>
             <p className="fade-in" style={{ fontSize: 15, color: 'var(--ink-dim)', lineHeight: 1.6 }}>Fill in your details and we'll get back to you within a few hours.</p>
           </div>
-          <div className="contact-main-grid">
-            <ContactForm />
-            <div className="channels-sidebar">
-              {channels.map((c, i) => (
-                <a key={i} href={c.href} target="_blank" rel="noopener noreferrer"
-                   className={`channel-card ${c.cls} fade-in`}>
-                  <div className="channel-card-row">
-                    <div className="channel-icon">{c.icon}</div>
-                    <div className="channel-name">{c.name}</div>
-                    <div className="channel-cta">{c.cta} <Icon.ArrowRight /></div>
-                  </div>
-                  <div className="channel-detail-clip">
-                    <div className="channel-detail">{c.detail}</div>
-                  </div>
-                </a>
-              ))}
-            </div>
-          </div>
+          <ContactForm />
         </div>
       </section>
 
-      <Offers />
       <CtaBanner />
       <Footer />
     </>
