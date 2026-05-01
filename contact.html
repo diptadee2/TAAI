@@ -47,9 +47,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .container { max-width: 1200px; margin: 0 auto; padding: 0 max(var(--gutter), 24px); }
 
 /* Nav */
-.nav { position: sticky; top: 0; z-index: 50; background: transparent; border-bottom: 1px solid var(--line); overflow: visible; }
-.nav-bg { position: absolute; inset: 0; background: rgba(255,255,255,0.72); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); z-index: 0; transition: background .25s ease; }
-.nav.menu-open .nav-bg { background: rgba(248,246,255,0.85); }
+.nav { position: sticky; top: 0; z-index: 50; background: rgba(255,255,255,0.80); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); -webkit-transform: translateZ(0); transform: translateZ(0); border-bottom: 1px solid var(--line); overflow: visible; }
+.nav.menu-open { background: rgba(248,246,255,0.92); }
 .nav-inner { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; height: 86px; padding: 0 32px 0 20px; overflow: visible; }
 .nav-logo { display: flex; align-items: center; text-decoration: none; transition: transform .22s ease-out, opacity .22s ease; }
 .nav-logo svg, .nav-logo img { width: 180px; height: auto; }
@@ -538,7 +537,6 @@ function Nav() {
   return (
     <>
     <nav className={`nav${menuOpen ? ' menu-open' : ''}`}>
-      <div className="nav-bg" />
       <div className="nav-inner" onMouseLeave={reset}>
         <a href="index.html" className="nav-logo"><TAAILogo /></a>
         <div className="nav-links" ref={linksRef}>
