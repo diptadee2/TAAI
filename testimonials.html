@@ -186,6 +186,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .strip-num { font-family: var(--font-display); font-size: clamp(36px, 5vw, 56px); font-weight: 600; letter-spacing: -0.04em; line-height: 1; margin-bottom: 8px; }
 .strip-label { font-size: 12px; color: rgba(255,255,255,0.72); text-transform: uppercase; letter-spacing: .1em; }
 .strip-sub { font-size: 11px; color: rgba(255,255,255,0.42); letter-spacing: .05em; margin-top: 4px; font-style: italic; }
+.strip-note { text-align: center; font-size: 12px; color: rgba(255,255,255,0.38); letter-spacing: .05em; font-style: italic; margin-top: 20px; padding: 0 20px; }
 
 /* ── Section base ────────────────────────────────────── */
 .section { padding: var(--section-pad) 0; }
@@ -350,13 +351,28 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .testi-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
 .testi-rank-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--purple-soft); color: var(--purple); font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: .06em; padding: 5px 12px; border-radius: 999px; width: fit-content; }
 .testi-rank-badge span { font-family: var(--font-display); font-size: 18px; font-weight: 700; }
-.testi-stars { display: flex; gap: 3px; }
-.testi-star { color: #F59E0B; font-size: 14px; }
 .testi-quote { font-size: 14px; line-height: 1.7; color: var(--ink-dim); font-style: italic; flex: 1; }
 .testi-author { display: flex; align-items: center; gap: 12px; padding-top: 4px; border-top: 1px solid var(--line); }
 .testi-avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; flex-shrink: 0; }
 .testi-name { font-weight: 600; font-size: 14px; color: var(--ink); }
 .testi-role { font-size: 12px; color: var(--ink-soft); margin-top: 1px; }
+
+/* ── Video thumbnails ────────────────────────────────── */
+.vthumb-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.vthumb-header-label { font-size: 12px; font-weight: 700; color: var(--ink-dim); text-transform: uppercase; letter-spacing: .09em; }
+.vthumb-header-all { font-size: 13px; color: var(--purple); font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: color .2s; }
+.vthumb-header-all:hover { color: var(--pink); }
+.vthumb-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.vthumb { text-decoration: none; color: inherit; display: block; }
+.vthumb-wrap { position: relative; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 16/9; }
+.vthumb-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .4s ease, opacity .3s ease; opacity: 0.9; }
+.vthumb:hover .vthumb-wrap img { transform: scale(1.04); opacity: 0.72; }
+.vthumb-play-overlay { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0; transition: opacity .25s ease; }
+.vthumb:hover .vthumb-play-overlay { opacity: 1; }
+.vthumb-info { padding: 10px 2px 0; }
+.vthumb-air-badge { font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--purple); background: var(--purple-soft); padding: 2px 8px; border-radius: 999px; display: inline-block; margin-bottom: 5px; }
+.vthumb-name { font-size: 13px; font-weight: 600; color: var(--ink); display: block; }
+.vthumb-batch { font-size: 12px; color: var(--ink-soft); display: block; margin-top: 1px; }
 
 /* ── Video CTA ───────────────────────────────────────── */
 .video-cta { background: var(--bg-soft); border-radius: var(--radius-xl); padding: 56px 48px; display: flex; align-items: center; justify-content: space-between; gap: 40px; border: 1px solid var(--line); }
@@ -410,6 +426,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 /* ── Responsive ──────────────────────────────────────── */
 @media (max-width: 1024px) {
   .featured-grid { grid-template-columns: 1fr; }
+  .vthumb-grid { grid-template-columns: 1fr 1fr; }
   .testi-grid { grid-template-columns: 1fr 1fr; }
   .video-cta { flex-direction: column; align-items: flex-start; }
   .video-cta-right { align-items: flex-start; }
@@ -424,6 +441,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .nav-links { display: none; }
   .btn-nav-contact { display: none; }
   .testi-grid { grid-template-columns: 1fr; }
+  .vthumb-grid { grid-template-columns: 1fr; }
   .strip-grid { grid-template-columns: repeat(3,1fr); gap: 0; }
   .strip-item { padding: 0 16px; }
   .hero-stats { gap: 20px; }
@@ -733,14 +751,6 @@ const TESTIMONIALS_2025 = [
   },
 ];
 
-function Stars() {
-  return (
-    <div className="testi-stars">
-      {[1,2,3,4,5].map(i => <span key={i} className="testi-star">★</span>)}
-    </div>
-  );
-}
-
 function initials(name) {
   return name.split(' ').map(n => n[0]).slice(0,2).join('');
 }
@@ -764,9 +774,9 @@ function Hero() {
 // ── Stats Strip ──────────────────────────────────────────────────
 function Strip() {
   const items = [
-    { to: 5,  suffix: '',  label: 'Top 50 ranks',  sub: 'in 1.25 years of TAAI\'s existence' },
-    { to: 35, suffix: '+', label: 'Top 250 ranks', sub: 'in 1.25 years of TAAI\'s existence' },
-    { to: 51, suffix: '+', label: 'Top 500 ranks', sub: 'in 1.25 years of TAAI\'s existence' },
+    { to: 5,  suffix: '',  label: 'Top 50 ranks' },
+    { to: 35, suffix: '+', label: 'Top 250 ranks' },
+    { to: 51, suffix: '+', label: 'Top 500 ranks' },
   ];
   return (
     <div className="strip">
@@ -775,10 +785,10 @@ function Strip() {
           <div key={i} className="strip-item fade-in" style={{ '--delay': `${i * 110}ms`, '--ty': '20px' }}>
             <div className="strip-num"><AnimatedNum to={s.to} suffix={s.suffix} /></div>
             <div className="strip-label">{s.label}</div>
-            {s.sub && <div className="strip-sub">{s.sub}</div>}
           </div>
         ))}
       </div>
+      <p className="strip-note">All ranks achieved in 1.25 years of TAAI's existence.</p>
     </div>
   );
 }
@@ -791,7 +801,7 @@ function ThisYearGallery() {
         <div className="fade-in section-header">
           <div className="section-eyebrow">GATE DA 2026 · Latest Batch</div>
           <h2 className="section-h2">
-            This year's<br /><em>results speak.</em>
+            GATE DA 2026 —<br /><em>results speak.</em>
           </h2>
         </div>
         <div className="gallery-masonry">
@@ -834,9 +844,9 @@ function PreviousBatch() {
           <div className="result-hero fade-in">
             <div className="result-hero-num">2.5</div>
             <div className="result-hero-text">
-              <div className="result-hero-eyebrow">The TAAI edge</div>
-              <div className="result-hero-label">months of focused<br />training.</div>
-              <div className="result-hero-sub">From zero to IIT, IISc, and NIT — in under three months of structured, concept-first preparation.</div>
+              <div className="result-hero-eyebrow">GATE DA 2025 batch</div>
+              <div className="result-hero-label">months from zero<br />to IIT.</div>
+              <div className="result-hero-sub">From course start to GATE DA 2025 exam — students went from zero to IIT, IISc, and NIT in under three months of structured, concept-first prep.</div>
             </div>
           </div>
           <div className="results-row">
@@ -878,6 +888,37 @@ function PreviousBatch() {
           ))}
         </div>
 
+        <div style={{ marginTop: 56 }} className="fade-in">
+          <div className="vthumb-header">
+            <span className="vthumb-header-label">Watch their stories</span>
+            <a href="https://www.youtube.com/playlist?list=PLZvuMBNC5r0WNKW_nqAD703PwYRd0UqQH" target="_blank" rel="noopener noreferrer" className="vthumb-header-all">View all <Icon.ArrowRight /></a>
+          </div>
+          <div className="vthumb-grid">
+            {[
+              { air: 38, name: 'Sanved Bangale', batch: 'GATE DA 2025 · IIT Madras',   id: 'p5Rnv2XklDQ', href: 'https://www.youtube.com/watch?v=p5Rnv2XklDQ&list=PLZvuMBNC5r0WNKW_nqAD703PwYRd0UqQH&index=2' },
+              { air: 49, name: 'Yash Raj',       batch: 'GATE DA 2025 · IIT Madras',   id: '6vQ6V39y7lA', href: 'https://www.youtube.com/watch?v=6vQ6V39y7lA&list=PLZvuMBNC5r0WNKW_nqAD703PwYRd0UqQH&index=3' },
+              { air: 23, name: 'Suryamani',      batch: 'GATE DA 2026',                id: '8wks9zdLvDc', href: 'https://www.youtube.com/watch?v=8wks9zdLvDc&list=PLZvuMBNC5r0WNKW_nqAD703PwYRd0UqQH&index=5&t=754s' },
+            ].map((v, i) => (
+              <a key={i} href={v.href} target="_blank" rel="noopener noreferrer" className="vthumb">
+                <div className="vthumb-wrap">
+                  <img src={`https://img.youtube.com/vi/${v.id}/hqdefault.jpg`} alt={`AIR ${v.air} interview`} loading="lazy" />
+                  <div className="vthumb-play-overlay">
+                    <svg width="80" height="56" viewBox="0 0 90 63" fill="none">
+                      <rect x="0" y="0" width="90" height="63" rx="14" fill="#FF0000" fillOpacity="0.92"/>
+                      <polygon points="36,18 66,31.5 36,45" fill="#FFFFFF"/>
+                    </svg>
+                  </div>
+                </div>
+                <div className="vthumb-info">
+                  <span className="vthumb-air-badge">AIR {v.air}</span>
+                  <span className="vthumb-name">{v.name}</span>
+                  <span className="vthumb-batch">{v.batch}</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+
         <div className="batch-divider" style={{ marginTop: 64 }}>
           <div className="batch-divider-line" />
           <div className="batch-divider-label">More Stories</div>
@@ -887,10 +928,7 @@ function PreviousBatch() {
         <div className="testi-grid">
           {TESTIMONIALS_2025.map((t, i) => (
             <div key={i} className="testi-card card fade-in" style={{ '--delay': `${(i % 3) * 100}ms` }}>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
-                <div className="testi-rank-badge">AIR <span>{t.air}</span></div>
-                <Stars />
-              </div>
+              <div className="testi-rank-badge">AIR <span>{t.air}</span></div>
               <p className="testi-quote">"{t.quote}"</p>
               <div className="testi-author">
                 <div className="testi-avatar" style={{ background: t.grad }}>{initials(t.name)}</div>
