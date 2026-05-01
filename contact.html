@@ -181,14 +181,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .ch-telegram::after { background: var(--blue); }
 .ch-linkedin::after { background: #0A66C2; }
 
-/* Glass shine */
-.channel-card::before {
-  content: ''; position: absolute; inset: -60% -40%; pointer-events: none; z-index: 1;
-  background: linear-gradient(112deg, transparent 28%, rgba(255,255,255,0.04) 40%, rgba(255,255,255,0.10) 50%, rgba(255,255,255,0.04) 60%, transparent 72%);
-  transform: translateX(-110%) translateY(55%);
-  transition: transform 0s;
-}
-.channel-card:hover::before { transform: translateX(110%) translateY(-55%); transition: transform 1s cubic-bezier(.25,.46,.45,.94); }
 
 .channel-icon {
   width: 48px; height: 48px; border-radius: 14px;
