@@ -644,14 +644,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .mentor-commit-label { font-size: 13.5px; font-weight: 600; color: rgba(255,255,255,0.82); }
 .mentor-commit-sub { font-size: 11.5px; color: rgba(255,255,255,0.36); margin-top: 2px; }
 .mentor-commit-num { font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: -0.04em; color: var(--lilac); flex-shrink: 0; }
-.mentor-commit-progress {
-  position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
-  background: linear-gradient(90deg, var(--commit-color, var(--purple)), rgba(139,92,246,0.3));
-  transform-origin: left; transform: scaleX(0);
-  animation: commitProgress var(--dur, 3500ms) linear forwards;
-  border-radius: 0 0 14px 14px;
-}
-@keyframes commitProgress { to { transform: scaleX(1); } }
 @keyframes commitDetailIn {
   from { opacity: 0; transform: translateY(8px) scale(0.98); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
@@ -1228,7 +1220,7 @@ function AnimatedNum({ to, suffix = '', duration = 1400 }) {
 function Strip() {
   const items = [
     { to: 67,   suffix: '',  label: 'Total tests',       sub: '45 topic · 10 subject · 12 full-length' },
-    { to: 1500, suffix: '+', label: 'Questions',          sub: 'all with text & video solutions' },
+    { to: 1500, suffix: '+', label: 'Questions',          sub: 'curated for GATE DA' },
     { to: 3,    suffix: '',  label: 'Test formats',       sub: 'topic · subject · full-length mock' },
     { to: 100,  suffix: '%', label: 'GATE DA syllabus',   sub: 'every topic covered' },
   ];
@@ -1589,10 +1581,6 @@ function Quality() {
                     <div className="mentor-commit-sub">{cr.sub}</div>
                   </div>
                   <div className="mentor-commit-num" style={{ fontSize:13, letterSpacing:0, color: cr.accent }}>{cr.val}</div>
-                  {i === active && !isMobile && (
-                    <div key={`p-${active}`} className="mentor-commit-progress"
-                      style={{ '--dur': `${DURATION}ms`, animationPlayState: paused ? 'paused' : 'running' }} />
-                  )}
                   {i === active && isMobile && (
                     <div key={`d-${active}`} className="mentor-commit-detail">
                       {cr.leftLine.replace('\n', ' ')}
