@@ -44,7 +44,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .container { max-width: 1280px; margin: 0 auto; padding: 0 max(var(--gutter), 24px); }
 
 /* ── Nav ─────────────────────────────────────────────── */
-.nav { position: sticky; top: 0; z-index: 50; background: rgba(255,255,255,0.80); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); -webkit-transform: translateZ(0); transform: translateZ(0); border-bottom: 1px solid var(--line); overflow: visible; }
+.nav { position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: rgba(255,255,255,0.80); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); border-bottom: 1px solid var(--line); overflow: visible; }
+.nav-spacer { height: 86px; }
 .nav.menu-open { background: rgba(248,246,255,0.92); }
 .nav-inner { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; height: 86px; padding: 0 32px 0 20px; overflow: visible; }
 .nav-logo {
@@ -527,7 +528,7 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 .mobile-menu-actions .btn-nav-signup:hover .mobile-btn-arrow, .mobile-menu-actions .btn-nav-signup:active .mobile-btn-arrow { transform: translateX(4px); }
 .mobile-menu-contact { display: flex; align-items: center; justify-content: center; gap: 7px; padding: 11px 16px; font-size: 13px; font-weight: 600; color: var(--ink-dim); text-decoration: none; border-radius: 10px; transition: color .18s, background .18s; letter-spacing: .04em; text-transform: uppercase; }
 .mobile-menu-contact:hover { color: var(--purple); background: rgba(139,92,246,0.06); }
-@media (max-width: 768px) { .nav-hamburger { display: flex; } .nav-cta { display: none; } .nav-inner { height: 64px; padding: 0 14px; position: relative; justify-content: flex-end; } .mobile-menu { top: 64px; } .nav-logo { position: absolute; left: 50%; transform: translateX(-50%); } .nav-logo:hover { transform: translateX(-50%) translateY(-2px); } .nav-logo:active { transform: translateX(-50%) translateY(1px); } .nav-logo svg, .nav-logo img { width: 150px; height: auto; } .nav-hamburger span { background: var(--purple); } }
+@media (max-width: 768px) { .nav-hamburger { display: flex; } .nav-cta { display: none; } .nav-inner { height: 64px; padding: 0 14px; position: relative; justify-content: flex-end; } .mobile-menu { top: 64px; } .nav-spacer { height: 64px; } .nav-logo { position: absolute; left: 50%; transform: translateX(-50%); } .nav-logo:hover { transform: translateX(-50%) translateY(-2px); } .nav-logo:active { transform: translateX(-50%) translateY(1px); } .nav-logo svg, .nav-logo img { width: 150px; height: auto; } .nav-hamburger span { background: var(--purple); } }
 </style>
 </head>
 <body>
@@ -1015,6 +1016,7 @@ function App() {
   return (
     <>
       <Nav />
+      <div className="nav-spacer" />
       <Hero />
       <Strip />
       <ThisYearGallery />
