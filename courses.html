@@ -168,6 +168,18 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .page-hero h1 em { font-style: normal; background: linear-gradient(120deg, var(--pink) 0%, var(--purple) 50%, var(--blue) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .page-hero-sub { font-size: 19px; color: var(--ink-dim); max-width: 600px; line-height: 1.5; margin-bottom: 36px; }
 
+/* Hero proof strip */
+.hero-proof { display: flex; align-items: center; gap: 16px; margin-top: 32px; padding: 14px 18px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; width: fit-content; max-width: 100%; }
+.hero-proof-thumb { width: 58px; height: 58px; border-radius: 10px; overflow: hidden; flex-shrink: 0; box-shadow: 0 4px 16px rgba(139,92,246,0.18); }
+.hero-proof-thumb img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
+.hero-proof-text { display: flex; flex-direction: column; gap: 1px; }
+.hero-proof-rank { font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--purple); text-transform: uppercase; letter-spacing: .08em; }
+.hero-proof-name { font-size: 14px; font-weight: 700; color: var(--ink); }
+.hero-proof-inst { font-size: 12px; color: var(--ink-soft); }
+.hero-proof-link { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--purple); font-weight: 600; text-decoration: none; margin-top: 6px; opacity: 0.8; transition: opacity .2s; }
+.hero-proof-link:hover { opacity: 1; }
+@media (max-width: 480px) { .hero-proof { padding: 12px 14px; gap: 12px; } .hero-proof-thumb { width: 48px; height: 48px; } }
+
 /* Section */
 .section { padding: var(--section-pad) 0; }
 .section-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--purple); margin-bottom: 16px; }
@@ -397,6 +409,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .combo-price-old { font-size: 15px; color: var(--ink-soft); text-decoration: line-through; }
 .combo-card.featured .combo-price-old { color: rgba(255,255,255,0.36); }
 .combo-discount { font-size: 11px; font-weight: 700; color: #fff; background: linear-gradient(135deg, var(--pink), var(--purple)); padding: 4px 10px; border-radius: 999px; }
+.combo-saving { font-size: 12px; color: var(--ink-soft); margin-bottom: 16px; font-style: italic; }
+.combo-card.featured .combo-saving { color: rgba(255,255,255,0.46); }
 .combo-card .btn { position: relative; z-index: 1; }
 .combo-num {
   position: absolute; top: 22px; right: 24px; z-index: 0;
@@ -898,6 +912,7 @@ const COMBOS = [
     title: 'GATE 2027 Full Course',
     validity: 'VALID UNTIL GATE 2027',
     price: '₹11,999', priceOld: '₹14,999', discount: '20% off',
+    saving: '5 courses cost ₹11,495 individually — ₹504 more gets you test series, live sessions & notes',
     includes: [
       'Complete GATE DA syllabus',
       'Linear Algebra, Probability, Statistics, Calculus',
@@ -917,6 +932,7 @@ const COMBOS = [
     title: 'Mathematics & ML Bundle',
     validity: 'VALID UNTIL FEB 20, 2027',
     price: '₹7,999', priceOld: '₹9,999', discount: '20% off',
+    saving: 'Save ₹3,496 vs buying all 5 courses individually',
     includes: [
       'Linear Algebra',
       'Probability',
@@ -934,6 +950,7 @@ const COMBOS = [
     title: 'Mathematics Bundle',
     validity: 'VALID UNTIL FEB 20, 2027',
     price: '₹5,999', priceOld: '₹7,499', discount: '20% off',
+    saving: 'Save ₹1,497 vs buying all 4 maths courses individually',
     includes: [
       'Linear Algebra',
       'Probability',
@@ -1034,6 +1051,7 @@ function ComboCard({ c }) {
         {c.priceOld && <div className="combo-price-old">{c.priceOld}</div>}
         {c.discount && <div className="combo-discount">{c.discount}</div>}
       </div>
+      {c.saving && <div className="combo-saving">{c.saving}</div>}
       <a href={c.href} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-full">Enrol now <Icon.ArrowRight /></a>
     </div>
   );
@@ -1246,9 +1264,9 @@ function Faculty() {
       <div className="container">
         <div className="section-eyebrow fade-in">Faculty</div>
         <h2 className="fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 12 }}>
-          Know your <em>instructors</em>
+          Taught by <em>GATE toppers</em>
         </h2>
-        <p className="section-sub fade-in">Every topic covered by a specialist — not a generalist.</p>
+        <p className="section-sub fade-in">AIR 13 and AIR 94 — they've cracked the exam, now they teach it.</p>
         <div className="faculty-grid fade-in" ref={gridRef}>
 
           <div className="faculty-card faculty-primary">
@@ -1334,11 +1352,22 @@ function App() {
           <div className="page-eyebrow">GATE DA 2027 Courses</div>
           <h1 className="fade-in">Your career, all at<br /><em>One place.</em></h1>
           <p className="hero-sub fade-in" style={{ fontSize: 19, color: 'var(--ink-dim)', maxWidth: 580, lineHeight: 1.5, marginBottom: 36 }}>
-            Conceptual, visualized, GATE-relevant. From individual subjects to the full course — pick what fits your prep. All by Manoj Sir.
+            The only GATE DA prep that teaches mathematics the way the exam actually tests it — visual, conceptual, and built for DA from scratch. Not repurposed CSE content.
           </p>
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }} className="fade-in">
             <a href="#combos" className="btn btn-primary btn-lg">Bundled courses</a>
             <a href="#individual" className="btn btn-ghost btn-lg">Individual courses</a>
+          </div>
+          <div className="hero-proof fade-in">
+            <div className="hero-proof-thumb">
+              <img src="testimonials/91 AIR.webp" alt="AIR 91 GATE DA 2026" loading="lazy" />
+            </div>
+            <div className="hero-proof-text">
+              <div className="hero-proof-rank">AIR 91 · GATE DA 2026</div>
+              <div className="hero-proof-name">Tapan Patel</div>
+              <div className="hero-proof-inst">IIT Madras · M.Tech Data Science & AI</div>
+              <a href="testimonials.html" className="hero-proof-link">51+ more success stories <Icon.ArrowRight /></a>
+            </div>
           </div>
         </div>
       </section>
