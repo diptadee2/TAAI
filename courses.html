@@ -715,6 +715,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .compare-enroll-btn:hover { background: rgba(0,0,0,0.88); transform: scale(1.04); }
 .compare-enroll-btn.featured { background: var(--purple); }
 .compare-enroll-btn.featured:hover { background: var(--pink); }
+.compare-val-text { font-size: 11px; font-weight: 600; color: var(--ink-dim); display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.compare-val-note { font-size: 9px; font-weight: 700; letter-spacing: .04em; background: rgba(139,92,246,0.13); color: var(--purple); padding: 2px 7px; border-radius: 999px; white-space: nowrap; }
 @media (max-width: 768px) {
   .compare-table { min-width: 420px; }
   .compare-head { grid-template-columns: 1.3fr repeat(3, 1fr); }
@@ -1137,6 +1139,7 @@ function BundleComparison() {
     { label: 'Weekly quizzes',                       full: true,  ml: true,  maths: true,  group: 'Study Materials' },
     { label: 'Live doubt sessions with Manoj Sir',   full: true,  ml: false, maths: false, group: 'Support'         },
     { label: 'Discord community support',            full: true,  ml: true,  maths: true,  group: 'Support'         },
+    { label: 'Valid until', fullText: 'Mar 20, 2027', mlText: 'Feb 15, 2027', mathsText: 'Feb 15, 2027', fullNote: '+1 month', group: 'Support' },
   ];
   const Yes = () => (
     <span className="compare-yes">
@@ -1203,9 +1206,9 @@ function BundleComparison() {
                 rows.push(
                   <div key={i} className={`compare-row${i % 2 === 0 ? ' zebra' : ''}`}>
                     <div className="compare-cell feat-name">{f.label}</div>
-                    <div className="compare-cell featured">{f.full ? <Yes /> : <No />}</div>
-                    <div className="compare-cell">{f.ml ? <Yes /> : <No />}</div>
-                    <div className="compare-cell">{f.maths ? <Yes /> : <No />}</div>
+                    <div className="compare-cell featured">{f.fullText ? <span className="compare-val-text">{f.fullText}{f.fullNote && <span className="compare-val-note">{f.fullNote}</span>}</span> : (f.full ? <Yes /> : <No />)}</div>
+                    <div className="compare-cell">{f.mlText ? <span className="compare-val-text">{f.mlText}</span> : (f.ml ? <Yes /> : <No />)}</div>
+                    <div className="compare-cell">{f.mathsText ? <span className="compare-val-text">{f.mathsText}</span> : (f.maths ? <Yes /> : <No />)}</div>
                   </div>
                 );
               });
