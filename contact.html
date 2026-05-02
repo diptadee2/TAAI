@@ -52,7 +52,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .nav.menu-open { background: rgba(248,246,255,0.82); }
 .nav-inner { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; height: 86px; padding: 0 32px 0 20px; overflow: visible; }
 .nav-logo { display: flex; align-items: center; text-decoration: none; transition: transform .22s ease-out, opacity .22s ease; }
-.nav-logo svg, .nav-logo img { width: 180px; height: auto; }
+.nav-logo svg, .nav-logo img { width: 180px; height: auto; filter: drop-shadow(0 0 6px rgba(255,255,255,0.9)) drop-shadow(0 0 14px rgba(255,255,255,0.6)); }
 .nav-logo:hover { transform: translateY(-2px); opacity: 0.82; }
 .nav-logo:active { transform: translateY(1px); opacity: 1; transition-duration: .08s; }
 @media (hover: hover) {
