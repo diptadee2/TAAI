@@ -1138,23 +1138,23 @@ function BundleComparison() {
         <div className="compare-table">
           <div className="compare-head">
             <div className="compare-head-cell" />
-            <div className="compare-head-cell">Maths<br/>Bundle</div>
-            <div className="compare-head-cell">Maths &amp; ML<br/>Bundle</div>
             <div className="compare-head-cell featured">Full Course<br/><span>Best value</span></div>
+            <div className="compare-head-cell">Maths &amp; ML<br/>Bundle</div>
+            <div className="compare-head-cell">Maths<br/>Bundle</div>
           </div>
           {features.map((f, i) => (
             <div key={i} className="compare-row">
               <div className="compare-cell feat-name">{f.label}</div>
-              <div className="compare-cell">{f.maths ? <Yes /> : <No />}</div>
-              <div className="compare-cell">{f.ml ? <Yes /> : <No />}</div>
               <div className="compare-cell featured">{f.full ? <Yes /> : <No />}</div>
+              <div className="compare-cell">{f.ml ? <Yes /> : <No />}</div>
+              <div className="compare-cell">{f.maths ? <Yes /> : <No />}</div>
             </div>
           ))}
           <div className="compare-footer">
             <div className="compare-footer-cell" />
-            <div className="compare-footer-cell"><span className="compare-price">₹5,999</span></div>
-            <div className="compare-footer-cell"><span className="compare-price">₹7,999</span></div>
             <div className="compare-footer-cell featured"><span className="compare-price best">₹11,999</span></div>
+            <div className="compare-footer-cell"><span className="compare-price">₹7,999</span></div>
+            <div className="compare-footer-cell"><span className="compare-price">₹5,999</span></div>
           </div>
         </div>
       </div>
