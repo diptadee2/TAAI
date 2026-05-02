@@ -707,8 +707,12 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .compare-footer-cell.featured { background: rgba(139,92,246,0.07); }
 .compare-price { font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: -0.03em; color: var(--ink); }
 .compare-price.best { color: var(--purple); }
-.compare-group-header { display: grid; grid-template-columns: 1.8fr repeat(3, 1fr); background: rgba(139,92,246,0.09); border-top: 2px solid rgba(139,92,246,0.22); }
-.compare-group-label { padding: 8px 16px 8px 14px; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--purple); position: sticky; left: 0; background: rgba(139,92,246,0.09); border-left: 3px solid var(--purple); }
+.compare-group-header { display: grid; grid-template-columns: 1.8fr repeat(3, 1fr); background: rgba(139,92,246,0.09); border-top: 2px solid rgba(139,92,246,0.22); cursor: pointer; user-select: none; }
+.compare-group-header:hover { background: rgba(139,92,246,0.14); }
+.compare-group-header:hover .compare-group-label { background: rgba(139,92,246,0.14); }
+.compare-group-label { padding: 8px 16px 8px 14px; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--purple); position: sticky; left: 0; background: rgba(139,92,246,0.09); border-left: 3px solid var(--purple); display: flex; align-items: center; justify-content: space-between; gap: 8px; transition: background .15s; }
+.compare-group-chevron { flex-shrink: 0; transition: transform .22s ease; color: var(--purple); opacity: 0.7; }
+.compare-group-chevron.collapsed { transform: rotate(-90deg); }
 .compare-row.zebra { background: rgba(0,0,0,0.018); }
 .compare-row.zebra .compare-cell.feat-name { background: #f9f9fc; }
 .compare-enroll-btn { display: inline-block; padding: 7px 16px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-align: center; text-decoration: none; background: rgba(0,0,0,0.72); color: #fff; transition: background .18s, transform .15s; white-space: nowrap; }
@@ -1151,6 +1155,8 @@ function BundleComparison() {
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
     </span>
   );
+  const [collapsed, setCollapsed] = React.useState({});
+  const toggleGroup = g => setCollapsed(c => ({ ...c, [g]: !c[g] }));
   const scrollRef = React.useRef(null);
   const [showBtn, setShowBtn] = React.useState(true);
   React.useEffect(() => {
@@ -1193,24 +1199,32 @@ function BundleComparison() {
             {(() => {
               const rows = [];
               let lastGroup = null;
+              const Chevron = ({ g }) => (
+                <svg className={`compare-group-chevron${collapsed[g] ? ' collapsed' : ''}`} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 9l6 6 6-6"/>
+                </svg>
+              );
               features.forEach((f, i) => {
                 if (f.group !== lastGroup) {
                   lastGroup = f.group;
+                  const g = f.group;
                   rows.push(
-                    <div key={`grp-${f.group}`} className="compare-group-header">
-                      <div className="compare-group-label">{f.group}</div>
+                    <div key={`grp-${g}`} className="compare-group-header" onClick={() => toggleGroup(g)}>
+                      <div className="compare-group-label">{g}<Chevron g={g} /></div>
                       <div /><div /><div />
                     </div>
                   );
                 }
-                rows.push(
-                  <div key={i} className={`compare-row${i % 2 === 0 ? ' zebra' : ''}`}>
-                    <div className="compare-cell feat-name">{f.label}</div>
-                    <div className="compare-cell featured">{f.fullText ? <span className="compare-val-text">{f.fullText}{f.fullNote && <span className="compare-val-note">{f.fullNote}</span>}</span> : (f.full ? <Yes /> : <No />)}</div>
-                    <div className="compare-cell">{f.mlText ? <span className="compare-val-text">{f.mlText}</span> : (f.ml ? <Yes /> : <No />)}</div>
-                    <div className="compare-cell">{f.mathsText ? <span className="compare-val-text">{f.mathsText}</span> : (f.maths ? <Yes /> : <No />)}</div>
-                  </div>
-                );
+                if (!collapsed[f.group]) {
+                  rows.push(
+                    <div key={i} className={`compare-row${i % 2 === 0 ? ' zebra' : ''}`}>
+                      <div className="compare-cell feat-name">{f.label}</div>
+                      <div className="compare-cell featured">{f.fullText ? <span className="compare-val-text">{f.fullText}{f.fullNote && <span className="compare-val-note">{f.fullNote}</span>}</span> : (f.full ? <Yes /> : <No />)}</div>
+                      <div className="compare-cell">{f.mlText ? <span className="compare-val-text">{f.mlText}</span> : (f.ml ? <Yes /> : <No />)}</div>
+                      <div className="compare-cell">{f.mathsText ? <span className="compare-val-text">{f.mathsText}</span> : (f.maths ? <Yes /> : <No />)}</div>
+                    </div>
+                  );
+                }
               });
               return rows;
             })()}
