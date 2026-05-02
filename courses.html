@@ -702,21 +702,31 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .compare-yes { color: var(--purple); display: flex; }
 .compare-no { color: var(--line); display: flex; opacity: 0.45; }
 .compare-footer { display: grid; grid-template-columns: 1.8fr repeat(3, 1fr); border-top: 1.5px solid var(--line); background: var(--bg-soft); }
-.compare-footer-cell { padding: 16px; display: flex; align-items: center; justify-content: center; }
+.compare-footer-cell { padding: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
 .compare-footer-cell:first-child { position: sticky; left: 0; background: var(--bg-soft); z-index: 1; }
 .compare-footer-cell.featured { background: rgba(139,92,246,0.07); }
 .compare-price { font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: -0.03em; color: var(--ink); }
 .compare-price.best { color: var(--purple); }
+.compare-group-header { display: grid; grid-template-columns: 1.8fr repeat(3, 1fr); background: rgba(139,92,246,0.04); border-top: 1.5px solid var(--line); }
+.compare-group-label { padding: 6px 16px; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); position: sticky; left: 0; background: rgba(139,92,246,0.04); }
+.compare-row.zebra { background: rgba(0,0,0,0.018); }
+.compare-row.zebra .compare-cell.feat-name { background: #f9f9fc; }
+.compare-enroll-btn { display: inline-block; padding: 7px 16px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-align: center; text-decoration: none; background: rgba(0,0,0,0.72); color: #fff; transition: background .18s, transform .15s; white-space: nowrap; }
+.compare-enroll-btn:hover { background: rgba(0,0,0,0.88); transform: scale(1.04); }
+.compare-enroll-btn.featured { background: var(--purple); }
+.compare-enroll-btn.featured:hover { background: var(--pink); }
 @media (max-width: 768px) {
   .compare-table { min-width: 420px; }
   .compare-head { grid-template-columns: 1.3fr repeat(3, 1fr); }
   .compare-row { grid-template-columns: 1.3fr repeat(3, 1fr); }
+  .compare-group-header { grid-template-columns: 1.3fr repeat(3, 1fr); }
   .compare-footer { grid-template-columns: 1.3fr repeat(3, 1fr); }
   .compare-head-cell { padding: 12px 10px; font-size: 10px; }
   .compare-cell { padding: 10px 10px; font-size: 12px; }
   .compare-cell.feat-name { font-size: 12px; }
-  .compare-footer-cell { padding: 12px 10px; }
+  .compare-footer-cell { padding: 12px 8px; gap: 8px; }
   .compare-price { font-size: 17px; }
+  .compare-enroll-btn { font-size: 10px; padding: 6px 10px; }
 }
 
 @media (max-width: 1024px) {
@@ -1113,20 +1123,20 @@ const INCLUDED = [
 
 function BundleComparison() {
   const features = [
-    { label: 'Linear Algebra',                       full: true,  ml: true,  maths: true  },
-    { label: 'Probability',                          full: true,  ml: true,  maths: true  },
-    { label: 'Statistics',                           full: true,  ml: true,  maths: true  },
-    { label: 'Calculus',                             full: true,  ml: true,  maths: true  },
-    { label: 'Machine Learning',                     full: true,  ml: true,  maths: false },
-    { label: 'Artificial Intelligence',              full: true,  ml: false, maths: false },
-    { label: 'DBMS',                                 full: true,  ml: false, maths: false },
-    { label: 'Data Structures',                      full: true,  ml: false, maths: false },
-    { label: 'Algorithms',                           full: true,  ml: false, maths: false },
-    { label: 'GATE-level question bank (1,500+)',    full: true,  ml: false, maths: false },
-    { label: 'Live doubt sessions with Manoj Sir',   full: true,  ml: false, maths: false },
-    { label: 'Handwritten notes + video solutions',  full: true,  ml: false, maths: false },
-    { label: 'Discord community support',            full: true,  ml: true,  maths: true  },
-    { label: 'Weekly quizzes',                        full: true,  ml: true,  maths: true  },
+    { label: 'Linear Algebra',                       full: true,  ml: true,  maths: true,  group: 'Subjects'        },
+    { label: 'Probability',                          full: true,  ml: true,  maths: true,  group: 'Subjects'        },
+    { label: 'Statistics',                           full: true,  ml: true,  maths: true,  group: 'Subjects'        },
+    { label: 'Calculus',                             full: true,  ml: true,  maths: true,  group: 'Subjects'        },
+    { label: 'Machine Learning',                     full: true,  ml: true,  maths: false, group: 'Subjects'        },
+    { label: 'Artificial Intelligence',              full: true,  ml: false, maths: false, group: 'Subjects'        },
+    { label: 'DBMS',                                 full: true,  ml: false, maths: false, group: 'Subjects'        },
+    { label: 'Data Structures',                      full: true,  ml: false, maths: false, group: 'Subjects'        },
+    { label: 'Algorithms',                           full: true,  ml: false, maths: false, group: 'Subjects'        },
+    { label: 'GATE-level question bank (1,500+)',    full: true,  ml: false, maths: false, group: 'Study Materials' },
+    { label: 'Handwritten notes + video solutions',  full: true,  ml: false, maths: false, group: 'Study Materials' },
+    { label: 'Weekly quizzes',                       full: true,  ml: true,  maths: true,  group: 'Study Materials' },
+    { label: 'Live doubt sessions with Manoj Sir',   full: true,  ml: false, maths: false, group: 'Support'         },
+    { label: 'Discord community support',            full: true,  ml: true,  maths: true,  group: 'Support'         },
   ];
   const Yes = () => (
     <span className="compare-yes">
@@ -1177,19 +1187,44 @@ function BundleComparison() {
               <div className="compare-head-cell">Maths &amp; ML<br/>Bundle</div>
               <div className="compare-head-cell">Maths<br/>Bundle</div>
             </div>
-            {features.map((f, i) => (
-              <div key={i} className="compare-row">
-                <div className="compare-cell feat-name">{f.label}</div>
-                <div className="compare-cell featured">{f.full ? <Yes /> : <No />}</div>
-                <div className="compare-cell">{f.ml ? <Yes /> : <No />}</div>
-                <div className="compare-cell">{f.maths ? <Yes /> : <No />}</div>
-              </div>
-            ))}
+            {(() => {
+              const rows = [];
+              let lastGroup = null;
+              features.forEach((f, i) => {
+                if (f.group !== lastGroup) {
+                  lastGroup = f.group;
+                  rows.push(
+                    <div key={`grp-${f.group}`} className="compare-group-header">
+                      <div className="compare-group-label">{f.group}</div>
+                      <div /><div /><div />
+                    </div>
+                  );
+                }
+                rows.push(
+                  <div key={i} className={`compare-row${i % 2 === 0 ? ' zebra' : ''}`}>
+                    <div className="compare-cell feat-name">{f.label}</div>
+                    <div className="compare-cell featured">{f.full ? <Yes /> : <No />}</div>
+                    <div className="compare-cell">{f.ml ? <Yes /> : <No />}</div>
+                    <div className="compare-cell">{f.maths ? <Yes /> : <No />}</div>
+                  </div>
+                );
+              });
+              return rows;
+            })()}
             <div className="compare-footer">
               <div className="compare-footer-cell" />
-              <div className="compare-footer-cell featured"><span className="compare-price best">₹11,999</span></div>
-              <div className="compare-footer-cell"><span className="compare-price">₹7,999</span></div>
-              <div className="compare-footer-cell"><span className="compare-price">₹5,999</span></div>
+              <div className="compare-footer-cell featured">
+                <span className="compare-price best">₹11,999</span>
+                <a href="https://www.taai.live/learn/batch/GATE-2027?calendarInitialView=dayGridWeek" target="_blank" rel="noopener noreferrer" className="compare-enroll-btn featured">Enrol now</a>
+              </div>
+              <div className="compare-footer-cell">
+                <span className="compare-price">₹7,999</span>
+                <a href="https://www.taai.live/learn/Maths--ML---AI-Bundle---GATE-2026" target="_blank" rel="noopener noreferrer" className="compare-enroll-btn">Enrol now</a>
+              </div>
+              <div className="compare-footer-cell">
+                <span className="compare-price">₹5,999</span>
+                <a href="https://www.taai.live/learn/Mathematics-Course-by-manoj-sir-gate-2026-gateda" target="_blank" rel="noopener noreferrer" className="compare-enroll-btn">Enrol now</a>
+              </div>
             </div>
           </div>
         </div>
