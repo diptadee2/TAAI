@@ -1150,7 +1150,19 @@ function BundleComparison() {
   }, []);
   const scrollRight = () => {
     const el = scrollRef.current;
-    if (el) el.scrollBy({ left: 160, behavior: 'smooth' });
+    if (!el) return;
+    const start = el.scrollLeft;
+    const distance = el.scrollWidth - el.clientWidth - start;
+    if (distance <= 0) return;
+    const duration = 420;
+    const t0 = performance.now();
+    const ease = t => 1 - Math.pow(1 - t, 3);
+    const step = now => {
+      const p = Math.min((now - t0) / duration, 1);
+      el.scrollLeft = start + distance * ease(p);
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
   };
   return (
     <div className="compare-wrap fade-in">
