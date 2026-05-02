@@ -680,7 +680,12 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 /* Bundle comparison */
 .compare-wrap { margin-top: 44px; }
 .compare-label { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 16px; }
-.compare-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--radius-xl); border: 1px solid var(--line); }
+.compare-outer { position: relative; border-radius: var(--radius-xl); border: 1px solid var(--line); }
+.compare-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--radius-xl); scrollbar-width: none; }
+.compare-scroll::-webkit-scrollbar { display: none; }
+.compare-hint { position: absolute; top: 0; right: 0; bottom: 0; width: 56px; background: linear-gradient(to right, transparent, rgba(255,255,255,0.96)); border-radius: 0 var(--radius-xl) var(--radius-xl) 0; pointer-events: none; transition: opacity .3s ease; display: none; }
+.compare-hint.visible { display: block; }
+@media (max-width: 768px) { .compare-hint { display: none; } .compare-hint.visible { display: block; } }
 .compare-table { min-width: 540px; }
 .compare-head { display: grid; grid-template-columns: 1.8fr repeat(3, 1fr); background: var(--bg-soft); border-bottom: 1px solid var(--line); }
 .compare-head-cell { padding: 14px 16px; font-size: 11px; font-weight: 700; text-align: center; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); line-height: 1.4; }
@@ -1131,32 +1136,46 @@ function BundleComparison() {
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
     </span>
   );
+  const scrollRef = React.useRef(null);
+  const [showHint, setShowHint] = React.useState(false);
+  React.useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const check = () => setShowHint(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+    check();
+    el.addEventListener('scroll', check, { passive: true });
+    window.addEventListener('resize', check, { passive: true });
+    return () => { el.removeEventListener('scroll', check); window.removeEventListener('resize', check); };
+  }, []);
   return (
     <div className="compare-wrap fade-in">
       <div className="compare-label">What's included in each bundle</div>
-      <div className="compare-scroll">
-        <div className="compare-table">
-          <div className="compare-head">
-            <div className="compare-head-cell" />
-            <div className="compare-head-cell featured">Full Course<br/><span>Best value</span></div>
-            <div className="compare-head-cell">Maths &amp; ML<br/>Bundle</div>
-            <div className="compare-head-cell">Maths<br/>Bundle</div>
-          </div>
-          {features.map((f, i) => (
-            <div key={i} className="compare-row">
-              <div className="compare-cell feat-name">{f.label}</div>
-              <div className="compare-cell featured">{f.full ? <Yes /> : <No />}</div>
-              <div className="compare-cell">{f.ml ? <Yes /> : <No />}</div>
-              <div className="compare-cell">{f.maths ? <Yes /> : <No />}</div>
+      <div className="compare-outer">
+        <div className="compare-scroll" ref={scrollRef}>
+          <div className="compare-table">
+            <div className="compare-head">
+              <div className="compare-head-cell" />
+              <div className="compare-head-cell featured">Full Course<br/><span>Best value</span></div>
+              <div className="compare-head-cell">Maths &amp; ML<br/>Bundle</div>
+              <div className="compare-head-cell">Maths<br/>Bundle</div>
             </div>
-          ))}
-          <div className="compare-footer">
-            <div className="compare-footer-cell" />
-            <div className="compare-footer-cell featured"><span className="compare-price best">₹11,999</span></div>
-            <div className="compare-footer-cell"><span className="compare-price">₹7,999</span></div>
-            <div className="compare-footer-cell"><span className="compare-price">₹5,999</span></div>
+            {features.map((f, i) => (
+              <div key={i} className="compare-row">
+                <div className="compare-cell feat-name">{f.label}</div>
+                <div className="compare-cell featured">{f.full ? <Yes /> : <No />}</div>
+                <div className="compare-cell">{f.ml ? <Yes /> : <No />}</div>
+                <div className="compare-cell">{f.maths ? <Yes /> : <No />}</div>
+              </div>
+            ))}
+            <div className="compare-footer">
+              <div className="compare-footer-cell" />
+              <div className="compare-footer-cell featured"><span className="compare-price best">₹11,999</span></div>
+              <div className="compare-footer-cell"><span className="compare-price">₹7,999</span></div>
+              <div className="compare-footer-cell"><span className="compare-price">₹5,999</span></div>
+            </div>
           </div>
         </div>
+        <div className={`compare-hint${showHint ? ' visible' : ''}`} />
       </div>
     </div>
   );
