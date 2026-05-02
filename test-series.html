@@ -1361,7 +1361,7 @@ const BARS = [32,55,70,44,85,60,40,76];
 function Features() {
   const [qs, setQs] = React.useState(() => [...PALETTE_QS]);
   const [rankHov, setRankHov] = React.useState(false);
-  const [rankNum, setRankNum] = React.useState(847);
+  const [rankNum, setRankNum] = React.useState(47);
   const rankRaf = React.useRef(null);
   const [vidPct, setVidPct] = React.useState(0);
   const vidTimer = React.useRef(null);
@@ -1379,8 +1379,8 @@ function Features() {
 
   React.useEffect(() => {
     if (rankRaf.current) cancelAnimationFrame(rankRaf.current);
-    if (!rankHov) { setRankNum(847); return; }
-    const START = 3200, END = 847, DURATION = 1400;
+    if (!rankHov) { setRankNum(47); return; }
+    const START = 3200, END = 47, DURATION = 1400;
     const t0 = performance.now();
     const step = (now) => {
       const p = Math.min((now - t0) / DURATION, 1);
