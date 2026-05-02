@@ -183,13 +183,14 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .hero-proof-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--pink), var(--purple)); display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 12px; flex-shrink: 0; }
 .hero-proof-name { font-size: 13px; font-weight: 700; color: var(--ink); }
 .hero-proof-inst { font-size: 12px; color: var(--ink-soft); margin-top: 1px; }
-.hero-proof-link { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--purple); font-weight: 600; text-decoration: none; white-space: nowrap; opacity: 0.8; transition: opacity .2s; flex-shrink: 0; }
+.hero-proof-link { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--purple); font-weight: 600; text-decoration: none; white-space: nowrap; opacity: 0.8; transition: opacity .2s; margin-top: 12px; }
 .hero-proof-link:hover { opacity: 1; }
 @media (max-width: 768px) {
   .page-hero-inner { grid-template-columns: 1fr; gap: 36px; }
   .hero-proof-row { flex-direction: row; flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; margin-left: calc(-1 * max(var(--gutter), 24px)); margin-right: calc(-1 * max(var(--gutter), 24px)); padding-left: max(var(--gutter), 24px); padding-right: max(var(--gutter), 24px); padding-bottom: 4px; gap: 12px; }
   .hero-proof-row::-webkit-scrollbar { display: none; }
   .hero-proof { flex: 0 0 82vw; scroll-snap-align: start; }
+  .hero-proof-link { display: flex; justify-content: center; margin-top: 16px; }
 }
 
 /* Section */
@@ -1393,8 +1394,8 @@ function App() {
                   </div>
                 </div>
               </div>
-              <a href="testimonials.html" className="hero-proof-link" style={{ alignSelf: 'flex-start' }}>See all student stories <Icon.ArrowRight /></a>
             </div>
+            <a href="testimonials.html" className="hero-proof-link">See all student stories <Icon.ArrowRight /></a>
           </div>
         </div>
       </section>
