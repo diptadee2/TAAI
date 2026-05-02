@@ -681,7 +681,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .compare-wrap { margin-top: 44px; }
 .compare-label { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 16px; }
 .compare-outer { position: relative; border-radius: var(--radius-xl); border: 1px solid var(--line); overflow: hidden; }
-.compare-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--radius-xl); scrollbar-width: none; }
+.compare-scroll { overflow-x: auto; scroll-behavior: smooth; border-radius: var(--radius-xl); scrollbar-width: none; }
 .compare-scroll::-webkit-scrollbar { display: none; }
 .compare-scroll-btn { position: absolute; right: 12px; top: 50%; transform: translateY(-50%) scale(0.85); width: 44px; height: 44px; border-radius: 50%; background: var(--purple); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; box-shadow: 0 4px 16px rgba(107,75,255,0.35); opacity: 0; pointer-events: none; transition: opacity .25s ease, transform .25s ease; }
 .compare-scroll-btn.visible { opacity: 1; pointer-events: auto; transform: translateY(-50%) scale(1); }
@@ -1171,19 +1171,7 @@ function BundleComparison() {
   }, []);
   const scrollRight = () => {
     const el = scrollRef.current;
-    if (!el) return;
-    const start = el.scrollLeft;
-    const distance = el.scrollWidth - el.clientWidth - start;
-    if (distance <= 0) return;
-    const duration = 420;
-    const t0 = performance.now();
-    const ease = t => 1 - Math.pow(1 - t, 3);
-    const step = now => {
-      const p = Math.min((now - t0) / duration, 1);
-      el.scrollLeft = start + distance * ease(p);
-      if (p < 1) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
+    if (el) el.scrollTo({ left: el.scrollWidth - el.clientWidth });
   };
   return (
     <div className="compare-wrap fade-in">
