@@ -1546,19 +1546,11 @@ const QUALITY_CRITERIA = [
 ];
 
 function Quality() {
-  const DURATION = 3500;
   const [active, setActive] = React.useState(0);
-  const [paused, setPaused] = React.useState(false);
   const isMobile = window.matchMedia('(max-width: 768px)').matches;
   const c = QUALITY_CRITERIA[active];
 
-  const go = i => { setActive(i); setPaused(true); setTimeout(() => setPaused(false), 7000); };
-
-  React.useEffect(() => {
-    if (paused) return;
-    const id = setInterval(() => setActive(a => (a + 1) % QUALITY_CRITERIA.length), DURATION);
-    return () => clearInterval(id);
-  }, [paused, active]);
+  const go = i => setActive(i);
 
   return (
     <section className="section">
@@ -1568,9 +1560,7 @@ function Quality() {
           If it's not GATE-level,<br /><em>it doesn't ship.</em>
         </h2>
         <p className="section-sub fade-in">Every question is benchmarked against real GATE DA papers — the same difficulty, the same style, the same pressure you'll face on exam day.</p>
-        <div className="mentor-card fade-in"
-          onMouseEnter={() => setPaused(true)}
-          onMouseLeave={() => setPaused(false)}>
+        <div className="mentor-card fade-in">
           <div className="quality-left">
             <div className="quality-icon-circle" key={active} style={{ background: c.color, boxShadow: `0 12px 40px ${c.glow}` }}>
               {React.createElement(Icon[c.icon])}
@@ -1645,9 +1635,10 @@ function TSTestimonials() {
     <section className="section" style={{ paddingTop: 0 }}>
       <div className="container">
         <div className="section-eyebrow fade-in">What students say</div>
-        <h2 className="fade-in" style={{ fontFamily:'var(--font-display)', fontSize:'clamp(30px,3.8vw,52px)', fontWeight:600, letterSpacing:'-0.035em', lineHeight:1, marginBottom:12 }}>
-          Ranked.<br /><em>By students who used it.</em>
+        <h2 className="fade-in" style={{ fontFamily:'var(--font-display)', fontSize:'clamp(30px,3.8vw,52px)', fontWeight:600, letterSpacing:'-0.035em', lineHeight:1, marginBottom:16 }}>
+          From AIRs,<br /><em>not ads.</em>
         </h2>
+        <p className="section-sub fade-in" style={{ marginBottom: 0 }}>These aren't cherry-picked reviews. AIR 46, 51, and 84 in GATE DA 2026 — in their own words.</p>
         <div className="ts-testi-grid">
           {TS_TESTIS.map((t, i) => (
             <div key={i} className="ts-testi-card fade-in" style={{ '--delay': `${i * 100}ms` }}>
