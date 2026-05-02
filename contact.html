@@ -406,6 +406,13 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   animation: yt-wiggle 0.6s cubic-bezier(.4,0,.2,1);
 }
+/* ── Menu overlay ───────────────────────────────────── */
+.menu-overlay { display: none; }
+@media (max-width: 768px) {
+  .menu-overlay { display: block; position: fixed; inset: 0; z-index: 48; background: rgba(14,10,35,0.52); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); opacity: 0; pointer-events: none; transition: opacity .3s ease; }
+  .menu-overlay.open { opacity: 1; pointer-events: auto; }
+}
+
 /* ── Mobile hamburger menu ──────────────────────────── */
 .nav-hamburger { display: none; flex-direction: column; gap: 5px; align-items: center; justify-content: center; width: 40px; height: 40px; border: none; background: none; cursor: pointer; border-radius: 8px; transition: background .2s; flex-shrink: 0; padding: 0; }
 .nav-hamburger:hover { background: rgba(139,92,246,0.08); }
@@ -537,6 +544,7 @@ function Nav() {
   }, [menuOpen]);
   return (
     <>
+      <div className={`menu-overlay${menuOpen ? ' open' : ''}`} onClick={() => setMenuOpen(false)} />
     <nav className={`nav${menuOpen ? ' menu-open' : ''}`}>
       <div className="nav-inner" onMouseLeave={reset}>
         <a href="index.html" className="nav-logo"><TAAILogo /></a>
