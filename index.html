@@ -1107,7 +1107,7 @@ const MENU_ICONS = {
 };
 
 function TAAILogo() {
-  return <img src="logo.png" alt="TAAI" width="645" height="387" />;
+  return <img src="logo.png" alt="TAAI" />;
 }
 
 function Nav() {
@@ -1672,7 +1672,7 @@ function Instructor() {
       <div className="container">
         <div className="instructor-grid">
           <div className="instructor-photo-wrap fade-in">
-            <img src="manoj-kumar.webp" alt="Manoj Kumar — TAAI" className="instructor-photo" width="2676" height="1568" />
+            <img src="manoj-kumar.webp" alt="Manoj Kumar — TAAI" className="instructor-photo" />
             <a href="https://www.youtube.com/watch?v=Rppm3LrbLOI&t=5372s" target="_blank" rel="noopener noreferrer" className="instructor-play-btn">
               <span className="instructor-play-label">Free Probability Crash Course</span>
               <span className="instructor-play-icon">
@@ -1738,7 +1738,7 @@ function Testimonials() {
           {MIXED_TESTIMONIALS.map((t, i) => t.type === 'image' ? (
             <div key={i} className={`gitem${t.wide ? ' gitem-wide' : ''}`}>
               <div style={{ position: 'relative' }}>
-                <img src={t.src} alt={`AIR ${t.air} GATE DA`} loading="lazy" width="1024" height="1024" />
+                <img src={t.src} alt={`AIR ${t.air} GATE DA`} loading="lazy" />
                 {t.ytLink && (
                   <a href={t.ytLink} target="_blank" rel="noopener noreferrer" className="gitem-play" aria-label={`Watch AIR ${t.air} interview`}>
                     <div className="gitem-play-icon">

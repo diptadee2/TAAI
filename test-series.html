@@ -989,7 +989,7 @@ const Icon = {
 
 // ── Logo & Nav ───────────────────────────────────────────────────
 function TAAILogo() {
-  return <img src="logo.png" alt="TAAI" width="645" height="387" />;
+  return <img src="logo.png" alt="TAAI" />;
 }
 
 const NAV_LINKS = [
@@ -1094,7 +1094,7 @@ function DeviceCarousel({ idx }) {
       <div className="device-carousel-track" style={{ transform:`translateX(-${idx * 100}%)` }}>
         {INTERFACE_IMGS.map((img, i) => (
           <div key={i} className="device-carousel-slide">
-            <img src={img.src} alt={img.label} width="2474" height="1728" />
+            <img src={img.src} alt={img.label} />
           </div>
         ))}
       </div>
@@ -1139,7 +1139,7 @@ function MockInterface() {
                   <div className="mac-carousel-track" style={{ transform:`translateX(-${imacIdx * 100}%)` }}>
                     {INTERFACE_IMGS.map((img, i) => (
                       <div key={i} className="mac-carousel-slide">
-                        <img src={img.src} alt={img.label} width="2474" height="1728" />
+                        <img src={img.src} alt={img.label} />
                       </div>
                     ))}
                   </div>
@@ -1553,7 +1553,7 @@ function Discussions() {
           {DISCUSSION_VIDEOS.map(v => (
             <a key={v.id} className="disc-card" href={`https://www.youtube.com/watch?v=${v.id}`} target="_blank" rel="noopener noreferrer">
               <div className="disc-thumb-wrap">
-                <img className="disc-thumb" src={`https://img.youtube.com/vi/${v.id}/maxresdefault.jpg`} alt={titles[v.id] || ''} width="1280" height="720" />
+                <img className="disc-thumb" src={`https://img.youtube.com/vi/${v.id}/maxresdefault.jpg`} alt={titles[v.id] || ''} />
                 <div className="disc-play-btn">
                   <div className="disc-play-circle">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none">

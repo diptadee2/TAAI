@@ -553,7 +553,7 @@ const Icon = {
 };
 
 function TAAILogo() {
-  return <img src="logo.png" alt="TAAI" width="645" height="387" />;
+  return <img src="logo.png" alt="TAAI" />;
 }
 
 const NAV_LINKS = [
@@ -828,7 +828,7 @@ function ThisYearGallery() {
                   '--delay': `${ri * 70}ms`,
                 }}>
                   <div className="gallery-img-wrap">
-                    <img src={img.src} alt={`AIR ${img.air} GATE DA 2026`} loading="lazy" width="1024" height="1024" />
+                    <img src={img.src} alt={`AIR ${img.air} GATE DA 2026`} loading="lazy" />
                   </div>
                   <div className="gallery-footer">
                     <span className="gallery-air-badge">AIR {img.air}</span>
@@ -916,7 +916,7 @@ function PreviousBatch() {
             ].map((v, i) => (
               <a key={i} href={v.href} target="_blank" rel="noopener noreferrer" className="vthumb">
                 <div className="vthumb-wrap">
-                  <img src={`https://img.youtube.com/vi/${v.id}/hqdefault.jpg`} alt={`AIR ${v.air} interview`} loading="lazy" width="480" height="360" />
+                  <img src={`https://img.youtube.com/vi/${v.id}/hqdefault.jpg`} alt={`AIR ${v.air} interview`} loading="lazy" />
                   <div className="vthumb-play-overlay">
                     <svg width="80" height="56" viewBox="0 0 90 63" fill="none">
                       <rect x="0" y="0" width="90" height="63" rx="14" fill="#FF0000" fillOpacity="0.92"/>

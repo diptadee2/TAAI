@@ -384,12 +384,11 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .contact-hero-sub { font-size: 16px; margin-bottom: 28px; }
   .channel-grid { grid-template-columns: 1fr; gap: 10px; }
   .channel-card { flex-direction: row; align-items: center; padding: 14px 18px; border-radius: var(--radius-md); gap: 14px; }
-  .channel-card:active { transform: scale(0.97); transition-duration: .12s; }
   .channel-icon { width: 40px; height: 40px; margin-bottom: 0; flex-shrink: 0; border-radius: 12px; }
   .channel-label { display: none; }
   .channel-name { margin-bottom: 0; font-size: 15px; flex: 1; }
   .channel-detail { display: none; }
-  .channel-cta { margin-left: auto; white-space: nowrap; flex-shrink: 0; font-size: 12px; font-weight: 700; color: #fff; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.22); border-radius: 999px; padding: 7px 14px; gap: 5px; }
+  .channel-cta { margin-left: auto; white-space: nowrap; flex-shrink: 0; }
   .offer-grid { grid-template-columns: 1fr; }
   .nav-links { display: none; }
   .cta-banner { flex-direction: column; align-items: flex-start; padding: 40px 28px; }
@@ -519,7 +518,7 @@ const MENU_ICONS = {
 };
 
 function TAAILogo() {
-  return <img src="logo.png" alt="TAAI" width="645" height="387" />;
+  return <img src="logo.png" alt="TAAI" />;
 }
 
 function Nav() {
