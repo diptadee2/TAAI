@@ -686,8 +686,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .footer-inner { flex-direction: column; align-items: center; text-align: center; }
   .footer-socials a { width: 44px; height: 44px; }
   .footer-socials a svg { width: 18px; height: 18px; }
-  .combo-price-row { flex-wrap: wrap; align-items: center; row-gap: 4px; }
-  .combo-discount { order: -1; }
+  .combo-price-row { flex-wrap: wrap; align-items: center; row-gap: 2px; column-gap: 8px; }
+  .combo-price-old { order: 1; }
+  .combo-discount { order: 2; }
+  .combo-price { order: 3; width: 100%; }
 }
 
 /* ── Touch-device interaction overrides ─────────────────────── */
