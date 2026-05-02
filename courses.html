@@ -693,9 +693,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .compare-head-cell:first-child { position: sticky; left: 0; background: var(--bg-soft); z-index: 2; text-align: left; }
 .compare-head-cell.featured { background: rgba(139,92,246,0.07); color: var(--purple); }
 .compare-head-cell.featured span { font-size: 9px; opacity: 0.7; display: block; font-weight: 600; letter-spacing: .05em; }
-.compare-row { display: grid; grid-template-columns: 1.8fr repeat(3, 1fr); border-top: 1px solid var(--line); transition: background .15s; }
-.compare-group-rows { overflow: hidden; max-height: 800px; transition: max-height .35s cubic-bezier(.4,0,.2,1), opacity .25s ease; opacity: 1; }
-.compare-group-rows.collapsed { max-height: 0; opacity: 0; }
+@keyframes compareRowIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: none; } }
+.compare-row { display: grid; grid-template-columns: 1.8fr repeat(3, 1fr); border-top: 1px solid var(--line); transition: background .15s; animation: compareRowIn .18s ease both; }
 .compare-row:hover { background: var(--bg-soft); }
 .compare-cell { padding: 11px 16px; font-size: 13px; display: flex; align-items: center; justify-content: center; }
 .compare-cell.feat-name { justify-content: flex-start; color: var(--ink-dim); font-weight: 500; position: sticky; left: 0; background: #fff; z-index: 1; box-shadow: 3px 0 8px rgba(0,0,0,0.04); }
@@ -1187,42 +1186,38 @@ function BundleComparison() {
               <div className="compare-head-cell">Maths<br/>Bundle</div>
             </div>
             {(() => {
-              const rows = [];
-              let lastGroup = null;
               const Chevron = ({ g }) => (
                 <svg className={`compare-group-chevron${collapsed[g] ? ' collapsed' : ''}`} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M6 9l6 6 6-6"/>
                 </svg>
               );
-              const groups = [];
-              let currentGroup = null;
-              let currentRows = null;
+              const rows = [];
+              let lastGroup = null;
+              let groupIdx = 0;
               features.forEach((f, i) => {
-                if (f.group !== currentGroup) {
-                  currentGroup = f.group;
-                  currentRows = [];
-                  groups.push({ g: f.group, rows: currentRows });
+                if (f.group !== lastGroup) {
+                  lastGroup = f.group;
+                  groupIdx = 0;
+                  const g = f.group;
+                  rows.push(
+                    <div key={`grp-${g}`} className="compare-group-header" onClick={() => toggleGroup(g)}>
+                      <div className="compare-group-label">{g}<Chevron g={g} /></div>
+                      <div /><div /><div />
+                    </div>
+                  );
+                } else { groupIdx++; }
+                if (!collapsed[f.group]) {
+                  rows.push(
+                    <div key={i} className={`compare-row${i % 2 === 0 ? ' zebra' : ''}`} style={{ animationDelay: `${groupIdx * 30}ms` }}>
+                      <div className="compare-cell feat-name">{f.label}</div>
+                      <div className="compare-cell featured">{f.fullText ? <span className="compare-val-text">{f.fullText}{f.fullNote && <span className="compare-val-note">{f.fullNote}</span>}</span> : (f.full ? <Yes /> : <No />)}</div>
+                      <div className="compare-cell">{f.mlText ? <span className="compare-val-text">{f.mlText}</span> : (f.ml ? <Yes /> : <No />)}</div>
+                      <div className="compare-cell">{f.mathsText ? <span className="compare-val-text">{f.mathsText}</span> : (f.maths ? <Yes /> : <No />)}</div>
+                    </div>
+                  );
                 }
-                currentRows.push({ f, i });
               });
-              return groups.map(({ g, rows: gRows }) => (
-                <React.Fragment key={g}>
-                  <div className="compare-group-header" onClick={() => toggleGroup(g)}>
-                    <div className="compare-group-label">{g}<Chevron g={g} /></div>
-                    <div /><div /><div />
-                  </div>
-                  <div className={`compare-group-rows${collapsed[g] ? ' collapsed' : ''}`}>
-                    {gRows.map(({ f, i }) => (
-                      <div key={i} className={`compare-row${i % 2 === 0 ? ' zebra' : ''}`}>
-                        <div className="compare-cell feat-name">{f.label}</div>
-                        <div className="compare-cell featured">{f.fullText ? <span className="compare-val-text">{f.fullText}{f.fullNote && <span className="compare-val-note">{f.fullNote}</span>}</span> : (f.full ? <Yes /> : <No />)}</div>
-                        <div className="compare-cell">{f.mlText ? <span className="compare-val-text">{f.mlText}</span> : (f.ml ? <Yes /> : <No />)}</div>
-                        <div className="compare-cell">{f.mathsText ? <span className="compare-val-text">{f.mathsText}</span> : (f.maths ? <Yes /> : <No />)}</div>
-                      </div>
-                    ))}
-                  </div>
-                </React.Fragment>
-              ));
+              return rows;
             })()}
             <div className="compare-footer">
               <div className="compare-footer-cell" />
