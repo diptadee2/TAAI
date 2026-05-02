@@ -532,7 +532,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .feat-f:hover .feat-rank-num { transform: scale(1.06); }
 .feat-rank-label { font-size: 10px; color: var(--ink-soft); font-family: var(--font-mono); letter-spacing: .06em; text-transform: uppercase; }
 .feat-rank-divider { width: 1px; align-self: stretch; background: rgba(139,92,246,0.2); flex-shrink: 0; }
-.feat-rank-right { display: flex; flex-direction: column; gap: 8px; }
+.feat-rank-right { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
 
 /* ── Discussions section ─────────────────────────────── */
 .disc-section { background: linear-gradient(160deg, #0e0b24 0%, #14102b 55%, #0a1020 100%); position: relative; overflow: hidden; }
@@ -1513,7 +1513,7 @@ function Features() {
             <div className="feat-rank-right">
               <div className="feat-title">Rank prediction</div>
               <div className="feat-desc">Mock rank estimates based on historical GATE DA data — so you know where you stand nationally before the real exam.</div>
-              <div className="feat-chip" style={{ alignSelf:'flex-start' }}>Updated after every mock</div>
+              <div className="feat-chip">Updated after every mock</div>
             </div>
           </div>
 
