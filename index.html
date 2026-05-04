@@ -735,20 +735,16 @@ body {
 /* Play overlay — image testimonials */
 .gitem { position: relative; }
 .gitem-play {
-  position: absolute; inset: 0;
+  position: absolute; bottom: 10px; right: 10px;
   display: grid; place-items: center;
-  background: rgba(14,10,30,0.28);
-  backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
-  opacity: 0; transition: opacity 0.28s ease;
-  text-decoration: none; border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  opacity: 0.85; transition: opacity 0.28s ease, transform 0.28s ease;
+  text-decoration: none;
 }
-.gitem:hover .gitem-play { opacity: 1; }
+.gitem:hover .gitem-play { opacity: 1; transform: scale(1.08); }
 .gitem-play-icon {
   display: grid; place-items: center;
-  filter: drop-shadow(0 4px 20px rgba(0,0,0,0.45));
-  transform: scale(0.75); transition: transform 0.34s cubic-bezier(.34,1.35,.64,1);
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
 }
-.gitem:hover .gitem-play-icon { transform: scale(1); }
 
 /* Watch interview — quote testimonials */
 .testi { position: relative; }
@@ -902,8 +898,7 @@ body {
     position: static; opacity: 1; transform: none;
     align-self: flex-start; margin-top: 14px;
   }
-  .gitem-play { opacity: 1; }
-  .gitem-play-icon { transform: scale(1); }
+  .gitem-play { opacity: 0.85; }
 }
 @media (max-width: 480px) {
   :root { --section-pad: 40px; }
@@ -1742,7 +1737,7 @@ function Testimonials() {
                 {t.ytLink && (
                   <a href={t.ytLink} target="_blank" rel="noopener noreferrer" className="gitem-play" aria-label={`Watch AIR ${t.air} interview`}>
                     <div className="gitem-play-icon">
-                      <svg width="80" height="56" viewBox="0 0 90 63" fill="none">
+                      <svg width="44" height="31" viewBox="0 0 90 63" fill="none">
                         <rect x="0" y="0" width="90" height="63" rx="14" fill="#FF0000"/>
                         <polygon points="36,18 66,31.5 36,45" fill="#FFFFFF"/>
                       </svg>
