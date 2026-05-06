@@ -387,13 +387,13 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   border: 1.5px solid rgba(139,92,246,0.14);
   box-shadow: 0 2px 12px rgba(139,92,246,0.07), 0 1px 3px rgba(0,0,0,0.04);
 }
-.combo-card:hover { transform: translateY(-10px); box-shadow: 0 24px 56px rgba(107,75,255,0.16), 0 2px 8px rgba(0,0,0,0.06); }
+.combo-card.card:hover { transform: translateY(-10px); box-shadow: 0 24px 56px rgba(107,75,255,0.16), 0 2px 8px rgba(0,0,0,0.06); }
 .combo-card.featured {
   background: linear-gradient(150deg, #14102B 0%, #221260 55%, #1a0d50 100%);
   border-color: rgba(139,92,246,0.35);
   box-shadow: 0 20px 60px rgba(107,75,255,0.28), inset 0 1px 0 rgba(255,255,255,0.07);
 }
-.combo-card.featured:hover { transform: translateY(-10px); box-shadow: 0 24px 56px rgba(107,75,255,0.44), inset 0 1px 0 rgba(255,255,255,0.07); }
+.combo-card.featured.card:hover { transform: translateY(-10px); box-shadow: 0 24px 56px rgba(107,75,255,0.44), inset 0 1px 0 rgba(255,255,255,0.07); }
 .combo-card::before {
   content: ''; position: absolute; top: -60px; right: -60px;
   width: 200px; height: 200px; border-radius: 50%;
@@ -794,8 +794,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 /* ── Touch-device interaction overrides ─────────────────────── */
 @media (hover: none) {
   /* Kill hover lifts — replace with tap feedback */
-  .combo-card:hover,
-  .combo-card.featured:hover { transform: none; }
+  .combo-card.card:hover,
+  .combo-card.featured.card:hover { transform: none; }
   .combo-card:active { transform: scale(0.975); transition-duration: .12s; }
   .combo-card.featured:active { transform: scale(0.975); transition-duration: .12s; }
   .course-card:hover { transform: none; box-shadow: none; }
@@ -809,7 +809,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .combo-includes li { opacity: 1; transform: translateX(0); }
   .combo-check svg path { stroke-dashoffset: 0; }
   /* Restore featured-card box-shadow */
-  .combo-card.featured:hover { box-shadow: 0 20px 60px rgba(107,75,255,0.28), inset 0 1px 0 rgba(255,255,255,0.07); }
+  .combo-card.featured.card:hover { box-shadow: 0 20px 60px rgba(107,75,255,0.28), inset 0 1px 0 rgba(255,255,255,0.07); }
 }
 
 /* ── Featured card float (mobile only, after reveal) ────────── */
@@ -900,8 +900,8 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   .faculty-card:hover { transform: none; box-shadow: none; }
   .faculty-primary:hover { box-shadow: none; }
   .faculty-secondary:hover { box-shadow: none; }
-  .combo-card:hover { transform: none; box-shadow: none; }
-  .combo-card.featured:hover { transform: none; box-shadow: 0 20px 60px rgba(107,75,255,0.28), inset 0 1px 0 rgba(255,255,255,0.07); }
+  .combo-card.card:hover { transform: none; box-shadow: none; }
+  .combo-card.featured.card:hover { transform: none; box-shadow: 0 20px 60px rgba(107,75,255,0.28), inset 0 1px 0 rgba(255,255,255,0.07); }
   .incl-tab:hover { background: none; border-color: transparent; }
   .incl-tab.active { transform: none; }
   .btn-enroll:hover { transform: none; box-shadow: 0 4px 20px rgba(139,92,246,0.4); }
