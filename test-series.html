@@ -214,6 +214,46 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .hero-trust-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-soft); }
 .hero-trust-dot { width: 6px; height: 6px; border-radius: 50%; background: linear-gradient(135deg, var(--purple), var(--pink)); }
 
+/* ── Launch Countdown ───────────────────────────────── */
+.hero-countdown {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 28px;
+}
+.countdown-label {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--ink-soft);
+  margin-right: 6px; white-space: nowrap;
+}
+.countdown-units { display: flex; gap: 8px; }
+.countdown-unit {
+  display: flex; flex-direction: column; align-items: center;
+  background: var(--ink); border-radius: 10px;
+  padding: 10px 14px 8px;
+  min-width: 52px;
+}
+.countdown-num {
+  font-family: var(--font-display); font-size: 26px; font-weight: 600;
+  letter-spacing: -0.04em; line-height: 1; color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.countdown-unit-label {
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: .1em;
+  text-transform: uppercase; color: rgba(255,255,255,0.36);
+  margin-top: 4px;
+}
+.countdown-sep {
+  font-family: var(--font-display); font-size: 22px; font-weight: 600;
+  color: var(--ink-soft); margin-bottom: 8px; line-height: 1;
+}
+.countdown-launched {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--purple); font-weight: 700;
+}
+@media (max-width: 480px) {
+  .countdown-unit { min-width: 44px; padding: 8px 10px 6px; }
+  .countdown-num { font-size: 22px; }
+}
+
 /* ── Device Mockup Scene ────────────────────────────── */
 .hero-visual { position: relative; margin-left: auto; }
 .device-scene {
@@ -1220,6 +1260,46 @@ function MockInterface() {
   );
 }
 
+// ── Launch Countdown ─────────────────────────────────────────────
+const LAUNCH_DATE = new Date('2026-05-20T00:00:00');
+
+function Countdown() {
+  const calc = () => {
+    const diff = LAUNCH_DATE - Date.now();
+    if (diff <= 0) return null;
+    const s = Math.floor(diff / 1000);
+    return {
+      d: Math.floor(s / 86400),
+      h: Math.floor((s % 86400) / 3600),
+      m: Math.floor((s % 3600) / 60),
+      s: s % 60,
+    };
+  };
+  const [t, setT] = React.useState(calc);
+  React.useEffect(() => {
+    const id = setInterval(() => setT(calc()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (!t) return <span className="countdown-launched">Launched ✦</span>;
+
+  const pad = n => String(n).padStart(2, '0');
+  return (
+    <div className="hero-countdown">
+      <span className="countdown-label">Launches in</span>
+      <div className="countdown-units">
+        <div className="countdown-unit"><span className="countdown-num">{t.d}</span><span className="countdown-unit-label">days</span></div>
+        <span className="countdown-sep">:</span>
+        <div className="countdown-unit"><span className="countdown-num">{pad(t.h)}</span><span className="countdown-unit-label">hrs</span></div>
+        <span className="countdown-sep">:</span>
+        <div className="countdown-unit"><span className="countdown-num">{pad(t.m)}</span><span className="countdown-unit-label">min</span></div>
+        <span className="countdown-sep">:</span>
+        <div className="countdown-unit"><span className="countdown-num">{pad(t.s)}</span><span className="countdown-unit-label">sec</span></div>
+      </div>
+    </div>
+  );
+}
+
 // ── Hero ─────────────────────────────────────────────────────────
 function Hero() {
   return (
@@ -1238,6 +1318,9 @@ function Hero() {
           <div className="hero-trust" style={{ animation: 'heroIn .60s cubic-bezier(.34,1.12,.64,1) .48s both' }}>
             <div className="hero-trust-item"><span className="hero-trust-dot"/>67 tests</div>
             <div className="hero-trust-item"><span className="hero-trust-dot"/>GATE-like interface</div>
+          </div>
+          <div style={{ animation: 'heroIn .60s cubic-bezier(.34,1.12,.64,1) .58s both' }}>
+            <Countdown />
           </div>
         </div>
         <MockInterface />
