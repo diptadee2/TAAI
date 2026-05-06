@@ -383,20 +383,26 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   position: relative; overflow: hidden;
   transition: transform .38s cubic-bezier(.4,0,.2,1), box-shadow .38s ease,
               opacity .32s ease, filter .32s ease;
-  background: var(--card); border: 1.5px solid var(--line);
+  background: linear-gradient(160deg, #ffffff 0%, #f7f3ff 100%);
+  border: 1.5px solid rgba(139,92,246,0.14);
+  box-shadow: 0 2px 12px rgba(139,92,246,0.07), 0 1px 3px rgba(0,0,0,0.04);
 }
-.combo-card:hover { transform: translateY(-10px); box-shadow: 0 28px 60px rgba(107,75,255,0.13); }
+.combo-card:hover { transform: translateY(-10px); box-shadow: 0 24px 56px rgba(107,75,255,0.16), 0 2px 8px rgba(0,0,0,0.06); }
 .combo-card.featured {
   background: linear-gradient(150deg, #14102B 0%, #221260 55%, #1a0d50 100%);
   border-color: rgba(139,92,246,0.35);
   box-shadow: 0 20px 60px rgba(107,75,255,0.28), inset 0 1px 0 rgba(255,255,255,0.07);
 }
 .combo-card.featured:hover { transform: translateY(-12px); box-shadow: 0 36px 80px rgba(107,75,255,0.44), inset 0 1px 0 rgba(255,255,255,0.07); }
-.combo-card.featured::before {
-  content: ''; position: absolute; top: -50px; right: -50px;
-  width: 220px; height: 220px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(139,92,246,0.32) 0%, transparent 70%);
+.combo-card::before {
+  content: ''; position: absolute; top: -60px; right: -60px;
+  width: 200px; height: 200px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%);
   pointer-events: none;
+}
+.combo-card.featured::before {
+  background: radial-gradient(circle, rgba(139,92,246,0.32) 0%, transparent 70%);
+  width: 220px; height: 220px; top: -50px; right: -50px;
 }
 .combo-card.featured::after {
   content: ''; position: absolute; bottom: -30px; left: -30px;
@@ -412,7 +418,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 .combo-badge.best { background: linear-gradient(135deg, var(--pink), var(--purple)); color: #fff; box-shadow: 0 4px 14px rgba(139,92,246,0.4); }
 .combo-badge.popular { background: var(--purple-soft); color: var(--purple); }
-.combo-badge.combo { background: var(--blue-soft); color: var(--blue); }
+.combo-badge.combo { background: var(--purple-soft); color: var(--purple); }
 .combo-title { font-family: var(--font-display); font-size: 26px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 6px; position: relative; z-index: 1; }
 .combo-card.featured .combo-title { color: #fff; font-size: 30px; }
 .combo-validity { font-family: var(--font-mono); font-size: 10px; color: var(--ink-soft); margin-bottom: 18px; letter-spacing: .08em; position: relative; z-index: 1; }
@@ -426,10 +432,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .combo-includes li {
   display: flex; align-items: flex-start; gap: 10px;
   font-size: 14px; color: var(--ink-dim); line-height: 1.45;
-  opacity: 0.5; transform: translateX(-5px);
-  transition: opacity .28s ease var(--delay, 0ms), transform .28s ease var(--delay, 0ms);
+  opacity: 0.78; transform: translateX(0);
+  transition: opacity .28s ease var(--delay, 0ms);
 }
-.combo-card:hover .combo-includes li { opacity: 1; transform: translateX(0); }
+.combo-card:hover .combo-includes li { opacity: 1; }
 .combo-card.featured .combo-includes li { opacity: 1; transform: translateX(0); color: rgba(255,255,255,0.78); }
 .combo-check {
   width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; margin-top: 2px;
