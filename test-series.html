@@ -342,6 +342,44 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .strip-label { font-size: 13px; color: rgba(255,255,255,0.78); text-transform: uppercase; letter-spacing: .08em; }
 .strip-sub { font-size: 11px; color: rgba(255,255,255,0.42); letter-spacing: .04em; margin-top: 5px; font-style: italic; }
 
+/* ── Countdown strip ─────────────────────────────────── */
+.cd-strip {
+  padding: 44px 0 48px;
+  background: linear-gradient(90deg, var(--pink) 0%, var(--purple) 50%, var(--blue) 100%);
+  color: #fff;
+}
+.cd-strip-inner { display: flex; flex-direction: column; gap: 18px; }
+.cd-strip-label {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em;
+  text-transform: uppercase; color: rgba(255,255,255,0.55);
+}
+.cd-strip-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #fff; opacity: 0.9;
+  animation: blink 1.8s ease infinite; flex-shrink: 0;
+}
+.cd-strip-units { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+.cd-strip-unit { border-left: 1px solid rgba(255,255,255,0.22); padding-left: 28px; }
+.cd-strip-unit:first-child { border-left: none; padding-left: 0; }
+.cd-strip-num {
+  font-family: var(--font-display); font-size: clamp(34px, 5vw, 52px);
+  font-weight: 600; letter-spacing: -0.04em; line-height: 1; margin-bottom: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.cd-strip-unit-label {
+  font-size: 13px; color: rgba(255,255,255,0.78);
+  text-transform: uppercase; letter-spacing: .08em;
+}
+.cd-launched {
+  font-family: var(--font-display); font-size: clamp(28px, 4vw, 44px);
+  font-weight: 600; letter-spacing: -0.03em; color: #fff;
+}
+@media (max-width: 600px) {
+  .cd-strip-units { grid-template-columns: repeat(2, 1fr); gap: 20px 16px; }
+  .cd-strip-unit { border-left: none; padding-left: 0; }
+}
+
 /* ── Section base ────────────────────────────────────── */
 .section { padding: var(--section-pad) 0; }
 .section-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--purple); margin-bottom: 18px; }
@@ -1276,6 +1314,61 @@ function AnimatedNum({ to, suffix = '', duration = 1400 }) {
   return <span ref={ref} style={{ fontVariantNumeric: 'tabular-nums' }}>{val}{suffix}</span>;
 }
 
+// ── Countdown Strip ──────────────────────────────────────────────
+const LAUNCH_DATE = new Date('2026-05-20T00:00:00');
+
+function CountdownStrip() {
+  const calc = () => {
+    const diff = LAUNCH_DATE - Date.now();
+    if (diff <= 0) return null;
+    const s = Math.floor(diff / 1000);
+    return {
+      d: Math.floor(s / 86400),
+      h: Math.floor((s % 86400) / 3600),
+      m: Math.floor((s % 3600) / 60),
+      s: s % 60,
+    };
+  };
+  const [t, setT] = React.useState(calc);
+  React.useEffect(() => {
+    const id = setInterval(() => setT(calc()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const pad = n => String(n).padStart(2, '0');
+  const units = t
+    ? [
+        { num: t.d,      label: 'Days' },
+        { num: pad(t.h), label: 'Hours' },
+        { num: pad(t.m), label: 'Minutes' },
+        { num: pad(t.s), label: 'Seconds' },
+      ]
+    : null;
+
+  return (
+    <div className="cd-strip">
+      <div className="container cd-strip-inner">
+        <div className="cd-strip-label">
+          <span className="cd-strip-dot" />
+          {t ? 'Launching May 20, 2026' : 'Now live — May 20, 2026'}
+        </div>
+        {units ? (
+          <div className="cd-strip-units">
+            {units.map((u, i) => (
+              <div key={i} className="cd-strip-unit">
+                <div className="cd-strip-num">{u.num}</div>
+                <div className="cd-strip-unit-label">{u.label}</div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="cd-launched">Launched ✦</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Stats Strip ──────────────────────────────────────────────────
 function Strip() {
   const items = [
@@ -1831,7 +1924,7 @@ function App() {
       <Nav />
       <div className="nav-spacer" />
       <Hero />
-      <Strip />
+      <CountdownStrip />
       <Breakdown />
       <Features />
       <Discussions />
