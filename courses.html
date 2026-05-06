@@ -376,7 +376,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 @media (max-width: 768px) { .faculty-grid { grid-template-columns: 1fr; } }
 
 /* Combos grid — redesigned */
-.combos-grid { display: grid; grid-template-columns: 1.42fr 1fr 1fr; gap: 20px; align-items: start; }
+.combos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: stretch; }
 .combo-card {
   border-radius: var(--radius-xl); padding: 36px;
   display: flex; flex-direction: column;
@@ -445,7 +445,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 .combo-card:hover .combo-check svg path { stroke-dashoffset: 0; }
 .combo-card.featured .combo-check svg path { stroke: rgba(255,255,255,0.85); stroke-dashoffset: 0; }
-.combo-price-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 22px; position: relative; z-index: 1; }
+.combo-price-row { display: flex; align-items: baseline; gap: 10px; margin-top: auto; padding-top: 20px; margin-bottom: 22px; position: relative; z-index: 1; }
 .combo-price { font-family: var(--font-display); font-size: 38px; font-weight: 600; letter-spacing: -0.04em; }
 .combo-card.featured .combo-price { color: #fff; font-size: 44px; }
 .combo-price-old { font-size: 15px; color: var(--ink-soft); text-decoration: line-through; }
