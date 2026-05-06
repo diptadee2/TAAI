@@ -334,7 +334,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   padding: 52px 0;
   background: linear-gradient(90deg, var(--pink) 0%, var(--purple) 50%, var(--blue) 100%);
   color: #fff;
-  position: relative; z-index: 2;
 }
 .strip-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
 .strip-item { border-left: 1px solid rgba(255,255,255,0.22); padding-left: 28px; }
@@ -1244,7 +1243,6 @@ function Hero() {
         </div>
         <MockInterface />
       </div>
-      <Strip />
     </section>
   );
 }
@@ -1833,6 +1831,7 @@ function App() {
       <Nav />
       <div className="nav-spacer" />
       <Hero />
+      <Strip />
       <Breakdown />
       <Features />
       <Discussions />
