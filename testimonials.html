@@ -539,31 +539,49 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 .mobile-menu-contact:hover { color: var(--purple); background: rgba(139,92,246,0.06); }
 @media (max-width: 768px) { .nav-hamburger { display: flex; } .nav-cta { display: none; } .nav-inner { height: 64px; padding: 0 14px; position: relative; justify-content: flex-end; } .mobile-menu { top: 64px; } .nav-spacer { height: 64px; } .nav-logo { position: absolute; left: 50%; transform: translateX(-50%); } .nav-logo:hover { transform: translateX(-50%) translateY(-2px); } .nav-logo:active { transform: translateX(-50%) translateY(1px); } .nav-logo svg, .nav-logo img { width: 150px; height: auto; filter: drop-shadow(0 0 14px rgba(255,255,255,0.22)) drop-shadow(0 0 36px rgba(255,255,255,0.12)) drop-shadow(0 0 72px rgba(255,255,255,0.07)); } .nav-hamburger span { background: var(--purple); } }
 
-/* ── Mobile sticky contact bar ───────────────────────── */
+/* ── Sticky contact bar (mobile bottom / desktop side) ── */
 @keyframes mcb-slide-up {
   from { transform: translateY(110%); opacity: 0; }
   to   { transform: translateY(0);    opacity: 1; }
 }
-.mobile-contact-bar { display: none; }
+@keyframes mcb-side-in {
+  from { transform: translateX(130%) scale(0.88); opacity: 0; }
+  to   { transform: translateX(0)    scale(1);    opacity: 1; }
+}
+.mobile-contact-bar {
+  display: flex; flex-direction: column;
+  position: fixed; right: 28px; bottom: 44px; z-index: 200;
+  gap: 10px;
+  animation: mcb-side-in .52s cubic-bezier(.34,1.1,.64,1) .5s both;
+}
+.mobile-contact-bar a {
+  display: flex; align-items: center; gap: 9px;
+  padding: 12px 20px; border-radius: 50px; font-size: 13.5px; font-weight: 700;
+  text-decoration: none; letter-spacing: -0.01em;
+  transition: transform .22s cubic-bezier(.34,1.1,.64,1), box-shadow .22s ease;
+  white-space: nowrap;
+}
+.mobile-contact-bar a:hover { transform: translateX(-5px) scale(1.04); }
+.mcb-wa   { background: #25D366; color: #fff !important; box-shadow: 0 6px 22px rgba(37,211,102,0.42); }
+.mcb-call { background: linear-gradient(135deg, var(--purple), var(--blue)); color: #fff !important; box-shadow: 0 6px 22px rgba(139,92,246,0.42); }
 @media (max-width: 768px) {
   .mobile-contact-bar {
-    display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+    flex-direction: row;
+    position: fixed; bottom: 0; left: 0; right: 0; top: auto;
     background: rgba(255,255,255,0.92);
     backdrop-filter: blur(16px) saturate(180%); -webkit-backdrop-filter: blur(16px) saturate(180%);
     border-top: 1px solid rgba(139,92,246,0.12);
-    padding: 10px 16px; gap: 10px;
+    padding: 10px 16px; gap: 10px; border-radius: 0;
     box-shadow: 0 -4px 24px rgba(0,0,0,0.08);
     animation: mcb-slide-up .52s cubic-bezier(.34,1.1,.64,1) .35s both;
   }
   .mobile-contact-bar a {
-    flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
-    padding: 13px 0; border-radius: 14px; font-size: 14.5px; font-weight: 700;
-    text-decoration: none; letter-spacing: -0.01em;
+    flex: 1; justify-content: center;
+    padding: 13px 0; border-radius: 14px; font-size: 14.5px;
     transition: transform .16s ease, opacity .16s ease;
   }
+  .mobile-contact-bar a:hover { transform: none; }
   .mobile-contact-bar a:active { transform: scale(0.96); opacity: 0.9; }
-  .mcb-wa { background: #25D366; color: #fff !important; box-shadow: 0 4px 16px rgba(37,211,102,0.3); }
-  .mcb-call { background: linear-gradient(135deg, var(--purple), var(--blue)); color: #fff !important; box-shadow: 0 4px 16px rgba(139,92,246,0.35); }
   body { padding-bottom: 76px; }
 }
 </style>
