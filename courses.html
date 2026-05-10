@@ -894,6 +894,81 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   .btn-enroll:hover { transform: none; box-shadow: 0 4px 20px rgba(139,92,246,0.4); }
 }
 
+/* ── Why TAAI strip ──────────────────────────────────── */
+.why-strip {
+  padding: 72px 0 80px;
+  background: var(--bg);
+  position: relative;
+}
+.why-strip::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 60% 50% at 50% 100%, rgba(139,92,246,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+.why-strip-label {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-soft); text-align: center; margin-bottom: 52px;
+}
+.why-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  position: relative;
+}
+.why-divider {
+  position: absolute; top: 15%; bottom: 15%; width: 1px;
+  background: linear-gradient(to bottom, transparent, rgba(139,92,246,0.18) 30%, rgba(139,92,246,0.18) 70%, transparent);
+}
+.why-pillar {
+  padding: 16px 48px 36px;
+  text-align: center; display: flex; flex-direction: column; align-items: center; gap: 22px;
+}
+.why-icon-wrap {
+  width: 68px; height: 68px; border-radius: 22px;
+  display: grid; place-items: center;
+  background: linear-gradient(135deg, rgba(139,92,246,0.1) 0%, rgba(236,72,153,0.08) 100%);
+  border: 1.5px solid rgba(139,92,246,0.15);
+  color: var(--purple);
+  transition: transform .32s cubic-bezier(.4,0,.2,1), box-shadow .32s ease;
+}
+.why-pillar:hover .why-icon-wrap {
+  transform: translateY(-5px) scale(1.07);
+  box-shadow: 0 14px 40px rgba(139,92,246,0.22);
+}
+.why-heading {
+  font-family: var(--font-display); font-size: clamp(19px, 2vw, 24px); font-weight: 700;
+  color: var(--ink); letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 10px;
+}
+.why-sub { font-size: 14.5px; color: var(--ink-dim); line-height: 1.65; max-width: 250px; }
+@media (max-width: 768px) {
+  .why-grid { grid-template-columns: 1fr; }
+  .why-divider { display: none; }
+  .why-pillar { padding: 32px 24px; border-bottom: 1px solid rgba(139,92,246,0.1); }
+  .why-pillar:last-child { border-bottom: none; }
+}
+
+/* ── Mobile sticky contact bar ───────────────────────── */
+.mobile-contact-bar { display: none; }
+@media (max-width: 768px) {
+  .mobile-contact-bar {
+    display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(16px) saturate(180%); -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border-top: 1px solid rgba(139,92,246,0.12);
+    padding: 10px 16px; gap: 10px;
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.08);
+  }
+  .mobile-contact-bar a {
+    flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 13px 0; border-radius: 14px; font-size: 14.5px; font-weight: 700;
+    text-decoration: none; letter-spacing: -0.01em;
+    transition: transform .16s ease, opacity .16s ease;
+  }
+  .mobile-contact-bar a:active { transform: scale(0.96); opacity: 0.9; }
+  .mcb-wa { background: #25D366; color: #fff !important; box-shadow: 0 4px 16px rgba(37,211,102,0.3); }
+  .mcb-call { background: linear-gradient(135deg, var(--purple), var(--blue)); color: #fff !important; box-shadow: 0 4px 16px rgba(139,92,246,0.35); }
+  body { padding-bottom: 76px; }
+}
+
 /* ── Course testimonials ─────────────────────────────── */
 .course-testi-section {
   background: linear-gradient(150deg, #faf8ff 0%, #f3eeff 50%, #fdf0f8 100%);
@@ -1653,6 +1728,62 @@ function ScrollProgress() {
   return <div id="scroll-progress-bar" className="scroll-progress" style={{ width: '0%' }} />;
 }
 
+const WHY_PILLARS = [
+  {
+    icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5"/><circle cx="12" cy="12" r="4.5" stroke="currentColor" strokeWidth="1.5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>,
+    heading: 'GATE DA–Specific',
+    sub: 'Not repurposed CSE content. Built ground-up for the exact topics GATE DA tests — from scratch.',
+  },
+  {
+    icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 3a6 6 0 0 1 6 6c0 3-1.8 5.4-3.6 7.2L12 18l-2.4-1.8C7.8 14.4 6 12 6 9a6 6 0 0 1 6-6z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/><circle cx="12" cy="9" r="2" stroke="currentColor" strokeWidth="1.5"/><path d="M9 21h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
+    heading: 'Visual & Conceptual',
+    sub: 'Mathematics taught for understanding, not memorisation — intuition-first with clear, grounded visuals.',
+  },
+  {
+    icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M4 4V20H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M7 15L11 10L14 13L19 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><circle cx="19" cy="6" r="1.5" fill="currentColor"/></svg>,
+    heading: 'Proven Results',
+    sub: 'AIR 46, 51, 91, 102 and more — students consistently crack GATE DA with top ranks.',
+  },
+];
+
+function WhyStrip() {
+  return (
+    <div className="why-strip">
+      <div className="container">
+        <p className="why-strip-label">Why students choose TAAI</p>
+        <div className="why-grid">
+          <div className="why-divider" style={{ left: '33.33%' }} />
+          <div className="why-divider" style={{ left: '66.66%' }} />
+          {WHY_PILLARS.map((p, i) => (
+            <div key={i} className="why-pillar fade-in">
+              <div className="why-icon-wrap">{p.icon}</div>
+              <div>
+                <div className="why-heading">{p.heading}</div>
+                <p className="why-sub">{p.sub}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MobileContactBar() {
+  return (
+    <div className="mobile-contact-bar">
+      <a href="https://wa.me/9088553305" className="mcb-wa" target="_blank" rel="noopener noreferrer">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.106.549 4.09 1.508 5.813L0 24l6.335-1.491A11.93 11.93 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.012-1.374l-.359-.214-3.761.986.999-3.666-.234-.376A9.818 9.818 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182c5.43 0 9.818 4.388 9.818 9.818 0 5.43-4.388 9.818-9.818 9.818z"/></svg>
+        WhatsApp
+      </a>
+      <a href="tel:+919088553305" className="mcb-call">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        Call Us
+      </a>
+    </div>
+  );
+}
+
 function App() {
   React.useEffect(() => {
     const els = document.querySelectorAll('.fade-in');
@@ -1675,6 +1806,7 @@ function App() {
     <>
       <ScrollProgress />
       <BackToTop />
+      <MobileContactBar />
       <Nav />
       <div className="nav-spacer" />
       {/* Page hero */}
@@ -1724,6 +1856,8 @@ function App() {
           </div>
         </div>
       </section>
+
+      <WhyStrip />
 
       <Flagship />
 
