@@ -364,7 +364,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .footer-email { font-size: 12px; color: var(--ink-dim); text-decoration: none; letter-spacing: .02em; transition: color .2s; }
 .footer-email:hover { color: var(--purple); }
 .scroll-progress { position: fixed; top: 0; left: 0; z-index: 100; height: 3px; background: linear-gradient(90deg, var(--pink), var(--purple)); pointer-events: none; transition: width 120ms linear; }
-.back-to-top { position: fixed; bottom: 28px; right: 24px; z-index: 90; width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--purple), var(--blue)); color: #fff; border: none; cursor: pointer; display: grid; place-items: center; box-shadow: 0 4px 20px rgba(107,75,255,0.4); opacity: 0; transform: translateY(12px) scale(0.88); transition: opacity .28s ease, transform .32s cubic-bezier(.34,1.3,.64,1), box-shadow .2s; pointer-events: none; }
+.back-to-top { position: fixed; bottom: 24px; right: 24px; z-index: 90; width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, var(--purple), var(--blue)); color: #fff; border: none; cursor: pointer; display: grid; place-items: center; box-shadow: 0 4px 16px rgba(107,75,255,0.45); opacity: 0; transform: translateY(12px) scale(0.88); transition: opacity .28s ease, transform .32s cubic-bezier(.34,1.3,.64,1), box-shadow .2s; pointer-events: none; }
 .back-to-top.visible { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
 .back-to-top:hover { box-shadow: 0 6px 28px rgba(107,75,255,0.6); transform: translateY(-2px) scale(1.06); }
 .back-to-top:active { transform: scale(0.93); }
@@ -524,25 +524,25 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
     flex-direction: row; align-items: stretch;
     width: auto; height: auto;
     position: fixed; bottom: 0; left: 0; right: 0; top: auto;
-    background: rgba(255,255,255,0.94);
-    backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border-top: 1px solid rgba(139,92,246,0.12);
-    padding: 10px 16px; gap: 10px; border-radius: 0;
-    box-shadow: 0 -4px 24px rgba(0,0,0,0.07);
+    background: rgba(252,250,255,0.97);
+    backdrop-filter: blur(24px) saturate(200%); -webkit-backdrop-filter: blur(24px) saturate(200%);
+    border-top: 1px solid rgba(139,92,246,0.1);
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px)); gap: 8px; border-radius: 0;
+    box-shadow: 0 -1px 0 rgba(139,92,246,0.07), 0 -8px 28px rgba(0,0,0,0.05);
     animation: mcb-slide-up .52s cubic-bezier(.34,1.1,.64,1) .35s both;
   }
   .mobile-contact-bar a {
     flex: 1; width: auto; height: auto; border-radius: 14px;
     display: flex; align-items: center; justify-content: center; gap: 7px;
-    padding: 13px 0; font-size: 14px; font-weight: 700;
+    padding: 13px 0; font-size: 14px; font-weight: 700; letter-spacing: -0.01em;
     transition: transform .14s ease, opacity .14s ease;
   }
   .mcb-label { display: inline; }
   .mobile-contact-bar a::after { display: none; }
-  .mobile-contact-bar a:hover { transform: none; box-shadow: none; }
+  .mobile-contact-bar a:hover { transform: none; }
   .mobile-contact-bar a:active { transform: scale(0.96); opacity: 0.88; }
   body { padding-bottom: 76px; }
-  .back-to-top { bottom: 92px; }
+  .back-to-top { bottom: 92px; width: 44px; height: 44px; right: 16px; }
 }
 </style>
 <script type="module" id="lyst-widgets" src="https://res-cdn-g.learnyst.com/widgets/pro/src/raven/index.js" async></script>
