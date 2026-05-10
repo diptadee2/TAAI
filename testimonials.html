@@ -539,49 +539,65 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 .mobile-menu-contact:hover { color: var(--purple); background: rgba(139,92,246,0.06); }
 @media (max-width: 768px) { .nav-hamburger { display: flex; } .nav-cta { display: none; } .nav-inner { height: 64px; padding: 0 14px; position: relative; justify-content: flex-end; } .mobile-menu { top: 64px; } .nav-spacer { height: 64px; } .nav-logo { position: absolute; left: 50%; transform: translateX(-50%); } .nav-logo:hover { transform: translateX(-50%) translateY(-2px); } .nav-logo:active { transform: translateX(-50%) translateY(1px); } .nav-logo svg, .nav-logo img { width: 150px; height: auto; filter: drop-shadow(0 0 14px rgba(255,255,255,0.22)) drop-shadow(0 0 36px rgba(255,255,255,0.12)) drop-shadow(0 0 72px rgba(255,255,255,0.07)); } .nav-hamburger span { background: var(--purple); } }
 
-/* ── Sticky contact bar (mobile bottom / desktop side) ── */
+/* ── Sticky contact buttons ───────────────────────────── */
 @keyframes mcb-slide-up {
   from { transform: translateY(110%); opacity: 0; }
   to   { transform: translateY(0);    opacity: 1; }
 }
 @keyframes mcb-side-in {
-  from { transform: translateX(130%) scale(0.88); opacity: 0; }
-  to   { transform: translateX(0)    scale(1);    opacity: 1; }
+  from { transform: translateX(130%) scale(0.8); opacity: 0; }
+  to   { transform: translateX(0)    scale(1);   opacity: 1; }
 }
 .mobile-contact-bar {
   display: flex; flex-direction: column;
-  position: fixed; right: 28px; bottom: 88px; z-index: 200;
-  gap: 10px;
-  animation: mcb-side-in .52s cubic-bezier(.34,1.1,.64,1) .5s both;
+  position: fixed; right: 24px; bottom: 88px; z-index: 200;
+  gap: 12px;
+  animation: mcb-side-in .48s cubic-bezier(.34,1.1,.64,1) .5s both;
 }
 .mobile-contact-bar a {
-  display: flex; align-items: center; gap: 9px;
-  padding: 12px 20px; border-radius: 50px; font-size: 13.5px; font-weight: 700;
-  text-decoration: none; letter-spacing: -0.01em;
+  position: relative;
+  width: 50px; height: 50px; border-radius: 50%;
+  display: grid; place-items: center;
+  text-decoration: none;
   transition: transform .22s cubic-bezier(.34,1.1,.64,1), box-shadow .22s ease;
-  white-space: nowrap;
 }
-.mobile-contact-bar a:hover { transform: translateX(-5px) scale(1.04); }
-.mcb-wa   { background: #25D366; color: #fff !important; box-shadow: 0 6px 22px rgba(37,211,102,0.42); }
-.mcb-call { background: linear-gradient(135deg, var(--purple), var(--blue)); color: #fff !important; box-shadow: 0 6px 22px rgba(139,92,246,0.42); }
+.mcb-label { display: none; }
+.mobile-contact-bar a::after {
+  content: attr(data-label);
+  position: absolute; right: calc(100% + 12px); top: 50%;
+  transform: translateY(-50%) translateX(6px);
+  background: rgba(18,14,40,0.82); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  color: #fff; font-size: 12px; font-weight: 600; letter-spacing: .01em;
+  padding: 6px 12px; border-radius: 8px; white-space: nowrap;
+  opacity: 0; pointer-events: none;
+  transition: opacity .16s ease, transform .18s cubic-bezier(.34,1.1,.64,1);
+}
+.mobile-contact-bar a:hover::after { opacity: 1; transform: translateY(-50%) translateX(0); }
+.mobile-contact-bar a:hover { transform: scale(1.12); }
+.mcb-wa   { background: #25D366; color: #fff !important; box-shadow: 0 4px 16px rgba(37,211,102,0.45); }
+.mcb-call { background: linear-gradient(135deg, var(--purple), var(--blue)); color: #fff !important; box-shadow: 0 4px 16px rgba(139,92,246,0.45); }
 @media (max-width: 768px) {
   .mobile-contact-bar {
-    flex-direction: row;
+    flex-direction: row; align-items: stretch;
+    width: auto; height: auto;
     position: fixed; bottom: 0; left: 0; right: 0; top: auto;
-    background: rgba(255,255,255,0.92);
-    backdrop-filter: blur(16px) saturate(180%); -webkit-backdrop-filter: blur(16px) saturate(180%);
+    background: rgba(255,255,255,0.94);
+    backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
     border-top: 1px solid rgba(139,92,246,0.12);
     padding: 10px 16px; gap: 10px; border-radius: 0;
-    box-shadow: 0 -4px 24px rgba(0,0,0,0.08);
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.07);
     animation: mcb-slide-up .52s cubic-bezier(.34,1.1,.64,1) .35s both;
   }
   .mobile-contact-bar a {
-    flex: 1; justify-content: center;
-    padding: 13px 0; border-radius: 14px; font-size: 14.5px;
-    transition: transform .16s ease, opacity .16s ease;
+    flex: 1; width: auto; height: auto; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    padding: 13px 0; font-size: 14px; font-weight: 700;
+    transition: transform .14s ease, opacity .14s ease;
   }
-  .mobile-contact-bar a:hover { transform: none; }
-  .mobile-contact-bar a:active { transform: scale(0.96); opacity: 0.9; }
+  .mcb-label { display: inline; }
+  .mobile-contact-bar a::after { display: none; }
+  .mobile-contact-bar a:hover { transform: none; box-shadow: none; }
+  .mobile-contact-bar a:active { transform: scale(0.96); opacity: 0.88; }
   body { padding-bottom: 76px; }
   .back-to-top { bottom: 92px; }
 }
@@ -1083,13 +1099,13 @@ function ScrollProgress() {
 function MobileContactBar() {
   return (
     <div className="mobile-contact-bar">
-      <a href="https://wa.me/9088553305" className="mcb-wa" target="_blank" rel="noopener noreferrer">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.106.549 4.09 1.508 5.813L0 24l6.335-1.491A11.93 11.93 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.012-1.374l-.359-.214-3.761.986.999-3.666-.234-.376A9.818 9.818 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182c5.43 0 9.818 4.388 9.818 9.818 0 5.43-4.388 9.818-9.818 9.818z"/></svg>
-        WhatsApp
+      <a href="https://wa.me/9088553305" className="mcb-wa" target="_blank" rel="noopener noreferrer" data-label="WhatsApp">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.106.549 4.09 1.508 5.813L0 24l6.335-1.491A11.93 11.93 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.012-1.374l-.359-.214-3.761.986.999-3.666-.234-.376A9.818 9.818 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182c5.43 0 9.818 4.388 9.818 9.818 0 5.43-4.388 9.818-9.818 9.818z"/></svg>
+        <span className="mcb-label">WhatsApp</span>
       </a>
-      <a href="tel:+919088553305" className="mcb-call">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-        Call Us
+      <a href="tel:+919088553305" className="mcb-call" data-label="Call Us">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        <span className="mcb-label">Call Us</span>
       </a>
     </div>
   );
