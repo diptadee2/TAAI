@@ -1024,27 +1024,20 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 .mcb-call { background: linear-gradient(135deg, var(--purple), var(--blue)); color: #fff !important; box-shadow: 0 4px 16px rgba(139,92,246,0.45); }
 @media (max-width: 768px) {
   .mobile-contact-bar {
-    flex-direction: row; align-items: stretch;
-    position: fixed; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); left: 16px; right: 16px; top: auto;
-    background: rgba(255,255,255,0.96);
-    backdrop-filter: blur(28px) saturate(200%); -webkit-backdrop-filter: blur(28px) saturate(200%);
-    border: 1px solid rgba(139,92,246,0.12);
-    border-radius: 22px; padding: 7px; gap: 6px;
-    box-shadow: 0 8px 36px rgba(0,0,0,0.11), 0 2px 8px rgba(139,92,246,0.09);
-    animation: mcb-slide-up .52s cubic-bezier(.34,1.1,.64,1) .35s both;
+    flex-direction: column;
+    right: 16px; bottom: 90px; left: auto; top: auto;
+    gap: 10px; background: none; border: none; padding: 0; box-shadow: none;
+    animation: mcb-side-in .48s cubic-bezier(.34,1.1,.64,1) .5s both;
   }
   .mobile-contact-bar a {
-    flex: 1; width: auto; height: auto; border-radius: 16px;
-    display: flex; align-items: center; justify-content: center; gap: 7px;
-    padding: 14px 0; font-size: 14px; font-weight: 700; letter-spacing: -0.01em;
-    transition: transform .14s ease, opacity .14s ease;
+    width: 48px; height: 48px; border-radius: 50%;
+    display: grid; place-items: center; padding: 0; flex: none;
+    transition: transform .16s ease, opacity .16s ease;
   }
-  .mcb-label { display: inline; }
+  .mcb-label { display: none; }
   .mobile-contact-bar a::after { display: none; }
-  .mobile-contact-bar a:hover { transform: none; }
-  .mobile-contact-bar a:active { transform: scale(0.96); opacity: 0.88; }
-  body { padding-bottom: 100px; }
-  .back-to-top { bottom: calc(100px + env(safe-area-inset-bottom, 0px)); width: 44px; height: 44px; right: 16px; }
+  .mobile-contact-bar a:active { transform: scale(0.9); opacity: 0.85; }
+  .back-to-top { bottom: 24px; width: 44px; height: 44px; right: 16px; }
 }
 </style>
 </head>
