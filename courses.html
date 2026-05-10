@@ -947,6 +947,10 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 }
 
 /* ── Mobile sticky contact bar ───────────────────────── */
+@keyframes mcb-slide-up {
+  from { transform: translateY(110%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
 .mobile-contact-bar { display: none; }
 @media (max-width: 768px) {
   .mobile-contact-bar {
@@ -956,6 +960,7 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
     border-top: 1px solid rgba(139,92,246,0.12);
     padding: 10px 16px; gap: 10px;
     box-shadow: 0 -4px 24px rgba(0,0,0,0.08);
+    animation: mcb-slide-up .52s cubic-bezier(.34,1.1,.64,1) .35s both;
   }
   .mobile-contact-bar a {
     flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -1755,7 +1760,7 @@ function WhyStrip() {
           <div className="why-divider" style={{ left: '33.33%' }} />
           <div className="why-divider" style={{ left: '66.66%' }} />
           {WHY_PILLARS.map((p, i) => (
-            <div key={i} className="why-pillar fade-in">
+            <div key={i} className="why-pillar fade-in" style={{ transitionDelay: i * 130 + 'ms' }}>
               <div className="why-icon-wrap">{p.icon}</div>
               <div>
                 <div className="why-heading">{p.heading}</div>

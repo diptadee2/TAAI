@@ -483,6 +483,10 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 @media (max-width: 768px) { .nav-hamburger { display: flex; } .nav-cta { display: none; } .nav-inner { height: 64px; padding: 0 14px; position: relative; justify-content: flex-end; } .mobile-menu { top: 64px; } .nav-spacer { height: 64px; } .nav-logo { position: absolute; left: 50%; transform: translateX(-50%); } .nav-logo:hover { transform: translateX(-50%) translateY(-2px); } .nav-logo:active { transform: translateX(-50%) translateY(1px); } .nav-logo svg, .nav-logo img { width: 150px; height: auto; filter: drop-shadow(0 0 14px rgba(255,255,255,0.22)) drop-shadow(0 0 36px rgba(255,255,255,0.12)) drop-shadow(0 0 72px rgba(255,255,255,0.07)); } .nav-hamburger span { background: var(--purple); } }
 
 /* ── Mobile sticky contact bar ───────────────────────── */
+@keyframes mcb-slide-up {
+  from { transform: translateY(110%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
 .mobile-contact-bar { display: none; }
 @media (max-width: 768px) {
   .mobile-contact-bar {
@@ -492,6 +496,7 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
     border-top: 1px solid rgba(139,92,246,0.12);
     padding: 10px 16px; gap: 10px;
     box-shadow: 0 -4px 24px rgba(0,0,0,0.08);
+    animation: mcb-slide-up .52s cubic-bezier(.34,1.1,.64,1) .35s both;
   }
   .mobile-contact-bar a {
     flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
