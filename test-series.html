@@ -1036,8 +1036,10 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 }
 .mobile-contact-bar a:hover::after { opacity: 1; transform: translateY(-50%) translateX(0); }
 .mobile-contact-bar a:hover { transform: scale(1.12); transition-delay: 0ms; }
-.mcb-wa   { background: #25D366; color: #fff !important; box-shadow: 0 4px 16px rgba(37,211,102,0.45); }
-.mcb-call { background: linear-gradient(135deg, #f97316, #dc2626); color: #fff !important; box-shadow: 0 4px 16px rgba(220,38,38,0.38); }
+.mcb-wa   { background: #25D366; color: #fff !important; box-shadow: 0 4px 16px rgba(37,211,102,0.45); opacity: 0; transform: translateX(80px); pointer-events: none; }
+.mcb-call { background: linear-gradient(135deg, #f97316, #dc2626); color: #fff !important; box-shadow: 0 4px 16px rgba(220,38,38,0.38); opacity: 0; transform: translateX(80px); pointer-events: none; }
+body.buttons-visible .mcb-call { opacity: 1; transform: translateX(0); pointer-events: auto; }
+body.buttons-visible .mcb-wa { opacity: 1; transform: translateX(0); pointer-events: auto; transition-delay: 25ms; }
 body.is-scrolling .mcb-call { transform: translateX(80px) scale(.85); opacity: 0; pointer-events: none; transition: transform .2s cubic-bezier(.55,0,.9,.1), opacity .16s ease-in; transition-delay: 220ms; }
 body.is-scrolling .mcb-wa { transform: translateX(80px) scale(.85); opacity: 0; pointer-events: none; transition: transform .2s cubic-bezier(.55,0,.9,.1), opacity .16s ease-in; transition-delay: 250ms; }
 body.is-scrolling .back-to-top.visible { transform: translateX(80px) scale(.85); opacity: 0; pointer-events: none; transition: transform .18s cubic-bezier(.55,0,.9,.1), opacity .14s ease-in; transition-delay: 220ms; }
@@ -1929,12 +1931,17 @@ function BackToTop() {
       clearTimeout(t);
       t = setTimeout(() => {
         document.body.classList.remove('is-scrolling');
-        setVisible(window.scrollY > 400);
+        const past400 = window.scrollY > 400;
+        setVisible(past400);
+        document.body.classList.toggle('buttons-visible', past400);
       }, 250);
-      if (window.scrollY <= 400) setVisible(false);
+      if (window.scrollY <= 400) {
+        setVisible(false);
+        document.body.classList.remove('buttons-visible');
+      }
     };
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => { window.removeEventListener('scroll', onScroll); clearTimeout(t); };
+    return () => { window.removeEventListener('scroll', onScroll); clearTimeout(t); document.body.classList.remove('buttons-visible'); };
   }, []);
   return (
     <button className={`back-to-top${visible ? ' visible' : ''}`} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} aria-label="Back to top">
