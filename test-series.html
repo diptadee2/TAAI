@@ -751,7 +751,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .ts-plan-name { font-family: var(--font-display); font-size: 23px; font-weight: 600; color: #fff; margin-bottom: 6px; line-height: 1.2; letter-spacing: -0.02em; position: relative; z-index: 2; }
 .ts-plan-tagline { font-size: 13px; color: rgba(255,255,255,0.4); margin-bottom: 28px; line-height: 1.55; position: relative; z-index: 2; }
 .ts-plan-price { font-family: var(--font-display); font-size: 56px; font-weight: 600; letter-spacing: -0.045em; color: #fff; line-height: 1; position: relative; z-index: 2; }
-.ts-plan-validity { font-size: 12px; color: rgba(255,255,255,0.3); margin: 6px 0 28px; position: relative; z-index: 2; }
+.ts-plan-price-meta { display: flex; align-items: center; gap: 8px; margin: 6px 0 4px; position: relative; z-index: 2; }
+.ts-plan-price-old { font-size: 15px; color: rgba(255,255,255,0.32); text-decoration: line-through; }
+.ts-plan-discount { font-size: 11px; font-weight: 700; color: #fff; background: linear-gradient(135deg, #ff7fb7, #8b5cf6); padding: 3px 9px; border-radius: 999px; letter-spacing: .04em; }
+.ts-plan-validity { font-size: 12px; color: rgba(255,255,255,0.3); margin: 0 0 28px; position: relative; z-index: 2; }
 .ts-plan-divider { height: 1px; background: rgba(255,255,255,0.1); margin-bottom: 22px; position: relative; z-index: 2; }
 .ts-plan-features { display: flex; flex-direction: column; flex: 1; margin-bottom: 32px; position: relative; z-index: 2; }
 .ts-plan-feat { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: rgba(255,255,255,0.7); line-height: 1.45; padding: 5px 8px; border-radius: 8px; margin: 0 -8px; transition: background .14s ease, color .14s ease; }
@@ -761,6 +764,11 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .ts-plan-check { width: 19px; height: 19px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center; margin-top: 2px; }
 .ts-plan-check-basic { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.22); }
 .ts-plan-check-featured { background: rgba(139,92,246,0.4); border: 1px solid rgba(139,92,246,0.58); }
+.ts-plan-check svg path { fill: none; stroke-dasharray: 14; stroke-dashoffset: 14; transition: stroke-dashoffset .32s ease var(--delay, 0ms); }
+.ts-plan-basic .ts-plan-check svg path { stroke: rgba(255,255,255,0.65); }
+.ts-plan-featured .ts-plan-check svg path { stroke: rgba(255,255,255,0.9); stroke-dashoffset: 0; }
+.ts-plan-basic:hover .ts-plan-check svg path,
+.ts-plan-basic.ts-plan-selected .ts-plan-check svg path { stroke-dashoffset: 0; }
 .ts-plan-addons-label { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: rgba(196,176,255,0.52); padding: 10px 8px 5px; margin: 0 -8px; }
 .ts-plan-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 15px 24px; border-radius: 12px; font-size: 14px; font-weight: 700; letter-spacing: .02em; text-decoration: none; position: relative; z-index: 2; transition: transform .22s cubic-bezier(.34,1.2,.64,1), box-shadow .22s ease, background .18s ease; }
 .ts-plan-btn-basic { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
@@ -1993,8 +2001,8 @@ function TSPricing() {
 
   const Tick = ({ featured }) => (
     <div className={`ts-plan-check ${featured ? 'ts-plan-check-featured' : 'ts-plan-check-basic'}`}>
-      <svg width="9" height="7" viewBox="0 0 10 8" fill="none">
-        <path d="M1 4L3.5 6.5L9 1" stroke={featured ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.65)'} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+      <svg width="10" height="8" viewBox="0 0 10 8" fill="none" overflow="visible">
+        <path d="M1 4L3.5 6.5L9 1" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
       </svg>
     </div>
   );
@@ -2021,11 +2029,15 @@ function TSPricing() {
             <div className="ts-plan-name">Mock Tests Only</div>
             <div className="ts-plan-tagline">Full-length and subject-wise tests, solutions, and live discussions.</div>
             <div className="ts-plan-price">₹1,500</div>
+            <div className="ts-plan-price-meta">
+              <span className="ts-plan-price-old">₹1,875</span>
+              <span className="ts-plan-discount">20% off</span>
+            </div>
             <div className="ts-plan-validity">One-time payment · Valid till GATE DA 2027</div>
             <div className="ts-plan-divider" />
             <div className="ts-plan-features">
               {BASIC_FEATS.map((f, i) => (
-                <div key={i} className="ts-plan-feat"><Tick /><span>{f}</span></div>
+                <div key={i} className="ts-plan-feat" style={{ '--delay': `${i * 45}ms` }}><Tick /><span>{f}</span></div>
               ))}
             </div>
             <a href="https://wa.me/9088553305" target="_blank" rel="noopener noreferrer"
@@ -2045,17 +2057,21 @@ function TSPricing() {
               Most Popular
             </div>
             <div className="ts-plan-name">Tests + Quizzes</div>
-            <div className="ts-plan-tagline">Everything in Mock Tests, plus quizzes woven into every lecture.</div>
+            <div className="ts-plan-tagline">All mock tests, plus quizzes from the GATE DA 2027 full course.</div>
             <div className="ts-plan-price">₹2,000</div>
+            <div className="ts-plan-price-meta">
+              <span className="ts-plan-price-old">₹2,500</span>
+              <span className="ts-plan-discount">20% off</span>
+            </div>
             <div className="ts-plan-validity">One-time payment · Valid till GATE DA 2027</div>
             <div className="ts-plan-divider" />
             <div className="ts-plan-features">
               {BASIC_FEATS.map((f, i) => (
-                <div key={i} className="ts-plan-feat"><Tick featured /><span>{f}</span></div>
+                <div key={i} className="ts-plan-feat" style={{ '--delay': `${i * 45}ms` }}><Tick featured /><span>{f}</span></div>
               ))}
               <div className="ts-plan-addons-label">+ Quizzes included</div>
               {ADDON_FEATS.map((f, i) => (
-                <div key={i} className="ts-plan-feat"><Tick featured /><span>{f}</span></div>
+                <div key={i} className="ts-plan-feat" style={{ '--delay': `${(BASIC_FEATS.length + i) * 45}ms` }}><Tick featured /><span>{f}</span></div>
               ))}
             </div>
             <a href="https://wa.me/9088553305" target="_blank" rel="noopener noreferrer"
