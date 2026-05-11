@@ -594,6 +594,8 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 .mcb-call { background: linear-gradient(135deg, #f97316, #dc2626); color: #fff !important; box-shadow: 0 4px 16px rgba(220,38,38,0.38); opacity: 0; transform: translateX(80px); pointer-events: none; }
 body.buttons-visible .mcb-call { opacity: 1; transform: translateX(0); pointer-events: auto; }
 body.buttons-visible .mcb-wa { opacity: 1; transform: translateX(0); pointer-events: auto; transition-delay: 25ms; }
+body.buttons-visible .mcb-call:hover,
+body.buttons-visible .mcb-wa:hover { transform: scale(1.12); transition-delay: 0ms; }
 body.is-scrolling .mcb-call { transform: translateX(80px) scale(.85); opacity: 0; pointer-events: none; transition: transform .2s cubic-bezier(.55,0,.9,.1), opacity .16s ease-in; transition-delay: 220ms; }
 body.is-scrolling .mcb-wa { transform: translateX(80px) scale(.85); opacity: 0; pointer-events: none; transition: transform .2s cubic-bezier(.55,0,.9,.1), opacity .16s ease-in; transition-delay: 250ms; }
 body.is-scrolling .back-to-top.visible { transform: translateX(80px) scale(.85); opacity: 0; pointer-events: none; transition: transform .18s cubic-bezier(.55,0,.9,.1), opacity .14s ease-in; transition-delay: 220ms; }
