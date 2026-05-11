@@ -111,16 +111,16 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 /* ── Courses nav dropdown ────────────────────────────── */
 .nav-dropdown-wrap { position: relative; display: flex; align-items: center; }
-.nav-dropdown { position: absolute; top: 100%; left: 50%; transform: translateX(-50%) translateY(-4px) scaleY(0.9); transform-origin: top center; min-width: 210px; padding: 6px; background: rgba(248,246,255,0.97); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(139,92,246,0.16); border-radius: 14px; box-shadow: 0 8px 32px rgba(20,16,43,0.12), 0 2px 8px rgba(139,92,246,0.08); opacity: 0; pointer-events: none; transition: opacity .14s ease, transform .26s cubic-bezier(.34,1.56,.64,1); z-index: 150; }
+.nav-dropdown { position: absolute; top: 100%; left: 0; transform: translateY(-4px) scaleY(0.9); transform-origin: top center; min-width: 210px; padding: 6px; background: rgba(248,246,255,0.97); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(139,92,246,0.16); border-radius: 14px; box-shadow: 0 8px 32px rgba(20,16,43,0.12), 0 2px 8px rgba(139,92,246,0.08); opacity: 0; pointer-events: none; transition: opacity .14s ease, transform .26s cubic-bezier(.34,1.56,.64,1); z-index: 150; }
 .nav-dropdown::before { content: ''; position: absolute; top: -10px; left: 0; right: 0; height: 10px; }
-.nav-dropdown-wrap:hover .nav-dropdown { opacity: 1; transform: translateX(-50%) translateY(4px) scaleY(1); pointer-events: auto; }
-.nav-dd-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 9px; text-decoration: none; color: var(--ink-dim); font-size: 11.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; white-space: nowrap; opacity: 0; transform: translateY(5px); transition: background .14s ease, color .14s ease, opacity .13s ease, transform .13s ease; }
+.nav-dropdown-wrap:hover .nav-dropdown { opacity: 1; transform: translateY(4px) scaleY(1); pointer-events: auto; }
+.nav-dd-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 9px; text-decoration: none; color: var(--ink-dim); font-size: 11.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; white-space: nowrap; position: relative; opacity: 0; transform: translateY(5px); transition: background .14s ease, color .14s ease, opacity .13s ease, transform .13s ease; }
+.nav-dd-item:not(:last-child)::after { content: ''; position: absolute; bottom: 0; left: 8px; right: 8px; height: 1px; background: rgba(139,92,246,0.09); }
 .nav-dd-item:hover { background: rgba(139,92,246,0.08); color: var(--purple); }
 .nav-dropdown-wrap:hover .nav-dd-item { opacity: 1; transform: translateY(0); transition: background .14s ease, color .14s ease, opacity .22s cubic-bezier(.34,1.56,.64,1), transform .28s cubic-bezier(.34,1.56,.64,1); }
 .nav-dropdown-wrap:hover .nav-dd-item:nth-child(1) { transition-delay: .04s; }
 .nav-dropdown-wrap:hover .nav-dd-item:nth-child(2) { transition-delay: .08s; }
-.nav-dropdown-wrap:hover .nav-dd-item:nth-child(4) { transition-delay: .11s; }
-.nav-dd-divider { height: 1px; background: rgba(139,92,246,0.1); margin: 3px 8px; }
+.nav-dropdown-wrap:hover .nav-dd-item:nth-child(3) { transition-delay: .11s; }
 .nav-cta { display: flex; gap: 10px; align-items: center; }
 .btn-nav-signin { display: inline-flex; align-items: center; padding: 10px 22px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; background: rgba(139,92,246,0.07); color: var(--ink); border: 1px solid rgba(139,92,246,0.22); backdrop-filter: blur(10px) saturate(150%); -webkit-backdrop-filter: blur(10px) saturate(150%); box-shadow: 0 1px 2px rgba(139,92,246,0.06), inset 0 1px 0 rgba(255,255,255,0.7); transition: background .2s, transform .32s cubic-bezier(.34,1.1,.64,1), box-shadow .2s, backdrop-filter .2s; white-space: nowrap; }
 .btn-nav-signin:hover { background: rgba(139,92,246,0.13); transform: scale(1.06) translateY(-1px); backdrop-filter: blur(18px) saturate(220%) brightness(1.04); -webkit-backdrop-filter: blur(18px) saturate(220%) brightness(1.04); box-shadow: 0 6px 20px rgba(139,92,246,0.18), inset 0 1px 0 rgba(255,255,255,0.85), 0 0 0 1px rgba(139,92,246,0.12); }
@@ -1128,7 +1128,7 @@ const Icon = {
 const COURSE_DROPDOWN = [
   { label: 'Bundled Courses',    href: 'courses.html#combos'    },
   { label: 'Individual Courses', href: 'courses.html#individual' },
-  { label: 'Interview Prep',     href: 'courses.html',           dividerBefore: true },
+  { label: 'Interview Prep',     href: 'courses.html'            },
 ];
 const NAV_LINKS = [
   { label: 'Courses',      href: 'courses.html',      active: true, dropdown: COURSE_DROPDOWN },
