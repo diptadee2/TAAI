@@ -105,13 +105,15 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 /* ── Courses nav dropdown ────────────────────────────── */
 .nav-dropdown-wrap { position: relative; display: flex; align-items: center; }
-.nav-dropdown { position: absolute; top: 100%; left: 50%; transform: translateX(-50%) translateY(-6px); min-width: 210px; padding: 6px; background: rgba(248,246,255,0.97); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(139,92,246,0.16); border-radius: 14px; box-shadow: 0 8px 32px rgba(20,16,43,0.12), 0 2px 8px rgba(139,92,246,0.08); opacity: 0; pointer-events: none; transition: opacity .16s ease, transform .2s cubic-bezier(.34,1.3,.64,1); z-index: 150; }
+.nav-dropdown { position: absolute; top: 100%; left: 50%; transform: translateX(-50%) translateY(-4px) scaleY(0.9); transform-origin: top center; min-width: 210px; padding: 6px; background: rgba(248,246,255,0.97); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(139,92,246,0.16); border-radius: 14px; box-shadow: 0 8px 32px rgba(20,16,43,0.12), 0 2px 8px rgba(139,92,246,0.08); opacity: 0; pointer-events: none; transition: opacity .14s ease, transform .26s cubic-bezier(.34,1.56,.64,1); z-index: 150; }
 .nav-dropdown::before { content: ''; position: absolute; top: -10px; left: 0; right: 0; height: 10px; }
-.nav-dropdown-wrap:hover .nav-dropdown { opacity: 1; transform: translateX(-50%) translateY(4px); pointer-events: auto; }
-.nav-dd-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 9px; text-decoration: none; color: var(--ink-dim); font-size: 11.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; transition: background .14s ease, color .14s ease; white-space: nowrap; }
+.nav-dropdown-wrap:hover .nav-dropdown { opacity: 1; transform: translateX(-50%) translateY(4px) scaleY(1); pointer-events: auto; }
+.nav-dd-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 9px; text-decoration: none; color: var(--ink-dim); font-size: 11.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; white-space: nowrap; opacity: 0; transform: translateY(5px); transition: background .14s ease, color .14s ease, opacity .13s ease, transform .13s ease; }
 .nav-dd-item:hover { background: rgba(139,92,246,0.08); color: var(--purple); }
-.nav-dd-item svg { flex-shrink: 0; opacity: 0.6; transition: opacity .14s ease; }
-.nav-dd-item:hover svg { opacity: 1; }
+.nav-dropdown-wrap:hover .nav-dd-item { opacity: 1; transform: translateY(0); transition: background .14s ease, color .14s ease, opacity .22s cubic-bezier(.34,1.56,.64,1), transform .28s cubic-bezier(.34,1.56,.64,1); }
+.nav-dropdown-wrap:hover .nav-dd-item:nth-child(1) { transition-delay: .04s; }
+.nav-dropdown-wrap:hover .nav-dd-item:nth-child(2) { transition-delay: .08s; }
+.nav-dropdown-wrap:hover .nav-dd-item:nth-child(4) { transition-delay: .11s; }
 .nav-dd-divider { height: 1px; background: rgba(139,92,246,0.1); margin: 3px 8px; }
 .nav-cta { display: flex; gap: 10px; align-items: center; }
 .btn-nav-signin { display: inline-flex; align-items: center; padding: 10px 22px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; background: rgba(139,92,246,0.07); color: var(--ink); border: 1px solid rgba(139,92,246,0.22); backdrop-filter: blur(10px) saturate(150%); -webkit-backdrop-filter: blur(10px) saturate(150%); box-shadow: 0 1px 2px rgba(139,92,246,0.06), inset 0 1px 0 rgba(255,255,255,0.7); transition: background .2s, transform .32s cubic-bezier(.34,1.1,.64,1), box-shadow .2s, backdrop-filter .2s; white-space: nowrap; }
@@ -625,9 +627,9 @@ function TAAILogo() {
 }
 
 const COURSE_DROPDOWN = [
-  { label: 'Bundled Courses',    href: 'courses.html#combos',    icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M2 8L12 3L22 8L12 13L2 8Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/><path d="M2 13L12 18L22 13" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg> },
-  { label: 'Individual Courses', href: 'courses.html#individual', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 5C4 4 4.5 3 6 3H11V20H6C4.5 20 4 19 4 18V5Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/><path d="M20 5C20 4 19.5 3 18 3H13V20H18C19.5 20 20 19 20 18V5Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/></svg> },
-  { label: 'Interview Prep',     href: 'courses.html',           icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.7"/><path d="M3 20C3 17 5.7 15 9 15" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/><path d="M16 14L18 16L22 12" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>, dividerBefore: true },
+  { label: 'Bundled Courses',    href: 'courses.html#combos'    },
+  { label: 'Individual Courses', href: 'courses.html#individual' },
+  { label: 'Interview Prep',     href: 'courses.html',           dividerBefore: true },
 ];
 const NAV_LINKS = [
   { label: 'Courses',      href: 'courses.html',                           dropdown: COURSE_DROPDOWN },
@@ -687,7 +689,7 @@ function Nav() {
                   {l.dropdown.map((d, i) => (
                     <React.Fragment key={i}>
                       {d.dividerBefore && <div className="nav-dd-divider" />}
-                      <a href={d.href} className="nav-dd-item">{d.icon}{d.label}</a>
+                      <a href={d.href} className="nav-dd-item">{d.label}</a>
                     </React.Fragment>
                   ))}
                 </div>
