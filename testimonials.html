@@ -553,6 +553,7 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   position: fixed; right: 24px; bottom: 88px; z-index: 200;
   gap: 12px;
   animation: mcb-side-in .48s cubic-bezier(.34,1.1,.64,1) .5s both;
+  transition: transform .32s cubic-bezier(.34,1.1,.64,1), opacity .28s ease;
 }
 .mobile-contact-bar a {
   position: relative;
@@ -576,6 +577,8 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 .mobile-contact-bar a:hover { transform: scale(1.12); }
 .mcb-wa   { background: #25D366; color: #fff !important; box-shadow: 0 4px 16px rgba(37,211,102,0.45); }
 .mcb-call { background: linear-gradient(135deg, var(--purple), var(--blue)); color: #fff !important; box-shadow: 0 4px 16px rgba(139,92,246,0.45); }
+body.is-scrolling .mobile-contact-bar { transform: translateX(90px); opacity: 0; pointer-events: none; transition: transform .18s ease, opacity .16s ease; }
+body.is-scrolling .back-to-top.visible { transform: translateX(90px); opacity: 0; pointer-events: none; transition: transform .18s ease, opacity .16s ease; }
 @media (max-width: 768px) {
   .mobile-contact-bar {
     flex-direction: column;
@@ -591,7 +594,7 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   .mcb-label { display: none; }
   .mobile-contact-bar a::after { display: none; }
   .mobile-contact-bar a:active { transform: scale(0.9); opacity: 0.85; }
-  .back-to-top { bottom: 24px; width: 44px; height: 44px; right: 16px; }
+  .back-to-top { bottom: 24px; width: 48px; height: 48px; right: 16px; }
 }
 </style>
 </head>
@@ -1063,9 +1066,15 @@ function Footer() {
 function BackToTop() {
   const [visible, setVisible] = React.useState(false);
   React.useEffect(() => {
-    const onScroll = () => setVisible(window.scrollY > 400);
+    let t;
+    const onScroll = () => {
+      setVisible(window.scrollY > 400);
+      document.body.classList.add('is-scrolling');
+      clearTimeout(t);
+      t = setTimeout(() => document.body.classList.remove('is-scrolling'), 600);
+    };
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    return () => { window.removeEventListener('scroll', onScroll); clearTimeout(t); };
   }, []);
   return (
     <button className={`back-to-top${visible ? ' visible' : ''}`} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} aria-label="Back to top">
