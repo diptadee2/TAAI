@@ -1081,7 +1081,7 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   }
   .msc-label { font-size: 13px; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
   .msc-sub { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
-  .msc-btn { flex-shrink: 0; padding: 9px 18px; font-size: 13px; gap: 5px; }
+  .msc-btn { flex-shrink: 0; padding: 9px 18px; font-size: 13px; gap: 5px; background: linear-gradient(135deg, #ff5252, #c0392b); color: #fff; box-shadow: 0 4px 16px rgba(192,57,43,0.38); }
 }
 
 /* ── Sticky contact buttons (desktop only) ────────────── */
@@ -1933,10 +1933,10 @@ function MobileStickyCTA() {
   return (
     <div className="mobile-sticky-cta">
       <div className="msc-text">
-        <div className="msc-label">GATE DA 2027 Full Course</div>
-        <div className="msc-sub">Limited seats · Enroll now</div>
+        <div className="msc-label">Take a Trial</div>
+        <div className="msc-sub">GATE DA 2027 Full Course</div>
       </div>
-      <a href="https://www.taai.live/learn/batch/GATE-2027?calendarInitialView=dayGridWeek" target="_blank" rel="noopener noreferrer" className="btn btn-primary msc-btn">Enroll <Icon.ArrowRight /></a>
+      <a href="https://www.taai.live/learn/batch/GATE-2027?calendarInitialView=dayGridWeek" target="_blank" rel="noopener noreferrer" className="btn msc-btn">Free! <Icon.ArrowRight /></a>
     </div>
   );
 }
