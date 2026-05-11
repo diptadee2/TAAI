@@ -1739,18 +1739,16 @@ function Faculty() {
 
 function BackToTop() {
   const [visible, setVisible] = React.useState(false);
-  const visibleRef = React.useRef(false);
   React.useEffect(() => {
     let t;
     const onScroll = () => {
-      const nowVisible = window.scrollY > 400;
-      if (visibleRef.current) {
-        document.body.classList.add('is-scrolling');
-        clearTimeout(t);
-        t = setTimeout(() => document.body.classList.remove('is-scrolling'), 250);
-      }
-      visibleRef.current = nowVisible;
-      setVisible(nowVisible);
+      document.body.classList.add('is-scrolling');
+      clearTimeout(t);
+      t = setTimeout(() => {
+        document.body.classList.remove('is-scrolling');
+        setVisible(window.scrollY > 400);
+      }, 250);
+      if (window.scrollY <= 400) setVisible(false);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => { window.removeEventListener('scroll', onScroll); clearTimeout(t); };
