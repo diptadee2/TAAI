@@ -730,6 +730,45 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
   display: grid; place-items: center;
 }
+/* ── Test Series Pricing Plans ───────────────────────── */
+.ts-plans-section { background: linear-gradient(160deg, #0c0a20 0%, #14102b 50%, #0a0f1e 100%); position: relative; overflow: hidden; }
+.ts-plans-section::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 70% 60% at 10% 20%, rgba(139,92,246,0.14) 0%, transparent 65%), radial-gradient(ellipse 55% 50% at 90% 85%, rgba(77,139,255,0.08) 0%, transparent 55%); pointer-events: none; }
+.ts-plans-section .section-eyebrow { color: rgba(255,255,255,0.5); border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.06); }
+.ts-plans-section h2 { color: #fff; }
+.ts-plans-section .section-sub { color: rgba(255,255,255,0.48); }
+.ts-plans-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 840px; margin: 0 auto; }
+.ts-plan { border-radius: var(--radius-lg); padding: 40px 36px; position: relative; overflow: hidden; display: flex; flex-direction: column; transition: transform .32s cubic-bezier(.34,1.05,.64,1), box-shadow .32s ease, border-color .22s ease; }
+.ts-plan-basic { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); }
+.ts-plan-basic:hover { transform: translateY(-6px); box-shadow: 0 20px 60px rgba(0,0,0,0.35); border-color: rgba(255,255,255,0.2); }
+.ts-plan-featured { background: linear-gradient(145deg, rgba(139,92,246,0.18) 0%, rgba(107,75,255,0.12) 100%); border: 1px solid rgba(139,92,246,0.38); box-shadow: 0 8px 48px rgba(139,92,246,0.16); }
+.ts-plan-featured:hover { transform: translateY(-6px); box-shadow: 0 24px 72px rgba(139,92,246,0.3); border-color: rgba(139,92,246,0.6); }
+.ts-plan-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; margin-bottom: 20px; align-self: flex-start; }
+.ts-plan-badge-basic { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.14); }
+.ts-plan-badge-featured { background: rgba(139,92,246,0.28); color: #c4b0ff; border: 1px solid rgba(139,92,246,0.48); }
+.ts-plan-name { font-family: var(--font-display); font-size: 22px; font-weight: 600; color: #fff; margin-bottom: 6px; line-height: 1.2; letter-spacing: -0.02em; }
+.ts-plan-tagline { font-size: 13px; color: rgba(255,255,255,0.42); margin-bottom: 28px; line-height: 1.5; }
+.ts-plan-price-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+.ts-plan-price { font-family: var(--font-display); font-size: 52px; font-weight: 600; letter-spacing: -0.04em; color: #fff; line-height: 1; }
+.ts-plan-validity { font-size: 12px; color: rgba(255,255,255,0.3); margin-bottom: 28px; }
+.ts-plan-divider { height: 1px; background: rgba(255,255,255,0.1); margin-bottom: 22px; }
+.ts-plan-features { display: flex; flex-direction: column; gap: 12px; flex: 1; margin-bottom: 32px; }
+.ts-plan-feat { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: rgba(255,255,255,0.72); line-height: 1.45; }
+.ts-plan-check { width: 19px; height: 19px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center; margin-top: 1px; }
+.ts-plan-check-basic { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.22); }
+.ts-plan-check-featured { background: rgba(139,92,246,0.38); border: 1px solid rgba(139,92,246,0.55); }
+.ts-plan-addons-label { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: rgba(196,176,255,0.55); padding: 4px 0; }
+.ts-plan-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 24px; border-radius: 12px; font-size: 14px; font-weight: 700; letter-spacing: .02em; text-decoration: none; transition: transform .22s cubic-bezier(.34,1.2,.64,1), box-shadow .22s ease, background .18s ease; }
+.ts-plan-btn-basic { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.18); }
+.ts-plan-btn-basic:hover { background: rgba(255,255,255,0.17); transform: translateY(-2px); box-shadow: 0 6px 24px rgba(255,255,255,0.08); }
+.ts-plan-btn-featured { background: linear-gradient(135deg, #8b5cf6, #6b4bff); color: #fff; box-shadow: 0 4px 22px rgba(139,92,246,0.42); }
+.ts-plan-btn-featured:hover { background: linear-gradient(135deg, #9d70ff, #7c5cff); transform: translateY(-2px); box-shadow: 0 8px 36px rgba(139,92,246,0.58); }
+.ts-plan-note { text-align: center; font-size: 12px; color: rgba(255,255,255,0.25); margin-top: 10px; }
+@media (max-width: 768px) {
+  .ts-plans-grid { grid-template-columns: 1fr; }
+  .ts-plan { padding: 32px 24px; }
+  .ts-plan-price { font-size: 44px; }
+}
+
 /* ── FAQ ─────────────────────────────────────────────── */
 .faq-layout { display: grid; grid-template-columns: 1fr 2fr; gap: 64px; }
 .faq-list { display: flex; flex-direction: column; gap: 12px; }
@@ -1981,6 +2020,91 @@ function MobileContactBar() {
   );
 }
 
+// ── Test Series Pricing ───────────────────────────────────────────
+const BASIC_FEATS = [
+  'All subject-wise mock tests',
+  'Full-length GATE-pattern tests',
+  'Live post-test discussion sessions',
+  'Video solutions & explanations',
+  'Performance analytics & percentile rank',
+];
+const ADDON_FEATS = [
+  'Topic quizzes after every lecture',
+  'Instant quiz feedback & explanations',
+  'Concept-check micro-tests',
+];
+
+function TSPricing() {
+  const Tick = ({ featured }) => (
+    <div className={`ts-plan-check ${featured ? 'ts-plan-check-featured' : 'ts-plan-check-basic'}`}>
+      <svg width="9" height="7" viewBox="0 0 10 8" fill="none">
+        <path d="M1 4L3.5 6.5L9 1" stroke={featured ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.65)'} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    </div>
+  );
+  return (
+    <section className="section ts-plans-section" style={{ position: 'relative' }}>
+      <div className="container">
+        <div className="section-eyebrow fade-in">Enroll now</div>
+        <h2 className="fade-in" style={{ fontFamily:'var(--font-display)', fontSize:'clamp(30px,3.8vw,52px)', fontWeight:600, letterSpacing:'-0.035em', lineHeight:1, marginBottom:14 }}>
+          Pick your <em>plan.</em>
+        </h2>
+        <p className="section-sub fade-in" style={{ marginBottom:52 }}>Both plans include the full mock test suite. Add quizzes for concept-level checkpoints woven into every lecture.</p>
+        <div className="ts-plans-grid fade-in">
+
+          <div className="ts-plan ts-plan-basic">
+            <div className="ts-plan-badge ts-plan-badge-basic">Test Series</div>
+            <div className="ts-plan-name">Mock Tests Only</div>
+            <div className="ts-plan-tagline">Full-length and subject-wise tests, solutions, and live discussions.</div>
+            <div className="ts-plan-price-row">
+              <div className="ts-plan-price">₹1,500</div>
+            </div>
+            <div className="ts-plan-validity">One-time payment · Valid till GATE DA 2027</div>
+            <div className="ts-plan-divider" />
+            <div className="ts-plan-features">
+              {BASIC_FEATS.map((f, i) => (
+                <div key={i} className="ts-plan-feat"><Tick />{f}</div>
+              ))}
+            </div>
+            <a href="https://wa.me/9088553305" target="_blank" rel="noopener noreferrer" className="ts-plan-btn ts-plan-btn-basic">
+              Enroll now <Icon.ArrowRight s={14} />
+            </a>
+            <div className="ts-plan-note">Message us on WhatsApp to enroll</div>
+          </div>
+
+          <div className="ts-plan ts-plan-featured">
+            <div className="ts-plan-badge ts-plan-badge-featured">
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M6 0l1.35 3.18L10.8 3.9l-2.7 2.55.78 3.75L6 8.55l-2.88 1.65.78-3.75L1.2 3.9l3.45-.72L6 0z"/></svg>
+              Most Popular
+            </div>
+            <div className="ts-plan-name">Tests + Quizzes</div>
+            <div className="ts-plan-tagline">Everything in Mock Tests, plus quizzes woven into every lecture.</div>
+            <div className="ts-plan-price-row">
+              <div className="ts-plan-price">₹2,000</div>
+            </div>
+            <div className="ts-plan-validity">One-time payment · Valid till GATE DA 2027</div>
+            <div className="ts-plan-divider" />
+            <div className="ts-plan-features">
+              {BASIC_FEATS.map((f, i) => (
+                <div key={i} className="ts-plan-feat"><Tick featured />{f}</div>
+              ))}
+              <div className="ts-plan-addons-label">+ Quizzes included</div>
+              {ADDON_FEATS.map((f, i) => (
+                <div key={i} className="ts-plan-feat"><Tick featured />{f}</div>
+              ))}
+            </div>
+            <a href="https://wa.me/9088553305" target="_blank" rel="noopener noreferrer" className="ts-plan-btn ts-plan-btn-featured">
+              Enroll now <Icon.ArrowRight s={14} />
+            </a>
+            <div className="ts-plan-note">Message us on WhatsApp to enroll</div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ── App ──────────────────────────────────────────────────────────
 function App() {
   React.useEffect(() => {
@@ -2012,6 +2136,7 @@ function App() {
       <Discussions />
       <TSTestimonials />
       <Quality />
+      <TSPricing />
       <FAQ />
       <Footer />
     </>
