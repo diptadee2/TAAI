@@ -766,9 +766,11 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .ts-plan-check-featured { background: rgba(139,92,246,0.4); border: 1px solid rgba(139,92,246,0.58); }
 .ts-plan-check svg path { fill: none; stroke-dasharray: 14; stroke-dashoffset: 14; transition: stroke-dashoffset .32s ease var(--delay, 0ms); }
 .ts-plan-basic .ts-plan-check svg path { stroke: rgba(255,255,255,0.65); }
-.ts-plan-featured .ts-plan-check svg path { stroke: rgba(255,255,255,0.9); stroke-dashoffset: 0; }
+.ts-plan-featured .ts-plan-check svg path { stroke: rgba(255,255,255,0.9); }
 .ts-plan-basic:hover .ts-plan-check svg path,
-.ts-plan-basic.ts-plan-selected .ts-plan-check svg path { stroke-dashoffset: 0; }
+.ts-plan-basic.ts-plan-selected .ts-plan-check svg path,
+.ts-plan-featured:hover .ts-plan-check svg path,
+.ts-plan-featured.ts-plan-selected .ts-plan-check svg path { stroke-dashoffset: 0; }
 .ts-plan-addons-label { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: rgba(196,176,255,0.52); padding: 10px 8px 5px; margin: 0 -8px; }
 .ts-plan-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 15px 24px; border-radius: 12px; font-size: 14px; font-weight: 700; letter-spacing: .02em; text-decoration: none; position: relative; z-index: 2; transition: transform .22s cubic-bezier(.34,1.2,.64,1), box-shadow .22s ease, background .18s ease; }
 .ts-plan-btn-basic { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
