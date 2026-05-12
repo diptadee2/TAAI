@@ -63,10 +63,20 @@ function compilePage(filename) {
     ''
   );
 
-  // 5. Swap dev React builds for production builds
-  for (const [from, to] of CDN_SWAPS) {
-    out = out.split(from).join(to);
-  }
+  // 5. Swap dev React builds for production builds + fix integrity hashes
+  const REACT_PROD_INTEGRITY    = 'sha384-DGyLxAyjq0f9SPpVevD6IgztCFlnMF6oW/XQGmfe+IsZ8TqEiDrcHkMLKI6fiB/Z';
+  const REACTDOM_PROD_INTEGRITY = 'sha384-gTGxhz21lVGYNMcdJOyq01Edg0jhn/c22nsx0kyqP0TxaV5WVdsSH1fSDUf5YJj1';
+
+  // Replace full <script> tag for react (URL + integrity hash)
+  out = out.replace(
+    /<script\s[^>]*unpkg\.com\/react@18\.3\.1\/umd\/react\.development\.js[^>]*><\/script>/i,
+    `<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" integrity="${REACT_PROD_INTEGRITY}" crossorigin="anonymous"></script>`
+  );
+  // Replace full <script> tag for react-dom
+  out = out.replace(
+    /<script\s[^>]*unpkg\.com\/react-dom@18\.3\.1\/umd\/react-dom\.development\.js[^>]*><\/script>/i,
+    `<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" integrity="${REACTDOM_PROD_INTEGRITY}" crossorigin="anonymous"></script>`
+  );
 
   fs.writeFileSync(path.join(DIST, filename), out);
   console.log(`  ✓ ${filename}`);
