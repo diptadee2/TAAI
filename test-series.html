@@ -695,96 +695,129 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   display: grid; place-items: center;
 }
 /* ── Test Series Pricing Plans ───────────────────────── */
+@keyframes ts-border-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
 @keyframes ts-shimmer-sweep {
   from { transform: translateX(-130%) skewX(-15deg); }
   to   { transform: translateX(260%)  skewX(-15deg); }
 }
-@keyframes ts-orb-drift {
-  0%,100% { transform: translate(0,0) scale(1); }
-  33%     { transform: translate(24px,-18px) scale(1.06); }
-  66%     { transform: translate(-12px,14px) scale(0.96); }
+.ts-plans-section {
+  background: #07060f;
+  background-image: radial-gradient(rgba(139,92,246,0.055) 1px, transparent 1px);
+  background-size: 28px 28px;
+  position: relative; overflow: hidden;
 }
-@keyframes ts-ring-in {
-  from { box-shadow: var(--ts-base-shadow), 0 0 0 0 rgba(139,92,246,0.7); }
-  to   { box-shadow: var(--ts-base-shadow), 0 0 0 3px rgba(139,92,246,0.7); }
+.ts-plans-section::before {
+  content: ''; position: absolute;
+  width: 900px; height: 900px; top: -350px; left: -250px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 60%);
+  pointer-events: none; z-index: 0;
 }
-.ts-plans-section { background: linear-gradient(155deg, #0c0a20 0%, #14102b 45%, #0a0f1e 100%); position: relative; overflow: hidden; }
-.ts-plans-orb { position: absolute; border-radius: 50%; pointer-events: none; }
-.ts-plans-orb-1 { width: 560px; height: 560px; top: -200px; left: -140px; background: radial-gradient(circle, rgba(139,92,246,0.13) 0%, transparent 68%); animation: ts-orb-drift 14s ease-in-out infinite; }
-.ts-plans-orb-2 { width: 440px; height: 440px; bottom: -160px; right: -100px; background: radial-gradient(circle, rgba(77,139,255,0.09) 0%, transparent 65%); animation: ts-orb-drift 17s ease-in-out -7s infinite; }
+.ts-plans-section::after {
+  content: ''; position: absolute;
+  width: 700px; height: 700px; bottom: -250px; right: -200px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(77,139,255,0.08) 0%, transparent 60%);
+  pointer-events: none; z-index: 0;
+}
 .ts-plans-section .section-eyebrow { color: rgba(255,255,255,0.5); border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.06); }
 .ts-plans-section h2 { color: #fff; }
-.ts-plans-section .section-sub { color: rgba(255,255,255,0.48); }
-.ts-plans-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 860px; margin: 0 auto; align-items: stretch; }
+.ts-plans-section .section-sub { color: rgba(255,255,255,0.46); }
+.ts-plans-grid {
+  display: grid; grid-template-columns: 1fr 1.38fr; gap: 24px;
+  max-width: 900px; margin: 0 auto; align-items: start;
+}
 .ts-plan {
   border-radius: var(--radius-lg); position: relative; overflow: hidden;
   display: flex; flex-direction: column; cursor: pointer;
   transition: transform .3s cubic-bezier(.34,1.05,.64,1), box-shadow .3s ease, border-color .22s ease;
 }
 .ts-plan-basic {
-  --ts-base-shadow: 0 4px 24px rgba(0,0,0,0.25);
-  padding: 40px 36px;
-  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
-  box-shadow: var(--ts-base-shadow);
+  padding: 36px 32px;
+  background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.09);
+  box-shadow: 0 4px 32px rgba(0,0,0,0.35);
 }
-.ts-plan-basic:hover { transform: translateY(-6px); box-shadow: 0 20px 60px rgba(0,0,0,0.35); border-color: rgba(255,255,255,0.22); }
-.ts-plan-basic.ts-plan-selected { transform: translateY(-6px); box-shadow: 0 20px 60px rgba(0,0,0,0.35), 0 0 0 2px rgba(255,255,255,0.45); border-color: rgba(255,255,255,0.3); }
+.ts-plan-basic:hover { transform: translateY(-8px); box-shadow: 0 24px 64px rgba(0,0,0,0.5); border-color: rgba(255,255,255,0.18); }
+.ts-plan-basic.ts-plan-selected { transform: translateY(-8px); box-shadow: 0 24px 64px rgba(0,0,0,0.5), 0 0 0 2px rgba(255,255,255,0.3); border-color: rgba(255,255,255,0.2); }
+/* animated gradient border frame */
+.ts-plan-featured-frame {
+  border-radius: calc(var(--radius-lg) + 2px); padding: 2px;
+  position: relative; overflow: hidden;
+  transform: translateY(-16px);
+  box-shadow: 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12);
+  transition: transform .3s cubic-bezier(.34,1.05,.64,1), box-shadow .3s ease;
+  cursor: pointer;
+}
+.ts-plan-featured-frame::before {
+  content: ''; position: absolute; inset: -200%;
+  background: conic-gradient(from 0deg, #8b5cf6, #6366f1 33%, #38bdf8 55%, #a78bfa 75%, #8b5cf6 100%);
+  animation: ts-border-spin 3s linear infinite;
+  z-index: 0;
+}
+.ts-plan-featured-frame:hover { transform: translateY(-22px); box-shadow: 0 32px 100px rgba(139,92,246,0.55), 0 0 72px rgba(139,92,246,0.2); }
+.ts-plan-featured-frame.ts-plan-frame-selected { transform: translateY(-22px); box-shadow: 0 32px 100px rgba(139,92,246,0.55), 0 0 72px rgba(139,92,246,0.2); }
 .ts-plan-featured {
-  --ts-base-shadow: 0 8px 48px rgba(139,92,246,0.18);
-  padding: 48px 36px;
-  background: linear-gradient(148deg, rgba(139,92,246,0.22) 0%, rgba(107,75,255,0.14) 60%, rgba(77,139,255,0.1) 100%);
-  border: 1px solid rgba(139,92,246,0.42);
-  box-shadow: var(--ts-base-shadow);
+  padding: 44px 36px;
+  background: linear-gradient(148deg, #1e1348 0%, #140f38 55%, #0f1432 100%);
+  border-radius: var(--radius-lg); position: relative; z-index: 1;
+  display: flex; flex-direction: column;
+  transition: none;
 }
-.ts-plan-featured:hover { transform: translateY(-6px); box-shadow: 0 24px 72px rgba(139,92,246,0.3); border-color: rgba(139,92,246,0.65); }
-.ts-plan-featured.ts-plan-selected { transform: translateY(-6px); box-shadow: 0 24px 72px rgba(139,92,246,0.32), 0 0 0 2px rgba(139,92,246,0.85); border-color: rgba(139,92,246,0.8); }
 .ts-plan-featured::after {
   content: ''; position: absolute; inset: 0; border-radius: inherit;
-  background: linear-gradient(105deg, transparent 38%, rgba(255,255,255,0.07) 50%, transparent 62%);
+  background: linear-gradient(105deg, transparent 38%, rgba(255,255,255,0.045) 50%, transparent 62%);
   transform: translateX(-130%) skewX(-15deg);
-  animation: ts-shimmer-sweep 4.5s ease-in-out 2s infinite;
+  animation: ts-shimmer-sweep 5s ease-in-out 1.5s infinite;
   pointer-events: none; z-index: 1;
 }
 .ts-plan-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; margin-bottom: 20px; align-self: flex-start; position: relative; z-index: 2; }
-.ts-plan-badge-basic { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.48); border: 1px solid rgba(255,255,255,0.14); }
-.ts-plan-badge-featured { background: rgba(139,92,246,0.3); color: #c4b0ff; border: 1px solid rgba(139,92,246,0.5); }
-.ts-plan-name { font-family: var(--font-display); font-size: 23px; font-weight: 600; color: #fff; margin-bottom: 6px; line-height: 1.2; letter-spacing: -0.02em; position: relative; z-index: 2; }
-.ts-plan-tagline { font-size: 13px; color: rgba(255,255,255,0.4); margin-bottom: 28px; line-height: 1.55; position: relative; z-index: 2; }
-.ts-plan-price { font-family: var(--font-display); font-size: 56px; font-weight: 600; letter-spacing: -0.045em; color: #fff; line-height: 1; position: relative; z-index: 2; }
-.ts-plan-price-meta { display: flex; align-items: center; gap: 8px; margin: 6px 0 4px; position: relative; z-index: 2; }
-.ts-plan-price-old { font-size: 15px; color: rgba(255,255,255,0.32); text-decoration: line-through; }
+.ts-plan-badge-basic { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.38); border: 1px solid rgba(255,255,255,0.12); }
+.ts-plan-badge-featured { background: linear-gradient(135deg, rgba(139,92,246,0.32), rgba(99,102,241,0.22)); color: #c4b0ff; border: 1px solid rgba(139,92,246,0.44); }
+.ts-plan-name { font-family: var(--font-display); font-size: 22px; font-weight: 600; color: #fff; margin-bottom: 6px; line-height: 1.2; letter-spacing: -0.02em; position: relative; z-index: 2; }
+.ts-plan-tagline { font-size: 13px; color: rgba(255,255,255,0.36); margin-bottom: 24px; line-height: 1.55; position: relative; z-index: 2; }
+.ts-plan-price { font-family: var(--font-display); font-size: 54px; font-weight: 600; letter-spacing: -0.045em; color: #fff; line-height: 1; position: relative; z-index: 2; }
+.ts-plan-featured .ts-plan-price { font-size: 62px; background: linear-gradient(135deg, #ede0ff 0%, #c4b0ff 55%, #a78bfa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.ts-plan-price-meta { display: flex; align-items: center; gap: 8px; margin: 6px 0 2px; position: relative; z-index: 2; }
+.ts-plan-price-old { font-size: 15px; color: rgba(255,255,255,0.28); text-decoration: line-through; }
 .ts-plan-discount { font-size: 11px; font-weight: 700; color: #fff; background: linear-gradient(135deg, #ff7fb7, #8b5cf6); padding: 3px 9px; border-radius: 999px; letter-spacing: .04em; }
-.ts-plan-validity { font-size: 12px; color: rgba(255,255,255,0.3); margin: 0 0 28px; position: relative; z-index: 2; }
-.ts-plan-divider { height: 1px; background: rgba(255,255,255,0.1); margin-bottom: 22px; position: relative; z-index: 2; }
-.ts-plan-features { display: flex; flex-direction: column; flex: 1; margin-bottom: 32px; position: relative; z-index: 2; }
-.ts-plan-feat { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: rgba(255,255,255,0.7); line-height: 1.45; padding: 5px 8px; border-radius: 8px; margin: 0 -8px; transition: background .14s ease, color .14s ease; }
+.ts-plan-savings { font-size: 12px; color: rgba(134,239,172,0.75); margin-bottom: 2px; position: relative; z-index: 2; }
+.ts-plan-validity { font-size: 12px; color: rgba(255,255,255,0.26); margin: 0 0 22px; position: relative; z-index: 2; }
+.ts-plan-divider { height: 1px; background: rgba(255,255,255,0.08); margin-bottom: 20px; position: relative; z-index: 2; }
+.ts-plan-featured .ts-plan-divider { background: rgba(139,92,246,0.22); }
+.ts-plan-features { display: flex; flex-direction: column; flex: 1; margin-bottom: 28px; position: relative; z-index: 2; }
+.ts-plan-feat { display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px; color: rgba(255,255,255,0.62); line-height: 1.45; padding: 5px 8px; border-radius: 8px; margin: 0 -8px; transition: background .14s ease, color .14s ease; }
 .ts-plan-feat:hover { color: #fff; }
 .ts-plan-basic .ts-plan-feat:hover { background: rgba(255,255,255,0.07); }
-.ts-plan-featured .ts-plan-feat:hover { background: rgba(139,92,246,0.15); }
-.ts-plan-check { width: 19px; height: 19px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center; margin-top: 2px; }
-.ts-plan-check-basic { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.22); }
-.ts-plan-check-featured { background: rgba(139,92,246,0.4); border: 1px solid rgba(139,92,246,0.58); }
+.ts-plan-featured .ts-plan-feat:hover { background: rgba(139,92,246,0.12); }
+.ts-plan-check { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center; margin-top: 2px; }
+.ts-plan-check-basic { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); }
+.ts-plan-check-featured { background: rgba(139,92,246,0.32); border: 1px solid rgba(139,92,246,0.52); }
 .ts-plan-check svg path { fill: none; stroke-dasharray: 14; stroke-dashoffset: 14; transition: stroke-dashoffset .32s ease var(--delay, 0ms); }
-.ts-plan-basic .ts-plan-check svg path { stroke: rgba(255,255,255,0.65); }
-.ts-plan-featured .ts-plan-check svg path { stroke: rgba(255,255,255,0.9); }
+.ts-plan-basic .ts-plan-check svg path { stroke: rgba(255,255,255,0.62); }
+.ts-plan-featured .ts-plan-check svg path { stroke: rgba(196,176,255,0.88); }
 .ts-plan-basic:hover .ts-plan-check svg path,
-.ts-plan-basic.ts-plan-selected .ts-plan-check svg path,
-.ts-plan-featured:hover .ts-plan-check svg path,
-.ts-plan-featured.ts-plan-selected .ts-plan-check svg path { stroke-dashoffset: 0; }
-.ts-plan-addons-label { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: rgba(196,176,255,0.52); padding: 10px 8px 5px; margin: 0 -8px; }
+.ts-plan-basic.ts-plan-selected .ts-plan-check svg path { stroke-dashoffset: 0; }
+.ts-plan-featured-frame:hover .ts-plan-check svg path,
+.ts-plan-featured-frame.ts-plan-frame-selected .ts-plan-check svg path { stroke-dashoffset: 0; }
+.ts-plan-addons-label { font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: rgba(196,176,255,0.48); padding: 10px 8px 5px; margin: 4px -8px 0; border-top: 1px solid rgba(139,92,246,0.14); }
 .ts-plan-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 15px 24px; border-radius: 12px; font-size: 14px; font-weight: 700; letter-spacing: .02em; text-decoration: none; position: relative; z-index: 2; transition: transform .22s cubic-bezier(.34,1.2,.64,1), box-shadow .22s ease, background .18s ease; }
-.ts-plan-btn-basic { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
-.ts-plan-btn-basic:hover { background: rgba(255,255,255,0.18); transform: translateY(-2px); box-shadow: 0 6px 24px rgba(255,255,255,0.08); }
-.ts-plan-btn-featured { background: linear-gradient(135deg, #8b5cf6, #6b4bff); color: #fff; box-shadow: 0 4px 22px rgba(139,92,246,0.45); }
-.ts-plan-btn-featured:hover { background: linear-gradient(135deg, #9d70ff, #7c5cff); transform: translateY(-2px); box-shadow: 0 10px 36px rgba(139,92,246,0.62); }
-.ts-plan-note { text-align: center; font-size: 12px; color: rgba(255,255,255,0.24); margin-top: 10px; position: relative; z-index: 2; }
-.ts-plans-footer { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 36px; font-size: 13px; color: rgba(255,255,255,0.36); }
-.ts-plans-footer a { color: rgba(196,176,255,0.65); text-decoration: none; font-weight: 600; transition: color .18s ease; }
+.ts-plan-btn-basic { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.15); }
+.ts-plan-btn-basic:hover { background: rgba(255,255,255,0.14); color: #fff; transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,0.3); }
+.ts-plan-btn-featured { background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 60%, #4f46e5 100%); color: #fff; box-shadow: 0 4px 22px rgba(139,92,246,0.5); }
+.ts-plan-btn-featured:hover { background: linear-gradient(135deg, #9d70ff 0%, #7577f5 60%, #6058f0 100%); transform: translateY(-2px); box-shadow: 0 12px 40px rgba(139,92,246,0.65); }
+.ts-plan-note { text-align: center; font-size: 11.5px; color: rgba(255,255,255,0.2); margin-top: 10px; position: relative; z-index: 2; }
+.ts-plans-footer { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 52px; font-size: 13px; color: rgba(255,255,255,0.34); }
+.ts-plans-footer a { color: rgba(196,176,255,0.62); text-decoration: none; font-weight: 600; transition: color .18s ease; }
 .ts-plans-footer a:hover { color: #c4b0ff; }
 @media (max-width: 768px) {
-  .ts-plans-grid { grid-template-columns: 1fr; gap: 16px; }
-  .ts-plan-basic, .ts-plan-featured { padding: 32px 24px; }
+  .ts-plans-grid { grid-template-columns: 1fr; gap: 20px; }
+  .ts-plan-featured-frame { transform: translateY(0); }
+  .ts-plan-featured-frame:hover, .ts-plan-featured-frame.ts-plan-frame-selected { transform: translateY(-6px); }
+  .ts-plan-basic { padding: 32px 24px; }
+  .ts-plan-featured { padding: 36px 28px; }
   .ts-plan-price { font-size: 46px; }
+  .ts-plan-featured .ts-plan-price { font-size: 52px; }
 }
 
 /* ── FAQ ─────────────────────────────────────────────── */
@@ -2011,8 +2044,6 @@ function TSPricing() {
 
   return (
     <section className="section ts-plans-section" style={{ position: 'relative' }}>
-      <div className="ts-plans-orb ts-plans-orb-1" />
-      <div className="ts-plans-orb ts-plans-orb-2" />
       <div className="container" style={{ position: 'relative', zIndex: 1 }}>
         <div className="section-eyebrow fade-in">Enroll now</div>
         <h2 className="fade-in" style={{ fontFamily:'var(--font-display)', fontSize:'clamp(30px,3.8vw,52px)', fontWeight:600, letterSpacing:'-0.035em', lineHeight:1, marginBottom:14 }}>
@@ -2035,7 +2066,8 @@ function TSPricing() {
               <span className="ts-plan-price-old">₹1,875</span>
               <span className="ts-plan-discount">20% off</span>
             </div>
-            <div className="ts-plan-validity">One-time payment · Valid till GATE DA 2027</div>
+            <div className="ts-plan-savings">You save ₹375</div>
+            <div className="ts-plan-validity">One-time · Valid till GATE DA 2027</div>
             <div className="ts-plan-divider" />
             <div className="ts-plan-features">
               {BASIC_FEATS.map((f, i) => (
@@ -2049,38 +2081,41 @@ function TSPricing() {
             <div className="ts-plan-note">Message us on WhatsApp to enroll</div>
           </div>
 
-          {/* ── Featured ── */}
+          {/* ── Featured (animated gradient border frame) ── */}
           <div
-            className={`ts-plan ts-plan-featured${selected === 'featured' ? ' ts-plan-selected' : ''}`}
+            className={`ts-plan-featured-frame${selected === 'featured' ? ' ts-plan-frame-selected' : ''}`}
             onClick={() => pick('featured')}
           >
-            <div className="ts-plan-badge ts-plan-badge-featured">
-              <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M6 0l1.35 3.18L10.8 3.9l-2.7 2.55.78 3.75L6 8.55l-2.88 1.65.78-3.75L1.2 3.9l3.45-.72L6 0z"/></svg>
-              Most Popular
+            <div className="ts-plan ts-plan-featured">
+              <div className="ts-plan-badge ts-plan-badge-featured">
+                <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M6 0l1.35 3.18L10.8 3.9l-2.7 2.55.78 3.75L6 8.55l-2.88 1.65.78-3.75L1.2 3.9l3.45-.72L6 0z"/></svg>
+                Most Popular
+              </div>
+              <div className="ts-plan-name">Tests + Quizzes</div>
+              <div className="ts-plan-tagline">All mock tests, plus quizzes from the GATE DA 2027 full course.</div>
+              <div className="ts-plan-price">₹2,000</div>
+              <div className="ts-plan-price-meta">
+                <span className="ts-plan-price-old">₹2,500</span>
+                <span className="ts-plan-discount">20% off</span>
+              </div>
+              <div className="ts-plan-savings">You save ₹500</div>
+              <div className="ts-plan-validity">One-time · Valid till GATE DA 2027</div>
+              <div className="ts-plan-divider" />
+              <div className="ts-plan-features">
+                {BASIC_FEATS.map((f, i) => (
+                  <div key={i} className="ts-plan-feat" style={{ '--delay': `${i * 45}ms` }}><Tick featured /><span>{f}</span></div>
+                ))}
+                <div className="ts-plan-addons-label">+ Quizzes included</div>
+                {ADDON_FEATS.map((f, i) => (
+                  <div key={i} className="ts-plan-feat" style={{ '--delay': `${(BASIC_FEATS.length + i) * 45}ms` }}><Tick featured /><span>{f}</span></div>
+                ))}
+              </div>
+              <a href="https://wa.me/9088553305" target="_blank" rel="noopener noreferrer"
+                 className="ts-plan-btn ts-plan-btn-featured" onClick={e => e.stopPropagation()}>
+                Enroll now <Icon.ArrowRight s={14} />
+              </a>
+              <div className="ts-plan-note">Message us on WhatsApp to enroll</div>
             </div>
-            <div className="ts-plan-name">Tests + Quizzes</div>
-            <div className="ts-plan-tagline">All mock tests, plus quizzes from the GATE DA 2027 full course.</div>
-            <div className="ts-plan-price">₹2,000</div>
-            <div className="ts-plan-price-meta">
-              <span className="ts-plan-price-old">₹2,500</span>
-              <span className="ts-plan-discount">20% off</span>
-            </div>
-            <div className="ts-plan-validity">One-time payment · Valid till GATE DA 2027</div>
-            <div className="ts-plan-divider" />
-            <div className="ts-plan-features">
-              {BASIC_FEATS.map((f, i) => (
-                <div key={i} className="ts-plan-feat" style={{ '--delay': `${i * 45}ms` }}><Tick featured /><span>{f}</span></div>
-              ))}
-              <div className="ts-plan-addons-label">+ Quizzes included</div>
-              {ADDON_FEATS.map((f, i) => (
-                <div key={i} className="ts-plan-feat" style={{ '--delay': `${(BASIC_FEATS.length + i) * 45}ms` }}><Tick featured /><span>{f}</span></div>
-              ))}
-            </div>
-            <a href="https://wa.me/9088553305" target="_blank" rel="noopener noreferrer"
-               className="ts-plan-btn ts-plan-btn-featured" onClick={e => e.stopPropagation()}>
-              Enroll now <Icon.ArrowRight s={14} />
-            </a>
-            <div className="ts-plan-note">Message us on WhatsApp to enroll</div>
           </div>
 
         </div>
