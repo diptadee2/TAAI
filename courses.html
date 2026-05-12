@@ -2110,20 +2110,34 @@ function App() {
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
 
-function scrollToHash() {
-  var hash = window.location.hash;
-  if (!hash) return;
+function scrollToEl(hash) {
   var el = document.querySelector(hash);
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); return true; }
+  return false;
 }
+// Cross-page: retry until React has rendered
 (function tryOnLoad(n) {
   var hash = window.location.hash;
   if (!hash) return;
-  var el = document.querySelector(hash);
-  if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+  if (scrollToEl(hash)) return;
   if (n > 0) setTimeout(function() { tryOnLoad(n - 1); }, 150);
 })(8);
-window.addEventListener('hashchange', scrollToHash);
+// Same-page: intercept hash link clicks directly
+document.addEventListener('click', function(e) {
+  var a = e.target.closest('a[href]');
+  if (!a) return;
+  var href = a.getAttribute('href');
+  if (!href || href.indexOf('#') === -1) return;
+  var hash = href.slice(href.indexOf('#'));
+  var pagePart = href.slice(0, href.indexOf('#'));
+  var currentPage = window.location.pathname.split('/').pop() || 'index.html';
+  if (pagePart && pagePart !== currentPage) return;
+  var el = document.querySelector(hash);
+  if (!el) return;
+  e.preventDefault();
+  history.pushState(null, '', hash);
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
 </script>
 </body>
 </html>
