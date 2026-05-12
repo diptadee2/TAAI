@@ -228,51 +228,47 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .hero-sub { font-size: 18px; color: var(--ink-dim); line-height: 1.6; max-width: 480px; margin-bottom: 28px; }
 
 @keyframes schedule-pulse {
-  0%, 100% { box-shadow: 0 4px 18px rgba(139,92,246,0.18), 0 0 0 0 rgba(139,92,246,0.12); }
-  50%       { box-shadow: 0 6px 28px rgba(139,92,246,0.26), 0 0 0 6px rgba(139,92,246,0); }
+  0%, 100% { box-shadow: 0 6px 24px rgba(139,92,246,0.35), 0 0 0 0 rgba(139,92,246,0.18); }
+  55%       { box-shadow: 0 8px 36px rgba(139,92,246,0.48), 0 0 0 8px rgba(139,92,246,0); }
 }
 .schedule-btn {
   display: inline-flex; align-items: center; gap: 11px;
-  padding: 11px 20px 11px 13px;
+  padding: 13px 22px 13px 14px;
   border-radius: 100px;
-  background: linear-gradient(135deg, rgba(139,92,246,0.13) 0%, rgba(236,72,153,0.09) 100%);
-  border: 1.5px solid rgba(139,92,246,0.32);
-  color: var(--purple);
-  font-size: 13px; font-weight: 600; letter-spacing: .02em;
+  background: linear-gradient(135deg, #8B5CF6 0%, #a855f7 50%, #ec4899 100%);
+  border: none;
+  color: #fff;
+  font-size: 14px; font-weight: 700; letter-spacing: .02em;
   text-decoration: none;
   cursor: pointer;
-  transition: background .25s ease, border-color .25s ease, transform .3s cubic-bezier(.34,1.2,.64,1), box-shadow .28s ease;
+  transition: transform .3s cubic-bezier(.34,1.2,.64,1), box-shadow .28s ease, filter .25s ease;
   position: relative; overflow: hidden;
-  animation: heroIn .62s cubic-bezier(.34,1.12,.64,1) .46s both, schedule-pulse 3s ease-in-out 1.2s infinite;
+  animation: heroIn .62s cubic-bezier(.34,1.12,.64,1) .46s both, schedule-pulse 2.8s ease-in-out 1.2s infinite;
   margin-bottom: 36px;
 }
 .schedule-btn::before {
   content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(139,92,246,0.1), transparent);
-  transition: left .45s ease;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+  transition: left .48s ease;
 }
 .schedule-btn:hover::before { left: 100%; }
 .schedule-btn:hover {
-  background: linear-gradient(135deg, rgba(139,92,246,0.2) 0%, rgba(236,72,153,0.14) 100%);
-  border-color: rgba(139,92,246,0.52);
-  transform: translateY(-2px);
-  box-shadow: 0 10px 32px rgba(139,92,246,0.22);
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 14px 40px rgba(139,92,246,0.45);
+  filter: brightness(1.08);
   animation-play-state: paused;
 }
-.schedule-btn:active { transform: translateY(0); transition-duration: .1s; }
+.schedule-btn:active { transform: translateY(0) scale(1); transition-duration: .1s; }
 .schedule-btn-icon {
-  width: 30px; height: 30px; border-radius: 9px;
-  background: linear-gradient(135deg, rgba(139,92,246,0.22) 0%, rgba(236,72,153,0.14) 100%);
-  border: 1px solid rgba(139,92,246,0.28);
+  width: 28px; height: 28px; border-radius: 8px;
+  background: rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.3);
   display: grid; place-items: center; flex-shrink: 0;
-  transition: transform .3s cubic-bezier(.34,1.4,.64,1), border-color .25s ease;
+  transition: transform .3s cubic-bezier(.34,1.4,.64,1);
 }
-.schedule-btn:hover .schedule-btn-icon {
-  transform: rotate(-8deg) scale(1.12);
-  border-color: rgba(139,92,246,0.45);
-}
+.schedule-btn:hover .schedule-btn-icon { transform: rotate(-8deg) scale(1.12); }
 .schedule-btn-arrow {
-  opacity: 0.6; transition: transform .25s ease, opacity .25s ease; flex-shrink: 0;
+  opacity: 0.75; transition: transform .25s ease, opacity .25s ease; flex-shrink: 0;
 }
 .schedule-btn:hover .schedule-btn-arrow { transform: translate(3px, -2px); opacity: 1; }
 
