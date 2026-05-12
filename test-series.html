@@ -1202,9 +1202,13 @@ const COURSE_DROPDOWN = [
   { label: 'Individual Courses', href: 'courses.html#individual', dividerBefore: true },
   { label: 'Interview Prep',     href: 'courses.html#interview',  dividerBefore: true },
 ];
+const TS_DROPDOWN = [
+  { label: 'Test Series + Quizzes', href: 'test-series.html#plan-featured' },
+  { label: 'Test Series',           href: 'test-series.html#plan-basic', dividerBefore: true },
+];
 const NAV_LINKS = [
   { label: 'Courses',      href: 'courses.html',                   dropdown: COURSE_DROPDOWN },
-  { label: 'Test Series',  href: 'test-series.html',  active: true },
+  { label: 'Test Series',  href: 'test-series.html',  active: true, dropdown: TS_DROPDOWN },
   { label: 'Testimonials', href: 'testimonials.html'               },
 ];
 const MENU_ICONS = {
@@ -2063,7 +2067,7 @@ function TSPricing() {
         <div className="ts-plans-grid fade-in">
 
           {/* ── Basic ── */}
-          <div
+          <div id="plan-basic"
             className={`ts-plan ts-plan-basic${selected === 'basic' ? ' ts-plan-selected' : ''}`}
             onClick={() => pick('basic')}
             onMouseMove={e=>{const r=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');e.currentTarget.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%');}}
@@ -2093,7 +2097,7 @@ function TSPricing() {
           </div>
 
           {/* ── Featured (animated gradient border frame) ── */}
-          <div
+          <div id="plan-featured"
             className={`ts-plan-featured-frame${selected === 'featured' ? ' ts-plan-frame-selected' : ''}`}
             onClick={() => pick('featured')}
           >
