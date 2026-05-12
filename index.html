@@ -133,7 +133,7 @@ body {
   50% { opacity: 0.35; transform: translateX(10px); }
 }
 /* ── Courses nav dropdown ────────────────────────────── */
-.nav-dropdown-wrap { position: relative; display: flex; align-items: center; }
+.nav-dropdown-wrap { position: relative; display: flex; align-items: center; z-index: 100; }
 .nav-dropdown { position: absolute; top: 100%; left: max(-20px, calc(50% - 105px)); transform: translateY(-8px) scaleY(0.9); transform-origin: top center; min-width: 210px; padding: 10px 6px 6px; background: rgba(248,246,255,0.97); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(139,92,246,0.16); border-radius: 14px; box-shadow: 0 8px 32px rgba(20,16,43,0.12), 0 2px 8px rgba(139,92,246,0.08); opacity: 0; pointer-events: none; transition: opacity .14s ease, transform .26s cubic-bezier(.34,1.56,.64,1); z-index: 150; }
 .nav-dropdown::before { content: ''; position: absolute; top: -18px; left: 0; right: 0; height: 18px; }
 .nav-dropdown-wrap:hover .nav-dropdown { opacity: 1; transform: translateY(12px) scaleY(1); pointer-events: auto; }
