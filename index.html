@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Fraunces:ital,wght@0,400;0,500;0,600;1,500&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* TAAI Landing Page — Pink / Purple / Blue on white */
+/* TAAI Landing Page, Pink / Purple / Blue on white */
 :root {
   --bg: #FFFFFF;
   --bg-soft: #FBF9FF;
@@ -473,7 +473,7 @@ body {
 }
 .section-sub { font-size: 18px; color: var(--ink-dim); line-height: 1.5; max-width: 580px; }
 
-/* Three ways — offer cards */
+/* Three ways, offer cards */
 .offer-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
 .offer-card {
   border-radius: var(--radius-xl); min-height: 400px;
@@ -541,7 +541,7 @@ body {
 .offer-card:hover .offer-badge { background: rgba(255,255,255,0.16); color: rgba(255,255,255,0.9); border-color: rgba(255,255,255,0.2); }
 .offer-card:hover .offer-badge-dot { background: rgba(255,255,255,0.7); }
 
-/* Why TAAI — interactive tabs */
+/* Why TAAI, interactive tabs */
 .whyus-layout { display: grid; grid-template-columns: 360px 1fr; gap: 20px; align-items: stretch; }
 .whyus-tabs { display: flex; flex-direction: column; gap: 6px; }
 .whyus-tab {
@@ -759,7 +759,7 @@ body {
 .gitem img { width: 100%; display: block; }
 .gitem-badge { display: inline-flex; align-items: center; background: linear-gradient(135deg, var(--pink), var(--purple)); color: #fff; font-family: var(--font-mono); font-size: 11px; font-weight: 600; padding: 4px 11px; border-radius: 999px; margin-top: 8px; }
 
-/* Play overlay — image testimonials */
+/* Play overlay, image testimonials */
 .gitem { position: relative; }
 .gitem-play {
   position: absolute; inset: 0;
@@ -777,7 +777,7 @@ body {
 }
 .gitem:hover .gitem-play-icon { transform: scale(1); }
 
-/* Watch interview — quote testimonials */
+/* Watch interview, quote testimonials */
 .testi { position: relative; }
 .testi-watch {
   position: absolute; bottom: 26px; right: 26px;
@@ -1339,11 +1339,11 @@ function Hero() {
           <div className="hero-checks">
             <div className="hero-check">
               <span className="hero-check-icon" style={{ background: 'var(--purple-soft)' }}><Icon.Check size={11} style={{ color: 'var(--purple)' }} /></span>
-              Built for GATE DA — not a repurposed CSE course
+              Built for GATE DA, not a repurposed CSE course
             </div>
             <div className="hero-check">
               <span className="hero-check-icon" style={{ background: 'var(--pink-soft)' }}><Icon.Check size={11} style={{ color: 'var(--pink)' }} /></span>
-              Visual, conceptual teaching — understand the why, not just formulas
+              Visual, conceptual teaching, understand the why, not just formulas
             </div>
             <div className="hero-check">
               <span className="hero-check-icon" style={{ background: 'var(--₹blue-soft)' }}><Icon.Check size={11} style={{ color: 'var(--blue)' }} /></span>
@@ -1452,12 +1452,12 @@ function Hero() {
               <line x1="33" y1="4" x2="33" y2="14" stroke="var(--pink)" strokeWidth="2.2" strokeLinecap="round" />
               {/* Live dot top-right */}
               <circle cx="41" cy="13" r="3.2" fill="#ff3b3b" className="cal-live" />
-              {/* 6 sequential days — Mon to Sat */}
+              {/* 6 sequential days, Mon to Sat */}
               {[[9,29],[17,29],[25,29],[33,29],[9,38],[17,38]].map(([cx,cy],i) => (
                 <circle key={i} cx={cx} cy={cy} r="3.2" fill="rgba(255,127,183,0.18)"
                   className="cal-day" style={{ animationDelay: `${i * 0.35}s` }} />
               ))}
-              {/* Today — Sunday with radar ping */}
+              {/* Today, Sunday with radar ping */}
               <circle cx="33" cy="38" r="4.5" fill="var(--pink)" />
               <circle cx="33" cy="38" r="4.5" fill="none" stroke="var(--pink)" strokeWidth="1.8" className="cal-ping" />
               <circle cx="33" cy="38" r="4.5" fill="none" stroke="var(--pink)" strokeWidth="1.8" className="cal-ping-2" />
@@ -1465,7 +1465,7 @@ function Hero() {
             </svg>
           </div>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 36, letterSpacing: '-0.03em' }}>Weekly</div>
-          <div style={{ fontSize: 13, color: 'var(--ink-dim)' }}>Live doubt + discussion — career to conceptual, everything.</div>
+          <div style={{ fontSize: 13, color: 'var(--ink-dim)' }}>Live doubt + discussion, career to conceptual, everything.</div>
         </div>
       </div>
     </section>
@@ -1583,7 +1583,7 @@ const WHY_FEATURES = [
     label: 'Conceptual clarity.',
     sub: 'Visual, intuition-first teaching',
     title: <>Understand the <em style={{color:'var(--pink)'}}>why,</em><br />not just the formulas.</>,
-    desc: 'Every concept taught visually and intuitively. Builds the thinking ability that carries you through exams and IIT interviews — not just pattern matching.',
+    desc: 'Every concept taught visually and intuitively. Builds the thinking ability that carries you through exams and IIT interviews, not just pattern matching.',
     stat: { num: '100+', lbl: 'concept videos' },
     eyebrow: 'Visual learning'
   },
@@ -1594,7 +1594,7 @@ const WHY_FEATURES = [
     label: 'GATE-level practice.',
     sub: '1,500+ curated questions',
     title: <>Quality over<br /><em style={{color:'var(--lilac)'}}>quantity.</em></>,
-    desc: 'Conceptual, exam-relevant questions with text + video solutions. Every question earns its place — no filler, no repetition.',
+    desc: 'Conceptual, exam-relevant questions with text + video solutions. Every question earns its place, no filler, no repetition.',
     stat: { num: '1,500+', lbl: 'practice questions' },
     eyebrow: 'Question bank'
   },
@@ -1605,7 +1605,7 @@ const WHY_FEATURES = [
     label: 'End-to-end guidance.',
     sub: 'From prep to IIT admission',
     title: <>With you until<br /><em style={{color:'#7EB3FF'}}>IIT admission.</em></>,
-    desc: 'From your first concept to your final interview — guidance through GATE, institute selection, and written tests at top IITs.',
+    desc: 'From your first concept to your final interview, guidance through GATE, institute selection, and written tests at top IITs.',
     stat: { num: '35+', lbl: 'Top 250 ranks achieved' },
     eyebrow: 'Full journey'
   },
@@ -1616,7 +1616,7 @@ const WHY_FEATURES = [
     label: 'Active community.',
     sub: 'Discord · any hour',
     title: <>Real help at<br /><em style={{color:'var(--pink)'}}>any hour.</em></>,
-    desc: 'Late-night doubt? Tricky question? A real community of mentors and toppers — not a bot. Instant resolution on Discord.',
+    desc: 'Late-night doubt? Tricky question? A real community of mentors and toppers, not a bot. Instant resolution on Discord.',
     stat: { num: '24/7', lbl: 'community support' },
     eyebrow: 'Discord community'
   },
@@ -1627,7 +1627,7 @@ const WHY_FEATURES = [
     label: 'Live sessions.',
     sub: 'Real-time doubt clearing',
     title: <>Topic-wise live<br /><em style={{color:'var(--lilac)'}}>discussions.</em></>,
-    desc: 'Regular live sessions per topic — clarify doubts, discuss logic, and get direct explanations from Manoj Sir in real time.',
+    desc: 'Regular live sessions per topic, clarify doubts, discuss logic, and get direct explanations from Manoj Sir in real time.',
     stat: { num: '67+', lbl: 'live test discussions' },
     eyebrow: 'Live interactive'
   }
@@ -1646,7 +1646,7 @@ function WhyUs() {
     return () => mq.removeEventListener('change', fn);
   }, []);
 
-  // Auto-advance — resets whenever active changes or paused toggles
+  // Auto-advance, resets whenever active changes or paused toggles
   React.useEffect(() => {
     if (paused || isMobile) return;
     const id = setInterval(() => setActive(a => (a + 1) % WHY_FEATURES.length), DURATION);
@@ -1767,7 +1767,7 @@ function Instructor() {
       <div className="container">
         <div className="instructor-grid">
           <div className="instructor-photo-wrap fade-in">
-            <img src="manoj-kumar.webp" alt="Manoj Kumar — TAAI" className="instructor-photo" />
+            <img src="manoj-kumar.webp" alt="Manoj Kumar, TAAI" className="instructor-photo" />
             <a href="https://www.youtube.com/watch?v=Rppm3LrbLOI&t=5372s" target="_blank" rel="noopener noreferrer" className="instructor-play-btn">
               <span className="instructor-play-label">Free Probability Crash Course</span>
               <span className="instructor-play-icon">
@@ -1779,7 +1779,7 @@ function Instructor() {
             <div className="instructor-eyebrow">Your Mentor</div>
             <div className="instructor-name">Manoj<br /><span>Kumar.</span></div>
             <p className="instructor-bio">
-              Known for visual, intuition-first teaching across every GATE DA subject. Started TAAI with one goal — give serious aspirants the clearest possible path to an IIT. No shortcuts, no fluff, just the depth that actually gets you ranked.
+              Known for visual, intuition-first teaching across every GATE DA subject. Started TAAI with one goal, give serious aspirants the clearest possible path to an IIT. No shortcuts, no fluff, just the depth that actually gets you ranked.
             </p>
             <div className="instructor-creds">
               <div className="instructor-cred-card instructor-cred-card-air">
@@ -1823,7 +1823,7 @@ function Testimonials() {
           <div className="section-head-left">
             <div className="section-eyebrow">Stories</div>
             <h2>Hear what our<br /><em>students say.</em></h2>
-            <p className="section-sub">Testimonials and feedback from TAAI students — candid thoughts on programs, mentorship, and the ranks that followed.</p>
+            <p className="section-sub">Testimonials and feedback from TAAI students, candid thoughts on programs, mentorship, and the ranks that followed.</p>
           </div>
           <a href="https://www.youtube.com/playlist?list=PLZvuMBNC5r0WNKW_nqAD703PwYRd0UqQH" target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-swap">
             <span className="swap-default">Video testimonials <Icon.ArrowRight /></span>
@@ -1881,11 +1881,11 @@ function Testimonials() {
 
 // ============ FAQ ============
 const FAQS = [
-  { q: 'Why should I choose TAAI?', a: <><p>TAAI is a complete learning experience — not just coaching. Five reasons:</p><ul><li><b>Conceptual clarity with visualization.</b> Every concept explained visually — you learn the "why", not just the formula.</li><li><b>Top-quality practice material.</b> GATE-level, conceptual questions — quality over quantity.</li><li><b>Proven results.</b> 5 students in Top 50, 35+ in Top 250, and 51+ in Top 500.</li><li><b>Complete support until admission.</b> From choosing institutes to interviews and written tests.</li><li><b>Interview preparation (coming soon).</b> Preparing students for AI and Data Science roles.</li></ul></> },
-  { q: "I genuinely want to study, but I can't afford the course. What should I do?", a: "Financial challenges shouldn't stop a dedicated learner. Write to support@taai.live explaining your situation — our team offers discounts or scholarship options based on need and interest." },
+  { q: 'Why should I choose TAAI?', a: <><p>TAAI is a complete learning experience, not just coaching. Five reasons:</p><ul><li><b>Conceptual clarity with visualization.</b> Every concept explained visually, you learn the "why", not just the formula.</li><li><b>Top-quality practice material.</b> GATE-level, conceptual questions, quality over quantity.</li><li><b>Proven results.</b> 5 students in Top 50, 35+ in Top 250, and 51+ in Top 500.</li><li><b>Complete support until admission.</b> From choosing institutes to interviews and written tests.</li><li><b>Interview preparation (coming soon).</b> Preparing students for AI and Data Science roles.</li></ul></> },
+  { q: "I genuinely want to study, but I can't afford the course. What should I do?", a: "Financial challenges shouldn't stop a dedicated learner. Write to support@taai.live explaining your situation, our team offers discounts or scholarship options based on need and interest." },
   { q: 'What do I get in the TAAI Full Course for GATE DA?', a: <><p>Structured, high-quality, result-driven program:</p><ul><li>Top-notch conceptual content</li><li>Hand-coded animations</li><li>GATE-level problem sets</li><li>Weekly topic-wise tests</li><li>Live doubt sessions</li><li>Handwritten notes</li><li>Active Discord community</li><li>Subject-wise test at end</li></ul></> },
-  { q: 'What is the mode of teaching at TAAI?', a: <><p>A blended learning approach — flexibility with depth:</p><ul><li><b>Recorded concept classes</b> — learn at your own pace</li><li><b>Live doubt sessions</b> — topic-wise, real-time clarity</li><li><b>Active Discord support</b> — mentors and peers, fast resolution</li><li><b>Handwritten notes</b> — structured revision</li></ul></> },
-  { q: 'Can I access the course on mobile or desktop?', a: <><p>Yes — across all major platforms:</p><ul><li><b>Mobile:</b> Google Play Store</li><li><b>Desktop:</b> Dedicated website.</li></ul><p>Progress stays synced across devices. Facing technical issues? Drop a message on Discord — our tech team assists promptly.</p></> }
+  { q: 'What is the mode of teaching at TAAI?', a: <><p>A blended learning approach, flexibility with depth:</p><ul><li><b>Recorded concept classes</b>, learn at your own pace</li><li><b>Live doubt sessions</b>, topic-wise, real-time clarity</li><li><b>Active Discord support</b>, mentors and peers, fast resolution</li><li><b>Handwritten notes</b>, structured revision</li></ul></> },
+  { q: 'Can I access the course on mobile or desktop?', a: <><p>Yes, across all major platforms:</p><ul><li><b>Mobile:</b> Google Play Store</li><li><b>Desktop:</b> Dedicated website.</li></ul><p>Progress stays synced across devices. Facing technical issues? Drop a message on Discord, our tech team assists promptly.</p></> }
 ];
 
 function FaqItem({ f, isOpen, onToggle }) {
@@ -1939,7 +1939,7 @@ function CTA() {
       <div className="container">
         <div className="cta-card fade-in">
           <h2>Can't afford it <em>right now?</em></h2>
-          <p>Financial challenges shouldn't stop a dedicated learner. We offer need-based discounts and scholarships — fill out a short form and our team will get back to you personally.</p>
+          <p>Financial challenges shouldn't stop a dedicated learner. We offer need-based discounts and scholarships, fill out a short form and our team will get back to you personally.</p>
           <a href="contact.html#contact-form" className="btn cta-btn-white">Apply for financial assistance <Icon.ArrowRight /></a>
         </div>
       </div>

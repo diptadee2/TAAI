@@ -198,7 +198,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .ch-telegram:hover { border-color: rgba(77,139,255,0.35); }
 .ch-linkedin:hover { border-color: rgba(10,102,194,0.45); }
 
-/* Orb per card — drifts continuously */
+/* Orb per card, drifts continuously */
 @keyframes orb-drift {
   0%, 100% { transform: translate(0, 0) scale(1); }
   50%       { transform: translate(-22px, 18px) scale(1.18); }
@@ -656,9 +656,9 @@ function ContactForm() {
 
 function Offers() {
   const offers = [
-    { cls: 'oc-1', num: '01', icon: <Icon.BookOpen />, title: 'GATE DA Courses', desc: 'Complete GATE DA coverage by Manoj Kumar — Linear Algebra, Probability, Statistics, Calculus, ML and more. Valid until GATE 2027.', href: 'courses.html', cta: 'View courses' },
+    { cls: 'oc-1', num: '01', icon: <Icon.BookOpen />, title: 'GATE DA Courses', desc: 'Complete GATE DA coverage by Manoj Kumar, Linear Algebra, Probability, Statistics, Calculus, ML and more. Valid until GATE 2027.', href: 'courses.html', cta: 'View courses' },
     { cls: 'oc-2', num: '02', icon: <Icon.Target />, title: 'Test Series', desc: '67 tests: 45 topic-wise, 10 subject-wise, 12 full-length mocks. GATE-like interface with detailed performance analytics.', href: 'test-series.html', cta: 'Explore test series' },
-    { cls: 'oc-3', num: '03', icon: <Icon.Briefcase />, title: 'Interview Preparation', desc: 'Career prep for DS/AI roles — projects, mock interviews, and industry mentorship. Preview available on YouTube now.', href: 'https://www.youtube.com/watch?v=iobgxxTluUc&list=PLZvuMBNC5r0UEjm31D56LdoYzd4L-vtaF', cta: 'Watch preview' },
+    { cls: 'oc-3', num: '03', icon: <Icon.Briefcase />, title: 'Interview Preparation', desc: 'Career prep for DS/AI roles, projects, mock interviews, and industry mentorship. Preview available on YouTube now.', href: 'https://www.youtube.com/watch?v=iobgxxTluUc&list=PLZvuMBNC5r0UEjm31D56LdoYzd4L-vtaF', cta: 'Watch preview' },
   ];
   return (
     <section className="section" style={{ background: 'var(--bg-soft)' }}>
@@ -668,7 +668,7 @@ function Offers() {
           Everything you need to <em style={{ fontStyle: 'normal', background: 'linear-gradient(120deg,var(--pink),var(--purple),var(--blue),var(--purple),var(--pink))', backgroundSize: '250% 100%', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', animation: 'grad-drift 9s ease infinite' }}>crack GATE.</em>
         </h2>
         <p className="fade-in" style={{ fontSize: 17, color: 'var(--ink-dim)', marginBottom: 48, maxWidth: 520 }}>
-          Structured courses, rigorous testing, and placement prep — all in one place.
+          Structured courses, rigorous testing, and placement prep, all in one place.
         </p>
         <div className="offer-grid">
           {offers.map((o, i) => (
@@ -700,7 +700,7 @@ function CtaBanner() {
           <div className="cta-text">
             <div className="cta-eyebrow">GATE 2027</div>
             <div className="cta-title">Get ready to crack<br /><em>GATE this year.</em></div>
-            <div className="cta-sub">Walk the path as your mentors. Students from IITs and IISc have cracked GATE with TAAI — now it's your turn.</div>
+            <div className="cta-sub">Walk the path as your mentors. Students from IITs and IISc have cracked GATE with TAAI, now it's your turn.</div>
           </div>
           <div className="cta-actions">
             <a href="https://www.taai.live/learn/account/signup" target="_blank" rel="noopener noreferrer" className="btn-cta-primary">Sign Up free <Icon.ArrowRight /></a>
@@ -796,7 +796,7 @@ function App() {
           <div className="contact-eyebrow" style={{ animation: 'heroIn .6s cubic-bezier(.34,1.12,.64,1) .08s both' }}>Get in touch</div>
           <h1 style={{ animation: 'heroIn .72s cubic-bezier(.34,1.12,.64,1) .20s both' }}>We are here<br />to <em>help you.</em></h1>
           <p className="contact-hero-sub" style={{ animation: 'heroIn .62s cubic-bezier(.34,1.12,.64,1) .34s both' }}>
-            Whether it's a course question, a doubt, or just a hello — reach out through any channel and we'll get back to you fast.
+            Whether it's a course question, a doubt, or just a hello, reach out through any channel and we'll get back to you fast.
           </p>
           <div className="channel-grid" style={{ marginTop: 48 }}>
             {CHANNELS.map((c, i) => (

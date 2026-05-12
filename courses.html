@@ -382,7 +382,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .faculty-secondary .faculty-tag:hover { background: rgba(139,92,246,0.18); border-color: rgba(139,92,246,0.38); transform: scale(1.09); }
 @media (max-width: 768px) { .faculty-grid { grid-template-columns: 1fr; } }
 
-/* Combos grid — redesigned */
+/* Combos grid, redesigned */
 .combos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: stretch; }
 .combo-card {
   border-radius: var(--radius-xl); padding: 36px;
@@ -478,7 +478,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .combo-card.featured .combo-num { opacity: 0.14; color: #fff; }
 .combo-card.featured:hover .combo-num { opacity: 0.22; }
 
-/* Individual courses — redesigned */
+/* Individual courses, redesigned */
 .courses-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
 .course-card {
   border-radius: var(--radius-xl); padding: 28px 24px 24px;
@@ -621,7 +621,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .placement-chip.chip-pink:hover   { background: rgba(255,127,183,0.18); border-color: rgba(255,127,183,0.4); color: var(--pink); transform: scale(1.07); }
 .placement-divider { height: 1px; background: rgba(255,255,255,0.07); }
 
-/* Every course includes — tab showcase (mirrors Why TAAI on landing page) */
+/* Every course includes, tab showcase (mirrors Why TAAI on landing page) */
 .incl-layout { display: grid; grid-template-columns: 360px 1fr; gap: 20px; align-items: stretch; }
 .incl-tabs { display: flex; flex-direction: column; gap: 6px; }
 .incl-tab {
@@ -808,7 +808,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 
 /* ── Touch-device interaction overrides ─────────────────────── */
 @media (hover: none) {
-  /* Kill hover lifts — replace with tap feedback */
+  /* Kill hover lifts, replace with tap feedback */
   .combo-card.card:hover,
   .combo-card.featured.card:hover { transform: none; }
   .combo-card:active { transform: scale(0.975); transition-duration: .12s; }
@@ -820,7 +820,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .course-card:hover .course-validity { color: var(--ink-soft); }
   .course-card:hover .course-topics { max-height: 0; opacity: 0; margin-bottom: 0; }
   .course-card:active { transform: scale(0.975); transition-duration: .12s; }
-  /* Combo includes — show without hover */
+  /* Combo includes, show without hover */
   .combo-includes li { opacity: 1; transform: translateX(0); }
   .combo-check svg path { stroke-dashoffset: 0; }
   /* Restore featured-card box-shadow */
@@ -1274,7 +1274,7 @@ const COMBOS = [
     includes: [
       'Complete GATE DA syllabus',
       'Linear Algebra, Probability, Statistics, Calculus',
-      'Machine Learning — full coverage',
+      'Machine Learning, full coverage',
       'GATE-level question bank (1,500+ questions)',
       'Live doubt sessions every week',
       'Handwritten notes + video solutions',
@@ -1348,17 +1348,17 @@ const INCLUDED = [
   { icon: <Icon.Video />, grad: 'linear-gradient(135deg,var(--pink),var(--purple))', color: '#FF7FB7',
     label: 'Recorded classes.', sub: 'Visual-first lectures', eyebrow: 'Core content',
     title: <>Learn at<br /><em style={{color:'var(--pink)'}}>your own pace.</em></>,
-    desc: 'High-quality, visual-first lectures you can re-watch anytime. Structured for GATE DA — concise, conceptual, focused.',
+    desc: 'High-quality, visual-first lectures you can re-watch anytime. Structured for GATE DA, concise, conceptual, focused.',
     stat: { num: '100+', lbl: 'concept videos' } },
   { icon: <Icon.Users />, grad: 'linear-gradient(135deg,var(--purple),var(--blue))', color: '#8B5CF6',
     label: 'Live doubt sessions.', sub: 'Weekly, real-time', eyebrow: 'Live interactive',
     title: <>Doubts cleared<br /><em style={{color:'var(--lilac)'}}>in real time.</em></>,
-    desc: 'Weekly live sessions per topic — clarify doubts, discuss logic, and get direct explanations from Manoj Sir.',
+    desc: 'Weekly live sessions per topic, clarify doubts, discuss logic, and get direct explanations from Manoj Sir.',
     stat: { num: '67+', lbl: 'live sessions' } },
   { icon: <Icon.Discord />, grad: 'linear-gradient(135deg,var(--blue),#7FA8FF)', color: '#4D8BFF',
     label: 'Discord support.', sub: 'Mentors · any hour', eyebrow: 'Community',
     title: <>Help available<br /><em style={{color:'#7EB3FF'}}>24 / 7.</em></>,
-    desc: 'Active Discord community with mentors and toppers. Late-night doubt? Someone always there — not a bot.',
+    desc: 'Active Discord community with mentors and toppers. Late-night doubt? Someone always there, not a bot.',
     stat: { num: '24/7', lbl: 'community support' } },
   { icon: <Icon.Note />, grad: 'linear-gradient(135deg,var(--pink),#FF9ECB)', color: '#FF9ECB',
     label: 'Handwritten notes.', sub: 'Exam-ready revision', eyebrow: 'Study material',
@@ -1368,7 +1368,7 @@ const INCLUDED = [
   { icon: <Icon.Target />, grad: 'linear-gradient(135deg,var(--purple),var(--lilac))', color: '#A78BFA',
     label: 'Question bank.', sub: '1,500+ GATE-level Qs', eyebrow: 'Practice',
     title: <>Quality over<br /><em style={{color:'var(--lilac)'}}>quantity.</em></>,
-    desc: '1,500+ conceptual questions with text and video solutions. Curated for GATE DA — no filler, every question earns its place.',
+    desc: '1,500+ conceptual questions with text and video solutions. Curated for GATE DA, no filler, every question earns its place.',
     stat: { num: '1,500+', lbl: 'practice questions' } },
 ];
 
@@ -1640,7 +1640,7 @@ function IncludedShowcase() {
         <h2 className="fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 12 }}>
           More than just <em>video lectures</em>
         </h2>
-        <p className="section-sub fade-in">Every TAAI course ships with the full support stack — not just recorded classes.</p>
+        <p className="section-sub fade-in">Every TAAI course ships with the full support stack, not just recorded classes.</p>
 
         {isMobile ? (
           <div className="incl-accordion fade-in">
@@ -1740,7 +1740,7 @@ function Faculty() {
         <h2 className="fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 12 }}>
           Taught by <em>GATE toppers</em>
         </h2>
-        <p className="section-sub fade-in">AIR 13 and AIR 94 — they've cracked the exam, now they teach it.</p>
+        <p className="section-sub fade-in">AIR 13 and AIR 94, they've cracked the exam, now they teach it.</p>
         <div className="faculty-grid fade-in" ref={gridRef}>
 
           <div className="faculty-card faculty-primary">
@@ -1834,17 +1834,17 @@ const WHY_PILLARS = [
   {
     icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5"/><circle cx="12" cy="12" r="4.5" stroke="currentColor" strokeWidth="1.5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>,
     heading: 'GATE DA–Specific',
-    sub: 'Not repurposed CSE content. Built ground-up for the exact topics GATE DA tests — from scratch.',
+    sub: 'Not repurposed CSE content. Built ground-up for the exact topics GATE DA tests, from scratch.',
   },
   {
     icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 3a6 6 0 0 1 6 6c0 3-1.8 5.4-3.6 7.2L12 18l-2.4-1.8C7.8 14.4 6 12 6 9a6 6 0 0 1 6-6z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/><circle cx="12" cy="9" r="2" stroke="currentColor" strokeWidth="1.5"/><path d="M9 21h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
     heading: 'Visual & Conceptual',
-    sub: 'Mathematics taught for understanding, not memorisation — intuition-first with clear, grounded visuals.',
+    sub: 'Mathematics taught for understanding, not memorisation, intuition-first with clear, grounded visuals.',
   },
   {
     icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M4 4V20H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M7 15L11 10L14 13L19 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><circle cx="19" cy="6" r="1.5" fill="currentColor"/></svg>,
     heading: 'Proven Results',
-    sub: 'AIR 46, 51, 91, 102 and more — students consistently crack GATE DA with top ranks.',
+    sub: 'AIR 46, 51, 91, 102 and more, students consistently crack GATE DA with top ranks.',
   },
 ];
 
@@ -1918,7 +1918,7 @@ function App() {
             <div className="page-eyebrow">GATE DA 2027 Courses</div>
             <h1 className="fade-in">Your career, all at<br /><em>One place.</em></h1>
             <p className="hero-sub fade-in" style={{ fontSize: 19, color: 'var(--ink-dim)', maxWidth: 580, lineHeight: 1.5, marginBottom: 36 }}>
-              The only GATE DA prep that teaches mathematics the way the exam actually tests it — visual, conceptual, and built for DA from scratch. Not repurposed CSE content.
+              The only GATE DA prep that teaches mathematics the way the exam actually tests it, visual, conceptual, and built for DA from scratch. Not repurposed CSE content.
             </p>
             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }} className="fade-in">
               <a href="#combos" className="btn btn-primary btn-lg">Bundled courses</a>
@@ -1945,7 +1945,7 @@ function App() {
                   <div className="hero-proof-rank">AIR 102 · GATE DA 2026</div>
                   <div className="hero-proof-stars">★★★★★</div>
                 </div>
-                <p className="hero-proof-quote">"The lectures felt just right — clear, to the point, and not overloaded with unnecessary content. Concepts were explained so intuitively, with plenty of examples. Manoj Sir's personal support truly stood out and made a big difference in my learning."</p>
+                <p className="hero-proof-quote">"The lectures felt just right, clear, to the point, and not overloaded with unnecessary content. Concepts were explained so intuitively, with plenty of examples. Manoj Sir's personal support truly stood out and made a big difference in my learning."</p>
                 <div className="hero-proof-footer">
                   <div className="hero-proof-avatar">PR</div>
                   <div>
@@ -2058,7 +2058,7 @@ function App() {
                 Interview Preparation<br /><em>DS / AI</em>
               </div>
               <p className="placement-desc">
-                Career prep for AI and Data Science roles — end-to-end projects, mock interviews, resume reviews, and industry mentorship. Preview available on YouTube now.
+                Career prep for AI and Data Science roles, end-to-end projects, mock interviews, resume reviews, and industry mentorship. Preview available on YouTube now.
               </p>
               <div className="placement-btns">
                 <a href="https://www.youtube.com/watch?v=iobgxxTluUc&list=PLZvuMBNC5r0UEjm31D56LdoYzd4L-vtaF" target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-swap btn-attract" data-swap-hover="ML Algorithms from Scratch">
