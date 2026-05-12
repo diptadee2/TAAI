@@ -234,7 +234,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 
 /* Section */
-.section { padding: var(--section-pad) 0; }
+.section { padding: var(--section-pad) 0; scroll-margin-top: 100px; }
 .section + .section { border-top: 1px solid transparent; border-image: linear-gradient(90deg, transparent, rgba(139,92,246,0.2) 35%, rgba(236,72,153,0.2) 65%, transparent) 1; }
 .section-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--purple); margin-bottom: 16px; }
 .section-eyebrow::before { content: ''; display: inline-block; width: 20px; height: 2px; background: linear-gradient(90deg, var(--pink), var(--purple)); border-radius: 2px; }
@@ -2109,6 +2109,21 @@ function App() {
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+function scrollToHash() {
+  var hash = window.location.hash;
+  if (!hash) return;
+  var el = document.querySelector(hash);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+(function tryOnLoad(n) {
+  var hash = window.location.hash;
+  if (!hash) return;
+  var el = document.querySelector(hash);
+  if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+  if (n > 0) setTimeout(function() { tryOnLoad(n - 1); }, 150);
+})(8);
+window.addEventListener('hashchange', scrollToHash);
 </script>
 </body>
 </html>
