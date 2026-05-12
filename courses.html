@@ -1151,10 +1151,14 @@ const COURSE_DROPDOWN = [
   { label: 'Individual Courses', href: 'courses.html#individual', dividerBefore: true },
   { label: 'Interview Prep',     href: 'courses.html#interview',  dividerBefore: true },
 ];
+const TESTIMONIALS_DROPDOWN = [
+  { label: 'Batch of 2026', href: 'testimonials.html#batch-2026' },
+  { label: 'Batch of 2025', href: 'testimonials.html#batch-2025', dividerBefore: true },
+];
 const NAV_LINKS = [
   { label: 'Courses',      href: 'courses.html',      active: true, dropdown: COURSE_DROPDOWN },
   { label: 'Test Series 2027',  href: 'test-series.html' },
-  { label: 'Testimonials', href: 'testimonials.html' },
+  { label: 'Testimonials', href: 'testimonials.html', dropdown: TESTIMONIALS_DROPDOWN },
 ];
 const MENU_ICONS = {
   'index.html':        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M3 12L12 4L21 12V20C21 20.6 20.6 21 20 21H15V16H9V21H4C3.4 21 3 20.6 3 20V12Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" /></svg>,
