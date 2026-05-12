@@ -673,6 +673,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .fade-in.visible { transform: translateY(0) scale(1); }
 }
 
+.courses-chat-footer { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 48px; font-size: 13px; color: var(--ink-soft); }
+.courses-chat-footer a { color: var(--purple); text-decoration: none; font-weight: 600; transition: color .18s ease, gap .18s cubic-bezier(.34,1.4,.64,1); display: inline-flex; align-items: center; gap: 4px; }
+.courses-chat-footer a:hover { color: #7c3aed; }
+
 /* Footer */
 .footer { padding: 40px 0; border-top: 1px solid var(--line); }
 .footer-inner { display: flex; flex-direction: row; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
@@ -2024,6 +2028,10 @@ function App() {
             {INDIVIDUAL.map((c, i) => <CourseCard key={i} c={c} />)}
           </div>
           <BundleComparison />
+          <div className="courses-chat-footer fade-in">
+            <span>Not sure which to pick?</span>
+            <a href="https://wa.me/9088553305" target="_blank" rel="noopener noreferrer">Chat with us →</a>
+          </div>
         </div>
       </section>
 
