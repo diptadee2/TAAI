@@ -207,7 +207,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .strip-note { text-align: center; font-size: 12px; color: rgba(255,255,255,0.38); letter-spacing: .05em; font-style: italic; margin-top: 20px; padding: 0 20px; }
 
 /* ── Section base ────────────────────────────────────── */
-.section { padding: var(--section-pad) 0; }
+.section { padding: var(--section-pad) 0; scroll-margin-top: 100px; }
 .section + .section { border-top: 1px solid transparent; border-image: linear-gradient(90deg, transparent, rgba(139,92,246,0.2) 35%, rgba(236,72,153,0.2) 65%, transparent) 1; }
 .section-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--purple); margin-bottom: 18px; }
 .section-eyebrow::before { content: ''; display: inline-block; width: 18px; height: 2px; background: linear-gradient(90deg, var(--pink), var(--purple)); border-radius: 2px; }
@@ -645,10 +645,14 @@ const COURSE_DROPDOWN = [
   { label: 'Individual Courses', href: 'courses.html#individual', dividerBefore: true },
   { label: 'Interview Prep',     href: 'courses.html#interview',  dividerBefore: true },
 ];
+const TESTIMONIALS_DROPDOWN = [
+  { label: 'Batch of 2026', href: 'testimonials.html#batch-2026' },
+  { label: 'Batch of 2025', href: 'testimonials.html#batch-2025', dividerBefore: true },
+];
 const NAV_LINKS = [
   { label: 'Courses',      href: 'courses.html',                           dropdown: COURSE_DROPDOWN },
   { label: 'Test Series 2027',  href: 'test-series.html' },
-  { label: 'Testimonials', href: 'testimonials.html', active: true     },
+  { label: 'Testimonials', href: 'testimonials.html', active: true, dropdown: TESTIMONIALS_DROPDOWN },
 ];
 const MENU_ICONS = {
   'index.html':        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M3 12L12 4L21 12V20C21 20.6 20.6 21 20 21H15V16H9V21H4C3.4 21 3 20.6 3 20V12Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" /></svg>,
@@ -913,7 +917,7 @@ function Strip() {
 // ── This Year Gallery ─────────────────────────────────────────────
 function ThisYearGallery() {
   return (
-    <section className="section">
+    <section className="section" id="batch-2026">
       <div className="container">
         <div className="fade-in section-header">
           <div className="section-eyebrow">GATE DA 2026 · Latest Batch</div>
@@ -948,7 +952,7 @@ function ThisYearGallery() {
 // ── Previous Batch ────────────────────────────────────────────────
 function PreviousBatch() {
   return (
-    <section className="section" style={{ background:'var(--bg-soft)' }}>
+    <section className="section" id="batch-2025" style={{ background:'var(--bg-soft)' }}>
       <div className="container">
         <div className="fade-in section-header" style={{ marginBottom: 40 }}>
           <div className="section-eyebrow">GATE DA 2025 · Previous Batch</div>
@@ -1192,6 +1196,15 @@ function App() {
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+function scrollToHash() {
+  var hash = window.location.hash;
+  if (!hash) return;
+  var el = document.querySelector(hash);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+setTimeout(scrollToHash, 80);
+window.addEventListener('hashchange', scrollToHash);
 </script>
 </body>
 </html>
