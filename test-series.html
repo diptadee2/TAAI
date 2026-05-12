@@ -745,7 +745,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 .ts-plan-basic {
   padding: 36px 32px;
-  background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.09);
+  background-color: rgba(255,255,255,0.035);
+  background-image: radial-gradient(circle at var(--mx, -200%) var(--my, -200%), rgba(139,92,246,0.28) 0%, transparent 55%);
+  background-size: 100% 100%;
+  border: 1px solid rgba(255,255,255,0.09);
   box-shadow: 0 4px 32px rgba(0,0,0,0.35);
 }
 .ts-plan-basic:hover { transform: translateY(-8px); box-shadow: 0 24px 64px rgba(0,0,0,0.5); border-color: rgba(255,255,255,0.18); }
@@ -769,7 +772,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .ts-plan-featured-frame.ts-plan-frame-selected { transform: translateY(-22px); box-shadow: 0 32px 100px rgba(139,92,246,0.55), 0 0 72px rgba(139,92,246,0.2); }
 .ts-plan-featured {
   padding: 44px 36px;
-  background: linear-gradient(148deg, #1e1348 0%, #140f38 55%, #0f1432 100%);
+  background: radial-gradient(circle at var(--mx, -200%) var(--my, -200%), rgba(139,92,246,0.28) 0%, transparent 55%), linear-gradient(148deg, #1e1348 0%, #140f38 55%, #0f1432 100%);
+  background-size: 100% 100%, 100% 100%;
   border-radius: var(--radius-lg); position: relative; z-index: 1;
   display: flex; flex-direction: column;
   transition: none;
@@ -2076,6 +2080,8 @@ function TSPricing() {
           <div
             className={`ts-plan ts-plan-basic${selected === 'basic' ? ' ts-plan-selected' : ''}`}
             onClick={() => pick('basic')}
+            onMouseMove={e=>{const r=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');e.currentTarget.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%');}}
+            onMouseLeave={e=>{e.currentTarget.style.setProperty('--mx','-200%');e.currentTarget.style.setProperty('--my','-200%');}}
           >
             <div className="ts-plan-badge ts-plan-badge-basic">Test Series</div>
             <div className="ts-plan-name">Mock Tests Only</div>
@@ -2105,7 +2111,9 @@ function TSPricing() {
             className={`ts-plan-featured-frame${selected === 'featured' ? ' ts-plan-frame-selected' : ''}`}
             onClick={() => pick('featured')}
           >
-            <div className="ts-plan ts-plan-featured">
+            <div className="ts-plan ts-plan-featured"
+              onMouseMove={e=>{const r=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');e.currentTarget.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%');}}
+              onMouseLeave={e=>{e.currentTarget.style.setProperty('--mx','-200%');e.currentTarget.style.setProperty('--my','-200%');}}>
               <div className="ts-plan-badge ts-plan-badge-featured">
                 <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M6 0l1.35 3.18L10.8 3.9l-2.7 2.55.78 3.75L6 8.55l-2.88 1.65.78-3.75L1.2 3.9l3.45-.72L6 0z"/></svg>
                 Most Popular

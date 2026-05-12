@@ -570,8 +570,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 
 /* Coming soon card */
 .placement-card {
-  background: radial-gradient(circle, rgba(255,255,255,0.08) 1.5px, transparent 1.5px), linear-gradient(150deg, #14102B 0%, #1c1255 55%, #0a1020 100%);
-  background-size: 28px 28px, auto;
+  background: radial-gradient(circle at var(--mx, -200%) var(--my, -200%), rgba(139,92,246,0.28) 0%, transparent 55%), radial-gradient(circle, rgba(255,255,255,0.08) 1.5px, transparent 1.5px), linear-gradient(150deg, #14102B 0%, #1c1255 55%, #0a1020 100%);
+  background-size: 100% 100%, 28px 28px, 100% 100%;
   border-radius: var(--radius-xl); padding: 56px 64px;
   display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center;
   border: 1.5px solid rgba(139,92,246,0.24);
@@ -642,7 +642,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .incl-tab-chevron { margin-left: auto; flex-shrink: 0; opacity: 0; transform: translateX(-4px); transition: opacity .2s, transform .2s; color: var(--purple); }
 .incl-tab.active .incl-tab-chevron { opacity: 1; transform: translateX(0); }
 .incl-panel {
-  border-radius: var(--radius-xl); background: var(--ink);
+  border-radius: var(--radius-xl);
+  background-color: var(--ink);
+  background-image: radial-gradient(circle at var(--mx, -200%) var(--my, -200%), rgba(139,92,246,0.28) 0%, transparent 55%);
+  background-size: 100% 100%;
   padding: 48px; position: relative; overflow: hidden;
   display: flex; flex-direction: column; justify-content: flex-end;
   min-height: 440px;
@@ -1678,7 +1681,9 @@ function IncludedShowcase() {
                 </button>
               ))}
             </div>
-            <div className="incl-panel">
+            <div className="incl-panel"
+              onMouseMove={e=>{const r=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');e.currentTarget.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%');}}
+              onMouseLeave={e=>{e.currentTarget.style.setProperty('--mx','-200%');e.currentTarget.style.setProperty('--my','-200%');}}>
               <div className="incl-orb1" style={{ background: f.color }} />
               <div className="incl-orb2" style={{ background: f.color }} />
               <div className="incl-icon-bg">{f.icon}</div>
@@ -2051,7 +2056,9 @@ function App() {
             From GATE to your <em>dream job</em>
           </h2>
           <p className="section-sub fade-in">GATE gets you the IIT tag. We'll help you convert it into a career in DS and AI.</p>
-          <div className="placement-card fade-in">
+          <div className="placement-card fade-in"
+            onMouseMove={e=>{const r=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');e.currentTarget.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%');}}
+            onMouseLeave={e=>{e.currentTarget.style.setProperty('--mx','-200%');e.currentTarget.style.setProperty('--my','-200%');}}>
             <div className="placement-left">
               <div className="placement-badge">
                 <span className="placement-badge-dot" />

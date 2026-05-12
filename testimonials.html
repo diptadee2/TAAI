@@ -331,8 +331,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .featured-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 40px; }
 .feat-card {
   background-color: var(--ink);
-  background-image: radial-gradient(circle, rgba(255,255,255,0.09) 1.5px, transparent 1.5px);
-  background-size: 28px 28px;
+  background-image: radial-gradient(circle at var(--mx, -200%) var(--my, -200%), rgba(139,92,246,0.28) 0%, transparent 55%), radial-gradient(circle, rgba(255,255,255,0.09) 1.5px, transparent 1.5px);
+  background-size: 100% 100%, 28px 28px;
   border-radius: var(--radius-xl);
   padding: 40px;
   color: #fff;
@@ -992,7 +992,9 @@ function PreviousBatch() {
 
         <div className="featured-grid">
           {FEATURED_2025.map((f, i) => (
-            <div key={i} className="feat-card fade-in" style={{ '--delay': `${i * 130}ms` }}>
+            <div key={i} className="feat-card fade-in" style={{ '--delay': `${i * 130}ms` }}
+              onMouseMove={e=>{const r=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');e.currentTarget.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%');}}
+              onMouseLeave={e=>{e.currentTarget.style.setProperty('--mx','-200%');e.currentTarget.style.setProperty('--my','-200%');}}>
               <div>
                 <div className="feat-rank"><span>All India Rank</span></div>
                 <div className="feat-rank-num">{f.air}</div>

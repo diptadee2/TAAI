@@ -575,7 +575,10 @@ body {
 @keyframes wyProgress { to { transform: scaleX(1); } }
 
 .whyus-panel {
-  border-radius: var(--radius-xl); background: var(--ink);
+  border-radius: var(--radius-xl);
+  background-color: var(--ink);
+  background-image: radial-gradient(circle at var(--mx, -200%) var(--my, -200%), rgba(139,92,246,0.28) 0%, transparent 55%);
+  background-size: 100% 100%;
   padding: 48px; position: relative; overflow: hidden;
   display: flex; flex-direction: column; justify-content: flex-end;
   min-height: 440px;
@@ -1343,7 +1346,7 @@ function Hero() {
               Visual, conceptual teaching — understand the why, not just formulas
             </div>
             <div className="hero-check">
-              <span className="hero-check-icon" style={{ background: 'var(--blue-soft)' }}><Icon.Check size={11} style={{ color: 'var(--blue)' }} /></span>
+              <span className="hero-check-icon" style={{ background: 'var(--₹blue-soft)' }}><Icon.Check size={11} style={{ color: 'var(--blue)' }} /></span>
               End-to-end: GATE prep, IIT admission, and AI/ML interview prep
             </div>
           </div>
@@ -1738,7 +1741,9 @@ function WhyUs() {
               </button>
             ))}
           </div>
-          <div className="whyus-panel">
+          <div className="whyus-panel"
+            onMouseMove={e=>{const r=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');e.currentTarget.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%');}}
+            onMouseLeave={e=>{e.currentTarget.style.setProperty('--mx','-200%');e.currentTarget.style.setProperty('--my','-200%');}}>
             <div className="whyus-orb1" style={{ background: f.color }} />
             <div className="whyus-orb2" style={{ background: f.color }} />
             <div className="whyus-icon-bg">{React.cloneElement(f.icon, { style: { width: 108, height: 108 } })}</div>
