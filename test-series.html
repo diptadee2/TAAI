@@ -826,6 +826,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 
 /* ── FAQ ─────────────────────────────────────────────── */
+.ts-faq-section { background-image: radial-gradient(circle, rgba(139,92,246,0.11) 1.5px, transparent 1.5px); background-size: 32px 32px; }
 .faq-layout { display: grid; grid-template-columns: 1fr 2fr; gap: 64px; }
 .faq-list { display: flex; flex-direction: column; gap: 12px; }
 .faq-item {
@@ -1918,7 +1919,7 @@ function FAQ() {
   const [openSet, setOpenSet] = React.useState(() => new Set([0]));
   const toggle = i => setOpenSet(prev => { const n = new Set(prev); n.has(i) ? n.delete(i) : n.add(i); return n; });
   return (
-    <section className="section" id="faq">
+    <section className="section ts-faq-section" id="faq">
       <div className="container">
         <div className="faq-layout">
           <div className="fade-in">

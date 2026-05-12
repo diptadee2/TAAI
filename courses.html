@@ -391,7 +391,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 .combo-card.card:hover { transform: translateY(-10px); box-shadow: 0 24px 56px rgba(107,75,255,0.16), 0 2px 8px rgba(0,0,0,0.06); }
 .combo-card.featured {
-  background: linear-gradient(150deg, #14102B 0%, #221260 55%, #1a0d50 100%);
+  background: radial-gradient(circle, rgba(255,255,255,0.08) 1.5px, transparent 1.5px), linear-gradient(150deg, #14102B 0%, #221260 55%, #1a0d50 100%);
+  background-size: 28px 28px, auto;
   border-color: rgba(139,92,246,0.35);
   box-shadow: 0 20px 60px rgba(107,75,255,0.28), inset 0 1px 0 rgba(255,255,255,0.07);
 }
@@ -564,7 +565,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 
 /* Coming soon card */
 .placement-card {
-  background: linear-gradient(150deg, #14102B 0%, #1c1255 55%, #0a1020 100%);
+  background: radial-gradient(circle, rgba(255,255,255,0.08) 1.5px, transparent 1.5px), linear-gradient(150deg, #14102B 0%, #1c1255 55%, #0a1020 100%);
+  background-size: 28px 28px, auto;
   border-radius: var(--radius-xl); padding: 56px 64px;
   display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center;
   border: 1.5px solid rgba(139,92,246,0.24);
@@ -1032,7 +1034,8 @@ body.is-scrolling .back-to-top.visible { transform: translateX(80px) scale(.85);
 
 /* ── Course testimonials ─────────────────────────────── */
 .course-testi-section {
-  background: linear-gradient(150deg, #faf8ff 0%, #f3eeff 50%, #fdf0f8 100%);
+  background: radial-gradient(circle, rgba(139,92,246,0.12) 1.5px, transparent 1.5px), linear-gradient(150deg, #faf8ff 0%, #f3eeff 50%, #fdf0f8 100%);
+  background-size: 32px 32px, auto;
   padding: var(--section-pad) 0;
   position: relative; overflow: hidden;
 }
