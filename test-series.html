@@ -778,8 +778,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .ts-plans-section h2 { color: #fff; }
 .ts-plans-section .section-sub { color: rgba(255,255,255,0.46); }
 .ts-plans-grid {
-  display: grid; grid-template-columns: 1fr 1.38fr; gap: 24px;
-  max-width: 900px; margin: 0 auto; align-items: start;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+  max-width: 860px; margin: 0 auto; align-items: stretch;
 }
 .ts-plan {
   border-radius: var(--radius-lg); position: relative; overflow: hidden;
@@ -802,7 +802,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   scroll-margin-top: 110px;
   border-radius: calc(var(--radius-lg) + 2px); padding: 2px;
   position: relative; overflow: hidden;
-  transform: translateY(-16px);
+  transform: translateY(0);
   box-shadow: 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12);
   transition: transform .3s cubic-bezier(.34,1.05,.64,1), box-shadow .3s ease;
   cursor: pointer;
@@ -813,8 +813,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   animation: ts-border-spin 3s linear infinite;
   z-index: 0;
 }
-.ts-plan-featured-frame:hover { transform: translateY(-22px); box-shadow: 0 32px 100px rgba(139,92,246,0.55), 0 0 72px rgba(139,92,246,0.2); }
-.ts-plan-featured-frame.ts-plan-frame-selected { transform: translateY(-22px); box-shadow: 0 32px 100px rgba(139,92,246,0.55), 0 0 72px rgba(139,92,246,0.2); }
+.ts-plan-featured-frame:hover { transform: translateY(-9px); box-shadow: 0 32px 100px rgba(139,92,246,0.55), 0 0 72px rgba(139,92,246,0.2); }
+.ts-plan-featured-frame.ts-plan-frame-selected { transform: translateY(-9px); box-shadow: 0 32px 100px rgba(139,92,246,0.55), 0 0 72px rgba(139,92,246,0.2); }
 .ts-plan-featured {
   padding: 44px 36px;
   background: radial-gradient(circle at var(--mx, -200%) var(--my, -200%), rgba(139,92,246,0.28) 0%, transparent 55%), linear-gradient(148deg, #1e1348 0%, #140f38 55%, #0f1432 100%);
@@ -837,11 +837,11 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .ts-plan-tagline { font-size: 13px; color: rgba(255,255,255,0.36); margin-bottom: 24px; line-height: 1.55; position: relative; z-index: 2; }
 .ts-plan-price { font-family: var(--font-display); font-size: 54px; font-weight: 600; letter-spacing: -0.045em; color: #fff; line-height: 1; position: relative; z-index: 2; }
 .ts-plan-featured .ts-plan-price { font-size: 62px; background: linear-gradient(135deg, #ede0ff 0%, #c4b0ff 55%, #a78bfa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-.ts-plan-price-meta { display: flex; align-items: center; gap: 8px; margin: 6px 0 2px; position: relative; z-index: 2; }
-.ts-plan-price-old { font-size: 15px; color: rgba(255,255,255,0.28); text-decoration: line-through; }
+.ts-plan-price-meta { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin: 8px 0 22px; position: relative; z-index: 2; }
+.ts-plan-price-old { font-size: 14px; color: rgba(255,255,255,0.28); text-decoration: line-through; }
 .ts-plan-discount { font-size: 11px; font-weight: 700; color: #fff; background: linear-gradient(135deg, #ff7fb7, #8b5cf6); padding: 3px 9px; border-radius: 999px; letter-spacing: .04em; }
-.ts-plan-savings { font-size: 12px; color: rgba(134,239,172,0.75); margin-bottom: 2px; position: relative; z-index: 2; }
-.ts-plan-validity { font-size: 12px; color: rgba(255,255,255,0.26); margin: 0 0 22px; position: relative; z-index: 2; }
+.ts-plan-meta-dot { font-size: 10px; color: rgba(255,255,255,0.18); user-select: none; }
+.ts-plan-validity { font-size: 12px; color: rgba(255,255,255,0.26); position: relative; z-index: 2; }
 .ts-plan-divider { height: 1px; background: rgba(255,255,255,0.08); margin-bottom: 20px; position: relative; z-index: 2; }
 .ts-plan-featured .ts-plan-divider { background: rgba(139,92,246,0.22); }
 .ts-plan-features { display: flex; flex-direction: column; flex: 1; margin-bottom: 28px; position: relative; z-index: 2; }
@@ -876,7 +876,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .ts-plans-footer a:hover { color: #c4b0ff; }
 @media (max-width: 768px) {
   .ts-plans-grid { grid-template-columns: 1fr; gap: 20px; }
-  .ts-plan-featured-frame { transform: translateY(0); }
   .ts-plan-featured-frame:hover, .ts-plan-featured-frame.ts-plan-frame-selected { transform: translateY(-6px); }
   .ts-plan-basic { padding: 32px 24px; }
   .ts-plan-featured { padding: 36px 28px; }
@@ -2135,10 +2134,11 @@ function TSPricing() {
             <div className="ts-plan-price">₹1,500</div>
             <div className="ts-plan-price-meta">
               <span className="ts-plan-price-old">₹1,875</span>
+              <span className="ts-plan-meta-dot">·</span>
               <span className="ts-plan-discount">20% off</span>
+              <span className="ts-plan-meta-dot">·</span>
+              <span className="ts-plan-validity">One-time · GATE DA 2027</span>
             </div>
-            <div className="ts-plan-savings">You save ₹375</div>
-            <div className="ts-plan-validity">One-time · Valid till GATE DA 2027</div>
             <div className="ts-plan-divider" />
             <div className="ts-plan-features">
               {BASIC_FEATS.map((f, i) => (
@@ -2168,10 +2168,11 @@ function TSPricing() {
               <div className="ts-plan-price">₹2,000</div>
               <div className="ts-plan-price-meta">
                 <span className="ts-plan-price-old">₹2,500</span>
+                <span className="ts-plan-meta-dot">·</span>
                 <span className="ts-plan-discount">20% off</span>
+                <span className="ts-plan-meta-dot">·</span>
+                <span className="ts-plan-validity">One-time · GATE DA 2027</span>
               </div>
-              <div className="ts-plan-savings">You save ₹500</div>
-              <div className="ts-plan-validity">One-time · Valid till GATE DA 2027</div>
               <div className="ts-plan-divider" />
               <div className="ts-plan-features">
                 {BASIC_FEATS.map((f, i) => (
