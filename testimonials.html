@@ -208,6 +208,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 
 /* ── Section base ────────────────────────────────────── */
 .section { padding: var(--section-pad) 0; }
+.section + .section { border-top: 1px solid transparent; border-image: linear-gradient(90deg, transparent, rgba(139,92,246,0.2) 35%, rgba(236,72,153,0.2) 65%, transparent) 1; }
 .section-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--purple); margin-bottom: 18px; }
 .section-eyebrow::before { content: ''; display: inline-block; width: 18px; height: 2px; background: linear-gradient(90deg, var(--pink), var(--purple)); border-radius: 2px; }
 .section-header { margin-bottom: 0; }
@@ -252,8 +253,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .result-hero-label { font-family: var(--font-display); font-size: clamp(22px,2.8vw,34px); font-weight: 600; letter-spacing: -0.025em; color: #fff; line-height: 1.15; margin-bottom: 10px; }
 .result-hero-sub { font-size: 15px; color: rgba(255,255,255,0.45); line-height: 1.55; max-width: 360px; }
 .section-h2 { font-family: var(--font-display); font-size: clamp(30px,3.8vw,50px); font-weight: 600; letter-spacing: -0.035em; line-height: 1; }
-.section-h2 em { font-style: normal; background: linear-gradient(120deg, var(--pink), var(--purple)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.section-h2 em.blue { background: linear-gradient(120deg, var(--purple), var(--blue)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.section-h2 em { font-style: normal; background: linear-gradient(120deg, var(--pink), var(--purple), var(--blue), var(--purple), var(--pink)); background-size: 250% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: grad-drift 9s ease infinite; }
+.section-h2 em.blue { background: linear-gradient(120deg, var(--purple), var(--blue), var(--purple)); background-size: 250% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: grad-drift 9s ease infinite; }
 
 /* ── Gallery masonry ─────────────────────────────────── */
 .gallery-masonry {
@@ -432,6 +433,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 @keyframes reveal {
   from { opacity: 0; transform: translate(var(--tx, 0px), var(--ty, 28px)) scale(var(--ts, 0.97)); }
   to   { opacity: 1; transform: translate(0px, 0px) scale(1); }
+}
+@keyframes grad-drift {
+  0%, 100% { background-position: 0% 50%; }
+  50%       { background-position: 100% 50%; }
 }
 
 /* ── Scroll reveal ───────────────────────────────────── */

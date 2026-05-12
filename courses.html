@@ -235,10 +235,11 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 
 /* Section */
 .section { padding: var(--section-pad) 0; }
+.section + .section { border-top: 1px solid transparent; border-image: linear-gradient(90deg, transparent, rgba(139,92,246,0.2) 35%, rgba(236,72,153,0.2) 65%, transparent) 1; }
 .section-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--purple); margin-bottom: 16px; }
 .section-eyebrow::before { content: ''; display: inline-block; width: 20px; height: 2px; background: linear-gradient(90deg, var(--pink), var(--purple)); border-radius: 2px; }
 .section h2 { font-family: var(--font-display); font-size: clamp(30px, 3.8vw, 52px); font-weight: 600; letter-spacing: -0.035em; line-height: 1; margin-bottom: 16px; }
-.section h2 em { font-style: normal; background: linear-gradient(120deg, var(--pink), var(--purple), var(--blue)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.section h2 em { font-style: normal; background: linear-gradient(120deg, var(--pink), var(--purple), var(--blue), var(--purple), var(--pink)); background-size: 250% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: grad-drift 9s ease infinite; }
 .section-sub { font-size: 17px; color: var(--ink-dim); line-height: 1.5; max-width: 560px; margin-bottom: 48px; }
 
 /* ── Flagship spotlight ──────────────────────────────── */
@@ -371,6 +372,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .faculty-tags { display: flex; flex-wrap: wrap; gap: 7px; }
 .faculty-tag { font-size: 12.5px; font-weight: 500; padding: 5px 13px; border-radius: 999px; transition: transform .18s ease, background .18s ease, border-color .18s ease; animation: tag-pop .4s cubic-bezier(.34,1.3,.64,1) both; }
 @keyframes tag-pop { from { opacity: 0; transform: scale(0.8) translateY(4px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes grad-drift {
+  0%, 100% { background-position: 0% 50%; }
+  50%       { background-position: 100% 50%; }
+}
 .faculty-primary .faculty-tag { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.82); border: 1px solid rgba(255,255,255,0.12); }
 .faculty-secondary .faculty-tag { background: var(--purple-soft); color: var(--purple); border: 1px solid rgba(139,92,246,0.18); }
 .faculty-primary .faculty-tag:hover { background: rgba(255,255,255,0.16); border-color: rgba(255,255,255,0.28); transform: scale(1.09); }
@@ -391,8 +396,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 .combo-card.card:hover { transform: translateY(-10px); box-shadow: 0 24px 56px rgba(107,75,255,0.16), 0 2px 8px rgba(0,0,0,0.06); }
 .combo-card.featured {
-  background: radial-gradient(circle, rgba(255,255,255,0.08) 1.5px, transparent 1.5px), linear-gradient(150deg, #14102B 0%, #221260 55%, #1a0d50 100%);
-  background-size: 28px 28px, auto;
+  background: radial-gradient(circle at var(--mx, -200%) var(--my, -200%), rgba(139,92,246,0.28) 0%, transparent 55%), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.07'/%3E%3C/svg%3E"), radial-gradient(circle, rgba(255,255,255,0.08) 1.5px, transparent 1.5px), linear-gradient(150deg, #14102B 0%, #221260 55%, #1a0d50 100%);
+  background-size: auto, 200px 200px, 28px 28px, auto;
   border-color: rgba(139,92,246,0.35);
   box-shadow: 0 20px 60px rgba(107,75,255,0.28), inset 0 1px 0 rgba(255,255,255,0.07);
 }
@@ -1483,8 +1488,12 @@ function BundleComparison() {
 function ComboCard({ c }) {
   const featured = c.badge === 'best';
   const cls = 'combo-card card fade-in' + (featured ? ' featured' : '');
+  const spotlightProps = featured ? {
+    onMouseMove: e => { const r = e.currentTarget.getBoundingClientRect(); e.currentTarget.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100).toFixed(1) + '%'); e.currentTarget.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%'); },
+    onMouseLeave: e => { e.currentTarget.style.setProperty('--mx', '-200%'); e.currentTarget.style.setProperty('--my', '-200%'); }
+  } : {};
   return (
-    <div className={cls}>
+    <div className={cls} {...spotlightProps}>
       <div className="combo-num">{c.num}</div>
       <div className="combo-accent" style={{ background: c.accent }} />
       <div className={'combo-badge ' + c.badge}><Icon.Sparkle />{c.badgeLabel}</div>

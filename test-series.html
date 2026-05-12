@@ -348,10 +348,11 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 
 /* ── Section base ────────────────────────────────────── */
 .section { padding: var(--section-pad) 0; }
+.section + .section { border-top: 1px solid transparent; border-image: linear-gradient(90deg, transparent, rgba(139,92,246,0.2) 35%, rgba(236,72,153,0.2) 65%, transparent) 1; }
 .section-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--purple); margin-bottom: 18px; }
 .section-eyebrow::before { content: ''; display: inline-block; width: 18px; height: 2px; background: linear-gradient(90deg, var(--pink), var(--purple)); border-radius: 2px; }
 .section h2 { font-family: var(--font-display); font-size: clamp(32px, 4vw, 56px); font-weight: 600; letter-spacing: -0.035em; line-height: 1; margin-bottom: 16px; }
-.section h2 em { font-style: normal; background: linear-gradient(120deg, var(--pink), var(--purple), var(--blue)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.section h2 em { font-style: normal; background: linear-gradient(120deg, var(--pink), var(--purple), var(--blue), var(--purple), var(--pink)); background-size: 250% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: grad-drift 9s ease infinite; }
 .section-sub { font-size: 17px; color: var(--ink-dim); line-height: 1.6; max-width: 560px; margin-bottom: 56px; }
 
 /* ── Test breakdown ──────────────────────────────────── */
@@ -369,8 +370,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   display: flex; flex-direction: column; gap: 0;
   position: relative; overflow: hidden;
   background-color: var(--ink);
-  background-image: radial-gradient(circle, rgba(255,255,255,0.09) 1.5px, transparent 1.5px);
-  background-size: 28px 28px;
+  background-image: radial-gradient(circle at var(--mx, -200%) var(--my, -200%), rgba(139,92,246,0.28) 0%, transparent 55%), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.07'/%3E%3C/svg%3E"), radial-gradient(circle, rgba(255,255,255,0.09) 1.5px, transparent 1.5px);
+  background-size: auto, 200px 200px, 28px 28px;
   transition: transform .35s cubic-bezier(.4,0,.2,1), box-shadow .35s cubic-bezier(.4,0,.2,1);
   box-shadow: 0 4px 24px rgba(0,0,0,0.10);
 }
@@ -542,7 +543,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .feat-rank-right { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
 
 /* ── Discussions section ─────────────────────────────── */
-.disc-section { background: radial-gradient(circle, rgba(255,255,255,0.08) 1.5px, transparent 1.5px), linear-gradient(160deg, #0e0b24 0%, #14102b 55%, #0a1020 100%); background-size: 28px 28px, auto; position: relative; overflow: hidden; }
+.disc-section { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.07'/%3E%3C/svg%3E"), radial-gradient(circle, rgba(255,255,255,0.08) 1.5px, transparent 1.5px), linear-gradient(160deg, #0e0b24 0%, #14102b 55%, #0a1020 100%); background-size: 200px 200px, 28px 28px, auto; position: relative; overflow: hidden; }
 .disc-section::before {
   content: ''; position: absolute; pointer-events: none;
   width: 700px; height: 500px; border-radius: 50%;
@@ -708,10 +709,14 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   from { transform: translateX(-130%) skewX(-15deg); }
   to   { transform: translateX(260%)  skewX(-15deg); }
 }
+@keyframes grad-drift {
+  0%, 100% { background-position: 0% 50%; }
+  50%       { background-position: 100% 50%; }
+}
 .ts-plans-section {
   background: #07060f;
-  background-image: radial-gradient(rgba(139,92,246,0.055) 1px, transparent 1px);
-  background-size: 28px 28px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.07'/%3E%3C/svg%3E"), radial-gradient(rgba(139,92,246,0.055) 1px, transparent 1px);
+  background-size: 200px 200px, 28px 28px;
   position: relative; overflow: hidden;
 }
 .ts-plans-section::before {
@@ -1522,7 +1527,10 @@ function Breakdown() {
         <p className="section-sub fade-in">Every test is placed where it matters most in your prep timeline — not just a bulk dump of questions.</p>
         <div className="breakdown-grid">
           {cards.map((c,i) => (
-            <div key={i} className={`breakdown-card ${c.cls} fade-in`}>
+            <div key={i} className={`breakdown-card ${c.cls} fade-in`}
+              onMouseMove={e=>{const r=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');e.currentTarget.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%');}}
+              onMouseLeave={e=>{e.currentTarget.style.setProperty('--mx','-200%');e.currentTarget.style.setProperty('--my','-200%');}}>
+
               <div className="breakdown-icon">{c.icon}</div>
               <div className="breakdown-count">{c.count}</div>
               <div className="breakdown-title">{c.title}</div>
