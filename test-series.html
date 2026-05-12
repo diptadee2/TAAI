@@ -2188,6 +2188,15 @@ function App() {
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+function scrollToHash() {
+  var hash = window.location.hash;
+  if (!hash) return;
+  var el = document.querySelector(hash);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+setTimeout(scrollToHash, 80);
+window.addEventListener('hashchange', scrollToHash);
 </script>
 </body>
 </html>
