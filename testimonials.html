@@ -1203,7 +1203,13 @@ function scrollToHash() {
   var el = document.querySelector(hash);
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
-setTimeout(scrollToHash, 80);
+(function tryOnLoad(n) {
+  var hash = window.location.hash;
+  if (!hash) return;
+  var el = document.querySelector(hash);
+  if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+  if (n > 0) setTimeout(function() { tryOnLoad(n - 1); }, 150);
+})(8);
 window.addEventListener('hashchange', scrollToHash);
 </script>
 </body>
