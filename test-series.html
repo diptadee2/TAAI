@@ -1517,7 +1517,7 @@ function Breakdown() {
       icon:<Icon.Target/>,
     },
     {
-      cls:'bd-3', count:'12', title:'Full-length Mocks',
+      cls:'bd-3', count:'12', title:'Full-length Tests',
       desc:'Three-hour timed sessions matching the real GATE DA exam structure, difficulty, and marking scheme.',
       pills:['180 minutes','65 questions','Real GATE pattern'],
       icon:<Icon.Chart/>,
@@ -1718,8 +1718,7 @@ function Features() {
             <div className="feat-rank-divider"/>
             <div className="feat-rank-right">
               <div className="feat-title">Rank prediction</div>
-              <div className="feat-desc">Mock rank estimates based on historical GATE DA data, so you know where you stand nationally before the real exam.</div>
-              <div className="feat-chip">Updated after every mock</div>
+              <div className="feat-desc">Rank estimates based on historical GATE DA data, so you know where you stand nationally before the real exam.</div>
             </div>
           </div>
 
@@ -1754,7 +1753,7 @@ function Discussions() {
         <h2 className="fade-in" style={{ fontFamily:'var(--font-display)', fontSize:'clamp(32px,4vw,56px)', fontWeight:600, letterSpacing:'-0.035em', lineHeight:1, marginBottom:16 }}>
           Watch how we <em>break it down.</em>
         </h2>
-        <p className="section-sub fade-in">After every mock, Manoj Sir goes live to walk through the questions, the strategy, the common mistakes, and exactly how to think about each problem.</p>
+        <p className="section-sub fade-in">After every test, Manoj Sir goes live to walk through the questions, the strategy, the common mistakes, and exactly how to think about each problem.</p>
         <div className="disc-grid fade-in">
           {DISCUSSION_VIDEOS.map(v => (
             <a key={v.id} className="disc-card" href={`https://www.youtube.com/watch?v=${v.id}`} target="_blank" rel="noopener noreferrer">
@@ -1790,7 +1789,7 @@ const QUALITY_CRITERIA = [
   { label: 'Benchmarked against real GATE DA papers', sub: 'Difficulty calibrated across 4 years of actual exam data', val: '2024–26',    color: 'linear-gradient(135deg,var(--pink),var(--purple))',  accent: 'var(--pink)',    icon: 'Target', glow: 'rgba(255,127,183,0.45)', leftLine: 'All questions are benchmarked against past\nGATE DA papers from 2024 to 2026.' },
   { label: 'Covers the full GATE DA syllabus',        sub: 'Every topic and sub-topic in the official syllabus',        val: '12 topics', color: 'linear-gradient(135deg,var(--blue),#7FA8FF)',         accent: 'var(--blue)',    icon: 'List',   glow: 'rgba(77,139,255,0.45)',  leftLine: 'No gaps. Every subject area in the\nofficial GATE DA syllabus is covered.' },
   { label: 'Video solution for every question',       sub: 'Recorded and reviewed before the question ships',          val: '100%',       color: 'linear-gradient(135deg,var(--purple),var(--lilac))',  accent: 'var(--purple)',  icon: 'Video',  glow: 'rgba(139,92,246,0.45)',  leftLine: 'Every question ships with a full\nvideo walkthrough, not just the answer.' },
-  { label: 'Live discussion after every mock',        sub: 'Walk through the paper together right after the test',     val: 'Every test', color: 'linear-gradient(135deg,var(--pink),#FF9ECB)',          accent: '#FF9ECB',        icon: 'Users',  glow: 'rgba(255,158,203,0.45)', leftLine: 'A live session runs after every mock\nto walk through strategy and mistakes.' },
+  { label: 'Live discussion after every test',        sub: 'Walk through the paper together right after the test',     val: 'Every test', color: 'linear-gradient(135deg,var(--pink),#FF9ECB)',          accent: '#FF9ECB',        icon: 'Users',  glow: 'rgba(255,158,203,0.45)', leftLine: 'A live session runs after every test\nto walk through strategy and mistakes.' },
 ];
 
 function Quality() {
@@ -1911,7 +1910,7 @@ function TSTestimonials() {
 const FAQS = [
   { q: 'When does the test series launch?', a: 'We\'re finalising the question bank and review pipeline. Topic-wise and subject-wise tests will roll out alongside the course content. Full-length tests are scheduled to begin by October 2026. Join the waitlist to be notified first.' },
   { q: 'What does the GATE-like interface look like?', a: 'It replicates the official GATE CBT environment, question palette, section timer, marking scheme (+1,+2 and −0.33,-0.66), review later, and submit. You\'ll have zero interface anxiety on exam day.' },
-  { q: 'Can I attempt tests on mobile?', a: 'Yes, the platform works on mobile browsers. However, we strongly recommend desktop for full-length mocks to match real GATE conditions, they\'re three-hour sessions.' },
+  { q: 'Can I attempt tests on mobile?', a: 'Yes, the platform works on mobile browsers. However, we strongly recommend desktop for full-length tests to match real GATE conditions, they\'re three-hour sessions.' },
   { q: 'Who makes the solutions and discussion sessions?', a: 'Every video solution and live discussion is conducted by Manoj Sir and his team.' },
 ];
 
@@ -2033,7 +2032,7 @@ function MobileContactBar() {
 
 // ── Test Series Pricing ───────────────────────────────────────────
 const BASIC_FEATS = [
-  'All subject-wise mock tests',
+  'All subject-wise tests',
   'Full-length GATE-pattern tests',
   'Live post-test discussion sessions',
   'Video solutions & explanations',
@@ -2064,7 +2063,7 @@ function TSPricing() {
         <h2 className="fade-in" style={{ fontFamily:'var(--font-display)', fontSize:'clamp(30px,3.8vw,52px)', fontWeight:600, letterSpacing:'-0.035em', lineHeight:1, marginBottom:14 }}>
           Pick your <em>plan.</em>
         </h2>
-        <p className="section-sub fade-in" style={{ marginBottom:52 }}>Both plans include the full mock test suite. Add quizzes for concept-level checkpoints woven into every lecture.</p>
+        <p className="section-sub fade-in" style={{ marginBottom:52 }}>Both plans include the full test suite. Add quizzes for concept-level checkpoints woven into every lecture.</p>
 
         <div className="ts-plans-grid fade-in">
 
@@ -2111,7 +2110,7 @@ function TSPricing() {
                 Most Popular
               </div>
               <div className="ts-plan-name">Test Series + Weekly Quizzes</div>
-              <div className="ts-plan-tagline">All mock tests, plus quizzes from the GATE DA 2027 full course.</div>
+              <div className="ts-plan-tagline">All tests, plus quizzes from the GATE DA 2027 full course.</div>
               <div className="ts-plan-price">₹2,000</div>
               <div className="ts-plan-price-meta">
                 <span className="ts-plan-price-old">₹2,500</span>
