@@ -942,15 +942,22 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 }
 .why-grid {
   display: grid; grid-template-columns: repeat(3, 1fr);
-  position: relative;
-}
-.why-divider {
-  position: absolute; top: 15%; bottom: 15%; width: 1px;
-  background: linear-gradient(to bottom, transparent, rgba(139,92,246,0.18) 30%, rgba(139,92,246,0.18) 70%, transparent);
+  gap: 16px;
 }
 .why-pillar {
-  padding: 16px 48px 36px;
+  padding: 36px 28px 40px;
   text-align: center; display: flex; flex-direction: column; align-items: center; gap: 22px;
+  position: relative; overflow: hidden; border-radius: 20px;
+  border: 1px solid rgba(139,92,246,0.1);
+  background: rgba(255,255,255,0.5);
+  background-image: radial-gradient(circle at var(--mx, 50%) var(--my, 80%), rgba(139,92,246,0.09) 0%, transparent 65%);
+  transition: border-color .3s ease, box-shadow .35s ease, transform .32s cubic-bezier(.4,0,.2,1);
+  cursor: default;
+}
+.why-pillar:hover {
+  border-color: rgba(139,92,246,0.26);
+  box-shadow: 0 12px 40px rgba(139,92,246,0.11);
+  transform: translateY(-4px);
 }
 .why-icon-wrap {
   width: 68px; height: 68px; border-radius: 22px;
@@ -958,22 +965,34 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   background: linear-gradient(135deg, rgba(139,92,246,0.1) 0%, rgba(236,72,153,0.08) 100%);
   border: 1.5px solid rgba(139,92,246,0.15);
   color: var(--purple);
-  transition: transform .32s cubic-bezier(.4,0,.2,1), box-shadow .32s ease;
+  transition: transform .32s cubic-bezier(.4,0,.2,1), box-shadow .32s ease, background .3s ease, border-color .3s ease;
 }
 .why-pillar:hover .why-icon-wrap {
   transform: translateY(-5px) scale(1.07);
-  box-shadow: 0 14px 40px rgba(139,92,246,0.22);
+  box-shadow: 0 14px 40px rgba(139,92,246,0.28);
+  background: linear-gradient(135deg, rgba(139,92,246,0.18) 0%, rgba(236,72,153,0.14) 100%);
+  border-color: rgba(139,92,246,0.3);
 }
 .why-heading {
   font-family: var(--font-display); font-size: clamp(19px, 2vw, 24px); font-weight: 700;
   color: var(--ink); letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 10px;
 }
 .why-sub { font-size: 14.5px; color: var(--ink-dim); line-height: 1.65; max-width: 250px; }
+.why-chips {
+  display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-top: 12px;
+}
+.why-chip {
+  font-size: 11px; font-weight: 700; letter-spacing: .08em;
+  padding: 4px 11px; border-radius: 100px;
+  background: rgba(139,92,246,0.07);
+  border: 1px solid rgba(139,92,246,0.2);
+  color: var(--purple);
+  font-family: var(--font-mono);
+}
 @media (max-width: 768px) {
   .why-strip { display: none; }
-  .why-grid { grid-template-columns: 1fr; }
-  .why-divider { display: none; }
-  .why-pillar { padding: 32px 24px; border-bottom: 1px solid rgba(139,92,246,0.1); }
+  .why-grid { grid-template-columns: 1fr; gap: 12px; }
+  .why-pillar { padding: 28px 20px; }
   .why-pillar:last-child { border-bottom: none; }
 }
 
@@ -1844,7 +1863,8 @@ const WHY_PILLARS = [
   {
     icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M4 4V20H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M7 15L11 10L14 13L19 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><circle cx="19" cy="6" r="1.5" fill="currentColor"/></svg>,
     heading: 'Proven Results',
-    sub: 'AIR 46, 51, 91, 102 and more, students consistently crack GATE DA with top ranks.',
+    sub: 'Every batch, students reach top institutions. Consistent outcomes, year after year.',
+    chips: ['IIT', 'IISc', 'NIT'],
   },
 ];
 
@@ -1854,14 +1874,27 @@ function WhyStrip() {
       <div className="container">
         <p className="why-strip-label fade-in">Why students choose TAAI</p>
         <div className="why-grid">
-          <div className="why-divider" style={{ left: '33.33%' }} />
-          <div className="why-divider" style={{ left: '66.66%' }} />
           {WHY_PILLARS.map((p, i) => (
-            <div key={i} className="why-pillar fade-in" style={{ transitionDelay: i * 130 + 'ms' }}>
+            <div key={i} className="why-pillar fade-in" style={{ transitionDelay: i * 130 + 'ms' }}
+              onMouseMove={e => {
+                const r = e.currentTarget.getBoundingClientRect();
+                e.currentTarget.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
+                e.currentTarget.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.setProperty('--mx', '50%');
+                e.currentTarget.style.setProperty('--my', '80%');
+              }}
+            >
               <div className="why-icon-wrap">{p.icon}</div>
               <div>
                 <div className="why-heading">{p.heading}</div>
                 <p className="why-sub">{p.sub}</p>
+                {p.chips && (
+                  <div className="why-chips">
+                    {p.chips.map((c, j) => <span key={j} className="why-chip">{c}</span>)}
+                  </div>
+                )}
               </div>
             </div>
           ))}
