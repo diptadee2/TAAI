@@ -257,13 +257,16 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 .btn-attract { animation: btn-attract 2.2s ease-out infinite; }
 .btn-attract:hover { animation: none; }
-.hero-orientation-link {
+.orientation-pill {
   display: inline-flex; align-items: center; gap: 8px;
-  font-size: 14px; font-weight: 600; color: var(--purple);
-  text-decoration: none; margin-top: 6px;
-  transition: color .2s, gap .2s;
+  font-size: 13px; font-weight: 600; color: var(--purple);
+  background: var(--purple-soft); border: 1.5px solid rgba(139,92,246,0.22);
+  border-radius: 999px; padding: 8px 18px 8px 14px;
+  text-decoration: none; white-space: nowrap; flex-shrink: 0;
+  transition: background .2s, border-color .2s, color .2s, transform .2s;
 }
-.hero-orientation-link:hover { color: var(--pink); gap: 11px; }
+.orientation-pill:hover { background: rgba(139,92,246,0.14); border-color: rgba(139,92,246,0.42); color: var(--pink); transform: translateY(-1px); }
+.orientation-pill svg { flex-shrink: 0; }
 
 /* Combos grid, redesigned */
 .combos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: stretch; }
@@ -1689,10 +1692,6 @@ function App() {
               <a href="#combos" className="btn btn-primary btn-lg">Bundled courses</a>
               <a href="#individual" className="btn btn-ghost btn-lg">Individual courses</a>
             </div>
-            <a href="https://www.youtube.com/live/C2m3iCctqaA?si=d_sWTgjt0lrjVXuz" target="_blank" rel="noopener noreferrer" className="hero-orientation-link fade-in">
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2.5 1.5L11.5 6.5L2.5 11.5V1.5Z" fill="currentColor"/></svg>
-              Watch free orientation
-            </a>
           </div>
           <div className="page-hero-right">
             <div className="hero-proof-row fade-in">
@@ -1747,11 +1746,19 @@ function App() {
       {/* Individual courses */}
       <section className="section" id="individual" style={{ background: 'var(--bg)', paddingTop: 'var(--section-pad)' }}>
         <div className="container">
-          <div className="section-eyebrow fade-in">Individual</div>
-          <h2 className="fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 12 }}>
-            Pick a <em>single subject</em>
-          </h2>
-          <p className="section-sub fade-in">Need to strengthen one area? Get any subject standalone.</p>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 12 }}>
+            <div>
+              <div className="section-eyebrow fade-in">Individual</div>
+              <h2 className="fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 12 }}>
+                Pick a <em>single subject</em>
+              </h2>
+              <p className="section-sub fade-in">Need to strengthen one area? Get any subject standalone.</p>
+            </div>
+            <a href="https://www.youtube.com/live/C2m3iCctqaA?si=d_sWTgjt0lrjVXuz" target="_blank" rel="noopener noreferrer" className="orientation-pill fade-in" style={{ marginTop: 8 }}>
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2.5 1.5L11.5 6.5L2.5 11.5V1.5Z" fill="currentColor"/></svg>
+              Watch free orientation
+            </a>
+          </div>
           <div className="courses-grid">
             {INDIVIDUAL.map((c, i) => <CourseCard key={i} c={c} />)}
           </div>
