@@ -946,14 +946,18 @@ body {
   .mobile-menu { top: 64px; }
   .nav-links { display: none; }
   .btn-nav-contact { display: none; }
-  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 32px 16px; }
+  .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 24px 12px; }
   .stat-item { border-left: none; padding-left: 0; }
+  .stat-num { font-size: clamp(28px, 7vw, 44px); }
+  .stat-label { font-size: 11px; }
   .offer-grid { grid-template-columns: 1fr; }
   .offer-card { padding: 24px; }
   .faculty-grid { grid-template-columns: 1fr; }
   .faculty-card:hover { transform: none; box-shadow: none; }
   .faculty-grid:has(.faculty-card:hover) .faculty-card:not(:hover) { opacity: 1; transform: none; }
   .instructor-faculty-grid { grid-template-columns: 1fr; gap: 40px; }
+  .instructor-section-head { margin-bottom: 40px; }
+  .instructor-creds { grid-template-columns: 1fr 1fr; }
   .whyus-panel { padding: 28px; }
   .section-head { margin-bottom: 36px; }
   .footer-inner { flex-direction: column; align-items: center; text-align: center; }
@@ -990,7 +994,7 @@ body {
 }
 @media (max-width: 480px) {
   :root { --section-pad: 40px; }
-  .stats-grid { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 20px 8px; }
   .results-grid { grid-template-columns: 1fr; }
   .section-head { margin-bottom: 28px; }
 }
