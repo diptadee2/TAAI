@@ -1310,8 +1310,7 @@ const COMBOS = [
       'Linear Algebra, Probability, Statistics, Calculus',
       'Machine Learning, full coverage',
       '1,000+ weekly quiz questions',
-      'Live doubt sessions every week',
-      'Handwritten notes + video solutions',
+      'GATE mentorship sessions every week',
       'Active Discord community support',
     ],
     href: 'https://www.taai.live/learn/batch/GATE-2027?calendarInitialView=dayGridWeek',
@@ -1385,20 +1384,15 @@ const INCLUDED = [
     desc: 'High-quality, visual-first lectures you can re-watch anytime. Structured for GATE DA, concise, conceptual, focused.',
     stat: { num: '100+', lbl: 'concept videos' } },
   { icon: <Icon.Users />, grad: 'linear-gradient(135deg,var(--purple),var(--blue))', color: '#8B5CF6',
-    label: 'Live doubt sessions.', sub: 'Weekly, real-time', eyebrow: 'Live interactive',
+    label: 'GATE mentorship sessions.', sub: 'Weekly, real-time', eyebrow: 'Live interactive',
     title: <>Doubts cleared<br /><em style={{color:'var(--lilac)'}}>in real time.</em></>,
-    desc: 'Weekly live sessions per topic, clarify doubts, discuss logic, and get direct explanations from Manoj Sir.',
-    stat: { num: '67+', lbl: 'live sessions' } },
+    desc: 'Weekly GATE mentorship sessions per topic, clarify doubts, discuss logic, and get direct explanations from Manoj Sir.',
+    stat: { num: '67+', lbl: 'mentorship sessions' } },
   { icon: <Icon.Discord />, grad: 'linear-gradient(135deg,var(--blue),#7FA8FF)', color: '#4D8BFF',
     label: 'Discord support.', sub: 'Mentors · any hour', eyebrow: 'Community',
     title: <>Help available<br /><em style={{color:'#7EB3FF'}}>24 / 7.</em></>,
     desc: 'Active Discord community with mentors and toppers. Late-night doubt? Someone always there, not a bot.',
     stat: { num: '24/7', lbl: 'community support' } },
-  { icon: <Icon.Note />, grad: 'linear-gradient(135deg,var(--pink),#FF9ECB)', color: '#FF9ECB',
-    label: 'Handwritten notes.', sub: 'Exam-ready revision', eyebrow: 'Study material',
-    title: <>Every topic,<br /><em style={{color:'var(--pink)'}}>beautifully distilled.</em></>,
-    desc: 'Concise, exam-focused handwritten notes for every topic. Designed for fast revision, not re-reading lectures.',
-    stat: { num: '6', lbl: 'subjects covered' } },
   { icon: <Icon.Target />, grad: 'linear-gradient(135deg,var(--purple),var(--lilac))', color: '#A78BFA',
     label: 'Question bank.', sub: '1,000+ weekly quiz questions', eyebrow: 'Practice',
     title: <>Quality over<br /><em style={{color:'var(--lilac)'}}>quantity.</em></>,
@@ -1418,9 +1412,8 @@ function BundleComparison() {
     { label: 'Data Structures',                      full: true,  ml: false, maths: false, group: 'Subjects'        },
     { label: 'Algorithms',                           full: true,  ml: false, maths: false, group: 'Subjects'        },
     { label: '1,000+ weekly quiz questions',          full: true,  ml: false, maths: false, group: 'Study Materials' },
-    { label: 'Handwritten notes + video solutions',  full: true,  ml: false, maths: false, group: 'Study Materials' },
     { label: 'Weekly quizzes',                       full: true,  ml: true,  maths: true,  group: 'Study Materials' },
-    { label: 'Live doubt sessions with Manoj Sir',   full: true,  ml: false, maths: false, group: 'Support'         },
+    { label: 'GATE mentorship sessions with Manoj Sir', full: true,  ml: false, maths: false, group: 'Support'         },
     { label: 'Discord community support',            full: true,  ml: true,  maths: true,  group: 'Support'         },
     { label: 'Course valid until', fullText: 'Mar 20, 2027', mlText: 'Feb 15, 2027', mathsText: 'Feb 15, 2027', fullNote: '+1 month', group: 'Support' },
   ];
@@ -2021,7 +2014,7 @@ function App() {
           <h2 className="section fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 12, padding: 0 }}>
             Best value <em>bundles</em>
           </h2>
-          <p className="section-sub fade-in">Save more when you bundle. All bundles include quizzes and full course includes quizzes and live doubt sessions.</p>
+          <p className="section-sub fade-in">Save more when you bundle. All bundles include quizzes and full course includes quizzes and GATE mentorship sessions.</p>
           <div className="combos-grid">
             {COMBOS.map((c, i) => <ComboCard key={i} c={c} />)}
           </div>
