@@ -946,6 +946,7 @@ body {
   .mobile-menu { top: 64px; }
   .nav-links { display: none; }
   .btn-nav-contact { display: none; }
+  .hero-bento-1, .hero-bento-2 { display: none; }
   .stats-grid { grid-template-columns: 1fr; gap: 0; }
   .stat-item { display: flex; align-items: center; gap: 20px; border-left: none; padding-left: 0; border-bottom: 1px solid rgba(255,255,255,0.12); padding: 18px 0; }
   .stat-item:last-of-type { border-bottom: none; }
@@ -1469,7 +1470,7 @@ function Hero() {
 
         <div className="hero-bento-1 hero-bento-card">
           <div className="bento-icon-row">
-            <div className="mono" style={{ color: 'var(--purple)' }}>Question Bank</div>
+            <div className="mono" style={{ color: 'var(--purple)' }}>Practice Sets</div>
             <svg width="38" height="38" viewBox="0 0 44 44" fill="none">
               {/* Paper body */}
               <path d="M7 4 L29 4 L37 12 L37 40 L7 40 Z" stroke="rgba(139,92,246,0.7)" strokeWidth="1.8" fill="rgba(139,92,246,0.07)" />
@@ -1643,9 +1644,9 @@ const WHY_FEATURES = [
     label: 'GATE-level practice.',
     sub: '1,000+ weekly quiz questions',
     title: <>Quality over<br /><em style={{color:'var(--lilac)'}}>quantity.</em></>,
-    desc: 'Conceptual, exam-relevant questions with text + video solutions. Every question earns its place, no filler, no repetition.',
+    desc: 'Conceptual, exam-relevant questions with solutions. Every question earns its place, no filler, no repetition.',
     stat: { num: '1,000+', lbl: 'weekly quiz questions' },
-    eyebrow: 'Question bank'
+    eyebrow: 'Practice Sets'
   },
   {
     icon: <Icon.Users />,
