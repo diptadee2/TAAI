@@ -2282,7 +2282,11 @@ function App() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+try {
+  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+} catch(err) {
+  document.getElementById('root').innerHTML = '<div style="padding:40px;font-family:monospace;color:red;background:#fff"><strong>Error:</strong><br>' + (err && err.message ? err.message : String(err)) + '</div>';
+}
 
 function scrollToEl(hash) {
   var el = document.querySelector(hash);
