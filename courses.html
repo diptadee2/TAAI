@@ -618,12 +618,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .compare-footer-cell.featured { background: rgba(139,92,246,0.08); border-bottom: 3px solid var(--purple); }
 .compare-price { font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: -0.03em; color: var(--ink); }
 .compare-price.best { color: var(--purple); }
-.compare-group-header { display: grid; grid-template-columns: 1.8fr repeat(3, 1fr); background: rgba(139,92,246,0.09); border-top: 2px solid rgba(139,92,246,0.22); cursor: pointer; user-select: none; }
-.compare-group-header:hover { background: rgba(139,92,246,0.14); }
-.compare-group-header:hover .compare-group-label { background: rgba(139,92,246,0.14); }
-.compare-group-label { padding: 8px 16px 8px 14px; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--purple); position: sticky; left: 0; background: rgba(139,92,246,0.09); border-left: 3px solid var(--purple); display: flex; align-items: center; justify-content: space-between; gap: 8px; transition: background .15s; }
-.compare-group-chevron { flex-shrink: 0; transition: transform .22s ease; color: var(--purple); opacity: 0.7; }
-.compare-group-chevron.collapsed { transform: rotate(-90deg); }
+
 .compare-row.zebra { background: rgba(0,0,0,0.018); }
 .compare-row.zebra .compare-cell.feat-name { background: #f9f9fc; }
 .compare-row.zebra .compare-cell.featured { background: rgba(139,92,246,0.065); }
@@ -637,7 +632,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .compare-table { min-width: 420px; }
   .compare-head { grid-template-columns: 1.3fr repeat(3, 1fr); }
   .compare-row { grid-template-columns: 1.3fr repeat(3, 1fr); }
-  .compare-group-header { grid-template-columns: 1.3fr repeat(3, 1fr); }
+
   .compare-footer { grid-template-columns: 1.3fr repeat(3, 1fr); }
   .compare-head-cell { padding: 12px 10px; font-size: 10px; }
   .compare-cell { padding: 10px 10px; font-size: 12px; }
@@ -1266,10 +1261,10 @@ const INCLUDED = [
     desc: 'High-quality, visual-first lectures you can re-watch anytime. Structured for GATE DA, concise, conceptual, focused.',
     stat: { num: '100+', lbl: 'concept videos' } },
   { icon: <Icon.Users />, grad: 'linear-gradient(135deg,var(--purple),var(--blue))', color: '#8B5CF6',
-    label: 'GATE mentorship sessions.', sub: 'Doubt resolution', eyebrow: 'Mentorship',
+    label: 'GATE mentorship.', sub: 'Doubt resolution', eyebrow: 'Mentorship',
     title: <>Doubts cleared<br /><em style={{color:'var(--lilac)'}}>by Manoj Sir.</em></>,
     desc: 'GATE mentorship sessions per topic — clarify doubts, discuss logic, and get direct explanations from Manoj Sir.',
-    stat: { num: '67+', lbl: 'mentorship sessions' } },
+    stat: { num: '67+', lbl: 'mentorship' } },
   { icon: <Icon.Discord />, grad: 'linear-gradient(135deg,var(--blue),#7FA8FF)', color: '#4D8BFF',
     label: 'Discord support.', sub: 'Mentors · any hour', eyebrow: 'Community',
     title: <>Help available<br /><em style={{color:'#7EB3FF'}}>24 / 7.</em></>,
@@ -1294,10 +1289,9 @@ function BundleComparison() {
     { label: 'Data Structures',                      full: true,  ml: false, maths: false, group: 'Subjects'        },
     { label: 'Algorithms',                           full: true,  ml: false, maths: false, group: 'Subjects'        },
     { label: '1,000+ weekly quiz questions',          full: true,  ml: false, maths: false, group: 'Study Materials' },
-    { label: 'Weekly quizzes',                       full: true,  ml: true,  maths: true,  group: 'Study Materials' },
-    { label: 'GATE mentorship sessions with Manoj Sir', full: true,  ml: false, maths: false, group: 'Support'         },
+    { label: 'GATE mentorship with Manoj Sir', full: true,  ml: false, maths: false, group: 'Support'         },
     { label: 'Discord community support',            full: true,  ml: true,  maths: true,  group: 'Support'         },
-    { label: 'Course valid until', fullText: 'Mar 20, 2027', mlText: 'Feb 15, 2027', mathsText: 'Feb 15, 2027', fullNote: '+1 month', group: 'Support' },
+    { label: 'Course valid until', fullText: 'Apr 15, 2027', mlText: 'Feb 15, 2027', mathsText: 'Feb 15, 2027', fullNote: '+2 months', group: 'Support' },
   ];
   const Yes = () => (
     <span className="compare-yes">
@@ -1309,8 +1303,6 @@ function BundleComparison() {
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
     </span>
   );
-  const [collapsed, setCollapsed] = React.useState({ 'Study Materials': true, 'Support': true });
-  const toggleGroup = g => setCollapsed(c => ({ ...c, [g]: !c[g] }));
   const scrollRef = React.useRef(null);
   const [showBtn, setShowBtn] = React.useState(true);
   React.useEffect(() => {
@@ -1338,40 +1330,14 @@ function BundleComparison() {
               <div className="compare-head-cell">Maths &amp; ML<br/>Bundle</div>
               <div className="compare-head-cell">Maths<br/>Bundle</div>
             </div>
-            {(() => {
-              const Chevron = ({ g }) => (
-                <svg className={`compare-group-chevron${collapsed[g] ? ' collapsed' : ''}`} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M6 9l6 6 6-6"/>
-                </svg>
-              );
-              const rows = [];
-              let lastGroup = null;
-              let groupIdx = 0;
-              features.forEach((f, i) => {
-                if (f.group !== lastGroup) {
-                  lastGroup = f.group;
-                  groupIdx = 0;
-                  const g = f.group;
-                  rows.push(
-                    <div key={`grp-${g}`} className="compare-group-header" onClick={() => toggleGroup(g)}>
-                      <div className="compare-group-label">{g}<Chevron g={g} /></div>
-                      <div /><div /><div />
-                    </div>
-                  );
-                } else { groupIdx++; }
-                if (!collapsed[f.group]) {
-                  rows.push(
-                    <div key={i} className={`compare-row${i % 2 === 0 ? ' zebra' : ''}`} style={{ animationDelay: `${groupIdx * 30}ms` }}>
-                      <div className="compare-cell feat-name">{f.label}</div>
-                      <div className="compare-cell featured">{f.fullText ? <span className="compare-val-text">{f.fullText}{f.fullNote && <span className="compare-val-note">{f.fullNote}</span>}</span> : (f.full ? <Yes /> : <No />)}</div>
-                      <div className="compare-cell">{f.mlText ? <span className="compare-val-text">{f.mlText}</span> : (f.ml ? <Yes /> : <No />)}</div>
-                      <div className="compare-cell">{f.mathsText ? <span className="compare-val-text">{f.mathsText}</span> : (f.maths ? <Yes /> : <No />)}</div>
-                    </div>
-                  );
-                }
-              });
-              return rows;
-            })()}
+            {features.map((f, i) => (
+              <div key={i} className={`compare-row${i % 2 === 0 ? ' zebra' : ''}`}>
+                <div className="compare-cell feat-name">{f.label}</div>
+                <div className="compare-cell featured">{f.fullText ? <span className="compare-val-text">{f.fullText}{f.fullNote && <span className="compare-val-note">{f.fullNote}</span>}</span> : (f.full ? <Yes /> : <No />)}</div>
+                <div className="compare-cell">{f.mlText ? <span className="compare-val-text">{f.mlText}</span> : (f.ml ? <Yes /> : <No />)}</div>
+                <div className="compare-cell">{f.mathsText ? <span className="compare-val-text">{f.mathsText}</span> : (f.maths ? <Yes /> : <No />)}</div>
+              </div>
+            ))}
             <div className="compare-footer">
               <div className="compare-footer-cell" />
               <div className="compare-footer-cell featured">
@@ -1736,7 +1702,7 @@ function App() {
           <h2 className="section fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 12, padding: 0 }}>
             Best value <em>bundles</em>
           </h2>
-          <p className="section-sub fade-in">Save more when you bundle. All bundles include quizzes and full course includes quizzes and GATE mentorship sessions.</p>
+          <p className="section-sub fade-in">Save more when you bundle. All bundles include quizzes and full course includes quizzes and GATE mentorship.</p>
           <div className="combos-grid">
             {COMBOS.map((c, i) => <ComboCard key={i} c={c} />)}
           </div>
