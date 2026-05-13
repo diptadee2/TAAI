@@ -657,37 +657,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   border-radius: var(--radius-xl); border: 1.5px solid rgba(139,92,246,0.24);
   overflow: hidden;
 }
-.quality-left {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 48px 36px; gap: 20px; text-align: center; position: relative; overflow: hidden;
-  border-right: 1px solid rgba(255,255,255,0.07);
-}
-.quality-left::before, .quality-left::after {
-  content: ''; position: absolute; border-radius: 50%; pointer-events: none;
-  top: 50%; left: 50%; transform: translate(-50%,-50%);
-}
-.quality-left::before { width: 320px; height: 320px; border: 1px solid rgba(139,92,246,0.1); }
-.quality-left::after  { width: 200px; height: 200px; border: 1px solid rgba(139,92,246,0.14); }
-.quality-icon-circle {
-  width: 80px; height: 80px; border-radius: 50%;
-  background: linear-gradient(135deg, var(--purple), var(--pink));
-  display: grid; place-items: center; color: #fff;
-  box-shadow: 0 12px 40px rgba(139,92,246,0.45); position: relative; z-index: 1;
-  transition: background .38s ease, box-shadow .38s ease, transform .32s cubic-bezier(.34,1.2,.64,1);
-}
-.quality-headline { transition: opacity .22s ease; }
-.quality-headline {
-  font-family: var(--font-display); font-size: clamp(18px,1.8vw,23px); font-weight: 600;
-  letter-spacing: -0.025em; line-height: 1.3; color: #fff; position: relative; z-index: 1;
-}
-.quality-headline em { background: linear-gradient(120deg, var(--pink), var(--lilac)); -webkit-background-clip: text; background-clip: text; color: transparent; font-style: normal; }
-.quality-chip {
-  display: inline-flex; align-items: center; gap: 6px;
-  background: rgba(139,92,246,0.14); border: 1px solid rgba(139,92,246,0.28);
-  border-radius: 999px; padding: 5px 13px;
-  font-size: 11px; color: var(--lilac); font-weight: 600; font-family: var(--font-mono);
-  position: relative; z-index: 1;
-}
 .mentor-right { padding: 48px 52px; display: flex; flex-direction: column; justify-content: center; gap: 28px; }
 .mentor-quote {
   font-family: var(--font-display); font-size: clamp(20px,2.2vw,28px); font-weight: 600;
@@ -1017,7 +986,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .feat-dark,.feat-b,.feat-c,.feat-dark-blue,.feat-e,.feat-f { grid-column: span 1; }
   .feat-f { flex-direction: column; gap: 14px; padding: 28px; }
   .mentor-card { padding: 0; }
-  .quality-left { display: none; }
   .mentor-right { padding: 24px; }
   .mentor-commit { align-items: center; flex-wrap: wrap; cursor: pointer; gap: 10px; }
   .mentor-commit.commit-active { transform: none; }
@@ -1880,75 +1848,6 @@ function Discussions() {
   );
 }
 
-// ── Quality Standard ─────────────────────────────────────────────
-const QUALITY_CRITERIA = [
-  { label: 'Benchmarked against real GATE DA papers', sub: 'Difficulty calibrated across 4 years of actual exam data', val: '2024–26',    color: 'linear-gradient(135deg,var(--pink),var(--purple))',  accent: 'var(--pink)',    icon: 'Target', glow: 'rgba(255,127,183,0.45)', leftLine: 'All questions are benchmarked against past\nGATE DA papers from 2024 to 2026.' },
-  { label: 'Covers the full GATE DA syllabus',        sub: 'Every topic and sub-topic in the official syllabus',        val: '12 topics', color: 'linear-gradient(135deg,var(--blue),#7FA8FF)',         accent: 'var(--blue)',    icon: 'List',   glow: 'rgba(77,139,255,0.45)',  leftLine: 'No gaps. Every subject area in the\nofficial GATE DA syllabus is covered.' },
-  { label: 'Video solution for every question',       sub: 'Recorded and reviewed before the question ships',          val: '100%',       color: 'linear-gradient(135deg,var(--purple),var(--lilac))',  accent: 'var(--purple)',  icon: 'Video',  glow: 'rgba(139,92,246,0.45)',  leftLine: 'Every question ships with a full\nvideo walkthrough, not just the answer.' },
-  { label: 'Live discussion after every test',        sub: 'Walk through the paper together right after the test',     val: 'Every test', color: 'linear-gradient(135deg,var(--pink),#FF9ECB)',          accent: '#FF9ECB',        icon: 'Users',  glow: 'rgba(255,158,203,0.45)', leftLine: 'A live session runs after every test\nto walk through strategy and mistakes.' },
-];
-
-function Quality() {
-  const [active, setActive] = React.useState(0);
-  const isMobile = window.matchMedia('(max-width: 768px)').matches;
-  const c = QUALITY_CRITERIA[active];
-
-  const go = i => setActive(i);
-
-  return (
-    <section className="section">
-      <div className="container">
-        <div className="section-eyebrow fade-in">Question quality</div>
-        <h2 className="fade-in" style={{ fontFamily:'var(--font-display)', fontSize:'clamp(32px,4vw,56px)', fontWeight:600, letterSpacing:'-0.035em', lineHeight:1, marginBottom:16 }}>
-          If it's not GATE-level,<br /><em>it doesn't ship.</em>
-        </h2>
-        <p className="section-sub fade-in">Every question is benchmarked against real GATE DA papers, the same difficulty, the same style, the same pressure you'll face on exam day.</p>
-        <div className="mentor-card fade-in">
-          <div className="quality-left">
-            <div className="quality-icon-circle" key={active} style={{ background: c.color, boxShadow: `0 12px 40px ${c.glow}` }}>
-              {React.createElement(Icon[c.icon])}
-            </div>
-            <div className="quality-headline" key={`h-${active}`}>
-              {c.leftLine.split('\n').map((line, i) => <span key={i}>{line}{i === 0 && <br/>}</span>)}
-            </div>
-            <div className="quality-chip" key={`ch-${active}`} style={{ borderColor: c.accent, color: c.accent, background: `color-mix(in srgb, ${c.accent} 12%, transparent)` }}>
-              <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 6.5L4.5 9L10 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              {c.val}
-            </div>
-          </div>
-          <div className="mentor-right">
-            <div className="mentor-commits">
-              {QUALITY_CRITERIA.map((cr, i) => (
-                <div key={i}
-                  className={`mentor-commit${i === active ? ' commit-active' : ' commit-inactive'}`}
-                  style={{ borderLeftColor: i === active ? cr.accent : 'transparent', '--commit-color': cr.accent, position: 'relative' }}
-                  onMouseEnter={() => !isMobile && setActive(i)}
-                  onClick={() => go(i)}
-                >
-                  <div className="mentor-commit-icon" style={{ background: cr.color }}>{React.createElement(Icon[cr.icon])}</div>
-                  <div className="mentor-commit-text">
-                    <div className="mentor-commit-label">{cr.label}</div>
-                    <div className="mentor-commit-sub">{cr.sub}</div>
-                  </div>
-                  <div className="mentor-commit-num" style={{ fontSize:13, letterSpacing:0, color: cr.accent }}>{cr.val}</div>
-                  {i === active && isMobile && (
-                    <div key={`d-${active}`} className="mentor-commit-detail">
-                      {cr.leftLine.replace('\n', ' ')}
-                      <div className="mentor-commit-detail-chip" style={{ borderColor: cr.accent, color: cr.accent, background: `color-mix(in srgb, ${cr.accent} 10%, transparent)` }}>
-                        <svg width="9" height="9" viewBox="0 0 12 12" fill="none"><path d="M2 6.5L4.5 9L10 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                        {cr.val}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 
 // ── Testimonials ─────────────────────────────────────────────────
@@ -2289,7 +2188,6 @@ function App() {
       <Features />
       <Discussions />
       <TSTestimonials />
-      <Quality />
       <FAQ />
       <Footer />
     </>
