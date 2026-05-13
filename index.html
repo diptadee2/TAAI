@@ -1391,7 +1391,7 @@ function Hero() {
               Visual, conceptual teaching, understand the why, not just formulas
             </div>
             <div className="hero-check">
-              <span className="hero-check-icon" style={{ background: 'var(--₹blue-soft)' }}><Icon.Check size={11} style={{ color: 'var(--blue)' }} /></span>
+              <span className="hero-check-icon" style={{ background: 'var(--blue-soft)' }}><Icon.Check size={11} style={{ color: 'var(--blue)' }} /></span>
               End-to-end: GATE prep, IIT admission, and AI/ML interview prep
             </div>
           </div>
@@ -1569,7 +1569,7 @@ const OFFERS = [
     title: 'Interview Preparation',
     desc: 'Career prep for AI and Data Science roles. Preview on YouTube now.',
     bullets: ['Live + recorded sessions', '6 real-world projects', 'Interview mentorship'],
-    link: 'Watch preview', href: 'https://www.youtube.com/watch?v=iobgxxTluUc&list=PLZvuMBNC5r0UEjm31D56LdoYzd4L-vtaF', newTab: true,
+    link: null, href: null, newTab: false,
   }
 ];
 
@@ -1608,7 +1608,7 @@ function Offer() {
                 </div>
               </div>
               <div className="offer-footer">
-                <span className="offer-link">{c.link} <Icon.ArrowRight size={14} /></span>
+                {c.link && <span className="offer-link">{c.link} <Icon.ArrowRight size={14} /></span>}
               </div>
             </a>
           ))}
@@ -1989,7 +1989,7 @@ function Testimonials() {
 const FAQS = [
   { q: 'Why should I choose TAAI?', a: <><p>TAAI is a complete learning experience, not just coaching. Five reasons:</p><ul><li><b>Conceptual clarity with visualization.</b> Every concept explained visually, you learn the "why", not just the formula.</li><li><b>Top-quality practice material.</b> GATE-level, conceptual questions, quality over quantity.</li><li><b>Proven results.</b> 5 students in Top 50, 35+ in Top 250, and 51+ in Top 500.</li><li><b>Complete support until admission.</b> From choosing institutes to interviews and written tests.</li><li><b>Interview preparation (coming soon).</b> Preparing students for AI and Data Science roles.</li></ul></> },
   { q: "I genuinely want to study, but I can't afford the course. What should I do?", a: "Financial challenges shouldn't stop a dedicated learner. Write to support@taai.live explaining your situation, our team offers discounts or scholarship options based on need and interest." },
-  { q: 'What do I get in the TAAI Full Course for GATE DA?', a: <><p>Structured, high-quality, result-driven program:</p><ul><li>Top-notch conceptual content</li><li>Hand-coded animations</li><li>GATE-level problem sets</li><li>Weekly topic-wise tests</li><li>GATE mentorship sessions</li><li>Active Discord community</li><li>Subject-wise test at end</li></ul></> },
+  { q: 'What do I get in the TAAI Full Course for GATE DA?', a: <><p>Structured, high-quality, result-driven program:</p><ul><li>Top-notch conceptual content</li><li>Hand-coded animations</li><li>GATE-level problem sets</li><li>Weekly topic-wise tests</li><li>GATE mentorship</li><li>Active Discord community</li><li>Subject-wise test at end</li></ul></> },
   { q: 'What is the mode of teaching at TAAI?', a: <><p>A blended learning approach, flexibility with depth:</p><ul><li><b>Recorded concept classes</b>, learn at your own pace</li><li><b>GATE mentorship</b>, topic-wise, direct doubt resolution</li><li><b>Active Discord support</b>, mentors and peers, fast resolution</li></ul></> },
   { q: 'Where can I access the course?', a: <><p>Courses are accessible on desktop via our dedicated website. Facing technical issues? Drop a message on Discord, our tech team assists promptly.</p></> }
 ];
