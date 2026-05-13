@@ -578,20 +578,20 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .feat-live { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,65,108,0.1); border: 1px solid rgba(255,65,108,0.24); border-radius: 999px; padding: 5px 12px; font-size: 11px; color: #FF416C; font-weight: 600; align-self: flex-start; }
 .feat-live-dot { width: 7px; height: 7px; border-radius: 50%; background: #FF416C; animation: live-blink 1.6s ease-in-out infinite; }
 @keyframes live-blink { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.4;transform:scale(1.7);} }
-/* Chat bubbles (feat-e) */
+/* Chat bubbles */
 .feat-chat-bubbles { display: flex; flex-direction: column; gap: 6px; margin: 2px 0; }
 .feat-bubble { font-size: 11px; line-height: 1.45; padding: 7px 11px; border-radius: 12px; max-width: 93%; }
 .feat-bubble-left { background: rgba(139,92,246,0.07); border: 1px solid rgba(139,92,246,0.14); color: var(--ink-dim); align-self: flex-start; border-bottom-left-radius: 3px; }
 .feat-bubble-right { background: rgba(255,65,108,0.07); border: 1px solid rgba(255,65,108,0.16); color: var(--ink-dim); align-self: flex-end; border-bottom-right-radius: 3px; }
-/* Rank leaderboard (feat-f) */
+/* Rank leaderboard */
 .feat-rank-board { display: flex; flex-direction: column; gap: 5px; min-width: 210px; flex-shrink: 0; }
-.feat-rank-row { display: flex; align-items: center; gap: 9px; padding: 7px 12px; border-radius: 9px; background: rgba(139,92,246,0.06); border: 1px solid rgba(139,92,246,0.1); font-size: 12px; transition: background .18s ease; }
+.feat-rank-row { display: flex; align-items: center; gap: 9px; padding: 7px 12px; border-radius: 9px; background: rgba(139,92,246,0.06); border: 1px solid rgba(139,92,246,0.1); font-size: 12px; }
 .feat-rank-row.rank-you { background: rgba(139,92,246,0.14); border-color: rgba(139,92,246,0.32); }
 .feat-rank-pos { font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--purple); width: 24px; flex-shrink: 0; }
 .feat-rank-name { flex: 1; color: var(--ink-dim); font-size: 12px; }
 .feat-rank-row.rank-you .feat-rank-name { color: var(--ink); font-weight: 600; }
 .feat-rank-score { font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft); }
-.feat-rank-badge { font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 999px; background: rgba(139,92,246,0.18); border: 1px solid rgba(139,92,246,0.28); color: var(--purple); letter-spacing: .02em; }
+.feat-rank-you-badge { font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 999px; background: rgba(139,92,246,0.18); border: 1px solid rgba(139,92,246,0.28); color: var(--purple); }
 /* Rank */
 .feat-rank-num { font-family: var(--font-display); font-size: clamp(44px,4.5vw,64px); font-weight: 600; letter-spacing: -0.05em; line-height: 1; background: linear-gradient(120deg,var(--pink),var(--purple),var(--lilac)); -webkit-background-clip: text; background-clip: text; color: transparent; flex-shrink: 0; width: clamp(130px,13vw,175px); text-align: center; font-variant-numeric: tabular-nums; transition: transform .3s cubic-bezier(.34,1.2,.64,1); }
 .feat-f:hover .feat-rank-num { transform: scale(1.06); }
@@ -1628,6 +1628,13 @@ const TIME_ROWS = [
   { label:'Calc', pct: 52, val:'2.7m', color:'var(--lilac)' },
 ];
 const BARS = [32,55,70,44,85,60,40,76];
+const RANK_BOARD = [
+  { pos: '#1', name: 'Arjun V.',   score: '67.2' },
+  { pos: '#2', name: 'Sneha P.',   score: '65.8' },
+  { pos: '#3', name: 'Vikram R.',  score: '63.1' },
+  { pos: '#4', name: 'You',        score: '61.4', you: true },
+  { pos: '#5', name: 'Kavya M.',   score: '60.9' },
+];
 
 function Features() {
   const [qs, setQs] = React.useState(() => [...PALETTE_QS]);
@@ -1708,8 +1715,9 @@ function Features() {
 
           {/* GATE Interface, clickable palette */}
           <div className="feat feat-b fade-in card"
-            onMouseMove={e=>{const r=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');e.currentTarget.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%');}}
+            onMouseMove={e=>{const rect=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--mx',((e.clientX-rect.left)/rect.width*100).toFixed(1)+'%');e.currentTarget.style.setProperty('--my',((e.clientY-rect.top)/rect.height*100).toFixed(1)+'%');}}
             onMouseLeave={e=>{e.currentTarget.style.setProperty('--mx','-200%');e.currentTarget.style.setProperty('--my','-200%');}}>
+
             <div className="feat-icon" style={{ background:'linear-gradient(135deg,var(--pink),var(--purple))' }}><Icon.Brain /></div>
             <div className="feat-title">GATE-like interface</div>
             <div className="feat-palette">
@@ -1731,7 +1739,7 @@ function Features() {
 
           {/* Time management */}
           <div className="feat feat-c fade-in card"
-            onMouseMove={e=>{const r=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');e.currentTarget.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%');}}
+            onMouseMove={e=>{const rect=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--mx',((e.clientX-rect.left)/rect.width*100).toFixed(1)+'%');e.currentTarget.style.setProperty('--my',((e.clientY-rect.top)/rect.height*100).toFixed(1)+'%');}}
             onMouseLeave={e=>{e.currentTarget.style.setProperty('--mx','-200%');e.currentTarget.style.setProperty('--my','-200%');}}>
 
             <div className="feat-icon" style={{ background:'linear-gradient(135deg,var(--blue),#7FA8FF)' }}><Icon.Clock /></div>
@@ -1773,14 +1781,14 @@ function Features() {
 
           {/* Live discussions */}
           <div className="feat feat-e fade-in card"
-            onMouseMove={e=>{const r=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');e.currentTarget.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%');}}
+            onMouseMove={e=>{const rect=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--mx',((e.clientX-rect.left)/rect.width*100).toFixed(1)+'%');e.currentTarget.style.setProperty('--my',((e.clientY-rect.top)/rect.height*100).toFixed(1)+'%');}}
             onMouseLeave={e=>{e.currentTarget.style.setProperty('--mx','-200%');e.currentTarget.style.setProperty('--my','-200%');}}>
             <div className="feat-live"><span className="feat-live-dot"/>Live after each test</div>
             <div className="feat-icon" style={{ background:'linear-gradient(135deg,var(--pink),#FF9ECB)' }}><Icon.Users /></div>
             <div className="feat-title">Live test discussions</div>
             <div className="feat-chat-bubbles">
               <div className="feat-bubble feat-bubble-left">Why did you eliminate option B?</div>
-              <div className="feat-bubble feat-bubble-right">The function isn't differentiable at that point 🎯</div>
+              <div className="feat-bubble feat-bubble-right">Not differentiable at that point</div>
             </div>
           </div>
 
@@ -1796,14 +1804,16 @@ function Features() {
               <div className="feat-desc">Rank estimates based on historical GATE DA data, so you know where you stand nationally before the real exam.</div>
             </div>
             <div className="feat-rank-board">
-              {[{pos:'#1',name:'Arjun V.',score:'67.2'},{pos:'#2',name:'Sneha P.',score:'65.8'},{pos:'#3',name:'Vikram R.',score:'63.1'},{pos:'#4',name:'You',score:'61.4',you:true},{pos:'#5',name:'Kavya M.',score:'60.9'}].map(r=>(
-                <div key={r.pos} className={`feat-rank-row${r.you?' rank-you':''}`}>
-                  <span className="feat-rank-pos">{r.pos}</span>
-                  <span className="feat-rank-name">{r.name}</span>
-                  {r.you && <span className="feat-rank-badge">YOU</span>}
-                  <span className="feat-rank-score">{r.score}</span>
-                </div>
-              ))}
+              {RANK_BOARD.map(function(row) {
+                return (
+                  <div key={row.pos} className={'feat-rank-row' + (row.you ? ' rank-you' : '')}>
+                    <span className="feat-rank-pos">{row.pos}</span>
+                    <span className="feat-rank-name">{row.name}</span>
+                    {row.you ? <span className="feat-rank-you-badge">YOU</span> : null}
+                    <span className="feat-rank-score">{row.score}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
