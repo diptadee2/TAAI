@@ -634,6 +634,10 @@ body {
   display: grid; grid-template-columns: 1fr 1fr;
   gap: 72px; align-items: center; position: relative; z-index: 1;
 }
+.instructor-faculty-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 56px; align-items: start; position: relative; z-index: 1;
+}
 .instructor-photo-wrap { position: relative; border-radius: var(--radius-xl); overflow: hidden; }
 .instructor-photo { width: 100%; display: block; border-radius: var(--radius-xl); }
 @keyframes play-pulse-ring {
@@ -945,6 +949,7 @@ body {
   .faculty-grid { grid-template-columns: 1fr; }
   .faculty-card:hover { transform: none; box-shadow: none; }
   .faculty-grid:has(.faculty-card:hover) .faculty-card:not(:hover) { opacity: 1; transform: none; }
+  .instructor-faculty-grid { grid-template-columns: 1fr; gap: 40px; }
   .whyus-panel { padding: 28px; }
   .section-head { margin-bottom: 36px; }
   .footer-inner { flex-direction: column; align-items: center; text-align: center; }
@@ -1784,14 +1789,13 @@ function WhyUs() {
 }
 
 // ============ INSTRUCTOR ============
-const MANOJ_SUBJECTS = ['Probability', 'Statistics', 'Linear Algebra', 'Calculus', 'Machine Learning', 'AI', 'Python', 'Data Structures'];
 const AMIT_SUBJECTS = ['DBMS', 'Algorithms', 'Logic (AI)'];
 
 function Instructor() {
   const [airNum, setAirNum] = React.useState(94);
   const airRaf = React.useRef(null);
   const triggered = React.useRef(false);
-  const gridRef = React.useRef(null);
+  const sectionRef = React.useRef(null);
 
   React.useEffect(() => {
     const obs = new IntersectionObserver(([entry]) => {
@@ -1809,23 +1813,26 @@ function Instructor() {
         airRaf.current = requestAnimationFrame(step);
       }
     }, { threshold: 0.25 });
-    if (gridRef.current) obs.observe(gridRef.current);
+    if (sectionRef.current) obs.observe(sectionRef.current);
     return () => { obs.disconnect(); cancelAnimationFrame(airRaf.current); };
   }, []);
 
   return (
-    <section className="section" style={{ background: 'var(--bg-soft)' }}>
+    <section className="instructor-section">
       <div className="container">
-        <div className="section-eyebrow fade-in">Faculty</div>
-        <h2 className="fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 12 }}>
-          Taught by <em>GATE toppers</em>
-        </h2>
-        <p className="section-sub fade-in">AIR 13 and AIR 94 — they've cracked the exam, now they teach it.</p>
-        <div className="faculty-grid fade-in" ref={gridRef}>
+        <div className="instructor-section-head fade-in">
+          <div className="instructor-eyebrow" style={{ marginBottom: 14 }}>Faculty</div>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 12, color: '#fff' }}>
+            Know Your <em style={{ background: 'linear-gradient(120deg,var(--pink),var(--lilac))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', fontStyle: 'normal' }}>Mentors</em>
+          </h2>
+          <p style={{ fontSize: 17, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, marginBottom: 56 }}>AIR 13 and AIR 94 — they've cracked the exam, now they teach it.</p>
+        </div>
+        <div className="instructor-faculty-grid fade-in" ref={sectionRef}>
 
-          <div className="faculty-card faculty-primary">
-            <div className="faculty-photo-wrap">
-              <img src="manoj-kumar.webp" alt="Manoj Kumar" loading="lazy" />
+          {/* Manoj — left column */}
+          <div>
+            <div className="instructor-photo-wrap" style={{ marginBottom: 36 }}>
+              <img src="manoj-kumar.webp" alt="Manoj Kumar, TAAI" className="instructor-photo" loading="lazy" />
               <a href="https://www.youtube.com/watch?v=Rppm3LrbLOI&t=5372s" target="_blank" rel="noopener noreferrer" className="instructor-play-btn">
                 <span className="instructor-play-label">Free Probability Crash Course</span>
                 <span className="instructor-play-icon">
@@ -1833,39 +1840,31 @@ function Instructor() {
                 </span>
               </a>
             </div>
-            <div className="faculty-body">
-              <div>
-                <div className="faculty-role">★ AI/ML Specialist</div>
-                <div className="faculty-name">Manoj Kumar</div>
-                <div className="instructor-creds" style={{ marginTop: 4 }}>
-                  <div className="instructor-cred-card instructor-cred-card-air">
-                    <div className="instructor-cred-air-num">AIR 13</div>
-                    <div className="instructor-cred-air-text">
-                      <div className="instructor-cred-air-label">GATE</div>
-                      <div className="instructor-cred-air-sub">All India Rank</div>
-                    </div>
-                  </div>
-                  <div className="instructor-cred-card">
-                    <div className="instructor-cred-card-title">M.Tech Data Science</div>
-                    <div className="instructor-cred-card-sub">IIT Guwahati</div>
-                  </div>
-                  <div className="instructor-cred-card">
-                    <div className="instructor-cred-card-title">M.Tech Machine Design</div>
-                    <div className="instructor-cred-card-sub">IIT Bombay · Dropout</div>
+            <div className="instructor-text">
+              <div className="instructor-eyebrow">Your Mentor</div>
+              <div className="instructor-name">Manoj<br /><span>Kumar.</span></div>
+              <p className="instructor-bio">Known for visual, intuition-first teaching across every GATE DA subject. Started TAAI with one goal, give serious aspirants the clearest possible path to an IIT. No shortcuts, no fluff, just the depth that actually gets you ranked.</p>
+              <div className="instructor-creds">
+                <div className="instructor-cred-card instructor-cred-card-air">
+                  <div className="instructor-cred-air-num">AIR 13</div>
+                  <div className="instructor-cred-air-text">
+                    <div className="instructor-cred-air-label">GATE</div>
+                    <div className="instructor-cred-air-sub">All India Rank</div>
                   </div>
                 </div>
-              </div>
-              <div>
-                <div className="faculty-subjects-label">Subjects</div>
-                <div className="faculty-tags">
-                  {MANOJ_SUBJECTS.map((s, i) => (
-                    <span key={s} className="faculty-tag" style={{ animationDelay: i * 52 + 'ms' }}>{s}</span>
-                  ))}
+                <div className="instructor-cred-card">
+                  <div className="instructor-cred-card-title">M.Tech Data Science</div>
+                  <div className="instructor-cred-card-sub">IIT Guwahati</div>
+                </div>
+                <div className="instructor-cred-card">
+                  <div className="instructor-cred-card-title">M.Tech Machine Design</div>
+                  <div className="instructor-cred-card-sub">IIT Bombay · Dropout</div>
                 </div>
               </div>
             </div>
           </div>
 
+          {/* Amit — right column */}
           <div className="faculty-card faculty-secondary">
             <div className="faculty-photo-wrap">
               <img src="Amit Khurana_Courses page.webp" alt="Amit Khurana" loading="lazy" />
