@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TAAI · Test Series, Coming Soon</title>
+<title>TAAI · Test Series</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,800;1,9..144,500&display=swap" rel="stylesheet">
@@ -766,14 +766,39 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .ts-plan-basic {
   scroll-margin-top: 110px;
   padding: 36px 32px;
-  background-color: rgba(255,255,255,0.035);
-  background-image: radial-gradient(circle at var(--mx, -200%) var(--my, -200%), rgba(139,92,246,0.28) 0%, transparent 55%);
-  background-size: 100% 100%;
   border: 1px solid rgba(255,255,255,0.09);
   box-shadow: 0 4px 32px rgba(0,0,0,0.35);
 }
-.ts-plan-basic:hover { transform: translateY(-8px); box-shadow: 0 24px 64px rgba(0,0,0,0.5); border-color: rgba(255,255,255,0.18); }
-.ts-plan-basic.ts-plan-selected { transform: translateY(-8px); box-shadow: 0 24px 64px rgba(0,0,0,0.5), 0 0 0 2px rgba(255,255,255,0.3); border-color: rgba(255,255,255,0.2); }
+.ts-plan-pink {
+  background-color: #180d18;
+  background-image: radial-gradient(ellipse 80% 60% at 110% -10%, rgba(255,65,108,0.18) 0%, transparent 65%),
+                    radial-gradient(circle at var(--mx,-200%) var(--my,-200%), rgba(255,127,183,0.22) 0%, transparent 52%);
+  border-color: rgba(255,65,108,0.22);
+}
+.ts-plan-pink:hover { transform: translateY(-8px); box-shadow: 0 24px 64px rgba(255,65,108,0.2), 0 4px 16px rgba(0,0,0,0.4); border-color: rgba(255,127,183,0.42); }
+.ts-plan-pink.ts-plan-selected { transform: translateY(-8px); box-shadow: 0 24px 64px rgba(255,65,108,0.2), 0 0 0 2px rgba(255,127,183,0.32); border-color: rgba(255,127,183,0.42); }
+.ts-plan-pink .ts-plan-price { background: linear-gradient(135deg, #fff 0%, #ffd0e8 60%, #ff9ecb 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.ts-plan-pink .ts-plan-divider { background: rgba(255,127,183,0.15); }
+.ts-plan-pink .ts-plan-check-basic { background: rgba(255,127,183,0.12); border-color: rgba(255,127,183,0.3); }
+.ts-plan-pink .ts-plan-check-basic svg path { stroke: rgba(255,180,210,0.9); }
+.ts-plan-pink:hover .ts-plan-check-basic svg path,
+.ts-plan-pink.ts-plan-selected .ts-plan-check-basic svg path { stroke-dashoffset: 0; }
+.ts-plan-blue {
+  background-color: #0b1020;
+  background-image: radial-gradient(ellipse 80% 60% at 110% -10%, rgba(77,139,255,0.18) 0%, transparent 65%),
+                    radial-gradient(circle at var(--mx,-200%) var(--my,-200%), rgba(127,168,255,0.2) 0%, transparent 52%);
+  border-color: rgba(77,139,255,0.22);
+}
+.ts-plan-blue:hover { transform: translateY(-8px); box-shadow: 0 24px 64px rgba(77,139,255,0.2), 0 4px 16px rgba(0,0,0,0.4); border-color: rgba(127,168,255,0.42); }
+.ts-plan-blue.ts-plan-selected { transform: translateY(-8px); box-shadow: 0 24px 64px rgba(77,139,255,0.2), 0 0 0 2px rgba(127,168,255,0.32); border-color: rgba(127,168,255,0.42); }
+.ts-plan-blue .ts-plan-price { background: linear-gradient(135deg, #fff 0%, #c8dcff 60%, #7fa8ff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.ts-plan-blue .ts-plan-divider { background: rgba(77,139,255,0.15); }
+.ts-plan-blue .ts-plan-check-basic { background: rgba(77,139,255,0.12); border-color: rgba(127,168,255,0.3); }
+.ts-plan-blue .ts-plan-check-basic svg path { stroke: rgba(160,200,255,0.9); }
+.ts-plan-blue:hover .ts-plan-check-basic svg path,
+.ts-plan-blue.ts-plan-selected .ts-plan-check-basic svg path { stroke-dashoffset: 0; }
+.ts-plan-badge-pink { background: rgba(255,127,183,0.12); color: rgba(255,180,215,0.8); border: 1px solid rgba(255,127,183,0.22); }
+.ts-plan-badge-blue { background: rgba(77,139,255,0.12); color: rgba(160,200,255,0.8); border: 1px solid rgba(77,139,255,0.22); }
 /* animated gradient border frame */
 .ts-plan-featured-frame {
   scroll-margin-top: 110px;
@@ -1472,10 +1497,6 @@ function Hero() {
       <div className="hero-bg-orb-1" /><div className="hero-bg-orb-2" /><div className="hero-bg-orb-3" />
       <div className="container hero-inner">
         <div className="hero-text">
-          <div className="hero-coming-badge" style={{ animation: 'heroIn .6s cubic-bezier(.34,1.12,.64,1) .08s both' }}>
-            <span className="hero-coming-dot" />
-            Coming Soon
-          </div>
           <h1 style={{ animation: 'heroIn .72s cubic-bezier(.34,1.12,.64,1) .20s both' }}>The last test series<br />you'll ever <em>need.</em></h1>
           <p className="hero-sub" style={{ animation: 'heroIn .62s cubic-bezier(.34,1.12,.64,1) .34s both' }}>
             By the time you sit for GATE, you should have already lived it. Same pattern, same pressure, same interface, so exam day feels less like a test and more like the last practice run.
@@ -1595,7 +1616,7 @@ const RANK_BOARD = [
   { pos: '#1', name: 'Arjun V.',   score: '67.2' },
   { pos: '#2', name: 'Sneha P.',   score: '65.8' },
   { pos: '#3', name: 'Vikram R.',  score: '63.1' },
-  { pos: '#4', name: 'You',        score: '61.4', you: true },
+  { pos: '#4', name: 'Laksheet',        score: '61.4', you: true },
   { pos: '#5', name: 'Kavya M.',   score: '60.9' },
 ];
 
@@ -1656,7 +1677,7 @@ function Features() {
         <h2 className="fade-in" style={{ fontFamily:'var(--font-display)', fontSize:'clamp(32px,4vw,56px)', fontWeight:600, letterSpacing:'-0.035em', lineHeight:1, marginBottom:16 }}>
           Built for <em>serious prep.</em>
         </h2>
-        <p className="section-sub fade-in">Not just a question bank, a full test environment designed around how GATE DA actually works.</p>
+        <p className="section-sub fade-in">Not just a test series, a full test environment designed around how GATE DA actually works.</p>
         <div className="features-bento">
 
           {/* Analytics, dark hero card */}
@@ -1774,7 +1795,7 @@ function Discussions() {
   return (
     <section className="section disc-section">
       <div className="container">
-        <div className="section-eyebrow fade-in">Live after every test</div>
+        <div className="section-eyebrow fade-in">After every test</div>
         <h2 className="fade-in" style={{ fontFamily:'var(--font-display)', fontSize:'clamp(32px,4vw,56px)', fontWeight:600, letterSpacing:'-0.035em', lineHeight:1, marginBottom:16 }}>
           Watch how we <em>break it down.</em>
         </h2>
@@ -2024,12 +2045,12 @@ function TSPricing() {
 
           {/* ── Basic ── */}
           <div id="plan-basic"
-            className={`ts-plan ts-plan-basic${selected === 'basic' ? ' ts-plan-selected' : ''}`}
+            className={`ts-plan ts-plan-basic ts-plan-pink${selected === 'basic' ? ' ts-plan-selected' : ''}`}
             onClick={() => pick('basic')}
             onMouseMove={e=>{const r=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');e.currentTarget.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%');}}
             onMouseLeave={e=>{e.currentTarget.style.setProperty('--mx','-200%');e.currentTarget.style.setProperty('--my','-200%');}}
           >
-            <div className="ts-plan-badge ts-plan-badge-basic">Test Series</div>
+            <div className="ts-plan-badge ts-plan-badge-pink">Test Series</div>
             <div className="ts-plan-name">GATE DA 2027 Test Series</div>
             <div className="ts-plan-tagline">Full-length and subject-wise tests with performance analytics.</div>
             <div className="ts-plan-price">₹1,440</div>
@@ -2054,12 +2075,12 @@ function TSPricing() {
 
           {/* ── Weekly Quizzes ── */}
           <div id="plan-quiz"
-            className={`ts-plan ts-plan-basic${selected === 'quiz' ? ' ts-plan-selected' : ''}`}
+            className={`ts-plan ts-plan-basic ts-plan-blue${selected === 'quiz' ? ' ts-plan-selected' : ''}`}
             onClick={() => pick('quiz')}
             onMouseMove={e=>{const r=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');e.currentTarget.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%');}}
             onMouseLeave={e=>{e.currentTarget.style.setProperty('--mx','-200%');e.currentTarget.style.setProperty('--my','-200%');}}
           >
-            <div className="ts-plan-badge ts-plan-badge-basic">Weekly Quizzes</div>
+            <div className="ts-plan-badge ts-plan-badge-blue">Weekly Quizzes</div>
             <div className="ts-plan-name">Weekly Quiz Pack</div>
             <div className="ts-plan-tagline">Concept heavy quizzes to stay sharp throughout the year.</div>
             <div className="ts-plan-price">₹800</div>
