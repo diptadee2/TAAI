@@ -543,7 +543,7 @@ body {
 
 /* Why TAAI, interactive tabs */
 .whyus-layout { display: grid; grid-template-columns: 360px 1fr; gap: 20px; align-items: stretch; }
-.whyus-tabs { display: flex; flex-direction: column; gap: 6px; }
+.whyus-tabs { display: flex; flex-direction: column; gap: 6px; justify-content: center; }
 .whyus-tab {
   display: flex; align-items: center; gap: 14px;
   padding: 15px 16px; border-radius: var(--radius-md);
@@ -580,8 +580,8 @@ body {
   background-image: radial-gradient(circle at var(--mx, -200%) var(--my, -200%), rgba(139,92,246,0.28) 0%, transparent 55%);
   background-size: 100% 100%;
   padding: 48px; position: relative; overflow: hidden;
-  display: flex; flex-direction: column; justify-content: flex-end;
-  min-height: 440px;
+  display: flex; flex-direction: column; justify-content: center;
+  min-height: 380px;
 }
 .whyus-orb1, .whyus-orb2 { position: absolute; border-radius: 50%; pointer-events: none; transition: background .55s ease; }
 .whyus-orb1 { width: 340px; height: 340px; top: -100px; right: -70px; opacity: 0.22; filter: blur(72px); }
