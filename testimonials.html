@@ -365,16 +365,32 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .testi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 40px; }
 .testi-card {
   background: var(--card);
+  border: 1.5px solid var(--line);
   border-radius: var(--radius-lg);
   padding: 28px;
   display: flex; flex-direction: column; gap: 16px;
   transition: transform .2s, box-shadow .2s;
+  position: relative; overflow: hidden;
+}
+.testi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 3px;
+  background: var(--grad, linear-gradient(135deg, var(--pink), var(--purple)));
+}
+.testi-card::after {
+  content: '\201C';
+  font-family: var(--font-display);
+  font-size: 160px; font-weight: 700; line-height: 1;
+  color: var(--purple); opacity: 0.05;
+  position: absolute; top: -14px; right: 18px;
+  pointer-events: none; user-select: none;
 }
 .testi-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
 .testi-rank-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--purple-soft); color: var(--purple); font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: .06em; padding: 5px 12px; border-radius: 999px; width: fit-content; }
 .testi-rank-badge span { font-family: var(--font-display); font-size: 18px; font-weight: 700; }
-.testi-quote { font-size: 14px; line-height: 1.7; color: var(--ink-dim); font-style: italic; flex: 1; }
-.testi-author { display: flex; align-items: center; gap: 12px; padding-top: 4px; border-top: 1px solid var(--line); }
+.testi-quote { font-size: 14px; line-height: 1.7; color: var(--ink-dim); font-style: italic; flex: 1; position: relative; z-index: 1; }
+.testi-author { display: flex; align-items: center; gap: 12px; padding-top: 4px; border-top: 1px solid var(--line); position: relative; z-index: 1; }
 .testi-avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; flex-shrink: 0; }
 .testi-name { font-weight: 600; font-size: 14px; color: var(--ink); }
 .testi-role { font-size: 12px; color: var(--ink-soft); margin-top: 1px; }
@@ -1050,7 +1066,7 @@ function PreviousBatch() {
 
         <div className="testi-grid">
           {TESTIMONIALS_2025.map((t, i) => (
-            <div key={i} className="testi-card card fade-in" style={{ '--delay': `${(i % 3) * 100}ms` }}>
+            <div key={i} className="testi-card card fade-in" style={{ '--delay': `${(i % 3) * 100}ms`, '--grad': t.grad }}>
               <div className="testi-rank-badge">AIR <span>{t.air}</span></div>
               <p className="testi-quote">"{t.quote}"</p>
               <div className="testi-author">
