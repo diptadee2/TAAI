@@ -1836,10 +1836,10 @@ function Instructor() {
           </h2>
           <p style={{ fontSize: 17, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, marginBottom: 56 }}>Subjects taught not by Generalists, but Specialists.</p>
         </div>
-        <div className="instructor-faculty-grid fade-in" ref={sectionRef}>
+        <div className="instructor-faculty-grid" ref={sectionRef}>
 
           {/* Manoj — left column */}
-          <div>
+          <div className="fade-in" style={{ '--delay': '0ms' }}>
             <div className="instructor-photo-wrap" style={{ marginBottom: 36 }}>
               <img src="manoj-kumar.webp" alt="Manoj Kumar, TAAI" className="instructor-photo" loading="lazy" />
               <a href="https://www.youtube.com/watch?v=Rppm3LrbLOI&t=5372s" target="_blank" rel="noopener noreferrer" className="instructor-play-btn">
@@ -1881,7 +1881,7 @@ function Instructor() {
           </div>
 
           {/* Amit — right column */}
-          <div className="faculty-card faculty-secondary">
+          <div className="faculty-card faculty-secondary fade-in" style={{ '--delay': '180ms' }}>
             <div className="faculty-photo-wrap">
               <img src="Amit Khurana_Courses page.webp" alt="Amit Khurana" loading="lazy" />
             </div>
