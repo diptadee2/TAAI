@@ -586,7 +586,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .back-to-top:active { transform: scale(0.93); }
 
 /* Bundle comparison */
-.compare-wrap { margin-top: 44px; }
+.compare-wrap { margin-top: var(--section-pad); }
 .compare-label { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 16px; }
 .compare-outer { position: relative; border-radius: var(--radius-xl); border: 1px solid var(--line); overflow: hidden; }
 .compare-scroll { overflow-x: auto; scroll-behavior: smooth; border-radius: var(--radius-xl); scrollbar-width: none; }
@@ -1185,7 +1185,8 @@ const COMBOS = [
     includes: [
       'Complete GATE DA syllabus',
       'Linear Algebra, Probability, Statistics, Calculus',
-      'Machine Learning, full coverage',
+      'Machine Learning, AI',
+      'DBMS, DSA, Python',
       '1,000+ weekly quiz questions',
       'GATE mentorship with Manoj Kumar',
       'Quizzes for all subjects',
@@ -1262,12 +1263,12 @@ const INCLUDED = [
     label: 'Recorded classes.', sub: 'Visual-first lectures', eyebrow: 'Core content',
     title: <>Learn at<br /><em style={{color:'var(--pink)'}}>your own pace.</em></>,
     desc: 'High-quality, visual-first lectures you can re-watch anytime. Structured for GATE DA, concise, conceptual, focused.',
-    stat: { num: '100+', lbl: 'concept videos' } },
+    stat: null },
   { icon: <Icon.Users />, grad: 'linear-gradient(135deg,var(--purple),var(--blue))', color: '#8B5CF6',
     label: 'GATE mentorship.', sub: 'Doubt resolution', eyebrow: 'Mentorship',
     title: <>Doubts cleared<br /><em style={{color:'var(--lilac)'}}>by Manoj Kumar.</em></>,
     desc: 'GATE mentorship — clarify doubts, discuss logic, and get direct explanations from Manoj Kumar.',
-    stat: { num: '67+', lbl: 'mentorship' } },
+    stat: null },
   { icon: <Icon.Discord />, grad: 'linear-gradient(135deg,var(--blue),#7FA8FF)', color: '#4D8BFF',
     label: 'Discord support.', sub: 'Mentors · any hour', eyebrow: 'Community',
     title: <>Help available<br /><em style={{color:'#7EB3FF'}}>24 / 7.</em></>,
@@ -1276,7 +1277,7 @@ const INCLUDED = [
   { icon: <Icon.Target />, grad: 'linear-gradient(135deg,var(--purple),var(--lilac))', color: '#A78BFA',
     label: 'Problem Sets.', sub: '1,000+ weekly quiz questions', eyebrow: 'Practice',
     title: <>Quality over<br /><em style={{color:'var(--lilac)'}}>quantity.</em></>,
-    desc: '1,000+ weekly quiz questions with text and video solutions. Curated for GATE DA, no filler, every question earns its place.',
+    desc: '1,000+ weekly quiz questions with solutions. Curated for GATE DA, no filler, every question earns its place.',
     stat: { num: '1,000+', lbl: 'weekly quiz questions' } },
 ];
 
@@ -1291,8 +1292,9 @@ function BundleComparison() {
     { label: 'DBMS',                                 full: true,  ml: false, maths: false, group: 'Subjects'        },
     { label: 'Data Structures',                      full: true,  ml: false, maths: false, group: 'Subjects'        },
     { label: 'Algorithms',                           full: true,  ml: false, maths: false, group: 'Subjects'        },
-    { label: '1,000+ weekly quiz questions',          full: true,  ml: false, maths: false, group: 'Study Materials' },
+    
     { label: 'GATE mentorship with Manoj Kumar', full: true,  ml: false, maths: false, group: 'Support'         },
+    { label: '1,000+ quiz questions',          full: true,  ml: true, maths: true, group: 'Study Materials' },
     { label: 'Discord community support',            full: true,  ml: true,  maths: true,  group: 'Support'         },
     { label: 'Course valid until', fullText: 'Apr 15, 2027', mlText: 'Feb 15, 2027', mathsText: 'Feb 15, 2027', fullNote: '+2 months', group: 'Support' },
   ];
@@ -1471,10 +1473,12 @@ function IncludedShowcase() {
                 <div className="incl-accordion-body">
                   <div className="incl-accordion-body-title" style={{ color: feat.color }}>{feat.title}</div>
                   <div className="incl-accordion-body-desc">{feat.desc}</div>
-                  <div className="incl-pstat">
-                    <div className="incl-pstat-num" style={{ color: feat.color }}>{feat.stat.num}</div>
-                    <div className="incl-pstat-lbl" style={{ color: 'rgba(255,255,255,0.42)' }}>{feat.stat.lbl}</div>
-                  </div>
+                  {feat.stat && (
+                    <div className="incl-pstat">
+                      <div className="incl-pstat-num" style={{ color: feat.color }}>{feat.stat.num}</div>
+                      <div className="incl-pstat-lbl" style={{ color: 'rgba(255,255,255,0.42)' }}>{feat.stat.lbl}</div>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -1505,10 +1509,12 @@ function IncludedShowcase() {
                 <div className="incl-eyebrow">{f.eyebrow}</div>
                 <div className="incl-ptitle">{f.title}</div>
                 <div className="incl-pdesc">{f.desc}</div>
-                <div className="incl-pstat">
-                  <div className="incl-pstat-num" style={{ color: f.color }}>{f.stat.num}</div>
-                  <div className="incl-pstat-lbl">{f.stat.lbl}</div>
-                </div>
+                {f.stat && (
+                  <div className="incl-pstat">
+                    <div className="incl-pstat-num" style={{ color: f.color }}>{f.stat.num}</div>
+                    <div className="incl-pstat-lbl">{f.stat.lbl}</div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
