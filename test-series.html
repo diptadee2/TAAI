@@ -483,30 +483,24 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   transition: transform .38s cubic-bezier(.34,1.15,.64,1), box-shadow .32s ease;
   cursor: default;
 }
-.feat-dark { grid-column: span 7; background: linear-gradient(150deg, #14102B 0%, #1c1255 55%, #0f1a3d 100%); border: 1.5px solid rgba(139,92,246,0.24); }
+.feat-dark { grid-column: span 4; background: linear-gradient(150deg, #14102B 0%, #1c1255 55%, #0f1a3d 100%); border: 1.5px solid rgba(139,92,246,0.24); }
 .feat-dark:hover { transform: translateY(-6px); box-shadow: 0 24px 64px rgba(139,92,246,0.28), 0 0 0 1px rgba(139,92,246,0.3); }
 .feat-dark .feat-title { color: #fff; }
 .feat-dark .feat-desc { color: rgba(255,255,255,0.46); }
-.feat-b { grid-column: span 5; background-color: #fff; background-image: radial-gradient(circle at var(--mx,-200%) var(--my,-200%), rgba(139,92,246,0.08) 0%, transparent 60%); border: 1.5px solid var(--line); }
+.feat-b { grid-column: span 4; background-color: #fff; background-image: radial-gradient(circle at var(--mx,-200%) var(--my,-200%), rgba(139,92,246,0.08) 0%, transparent 60%); border: 1.5px solid var(--line); }
 .feat-b:hover { transform: translateY(-6px); box-shadow: 0 16px 48px rgba(107,75,255,0.1); }
 .feat-c { grid-column: span 4; background-image: radial-gradient(circle at var(--mx,-200%) var(--my,-200%), rgba(77,139,255,0.1) 0%, transparent 60%), linear-gradient(145deg, #fff 0%, var(--blue-soft) 100%); border: 1.5px solid var(--line); }
 .feat-c:hover { transform: translateY(-6px); box-shadow: 0 16px 48px rgba(77,139,255,0.1); }
-.feat-dark-blue { grid-column: span 5; background: linear-gradient(150deg, #0a1628 0%, #0d1f4d 60%, #080e24 100%); border: 1.5px solid rgba(77,139,255,0.22); }
-.feat-dark-blue:hover { transform: translateY(-6px); box-shadow: 0 24px 64px rgba(77,139,255,0.22), 0 0 0 1px rgba(77,139,255,0.24); }
-.feat-dark-blue .feat-title { color: #fff; }
-.feat-dark-blue .feat-desc { color: rgba(255,255,255,0.45); }
-.feat-e { grid-column: span 3; background-image: radial-gradient(circle at var(--mx,-200%) var(--my,-200%), rgba(255,65,108,0.09) 0%, transparent 60%), linear-gradient(145deg, #fff 0%, var(--pink-soft) 100%); border: 1.5px solid var(--line); }
-.feat-e:hover { transform: translateY(-6px); box-shadow: 0 16px 48px rgba(255,127,183,0.12); }
 .feat-f { grid-column: span 12; background: linear-gradient(120deg, var(--purple-soft) 0%, var(--pink-soft) 100%); border: 1.5px solid rgba(139,92,246,0.18); flex-direction: row; align-items: center; gap: 40px; padding: 28px 40px; }
 .feat-f:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(107,75,255,0.14); }
 .feat-icon { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; color: #fff; flex-shrink: 0; }
-.feat-dark .feat-icon, .feat-dark-blue .feat-icon { background: rgba(255,255,255,0.1) !important; }
+.feat-dark .feat-icon { background: rgba(255,255,255,0.1) !important; }
 .feat-title { font-family: var(--font-display); font-size: 20px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; color: var(--ink); }
 .feat-desc { font-size: 13.5px; color: var(--ink-dim); line-height: 1.6; }
 .feat-spacer { flex: 1; min-height: 6px; }
 .feat-chip { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 6px 13px; font-size: 11.5px; font-weight: 500; align-self: flex-start; }
-.feat-dark .feat-chip, .feat-dark-blue .feat-chip { background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.13); color: rgba(255,255,255,0.68); }
-.feat-b .feat-chip, .feat-c .feat-chip, .feat-e .feat-chip { background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.18); color: var(--purple); }
+.feat-dark .feat-chip { background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.13); color: rgba(255,255,255,0.68); }
+.feat-b .feat-chip, .feat-c .feat-chip { background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.18); color: var(--purple); }
 /* Analytics bars */
 .feat-bars { display: flex; align-items: flex-end; gap: 6px; height: 58px; margin: 2px 0; }
 .feat-bar { flex: 1; border-radius: 5px 5px 0 0; transform-origin: bottom; }
@@ -966,7 +960,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .ipad-group, .iphone-group { display: none; }
   .breakdown-grid { grid-template-columns: 1fr 1fr; }
   .features-bento { grid-template-columns: 1fr 1fr; }
-  .feat-dark,.feat-b,.feat-c,.feat-dark-blue,.feat-e { grid-column: span 1; }
+  .feat-dark,.feat-b,.feat-c { grid-column: span 1; }
   .feat-f { grid-column: span 2; flex-direction: column; gap: 16px; padding: 28px; }
   .feat-rank-divider { display: none; }
   .mentor-card { grid-template-columns: 1fr; gap: 40px; padding: 40px; }
@@ -983,7 +977,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .hero-inner { grid-template-columns: 1fr; gap: 0; }
   .breakdown-grid { grid-template-columns: 1fr; }
   .features-bento { grid-template-columns: 1fr; }
-  .feat-dark,.feat-b,.feat-c,.feat-dark-blue,.feat-e,.feat-f { grid-column: span 1; }
+  .feat-dark,.feat-b,.feat-c,.feat-f { grid-column: span 1; }
   .feat-f { flex-direction: column; gap: 14px; padding: 28px; }
   .mentor-card { padding: 0; }
   .mentor-right { padding: 24px; }
@@ -1728,39 +1722,6 @@ function Features() {
             <div className="feat-chip">See exactly where time is lost</div>
           </div>
 
-          {/* Video solutions, dark, progress bar on hover */}
-          <div className="feat feat-dark-blue fade-in">
-            <div className="feat-title">Video solutions by Manoj Sir</div>
-            <div className="feat-desc">Every question has a detailed walkthrough, not just the answer, but the exact thought process.</div>
-            <div className="feat-spacer"/>
-            <div className="feat-video-row" onMouseEnter={startVid} onMouseLeave={stopVid}>
-              <div className="feat-video-play">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="white"><path d="M3 2L10 6L3 10V2Z"/></svg>
-              </div>
-              <div className="feat-video-right">
-                <div className="feat-video-name">Q12 · Bayes' Theorem</div>
-                <div className="feat-video-track">
-                  <div className="feat-video-fill" style={{ width: vidPct + '%' }} />
-                </div>
-                <div className="feat-video-sub">4 min walkthrough</div>
-              </div>
-            </div>
-            <div className="feat-chip">Text + Video · Every question</div>
-          </div>
-
-          {/* Live discussions */}
-          <div className="feat feat-e fade-in card"
-            onMouseMove={e=>{const rect=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--mx',((e.clientX-rect.left)/rect.width*100).toFixed(1)+'%');e.currentTarget.style.setProperty('--my',((e.clientY-rect.top)/rect.height*100).toFixed(1)+'%');}}
-            onMouseLeave={e=>{e.currentTarget.style.setProperty('--mx','-200%');e.currentTarget.style.setProperty('--my','-200%');}}>
-            <div className="feat-live"><span className="feat-live-dot"/>Live after each test</div>
-            <div className="feat-icon" style={{ background:'linear-gradient(135deg,var(--pink),#FF9ECB)' }}><Icon.Users /></div>
-            <div className="feat-title">Live test discussions</div>
-            <div className="feat-chat-bubbles">
-              <div className="feat-bubble feat-bubble-left">Why did you eliminate option B?</div>
-              <div className="feat-bubble feat-bubble-right">Not differentiable at that point</div>
-            </div>
-          </div>
-
           {/* Rank prediction, counter animates on hover */}
           <div className="feat feat-f fade-in"
             onMouseEnter={() => setRankHov(true)}
@@ -2058,7 +2019,7 @@ function TSPricing() {
         <h2 className="fade-in" style={{ fontFamily:'var(--font-display)', fontSize:'clamp(30px,3.8vw,52px)', fontWeight:600, letterSpacing:'-0.035em', lineHeight:1, marginBottom:14 }}>
           Enroll for GATE DA <em>2027.</em>
         </h2>
-        <p className="section-sub fade-in" style={{ marginBottom:52 }}>Both options include the full test suite. Weekly quizzes are already part of every Bundled Course. Not enrolled in a course yet? Add them here alongside the test series.</p>
+        <p className="section-sub fade-in" style={{ marginBottom:52 }}>Weekly quizzes are already part of Full Course and Bundled Courses. Not enrolled in a course yet? Add them here alongside the test series.</p>
 
         <div className="ts-plans-grid fade-in">
 
@@ -2101,7 +2062,7 @@ function TSPricing() {
           >
             <div className="ts-plan-badge ts-plan-badge-basic">Weekly Quizzes</div>
             <div className="ts-plan-name">Weekly Quiz Pack</div>
-            <div className="ts-plan-tagline">Topic-wise weekly quizzes to stay sharp throughout the year.</div>
+            <div className="ts-plan-tagline">Concept heavy quizzes to stay sharp throughout the year.</div>
             <div className="ts-plan-price">₹800</div>
             <div className="ts-plan-price-meta">
               <span className="ts-plan-price-old">₹1,000</span>
