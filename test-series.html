@@ -2137,7 +2137,7 @@ function TSPricing() {
               ))}
             </div>
             <a href="https://wa.me/9088553305" target="_blank" rel="noopener noreferrer"
-               className="ts-plan-btn ts-plan-btn-basic" onClick={e => e.stopPropagation()}>
+               className="ts-plan-btn ts-plan-btn-basic" style={{ marginTop: 20 }} onClick={e => e.stopPropagation()}>
               Enroll now! <Icon.ArrowRight s={14} />
             </a>
           </div>
@@ -2175,15 +2175,6 @@ function TSPricing() {
                 {ADDON_FEATS.map((f, i) => (
                   <div key={i} className="ts-plan-feat" style={{ '--delay': `${(BASIC_FEATS.length + i) * 45}ms` }}><Tick featured /><span>{f}</span></div>
                 ))}
-                <div className="quiz-subs-label">Subject breakdown</div>
-                <div className="quiz-subs">
-                  {QUIZ_SUBJECTS.map((s, i) => (
-                    <div key={i} className="quiz-sub">
-                      <span className="quiz-sub-name">{s.name}</span>
-                      <span className="quiz-sub-count">{s.count}</span>
-                    </div>
-                  ))}
-                </div>
               </div>
               <a href="https://wa.me/9088553305" target="_blank" rel="noopener noreferrer"
                  className="ts-plan-btn ts-plan-btn-featured" onClick={e => e.stopPropagation()}>
