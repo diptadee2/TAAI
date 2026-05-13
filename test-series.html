@@ -990,6 +990,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .feat-rank-divider { display: none; }
   .mentor-card { grid-template-columns: 1fr; gap: 40px; padding: 40px; }
   .faq-layout { grid-template-columns: 1fr; gap: 32px; }
+  .ts-faq-section { padding-top: 32px; }
 }
 @media (max-width: 768px) {
   :root { --section-pad: 52px; }
@@ -1806,7 +1807,7 @@ function Discussions() {
   return (
     <section className="section disc-section">
       <div className="container">
-        <div className="section-eyebrow fade-in">After every test</div>
+        <div className="section-eyebrow fade-in">After test</div>
         <h2 className="fade-in" style={{ fontFamily:'var(--font-display)', fontSize:'clamp(32px,4vw,56px)', fontWeight:600, letterSpacing:'-0.035em', lineHeight:1, marginBottom:48 }}>
           Watch how we <em>break it down.</em>
         </h2>
@@ -2053,9 +2054,10 @@ function TSPricing() {
         </h2>
         <p className="section-sub fade-in" style={{ marginBottom:52 }}>Weekly quizzes are already part of Full Course and Bundled Courses.</p>
 
-        <div className="ts-plans-grid fade-in">
+        <div className="ts-plans-grid">
 
           {/* ── Basic ── */}
+          <div className="fade-in" style={{ '--delay': '0ms' }}>
           <div id="plan-basic"
             className={`ts-plan ts-plan-basic ts-plan-pink${selected === 'basic' ? ' ts-plan-selected' : ''}`}
             onClick={() => pick('basic')}
@@ -2084,8 +2086,10 @@ function TSPricing() {
               Enroll now! <Icon.ArrowRight s={14} />
             </a>
           </div>
+          </div>
 
           {/* ── Weekly Quizzes ── */}
+          <div className="fade-in" style={{ '--delay': '150ms' }}>
           <div id="plan-quiz"
             className={`ts-plan ts-plan-basic ts-plan-blue${selected === 'quiz' ? ' ts-plan-selected' : ''}`}
             onClick={() => pick('quiz')}
@@ -2114,8 +2118,10 @@ function TSPricing() {
               Enroll now! <Icon.ArrowRight s={14} />
             </a>
           </div>
+          </div>
 
           {/* ── Featured (animated gradient border frame) ── */}
+          <div className="fade-in" style={{ '--delay': '300ms' }}>
           <div id="plan-featured"
             className={`ts-plan-featured-frame${selected === 'featured' ? ' ts-plan-frame-selected' : ''}`}
             onClick={() => pick('featured')}
@@ -2152,6 +2158,7 @@ function TSPricing() {
                 Enroll now! <Icon.ArrowRight s={14} />
               </a>
             </div>
+          </div>
           </div>
 
         </div>
