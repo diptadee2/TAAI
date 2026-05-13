@@ -1187,7 +1187,8 @@ const COMBOS = [
       'Linear Algebra, Probability, Statistics, Calculus',
       'Machine Learning, full coverage',
       '1,000+ weekly quiz questions',
-      'GATE mentorship sessions',
+      'GATE mentorship with Manoj Kumar',
+      'Quizzes for all subjects',
       'Active Discord community support',
     ],
     href: 'https://www.taai.live/learn/batch/GATE-2027?calendarInitialView=dayGridWeek',
@@ -1207,6 +1208,7 @@ const COMBOS = [
       'Calculus',
       'Machine Learning',
       'Quizzes for all subjects',
+      'Active Discord community support',
     ],
     href: 'https://www.taai.live/learn/Maths--ML---AI-Bundle---GATE-2026',
   },
@@ -1224,6 +1226,7 @@ const COMBOS = [
       'Statistics',
       'Calculus',
       'Topic-wise quizzes included',
+      'Active Discord community support',
     ],
     href: 'https://www.taai.live/learn/Mathematics-Course-by-manoj-sir-gate-2026-gateda',
   },
@@ -1262,8 +1265,8 @@ const INCLUDED = [
     stat: { num: '100+', lbl: 'concept videos' } },
   { icon: <Icon.Users />, grad: 'linear-gradient(135deg,var(--purple),var(--blue))', color: '#8B5CF6',
     label: 'GATE mentorship.', sub: 'Doubt resolution', eyebrow: 'Mentorship',
-    title: <>Doubts cleared<br /><em style={{color:'var(--lilac)'}}>by Manoj Sir.</em></>,
-    desc: 'GATE mentorship sessions per topic — clarify doubts, discuss logic, and get direct explanations from Manoj Sir.',
+    title: <>Doubts cleared<br /><em style={{color:'var(--lilac)'}}>by Manoj Kumar.</em></>,
+    desc: 'GATE mentorship — clarify doubts, discuss logic, and get direct explanations from Manoj Kumar.',
     stat: { num: '67+', lbl: 'mentorship' } },
   { icon: <Icon.Discord />, grad: 'linear-gradient(135deg,var(--blue),#7FA8FF)', color: '#4D8BFF',
     label: 'Discord support.', sub: 'Mentors · any hour', eyebrow: 'Community',
@@ -1271,7 +1274,7 @@ const INCLUDED = [
     desc: 'Active Discord community with mentors and toppers. Late-night doubt? Someone always there, not a bot.',
     stat: { num: '24/7', lbl: 'community support' } },
   { icon: <Icon.Target />, grad: 'linear-gradient(135deg,var(--purple),var(--lilac))', color: '#A78BFA',
-    label: 'Question bank.', sub: '1,000+ weekly quiz questions', eyebrow: 'Practice',
+    label: 'Problem Sets.', sub: '1,000+ weekly quiz questions', eyebrow: 'Practice',
     title: <>Quality over<br /><em style={{color:'var(--lilac)'}}>quantity.</em></>,
     desc: '1,000+ weekly quiz questions with text and video solutions. Curated for GATE DA, no filler, every question earns its place.',
     stat: { num: '1,000+', lbl: 'weekly quiz questions' } },
@@ -1289,7 +1292,7 @@ function BundleComparison() {
     { label: 'Data Structures',                      full: true,  ml: false, maths: false, group: 'Subjects'        },
     { label: 'Algorithms',                           full: true,  ml: false, maths: false, group: 'Subjects'        },
     { label: '1,000+ weekly quiz questions',          full: true,  ml: false, maths: false, group: 'Study Materials' },
-    { label: 'GATE mentorship with Manoj Sir', full: true,  ml: false, maths: false, group: 'Support'         },
+    { label: 'GATE mentorship with Manoj Kumar', full: true,  ml: false, maths: false, group: 'Support'         },
     { label: 'Discord community support',            full: true,  ml: true,  maths: true,  group: 'Support'         },
     { label: 'Course valid until', fullText: 'Apr 15, 2027', mlText: 'Feb 15, 2027', mathsText: 'Feb 15, 2027', fullNote: '+2 months', group: 'Support' },
   ];
@@ -1696,7 +1699,7 @@ function App() {
       <WhyStrip />
 
       {/* Combo packages */}
-      <section className="section" id="combos" style={{ paddingTop: 0 }}>
+      <section className="section" id="combos">
         <div className="container">
           <div className="section-eyebrow fade-in">Packages</div>
           <h2 className="section fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 12, padding: 0 }}>
