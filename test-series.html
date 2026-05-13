@@ -761,8 +761,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .ts-plans-section h2 { color: #fff; }
 .ts-plans-section .section-sub { color: rgba(255,255,255,0.46); }
 .ts-plans-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
-  max-width: 860px; margin: 0 auto; align-items: stretch;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+  max-width: 1100px; margin: 0 auto; align-items: stretch;
 }
 .ts-plan {
   border-radius: var(--radius-lg); position: relative; overflow: hidden;
@@ -2029,9 +2029,8 @@ function MobileContactBar() {
 const BASIC_FEATS = [
   'Topic-wise tests',
   'Subject-wise tests',
+  'Mixed subject-wise tests',
   'Full-length GATE-pattern tests',
-  'Live post-test discussion sessions',
-  'Video solutions & explanations',
   'Performance analytics & score ranking',
 ];
 const ADDON_FEATS = [
@@ -2072,10 +2071,10 @@ function TSPricing() {
           >
             <div className="ts-plan-badge ts-plan-badge-basic">Test Series</div>
             <div className="ts-plan-name">GATE DA 2027 Test Series</div>
-            <div className="ts-plan-tagline">Full-length and subject-wise tests, solutions, and live discussions.</div>
-            <div className="ts-plan-price">₹1,500</div>
+            <div className="ts-plan-tagline">Full-length and subject-wise tests with performance analytics.</div>
+            <div className="ts-plan-price">₹1,440</div>
             <div className="ts-plan-price-meta">
-              <span className="ts-plan-price-old">₹1,875</span>
+              <span className="ts-plan-price-old">₹1,800</span>
               <span className="ts-plan-meta-dot">·</span>
               <span className="ts-plan-discount">20% off</span>
               <span className="ts-plan-meta-dot">·</span>
@@ -2084,6 +2083,36 @@ function TSPricing() {
             <div className="ts-plan-divider" />
             <div className="ts-plan-features">
               {BASIC_FEATS.map((f, i) => (
+                <div key={i} className="ts-plan-feat" style={{ '--delay': `${i * 45}ms` }}><Tick /><span>{f}</span></div>
+              ))}
+            </div>
+            <a href="https://wa.me/9088553305" target="_blank" rel="noopener noreferrer"
+               className="ts-plan-btn ts-plan-btn-basic" onClick={e => e.stopPropagation()}>
+              Get started <Icon.ArrowRight s={14} />
+            </a>
+          </div>
+
+          {/* ── Weekly Quizzes ── */}
+          <div id="plan-quiz"
+            className={`ts-plan ts-plan-basic${selected === 'quiz' ? ' ts-plan-selected' : ''}`}
+            onClick={() => pick('quiz')}
+            onMouseMove={e=>{const r=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');e.currentTarget.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%');}}
+            onMouseLeave={e=>{e.currentTarget.style.setProperty('--mx','-200%');e.currentTarget.style.setProperty('--my','-200%');}}
+          >
+            <div className="ts-plan-badge ts-plan-badge-basic">Weekly Quizzes</div>
+            <div className="ts-plan-name">Weekly Quiz Pack</div>
+            <div className="ts-plan-tagline">Topic-wise weekly quizzes to stay sharp throughout the year.</div>
+            <div className="ts-plan-price">₹800</div>
+            <div className="ts-plan-price-meta">
+              <span className="ts-plan-price-old">₹1,000</span>
+              <span className="ts-plan-meta-dot">·</span>
+              <span className="ts-plan-discount">20% off</span>
+              <span className="ts-plan-meta-dot">·</span>
+              <span className="ts-plan-validity">One-time · GATE DA 2027</span>
+            </div>
+            <div className="ts-plan-divider" />
+            <div className="ts-plan-features">
+              {ADDON_FEATS.map((f, i) => (
                 <div key={i} className="ts-plan-feat" style={{ '--delay': `${i * 45}ms` }}><Tick /><span>{f}</span></div>
               ))}
             </div>
@@ -2106,10 +2135,10 @@ function TSPricing() {
                 Most Popular
               </div>
               <div className="ts-plan-name">Test Series + Weekly Quizzes</div>
-              <div className="ts-plan-tagline">All tests, plus the weekly quizzes for those who haven't enrolled in the Full Course yet.</div>
-              <div className="ts-plan-price">₹2,000</div>
+              <div className="ts-plan-tagline">Everything in one — full test series and weekly quizzes bundled together.</div>
+              <div className="ts-plan-price">₹1,760</div>
               <div className="ts-plan-price-meta">
-                <span className="ts-plan-price-old">₹2,500</span>
+                <span className="ts-plan-price-old">₹2,200</span>
                 <span className="ts-plan-meta-dot">·</span>
                 <span className="ts-plan-discount">20% off</span>
                 <span className="ts-plan-meta-dot">·</span>
