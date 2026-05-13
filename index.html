@@ -946,10 +946,12 @@ body {
   .mobile-menu { top: 64px; }
   .nav-links { display: none; }
   .btn-nav-contact { display: none; }
-  .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 24px 12px; }
-  .stat-item { border-left: none; padding-left: 0; }
-  .stat-num { font-size: clamp(28px, 7vw, 44px); }
-  .stat-label { font-size: 11px; }
+  .stats-grid { grid-template-columns: 1fr; gap: 0; }
+  .stat-item { display: flex; align-items: center; gap: 20px; border-left: none; padding-left: 0; border-bottom: 1px solid rgba(255,255,255,0.12); padding: 18px 0; }
+  .stat-item:last-of-type { border-bottom: none; }
+  .stat-num { font-size: 40px; margin-bottom: 0; min-width: 76px; }
+  .stat-label { font-size: 13px; letter-spacing: .04em; line-height: 1.4; }
+  .stats-note { margin-top: 16px; }
   .offer-grid { grid-template-columns: 1fr; }
   .offer-card { padding: 24px; }
   .faculty-grid { grid-template-columns: 1fr; }
@@ -994,7 +996,6 @@ body {
 }
 @media (max-width: 480px) {
   :root { --section-pad: 40px; }
-  .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 20px 8px; }
   .results-grid { grid-template-columns: 1fr; }
   .section-head { margin-bottom: 28px; }
 }
