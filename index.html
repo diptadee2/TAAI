@@ -726,6 +726,10 @@ body {
 .instructor-cred-air-text { display: flex; flex-direction: column; gap: 2px; }
 .instructor-cred-air-label { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.9); }
 .instructor-cred-air-sub { font-size: 11px; color: rgba(255,255,255,0.38); letter-spacing: .02em; }
+.instructor-subjects-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,0.32); margin-bottom: 10px; }
+.instructor-tags { display: flex; flex-wrap: wrap; gap: 7px; }
+.instructor-tag { font-size: 12.5px; font-weight: 500; padding: 5px 13px; border-radius: 999px; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.82); border: 1px solid rgba(255,255,255,0.12); transition: background .18s ease, border-color .18s ease, transform .18s ease; animation: tag-pop .4s cubic-bezier(.34,1.3,.64,1) both; }
+.instructor-tag:hover { background: rgba(255,255,255,0.16); border-color: rgba(255,255,255,0.28); transform: scale(1.09); }
 
 /* Faculty cards */
 .faculty-grid { display: grid; grid-template-columns: 1.42fr 1fr; gap: 20px; align-items: start; }
@@ -1789,6 +1793,7 @@ function WhyUs() {
 }
 
 // ============ INSTRUCTOR ============
+const MANOJ_SUBJECTS = ['Probability', 'Statistics', 'Linear Algebra', 'Calculus', 'Machine Learning', 'AI', 'Python', 'Data Structures'];
 const AMIT_SUBJECTS = ['DBMS', 'Algorithms', 'Logic (AI)'];
 
 function Instructor() {
@@ -1825,7 +1830,7 @@ function Instructor() {
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 12, color: '#fff' }}>
             Know Your <em style={{ background: 'linear-gradient(120deg,var(--pink),var(--lilac))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', fontStyle: 'normal' }}>Mentors</em>
           </h2>
-          <p style={{ fontSize: 17, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, marginBottom: 56 }}>AIR 13 and AIR 94 — they've cracked the exam, now they teach it.</p>
+          <p style={{ fontSize: 17, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5, marginBottom: 56 }}>Subjects taught not by Generalists, but Specialists.</p>
         </div>
         <div className="instructor-faculty-grid fade-in" ref={sectionRef}>
 
@@ -1841,7 +1846,6 @@ function Instructor() {
               </a>
             </div>
             <div className="instructor-text">
-              <div className="instructor-eyebrow">Your Mentor</div>
               <div className="instructor-name">Manoj<br /><span>Kumar.</span></div>
               <p className="instructor-bio">Known for visual, intuition-first teaching across every GATE DA subject. Started TAAI with one goal, give serious aspirants the clearest possible path to an IIT. No shortcuts, no fluff, just the depth that actually gets you ranked.</p>
               <div className="instructor-creds">
@@ -1859,6 +1863,14 @@ function Instructor() {
                 <div className="instructor-cred-card">
                   <div className="instructor-cred-card-title">M.Tech Machine Design</div>
                   <div className="instructor-cred-card-sub">IIT Bombay · Dropout</div>
+                </div>
+              </div>
+              <div style={{ marginTop: 28 }}>
+                <div className="instructor-subjects-label">Subjects</div>
+                <div className="instructor-tags">
+                  {MANOJ_SUBJECTS.map((s, i) => (
+                    <span key={s} className="instructor-tag" style={{ animationDelay: i * 52 + 'ms' }}>{s}</span>
+                  ))}
                 </div>
               </div>
             </div>
