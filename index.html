@@ -1599,7 +1599,6 @@ const WHY_FEATURES = [
     sub: 'From prep to IIT admission',
     title: <>With you until<br /><em style={{color:'#7EB3FF'}}>IIT admission.</em></>,
     desc: 'From your first concept to your final interview, guidance through GATE, institute selection, and written tests at top IITs.',
-    stat: { num: '35+', lbl: 'Top 250 ranks achieved' },
     eyebrow: 'Full journey'
   },
   {
@@ -1665,10 +1664,10 @@ function WhyUs() {
       <div className="whyus-eyebrow">{feat.eyebrow}</div>
       <div className="whyus-ptitle">{feat.title}</div>
       <div className="whyus-pdesc">{feat.desc}</div>
-      <div className="whyus-pstat">
+      {feat.stat && <div className="whyus-pstat">
         <div className="whyus-pstat-num" style={{ color: feat.color }}>{feat.stat.num}</div>
         <div className="whyus-pstat-lbl">{feat.stat.lbl}</div>
-      </div>
+      </div>}
     </>
   );
 
