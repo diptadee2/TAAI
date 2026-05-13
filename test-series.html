@@ -2246,6 +2246,19 @@ function TSPricing() {
 }
 
 // ── App ──────────────────────────────────────────────────────────
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { err: null }; }
+  static getDerivedStateFromError(err) { return { err }; }
+  render() {
+    if (this.state.err) {
+      return <div style={{ padding:'40px', fontFamily:'monospace', color:'red', background:'#fff', whiteSpace:'pre-wrap' }}>
+        <strong>Render Error:</strong><br/>{String(this.state.err.message)}<br/><br/>{String(this.state.err.stack)}
+      </div>;
+    }
+    return this.props.children;
+  }
+}
+
 function App() {
   React.useEffect(() => {
     const mobile = window.matchMedia('(max-width: 768px)').matches;
@@ -2282,11 +2295,7 @@ function App() {
   );
 }
 
-try {
-  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-} catch(err) {
-  document.getElementById('root').innerHTML = '<div style="padding:40px;font-family:monospace;color:red;background:#fff"><strong>Error:</strong><br>' + (err && err.message ? err.message : String(err)) + '</div>';
-}
+ReactDOM.createRoot(document.getElementById('root')).render(<ErrorBoundary><App /></ErrorBoundary>);
 
 function scrollToEl(hash) {
   var el = document.querySelector(hash);
