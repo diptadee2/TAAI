@@ -1007,7 +1007,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .feat-rank-divider { display: none; }
   .mentor-card { grid-template-columns: 1fr; gap: 40px; padding: 40px; }
   .faq-layout { grid-template-columns: 1fr; gap: 32px; }
-  .faq-layout > :first-child { display: none; }
+  .faq-layout > :first-child > h2,
+  .faq-layout > :first-child > p,
+  .faq-layout > :first-child > a,
+  .faq-layout > :first-child > .trust-strip { display: none; }
   .ts-faq-section { padding-top: 32px; }
 }
 @media (max-width: 768px) {
