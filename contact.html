@@ -244,6 +244,14 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .channel-card:hover .channel-cta { color: #fff; gap: 10px; }
 .channel-card:hover .channel-cta svg { transform: translateX(3px); }
 
+/* ── Trust strip ─────────────────────────────────────── */
+.trust-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+.trust-item { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 22px 26px; display: flex; flex-direction: column; gap: 8px; }
+.trust-title { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 700; color: #fff; letter-spacing: -0.01em; }
+.trust-check { width: 18px; height: 18px; flex-shrink: 0; color: #E8A000; }
+.trust-desc { font-size: 14px; color: rgba(255,255,255,0.45); line-height: 1.6; padding-left: 28px; }
+@media (max-width: 540px) { .trust-strip { grid-template-columns: 1fr; } }
+
 /* ── Contact form + info layout ──────────────────────── */
 .contact-layout { max-width: none; }
 .contact-main-grid { display: grid; grid-template-columns: 1fr 360px; gap: 48px; align-items: start; }
@@ -811,6 +819,22 @@ function App() {
                 <div className="channel-cta">{c.cta} <Icon.ArrowRight /></div>
               </a>
             ))}
+          </div>
+          <div className="trust-strip" style={{ animation: 'heroIn .62s cubic-bezier(.34,1.12,.64,1) .62s both' }}>
+            <div className="trust-item">
+              <div className="trust-title">
+                <svg className="trust-check" viewBox="0 0 20 20" fill="none"><path d="M4 10.5l4.5 4.5 7.5-9" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                No salespeople
+              </div>
+              <div className="trust-desc">You'll only ever speak with GATE toppers, not sales reps. Genuine guidance, no pitch.</div>
+            </div>
+            <div className="trust-item">
+              <div className="trust-title">
+                <svg className="trust-check" viewBox="0 0 20 20" fill="none"><path d="M4 10.5l4.5 4.5 7.5-9" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                No spam, ever
+              </div>
+              <div className="trust-desc">We won't bombard you with calls or messages to push a sale. One reply, zero follow-up pressure.</div>
+            </div>
           </div>
         </div>
       </div>
