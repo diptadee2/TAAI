@@ -268,46 +268,11 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .orientation-pill:hover { background: rgba(139,92,246,0.14); border-color: rgba(139,92,246,0.42); color: var(--pink); transform: translateY(-1px); }
 .orientation-pill svg { flex-shrink: 0; }
 
-/* Combos YT pill button */
-@keyframes play-pulse-ring {
-  0%   { box-shadow: 0 4px 20px rgba(255,0,0,0.42), 0 2px 8px rgba(0,0,0,0.22), 0 0 0 0px  rgba(255,65,108,0.55); }
-  65%  { box-shadow: 0 4px 20px rgba(255,0,0,0.42), 0 2px 8px rgba(0,0,0,0.22), 0 0 0 14px rgba(255,65,108,0);   }
-  100% { box-shadow: 0 4px 20px rgba(255,0,0,0.42), 0 2px 8px rgba(0,0,0,0.22), 0 0 0 0px  rgba(255,65,108,0);   }
-}
-.combos-yt-btn {
-  height: 50px; width: 50px; border-radius: 999px; flex-shrink: 0;
-  background: linear-gradient(135deg, #FF416C 0%, #FF0000 55%, #CC0022 100%);
-  display: flex; align-items: center; justify-content: flex-end;
-  overflow: hidden; text-decoration: none; color: #fff;
-  animation: play-pulse-ring 2.2s ease-out infinite;
-  transition: width 0.46s cubic-bezier(.34,1.08,.64,1), box-shadow 0.3s ease;
-}
-.combos-yt-btn:hover {
-  width: 228px;
-  box-shadow: 0 6px 28px rgba(255,0,0,0.58), 0 2px 8px rgba(0,0,0,0.25);
-  animation: none;
-}
-.combos-yt-label {
-  font-size: 13px; font-weight: 600; white-space: nowrap; flex-shrink: 0;
-  padding-left: 16px;
-  opacity: 0; transform: translateX(10px);
-  transition: opacity 0.22s ease 0.16s, transform 0.32s cubic-bezier(.34,1.1,.64,1) 0.1s;
-}
-.combos-yt-btn:hover .combos-yt-label { opacity: 1; transform: translateX(0); }
-.combos-yt-icon {
-  width: 50px; height: 50px; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-}
 .combos-header {
   display: flex; align-items: center; justify-content: space-between;
   flex-wrap: wrap; gap: 20px; margin-bottom: 0;
 }
 .combos-header-text { flex: 1; min-width: 0; }
-@media (hover: none) {
-  .combos-yt-btn { animation: play-pulse-ring 2.2s ease-out infinite; }
-  .combos-yt-btn:active { width: 228px; animation: none; }
-  .combos-yt-btn:active .combos-yt-label { opacity: 1; transform: translateX(0); }
-}
 
 /* Combos grid, redesigned */
 @keyframes combo-border-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -1750,11 +1715,12 @@ function App() {
               </h2>
               <p className="section-sub fade-in">Save more when you bundle. All bundles include quizzes and full course includes quizzes and GATE mentorship.</p>
             </div>
-            <a href="https://www.youtube.com/live/C2m3iCctqaA?si=d_sWTgjt0lrjVXuz" target="_blank" rel="noopener noreferrer" className="combos-yt-btn fade-in" style={{ alignSelf: 'center', marginBottom: 36 }}>
-              <span className="combos-yt-label">Your First Step to IIT</span>
-              <span className="combos-yt-icon">
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M5 3.5L14.5 9L5 14.5V3.5Z" fill="currentColor"/></svg>
+            <a href="https://www.youtube.com/live/C2m3iCctqaA?si=d_sWTgjt0lrjVXuz" target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-swap btn-attract fade-in" style={{ alignSelf: 'center', marginBottom: 36, flexShrink: 0 }} data-swap-hover="Your First Step to IIT">
+              <span className="swap-default">
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style={{ marginRight: 7, verticalAlign: 'middle' }}><path d="M2.5 1.5L11.5 6.5L2.5 11.5V1.5Z" fill="currentColor"/></svg>
+                Watch free orientation
               </span>
+              <span className="swap-hover">Your First Step to IIT</span>
             </a>
           </div>
           <div className="combos-grid">
@@ -1774,10 +1740,6 @@ function App() {
               </h2>
               <p className="section-sub fade-in">Need to strengthen one area? Get any subject standalone.</p>
             </div>
-            <a href="https://www.youtube.com/live/C2m3iCctqaA?si=d_sWTgjt0lrjVXuz" target="_blank" rel="noopener noreferrer" className="orientation-pill fade-in" style={{ marginTop: 8 }}>
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2.5 1.5L11.5 6.5L2.5 11.5V1.5Z" fill="currentColor"/></svg>
-              Watch free orientation
-            </a>
           </div>
           <div className="courses-grid">
             {INDIVIDUAL.map((c, i) => <CourseCard key={i} c={c} />)}
