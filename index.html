@@ -635,11 +635,13 @@ body {
   gap: 72px; align-items: center; position: relative; z-index: 1;
 }
 .instructor-faculty-grid {
-  display: grid; grid-template-columns: 1fr 1fr;
+  display: grid; grid-template-columns: 1fr;
+  max-width: 700px; margin: 0 auto;
   gap: 56px; align-items: start; position: relative; z-index: 1;
 }
 .instructor-photo-wrap { position: relative; border-radius: var(--radius-xl); overflow: hidden; }
-.instructor-photo { width: 100%; display: block; border-radius: var(--radius-xl); }
+.instructor-photo { width: 100%; display: block; border-radius: var(--radius-xl); transition: transform .55s cubic-bezier(.25,.46,.45,.94); }
+.instructor-photo-wrap:hover .instructor-photo { transform: scale(1.04); }
 @keyframes play-pulse-ring {
   0%   { box-shadow: 0 4px 20px rgba(255,0,0,0.42), 0 2px 8px rgba(0,0,0,0.22), 0 0 0 0px  rgba(255,65,108,0.55); }
   65%  { box-shadow: 0 4px 20px rgba(255,0,0,0.42), 0 2px 8px rgba(0,0,0,0.22), 0 0 0 14px rgba(255,65,108,0);   }
@@ -1800,33 +1802,8 @@ function WhyUs() {
 
 // ============ INSTRUCTOR ============
 const MANOJ_SUBJECTS = ['Probability', 'Statistics', 'Linear Algebra', 'Calculus', 'Machine Learning', 'AI', 'Python', 'Data Structures'];
-const AMIT_SUBJECTS = ['DBMS', 'Algorithms', 'Logic (AI)'];
-
 function Instructor() {
-  const [airNum, setAirNum] = React.useState(94);
-  const airRaf = React.useRef(null);
-  const triggered = React.useRef(false);
   const sectionRef = React.useRef(null);
-
-  React.useEffect(() => {
-    const obs = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting && !triggered.current) {
-        triggered.current = true;
-        obs.disconnect();
-        const START = 560, END = 94, DURATION = 1300;
-        const t0 = performance.now();
-        const step = (now) => {
-          const p = Math.min((now - t0) / DURATION, 1);
-          const eased = 1 - Math.pow(1 - p, 3);
-          setAirNum(Math.round(START + (END - START) * eased));
-          if (p < 1) airRaf.current = requestAnimationFrame(step);
-        };
-        airRaf.current = requestAnimationFrame(step);
-      }
-    }, { threshold: 0.25 });
-    if (sectionRef.current) obs.observe(sectionRef.current);
-    return () => { obs.disconnect(); cancelAnimationFrame(airRaf.current); };
-  }, []);
 
   return (
     <section className="instructor-section">
@@ -1876,35 +1853,6 @@ function Instructor() {
                 <div className="instructor-tags">
                   {MANOJ_SUBJECTS.map((s, i) => (
                     <span key={s} className="instructor-tag" style={{ animationDelay: i * 52 + 'ms' }}>{s}</span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Amit — right column */}
-          <div className="faculty-card faculty-secondary fade-in" style={{ '--delay': '180ms' }}>
-            <div className="faculty-photo-wrap">
-              <img src="Amit Khurana_Courses page.webp" alt="Amit Khurana" loading="lazy" />
-            </div>
-            <div className="faculty-body">
-              <div>
-                <div className="faculty-role">Core CSE Specialist</div>
-                <div className="faculty-name">Amit Khurana</div>
-                <div className="faculty-creds">
-                  <div className="faculty-cred-row">
-                    <span className="faculty-cred-air">AIR {airNum}</span>
-                    <span>GATE CSE</span>
-                  </div>
-                  <div className="faculty-cred-row">IIT Bombay · CSE</div>
-                  <div className="faculty-cred-row">Founder · GATE CSE by Amit Khurana</div>
-                </div>
-              </div>
-              <div>
-                <div className="faculty-subjects-label">Subjects</div>
-                <div className="faculty-tags">
-                  {AMIT_SUBJECTS.map((s, i) => (
-                    <span key={s} className="faculty-tag" style={{ animationDelay: i * 52 + 'ms' }}>{s}</span>
                   ))}
                 </div>
               </div>
