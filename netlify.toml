@@ -4,6 +4,6 @@
 
 [[redirects]]
   from = "/learn"
-  to = "https://learn.taai.live/learn"
+  to = "https://taai.live/index.html"
   status = 301
   force = true
