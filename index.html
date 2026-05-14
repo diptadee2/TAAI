@@ -847,6 +847,12 @@ body {
 /* FAQ */
 .faq-layout { display: grid; grid-template-columns: 1fr 2fr; gap: 64px; }
 .faq-list { display: flex; flex-direction: column; gap: 12px; }
+.trust-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+.trust-item { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.14); border-radius: 14px; padding: 18px 20px; display: flex; flex-direction: column; gap: 7px; }
+.trust-title { display: flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 700; color: #fff; letter-spacing: -0.01em; }
+.trust-check { width: 16px; height: 16px; flex-shrink: 0; color: #E8A000; }
+.trust-desc { font-size: 13px; color: rgba(255,255,255,0.55); line-height: 1.55; padding-left: 25px; }
+@media (max-width: 540px) { .trust-strip { grid-template-columns: 1fr; } }
 .faq-item {
   background: #fff; border-radius: var(--radius-md);
   border: 1px solid var(--line); border-left: 3px solid transparent;
@@ -1978,8 +1984,23 @@ function FAQ() {
             <div className="section-eyebrow">FAQ Hub</div>
             <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(34px,4.3vw,54px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 16 }}>Frequently asked<br /><em style={{ fontStyle: 'normal', background: 'linear-gradient(120deg,var(--pink),var(--purple),var(--blue))', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>questions.</em></h2>
             <p className="section-sub" style={{ marginBottom: 18 }}>We are happy to help you!<br /><b>Email:</b> <a href="mailto:support@taai.live" style={{ color: 'var(--purple)', textDecoration: 'underline' }}>support@taai.live</a></p>
-            <p className="section-sub" style={{ marginBottom: 24, fontSize: 14 }}><b>No spam ever.</b> We will NOT keep calling you to sell courses. Spam-free guarantee.</p>
             <a href="contact.html" className="btn btn-primary">Contact us <Icon.ArrowRight /></a>
+            <div className="trust-strip">
+              <div className="trust-item">
+                <div className="trust-title">
+                  <svg className="trust-check" viewBox="0 0 20 20" fill="none"><path d="M4 10.5l4.5 4.5 7.5-9" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  No salespeople
+                </div>
+                <div className="trust-desc">You'll only ever speak with GATE toppers, not sales reps.</div>
+              </div>
+              <div className="trust-item">
+                <div className="trust-title">
+                  <svg className="trust-check" viewBox="0 0 20 20" fill="none"><path d="M4 10.5l4.5 4.5 7.5-9" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  No spam, ever
+                </div>
+                <div className="trust-desc">We won't keep calling you to push a sale. Zero follow-up pressure.</div>
+              </div>
+            </div>
           </div>
           <div className="faq-list fade-in">
             {FAQS.map((f, i) => (
