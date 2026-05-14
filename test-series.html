@@ -844,6 +844,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .ts-plan-discount { font-size: 11px; font-weight: 700; color: #fff; background: linear-gradient(135deg, #ff7fb7, #8b5cf6); padding: 3px 9px; border-radius: 999px; letter-spacing: .04em; }
 .ts-plan-meta-dot { font-size: 10px; color: rgba(255,255,255,0.18); user-select: none; }
 .ts-plan-price, .ts-plan-price-meta { filter: blur(12px); user-select: none; pointer-events: none; }
+.ts-plan-btn-disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
 .ts-plan-validity { font-size: 12px; color: rgba(255,255,255,0.26); position: relative; z-index: 2; }
 .ts-plan-divider { height: 1px; background: rgba(255,255,255,0.08); margin-bottom: 20px; position: relative; z-index: 2; }
 .ts-plan-featured .ts-plan-divider { background: rgba(139,92,246,0.22); }
@@ -2096,10 +2097,9 @@ function TSPricing() {
                 <div key={i} className="ts-plan-feat" style={{ '--delay': `${i * 45}ms` }}><Tick /><span>{f}</span></div>
               ))}
             </div>
-            <a href="https://wa.me/9088553305" target="_blank" rel="noopener noreferrer"
-               className="ts-plan-btn ts-plan-btn-basic" onClick={e => e.stopPropagation()}>
-              Enroll now! <Icon.ArrowRight s={14} />
-            </a>
+            <div className="ts-plan-btn ts-plan-btn-basic ts-plan-btn-disabled" onClick={e => e.stopPropagation()}>
+              Coming soon
+            </div>
           </div>
           </div>
 
@@ -2137,10 +2137,9 @@ function TSPricing() {
                 </div>
               ))}
             </div>
-            <a href="https://wa.me/9088553305" target="_blank" rel="noopener noreferrer"
-               className="ts-plan-btn ts-plan-btn-basic" style={{ marginTop: 20 }} onClick={e => e.stopPropagation()}>
-              Enroll now! <Icon.ArrowRight s={14} />
-            </a>
+            <div className="ts-plan-btn ts-plan-btn-basic ts-plan-btn-disabled" style={{ marginTop: 20 }} onClick={e => e.stopPropagation()}>
+              Coming soon
+            </div>
           </div>
           </div>
 
@@ -2177,10 +2176,9 @@ function TSPricing() {
                   <div key={i} className="ts-plan-feat" style={{ '--delay': `${(BASIC_FEATS.length + i) * 45}ms` }}><Tick featured /><span>{f}</span></div>
                 ))}
               </div>
-              <a href="https://wa.me/9088553305" target="_blank" rel="noopener noreferrer"
-                 className="ts-plan-btn ts-plan-btn-featured" onClick={e => e.stopPropagation()}>
-                Enroll now! <Icon.ArrowRight s={14} />
-              </a>
+              <div className="ts-plan-btn ts-plan-btn-featured ts-plan-btn-disabled" onClick={e => e.stopPropagation()}>
+                Coming soon
+              </div>
             </div>
           </div>
           </div>
