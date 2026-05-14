@@ -274,6 +274,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 .combos-header-text { flex: 1; min-width: 0; }
 .combos-header .btn-swap::before { content: none; }
+@media (max-width: 600px) {
+  .combos-header { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .combos-header .btn { align-self: flex-start; margin-bottom: 0 !important; }
+}
 
 /* Combos grid, redesigned */
 @keyframes combo-border-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
