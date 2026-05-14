@@ -269,100 +269,76 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .orientation-pill svg { flex-shrink: 0; }
 
 /* Combos grid, redesigned */
+#combos { background-color: #07050f; background-image: radial-gradient(circle, rgba(139,92,246,0.07) 1.5px, transparent 1.5px); background-size: 28px 28px; }
+#combos .section-eyebrow { color: var(--lilac); }
+#combos h2 { color: #fff; }
+#combos .section-sub { color: rgba(255,255,255,0.45); }
 .combos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: stretch; }
 .combo-card {
   border-radius: var(--radius-xl); padding: 36px;
   display: flex; flex-direction: column;
   position: relative; overflow: hidden;
-  transition: transform .38s cubic-bezier(.4,0,.2,1), box-shadow .38s ease,
-              opacity .32s ease, filter .32s ease;
-  background: linear-gradient(160deg, #ffffff 0%, #f7f3ff 100%);
-  border: 1.5px solid rgba(139,92,246,0.14);
-  box-shadow: 0 2px 12px rgba(139,92,246,0.07), 0 1px 3px rgba(0,0,0,0.04);
+  transition: transform .3s cubic-bezier(.34,1.05,.64,1), box-shadow .3s ease, border-color .22s ease;
+  border: 1px solid rgba(255,255,255,0.09);
+  box-shadow: 0 4px 32px rgba(0,0,0,0.35);
 }
-.combo-card.card:hover { transform: translateY(-10px); box-shadow: 0 24px 56px rgba(107,75,255,0.16), 0 2px 8px rgba(0,0,0,0.06); }
+.combo-card.combo-blue {
+  background-color: #0b1020;
+  background-image: radial-gradient(ellipse 80% 60% at 110% -10%, rgba(77,139,255,0.16) 0%, transparent 65%), radial-gradient(circle at var(--mx,-200%) var(--my,-200%), rgba(127,168,255,0.2) 0%, transparent 52%);
+  border-color: rgba(77,139,255,0.22);
+}
+.combo-card.combo-blue:hover { transform: translateY(-8px); box-shadow: 0 24px 64px rgba(77,139,255,0.22), 0 4px 16px rgba(0,0,0,0.4); border-color: rgba(127,168,255,0.44); }
+.combo-card.combo-pink {
+  background-color: #180d18;
+  background-image: radial-gradient(ellipse 80% 60% at 110% -10%, rgba(255,65,108,0.16) 0%, transparent 65%), radial-gradient(circle at var(--mx,-200%) var(--my,-200%), rgba(255,127,183,0.2) 0%, transparent 52%);
+  border-color: rgba(255,65,108,0.22);
+}
+.combo-card.combo-pink:hover { transform: translateY(-8px); box-shadow: 0 24px 64px rgba(255,65,108,0.2), 0 4px 16px rgba(0,0,0,0.4); border-color: rgba(255,127,183,0.44); }
 .combo-card.featured {
-  background: radial-gradient(circle at var(--mx, -200%) var(--my, -200%), rgba(139,92,246,0.28) 0%, transparent 55%), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.07'/%3E%3C/svg%3E"), radial-gradient(circle, rgba(255,255,255,0.08) 1.5px, transparent 1.5px), linear-gradient(150deg, #14102B 0%, #221260 55%, #1a0d50 100%);
-  background-size: 100% 100%, 200px 200px, 28px 28px, 100% 100%;
-  border-color: rgba(139,92,246,0.35);
-  box-shadow: 0 20px 60px rgba(107,75,255,0.28), inset 0 1px 0 rgba(255,255,255,0.07);
+  background: radial-gradient(circle at var(--mx,-200%) var(--my,-200%), rgba(139,92,246,0.3) 0%, transparent 55%), radial-gradient(circle, rgba(255,255,255,0.06) 1.5px, transparent 1.5px), linear-gradient(150deg, #14102B 0%, #221260 55%, #1a0d50 100%);
+  background-size: 100% 100%, 28px 28px, 100% 100%;
+  border-color: rgba(139,92,246,0.38);
+  box-shadow: 0 20px 60px rgba(107,75,255,0.35), inset 0 1px 0 rgba(255,255,255,0.07);
 }
-.combo-card.featured.card:hover { transform: translateY(-10px); box-shadow: 0 24px 56px rgba(107,75,255,0.44), inset 0 1px 0 rgba(255,255,255,0.07); }
+.combo-card.featured:hover { transform: translateY(-10px); box-shadow: 0 32px 80px rgba(107,75,255,0.55), inset 0 1px 0 rgba(255,255,255,0.1); }
 .combo-card::before {
   content: ''; position: absolute; top: -60px; right: -60px;
   width: 200px; height: 200px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 70%);
   pointer-events: none;
 }
-.combo-card.featured::before {
-  background: radial-gradient(circle, rgba(139,92,246,0.32) 0%, transparent 70%);
-  width: 220px; height: 220px; top: -50px; right: -50px;
-}
-.combo-card.featured::after {
-  content: ''; position: absolute; bottom: -30px; left: -30px;
-  width: 160px; height: 160px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,127,183,0.18) 0%, transparent 70%);
-  pointer-events: none;
-}
-.combo-accent { position: absolute; top: 0; left: 0; right: 0; height: 4px; }
-.combo-badge {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 5px 13px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
-  align-self: flex-start; margin-bottom: 22px; position: relative; z-index: 1;
-}
+.combo-card.featured::before { background: radial-gradient(circle, rgba(139,92,246,0.35) 0%, transparent 70%); width: 220px; height: 220px; top: -50px; right: -50px; }
+.combo-card.featured::after { content: ''; position: absolute; bottom: -30px; left: -30px; width: 160px; height: 160px; border-radius: 50%; background: radial-gradient(circle, rgba(255,127,183,0.2) 0%, transparent 70%); pointer-events: none; }
+.combo-accent { position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+.combo-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 13px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; align-self: flex-start; margin-bottom: 22px; position: relative; z-index: 1; }
 .combo-badge.best { background: linear-gradient(135deg, var(--pink), var(--purple)); color: #fff; box-shadow: 0 4px 14px rgba(139,92,246,0.4); }
-.combo-badge.popular { background: var(--purple-soft); color: var(--purple); }
-.combo-badge.combo { background: var(--purple-soft); color: var(--purple); }
-.combo-title { font-family: var(--font-display); font-size: 26px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 6px; position: relative; z-index: 1; }
-.combo-card.featured .combo-title { color: #fff; font-size: 30px; }
-.combo-validity { font-family: var(--font-mono); font-size: 10px; color: var(--ink-soft); margin-bottom: 18px; letter-spacing: .08em; position: relative; z-index: 1; }
-.combo-card.featured .combo-validity { color: rgba(255,255,255,0.38); }
-.combo-divider { height: 1px; background: var(--line); margin: 0 0 18px; position: relative; z-index: 1; }
-.combo-card.featured .combo-divider { background: rgba(255,255,255,0.1); }
-.combo-includes-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 14px; position: relative; z-index: 1; }
-.combo-card.featured .combo-includes-label { color: rgba(255,255,255,0.38); }
+.combo-badge.combo { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.72); border: 1px solid rgba(255,255,255,0.14); }
+.combo-title { font-family: var(--font-display); font-size: 26px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 6px; color: #fff; position: relative; z-index: 1; }
+.combo-card.featured .combo-title { font-size: 30px; }
+.combo-validity { font-family: var(--font-mono); font-size: 10px; color: rgba(255,255,255,0.35); margin-bottom: 18px; letter-spacing: .08em; position: relative; z-index: 1; }
+.combo-divider { height: 1px; background: rgba(255,255,255,0.09); margin: 0 0 18px; position: relative; z-index: 1; }
+.combo-includes-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 14px; position: relative; z-index: 1; }
 .combo-includes { flex: 1; margin-bottom: 24px; position: relative; z-index: 1; }
 .combo-includes ul { list-style: none; display: flex; flex-direction: column; gap: 9px; }
-.combo-includes li {
-  display: flex; align-items: flex-start; gap: 10px;
-  font-size: 14px; color: var(--ink-dim); line-height: 1.45;
-  opacity: 0.78; transform: translateX(0);
-  transition: opacity .28s ease var(--delay, 0ms);
-}
-.combo-card:hover .combo-includes li { opacity: 1; }
-.combo-card.featured .combo-includes li { opacity: 1; transform: translateX(0); color: rgba(255,255,255,0.78); }
-.combo-check {
-  width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; margin-top: 2px;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--purple-soft);
-}
-.combo-card.featured .combo-check { background: rgba(255,255,255,0.13); }
+.combo-includes li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: rgba(255,255,255,0.65); line-height: 1.45; transition: color .22s ease var(--delay,0ms); }
+.combo-card:hover .combo-includes li { color: rgba(255,255,255,0.88); }
+.combo-check { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1); }
 .combo-check svg { width: 10px; height: 8px; overflow: visible; }
-.combo-check svg path {
-  stroke: var(--purple); fill: none;
-  stroke-dasharray: 14; stroke-dashoffset: 14;
-  transition: stroke-dashoffset .32s ease var(--delay, 0ms);
-}
+.combo-check svg path { stroke: rgba(255,255,255,0.75); fill: none; stroke-dasharray: 14; stroke-dashoffset: 14; transition: stroke-dashoffset .32s ease var(--delay,0ms); }
 .combo-card:hover .combo-check svg path { stroke-dashoffset: 0; }
-.combo-card.featured .combo-check svg path { stroke: rgba(255,255,255,0.85); }
+.combo-card.featured .combo-check { background: rgba(255,255,255,0.13); }
+.combo-card.featured .combo-check svg path { stroke: rgba(255,255,255,0.9); }
 .combo-price-row { display: flex; align-items: baseline; gap: 10px; margin-top: auto; padding-top: 20px; margin-bottom: 22px; position: relative; z-index: 1; }
-.combo-price { font-family: var(--font-display); font-size: 38px; font-weight: 600; letter-spacing: -0.04em; }
-.combo-card.featured .combo-price { color: #fff; font-size: 44px; }
-.combo-price-old { font-size: 15px; color: var(--ink-soft); text-decoration: line-through; }
-.combo-card.featured .combo-price-old { color: rgba(255,255,255,0.36); }
+.combo-price { font-family: var(--font-display); font-size: 38px; font-weight: 600; letter-spacing: -0.04em; color: #fff; }
+.combo-card.featured .combo-price { font-size: 44px; background: linear-gradient(135deg, #ede0ff 0%, #c4b0ff 55%, #a78bfa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.combo-price-old { font-size: 15px; color: rgba(255,255,255,0.3); text-decoration: line-through; }
 .combo-discount { font-size: 11px; font-weight: 700; color: #fff; background: linear-gradient(135deg, var(--pink), var(--purple)); padding: 4px 10px; border-radius: 999px; }
-.combo-saving { font-size: 12px; color: var(--ink-soft); margin-bottom: 16px; font-style: italic; }
-.combo-card.featured .combo-saving { color: rgba(255,255,255,0.46); }
+.combo-saving { font-size: 12px; color: rgba(255,255,255,0.38); margin-bottom: 16px; font-style: italic; position: relative; z-index: 1; }
 .combo-card .btn { position: relative; z-index: 1; }
-.combo-num {
-  position: absolute; top: 22px; right: 24px; z-index: 0;
-  font-family: var(--font-display); font-size: 52px; font-weight: 700;
-  letter-spacing: -0.05em; line-height: 1; pointer-events: none;
-  opacity: 0.08; transition: opacity .32s ease, color .32s ease;
-}
-.combo-card:hover .combo-num { opacity: 0.15; }
-.combo-card.featured .combo-num { opacity: 0.14; color: #fff; }
-.combo-card.featured:hover .combo-num { opacity: 0.22; }
+.combo-num { position: absolute; top: 22px; right: 24px; z-index: 0; font-family: var(--font-display); font-size: 52px; font-weight: 700; letter-spacing: -0.05em; line-height: 1; pointer-events: none; color: #fff; opacity: 0.07; transition: opacity .32s ease; }
+.combo-card:hover .combo-num { opacity: 0.18; }
+.combo-card.featured .combo-num { opacity: 0.12; }
+.combo-card.featured:hover .combo-num { opacity: 0.24; }
 
 /* Individual courses, redesigned */
 .courses-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
@@ -798,8 +774,8 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   .course-topic { transform: none; opacity: 1; color: var(--ink-dim); }
   .course-topic::before { background: var(--purple); }
   .course-card:active { transform: scale(0.97); transition: transform .12s ease; }
-  .combo-card.card:hover { transform: none; box-shadow: none; }
-  .combo-card.featured.card:hover { transform: none; box-shadow: 0 20px 60px rgba(107,75,255,0.28), inset 0 1px 0 rgba(255,255,255,0.07); }
+  .combo-card:hover { transform: none; box-shadow: 0 4px 32px rgba(0,0,0,0.35); }
+  .combo-card.featured:hover { transform: none; box-shadow: 0 20px 60px rgba(107,75,255,0.35), inset 0 1px 0 rgba(255,255,255,0.07); }
   .incl-tab:hover { background: none; border-color: transparent; }
   .incl-tab.active { transform: none; }
 }
@@ -1198,6 +1174,7 @@ const COMBOS = [
   {
     num: '02',
     badge: 'combo', badgeLabel: 'Bundle',
+    theme: 'blue',
     accent: 'linear-gradient(90deg, var(--purple), var(--blue))',
     title: 'Mathematics & ML Bundle',
     validity: 'VALID UNTIL FEB 15, 2027',
@@ -1217,6 +1194,7 @@ const COMBOS = [
   {
     num: '03',
     badge: 'combo', badgeLabel: 'Bundle',
+    theme: 'pink',
     accent: 'linear-gradient(90deg, var(--pink), var(--purple))',
     title: 'Mathematics Bundle',
     validity: 'VALID UNTIL FEB 15, 2027',
@@ -1371,11 +1349,11 @@ function BundleComparison() {
 
 function ComboCard({ c }) {
   const featured = c.badge === 'best';
-  const cls = 'combo-card card fade-in' + (featured ? ' featured' : '');
-  const spotlightProps = featured ? {
+  const cls = 'combo-card card fade-in' + (featured ? ' featured' : '') + (c.theme ? ` combo-${c.theme}` : '');
+  const spotlightProps = {
     onMouseMove: e => { const r = e.currentTarget.getBoundingClientRect(); e.currentTarget.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100).toFixed(1) + '%'); e.currentTarget.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%'); },
     onMouseLeave: e => { e.currentTarget.style.setProperty('--mx', '-200%'); e.currentTarget.style.setProperty('--my', '-200%'); }
-  } : {};
+  };
   return (
     <div className={cls} {...spotlightProps}>
       <div className="combo-num">{c.num}</div>
