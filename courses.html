@@ -1399,7 +1399,7 @@ function ComboCard({ c }) {
       <a href={c.href} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-full">Enrol now <Icon.ArrowRight /></a>
     </div>
   );
-  if (featured) return <div className="combo-featured-frame fade-in">{inner}</div>;
+  if (featured) return <div className="fade-in"><div className="combo-featured-frame">{inner}</div></div>;
   return <div className="fade-in">{inner}</div>;
 }
 
