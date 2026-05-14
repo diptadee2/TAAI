@@ -856,7 +856,7 @@ body {
 .trust-check { width: 14px; height: 14px; color: #fff; }
 .trust-desc { font-size: 13px; color: rgba(0,0,0,0.52); line-height: 1.6; }
 @media (hover: none) { .trust-item:active { transform: scale(0.97); box-shadow: 0 4px 14px rgba(0,0,0,0.08); } }
-@media (max-width: 540px) { .trust-strip { grid-template-columns: 1fr; gap: 10px; } .trust-item { padding: 18px 18px 16px; } }
+@media (max-width: 600px) { .trust-strip { display: none; } }
 .faq-item {
   background: #fff; border-radius: var(--radius-md);
   border: 1px solid var(--line); border-left: 3px solid transparent;
@@ -1428,6 +1428,7 @@ function Hero() {
                 <div className="hero-avatar" style={{ background: 'var(--blue-soft)' }}>NP</div>
                 <div className="hero-avatar" style={{ background: 'linear-gradient(135deg,var(--pink),var(--purple))', color: '#fff' }}>+</div>
               </div>
+              
               <span>IIT / IISc / IIIT students</span>
             </div>
             <div className="hero-rating">
