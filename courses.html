@@ -558,6 +558,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .fade-in { transform: translateY(36px) scale(0.96); transition: opacity .58s cubic-bezier(.34,1.1,.64,1), transform .58s cubic-bezier(.34,1.1,.64,1); }
   .fade-in.visible { transform: translateY(0) scale(1); }
 }
+@media (max-width: 600px) {
+  .fade-in:has(> .combo-featured-frame) { transform: none !important; transition: opacity .5s ease; }
+  .fade-in:has(> .combo-featured-frame).visible { opacity: 1; transform: none !important; }
+}
 
 .courses-chat-footer { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 48px; font-size: 13px; color: var(--ink-soft); }
 .courses-chat-footer a { color: var(--purple); text-decoration: none; font-weight: 600; transition: color .18s ease, gap .18s cubic-bezier(.34,1.4,.64,1); display: inline-flex; align-items: center; gap: 4px; }
