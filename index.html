@@ -847,15 +847,16 @@ body {
 /* FAQ */
 .faq-layout { display: grid; grid-template-columns: 1fr 2fr; gap: 64px; }
 .faq-list { display: flex; flex-direction: column; gap: 12px; }
-.trust-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; }
-.trust-item { background: rgba(0,0,0,0.03); border: 1.5px solid rgba(0,0,0,0.08); border-radius: 16px; padding: 20px 22px; display: flex; flex-direction: column; gap: 10px; transition: transform .28s cubic-bezier(.34,1.2,.64,1), box-shadow .28s ease, border-color .28s ease; cursor: default; }
-.trust-item:hover { transform: translateY(-4px); box-shadow: 0 14px 36px rgba(0,0,0,0.09); border-color: rgba(139,92,246,0.3); }
-.trust-title { display: flex; align-items: center; gap: 11px; font-size: 14px; font-weight: 700; color: #0f0f1a; letter-spacing: -0.01em; }
-.trust-icon { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, #f59e0b, #d97706); display: grid; place-items: center; flex-shrink: 0; box-shadow: 0 3px 8px rgba(217,119,6,0.35); transition: transform .28s cubic-bezier(.34,1.5,.64,1); }
-.trust-item:hover .trust-icon { transform: scale(1.15) rotate(-8deg); }
-.trust-check { width: 12px; height: 12px; color: #fff; }
-.trust-desc { font-size: 13px; color: rgba(0,0,0,0.5); line-height: 1.6; padding-left: 37px; }
-@media (max-width: 540px) { .trust-strip { grid-template-columns: 1fr; gap: 10px; } .trust-item { padding: 16px 18px; } }
+.trust-strip { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 24px; }
+.trust-item { background: #fff; border: 1px solid rgba(0,0,0,0.07); border-top: 3px solid #f59e0b; border-radius: 16px; padding: 22px 20px 20px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04); transition: transform .3s cubic-bezier(.34,1.2,.64,1), box-shadow .3s ease, border-top-color .3s ease; cursor: default; user-select: none; }
+.trust-item:hover { transform: translateY(-6px); box-shadow: 0 22px 52px rgba(0,0,0,0.11), 0 6px 18px rgba(139,92,246,0.1); border-top-color: var(--purple); }
+.trust-title { display: flex; align-items: flex-start; gap: 12px; font-size: 14px; font-weight: 700; color: #0f0f1a; letter-spacing: -0.01em; }
+.trust-icon { width: 32px; height: 32px; border-radius: 10px; margin-top: 1px; background: linear-gradient(135deg, #f59e0b, #d97706); display: grid; place-items: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(217,119,6,0.4); transition: transform .3s cubic-bezier(.34,1.5,.64,1), box-shadow .3s ease; }
+.trust-item:hover .trust-icon { transform: scale(1.18) rotate(-10deg); box-shadow: 0 6px 18px rgba(217,119,6,0.55); }
+.trust-check { width: 14px; height: 14px; color: #fff; }
+.trust-desc { font-size: 13px; color: rgba(0,0,0,0.52); line-height: 1.6; padding-left: 44px;  }
+@media (hover: none) { .trust-item:active { transform: scale(0.97); box-shadow: 0 4px 14px rgba(0,0,0,0.08); } }
+@media (max-width: 540px) { .trust-strip { grid-template-columns: 1fr; gap: 10px; } .trust-item { padding: 18px 18px 16px; } }
 .faq-item {
   background: #fff; border-radius: var(--radius-md);
   border: 1px solid var(--line); border-left: 3px solid transparent;
