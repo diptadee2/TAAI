@@ -386,7 +386,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   display: flex; flex-direction: column;
   position: relative; overflow: hidden;
   border: 1.5px solid var(--line); background: var(--card);
-  transition: transform .38s cubic-bezier(.4,0,.2,1), box-shadow .38s ease;
+  transition: transform .48s cubic-bezier(.22,1,.36,1), box-shadow .48s cubic-bezier(.22,1,.36,1), border-color .3s ease;
 }
 .ticket-notch {
   position: relative; height: 0;
@@ -409,19 +409,19 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .course-card:hover .ticket-notch-line { border-color: rgba(255,255,255,0.22); }
 .course-card::before {
   content: ''; position: absolute; inset: 0; border-radius: inherit;
-  background: var(--course-grad); opacity: 0.18;
-  transition: opacity .38s ease;
+  background: var(--course-grad); opacity: 0.14;
+  transition: opacity .48s cubic-bezier(.22,1,.36,1);
 }
-.course-card:hover { transform: translateY(-10px); box-shadow: 0 24px 56px var(--course-shadow, rgba(107,75,255,0.25)); }
-.course-card:hover::before { opacity: 1; }
+.course-card:hover { transform: translateY(-10px); box-shadow: 0 28px 60px var(--course-shadow, rgba(107,75,255,0.28)); border-color: transparent; }
+.course-card:hover::before { opacity: 0.9; }
 .course-accent { display: none; }
 .course-icon {
   width: 48px; height: 48px; border-radius: 14px;
   display: grid; place-items: center; color: #fff; margin-bottom: 20px;
   position: relative; z-index: 1;
-  transition: transform .38s cubic-bezier(.34,1.3,0.64,1), box-shadow .38s ease;
+  transition: transform .48s cubic-bezier(.34,1.12,.64,1), box-shadow .4s ease;
 }
-.course-card:hover .course-icon { transform: scale(1.16) translateY(-3px); box-shadow: 0 10px 28px rgba(0,0,0,0.28); }
+.course-card:hover .course-icon { transform: scale(1.14) translateY(-3px); box-shadow: 0 10px 28px rgba(0,0,0,0.28); }
 .course-title {
   font-family: var(--font-display); font-size: 20px; font-weight: 600;
   letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 6px;
@@ -438,21 +438,21 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   position: relative; z-index: 1;
   display: flex; flex-direction: column; gap: 7px; margin-bottom: 0;
   max-height: 0; overflow: hidden; opacity: 0;
-  transition: max-height .28s ease, opacity .2s ease, margin-bottom .28s ease;
+  transition: max-height .32s ease, opacity .2s ease, margin-bottom .32s ease;
 }
 .course-card:hover .course-topics {
   max-height: 120px; opacity: 1; margin-bottom: 16px;
-  transition: max-height .55s cubic-bezier(0.25,0.46,0.45,0.94), opacity .4s ease .06s, margin-bottom .55s cubic-bezier(0.25,0.46,0.45,0.94);
+  transition: max-height .5s cubic-bezier(.22,1,.36,1), opacity .38s ease .08s, margin-bottom .5s cubic-bezier(.22,1,.36,1);
 }
 .course-topic {
   display: flex; align-items: center; gap: 7px;
   font-size: 12px; color: rgba(255,255,255,0.82); line-height: 1.35;
-  transform: translateY(8px); opacity: 0;
+  transform: translateY(6px); opacity: 0;
   transition: transform .22s ease, opacity .22s ease;
 }
 .course-card:hover .course-topic {
   transform: translateY(0); opacity: 1;
-  transition: transform .42s cubic-bezier(0.25,0.46,0.45,0.94) var(--td, 0ms), opacity .38s ease var(--td, 0ms);
+  transition: transform .44s cubic-bezier(.22,1,.36,1) var(--td, 0ms), opacity .36s ease var(--td, 0ms);
 }
 .course-topic::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.55); flex-shrink: 0; }
 .course-price-row {
@@ -726,7 +726,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .course-card:hover .course-title { color: inherit; }
   .course-card:hover .course-validity { color: var(--ink-soft); }
   .course-card:hover .course-topics { max-height: 0; opacity: 0; margin-bottom: 0; }
-  .course-card:active { transform: scale(0.975); transition-duration: .12s; }
+  .course-card:active { transform: scale(0.97); transition: transform .18s ease-out, box-shadow .18s ease-out; }
   /* Combo includes, show without hover */
   .combo-includes li { opacity: 1; transform: translateX(0); }
   .combo-check svg path { stroke-dashoffset: 0; }
