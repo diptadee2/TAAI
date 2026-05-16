@@ -721,10 +721,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   display: grid; place-items: center;
 }
 /* ── Test Series Pricing Plans ───────────────────────── */
-@keyframes ts-border-spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
+@property --ts-border-angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+@keyframes ts-border-spin { to { --ts-border-angle: 360deg; } }
 @keyframes ts-shimmer-sweep {
   from { transform: translateX(-130%) skewX(-15deg); }
   to   { transform: translateX(260%)  skewX(-15deg); }
@@ -803,17 +801,13 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .ts-plan-featured-frame {
   scroll-margin-top: 110px;
   border-radius: calc(var(--radius-lg) + 2px); padding: 2px;
-  position: relative; overflow: hidden;
+  position: relative;
+  background: conic-gradient(from var(--ts-border-angle), #8b5cf6, #6366f1 33%, #38bdf8 55%, #a78bfa 75%, #8b5cf6 100%);
+  animation: ts-border-spin 3s linear infinite;
   transform: translateY(0);
   box-shadow: 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12);
   transition: transform .3s cubic-bezier(.34,1.05,.64,1), box-shadow .3s ease;
   cursor: pointer;
-}
-.ts-plan-featured-frame::before {
-  content: ''; position: absolute; inset: -200%;
-  background: conic-gradient(from 0deg, #8b5cf6, #6366f1 33%, #38bdf8 55%, #a78bfa 75%, #8b5cf6 100%);
-  animation: ts-border-spin 3s linear infinite;
-  z-index: 0;
 }
 .ts-plan-featured-frame:hover { transform: translateY(-9px); box-shadow: 0 32px 100px rgba(139,92,246,0.55), 0 0 72px rgba(139,92,246,0.2); }
 .ts-plan-featured-frame.ts-plan-frame-selected { transform: translateY(-9px); box-shadow: 0 32px 100px rgba(139,92,246,0.55), 0 0 72px rgba(139,92,246,0.2); }
@@ -1052,8 +1046,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .ts-plan-pink:hover { transform: none; box-shadow: 0 8px 32px rgba(255,65,108,0.12), 0 2px 8px rgba(0,0,0,0.3); border-color: rgba(255,65,108,0.22); }
   .ts-plan-blue:hover { transform: none; box-shadow: 0 8px 32px rgba(77,139,255,0.12), 0 2px 8px rgba(0,0,0,0.3); border-color: rgba(77,139,255,0.22); }
   .ts-plan-featured-frame:hover { transform: none; box-shadow: 0 20px 72px rgba(139,92,246,0.38), 0 0 52px rgba(139,92,246,0.16); }
-  .ts-plan-featured-frame::before { content: none; }
-  .ts-plan-featured-frame { background: none; padding: 0; overflow: visible; box-shadow: 0 0 0 2px #8b5cf6, 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12); -webkit-tap-highlight-color: transparent; }
+  .ts-plan-featured-frame { background: none; padding: 0; animation: none; box-shadow: 0 0 0 2px #8b5cf6, 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12); -webkit-tap-highlight-color: transparent; }
   .ts-plan-pink:active, .ts-plan-blue:active { transform: scale(0.975) !important; transition-duration: .12s; }
   .ts-plan-featured-frame:active { transform: scale(0.975) !important; transition-duration: .12s; }
   .ts-plan-btn-basic:hover { transform: none; }
