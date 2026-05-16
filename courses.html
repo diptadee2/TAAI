@@ -393,7 +393,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   display: flex; flex-direction: column;
   position: relative; overflow: hidden;
   border: 1.5px solid var(--line); background: var(--card);
-  transition: transform .48s cubic-bezier(.22,1,.36,1), box-shadow .48s cubic-bezier(.22,1,.36,1), border-color .3s ease;
+  transition: transform .5s cubic-bezier(.25,.46,.45,.94), box-shadow .5s cubic-bezier(.25,.46,.45,.94), border-color .35s ease;
 }
 .ticket-notch {
   position: relative; height: 0;
@@ -417,7 +417,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .course-card::before {
   content: ''; position: absolute; inset: 0; border-radius: inherit;
   background: var(--course-grad); opacity: 0.14;
-  transition: opacity .48s cubic-bezier(.22,1,.36,1);
+  transition: opacity .5s ease;
 }
 .course-card:hover { transform: translateY(-10px); box-shadow: 0 28px 60px var(--course-shadow, rgba(107,75,255,0.28)); border-color: transparent; }
 .course-card:hover::before { opacity: 0.9; }
@@ -426,7 +426,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   width: 48px; height: 48px; border-radius: 14px;
   display: grid; place-items: center; color: #fff; margin-bottom: 20px;
   position: relative; z-index: 1;
-  transition: transform .48s cubic-bezier(.34,1.12,.64,1), box-shadow .4s ease;
+  transition: transform .5s cubic-bezier(.25,.46,.45,.94), box-shadow .5s ease;
 }
 .course-card:hover .course-icon { transform: scale(1.14) translateY(-3px); box-shadow: 0 10px 28px rgba(0,0,0,0.28); }
 .course-title {
