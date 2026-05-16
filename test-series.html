@@ -826,6 +826,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   25%, 100% { left: 160%; }
 }
 .ts-plan-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 16px 26px; border-radius: 12px; font-size: 14px; font-weight: 700; letter-spacing: .03em; text-decoration: none; position: relative; z-index: 2; overflow: hidden; transition: transform .22s cubic-bezier(.34,1.2,.64,1), box-shadow .22s ease, background .22s ease; }
+.ts-plan-btn svg { transition: transform .38s cubic-bezier(.34,1.28,.64,1); flex-shrink: 0; }
+.ts-plan-btn:hover svg { transform: translateX(5px); }
 .ts-plan-btn-basic { background: rgba(255,255,255,0.09); color: #fff; border: 1px solid rgba(255,255,255,0.22); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 2px 12px rgba(0,0,0,0.25); }
 .ts-plan-btn-basic:hover { background: rgba(255,255,255,0.17); border-color: rgba(255,255,255,0.44); box-shadow: 0 10px 36px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.28); transform: translateY(-3px); }
 .ts-plan-btn-featured { background: linear-gradient(135deg, #b57bff 0%, #9461ff 35%, #7c3aed 70%, #6424d0 100%); color: #fff; box-shadow: 0 6px 32px rgba(139,92,246,0.65), 0 2px 8px rgba(139,92,246,0.4), inset 0 1px 0 rgba(255,255,255,0.28); }
@@ -2078,9 +2080,9 @@ function TSPricing() {
                 <div key={i} className="ts-plan-feat" style={{ '--delay': `${i * 45}ms` }}><Tick /><span>{f}</span></div>
               ))}
             </div>
-            <div className="ts-plan-btn ts-plan-btn-basic ts-plan-btn-disabled" onClick={e => e.stopPropagation()}>
-              Coming soon
-            </div>
+            <a href="https://learn.taai.live/learn/Test-Series" target="_blank" rel="noopener noreferrer" className="ts-plan-btn ts-plan-btn-basic" onClick={e => e.stopPropagation()}>
+              Enrol now <Icon.ArrowRight size={16} />
+            </a>
           </div>
           </div>
 
@@ -2116,9 +2118,9 @@ function TSPricing() {
                 </div>
               ))}
             </div>
-            <div className="ts-plan-btn ts-plan-btn-basic ts-plan-btn-disabled" style={{ marginTop: 20 }} onClick={e => e.stopPropagation()}>
-              Coming soon
-            </div>
+            <a href="https://learn.taai.live/learn/Weekly-Quizzes---GATE-DA" target="_blank" rel="noopener noreferrer" className="ts-plan-btn ts-plan-btn-basic" style={{ marginTop: 20 }} onClick={e => e.stopPropagation()}>
+              Enrol now <Icon.ArrowRight size={16} />
+            </a>
           </div>
           </div>
 
@@ -2153,9 +2155,9 @@ function TSPricing() {
                   <div key={i} className="ts-plan-feat" style={{ '--delay': `${(BASIC_FEATS.length + i) * 45}ms` }}><Tick featured /><span>{f}</span></div>
                 ))}
               </div>
-              <div className="ts-plan-btn ts-plan-btn-featured ts-plan-btn-disabled" onClick={e => e.stopPropagation()}>
-                Coming soon
-              </div>
+              <a href="https://learn.taai.live/learn/Test-Series" target="_blank" rel="noopener noreferrer" className="ts-plan-btn ts-plan-btn-featured" onClick={e => e.stopPropagation()}>
+                Enrol now <Icon.ArrowRight size={16} />
+              </a>
             </div>
           </div>
           </div>
