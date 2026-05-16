@@ -168,6 +168,22 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(139,92,246,0.35); }
 .btn-ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--ink); }
 .btn-ghost:hover { background: var(--ink); color: #fff; }
+.btn-stories {
+  position: relative; overflow: hidden;
+  border-color: var(--purple); color: var(--purple);
+  transition: color .32s ease, border-color .32s ease, box-shadow .32s ease, transform .32s cubic-bezier(.34,1.1,.64,1);
+}
+.btn-stories::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(120deg, var(--pink), var(--purple) 55%, var(--blue));
+  transform: translateX(-102%); transition: transform .42s cubic-bezier(.4,0,.2,1);
+  z-index: 0;
+}
+.btn-stories:hover { color: #fff; border-color: transparent; box-shadow: 0 8px 32px rgba(139,92,246,0.38), 0 2px 8px rgba(236,72,153,0.2); transform: translateY(-2px); background: transparent; }
+.btn-stories:hover::before { transform: translateX(0); }
+.btn-stories span, .btn-stories svg { position: relative; z-index: 1; }
+.btn-stories svg { transition: transform .38s cubic-bezier(.34,1.28,.64,1); flex-shrink: 0; }
+.btn-stories:hover svg { transform: translateX(5px); }
 .btn-lg { padding: 15px 28px; font-size: 16px; }
 .btn-full { width: 100%; justify-content: center; }
 
@@ -1806,7 +1822,7 @@ function App() {
             </div>
           </div>
           <div style={{ textAlign: 'center', marginTop: 40 }} className="fade-in">
-            <a href="testimonials.html" className="btn btn-ghost btn-lg">See all student stories <Icon.ArrowRight /></a>
+            <a href="testimonials.html" className="btn btn-ghost btn-lg btn-stories"><span>See all student stories</span> <Icon.ArrowRight /></a>
           </div>
         </div>
       </section>
