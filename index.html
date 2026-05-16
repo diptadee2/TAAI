@@ -411,9 +411,18 @@ body {
 @keyframes wobble { 0%,100%{transform:rotate(-10deg)} 50%{transform:rotate(-4deg) translateY(-5px)} }
 
 .hero-bento-card {
-  border-radius: var(--radius-lg); padding: 24px; border: 1px solid var(--line);
+  border-radius: var(--radius-lg); padding: 24px; border: 1px solid transparent;
   display: flex; flex-direction: column; gap: 6px; min-height: 160px;
+  position: relative; overflow: hidden;
   transition: transform .28s cubic-bezier(.34,1.05,.64,1), box-shadow .28s ease;
+}
+.hero-bento-card::before {
+  content: ''; position: absolute; width: 200px; height: 200px; border-radius: 50%;
+  background: rgba(255,255,255,0.1); top: -70px; right: -70px; pointer-events: none;
+}
+.hero-bento-card::after {
+  content: ''; position: absolute; width: 140px; height: 140px; border-radius: 50%;
+  background: rgba(255,255,255,0.07); bottom: -50px; left: -40px; pointer-events: none;
 }
 .bento-icon-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
 
@@ -444,10 +453,16 @@ body {
 .pen-body { animation: pen-move 3.6s ease-in-out infinite; transform-box: fill-box; transform-origin: bottom left; }
 @keyframes pen-move { 0%,15%{transform:translate(0,0)} 22%,78%{transform:translate(6px,6px)} 93%,100%{transform:translate(0,0)} }
 .hero-bento-card:hover { transform: translateY(-4px); }
-.hero-bento-1 { background: linear-gradient(135deg, rgba(139,92,246,0.07) 0%, rgba(77,139,255,0.05) 100%); border-color: rgba(139,92,246,0.18); }
-.hero-bento-1:hover { box-shadow: 0 12px 36px rgba(139,92,246,0.14); }
-.hero-bento-2 { background: linear-gradient(135deg, rgba(255,127,183,0.08) 0%, rgba(139,92,246,0.05) 100%); border-color: rgba(255,127,183,0.2); }
-.hero-bento-2:hover { box-shadow: 0 12px 36px rgba(255,127,183,0.14); }
+.hero-bento-1 {
+  background: radial-gradient(circle, rgba(255,255,255,0.14) 1.5px, transparent 1.5px), linear-gradient(135deg, #6d28d9 0%, #4f46e5 50%, #2563eb 100%);
+  background-size: 24px 24px, auto; color: #fff;
+}
+.hero-bento-1:hover { box-shadow: 0 16px 48px rgba(109,40,217,0.45); }
+.hero-bento-2 {
+  background: radial-gradient(circle, rgba(255,255,255,0.14) 1.5px, transparent 1.5px), linear-gradient(135deg, #db2777 0%, #9333ea 50%, #6d28d9 100%);
+  background-size: 24px 24px, auto; color: #fff;
+}
+.hero-bento-2:hover { box-shadow: 0 16px 48px rgba(219,39,119,0.4); }
 
 /* Stats strip */
 .stats {
@@ -1525,53 +1540,44 @@ function Hero() {
 
         <div className="hero-bento-1 hero-bento-card">
           <div className="bento-icon-row">
-            <div className="mono" style={{ color: 'var(--purple)' }}>Practice Sets</div>
+            <div className="mono" style={{ color: 'rgba(255,255,255,0.8)' }}>Practice Sets</div>
             <svg width="38" height="38" viewBox="0 0 44 44" fill="none">
-              {/* Paper body */}
-              <path d="M7 4 L29 4 L37 12 L37 40 L7 40 Z" stroke="rgba(139,92,246,0.7)" strokeWidth="1.8" fill="rgba(139,92,246,0.07)" />
-              <path d="M29 4 L29 12 L37 12" stroke="rgba(139,92,246,0.7)" strokeWidth="1.8" fill="none" />
-              {/* Writing lines */}
-              <line x1="12" y1="20" x2="32" y2="20" stroke="rgba(139,92,246,0.8)" strokeWidth="1.6" strokeLinecap="round" className="pen-line pen-line-1" />
-              <line x1="12" y1="26" x2="28" y2="26" stroke="rgba(139,92,246,0.8)" strokeWidth="1.6" strokeLinecap="round" className="pen-line pen-line-2" />
-              <line x1="12" y1="32" x2="24" y2="32" stroke="rgba(139,92,246,0.8)" strokeWidth="1.6" strokeLinecap="round" className="pen-line pen-line-3" />
-              {/* Pen */}
+              <path d="M7 4 L29 4 L37 12 L37 40 L7 40 Z" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" fill="rgba(255,255,255,0.12)" />
+              <path d="M29 4 L29 12 L37 12" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" fill="none" />
+              <line x1="12" y1="20" x2="32" y2="20" stroke="rgba(255,255,255,0.85)" strokeWidth="1.6" strokeLinecap="round" className="pen-line pen-line-1" />
+              <line x1="12" y1="26" x2="28" y2="26" stroke="rgba(255,255,255,0.85)" strokeWidth="1.6" strokeLinecap="round" className="pen-line pen-line-2" />
+              <line x1="12" y1="32" x2="24" y2="32" stroke="rgba(255,255,255,0.85)" strokeWidth="1.6" strokeLinecap="round" className="pen-line pen-line-3" />
               <g className="pen-body">
-                <path d="M33 28 L38 23 L41 26 L36 31 Z" fill="rgba(139,92,246,0.7)" />
-                <path d="M33 28 L31 33 L36 31 Z" fill="rgba(139,92,246,0.4)" />
-                <line x1="38" y1="23" x2="41" y2="26" stroke="rgba(139,92,246,0.9)" strokeWidth="1" />
+                <path d="M33 28 L38 23 L41 26 L36 31 Z" fill="rgba(255,255,255,0.75)" />
+                <path d="M33 28 L31 33 L36 31 Z" fill="rgba(255,255,255,0.45)" />
+                <line x1="38" y1="23" x2="41" y2="26" stroke="rgba(255,255,255,0.95)" strokeWidth="1" />
               </g>
             </svg>
           </div>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 36, letterSpacing: '-0.03em' }}>1,000+</div>
-          <div style={{ fontSize: 13, color: 'var(--ink-dim)' }}>Weekly quiz questions, all explained</div>
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.72)' }}>Weekly quiz questions, all explained</div>
         </div>
         <div className="hero-bento-2 hero-bento-card">
           <div className="bento-icon-row">
-            <div className="mono" style={{ color: 'var(--pink)' }}>Mentorship</div>
+            <div className="mono" style={{ color: 'rgba(255,255,255,0.8)' }}>Mentorship</div>
             <svg width="40" height="40" viewBox="0 0 48 48" fill="none">
-              {/* Body */}
-              <rect x="3" y="9" width="42" height="36" rx="5" stroke="rgba(255,127,183,0.75)" strokeWidth="1.8" fill="rgba(255,127,183,0.06)" />
-              {/* Header */}
-              <rect x="3" y="9" width="42" height="12" rx="5" fill="rgba(255,127,183,0.22)" />
-              {/* Pins */}
-              <line x1="15" y1="4" x2="15" y2="14" stroke="var(--pink)" strokeWidth="2.2" strokeLinecap="round" />
-              <line x1="33" y1="4" x2="33" y2="14" stroke="var(--pink)" strokeWidth="2.2" strokeLinecap="round" />
-              {/* Live dot top-right */}
+              <rect x="3" y="9" width="42" height="36" rx="5" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" fill="rgba(255,255,255,0.1)" />
+              <rect x="3" y="9" width="42" height="12" rx="5" fill="rgba(255,255,255,0.2)" />
+              <line x1="15" y1="4" x2="15" y2="14" stroke="rgba(255,255,255,0.9)" strokeWidth="2.2" strokeLinecap="round" />
+              <line x1="33" y1="4" x2="33" y2="14" stroke="rgba(255,255,255,0.9)" strokeWidth="2.2" strokeLinecap="round" />
               <circle cx="41" cy="13" r="3.2" fill="#ff3b3b" className="cal-live" />
-              {/* 6 sequential days, Mon to Sat */}
               {[[9,29],[17,29],[25,29],[33,29],[9,38],[17,38]].map(([cx,cy],i) => (
-                <circle key={i} cx={cx} cy={cy} r="3.2" fill="rgba(255,127,183,0.18)"
+                <circle key={i} cx={cx} cy={cy} r="3.2" fill="rgba(255,255,255,0.22)"
                   className="cal-day" style={{ animationDelay: `${i * 0.35}s` }} />
               ))}
-              {/* Today, Sunday with radar ping */}
-              <circle cx="33" cy="38" r="4.5" fill="var(--pink)" />
-              <circle cx="33" cy="38" r="4.5" fill="none" stroke="var(--pink)" strokeWidth="1.8" className="cal-ping" />
-              <circle cx="33" cy="38" r="4.5" fill="none" stroke="var(--pink)" strokeWidth="1.8" className="cal-ping-2" />
-              <text x="33" y="41" textAnchor="middle" fill="white" fontSize="5.5" fontWeight="700" fontFamily="sans-serif">★</text>
+              <circle cx="33" cy="38" r="4.5" fill="rgba(255,255,255,0.95)" />
+              <circle cx="33" cy="38" r="4.5" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="1.8" className="cal-ping" />
+              <circle cx="33" cy="38" r="4.5" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="1.8" className="cal-ping-2" />
+              <text x="33" y="41" textAnchor="middle" fill="#9333ea" fontSize="5.5" fontWeight="700" fontFamily="sans-serif">★</text>
             </svg>
           </div>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 36, letterSpacing: '-0.03em', marginTop: 'auto' }}>Guidance</div>
-          <div style={{ fontSize: 13, color: 'var(--ink-dim)' }}>Concept discussions, career guidance, everything GATE.</div>
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.72)' }}>Concept discussions, career guidance, everything GATE.</div>
         </div>
       </div>
     </section>
