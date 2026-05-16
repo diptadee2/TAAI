@@ -281,7 +281,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 
 /* Combos grid, redesigned */
-@keyframes combo-border-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@property --combo-angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+@keyframes combo-border-spin { to { --combo-angle: 360deg; } }
 @keyframes combo-shimmer-sweep { from { transform: translateX(-130%) skewX(-15deg); } to { transform: translateX(260%) skewX(-15deg); } }
 #combos {
   background: #07060f;
@@ -298,11 +299,12 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .combos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: stretch; }
 .combo-featured-frame {
   border-radius: calc(var(--radius-xl) + 2px); padding: 2px;
-  position: relative; overflow: hidden;
+  position: relative;
+  background: conic-gradient(from var(--combo-angle), #8b5cf6, #6366f1 33%, #38bdf8 55%, #a78bfa 75%, #8b5cf6 100%);
+  animation: combo-border-spin 3s linear infinite;
   box-shadow: 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12);
   transition: transform .3s cubic-bezier(.34,1.05,.64,1), box-shadow .3s ease;
 }
-.combo-featured-frame::before { content: ''; position: absolute; inset: -200%; background: conic-gradient(from 0deg, #8b5cf6, #6366f1 33%, #38bdf8 55%, #a78bfa 75%, #8b5cf6 100%); animation: combo-border-spin 3s linear infinite; z-index: 0; }
 .combo-featured-frame:hover { transform: translateY(-10px); box-shadow: 0 32px 100px rgba(139,92,246,0.55), 0 0 72px rgba(139,92,246,0.2); }
 .combo-card {
   border-radius: var(--radius-xl); padding: 36px;
@@ -804,8 +806,7 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   .course-card:active { transform: scale(0.97); transition: transform .12s ease; }
   .combo-card:hover { transform: none; }
   .combo-featured-frame:hover { transform: none; box-shadow: 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12); }
-  .combo-featured-frame::before { content: none; }
-  .combo-featured-frame { background: none; padding: 0; overflow: visible; box-shadow: 0 0 0 2px #8b5cf6, 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12); -webkit-tap-highlight-color: transparent; }
+  .combo-featured-frame { background: none; padding: 0; animation: none; box-shadow: 0 0 0 2px #8b5cf6, 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12); -webkit-tap-highlight-color: transparent; }
   .combo-featured-frame, .combo-card.featured { -webkit-tap-highlight-color: transparent; }
   .combo-card.featured::after { animation: none; }
   .incl-tab:hover { background: none; border-color: transparent; }
