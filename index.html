@@ -410,17 +410,16 @@ body {
 }
 @keyframes wobble { 0%,100%{transform:rotate(-10deg)} 50%{transform:rotate(-4deg) translateY(-5px)} }
 
+.hero-bento-row {
+  grid-column: 1 / -1; display: flex; gap: 20px;
+}
+.hero-bento-row .hero-bento-card { flex: 1; min-width: 0; }
 .hero-bento-card {
   border-radius: var(--radius-lg); padding: 24px; border: 1px solid transparent;
   display: flex; flex-direction: column; gap: 6px; min-height: 160px;
   position: relative; overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.42);
   transition: transform .28s cubic-bezier(.34,1.05,.64,1), box-shadow .28s ease;
-}
-/* top-edge glass highlight */
-.hero-bento-card::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.55) 40%, rgba(255,255,255,0.55) 60%, transparent 100%);
-  pointer-events: none; z-index: 2;
 }
 /* floating orb 1 */
 .hero-bento-orb-1 {
@@ -486,12 +485,12 @@ body {
   background: radial-gradient(circle, rgba(255,255,255,0.14) 1.5px, transparent 1.5px), linear-gradient(135deg, #6d28d9 0%, #4f46e5 50%, #2563eb 100%);
   background-size: 24px 24px, auto; color: #fff;
 }
-.hero-bento-1:hover { box-shadow: 0 16px 48px rgba(109,40,217,0.45); }
+.hero-bento-1:hover { box-shadow: inset 0 1px 0 rgba(255,255,255,0.42), 0 16px 48px rgba(109,40,217,0.45); }
 .hero-bento-2 {
   background: radial-gradient(circle, rgba(255,255,255,0.14) 1.5px, transparent 1.5px), linear-gradient(135deg, #db2777 0%, #9333ea 50%, #6d28d9 100%);
   background-size: 24px 24px, auto; color: #fff;
 }
-.hero-bento-2:hover { box-shadow: 0 16px 48px rgba(219,39,119,0.4); }
+.hero-bento-2:hover { box-shadow: inset 0 1px 0 rgba(255,255,255,0.42), 0 16px 48px rgba(219,39,119,0.4); }
 
 /* Stats strip */
 .stats {
@@ -1567,6 +1566,7 @@ function Hero() {
           </div>
         </div>
 
+        <div className="hero-bento-row">
         <div className="hero-bento-1 hero-bento-card">
           <div className="hero-bento-orb-1" />
           <div className="hero-bento-orb-2" />
@@ -1611,6 +1611,7 @@ function Hero() {
           </div>
           <div className="bento-num" style={{ marginTop: 'auto' }}>Guidance</div>
           <div className="bento-desc">Concept discussions, career guidance, everything GATE.</div>
+        </div>
         </div>
       </div>
     </section>
