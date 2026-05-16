@@ -815,78 +815,81 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 
 /* ── Why TAAI strip ──────────────────────────────────── */
 .why-strip {
-  padding: 96px 0 0;
-  background: #07060f;
+  padding: 80px 0 92px;
+  background-color: var(--bg-soft);
+  background-image: radial-gradient(circle, rgba(139,92,246,0.09) 1px, transparent 1px);
+  background-size: 36px 36px;
   position: relative;
 }
 .why-strip::before {
   content: ''; position: absolute; inset: 0;
   background:
-    radial-gradient(ellipse 70% 60% at 10% 0%, rgba(139,92,246,0.28) 0%, transparent 100%),
-    radial-gradient(ellipse 60% 55% at 90% 0%, rgba(236,72,153,0.18) 0%, transparent 100%);
+    radial-gradient(ellipse 55% 60% at 10% 50%, rgba(139,92,246,0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 55% at 90% 50%, rgba(236,72,153,0.05) 0%, transparent 70%),
+    radial-gradient(ellipse 45% 50% at 50% 110%, rgba(6,182,212,0.05) 0%, transparent 65%);
   pointer-events: none;
 }
 .why-strip-label {
-  font-family: var(--font-mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
-  color: rgba(255,255,255,0.38); text-align: center; margin-bottom: 60px;
-  display: flex; align-items: center; justify-content: center; gap: 16px;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-soft); text-align: center; margin-bottom: 56px;
+  display: flex; align-items: center; justify-content: center; gap: 14px;
 }
 .why-strip-label::before, .why-strip-label::after {
-  content: ''; flex: 0 0 56px; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(139,92,246,0.55));
+  content: ''; flex: 0 0 40px; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(139,92,246,0.3));
 }
-.why-strip-label::after { background: linear-gradient(90deg, rgba(139,92,246,0.55), transparent); }
+.why-strip-label::after { background: linear-gradient(90deg, rgba(139,92,246,0.3), transparent); }
 .why-grid {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
 }
 .why-pillar {
-  padding: 44px 32px 52px;
-  text-align: center; display: flex; flex-direction: column; align-items: center; gap: 28px;
+  padding: 40px 30px 44px;
+  text-align: center; display: flex; flex-direction: column; align-items: center; gap: 24px;
   position: relative; overflow: hidden; border-radius: 24px;
-  border: 1px solid rgba(var(--card-rgb, 139,92,246), 0.22);
-  background: rgba(255,255,255,0.03);
-  background-image: radial-gradient(circle at var(--mx, 50%) var(--my, 80%), rgba(var(--card-rgb, 139,92,246), 0.12) 0%, transparent 60%);
-  transition: border-color .3s ease, box-shadow .35s ease, transform .32s cubic-bezier(.4,0,.2,1), background-image .3s ease;
+  border: 1px solid rgba(var(--card-rgb, 139,92,246), 0.14);
+  background: #fff;
+  background-image: radial-gradient(circle at var(--mx, 50%) var(--my, 80%), rgba(var(--card-rgb, 139,92,246), 0.08) 0%, transparent 62%);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.03);
+  transition: border-color .3s ease, box-shadow .35s ease, transform .32s cubic-bezier(.4,0,.2,1);
   cursor: default;
 }
 .why-pillar::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(var(--card-rgb, 139,92,246), 0.9), transparent);
-  opacity: 0.45; transition: opacity .3s ease;
+  content: ''; position: absolute; top: 0; left: 18%; right: 18%; height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(var(--card-rgb, 139,92,246), 0.7), transparent);
+  opacity: 0; transition: opacity .3s ease;
 }
 .why-pillar:hover {
-  border-color: rgba(var(--card-rgb, 139,92,246), 0.5);
-  box-shadow: 0 0 0 1px rgba(var(--card-rgb, 139,92,246), 0.1), 0 28px 72px rgba(var(--card-rgb, 139,92,246), 0.26), 0 4px 20px rgba(0,0,0,0.4);
-  transform: translateY(-6px);
+  border-color: rgba(var(--card-rgb, 139,92,246), 0.32);
+  box-shadow: 0 16px 48px rgba(var(--card-rgb, 139,92,246), 0.14), 0 4px 16px rgba(0,0,0,0.04);
+  transform: translateY(-5px);
 }
 .why-pillar:hover::before { opacity: 1; }
 .why-icon-wrap {
-  width: 80px; height: 80px; border-radius: 24px;
+  width: 76px; height: 76px; border-radius: 24px;
   display: grid; place-items: center;
-  background: linear-gradient(135deg, rgba(var(--card-rgb, 139,92,246), 0.22) 0%, rgba(var(--card-rgb, 139,92,246), 0.09) 100%);
-  border: 1px solid rgba(var(--card-rgb, 139,92,246), 0.32);
+  background: linear-gradient(135deg, rgba(var(--card-rgb, 139,92,246), 0.14) 0%, rgba(var(--card-rgb, 139,92,246), 0.07) 100%);
+  border: 1.5px solid rgba(var(--card-rgb, 139,92,246), 0.2);
   color: rgb(var(--card-rgb, 139,92,246));
-  box-shadow: 0 0 32px rgba(var(--card-rgb, 139,92,246), 0.22), inset 0 1px 0 rgba(255,255,255,0.07);
-  transition: transform .32s cubic-bezier(.34,1.2,.64,1), box-shadow .32s ease, background .3s ease;
+  transition: transform .32s cubic-bezier(.4,0,.2,1), box-shadow .32s ease, background .3s ease;
 }
 .why-pillar:hover .why-icon-wrap {
-  transform: translateY(-5px) scale(1.1) rotate(-5deg);
-  box-shadow: 0 20px 48px rgba(var(--card-rgb, 139,92,246), 0.46), inset 0 1px 0 rgba(255,255,255,0.12);
-  background: linear-gradient(135deg, rgba(var(--card-rgb, 139,92,246), 0.36) 0%, rgba(var(--card-rgb, 139,92,246), 0.18) 100%);
+  transform: translateY(-4px) scale(1.08);
+  box-shadow: 0 12px 32px rgba(var(--card-rgb, 139,92,246), 0.28);
+  background: linear-gradient(135deg, rgba(var(--card-rgb, 139,92,246), 0.22) 0%, rgba(var(--card-rgb, 139,92,246), 0.11) 100%);
 }
 .why-heading {
   font-family: var(--font-display); font-size: clamp(20px, 2.1vw, 25px); font-weight: 700;
-  color: #fff; letter-spacing: -0.025em; line-height: 1.15; margin-bottom: 10px;
+  color: var(--ink); letter-spacing: -0.025em; line-height: 1.15; margin-bottom: 10px;
 }
-.why-sub { font-size: 14.5px; color: rgba(255,255,255,0.5); line-height: 1.7; max-width: 240px; }
+.why-sub { font-size: 14.5px; color: var(--ink-dim); line-height: 1.7; max-width: 240px; }
 .why-chips {
   display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-top: 14px;
 }
 .why-chip {
   font-size: 11px; font-weight: 700; letter-spacing: .08em;
   padding: 4px 12px; border-radius: 100px;
-  background: rgba(var(--card-rgb, 139,92,246), 0.14);
-  border: 1px solid rgba(var(--card-rgb, 139,92,246), 0.38);
+  background: rgba(var(--card-rgb, 139,92,246), 0.08);
+  border: 1px solid rgba(var(--card-rgb, 139,92,246), 0.22);
   color: rgb(var(--card-rgb, 139,92,246));
   font-family: var(--font-mono);
 }
@@ -1568,19 +1571,19 @@ function ScrollProgress() {
 
 const WHY_PILLARS = [
   {
-    rgb: '139,92,246', num: '01',
+    rgb: '139,92,246',
     icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5"/><circle cx="12" cy="12" r="4.5" stroke="currentColor" strokeWidth="1.5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>,
     heading: 'GATE DA–Specific',
     sub: 'Not repurposed CSE content. Built ground-up for the exact topics GATE DA tests, from scratch.',
   },
   {
-    rgb: '236,72,153', num: '02',
+    rgb: '236,72,153',
     icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 3a6 6 0 0 1 6 6c0 3-1.8 5.4-3.6 7.2L12 18l-2.4-1.8C7.8 14.4 6 12 6 9a6 6 0 0 1 6-6z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/><circle cx="12" cy="9" r="2" stroke="currentColor" strokeWidth="1.5"/><path d="M9 21h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
     heading: 'Visual & Conceptual',
     sub: 'Mathematics taught for understanding, not memorisation, intuition-first with clear, grounded visuals.',
   },
   {
-    rgb: '6,182,212', num: '03',
+    rgb: '6,182,212',
     icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M4 4V20H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M7 15L11 10L14 13L19 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><circle cx="19" cy="6" r="1.5" fill="currentColor"/></svg>,
     heading: 'Proven Results',
     sub: 'Every batch, students reach top institutions. Consistent outcomes, year after year.',
@@ -1595,7 +1598,7 @@ function WhyStrip() {
         <p className="why-strip-label fade-in">Why students choose TAAI</p>
         <div className="why-grid">
           {WHY_PILLARS.map((p, i) => (
-            <div key={i} className="why-pillar fade-in" data-num={p.num} style={{ transitionDelay: i * 130 + 'ms', '--card-rgb': p.rgb }}
+            <div key={i} className="why-pillar fade-in" style={{ transitionDelay: i * 130 + 'ms', '--card-rgb': p.rgb }}
               onMouseMove={e => {
                 const r = e.currentTarget.getBoundingClientRect();
                 e.currentTarget.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
