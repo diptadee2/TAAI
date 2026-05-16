@@ -362,14 +362,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .combo-discount { font-size: 11px; font-weight: 700; color: #fff; background: linear-gradient(135deg, var(--pink), var(--purple)); padding: 4px 10px; border-radius: 999px; }
 .combo-saving { font-size: 12px; color: rgba(255,255,255,0.38); margin-bottom: 16px; font-style: italic; position: relative; z-index: 1; }
 .combo-card .btn { position: relative; z-index: 1; }
-@keyframes combo-btn-grad { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
 @keyframes combo-btn-shimmer { 0%,60% { transform: translateX(-130%) skewX(-15deg); } 80%,100% { transform: translateX(260%) skewX(-15deg); } }
-.combo-card .btn-primary {
-  background: linear-gradient(135deg, var(--pink) 0%, var(--purple) 25%, #4f46e5 50%, var(--purple) 75%, var(--pink) 100%);
-  background-size: 300% 100%;
-  animation: combo-btn-grad 10s linear infinite;
-  overflow: hidden;
-}
+.combo-card .btn-primary { overflow: hidden; }
 .combo-card .btn-primary::before {
   content: ''; position: absolute; inset: 0; width: 50%;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
