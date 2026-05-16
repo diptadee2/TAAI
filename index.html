@@ -416,15 +416,44 @@ body {
   position: relative; overflow: hidden;
   transition: transform .28s cubic-bezier(.34,1.05,.64,1), box-shadow .28s ease;
 }
+/* top-edge glass highlight */
 .hero-bento-card::before {
-  content: ''; position: absolute; width: 200px; height: 200px; border-radius: 50%;
-  background: rgba(255,255,255,0.1); top: -70px; right: -70px; pointer-events: none;
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.55) 40%, rgba(255,255,255,0.55) 60%, transparent 100%);
+  pointer-events: none; z-index: 2;
 }
-.hero-bento-card::after {
-  content: ''; position: absolute; width: 140px; height: 140px; border-radius: 50%;
-  background: rgba(255,255,255,0.07); bottom: -50px; left: -40px; pointer-events: none;
+/* floating orb 1 */
+.hero-bento-orb-1 {
+  position: absolute; width: 180px; height: 180px; border-radius: 50%;
+  background: rgba(255,255,255,0.09); top: -64px; right: -64px; pointer-events: none;
+  animation: bento-orb-a 8s ease-in-out infinite;
 }
-.bento-icon-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+/* floating orb 2 */
+.hero-bento-orb-2 {
+  position: absolute; width: 120px; height: 120px; border-radius: 50%;
+  background: rgba(255,255,255,0.06); bottom: -44px; left: -36px; pointer-events: none;
+  animation: bento-orb-b 11s ease-in-out infinite;
+}
+@keyframes bento-orb-a { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-14px,12px) scale(1.1)} }
+@keyframes bento-orb-b { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(10px,-8px) scale(1.08)} }
+.bento-label {
+  display: inline-flex; align-items: center;
+  padding: 3px 10px; border-radius: 999px; font-size: 11px; font-family: var(--font-mono);
+  background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.9);
+  letter-spacing: 0.04em; border: 1px solid rgba(255,255,255,0.2);
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  position: relative; z-index: 1;
+}
+.bento-num {
+  font-family: var(--font-display); font-size: 36px; letter-spacing: -0.03em;
+  filter: drop-shadow(0 0 18px rgba(255,255,255,0.5));
+  position: relative; z-index: 1;
+}
+.bento-desc {
+  font-size: 13px; color: rgba(255,255,255,0.72); position: relative; z-index: 1;
+}
+.bento-icon-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; position: relative; z-index: 1; }
+.bento-icon-row svg { position: relative; z-index: 1; }
 
 /* ── Calendar animation ── */
 .cal-day { animation: cal-day-seq 2.45s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
@@ -1539,8 +1568,10 @@ function Hero() {
         </div>
 
         <div className="hero-bento-1 hero-bento-card">
+          <div className="hero-bento-orb-1" />
+          <div className="hero-bento-orb-2" />
           <div className="bento-icon-row">
-            <div className="mono" style={{ color: 'rgba(255,255,255,0.8)' }}>Practice Sets</div>
+            <div className="bento-label">Practice Sets</div>
             <svg width="38" height="38" viewBox="0 0 44 44" fill="none">
               <path d="M7 4 L29 4 L37 12 L37 40 L7 40 Z" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" fill="rgba(255,255,255,0.12)" />
               <path d="M29 4 L29 12 L37 12" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" fill="none" />
@@ -1554,12 +1585,14 @@ function Hero() {
               </g>
             </svg>
           </div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 36, letterSpacing: '-0.03em' }}>1,000+</div>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.72)' }}>Weekly quiz questions, all explained</div>
+          <div className="bento-num">1,000+</div>
+          <div className="bento-desc">Weekly quiz questions, all explained</div>
         </div>
         <div className="hero-bento-2 hero-bento-card">
+          <div className="hero-bento-orb-1" />
+          <div className="hero-bento-orb-2" />
           <div className="bento-icon-row">
-            <div className="mono" style={{ color: 'rgba(255,255,255,0.8)' }}>Mentorship</div>
+            <div className="bento-label">Mentorship</div>
             <svg width="40" height="40" viewBox="0 0 48 48" fill="none">
               <rect x="3" y="9" width="42" height="36" rx="5" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" fill="rgba(255,255,255,0.1)" />
               <rect x="3" y="9" width="42" height="12" rx="5" fill="rgba(255,255,255,0.2)" />
@@ -1576,8 +1609,8 @@ function Hero() {
               <text x="33" y="41" textAnchor="middle" fill="#9333ea" fontSize="5.5" fontWeight="700" fontFamily="sans-serif">★</text>
             </svg>
           </div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 36, letterSpacing: '-0.03em', marginTop: 'auto' }}>Guidance</div>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.72)' }}>Concept discussions, career guidance, everything GATE.</div>
+          <div className="bento-num" style={{ marginTop: 'auto' }}>Guidance</div>
+          <div className="bento-desc">Concept discussions, career guidance, everything GATE.</div>
         </div>
       </div>
     </section>
