@@ -980,17 +980,18 @@ body {
   background-size: 28px 28px, auto;
   color: #fff; border-radius: var(--radius-xl);
   padding: 80px 64px; position: relative; overflow: hidden; text-align: center;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.38);
 }
 .cta-card::before, .cta-card::after {
   content: ''; position: absolute; border-radius: 50%;
   background: rgba(255,255,255,0.12); pointer-events: none;
 }
-.cta-card::before { top: -80px; right: -80px; width: 280px; height: 280px; }
-.cta-card::after { bottom: -100px; left: -100px; width: 320px; height: 320px; }
-.cta-card h2 { font-family: var(--font-display); font-size: clamp(38px, 4.8vw, 68px); font-weight: 600; letter-spacing: -0.035em; line-height: 1; margin-bottom: 20px; position: relative; }
+.cta-card::before { top: -80px; right: -80px; width: 280px; height: 280px; animation: bento-orb-a 9s ease-in-out infinite; }
+.cta-card::after { bottom: -100px; left: -100px; width: 320px; height: 320px; animation: bento-orb-b 12s ease-in-out infinite; }
+.cta-card h2 { font-family: var(--font-display); font-size: clamp(38px, 4.8vw, 68px); font-weight: 600; letter-spacing: -0.035em; line-height: 1; margin-bottom: 20px; position: relative; z-index: 1; }
 .cta-card h2 em { font-style: normal; color: #fff; border-bottom: 4px solid rgba(255,255,255,0.6); padding-bottom: 4px; }
-.cta-card p { font-size: 18px; opacity: 0.9; max-width: 560px; margin: 0 auto 36px; position: relative; }
-.cta-btn-white { background: #fff; color: var(--purple); font-weight: 600; box-shadow: 0 4px 20px rgba(0,0,0,0.15); position: relative; }
+.cta-card p { font-size: 18px; opacity: 0.9; max-width: 560px; margin: 0 auto 36px; position: relative; z-index: 1; }
+.cta-btn-white { background: #fff; color: var(--purple); font-weight: 600; box-shadow: 0 4px 20px rgba(0,0,0,0.15); position: relative; z-index: 1; }
 .cta-btn-white:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,0.22); color: var(--purple); }
 .cta-btn-white svg { transition: transform .38s cubic-bezier(.34,1.28,.64,1); flex-shrink: 0; }
 .cta-btn-white:hover svg { transform: translateX(5px); }
