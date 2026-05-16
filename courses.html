@@ -222,8 +222,22 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .hero-proof-footer { display: flex; align-items: center; gap: 10px; padding-top: 14px; margin-top: 16px; border-top: 1px solid var(--line); }
 .hero-proof-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--pink), var(--purple)); display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 12px; flex-shrink: 0; box-shadow: 0 2px 8px rgba(139,92,246,.28); }
 .hero-proof-name { font-size: 13px; font-weight: 700; color: var(--ink); }
-.hero-proof-link { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--purple); font-weight: 600; text-decoration: none; white-space: nowrap; opacity: 0.8; transition: opacity .2s, gap .2s cubic-bezier(.34,1.4,.64,1); margin-top: 12px; }
-.hero-proof-link:hover { opacity: 1; gap: 8px; }
+.hero-proof-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; text-decoration: none; white-space: nowrap;
+  margin-top: 12px; padding: 6px 12px 6px 10px; border-radius: 999px;
+  color: var(--purple);
+  background: rgba(139,92,246,0.06);
+  border: 1px solid rgba(139,92,246,0.16);
+  transition: background .22s ease, border-color .22s ease, color .22s ease, box-shadow .22s ease, gap .28s cubic-bezier(.34,1.2,.64,1);
+}
+.hero-proof-link:hover {
+  background: rgba(139,92,246,0.12); border-color: rgba(139,92,246,0.35);
+  box-shadow: 0 4px 16px rgba(139,92,246,0.16);
+  gap: 10px; color: var(--purple);
+}
+.hero-proof-link svg { transition: transform .28s cubic-bezier(.34,1.2,.64,1); flex-shrink: 0; }
+.hero-proof-link:hover svg { transform: translateX(3px); }
 @media (hover: none) { .hero-proof:active { transform: scale(0.975); transition-duration: .12s; } }
 @media (max-width: 768px) {
   .page-hero-inner { grid-template-columns: 1fr; gap: 36px; }
