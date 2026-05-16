@@ -1943,9 +1943,9 @@ function Testimonials() {
             <span className="swap-hover">Topper Talks</span>
           </a>
         </div>
-        <div className="testi-grid fade-in">
+        <div className="testi-grid">
           {MIXED_TESTIMONIALS.map((t, i) => t.type === 'image' ? (
-            <div key={i} className={`gitem${t.wide ? ' gitem-wide' : ''}`}>
+            <div key={i} className={`gitem${t.wide ? ' gitem-wide' : ''} fade-in`} style={{ '--delay': `${i * 60}ms` }}>
               <div style={{ position: 'relative' }}>
                 <img src={t.src} alt={`AIR ${t.air} GATE DA`} loading="lazy" />
                 {t.ytLink && (
@@ -1961,7 +1961,7 @@ function Testimonials() {
               </div>
             </div>
           ) : (
-            <div key={i} className="testi card">
+            <div key={i} className="testi card fade-in" style={{ '--delay': `${i * 60}ms` }}>
               <div className="testi-rank"><Icon.Sparkle size={12} />AIR {t.air}</div>
               <div className="testi-quote">"{t.quote}"</div>
               <div className="testi-author">
