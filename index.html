@@ -492,7 +492,7 @@ body {
 }
 .offer-1::before { background: linear-gradient(160deg, #FF7FB7 0%, #9333ea 100%); }
 .offer-2::before { background: linear-gradient(160deg, #8B5CF6 0%, #3B82F6 100%); }
-.offer-3::before { background: linear-gradient(160deg, #4D8BFF 0%, #8B5CF6 100%); }
+.offer-3::before { background: linear-gradient(160deg, #06b6d4 0%, #0ea5e9 55%, #6366f1 100%); }
 .offer-card:hover::before { opacity: 1; }
 .offer-num {
   position: absolute; bottom: -8px; right: 22px; z-index: 0;
@@ -510,7 +510,7 @@ body {
 .offer-card:hover .offer-icon { transform: scale(1.12) rotate(-4deg); box-shadow: 0 8px 24px rgba(0,0,0,0.22); }
 .offer-1 .offer-icon { background: linear-gradient(135deg, var(--pink), var(--purple)); }
 .offer-2 .offer-icon { background: linear-gradient(135deg, var(--purple), var(--blue)); }
-.offer-3 .offer-icon { background: linear-gradient(135deg, var(--blue), #7FA8FF); }
+.offer-3 .offer-icon { background: linear-gradient(135deg, #06b6d4, #3b82f6); }
 .offer-body { flex: 1; position: relative; z-index: 1; margin-top: 22px; }
 .offer-tagline { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 10px; color: var(--ink-soft); transition: color .28s ease; }
 .offer-card:hover .offer-tagline { color: rgba(255,255,255,0.6); }
@@ -538,6 +538,9 @@ body {
 .offer-badge-hot .offer-badge-dot { background: #E8A000; }
 .offer-badge-cs { background: var(--purple-soft); color: var(--purple); border: 1px solid rgba(139,92,246,0.18); }
 .offer-badge-cs .offer-badge-dot { background: var(--purple); }
+.offer-badge-live { background: #ecfdf5; color: #065f46; border: 1px solid rgba(16,185,129,0.22); }
+.offer-badge-live .offer-badge-dot { background: #10b981; animation: badge-pulse 1.8s ease-in-out infinite; }
+@keyframes badge-pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.45; transform: scale(1.5); } }
 .offer-card:hover .offer-badge { background: rgba(255,255,255,0.16); color: rgba(255,255,255,0.9); border-color: rgba(255,255,255,0.2); }
 .offer-card:hover .offer-badge-dot { background: rgba(255,255,255,0.7); }
 
@@ -1571,7 +1574,7 @@ const OFFERS = [
   {
     num: '02', cls: 'offer-2',
     icon: <Icon.Target />,
-    badge: { label: 'Coming soon', type: 'cs' },
+    badge: { label: 'Live now', type: 'live' },
     tagline: 'GATE-like · 67 Tests · DA 2027',
     title: 'Test Series',
     desc: '45 topic-wise + 10 subject-wise + 12 full-length tests. GATE-like interface.',
