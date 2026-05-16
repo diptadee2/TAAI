@@ -1054,6 +1054,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .ts-plan-pink:hover { transform: none; box-shadow: 0 8px 32px rgba(255,65,108,0.12), 0 2px 8px rgba(0,0,0,0.3); border-color: rgba(255,65,108,0.22); }
   .ts-plan-blue:hover { transform: none; box-shadow: 0 8px 32px rgba(77,139,255,0.12), 0 2px 8px rgba(0,0,0,0.3); border-color: rgba(77,139,255,0.22); }
   .ts-plan-featured-frame:hover { transform: none; box-shadow: 0 20px 72px rgba(139,92,246,0.38), 0 0 52px rgba(139,92,246,0.16); }
+  .ts-plan-featured-frame::before { content: none; }
+  .ts-plan-featured-frame { background: none; padding: 0; overflow: visible; box-shadow: 0 0 0 2px #8b5cf6, 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12); -webkit-tap-highlight-color: transparent; }
   .ts-plan-pink:active, .ts-plan-blue:active { transform: scale(0.975) !important; transition-duration: .12s; }
   .ts-plan-featured-frame:active { transform: scale(0.975) !important; transition-duration: .12s; }
   .ts-plan-btn-basic:hover { transform: none; }
