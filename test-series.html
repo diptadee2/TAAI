@@ -354,7 +354,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .section-sub { font-size: 17px; color: var(--ink-dim); line-height: 1.6; max-width: 560px; margin-bottom: 56px; }
 
 /* ── Test breakdown ──────────────────────────────────── */
-.breakdown-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.breakdown-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
 @keyframes bd-wiggle {
   0%   { transform: translateY(-7px) rotate(0deg); }
   18%  { transform: translateY(-8px) rotate(-0.7deg); }
@@ -388,6 +388,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .bd-1::after { background: var(--pink); }
 .bd-2::after { background: var(--purple); }
 .bd-3::after { background: var(--blue); }
+.bd-4::after { background: #10b981; }
 
 
 .breakdown-icon {
@@ -399,6 +400,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .bd-1 .breakdown-icon { background: linear-gradient(135deg, var(--pink), #C45FCF); }
 .bd-2 .breakdown-icon { background: linear-gradient(135deg, var(--purple), var(--blue)); }
 .bd-3 .breakdown-icon { background: linear-gradient(135deg, var(--blue), #4DA8FF); }
+.bd-4 .breakdown-icon { background: linear-gradient(135deg, #10b981, #0ea5e9); }
 
 .breakdown-count {
   font-family: var(--font-display); font-size: clamp(44px, 10vw, 72px); font-weight: 600;
@@ -408,6 +410,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .bd-1 .breakdown-count { color: var(--pink); }
 .bd-2 .breakdown-count { color: var(--purple); }
 .bd-3 .breakdown-count { color: #7FBFFF; }
+.bd-4 .breakdown-count { color: #10b981; }
 
 .breakdown-title {
   font-family: var(--font-display); font-size: 20px; font-weight: 600;
@@ -1213,6 +1216,7 @@ const Icon = {
   Clock: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.5"/><path d="M12 7V12L15 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
   List:  () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M9 6H20M9 12H20M9 18H20M4 6H5M4 12H5M4 18H5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
   Brain: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 5C10 3 6 4 5 7C3 7 2 9 3 11C2 13 3 15 5 15C5 17 7 18 9 17C11 19 14 18 15 15M12 5C14 3 18 4 19 7C21 7 22 9 21 11C22 13 21 15 19 15C19 17 17 18 15 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M12 5V17" stroke="currentColor" strokeWidth="1.5"/></svg>,
+  Shuffle: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M16 3h5v5M4 20l17-17M16 20h5v-5M4 4l17 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   Users: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="8" cy="9" r="3" stroke="currentColor" strokeWidth="1.5"/><circle cx="16" cy="9" r="3" stroke="currentColor" strokeWidth="1.5"/><path d="M3 19C3 16 5 14 8 14C11 14 13 16 13 19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M13 19C13 16 15 14 18 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
   Video: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="15" height="14" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M17 9L22 6V18L17 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
 };
@@ -1541,13 +1545,19 @@ function Breakdown() {
       pills:['180 minutes','65 questions','Real GATE pattern'],
       icon:<Icon.Chart/>,
     },
+    {
+      cls:'bd-4', count:'6', title:'Mixed Subject Tests',
+      desc:'Cross-subject combinations that mirror how GATE DA actually mixes topics — trains you to switch contexts fast.',
+      pills:['Complete Maths','Python + DBMS + DSA + Warehousing','ML + AI','LA + Python + ML','Prob + Stats + DSA','Calculus + AI + DBMS + Warehousing'],
+      icon:<Icon.Shuffle/>,
+    },
   ];
   return (
     <section className="section" id="breakdown">
       <div className="container">
         <div className="section-eyebrow fade-in">What's inside</div>
         <h2 className="fade-in" style={{ fontFamily:'var(--font-display)', fontSize:'clamp(32px,4vw,56px)', fontWeight:600, letterSpacing:'-0.035em', lineHeight:1, marginBottom:16 }}>
-          67 tests. <em>Zero filler.</em>
+          73 tests. <em>Zero filler.</em>
         </h2>
         <p className="section-sub fade-in">Every test is placed where it matters most in your prep timeline, not just a bulk dump of questions.</p>
         <div className="breakdown-grid">
