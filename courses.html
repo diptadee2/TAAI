@@ -226,11 +226,11 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   display: inline-flex; align-items: center; gap: 5px;
   font-size: 12px; font-weight: 600; text-decoration: none; white-space: nowrap;
   margin-top: 12px; color: var(--purple); opacity: 0.8;
-  transition: opacity .2s ease, gap .26s cubic-bezier(.34,1.2,.64,1);
+  transition: opacity .22s ease;
 }
-.hero-proof-link:hover { opacity: 1; gap: 9px; }
-.hero-proof-link svg { transition: transform .26s cubic-bezier(.34,1.2,.64,1); flex-shrink: 0; }
-.hero-proof-link:hover svg { transform: translateX(2px); }
+.hero-proof-link:hover { opacity: 1; }
+.hero-proof-link svg { transition: transform .38s cubic-bezier(.34,1.28,.64,1); flex-shrink: 0; }
+.hero-proof-link:hover svg { transform: translateX(5px); }
 @media (hover: none) { .hero-proof:active { transform: scale(0.975); transition-duration: .12s; } }
 @media (max-width: 768px) {
   .page-hero-inner { grid-template-columns: 1fr; gap: 36px; }
