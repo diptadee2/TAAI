@@ -781,7 +781,7 @@ function ScrollProgress() {
 
 function App() {
   React.useEffect(() => {
-    const mobile = window.matchMedia('(max-width: 768px)').matches;
+    const mobile = window.matchMedia('(max-width: 1024px)').matches;
     const io = new IntersectionObserver(entries => {
       const vis = entries.filter(e => e.isIntersecting);
       vis.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
@@ -790,7 +790,7 @@ function App() {
         e.target.classList.add('visible');
         io.unobserve(e.target);
       });
-    }, { threshold: 0.12 });
+    }, { threshold: 0.05, rootMargin: '0px 0px -40px 0px' });
     document.querySelectorAll('.fade-in').forEach(el => io.observe(el));
     return () => io.disconnect();
   }, []);
