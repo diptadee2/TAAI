@@ -468,6 +468,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .course-card:hover .course-price-old { color: rgba(255,255,255,0.42); }
 .course-card .btn-ghost { position: relative; z-index: 1; transition: background .28s ease, color .28s ease, border-color .28s ease; }
 .course-card:hover .btn-ghost { background: rgba(255,255,255,0.18); color: #fff; border-color: rgba(255,255,255,0.42); }
+.course-card .btn-ghost svg { transition: transform .28s ease-out; flex-shrink: 0; }
+.course-card:hover .btn-ghost svg { transform: translateX(3px); }
 
 /* Coming soon card */
 .placement-card {
@@ -1233,22 +1235,22 @@ const COMBOS = [
 
 // ── INDIVIDUAL COURSES ───────────────────────────────────────────
 const INDIVIDUAL = [
-  { num: '01', title: 'Linear Algebra', price: '₹1,999', priceOld: '₹2,999', validity: 'FEB 20, 2027',
-    icon: <Icon.Chart />, grad: 'linear-gradient(145deg,#6B4AFF,#4D8BFF)', shadow: 'rgba(107,74,255,0.32)',
-    href: 'https://learn.taai.live/learn/Linear-Algebra--Mathematics-',
-    topics: ['Matrices & determinants', 'Eigenvalues & vectors', 'Linear transformations'] },
-  { num: '02', title: 'Probability', price: '₹2,499', priceOld: '₹3,499', validity: 'FEB 20, 2027',
-    icon: <Icon.Target />, grad: 'linear-gradient(145deg,#FF7FB7,#8B5CF6)', shadow: 'rgba(255,127,183,0.32)',
-    href: 'https://learn.taai.live/learn/Probability',
-    topics: ['Conditional probability', 'Random variables', 'Distributions'] },
-  { num: '03', title: 'Statistics', price: '₹1,499', priceOld: '₹2,499', validity: 'FEB 20, 2027',
+  { num: '01', title: 'Statistics', price: '₹1,499', priceOld: '₹2,499', validity: 'FEB 20, 2027',
     icon: <Icon.Book />, grad: 'linear-gradient(145deg,#4D8BFF,#7FA8FF)', shadow: 'rgba(77,139,255,0.32)',
     href: 'https://learn.taai.live/learn/Statistics',
     topics: ['Hypothesis testing', 'Estimation theory', 'Regression basics'] },
-  { num: '04', title: 'Calculus', price: '₹1,499', priceOld: '₹2,499', validity: 'FEB 20, 2027',
+  { num: '02', title: 'Calculus', price: '₹1,499', priceOld: '₹2,499', validity: 'FEB 20, 2027',
     icon: <Icon.Note />, grad: 'linear-gradient(145deg,#FF7FB7,#FF9ECB)', shadow: 'rgba(255,127,183,0.28)',
     href: 'https://learn.taai.live/learn/Calculus-and-Optimization',
     topics: ['Limits & continuity', 'Differentiation', 'Optimization & integration'] },
+  { num: '03', title: 'Linear Algebra', price: '₹1,999', priceOld: '₹2,999', validity: 'FEB 20, 2027',
+    icon: <Icon.Chart />, grad: 'linear-gradient(145deg,#6B4AFF,#4D8BFF)', shadow: 'rgba(107,74,255,0.32)',
+    href: 'https://learn.taai.live/learn/Linear-Algebra--Mathematics-',
+    topics: ['Matrices & determinants', 'Eigenvalues & vectors', 'Linear transformations'] },
+  { num: '04', title: 'Probability', price: '₹2,499', priceOld: '₹3,499', validity: 'FEB 20, 2027',
+    icon: <Icon.Target />, grad: 'linear-gradient(145deg,#FF7FB7,#8B5CF6)', shadow: 'rgba(255,127,183,0.32)',
+    href: 'https://learn.taai.live/learn/Probability',
+    topics: ['Conditional probability', 'Random variables', 'Distributions'] },
   { num: '05', title: 'Machine Learning', price: '₹3,999', priceOld: '₹4,999', validity: 'FEB 20, 2027',
     icon: <Icon.Code />, grad: 'linear-gradient(145deg,#8B5CF6,#C4B0FF)', shadow: 'rgba(139,92,246,0.34)',
     href: 'https://learn.taai.live/learn/taAI-Machine-Learning-Full-Course',
