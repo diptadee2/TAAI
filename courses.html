@@ -480,10 +480,19 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .course-card:hover .course-price { color: #fff; }
 .course-price-old { font-size: 13px; color: var(--ink-soft); text-decoration: line-through; transition: color .28s ease; }
 .course-card:hover .course-price-old { color: rgba(255,255,255,0.42); }
-.course-card .btn-ghost { position: relative; z-index: 1; transition: background .28s ease, color .28s ease, border-color .28s ease; }
-.course-card:hover .btn-ghost { background: rgba(255,255,255,0.18); color: #fff; border-color: rgba(255,255,255,0.42); }
-.course-card .btn-ghost svg { transition: transform .28s ease-out; flex-shrink: 0; }
+.course-card .btn-ghost {
+  position: relative; z-index: 1; overflow: hidden;
+  transition: background .3s ease, color .3s ease, border-color .3s ease, transform .32s cubic-bezier(.34,1.15,.64,1), box-shadow .3s ease;
+}
+.course-card:hover .btn-ghost { background: rgba(255,255,255,0.14); color: #fff; border-color: rgba(255,255,255,0.38); }
+.course-card .btn-ghost:hover {
+  background: rgba(255,255,255,0.92); color: var(--ink);
+  border-color: transparent; transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+}
+.course-card .btn-ghost svg { transition: transform .3s cubic-bezier(.34,1.2,.64,1); flex-shrink: 0; }
 .course-card:hover .btn-ghost svg { transform: translateX(3px); }
+.course-card .btn-ghost:hover svg { transform: translateX(6px); }
 
 /* Coming soon card */
 .placement-card {
