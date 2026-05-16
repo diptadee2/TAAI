@@ -816,8 +816,8 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 /* ── Why TAAI strip ──────────────────────────────────── */
 .why-strip {
   padding: 96px 0 108px;
-  background: #07040f;
-  background-image: radial-gradient(circle, rgba(139,92,246,0.11) 1px, transparent 1px);
+  background: #1a0938;
+  background-image: radial-gradient(circle, rgba(139,92,246,0.16) 1px, transparent 1px);
   background-size: 32px 32px;
   position: relative;
   overflow: hidden;
@@ -825,9 +825,9 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 .why-strip::before {
   content: ''; position: absolute; inset: 0;
   background:
-    radial-gradient(ellipse 60% 70% at 12% 50%, rgba(139,92,246,0.22) 0%, transparent 65%),
-    radial-gradient(ellipse 50% 60% at 88% 50%, rgba(236,72,153,0.15) 0%, transparent 65%),
-    radial-gradient(ellipse 50% 55% at 50% 110%, rgba(6,182,212,0.12) 0%, transparent 60%);
+    radial-gradient(ellipse 65% 75% at 10% 50%, rgba(139,92,246,0.35) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 65% at 90% 50%, rgba(236,72,153,0.22) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 55% at 50% 110%, rgba(6,182,212,0.18) 0%, transparent 60%);
   pointer-events: none;
 }
 .why-strip-label {
@@ -858,21 +858,12 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   background: linear-gradient(90deg, transparent, rgba(var(--card-rgb, 139,92,246), 0.9), transparent);
   opacity: 0.45; transition: opacity .3s ease;
 }
-.why-pillar::after {
-  content: attr(data-num);
-  position: absolute; bottom: -18px; right: 18px;
-  font-family: var(--font-display); font-size: 100px; font-weight: 900; letter-spacing: -0.05em; line-height: 1;
-  color: rgba(var(--card-rgb, 139,92,246), 0.07);
-  pointer-events: none; user-select: none;
-  transition: color .35s ease;
-}
 .why-pillar:hover {
   border-color: rgba(var(--card-rgb, 139,92,246), 0.5);
   box-shadow: 0 0 0 1px rgba(var(--card-rgb, 139,92,246), 0.1), 0 28px 72px rgba(var(--card-rgb, 139,92,246), 0.26), 0 4px 20px rgba(0,0,0,0.4);
   transform: translateY(-6px);
 }
 .why-pillar:hover::before { opacity: 1; }
-.why-pillar:hover::after { color: rgba(var(--card-rgb, 139,92,246), 0.14); }
 .why-icon-wrap {
   width: 80px; height: 80px; border-radius: 24px;
   display: grid; place-items: center;
