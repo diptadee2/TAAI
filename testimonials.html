@@ -245,18 +245,16 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .section-header { margin-bottom: 0; }
 .section-head { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 56px; gap: 24px; flex-wrap: wrap; }
 .section-head-left { max-width: 720px; }
-@property --rh-mx { syntax: '<percentage>'; initial-value: 50%; inherits: false; }
-@property --rh-my { syntax: '<percentage>'; initial-value: 50%; inherits: false; }
 .results-grid { display: flex; flex-direction: column; gap: 16px; }
 .result-hero {
   border-radius: var(--radius-lg); padding: 48px 56px;
-  background-image: radial-gradient(circle at var(--rh-mx) var(--rh-my), rgba(255,127,183,0.16) 0%, rgba(139,92,246,0.06) 40%, transparent 65%), radial-gradient(circle, rgba(255,255,255,0.09) 1.5px, transparent 1.5px), linear-gradient(135deg, #14102B 0%, #221260 55%, #1a0d50 100%);
-  background-size: auto, 28px 28px, auto;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.09) 1.5px, transparent 1.5px), linear-gradient(135deg, #14102B 0%, #221260 55%, #1a0d50 100%);
+  background-size: 28px 28px, auto;
   border: 1px solid rgba(139,92,246,0.35);
   box-shadow: 0 12px 48px rgba(107,75,255,0.28);
   position: relative; overflow: hidden;
   display: flex; align-items: center; gap: 48px;
-  transition: box-shadow .4s ease, border-color .4s ease, --rh-mx .18s ease-out, --rh-my .18s ease-out;
+  transition: box-shadow .4s ease, border-color .4s ease;
 }
 .result-hero:hover { box-shadow: 0 20px 64px rgba(107,75,255,0.4); border-color: rgba(139,92,246,0.55); }
 .result-hero::before {
@@ -1056,8 +1054,7 @@ function PreviousBatch() {
 
         <div className="results-grid" style={{ marginBottom: 56 }}>
           <div className="result-hero fade-in"
-            onMouseMove={e=>{const r=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--rh-mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');e.currentTarget.style.setProperty('--rh-my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%');}}
-            onMouseLeave={e=>{e.currentTarget.style.setProperty('--rh-mx','50%');e.currentTarget.style.setProperty('--rh-my','50%');}}>
+>
             <div className="result-hero-num">2.5</div>
             <div className="result-hero-text">
               <div className="result-hero-eyebrow">GATE DA 2025 batch</div>
