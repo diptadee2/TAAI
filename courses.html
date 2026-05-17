@@ -758,7 +758,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .course-card:hover .course-title { color: inherit; }
   .course-card:hover .course-validity { color: var(--ink-soft); }
   .course-card:hover .course-topics { max-height: 0; opacity: 0; margin-bottom: 0; }
-  .course-card:active { transform: scale(0.97); transition: transform .18s ease-out, box-shadow .18s ease-out; }
   /* Combo includes, show without hover */
   .combo-includes li { opacity: 1; transform: translateX(0); }
   .combo-check svg path { stroke-dashoffset: 0; }
@@ -769,7 +768,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 @media (max-width: 768px) {
   .combo-card.featured.visible:active { transform: scale(0.975); }
 
-  /* Individual course cards — no animations on mobile, scroll-up reveal only */
+  /* Individual course cards — always expanded, no animations, scroll-up reveal only */
   .course-card,
   .course-card::before,
   .course-card .course-icon,
@@ -779,11 +778,16 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .course-card .course-price-old,
   .course-card .btn-ghost,
   .course-card .btn-ghost svg,
-  .course-card .ticket-notch-line {
+  .course-card .ticket-notch-line,
+  .course-card .course-topics,
+  .course-card .course-topic {
     transition: none !important;
     animation: none !important;
   }
-  .course-card:active { transform: none; }
+  .course-card:active,
+  .course-card:hover { transform: none; }
+  .course-topics { max-height: none !important; opacity: 1 !important; margin-bottom: 14px !important; overflow: visible !important; }
+  .course-topic { transform: none !important; opacity: 1 !important; color: var(--ink-dim) !important; }
 }
 
 /* YouTube link wiggle */
@@ -859,7 +863,6 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   .course-topics { max-height: 200px; opacity: 1; margin-bottom: 14px; }
   .course-topic { transform: none; opacity: 1; color: var(--ink-dim); }
   .course-topic::before { background: var(--purple); }
-  .course-card:active { transform: scale(0.97); transition: transform .12s ease; }
   .combo-card:hover { transform: none; }
   .combo-featured-frame:hover { transform: none; box-shadow: 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12); }
   .combo-featured-frame { background: none; padding: 0; animation: none; box-shadow: 0 0 0 2px #8b5cf6, 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12); -webkit-tap-highlight-color: transparent; }
