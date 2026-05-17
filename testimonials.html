@@ -877,9 +877,11 @@ function Nav() {
 }
 
 function AnimatedNum({ to, suffix = '', duration = 1400 }) {
-  const [val, setVal] = React.useState(0);
+  const isMobile = window.matchMedia('(max-width: 767px)').matches;
+  const [val, setVal] = React.useState(isMobile ? to : 0);
   const ref = React.useRef(null);
   React.useEffect(() => {
+    if (isMobile) return;
     const el = ref.current; if (!el) return;
     let started = false;
     const io = new IntersectionObserver(entries => {
