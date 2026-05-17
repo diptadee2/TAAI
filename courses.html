@@ -766,14 +766,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 
 }
 
-/* ── Featured card float (mobile only, after reveal) ────────── */
-@keyframes card-float {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50%       { transform: translateY(-8px) scale(1); }
-}
 @media (max-width: 768px) {
-  .combo-card.featured.visible { animation: card-float 3.8s ease-in-out 0.5s infinite; }
-  .combo-card.featured.visible:active { animation-play-state: paused; transform: scale(0.975); }
+  .combo-card.featured.visible:active { transform: scale(0.975); }
 }
 
 /* YouTube link wiggle */
@@ -855,6 +849,7 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   .combo-featured-frame { background: none; padding: 0; animation: none; box-shadow: 0 0 0 2px #8b5cf6, 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12); -webkit-tap-highlight-color: transparent; }
   .combo-featured-frame, .combo-card.featured { -webkit-tap-highlight-color: transparent; }
   .combo-card.featured::after { animation: none; }
+  .combo-card .btn-primary::before { animation: none; }
   .incl-tab:hover { background: none; border-color: transparent; }
   .incl-tab.active { transform: none; }
 }
