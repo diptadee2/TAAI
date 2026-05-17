@@ -768,6 +768,22 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 
 @media (max-width: 768px) {
   .combo-card.featured.visible:active { transform: scale(0.975); }
+
+  /* Individual course cards — no animations on mobile, scroll-up reveal only */
+  .course-card,
+  .course-card::before,
+  .course-card .course-icon,
+  .course-card .course-title,
+  .course-card .course-validity,
+  .course-card .course-price,
+  .course-card .course-price-old,
+  .course-card .btn-ghost,
+  .course-card .btn-ghost svg,
+  .course-card .ticket-notch-line {
+    transition: none !important;
+    animation: none !important;
+  }
+  .course-card:active { transform: none; }
 }
 
 /* YouTube link wiggle */
