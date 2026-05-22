@@ -1635,7 +1635,7 @@ function WhyStrip() {
         <p className="why-strip-sub fade-in">Every choice we made, from content to pedagogy, was made with one exam in mind.</p>
         <div className="why-grid">
           {WHY_PILLARS.map((p, i) => (
-            <div key={i} className={`why-pillar why-bd-${i+1} fade-in`} style={{ transitionDelay: i * 130 + 'ms', '--card-rgb': p.rgb }}
+            <div key={i} className={`why-pillar why-bd-${i+1} fade-in`} style={{ transitionDelay: i * 60 + 'ms', '--card-rgb': p.rgb }}
               onMouseMove={e => {
                 const r = e.currentTarget.getBoundingClientRect();
                 e.currentTarget.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
