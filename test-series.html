@@ -795,7 +795,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .ts-plan-badge-featured { background: linear-gradient(135deg, rgba(139,92,246,0.32), rgba(99,102,241,0.22)); color: #c4b0ff; border: 1px solid rgba(139,92,246,0.44); }
 .ts-plan-name { font-family: var(--font-display); font-size: 22px; font-weight: 600; color: #fff; margin-bottom: 6px; line-height: 1.2; letter-spacing: -0.02em; position: relative; z-index: 2; }
 .ts-plan-tagline { font-size: 13px; color: rgba(255,255,255,0.36); margin-bottom: 24px; line-height: 1.55; position: relative; z-index: 2; }
-.ts-plan-price { font-family: var(--font-display); font-size: 54px; font-weight: 600; letter-spacing: -0.045em; color: #fff; line-height: 1; position: relative; z-index: 2; }
+.ts-plan-price { font-family: var(--font-display); font-size: 54px; font-weight: 600; letter-spacing: -0.045em; color: #fff; line-height: 1; position: relative; z-index: 2; margin-bottom: 30px; }
 .ts-plan-featured .ts-plan-price { font-size: 62px; background: linear-gradient(135deg, #ede0ff 0%, #c4b0ff 55%, #a78bfa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 .ts-plan-price-meta { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin: 8px 0 22px; position: relative; z-index: 2; }
 .ts-plan-price-old { font-size: 14px; color: rgba(255,255,255,0.28); text-decoration: line-through; }
@@ -2068,12 +2068,7 @@ function TSPricing() {
             <div className="ts-plan-badge ts-plan-badge-pink">Test Series</div>
             <div className="ts-plan-name">GATE DA 2027 Test Series</div>
             <div className="ts-plan-tagline">Full-length and subject-wise tests with performance analytics.</div>
-            <div className="ts-plan-price">₹1,275</div>
-            <div className="ts-plan-price-meta">
-              <span className="ts-plan-price-old">₹1,500</span>
-              <span className="ts-plan-meta-dot">·</span>
-              <span className="ts-plan-discount">Early bird 15% off</span>
-            </div>
+            <div className="ts-plan-price">₹1,500</div>
             <div className="ts-plan-divider" />
             <div className="ts-plan-features">
               {BASIC_FEATS.map((f, i) => (
@@ -2097,12 +2092,7 @@ function TSPricing() {
             <div className="ts-plan-badge ts-plan-badge-blue">Weekly Quizzes</div>
             <div className="ts-plan-name">Weekly Quiz Pack</div>
             <div className="ts-plan-tagline">55+ concept-heavy quizzes to stay sharp throughout the year.</div>
-            <div className="ts-plan-price">₹680</div>
-            <div className="ts-plan-price-meta">
-              <span className="ts-plan-price-old">₹800</span>
-              <span className="ts-plan-meta-dot">·</span>
-              <span className="ts-plan-discount">Early bird 15% off</span>
-            </div>
+            <div className="ts-plan-price">₹800</div>
             <div className="ts-plan-divider" />
             <div className="ts-plan-features">
               {ADDON_FEATS.map((f, i) => (
@@ -2139,12 +2129,7 @@ function TSPricing() {
               </div>
               <div className="ts-plan-name">Test Series + Weekly Quizzes</div>
               <div className="ts-plan-tagline">Everything in one: full test series and weekly quizzes bundled together.</div>
-              <div className="ts-plan-price">₹1,700</div>
-              <div className="ts-plan-price-meta">
-                <span className="ts-plan-price-old">₹2,000</span>
-                <span className="ts-plan-meta-dot">·</span>
-                <span className="ts-plan-discount">Early bird 15% off</span>
-              </div>
+              <div className="ts-plan-price">₹2,000</div>
               <div className="ts-plan-divider" />
               <div className="ts-plan-features">
                 {BASIC_FEATS.map((f, i) => (
