@@ -1225,7 +1225,7 @@ const COMBOS = [
     badge: 'best', badgeLabel: 'Best value',
     accent: 'linear-gradient(90deg, var(--pink), var(--purple), var(--blue))',
     title: 'GATE 2027 Full Course',
-    validity: 'VALID UNTIL APR 15, 2027',
+    validity: 'VALID UNTIL APR 15, 2027', validityNote: '+2 months vs bundles',
     price: '₹10,499', priceOld: '₹14,999', discount: '30% off',
     includes: [
       'Linear Algebra, Probability, Statistics, Calculus',
@@ -1428,7 +1428,10 @@ function ComboCard({ c }) {
       <div className="combo-accent" style={{ background: c.accent }} />
       <div className={'combo-badge ' + c.badge}><Icon.Sparkle />{c.badgeLabel}</div>
       <div className="combo-title">{c.title}</div>
-      <div className="combo-validity">{c.validity}</div>
+      <div className="combo-validity" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        {c.validity}
+        {c.validityNote && <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', background: 'linear-gradient(135deg,var(--pink),var(--purple))', color: '#fff', padding: '2px 8px', borderRadius: 999 }}>{c.validityNote}</span>}
+      </div>
       <div className="combo-divider" />
       <div className="combo-includes-label">What's included</div>
       <div className="combo-includes">
