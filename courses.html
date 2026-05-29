@@ -1226,7 +1226,7 @@ const COMBOS = [
     accent: 'linear-gradient(90deg, var(--pink), var(--purple), var(--blue))',
     title: 'GATE 2027 Full Course',
     validity: 'VALID UNTIL APR 15, 2027', validityNote: '+2 months after GATE',
-    price: '₹10,499', priceOld: '₹14,999', discount: '30% off',
+    price: '₹10,499', priceOld: '₹14,999', discount: '30% off', discountDeadline: 'Offer ends Jun 5',
     includes: [
       'Linear Algebra, Probability, Statistics, Calculus',
       'Machine Learning, AI',
@@ -1453,6 +1453,7 @@ function ComboCard({ c }) {
         {c.priceOld && <div className="combo-price-old">{c.priceOld}</div>}
         {c.discount && <div className="combo-discount">{c.discount}</div>}
       </div>
+      {c.discountDeadline && <div className="combo-saving" style={{ color: '#e05a2b', fontWeight: 600 }}>⏳ {c.discountDeadline}</div>}
       {c.saving && <div className="combo-saving">{c.saving}</div>}
       <a href={c.href} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-full">Enrol now <Icon.ArrowRight /></a>
     </div>
