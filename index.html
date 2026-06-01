@@ -1618,6 +1618,9 @@ function Stats() {
     { img: 'testimonials/46 AIR_2.webp', air: 'AIR 46',  name: 'Arun',            college: '—' },
     { img: 'testimonials/91 AIR.webp',   air: 'AIR 91',  name: 'Tapan Patel',     college: '—' },
     { img: 'testimonials/102 AIR.webp',  air: 'AIR 102', name: 'Parinay Rana',    college: '—' },
+    { initials: 'SB', grad: 'linear-gradient(135deg,#FF7FB7,#8B5CF6)', air: 'AIR 38',  name: 'Sanved Bangale', college: 'IIT Madras · M.Tech DS & AI' },
+    { initials: 'YR', grad: 'linear-gradient(135deg,#8B5CF6,#4D8BFF)', air: 'AIR 49',  name: 'Yash Raj',       college: 'IIT Madras · M.Tech DS & AI' },
+    { initials: 'SD', grad: 'linear-gradient(135deg,#4D8BFF,#6B4BFF)', air: 'AIR 129', name: 'Sarthak Dey',    college: 'IIT Kharagpur · M.Tech in AI' },
   ];
   return (
     <section className="toppers-strip">
@@ -1629,12 +1632,15 @@ function Stats() {
         {toppers.map((t, i) => (
           <div key={i} className="topper-card">
             <div className="topper-img-wrap">
-              <img className="topper-img" src={t.img} alt={t.name} loading="lazy" />
+              {t.img
+                ? <img className="topper-img" src={t.img} alt={t.name} loading="lazy" />
+                : <div style={{ width: '100%', height: '100%', background: t.grad, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: 48, fontWeight: 600, color: 'rgba(255,255,255,0.9)', letterSpacing: '-0.02em' }}>{t.initials}</div>
+              }
             </div>
             <div className="topper-info">
               <div className="topper-air">{t.air}</div>
               <div className="topper-name">{t.name}</div>
-              {t.college !== '—' && <div className="topper-college">{t.college}</div>}
+              {t.college && t.college !== '—' && <div className="topper-college">{t.college}</div>}
             </div>
           </div>
         ))}
