@@ -421,7 +421,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .feat-rank-num { font-family: var(--font-display); font-size: 64px; font-weight: 600; letter-spacing: -0.05em; line-height: 1; background: linear-gradient(120deg, var(--pink), var(--lilac)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .feat-quote { font-size: 16px; line-height: 1.65; color: rgba(255,255,255,0.82); font-style: italic; flex: 1; }
 .feat-author { display: flex; align-items: center; gap: 14px; }
-.feat-avatar { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; color: #fff; flex-shrink: 0; }
+.feat-avatar { width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 22px; color: #fff; flex-shrink: 0; overflow: hidden; }
+.feat-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }
 .feat-name { font-weight: 600; font-size: 15px; color: #fff; }
 .feat-role { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 2px; }
 
@@ -1127,7 +1128,9 @@ function PreviousBatch() {
               </div>
               <p className="feat-quote">"{f.quote}"</p>
               <div className="feat-author">
-                <div className="feat-avatar" style={{ background: f.grad }}>{initials(f.name)}</div>
+                <div className="feat-avatar" style={{ background: f.photo ? 'none' : f.grad }}>
+                  {f.photo ? <img src={f.photo} alt={f.name} /> : initials(f.name)}
+                </div>
                 <div>
                   <div className="feat-name">{f.name}</div>
                   <div className="feat-role">{f.role}</div>
