@@ -549,8 +549,7 @@ body {
 .toppers-rows { display: flex; flex-direction: column; gap: 16px; }
 .toppers-scroll { display: flex; gap: 16px; padding: 4px 0 4px; width: max-content; animation: toppers-marquee 28s linear infinite; }
 .toppers-scroll-reverse { animation: toppers-marquee-rev 34s linear infinite; }
-.toppers-scroll-outer:hover .toppers-scroll,
-.toppers-scroll-outer:hover .toppers-scroll-reverse { animation-play-state: paused; }
+.toppers-scroll:hover, .toppers-scroll-reverse:hover { animation-play-state: paused; }
 .topper-card { flex: 0 0 190px; border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); transition: transform .36s cubic-bezier(.34,1.1,.64,1), box-shadow .32s ease, border-color .28s; cursor: pointer; }
 .topper-card:hover { transform: translateY(-10px) rotate(2deg); box-shadow: 0 28px 60px rgba(139,92,246,0.36), 0 8px 20px rgba(0,0,0,0.3); border-color: rgba(139,92,246,0.35); }
 .topper-img-wrap { width: 100%; aspect-ratio: 3/4; overflow: hidden; }
@@ -1635,22 +1634,6 @@ function Hero() {
 }
 
 // ============ STATS ============
-function TopperAirNum({ air, counted }) {
-  const [val, setVal] = React.useState(0);
-  React.useEffect(() => {
-    if (!counted) return;
-    let raf;
-    const start = performance.now();
-    const tick = now => {
-      const t = Math.min(1, (now - start) / 900);
-      setVal(Math.round(air * (1 - Math.pow(1 - t, 3))));
-      if (t < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [counted]);
-  return <span style={{ fontVariantNumeric: 'tabular-nums' }}>{val}</span>;
-}
 
 const IIT_TAG  = { label: 'IIT',  bg: 'rgba(139,92,246,0.22)',  color: '#c4b0ff' };
 const IISC_TAG = { label: 'IISc', bg: 'rgba(255,127,183,0.22)', color: '#ffb3d4' };
@@ -1670,17 +1653,7 @@ function Stats() {
     { initials: 'SD', grad: 'linear-gradient(135deg,#4D8BFF,#6B4BFF)', air: 129, name: 'Sarthak Dey',    college: 'IIT Kharagpur · M.Tech in AI',   tag: IIT_TAG,  quote: null, yt: null },
   ];
 
-  const [counted, setCounted]   = React.useState(false);
   const [selected, setSelected] = React.useState(null);
-  const sectionRef = React.useRef(null);
-
-  React.useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setCounted(true); io.disconnect(); } }, { threshold: 0.15 });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
 
   React.useEffect(() => {
     if (!selected) return;
@@ -1700,7 +1673,7 @@ function Stats() {
         }
       </div>
       <div className="topper-info">
-        <div className="topper-air">AIR {clone ? t.air : <TopperAirNum air={t.air} counted={counted} />}</div>
+        <div className="topper-air">AIR {t.air}</div>
         {t.tag && <div className="topper-tag" style={{ background: t.tag.bg, color: t.tag.color }}>{t.tag.label}</div>}
         <div className="topper-name">{t.name}</div>
         {t.college && <div className="topper-college">{t.college}</div>}
@@ -1709,7 +1682,7 @@ function Stats() {
   );
 
   return (
-    <section className="toppers-strip" ref={sectionRef}>
+    <section className="toppers-strip">
       <div style={{ maxWidth: 1280, margin: '0 auto 36px', width: '100%', padding: '0 max(32px,24px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
         <div>
           <div className="toppers-title">GATE DA 2026 <em>Toppers.</em></div>
