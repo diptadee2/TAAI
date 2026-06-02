@@ -467,7 +467,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .testi-rank-badge span { font-family: var(--font-display); font-size: 18px; font-weight: 800; line-height: 1.1; }
 .testi-quote { font-size: 14px; line-height: 1.75; color: var(--ink-dim); flex: 1; position: relative; z-index: 1; }
 .testi-author { display: flex; align-items: center; gap: 13px; padding-top: 14px; border-top: 1px solid var(--line); position: relative; z-index: 1; }
-.testi-avatar { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; flex-shrink: 0; }
+.testi-avatar { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; color: #fff; flex-shrink: 0; overflow: hidden; }
+.testi-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }
 .testi-name { font-weight: 600; font-size: 14px; color: var(--ink); }
 .testi-role { font-size: 11.5px; color: var(--ink-soft); margin-top: 2px; }
 
@@ -906,42 +907,29 @@ function AnimatedNum({ to, suffix = '', duration = 1400 }) {
   return <span ref={ref} style={{ fontVariantNumeric: 'tabular-nums' }}>{val}{suffix}</span>;
 }
 
-// ── This year's results ───────────────────────────────────────────
-// priority: true = full course student (shown first, ascending rank)
-const THIS_YEAR_IMGS = [
-  { src: 'testimonials/15 AIR.webp',    air: 15,  name: 'Alin Anto'                        },
-  { src: 'testimonials/23 AIR.webp',    air: 23,  name: 'Suryamani',        priority: true  },
-  { src: 'testimonials/46 AIR.webp',    air: 46,  name: 'Lakshit Mathur',   priority: true  },
-  { src: 'testimonials/46 AIR_2.webp',  air: 46                                              },
-  { src: 'testimonials/51 AIR.webp',    air: 51                                              },
-  { src: 'testimonials/84 AIR.webp',    air: 84                                              },
-  { src: 'testimonials/91 AIR.webp',    air: 91,  name: 'Tapan Patel',      priority: true  },
-  { src: 'testimonials/102 AIR.webp',   air: 102, name: 'Parinay Rana',     priority: true  },
-  { src: 'testimonials/111 AIR.webp',   air: 111, name: 'Vamsi',            priority: true  },
-  { src: 'testimonials/117 AIR.webp',   air: 117                                             },
-  { src: 'testimonials/125 AIR.webp',   air: 125, name: 'Soumyadeep Ghosh', priority: true  },
-  { src: 'testimonials/137 AIR.webp',   air: 137                                             },
-  { src: 'testimonials/149 AIR.webp',   air: 149                                             },
-  { src: 'testimonials/155 AIR AYUSH DWIVEDI FULL COURSE.webp', air: 155, name: 'Ayush Dwivedi', priority: true },
-  { src: 'testimonials/168 AIR.webp',   air: 168                                             },
-  { src: 'testimonials/178 AIR.webp',   air: 178                                             },
-  { src: 'testimonials/221 AIR.webp',   air: 221                                             },
-  { src: 'testimonials/235 AIR.webp',   air: 235                                             },
-  { src: 'testimonials/296 AIR.webp',   air: 296, name: 'Omkar Punjaji',    priority: true  },
+// ── GATE DA 2026 batch ────────────────────────────────────────────
+// photo: drop file into testimonials/photos/ and set the path here
+const BATCH_2026 = [
+  { air: 15,  name: 'Alin Anto',       college: null, grad: 'linear-gradient(135deg,#FF7FB7,#8B5CF6)', photo: null, quote: null },
+  { air: 23,  name: 'Suryamani',       college: null, grad: 'linear-gradient(135deg,#8B5CF6,#4D8BFF)', photo: null, quote: null },
+  { air: 46,  name: 'Lakshit Mathur',  college: null, grad: 'linear-gradient(135deg,#4D8BFF,#6B4BFF)', photo: null, quote: null },
+  { air: 46,  name: 'Arun',            college: null, grad: 'linear-gradient(135deg,#6B4BFF,#FF7FB7)', photo: null, quote: 'I followed your YouTube Concept to Combat series for ML revision, really easy to understand. I also attempted the TAAI AIMT; the question level was well suited for GATE DA. I was able to clear some conceptual doubts with ease. Thank you for your hard work.' },
+  { air: 51,  name: null,              college: null, grad: 'linear-gradient(135deg,#FF7FB7,#4D8BFF)', photo: null, quote: null },
+  { air: 84,  name: null,              college: null, grad: 'linear-gradient(135deg,#4D8BFF,#8B5CF6)', photo: null, quote: null },
+  { air: 91,  name: 'Tapan Patel',     college: null, grad: 'linear-gradient(135deg,#FF7FB7,#8B5CF6)', photo: null, quote: 'The way Manoj Sir taught Maths and ML made even tough topics feel much easier to understand. I never really felt scared of Maths or ML while preparing for the exam. The courses and guidance from TAAI played a big role in my journey.' },
+  { air: 102, name: 'Parinay Rana',    college: null, grad: 'linear-gradient(135deg,#8B5CF6,#FF7FB7)', photo: null, quote: 'The lectures felt just right, clear, to the point, and not overloaded with unnecessary content. Concepts were explained so intuitively, with plenty of examples. Manoj Sir\'s personal support truly stood out and made a big difference in my learning.' },
+  { air: 111, name: 'Vamsi',           college: null, grad: 'linear-gradient(135deg,#4D8BFF,#FF7FB7)', photo: null, quote: null },
+  { air: 117, name: null,              college: null, grad: 'linear-gradient(135deg,#6B4BFF,#4D8BFF)', photo: null, quote: null },
+  { air: 125, name: 'Soumyadeep Ghosh',college: null, grad: 'linear-gradient(135deg,#FF7FB7,#8B5CF6)', photo: null, quote: 'Manoj Sir\'s way of breaking down complex mathematical concepts, along with sharing smart tricks and shortcuts, made a massive difference in solving problems faster. He doesn\'t just teach concepts; he teaches how to think through questions efficiently.' },
+  { air: 137, name: null,              college: null, grad: 'linear-gradient(135deg,#8B5CF6,#6B4BFF)', photo: null, quote: null },
+  { air: 149, name: null,              college: null, grad: 'linear-gradient(135deg,#4D8BFF,#FF7FB7)', photo: null, quote: null },
+  { air: 155, name: 'Ayush Dwivedi',   college: null, grad: 'linear-gradient(135deg,#FF7FB7,#6B4BFF)', photo: null, quote: 'His way of breaking down complex mathematical and data science concepts, focusing on intuition and problem-solving rather than just formulas, completely changed how I approached the exam. Topics like statistics and ML, which initially felt abstract, became much clearer and more enjoyable to study.' },
+  { air: 168, name: null,              college: null, grad: 'linear-gradient(135deg,#6B4BFF,#FF7FB7)', photo: null, quote: null },
+  { air: 178, name: null,              college: null, grad: 'linear-gradient(135deg,#FF7FB7,#4D8BFF)', photo: null, quote: null },
+  { air: 221, name: null,              college: null, grad: 'linear-gradient(135deg,#4D8BFF,#8B5CF6)', photo: null, quote: null },
+  { air: 235, name: null,              college: null, grad: 'linear-gradient(135deg,#8B5CF6,#FF7FB7)', photo: null, quote: null },
+  { air: 296, name: 'Omkar Punjaji',   college: null, grad: 'linear-gradient(135deg,#FF7FB7,#8B5CF6)', photo: null, quote: null },
 ];
-
-// Priority students first (ascending rank), then the rest (ascending rank)
-const GALLERY_IMGS = [
-  ...THIS_YEAR_IMGS.filter(i => i.priority).sort((a, b) => a.air - b.air),
-  ...THIS_YEAR_IMGS.filter(i => !i.priority).sort((a, b) => a.air - b.air),
-];
-
-// Distribute into 3 columns so priority students visually lead column 1
-function buildColumns(items, n = 3) {
-  const cols = Array.from({ length: n }, () => []);
-  items.forEach((item, i) => cols[i % n].push(item));
-  return cols;
-}
 
 // ── Previous batch (GATE 2025) ────────────────────────────────────
 const FEATURED_2025 = [
@@ -1042,6 +1030,7 @@ function Strip() {
 
 // ── This Year Gallery ─────────────────────────────────────────────
 function ThisYearGallery() {
+  const ini = name => name ? name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '?';
   return (
     <section className="section" id="batch-2026">
       <div className="container">
@@ -1051,22 +1040,23 @@ function ThisYearGallery() {
             GATE DA 2026.<br /><em>Results speak.</em>
           </h2>
         </div>
-        <div className="gallery-masonry">
-          {buildColumns(GALLERY_IMGS, 2).map((col, ci) => (
-            <div key={ci} className="gallery-col">
-              {col.map((img, ri) => (
-                <div key={img.src} className={`gallery-item fade-in ${ci === 0 ? 'from-left' : 'from-right'}`} style={{
-                  '--ty': '0px',
-                  '--delay': `${ri * 70}ms`,
-                }}>
-                  <div className="gallery-img-wrap">
-                    <img src={img.src} alt={`AIR ${img.air} GATE DA 2026`} loading="lazy" />
-                  </div>
-                  <div className="gallery-footer">
-                    <span className="gallery-air-badge">AIR {img.air}</span>
-                  </div>
+        <div className="testi-grid">
+          {BATCH_2026.map((s, i) => (
+            <div key={i} className="testi-card fade-in" style={{ '--delay': `${i * 45}ms` }}>
+              <div className="testi-rank-badge">
+                <span>All India Rank</span>
+                <span>{s.air}</span>
+              </div>
+              {s.quote && <p className="testi-quote">"{s.quote}"</p>}
+              <div className="testi-author">
+                <div className="testi-avatar" style={{ background: s.photo ? 'none' : s.grad }}>
+                  {s.photo ? <img src={s.photo} alt={s.name || ''} /> : ini(s.name)}
                 </div>
-              ))}
+                <div>
+                  <div className="testi-name">{s.name || 'GATE DA 2026'}</div>
+                  {s.college && <div className="testi-role">{s.college}</div>}
+                </div>
+              </div>
             </div>
           ))}
         </div>
