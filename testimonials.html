@@ -393,29 +393,39 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 
 /* ── Featured cards ──────────────────────────────────── */
 .featured-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 40px; }
+@keyframes feat-orb-a { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-14px,16px) scale(1.12)} }
+@keyframes feat-orb-b { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(12px,-10px) scale(1.09)} }
 .feat-card {
-  background-color: var(--ink);
-  background-image: radial-gradient(circle at var(--mx, -200%) var(--my, -200%), rgba(139,92,246,0.28) 0%, transparent 55%), radial-gradient(circle, rgba(255,255,255,0.09) 1.5px, transparent 1.5px);
-  background-size: 100% 100%, 28px 28px;
+  background-color: #0f0c24;
+  background-image:
+    radial-gradient(circle at var(--mx,-200%) var(--my,-200%), rgba(139,92,246,0.32) 0%, transparent 52%),
+    radial-gradient(ellipse 90% 55% at 105% -5%, rgba(255,127,183,0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 70% at -5% 105%, rgba(77,139,255,0.14) 0%, transparent 60%),
+    radial-gradient(circle, rgba(255,255,255,0.07) 1.5px, transparent 1.5px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 28px 28px;
+  border: 1px solid rgba(139,92,246,0.2);
   border-radius: var(--radius-xl);
   padding: 40px;
   color: #fff;
   position: relative; overflow: hidden;
   display: flex; flex-direction: column; gap: 20px;
+  box-shadow: 0 4px 24px rgba(107,75,255,0.12);
 }
 .feat-card::before {
   content: '';
   position: absolute; top: -80px; right: -60px;
-  width: 260px; height: 260px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,127,183,0.2) 0%, transparent 70%);
-  pointer-events: none;
+  width: 280px; height: 280px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,127,183,0.32) 0%, rgba(139,92,246,0.18) 45%, transparent 70%);
+  pointer-events: none; filter: blur(18px);
+  animation: feat-orb-a 8s ease-in-out infinite;
 }
 .feat-card::after {
   content: '';
   position: absolute; bottom: -60px; left: -40px;
-  width: 200px; height: 200px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(77,139,255,0.15) 0%, transparent 70%);
-  pointer-events: none;
+  width: 220px; height: 220px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(77,139,255,0.28) 0%, rgba(139,92,246,0.14) 45%, transparent 70%);
+  pointer-events: none; filter: blur(16px);
+  animation: feat-orb-b 11s ease-in-out 1.5s infinite;
 }
 .feat-rank { display: inline-flex; align-items: baseline; gap: 6px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .12em; color: rgba(255,255,255,0.5); text-transform: uppercase; }
 .feat-rank-num { font-family: var(--font-display); font-size: 64px; font-weight: 600; letter-spacing: -0.05em; line-height: 1; background: linear-gradient(120deg, var(--pink), var(--lilac)); -webkit-background-clip: text; background-clip: text; color: transparent; }
