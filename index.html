@@ -539,22 +539,42 @@ body {
 .toppers-title em { font-style: normal; background: linear-gradient(120deg,var(--pink),var(--lilac),var(--blue)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .toppers-sub { font-size: 13px; color: rgba(255,255,255,0.38); letter-spacing: .02em; }
 @keyframes toppers-marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+@keyframes toppers-marquee-rev { 0% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
+@keyframes topper-modal-in { from { opacity: 0; transform: translateY(20px) scale(0.96); } to { opacity: 1; transform: none; } }
+@keyframes topper-overlay-in { from { opacity: 0; } to { opacity: 1; } }
 .toppers-scroll-outer { overflow: hidden; position: relative; }
-.toppers-scroll-outer::before, .toppers-scroll-outer::after { content: ''; position: absolute; top: 0; bottom: 0; width: 80px; z-index: 2; pointer-events: none; }
-.toppers-scroll-outer::before { left: 0; background: linear-gradient(to right, #07051a, transparent); }
-.toppers-scroll-outer::after { right: 0; background: linear-gradient(to left, #07051a, transparent); }
-.toppers-scroll { display: flex; gap: 16px; padding: 4px 0 16px; width: max-content; animation: toppers-marquee 28s linear infinite; }
-.toppers-scroll-outer:hover .toppers-scroll { animation-play-state: paused; }
-.topper-card { flex: 0 0 200px; border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); transition: transform .32s cubic-bezier(.34,1.05,.64,1), box-shadow .32s ease; cursor: default; }
-.topper-card:hover { transform: translateY(-8px); box-shadow: 0 24px 56px rgba(139,92,246,0.32), 0 8px 20px rgba(0,0,0,0.28); border-color: rgba(139,92,246,0.28); }
+.toppers-scroll-outer::before, .toppers-scroll-outer::after { content: ''; position: absolute; top: 0; bottom: 0; width: 100px; z-index: 2; pointer-events: none; }
+.toppers-scroll-outer::before { left: 0; background: linear-gradient(to right, #07051a 30%, transparent); }
+.toppers-scroll-outer::after { right: 0; background: linear-gradient(to left, #07051a 30%, transparent); }
+.toppers-rows { display: flex; flex-direction: column; gap: 16px; }
+.toppers-scroll { display: flex; gap: 16px; padding: 4px 0 4px; width: max-content; animation: toppers-marquee 28s linear infinite; }
+.toppers-scroll-reverse { animation: toppers-marquee-rev 34s linear infinite; }
+.toppers-scroll-outer:hover .toppers-scroll,
+.toppers-scroll-outer:hover .toppers-scroll-reverse { animation-play-state: paused; }
+.topper-card { flex: 0 0 190px; border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); transition: transform .36s cubic-bezier(.34,1.1,.64,1), box-shadow .32s ease, border-color .28s; cursor: pointer; }
+.topper-card:hover { transform: translateY(-10px) rotate(2deg); box-shadow: 0 28px 60px rgba(139,92,246,0.36), 0 8px 20px rgba(0,0,0,0.3); border-color: rgba(139,92,246,0.35); }
 .topper-img-wrap { width: 100%; aspect-ratio: 3/4; overflow: hidden; }
 .topper-img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; transition: transform .55s cubic-bezier(.25,.46,.45,.94); }
-.topper-card:hover .topper-img { transform: scale(1.04); }
-.topper-info { padding: 14px 16px 16px; }
-.topper-air { font-family: var(--font-display); font-size: 26px; font-weight: 600; letter-spacing: -0.04em; line-height: 1; background: linear-gradient(120deg,var(--pink),var(--lilac)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.topper-name { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.9); margin-top: 5px; }
-.topper-college { font-size: 11px; color: rgba(255,255,255,0.38); margin-top: 3px; letter-spacing: .01em; }
-@media (max-width: 768px) { .topper-card { flex: 0 0 160px; } .toppers-head { margin-bottom: 24px; } }
+.topper-card:hover .topper-img { transform: scale(1.05); }
+.topper-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 52px; font-weight: 600; color: rgba(255,255,255,0.9); letter-spacing: -0.02em; }
+.topper-info { padding: 12px 14px 14px; }
+.topper-air { font-family: var(--font-display); font-size: 24px; font-weight: 600; letter-spacing: -0.04em; line-height: 1; background: linear-gradient(120deg,var(--pink),var(--lilac)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.topper-tag { display: inline-flex; align-items: center; font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; margin-top: 5px; }
+.topper-name { font-size: 12.5px; font-weight: 600; color: rgba(255,255,255,0.9); margin-top: 4px; }
+.topper-college { font-size: 10.5px; color: rgba(255,255,255,0.35); margin-top: 2px; letter-spacing: .01em; line-height: 1.4; }
+.toppers-view-all { font-size: 13px; font-weight: 600; padding: 8px 18px; color: rgba(255,255,255,0.55); border: 1.5px solid rgba(255,255,255,0.18); border-radius: 999px; text-decoration: none; transition: color .2s, border-color .2s, background .2s; white-space: nowrap; }
+.toppers-view-all:hover { color: #fff; border-color: rgba(255,255,255,0.45); background: rgba(255,255,255,0.07); }
+.topper-modal-overlay { position: fixed; inset: 0; z-index: 1000; background: rgba(10,6,28,0.84); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; padding: 24px; animation: topper-overlay-in .2s ease; }
+.topper-modal { background: linear-gradient(150deg,#1c1140,#110c2e); border: 1px solid rgba(139,92,246,0.28); border-radius: 24px; max-width: 440px; width: 100%; padding: 36px; position: relative; animation: topper-modal-in .3s cubic-bezier(.34,1.1,.64,1); }
+.topper-modal-close { position: absolute; top: 14px; right: 14px; width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.07); border: none; color: rgba(255,255,255,0.5); cursor: pointer; font-size: 13px; display: grid; place-items: center; transition: background .18s, color .18s; }
+.topper-modal-close:hover { background: rgba(255,255,255,0.14); color: #fff; }
+.topper-modal-air { font-family: var(--font-display); font-size: 56px; font-weight: 600; letter-spacing: -0.04em; line-height: 1; background: linear-gradient(120deg,var(--pink),var(--lilac)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.topper-modal-name { font-size: 22px; font-weight: 600; color: #fff; margin-top: 8px; letter-spacing: -0.01em; }
+.topper-modal-college { font-size: 13px; color: rgba(255,255,255,0.4); margin-top: 4px; }
+.topper-modal-quote { font-size: 14.5px; color: rgba(255,255,255,0.62); line-height: 1.65; margin-top: 22px; font-style: italic; border-left: 2px solid rgba(139,92,246,0.45); padding-left: 16px; }
+.topper-modal-yt { display: inline-flex; align-items: center; gap: 8px; margin-top: 22px; background: #FF0000; color: #fff; padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 13px; text-decoration: none; transition: opacity .2s, transform .22s; }
+.topper-modal-yt:hover { opacity: 0.88; transform: translateY(-2px); }
+@media (max-width: 768px) { .topper-card { flex: 0 0 155px; } .toppers-head { margin-bottom: 24px; } .toppers-scroll { animation-duration: 18s; } .toppers-scroll-reverse { animation-duration: 22s; } }
 
 /* Sections */
 .section { padding: var(--section-pad) 0; position: relative; }
@@ -1615,45 +1635,118 @@ function Hero() {
 }
 
 // ============ STATS ============
+function TopperAirNum({ air, counted }) {
+  const [val, setVal] = React.useState(0);
+  React.useEffect(() => {
+    if (!counted) return;
+    let raf;
+    const start = performance.now();
+    const tick = now => {
+      const t = Math.min(1, (now - start) / 900);
+      setVal(Math.round(air * (1 - Math.pow(1 - t, 3))));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [counted]);
+  return <span style={{ fontVariantNumeric: 'tabular-nums' }}>{val}</span>;
+}
+
+const IIT_TAG  = { label: 'IIT',  bg: 'rgba(139,92,246,0.22)',  color: '#c4b0ff' };
+const IISC_TAG = { label: 'IISc', bg: 'rgba(255,127,183,0.22)', color: '#ffb3d4' };
+const NIT_TAG  = { label: 'NIT',  bg: 'rgba(6,182,212,0.22)',   color: '#67e8f9' };
+const IIIT_TAG = { label: 'IIIT', bg: 'rgba(77,139,255,0.22)',  color: '#93bbff' };
+
 function Stats() {
   const toppers = [
-    { img: 'testimonials/15 AIR.webp',   air: 'AIR 15',  name: 'Alin Anto',      college: '—' },
-    { img: 'testimonials/23 AIR.webp',   air: 'AIR 23',  name: 'Suryamani',       college: '—' },
-    { img: 'testimonials/46 AIR.webp',   air: 'AIR 46',  name: 'Lakshit Mathur',  college: '—' },
-    { img: 'testimonials/46 AIR_2.webp', air: 'AIR 46',  name: 'Arun',            college: '—' },
-    { img: 'testimonials/91 AIR.webp',   air: 'AIR 91',  name: 'Tapan Patel',     college: '—' },
-    { img: 'testimonials/102 AIR.webp',  air: 'AIR 102', name: 'Parinay Rana',    college: '—' },
-    { initials: 'SB', grad: 'linear-gradient(135deg,#FF7FB7,#8B5CF6)', air: 'AIR 38',  name: 'Sanved Bangale', college: 'IIT Madras · M.Tech DS & AI' },
-    { initials: 'YR', grad: 'linear-gradient(135deg,#8B5CF6,#4D8BFF)', air: 'AIR 49',  name: 'Yash Raj',       college: 'IIT Madras · M.Tech DS & AI' },
-    { initials: 'SD', grad: 'linear-gradient(135deg,#4D8BFF,#6B4BFF)', air: 'AIR 129', name: 'Sarthak Dey',    college: 'IIT Kharagpur · M.Tech in AI' },
+    { img: 'testimonials/15 AIR.webp',   air: 15,  name: 'Alin Anto',      college: null,                         tag: null,      quote: null, yt: null },
+    { img: 'testimonials/23 AIR.webp',   air: 23,  name: 'Suryamani',      college: null,                         tag: null,      quote: null, yt: 'https://www.youtube.com/watch?v=8wks9zdLvDc' },
+    { img: 'testimonials/46 AIR.webp',   air: 46,  name: 'Lakshit Mathur', college: null,                         tag: null,      quote: null, yt: null },
+    { img: 'testimonials/46 AIR_2.webp', air: 46,  name: 'Arun',           college: null,                         tag: null,      quote: 'I followed your YouTube Concept to Combat series for ML revision, really easy to understand. I also attempted the TAAI AIMT; the question level was well suited for GATE DA. I was able to clear some conceptual doubts with ease. Thank you for your hard work.', yt: null },
+    { img: 'testimonials/91 AIR.webp',   air: 91,  name: 'Tapan Patel',    college: null,                         tag: null,      quote: 'The way Manoj Sir taught Maths and ML made even tough topics feel much easier to understand. I never really felt scared of Maths or ML while preparing for the exam. The courses and guidance from TAAI played a big role in my journey.', yt: null },
+    { img: 'testimonials/102 AIR.webp',  air: 102, name: 'Parinay Rana',   college: null,                         tag: null,      quote: 'The lectures felt just right, clear, to the point, and not overloaded with unnecessary content. Concepts were explained so intuitively, with plenty of examples. Manoj Sir\'s personal support truly stood out and made a big difference in my learning.', yt: null },
+    { initials: 'SB', grad: 'linear-gradient(135deg,#FF7FB7,#8B5CF6)', air: 38,  name: 'Sanved Bangale', college: 'IIT Madras · M.Tech DS & AI',    tag: IIT_TAG,  quote: 'The most GATE DA specific practice I\'ve found, with really excellent coverage of the content. The clarity in teaching, structured approach, and constant support from the team made all the difference.', yt: 'https://www.youtube.com/watch?v=p5Rnv2XklDQ' },
+    { initials: 'YR', grad: 'linear-gradient(135deg,#8B5CF6,#4D8BFF)', air: 49,  name: 'Yash Raj',       college: 'IIT Madras · M.Tech DS & AI',    tag: IIT_TAG,  quote: 'Preparing for GATE DA was tough; I wasted significant time on ineffective resources. Your course was a complete game-changer, bridging the gap between concepts and application. The intuitive approach to problem-solving transformed my understanding of Maths.', yt: 'https://www.youtube.com/watch?v=6vQ6V39y7lA' },
+    { initials: 'SD', grad: 'linear-gradient(135deg,#4D8BFF,#6B4BFF)', air: 129, name: 'Sarthak Dey',    college: 'IIT Kharagpur · M.Tech in AI',   tag: IIT_TAG,  quote: null, yt: null },
   ];
-  const Card = ({ t, i }) => (
-    <div className="topper-card">
+
+  const [counted, setCounted]   = React.useState(false);
+  const [selected, setSelected] = React.useState(null);
+  const sectionRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setCounted(true); io.disconnect(); } }, { threshold: 0.15 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  React.useEffect(() => {
+    if (!selected) return;
+    const fn = e => { if (e.key === 'Escape') setSelected(null); };
+    document.addEventListener('keydown', fn);
+    return () => document.removeEventListener('keydown', fn);
+  }, [selected]);
+
+  const row2 = [...toppers].reverse();
+
+  const Card = ({ t, clone }) => (
+    <div className="topper-card" onClick={() => !clone && setSelected(t)}>
       <div className="topper-img-wrap">
         {t.img
           ? <img className="topper-img" src={t.img} alt={t.name} loading="lazy" />
-          : <div style={{ width: '100%', height: '100%', background: t.grad, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: 48, fontWeight: 600, color: 'rgba(255,255,255,0.9)', letterSpacing: '-0.02em' }}>{t.initials}</div>
+          : <div className="topper-placeholder" style={{ background: t.grad }}>{t.initials}</div>
         }
       </div>
       <div className="topper-info">
-        <div className="topper-air">{t.air}</div>
+        <div className="topper-air">AIR {clone ? t.air : <TopperAirNum air={t.air} counted={counted} />}</div>
+        {t.tag && <div className="topper-tag" style={{ background: t.tag.bg, color: t.tag.color }}>{t.tag.label}</div>}
         <div className="topper-name">{t.name}</div>
-        {t.college && t.college !== '—' && <div className="topper-college">{t.college}</div>}
+        {t.college && <div className="topper-college">{t.college}</div>}
       </div>
     </div>
   );
+
   return (
-    <section className="toppers-strip">
-      <div className="toppers-head" style={{ maxWidth: 1280, margin: '0 auto 36px', width: '100%', padding: '0 max(32px,24px)' }}>
-        <div className="toppers-title">GATE DA 2026 <em>Toppers.</em></div>
-        <div className="toppers-sub">All from TAAI · 1.25 years</div>
+    <section className="toppers-strip" ref={sectionRef}>
+      <div style={{ maxWidth: 1280, margin: '0 auto 36px', width: '100%', padding: '0 max(32px,24px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+        <div>
+          <div className="toppers-title">GATE DA 2026 <em>Toppers.</em></div>
+          <div className="toppers-sub" style={{ marginTop: 6 }}>All from TAAI · 1.25 years</div>
+        </div>
+        <a href="testimonials.html" className="toppers-view-all">View all stories →</a>
       </div>
       <div className="toppers-scroll-outer">
-        <div className="toppers-scroll" style={{ paddingLeft: 16 }}>
-          {toppers.map((t, i) => <Card key={i} t={t} i={i} />)}
-          {toppers.map((t, i) => <Card key={`d${i}`} t={t} i={i} />)}
+        <div className="toppers-rows">
+          <div className="toppers-scroll">
+            {toppers.map((t, i) => <Card key={i} t={t} />)}
+            {toppers.map((t, i) => <Card key={`d${i}`} t={t} clone />)}
+          </div>
+          <div className="toppers-scroll toppers-scroll-reverse">
+            {row2.map((t, i) => <Card key={i} t={t} />)}
+            {row2.map((t, i) => <Card key={`d${i}`} t={t} clone />)}
+          </div>
         </div>
       </div>
+
+      {selected && (
+        <div className="topper-modal-overlay" onClick={() => setSelected(null)}>
+          <div className="topper-modal" onClick={e => e.stopPropagation()}>
+            <button className="topper-modal-close" onClick={() => setSelected(null)}>✕</button>
+            <div className="topper-modal-air">AIR {selected.air}</div>
+            <div className="topper-modal-name">{selected.name}</div>
+            {selected.college && <div className="topper-modal-college">{selected.college}</div>}
+            {selected.quote && <p className="topper-modal-quote">{selected.quote}</p>}
+            {selected.yt && (
+              <a href={selected.yt} target="_blank" rel="noopener noreferrer" className="topper-modal-yt">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-2.75 12.65 12.65 0 0 0-11.64 0A4.83 4.83 0 0 1 .41 6.69 50.27 50.27 0 0 0 0 12a50.27 50.27 0 0 0 .41 5.31 4.83 4.83 0 0 1 3.77 2.75 12.65 12.65 0 0 0 11.64 0 4.83 4.83 0 0 1 3.77-2.75A50.27 50.27 0 0 0 24 12a50.27 50.27 0 0 0-.41-5.31zM9.75 15.02V8.98L15.5 12z"/></svg>
+                Watch interview
+              </a>
+            )}
+          </div>
+        </div>
+      )}
     </section>
   );
 }
