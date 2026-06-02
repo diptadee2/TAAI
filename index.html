@@ -538,9 +538,14 @@ body {
 .toppers-title { font-family: var(--font-display); font-size: clamp(24px,3vw,38px); font-weight: 600; letter-spacing: -0.03em; line-height: 1; }
 .toppers-title em { font-style: normal; background: linear-gradient(120deg,var(--pink),var(--lilac),var(--blue)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .toppers-sub { font-size: 13px; color: rgba(255,255,255,0.38); letter-spacing: .02em; }
-.toppers-scroll { display: flex; gap: 16px; overflow-x: auto; padding: 4px max(var(--gutter),24px) 16px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; -ms-overflow-style: none; scrollbar-width: none; }
-.toppers-scroll::-webkit-scrollbar { display: none; }
-.topper-card { flex: 0 0 200px; border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); scroll-snap-align: start; transition: transform .32s cubic-bezier(.34,1.05,.64,1), box-shadow .32s ease; cursor: default; }
+@keyframes toppers-marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+.toppers-scroll-outer { overflow: hidden; position: relative; }
+.toppers-scroll-outer::before, .toppers-scroll-outer::after { content: ''; position: absolute; top: 0; bottom: 0; width: 80px; z-index: 2; pointer-events: none; }
+.toppers-scroll-outer::before { left: 0; background: linear-gradient(to right, #07051a, transparent); }
+.toppers-scroll-outer::after { right: 0; background: linear-gradient(to left, #07051a, transparent); }
+.toppers-scroll { display: flex; gap: 16px; padding: 4px 0 16px; width: max-content; animation: toppers-marquee 28s linear infinite; }
+.toppers-scroll-outer:hover .toppers-scroll { animation-play-state: paused; }
+.topper-card { flex: 0 0 200px; border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); transition: transform .32s cubic-bezier(.34,1.05,.64,1), box-shadow .32s ease; cursor: default; }
 .topper-card:hover { transform: translateY(-8px); box-shadow: 0 24px 56px rgba(139,92,246,0.32), 0 8px 20px rgba(0,0,0,0.28); border-color: rgba(139,92,246,0.28); }
 .topper-img-wrap { width: 100%; aspect-ratio: 3/4; overflow: hidden; }
 .topper-img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; transition: transform .55s cubic-bezier(.25,.46,.45,.94); }
@@ -1622,28 +1627,32 @@ function Stats() {
     { initials: 'YR', grad: 'linear-gradient(135deg,#8B5CF6,#4D8BFF)', air: 'AIR 49',  name: 'Yash Raj',       college: 'IIT Madras · M.Tech DS & AI' },
     { initials: 'SD', grad: 'linear-gradient(135deg,#4D8BFF,#6B4BFF)', air: 'AIR 129', name: 'Sarthak Dey',    college: 'IIT Kharagpur · M.Tech in AI' },
   ];
+  const Card = ({ t, i }) => (
+    <div className="topper-card">
+      <div className="topper-img-wrap">
+        {t.img
+          ? <img className="topper-img" src={t.img} alt={t.name} loading="lazy" />
+          : <div style={{ width: '100%', height: '100%', background: t.grad, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: 48, fontWeight: 600, color: 'rgba(255,255,255,0.9)', letterSpacing: '-0.02em' }}>{t.initials}</div>
+        }
+      </div>
+      <div className="topper-info">
+        <div className="topper-air">{t.air}</div>
+        <div className="topper-name">{t.name}</div>
+        {t.college && t.college !== '—' && <div className="topper-college">{t.college}</div>}
+      </div>
+    </div>
+  );
   return (
     <section className="toppers-strip">
-      <div className="toppers-head" style={{ maxWidth: 1280, margin: '0 auto 36px', width: '100%' }}>
+      <div className="toppers-head" style={{ maxWidth: 1280, margin: '0 auto 36px', width: '100%', padding: '0 max(32px,24px)' }}>
         <div className="toppers-title">GATE DA 2026 <em>Toppers.</em></div>
         <div className="toppers-sub">All from TAAI · 1.25 years</div>
       </div>
-      <div className="toppers-scroll" style={{ maxWidth: 1280, margin: '0 auto', paddingLeft: 'max(var(--gutter),24px)', paddingRight: 'max(var(--gutter),24px)' }}>
-        {toppers.map((t, i) => (
-          <div key={i} className="topper-card">
-            <div className="topper-img-wrap">
-              {t.img
-                ? <img className="topper-img" src={t.img} alt={t.name} loading="lazy" />
-                : <div style={{ width: '100%', height: '100%', background: t.grad, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: 48, fontWeight: 600, color: 'rgba(255,255,255,0.9)', letterSpacing: '-0.02em' }}>{t.initials}</div>
-              }
-            </div>
-            <div className="topper-info">
-              <div className="topper-air">{t.air}</div>
-              <div className="topper-name">{t.name}</div>
-              {t.college && t.college !== '—' && <div className="topper-college">{t.college}</div>}
-            </div>
-          </div>
-        ))}
+      <div className="toppers-scroll-outer">
+        <div className="toppers-scroll" style={{ paddingLeft: 16 }}>
+          {toppers.map((t, i) => <Card key={i} t={t} i={i} />)}
+          {toppers.map((t, i) => <Card key={`d${i}`} t={t} i={i} />)}
+        </div>
       </div>
     </section>
   );
