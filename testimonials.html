@@ -396,36 +396,38 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 @keyframes feat-orb-a { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-14px,16px) scale(1.12)} }
 @keyframes feat-orb-b { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(12px,-10px) scale(1.09)} }
 .feat-card {
-  background-color: #0f0c24;
-  background-image:
-    radial-gradient(circle at var(--mx,-200%) var(--my,-200%), rgba(139,92,246,0.32) 0%, transparent 52%),
-    radial-gradient(ellipse 90% 55% at 105% -5%, rgba(255,127,183,0.18) 0%, transparent 60%),
-    radial-gradient(ellipse 70% 70% at -5% 105%, rgba(77,139,255,0.14) 0%, transparent 60%),
-    radial-gradient(circle, rgba(255,255,255,0.07) 1.5px, transparent 1.5px);
-  background-size: 100% 100%, 100% 100%, 100% 100%, 28px 28px;
-  border: 1px solid rgba(139,92,246,0.2);
+  background:
+    radial-gradient(circle at var(--mx,-200%) var(--my,-200%), rgba(139,92,246,0.38) 0%, transparent 50%),
+    radial-gradient(ellipse 110% 65% at 108% -8%, rgba(236,72,153,0.28) 0%, rgba(139,92,246,0.12) 45%, transparent 68%),
+    radial-gradient(ellipse 85% 85% at -8% 108%, rgba(56,189,248,0.22) 0%, rgba(99,102,241,0.12) 45%, transparent 68%),
+    radial-gradient(ellipse 60% 50% at 50% 100%, rgba(107,75,255,0.18) 0%, transparent 65%),
+    linear-gradient(148deg, #16103c 0%, #0e0a28 45%, #080618 100%),
+    radial-gradient(circle, rgba(255,255,255,0.065) 1.5px, transparent 1.5px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 28px 28px;
+  border: 1px solid rgba(139,92,246,0.22);
+  border-top: 1px solid rgba(196,176,255,0.18);
   border-radius: var(--radius-xl);
   padding: 40px;
   color: #fff;
   position: relative; overflow: hidden;
   display: flex; flex-direction: column; gap: 20px;
-  box-shadow: 0 4px 24px rgba(107,75,255,0.12);
+  box-shadow: 0 8px 32px rgba(107,75,255,0.18), inset 0 1px 0 rgba(255,255,255,0.06);
 }
 .feat-card::before {
   content: '';
-  position: absolute; top: -80px; right: -60px;
-  width: 280px; height: 280px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,127,183,0.32) 0%, rgba(139,92,246,0.18) 45%, transparent 70%);
-  pointer-events: none; filter: blur(18px);
-  animation: feat-orb-a 8s ease-in-out infinite;
+  position: absolute; top: -90px; right: -70px;
+  width: 300px; height: 300px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(236,72,153,0.38) 0%, rgba(139,92,246,0.22) 40%, transparent 68%);
+  pointer-events: none; filter: blur(22px);
+  animation: feat-orb-a 9s ease-in-out infinite;
 }
 .feat-card::after {
   content: '';
-  position: absolute; bottom: -60px; left: -40px;
-  width: 220px; height: 220px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(77,139,255,0.28) 0%, rgba(139,92,246,0.14) 45%, transparent 70%);
-  pointer-events: none; filter: blur(16px);
-  animation: feat-orb-b 11s ease-in-out 1.5s infinite;
+  position: absolute; bottom: -70px; left: -50px;
+  width: 240px; height: 240px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(56,189,248,0.32) 0%, rgba(99,102,241,0.18) 40%, transparent 68%);
+  pointer-events: none; filter: blur(20px);
+  animation: feat-orb-b 12s ease-in-out 2s infinite;
 }
 .feat-rank { display: inline-flex; align-items: baseline; gap: 6px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .12em; color: rgba(255,255,255,0.5); text-transform: uppercase; }
 .feat-rank-num { font-family: var(--font-display); font-size: 64px; font-weight: 600; letter-spacing: -0.05em; line-height: 1; background: linear-gradient(120deg, var(--pink), var(--lilac)); -webkit-background-clip: text; background-clip: text; color: transparent; }
