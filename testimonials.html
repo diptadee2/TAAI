@@ -1040,21 +1040,23 @@ function ThisYearGallery() {
             GATE DA 2026.<br /><em>Results speak.</em>
           </h2>
         </div>
-        <div className="testi-grid">
+        <div className="featured-grid">
           {BATCH_2026.map((s, i) => (
-            <div key={i} className="testi-card fade-in" style={{ '--delay': `${i * 45}ms` }}>
-              <div className="testi-rank-badge">
-                <span>All India Rank</span>
-                <span>{s.air}</span>
+            <div key={i} className="feat-card fade-in" style={{ '--delay': `${i * 45}ms` }}
+              onMouseMove={e=>{const r=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');e.currentTarget.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%');}}
+              onMouseLeave={e=>{e.currentTarget.style.setProperty('--mx','-200%');e.currentTarget.style.setProperty('--my','-200%');}}>
+              <div>
+                <div className="feat-rank"><span>All India Rank</span></div>
+                <div className="feat-rank-num">{s.air}</div>
               </div>
-              {s.quote && <p className="testi-quote">"{s.quote}"</p>}
-              <div className="testi-author">
-                <div className="testi-avatar" style={{ background: s.photo ? 'none' : s.grad }}>
+              {s.quote && <p className="feat-quote">"{s.quote}"</p>}
+              <div className="feat-author">
+                <div className="feat-avatar" style={{ background: s.photo ? 'none' : s.grad }}>
                   {s.photo ? <img src={s.photo} alt={s.name || ''} /> : ini(s.name)}
                 </div>
                 <div>
-                  <div className="testi-name">{s.name || 'GATE DA 2026'}</div>
-                  {s.college && <div className="testi-role">{s.college}</div>}
+                  <div className="feat-name">{s.name || 'GATE DA 2026'}</div>
+                  {s.college && <div className="feat-role">{s.college}</div>}
                 </div>
               </div>
             </div>
