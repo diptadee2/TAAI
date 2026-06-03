@@ -61,6 +61,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .btn-nav-contact { font-size: 14px; font-weight: 500; color: var(--ink-dim); text-decoration: none; padding: 10px 20px; border-radius: 8px; background: none; border: none; transition: color .2s, transform .32s cubic-bezier(.34,1.1,.64,1), background .2s; white-space: nowrap; }
 .btn-nav-contact:hover { color: var(--purple); background: rgba(139,92,246,0.07); transform: scale(1.06) translateY(-1px); }
 .phone-icon { display: inline-flex; align-items: center; margin-right: 5px; transform-origin: 50% 55%; }
+.btn-nav-contact:hover .phone-icon { animation: phone-ring 0.52s ease-in-out; }
+@keyframes phone-ring { 0%,100%{transform:rotate(0)} 12%{transform:rotate(-22deg)} 28%{transform:rotate(18deg)} 44%{transform:rotate(-12deg)} 60%{transform:rotate(8deg)} 76%{transform:rotate(-4deg)} 90%{transform:rotate(2deg)} }
 .nav-hamburger { display: none; flex-direction: column; gap: 5px; align-items: center; justify-content: center; width: 40px; height: 40px; border: none; background: none; cursor: pointer; border-radius: 8px; transition: background .2s; flex-shrink: 0; padding: 0; }
 .nav-hamburger span { display: block; width: 22px; height: 2px; border-radius: 2px; background: var(--ink); transition: transform .3s, opacity .2s; }
 .nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
