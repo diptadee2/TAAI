@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAAI · Resources</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #FFFFFF; --bg-soft: #FBF9FF; --ink: #14102B; --ink-dim: #4A4270; --ink-soft: #857CAE;
+  --line: #ECE6F8; --card: #FFFFFF;
+  --pink: #FF7FB7; --pink-soft: #FFD6E8; --purple: #8B5CF6; --purple-soft: #E6DCFF;
+  --blue: #4D8BFF; --blue-soft: #D6E4FF; --lilac: #C4B0FF;
+  --primary: #6B4BFF; --primary-contrast: #FFFFFF;
+  --radius-md: 18px; --radius-lg: 26px; --radius-xl: 36px;
+  --shadow-sm: 0 1px 0 rgba(20,16,43,0.04), 0 2px 6px rgba(20,16,43,0.04);
+  --shadow-md: 0 2px 0 rgba(20,16,43,0.03), 0 12px 32px rgba(107,75,255,0.08);
+  --font-display: 'Fraunces', ui-serif, serif;
+  --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
+  --gutter: 32px; --section-pad: 96px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: var(--font-body); background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased; font-size: 16px; line-height: 1.5; }
+.container { max-width: 1280px; margin: 0 auto; padding: 0 max(var(--gutter),24px); }
+
+/* Nav */
+.nav { position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: rgba(255,255,255,0.55); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); border-bottom: 1px solid var(--line); overflow: visible; }
+.nav-spacer { height: 86px; }
+.nav.menu-open { background: rgba(248,246,255,0.82); }
+.nav-inner { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; height: 86px; padding: 0 32px 0 20px; overflow: visible; }
+.nav-logo { display: flex; align-items: center; text-decoration: none; transition: transform .22s ease-out, opacity .22s ease; }
+.nav-logo img { width: 180px; height: auto; }
+.nav-logo:hover { transform: translateY(-2px); opacity: 0.82; }
+.nav-links { display: flex; gap: 36px; font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; position: relative; }
+.nav-links a { color: var(--ink-dim); text-decoration: none; transition: color .2s, transform .3s cubic-bezier(.34,1.1,.64,1); position: relative; z-index: 1; cursor: pointer; display: inline-block; }
+.nav-links a:hover, .nav-links a.active { color: var(--purple); transform: scale(1.08) translateY(-1px); }
+.nav-pill { position: absolute; top: 50%; transform: translateY(-50%); height: 34px; border-radius: 10px; pointer-events: none; z-index: 0; background: linear-gradient(150deg,rgba(255,255,255,0.36) 0%,rgba(180,155,255,0.14) 40%,rgba(139,92,246,0.10) 68%,rgba(255,255,255,0.24) 100%); border: 1px solid rgba(255,255,255,0.55); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 2px 12px rgba(139,92,246,0.10), inset 0 1.5px 0 rgba(255,255,255,0.82); transition: left .3s cubic-bezier(0.34,1.2,0.64,1), width .28s cubic-bezier(0.34,1.15,0.64,1), opacity .2s ease; }
+.nav-dropdown-wrap { position: relative; display: flex; align-items: center; z-index: 100; }
+.nav-cta { display: flex; gap: 10px; align-items: center; }
+.btn-nav-signin { display: inline-flex; align-items: center; padding: 10px 22px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; background: rgba(139,92,246,0.07); color: var(--ink); border: 1px solid rgba(139,92,246,0.22); transition: background .2s, transform .32s cubic-bezier(.34,1.1,.64,1); white-space: nowrap; }
+.btn-nav-signin:hover { background: rgba(139,92,246,0.13); transform: scale(1.06) translateY(-1px); }
+.btn-nav-signup { display: inline-flex; align-items: center; padding: 10px 22px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; background: linear-gradient(160deg,rgba(147,105,255,0.92),rgba(107,75,255,0.88)); color: #fff; border: 1px solid rgba(255,255,255,0.22); transition: transform .32s cubic-bezier(.34,1.1,.64,1), box-shadow .2s; white-space: nowrap; }
+.btn-nav-signup:hover { transform: scale(1.06) translateY(-1px); box-shadow: 0 8px 24px rgba(107,75,255,0.45); }
+.btn-nav-contact { font-size: 14px; font-weight: 500; color: var(--ink-dim); text-decoration: none; padding: 10px 20px; border-radius: 8px; background: none; border: none; transition: color .2s, background .2s; white-space: nowrap; }
+.btn-nav-contact:hover { color: var(--purple); background: rgba(139,92,246,0.07); }
+.nav-hamburger { display: none; flex-direction: column; gap: 5px; align-items: center; justify-content: center; width: 40px; height: 40px; border: none; background: none; cursor: pointer; border-radius: 8px; transition: background .2s; flex-shrink: 0; padding: 0; }
+.nav-hamburger span { display: block; width: 22px; height: 2px; border-radius: 2px; background: var(--ink); transition: transform .3s, opacity .2s; }
+.nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+.menu-overlay { display: none; }
+.mobile-menu { position: fixed; top: 86px; left: 0; right: 0; z-index: 49; background: rgba(248,246,255,0.72); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px); border-bottom: 1px solid rgba(139,92,246,0.15); padding: 8px 12px 20px; display: flex; flex-direction: column; gap: 2px; transform: translateY(-10px); opacity: 0; pointer-events: none; transition: transform .3s, opacity .22s; box-shadow: 0 8px 40px rgba(20,16,43,0.12); }
+.mobile-menu.open { transform: translateY(0); opacity: 1; pointer-events: auto; }
+.mobile-menu-link { display: flex; align-items: center; gap: 11px; padding: 12px 14px; border-radius: 12px; font-size: 14px; font-weight: 700; color: var(--ink-dim); text-decoration: none; letter-spacing: .05em; text-transform: uppercase; transition: background .18s, color .18s; }
+.mobile-menu-link:hover, .mobile-menu-link.active { background: rgba(139,92,246,0.08); color: var(--purple); }
+.mobile-menu-divider { height: 1px; background: linear-gradient(90deg,rgba(139,92,246,0.25),rgba(139,92,246,0.06),transparent); margin: 8px 4px; }
+.mobile-menu-actions { display: flex; flex-direction: column; gap: 10px; padding-top: 4px; }
+.mobile-menu-actions .btn-nav-signin { display: flex; justify-content: space-between; width: 100%; border-radius: 14px; padding: 15px 20px; font-size: 15px; color: var(--purple); }
+.mobile-menu-actions .btn-nav-signup { display: flex; justify-content: space-between; width: 100%; border-radius: 14px; padding: 15px 20px; font-size: 15px; background: linear-gradient(135deg,#9333ea,#6d28d9); box-shadow: 0 4px 24px rgba(109,40,217,0.42); }
+.mobile-menu-contact { display: flex; align-items: center; justify-content: center; gap: 7px; padding: 11px 16px; font-size: 13px; font-weight: 600; color: var(--ink-dim); text-decoration: none; border-radius: 10px; transition: color .18s, background .18s; letter-spacing: .04em; text-transform: uppercase; }
+
+/* Hero */
+.page-hero { padding: 80px 0 64px; background: var(--bg-soft); border-bottom: 1px solid var(--line); position: relative; overflow: hidden; }
+.page-hero::before { content: ''; position: absolute; top: -120px; right: -80px; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle,rgba(139,92,246,0.12) 0%,transparent 68%); pointer-events: none; }
+.page-hero::after { content: ''; position: absolute; bottom: -80px; left: -60px; width: 360px; height: 360px; border-radius: 50%; background: radial-gradient(circle,rgba(77,139,255,0.1) 0%,transparent 68%); pointer-events: none; }
+.page-hero-inner { position: relative; z-index: 1; }
+.page-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--purple); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.page-eyebrow::before { content: ''; display: inline-block; width: 20px; height: 2px; background: linear-gradient(90deg,var(--pink),var(--purple)); border-radius: 2px; }
+.page-hero h1 { font-family: var(--font-display); font-size: clamp(40px,5vw,72px); font-weight: 600; letter-spacing: -0.04em; line-height: 1; margin-bottom: 18px; }
+.page-hero h1 em { font-style: normal; background: linear-gradient(120deg,var(--pink),var(--purple),var(--blue)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.page-hero-sub { font-size: 18px; color: var(--ink-dim); max-width: 560px; line-height: 1.55; }
+
+/* Subject filter tabs */
+.filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin: 48px 0 40px; }
+.filter-btn { display: inline-flex; align-items: center; gap: 7px; padding: 8px 18px; border-radius: 999px; font-size: 13px; font-weight: 600; border: 1.5px solid var(--line); background: #fff; color: var(--ink-dim); cursor: pointer; transition: all .2s; font-family: inherit; }
+.filter-btn:hover { border-color: var(--purple); color: var(--purple); background: var(--purple-soft); }
+.filter-btn.active { background: var(--purple); color: #fff; border-color: var(--purple); box-shadow: 0 4px 16px rgba(139,92,246,0.3); }
+.filter-btn-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.6; }
+
+/* Subject sections */
+.subject-section { margin-bottom: 56px; }
+.subject-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+.subject-icon { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; color: #fff; flex-shrink: 0; }
+.subject-name { font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+.subject-count { font-size: 12px; color: var(--ink-soft); font-family: var(--font-mono); letter-spacing: .06em; margin-left: auto; }
+.notes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+
+/* Note card */
+.note-card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-md); padding: 22px 24px; display: flex; flex-direction: column; gap: 12px; transition: transform .22s cubic-bezier(.34,1.1,.64,1), box-shadow .22s ease, border-color .2s; position: relative; overflow: hidden; }
+.note-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: rgba(139,92,246,0.22); }
+.note-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--note-accent, linear-gradient(90deg,var(--pink),var(--purple))); }
+.note-title { font-weight: 600; font-size: 15px; color: var(--ink); line-height: 1.3; }
+.note-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.5; flex: 1; }
+.note-meta { display: flex; align-items: center; gap: 8px; }
+.note-type { font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); background: var(--bg-soft); border: 1px solid var(--line); padding: 3px 8px; border-radius: 4px; }
+.note-download { display: inline-flex; align-items: center; gap: 6px; margin-top: auto; padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; background: var(--purple-soft); color: var(--purple); border: 1.5px solid rgba(139,92,246,0.2); transition: background .2s, transform .2s, box-shadow .2s; }
+.note-download:hover { background: var(--purple); color: #fff; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(139,92,246,0.3); }
+.note-download svg { flex-shrink: 0; transition: transform .22s cubic-bezier(.34,1.3,.64,1); }
+.note-download:hover svg { transform: translateY(2px); }
+
+/* Empty state */
+.notes-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px 24px; background: var(--bg-soft); border: 1.5px dashed var(--line); border-radius: var(--radius-lg); text-align: center; gap: 10px; }
+.notes-empty-icon { width: 48px; height: 48px; border-radius: 14px; background: var(--purple-soft); display: grid; place-items: center; color: var(--purple); }
+.notes-empty-text { font-size: 14px; color: var(--ink-soft); }
+.notes-empty-label { font-weight: 600; font-size: 15px; color: var(--ink-dim); }
+
+/* Fade-in */
+.fade-in { opacity: 0; transform: translateY(20px); transition: opacity .6s cubic-bezier(.4,0,.2,1), transform .6s cubic-bezier(.4,0,.2,1); }
+.fade-in.visible { opacity: 1; transform: translateY(0); }
+
+/* Footer */
+.footer { padding: 40px 0; border-top: 1px solid var(--line); }
+.footer-inner { display: flex; flex-direction: row; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+.footer-copy { font-size: 12px; color: var(--ink-soft); }
+.footer-email { font-size: 12px; color: var(--ink-dim); text-decoration: none; transition: color .2s; }
+.footer-email:hover { color: var(--purple); }
+
+/* Scroll progress */
+.scroll-progress { position: fixed; top: 0; left: 0; z-index: 100; height: 3px; background: linear-gradient(90deg,var(--pink),var(--purple)); pointer-events: none; transition: width 120ms linear; }
+
+@media (max-width: 1024px) {
+  .nav-hamburger { display: flex; }
+  .nav-cta, .nav-links, .btn-nav-contact { display: none; }
+  .nav-inner { height: 64px; padding: 0 14px; justify-content: flex-end; }
+  .nav-logo { position: absolute; left: 50%; transform: translateX(-50%); }
+  .nav-logo img { width: 150px; }
+  .nav-spacer { height: 64px; }
+  .mobile-menu { top: 64px; }
+  .menu-overlay { display: block; position: fixed; inset: 0; z-index: 48; background: rgba(14,10,35,0.52); backdrop-filter: blur(8px); opacity: 0; pointer-events: none; transition: opacity .3s; }
+  .menu-overlay.open { opacity: 1; pointer-events: auto; }
+}
+@media (max-width: 768px) {
+  :root { --section-pad: 56px; }
+  .nav-inner { height: 64px; }
+  .notes-grid { grid-template-columns: 1fr; }
+  .filter-bar { gap: 6px; }
+  .filter-btn { padding: 7px 14px; font-size: 12px; }
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" data-presets="react">
+
+// ── Nav data ──────────────────────────────────────────────────────
+const COURSE_DROPDOWN = [
+  { label: 'Bundled Courses',    href: 'courses.html#combos' },
+  { label: 'Individual Courses', href: 'courses.html#individual', dividerBefore: true },
+  { label: 'Interview Prep',     href: 'courses.html#interview',  dividerBefore: true },
+];
+const TESTIMONIALS_DROPDOWN = [
+  { label: 'Batch of 2026', href: 'testimonials.html#batch-2026' },
+  { label: 'Batch of 2025', href: 'testimonials.html#batch-2025', dividerBefore: true },
+];
+const NAV_LINKS = [
+  { label: 'Courses',          href: 'courses.html',      dropdown: COURSE_DROPDOWN },
+  { label: 'Test Series 2027', href: 'test-series.html' },
+  { label: 'Testimonials',     href: 'testimonials.html', dropdown: TESTIMONIALS_DROPDOWN },
+  { label: 'Resources',        href: 'resources.html',    active: true },
+];
+
+// ── Resources data ────────────────────────────────────────────────
+// To add a note: add an entry to the notes array of the relevant subject.
+// file: path to the PDF e.g. 'notes/linear-algebra/eigenvalues.pdf'
+const SUBJECTS = [
+  {
+    id: 'linear-algebra',
+    name: 'Linear Algebra',
+    accent: 'linear-gradient(135deg,#8B5CF6,#4D8BFF)',
+    color: '#8B5CF6',
+    notes: [
+      // { title: 'Vectors & Matrices', desc: 'Basics of vectors, matrix operations and determinants.', file: 'notes/linear-algebra/vectors-matrices.pdf' },
+    ],
+  },
+  {
+    id: 'probability',
+    name: 'Probability',
+    accent: 'linear-gradient(135deg,#FF7FB7,#8B5CF6)',
+    color: '#FF7FB7',
+    notes: [],
+  },
+  {
+    id: 'statistics',
+    name: 'Statistics',
+    accent: 'linear-gradient(135deg,#4D8BFF,#06b6d4)',
+    color: '#4D8BFF',
+    notes: [],
+  },
+  {
+    id: 'calculus',
+    name: 'Calculus',
+    accent: 'linear-gradient(135deg,#f59e0b,#ef4444)',
+    color: '#f59e0b',
+    notes: [],
+  },
+  {
+    id: 'machine-learning',
+    name: 'Machine Learning',
+    accent: 'linear-gradient(135deg,#8B5CF6,#ec4899)',
+    color: '#8B5CF6',
+    notes: [],
+  },
+  {
+    id: 'ai',
+    name: 'Artificial Intelligence',
+    accent: 'linear-gradient(135deg,#06b6d4,#4D8BFF)',
+    color: '#06b6d4',
+    notes: [],
+  },
+  {
+    id: 'python-dsa',
+    name: 'Python & DSA',
+    accent: 'linear-gradient(135deg,#10b981,#4D8BFF)',
+    color: '#10b981',
+    notes: [],
+  },
+  {
+    id: 'dbms',
+    name: 'DBMS',
+    accent: 'linear-gradient(135deg,#f97316,#ef4444)',
+    color: '#f97316',
+    notes: [],
+  },
+];
+
+// ── Icons ─────────────────────────────────────────────────────────
+const DownloadIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+    <path d="M12 3v13M7 11l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M5 21h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+);
+
+const FileIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+    <path d="M14 2H6C5.4 2 5 2.4 5 3V21C5 21.6 5.4 22 6 22H18C18.6 22 19 21.6 19 21V7L14 2Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
+    <path d="M14 2V7H19" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
+    <path d="M9 13H15M9 17H13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+  </svg>
+);
+
+// ── Nav ───────────────────────────────────────────────────────────
+function TAAILogo() { return <img src="logo.png" alt="TAAI" />; }
+
+function Nav() {
+  const [menuOpen, setMenuOpen] = React.useState(false);
+  return (
+    <>
+      <div className={`menu-overlay${menuOpen ? ' open' : ''}`} onClick={() => setMenuOpen(false)} />
+      <nav className={`nav${menuOpen ? ' menu-open' : ''}`}>
+        <div className="nav-inner">
+          <a href="index.html" className="nav-logo"><TAAILogo /></a>
+          <div className="nav-links">
+            {NAV_LINKS.map(l => (
+              <a key={l.href} href={l.href} className={l.active ? 'active' : ''}>{l.label}</a>
+            ))}
+          </div>
+          <div className="nav-cta">
+            <a target="_blank" rel="noopener noreferrer" href="https://learn.taai.live/learn/account/signin" className="btn-nav-signin">Sign In</a>
+            <a target="_blank" rel="noopener noreferrer" href="https://learn.taai.live/learn/account/signup" className="btn-nav-signup">Sign Up</a>
+            <a href="contact.html" className="btn-nav-contact">Contact Us</a>
+          </div>
+          <button className={`nav-hamburger${menuOpen ? ' open' : ''}`} onClick={() => setMenuOpen(o => !o)} aria-label="Toggle menu">
+            <span /><span /><span />
+          </button>
+        </div>
+      </nav>
+      <div className={`mobile-menu${menuOpen ? ' open' : ''}`}>
+        {[{ label: 'Home', href: 'index.html' }, ...NAV_LINKS].map((l, i) => (
+          <a key={l.href} href={l.href} className={`mobile-menu-link${l.active ? ' active' : ''}`} onClick={() => setMenuOpen(false)}>
+            <span>{l.label}</span>
+          </a>
+        ))}
+        <div className="mobile-menu-divider" />
+        <div className="mobile-menu-actions">
+          <a target="_blank" rel="noopener noreferrer" href="https://learn.taai.live/learn/account/signin" className="btn-nav-signin">Sign In</a>
+          <a target="_blank" rel="noopener noreferrer" href="https://learn.taai.live/learn/account/signup" className="btn-nav-signup">Sign Up</a>
+        </div>
+        <a href="contact.html" className="mobile-menu-contact">Contact Us</a>
+      </div>
+    </>
+  );
+}
+
+// ── Note Card ─────────────────────────────────────────────────────
+function NoteCard({ note, accent }) {
+  return (
+    <div className="note-card fade-in" style={{ '--note-accent': accent }}>
+      <div className="note-title">{note.title}</div>
+      {note.desc && <div className="note-desc">{note.desc}</div>}
+      <div className="note-meta">
+        <span className="note-type">PDF</span>
+      </div>
+      <a href={note.file} download className="note-download">
+        <DownloadIcon /> Download
+      </a>
+    </div>
+  );
+}
+
+// ── App ───────────────────────────────────────────────────────────
+function App() {
+  const [active, setActive] = React.useState('all');
+
+  const filtered = active === 'all'
+    ? SUBJECTS.filter(s => s.notes.length > 0)
+    : SUBJECTS.filter(s => s.id === active);
+
+  const totalNotes = SUBJECTS.reduce((acc, s) => acc + s.notes.length, 0);
+
+  // Scroll progress
+  React.useEffect(() => {
+    const bar = document.querySelector('.scroll-progress');
+    if (!bar) return;
+    const update = () => { const p = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight); bar.style.width = (p * 100) + '%'; };
+    window.addEventListener('scroll', update, { passive: true });
+    return () => window.removeEventListener('scroll', update);
+  }, []);
+
+  // Fade-in observer
+  React.useEffect(() => {
+    const els = document.querySelectorAll('.fade-in');
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+    }, { threshold: 0.1 });
+    els.forEach(el => io.observe(el));
+    return () => io.disconnect();
+  }, [active]);
+
+  return (
+    <>
+      <div className="scroll-progress" />
+      <Nav />
+      <div className="nav-spacer" />
+
+      {/* Hero */}
+      <section className="page-hero">
+        <div className="container page-hero-inner">
+          <div className="page-eyebrow">Free for all GATE DA aspirants</div>
+          <h1>Study <em>Resources.</em></h1>
+          <p className="page-hero-sub">
+            Handcrafted notes for every GATE DA subject — downloadable, free, and built with the same depth as the courses.
+          </p>
+        </div>
+      </section>
+
+      {/* Main content */}
+      <section style={{ padding: '56px 0 96px' }}>
+        <div className="container">
+
+          {/* Filter bar */}
+          <div className="filter-bar">
+            <button className={`filter-btn${active === 'all' ? ' active' : ''}`} onClick={() => setActive('all')}>
+              All subjects
+              {totalNotes > 0 && <span className="filter-btn-dot" />}
+            </button>
+            {SUBJECTS.map(s => (
+              <button key={s.id} className={`filter-btn${active === s.id ? ' active' : ''}`} onClick={() => setActive(s.id)}
+                style={active === s.id ? {} : {}}>
+                {s.name}
+                {s.notes.length > 0 && <span className="filter-btn-dot" />}
+              </button>
+            ))}
+          </div>
+
+          {/* Subject sections */}
+          {filtered.length === 0 ? (
+            <div className="notes-empty fade-in">
+              <div className="notes-empty-icon"><FileIcon /></div>
+              <div className="notes-empty-label">Notes coming soon</div>
+              <div className="notes-empty-text">
+                {active === 'all'
+                  ? 'Notes are being prepared. Check back soon.'
+                  : `${SUBJECTS.find(s => s.id === active)?.name} notes are being prepared.`}
+              </div>
+            </div>
+          ) : (
+            filtered.map(subject => (
+              <div key={subject.id} className="subject-section">
+                <div className="subject-header">
+                  <div className="subject-icon" style={{ background: subject.accent }}>
+                    <FileIcon />
+                  </div>
+                  <div className="subject-name">{subject.name}</div>
+                  <div className="subject-count">{subject.notes.length} note{subject.notes.length !== 1 ? 's' : ''}</div>
+                </div>
+                <div className="notes-grid">
+                  {subject.notes.map((note, i) => (
+                    <NoteCard key={i} note={note} accent={subject.accent} />
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+
+          {/* All filter with no notes */}
+          {active === 'all' && filtered.length === 0 && null}
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="footer">
+        <div className="container footer-inner">
+          <span className="footer-copy">© 2026 TAAI. All rights reserved.</span>
+          <a href="mailto:rizzyouroy@gmail.com" className="footer-email">rizzyouroy@gmail.com</a>
+        </div>
+      </footer>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
