@@ -89,9 +89,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .page-hero-sub { font-size: 18px; color: var(--ink-dim); max-width: 560px; line-height: 1.55; }
 
 /* Subject filter tabs */
-.filter-bar-wrap { margin: 48px 0 40px; position: relative; }
-.filter-bar-wrap::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 40px; background: linear-gradient(to right, transparent, var(--bg)); pointer-events: none; display: none; }
-.filter-bar { display: flex; gap: 8px; flex-wrap: wrap; }
+.filter-bar-wrap { margin: 48px 0 40px; position: relative; overflow-x: auto; -webkit-overflow-scrolling: touch; -ms-overflow-style: none; scrollbar-width: none; }
+.filter-bar-wrap::-webkit-scrollbar { display: none; }
+.filter-bar-wrap::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 48px; background: linear-gradient(to right, transparent, var(--bg)); pointer-events: none; }
+.filter-bar { display: flex; gap: 8px; flex-wrap: nowrap; width: max-content; padding-bottom: 4px; }
 .filter-btn { display: inline-flex; align-items: center; gap: 7px; padding: 8px 18px; border-radius: 999px; font-size: 13px; font-weight: 600; border: 1.5px solid var(--line); background: #fff; color: var(--ink-dim); cursor: pointer; transition: all .2s; font-family: inherit; white-space: nowrap; flex-shrink: 0; }
 .filter-btn:hover { border-color: var(--purple); color: var(--purple); background: var(--purple-soft); }
 .filter-btn.active { background: var(--purple); color: #fff; border-color: var(--purple); box-shadow: 0 4px 16px rgba(139,92,246,0.3); }
@@ -157,9 +158,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   :root { --section-pad: 56px; }
   .nav-inner { height: 64px; }
   .notes-grid { grid-template-columns: 1fr; }
-  .filter-bar-wrap { margin: 32px 0 28px; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-left: -24px; margin-right: -24px; padding: 0 24px; }
-  .filter-bar-wrap::after { display: block; }
-  .filter-bar { flex-wrap: nowrap; padding-bottom: 4px; }
+  .filter-bar-wrap { margin: 32px 0 28px; margin-left: -24px; margin-right: -24px; padding: 0 24px; }
   .filter-btn { padding: 7px 14px; font-size: 12px; }
   .page-hero { padding: 48px 0 40px; }
   .page-hero h1 { font-size: clamp(36px,10vw,56px); }
