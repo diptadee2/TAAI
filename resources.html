@@ -104,12 +104,60 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 /* Subject filter tabs */
 .filter-bar-wrap { margin: 48px 0 40px; position: relative; overflow-x: auto; -webkit-overflow-scrolling: touch; -ms-overflow-style: none; scrollbar-width: none; animation: res-in .6s cubic-bezier(.34,1.1,.64,1) .5s both; }
 .filter-bar-wrap::-webkit-scrollbar { display: none; }
-.filter-bar-wrap::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 48px; background: linear-gradient(to right, transparent, var(--bg)); pointer-events: none; }
-.filter-bar { display: flex; gap: 8px; flex-wrap: nowrap; width: max-content; padding-bottom: 4px; }
-.filter-btn { display: inline-flex; align-items: center; gap: 7px; padding: 8px 18px; border-radius: 999px; font-size: 13px; font-weight: 600; border: 1.5px solid var(--line); background: #fff; color: var(--ink-dim); cursor: pointer; font-family: inherit; white-space: nowrap; flex-shrink: 0; animation: filter-pop .45s cubic-bezier(.34,1.2,.64,1) calc(var(--i,0) * 40ms + 550ms) both; transition: border-color .22s, color .22s, background .22s, box-shadow .22s, transform .28s cubic-bezier(.34,1.2,.64,1); }
-.filter-btn:hover { border-color: var(--purple); color: var(--purple); background: var(--purple-soft); transform: translateY(-2px); box-shadow: 0 4px 14px rgba(139,92,246,0.15); }
-.filter-btn.active { background: var(--purple); color: #fff; border-color: var(--purple); box-shadow: 0 4px 16px rgba(139,92,246,0.35); transform: translateY(-1px); }
-.filter-btn-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.6; }
+.filter-bar-wrap::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 60px; background: linear-gradient(to right, transparent, var(--bg)); pointer-events: none; }
+.filter-bar { display: flex; gap: 10px; flex-wrap: nowrap; width: max-content; padding: 4px 2px 8px; }
+.filter-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 18px 9px 14px; border-radius: 999px;
+  font-size: 13px; font-weight: 600; font-family: inherit;
+  white-space: nowrap; flex-shrink: 0; cursor: pointer;
+  border: 1.5px solid var(--line);
+  background: #fff;
+  color: var(--ink-dim);
+  animation: filter-pop .45s cubic-bezier(.34,1.2,.64,1) calc(var(--i,0) * 45ms + 550ms) both;
+  transition: border-color .24s, color .24s, background .24s, box-shadow .28s, transform .3s cubic-bezier(.34,1.2,.64,1);
+  position: relative; overflow: hidden;
+}
+.filter-btn::before {
+  content: '';
+  position: absolute; inset: 0; border-radius: inherit;
+  background: var(--subject-accent, linear-gradient(135deg,var(--purple),var(--blue)));
+  opacity: 0;
+  transition: opacity .28s ease;
+}
+.filter-btn:hover {
+  border-color: var(--subject-color, var(--purple));
+  color: var(--subject-color, var(--purple));
+  background: #fff;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
+}
+.filter-btn.active {
+  border-color: transparent;
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+}
+.filter-btn.active::before { opacity: 1; }
+.filter-btn-swatch {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--subject-color, var(--purple));
+  flex-shrink: 0;
+  transition: transform .28s cubic-bezier(.34,1.4,.64,1), box-shadow .24s;
+  position: relative; z-index: 1;
+  box-shadow: 0 0 0 0 var(--subject-color, var(--purple));
+}
+.filter-btn:hover .filter-btn-swatch { transform: scale(1.5); box-shadow: 0 0 0 3px rgba(0,0,0,0.08); }
+.filter-btn.active .filter-btn-swatch { background: rgba(255,255,255,0.8); box-shadow: 0 0 0 2px rgba(255,255,255,0.3); transform: scale(1.2); }
+.filter-btn-label { position: relative; z-index: 1; }
+.filter-btn-count {
+  position: relative; z-index: 1;
+  background: var(--bg-soft); color: var(--ink-soft);
+  border-radius: 999px; padding: 1px 7px;
+  font-size: 10px; font-family: var(--font-mono); font-weight: 700; letter-spacing: .04em;
+  transition: background .24s, color .24s;
+}
+.filter-btn.active .filter-btn-count { background: rgba(255,255,255,0.22); color: rgba(255,255,255,0.9); }
 
 /* Subject sections */
 .subject-section { margin-bottom: 56px; }
@@ -183,7 +231,9 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 
   /* Filter bar — edge-to-edge horizontal scroll */
   .filter-bar-wrap { margin: 28px 0 24px; margin-left: -24px; margin-right: -24px; padding: 0 24px; }
-  .filter-btn { padding: 7px 14px; font-size: 12px; }
+  .filter-btn { padding: 7px 14px 7px 11px; font-size: 12px; gap: 6px; }
+  .filter-btn-swatch { width: 7px; height: 7px; }
+  .filter-btn-count { font-size: 9px; padding: 1px 5px; }
 
   /* Subject header */
   .subject-section { margin-bottom: 36px; }
@@ -445,9 +495,13 @@ function App() {
             <div className="filter-bar-wrap">
               <div className="filter-bar">
                 {SUBJECTS.map((s, i) => (
-                  <button key={s.id} className={`filter-btn${active === s.id ? ' active' : ''}`} onClick={() => setActive(s.id)} style={{ '--i': i }}>
-                    {s.name}
-                    {s.notes.length > 0 && <span className="filter-btn-dot" />}
+                  <button key={s.id}
+                    className={`filter-btn${active === s.id ? ' active' : ''}`}
+                    onClick={() => setActive(s.id)}
+                    style={{ '--i': i, '--subject-color': s.color, '--subject-accent': s.accent }}>
+                    <span className="filter-btn-swatch" />
+                    <span className="filter-btn-label">{s.name}</span>
+                    {s.notes.length > 0 && <span className="filter-btn-count">{s.notes.length}</span>}
                   </button>
                 ))}
               </div>
