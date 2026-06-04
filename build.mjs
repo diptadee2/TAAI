@@ -16,7 +16,7 @@ const __dir = path.dirname(fileURLToPath(import.meta.url));
 const SRC   = __dir;
 const DIST  = path.join(__dir, 'dist');
 
-const PAGES = ['index.html', 'courses.html', 'test-series.html', 'testimonials.html', 'contact.html'];
+const PAGES = ['index.html', 'courses.html', 'test-series.html', 'testimonials.html', 'contact.html', 'resources.html'];
 
 // Swap CDN URLs: dev → production, remove Babel standalone
 const CDN_SWAPS = [
@@ -82,6 +82,41 @@ function compilePage(filename) {
   console.log(`  ✓ ${filename}`);
 }
 
+// ── Notes data generator ──────────────────────────────────────────
+const SUBJECT_META = {
+  'linear-algebra':   { name: 'Linear Algebra',          accent: 'linear-gradient(135deg,#8B5CF6,#4D8BFF)', color: '#8B5CF6' },
+  'probability':      { name: 'Probability',             accent: 'linear-gradient(135deg,#FF7FB7,#8B5CF6)', color: '#FF7FB7' },
+  'statistics':       { name: 'Statistics',              accent: 'linear-gradient(135deg,#4D8BFF,#06b6d4)', color: '#4D8BFF' },
+  'calculus':         { name: 'Calculus',                accent: 'linear-gradient(135deg,#f59e0b,#ef4444)', color: '#f59e0b' },
+  'machine-learning': { name: 'Machine Learning',        accent: 'linear-gradient(135deg,#8B5CF6,#ec4899)', color: '#8B5CF6' },
+  'ai':               { name: 'Artificial Intelligence', accent: 'linear-gradient(135deg,#06b6d4,#4D8BFF)', color: '#06b6d4' },
+  'python-dsa':       { name: 'Python & DSA',            accent: 'linear-gradient(135deg,#10b981,#4D8BFF)', color: '#10b981' },
+  'dbms':             { name: 'DBMS',                    accent: 'linear-gradient(135deg,#f97316,#ef4444)', color: '#f97316' },
+};
+
+function toTitle(filename) {
+  return filename
+    .replace(/\.pdf$/i, '')
+    .replace(/[-_]/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function generateNotesData() {
+  const notesDir = path.join(SRC, 'notes');
+  const subjects = Object.entries(SUBJECT_META).map(([id, meta]) => {
+    const folder = path.join(notesDir, id);
+    const notes = fs.existsSync(folder)
+      ? fs.readdirSync(folder)
+          .filter(f => f.toLowerCase().endsWith('.pdf'))
+          .map(f => ({ title: toTitle(f), file: `notes/${id}/${f}` }))
+      : [];
+    return { id, ...meta, notes };
+  });
+  const json = JSON.stringify({ subjects }, null, 2);
+  fs.writeFileSync(path.join(DIST, 'notes-data.json'), json);
+  console.log('  ✓ notes-data.json');
+}
+
 function build() {
   if (!fs.existsSync(DIST)) fs.mkdirSync(DIST);
 
@@ -99,6 +134,7 @@ function build() {
   }
 
   console.log('Building…');
+  generateNotesData();
   for (const page of PAGES) {
     if (fs.existsSync(path.join(SRC, page))) compilePage(page);
   }
