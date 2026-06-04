@@ -199,73 +199,7 @@ const NAV_LINKS = [
 // ── Resources data ────────────────────────────────────────────────
 // To add a note: add an entry to the notes array of the relevant subject.
 // file: path to the PDF e.g. 'notes/linear-algebra/eigenvalues.pdf'
-const SUBJECTS = [
-  {
-    id: 'linear-algebra',
-    name: 'Linear Algebra',
-    accent: 'linear-gradient(135deg,#8B5CF6,#4D8BFF)',
-    color: '#8B5CF6',
-    notes: [
-      // { title: 'Vectors & Matrices', desc: 'Basics of vectors, matrix operations and determinants.', file: 'notes/linear-algebra/vectors-matrices.pdf' },
-    ],
-  },
-  {
-    id: 'probability',
-    name: 'Probability',
-    accent: 'linear-gradient(135deg,#FF7FB7,#8B5CF6)',
-    color: '#FF7FB7',
-    notes: [],
-  },
-  {
-    id: 'statistics',
-    name: 'Statistics',
-    accent: 'linear-gradient(135deg,#4D8BFF,#06b6d4)',
-    color: '#4D8BFF',
-    notes: [],
-  },
-  {
-    id: 'calculus',
-    name: 'Calculus',
-    accent: 'linear-gradient(135deg,#f59e0b,#ef4444)',
-    color: '#f59e0b',
-    notes: [],
-  },
-  {
-    id: 'machine-learning',
-    name: 'Machine Learning',
-    accent: 'linear-gradient(135deg,#8B5CF6,#ec4899)',
-    color: '#8B5CF6',
-    notes: [],
-  },
-  {
-    id: 'ai',
-    name: 'Artificial Intelligence',
-    accent: 'linear-gradient(135deg,#06b6d4,#4D8BFF)',
-    color: '#06b6d4',
-    notes: [],
-  },
-  {
-    id: 'python-dsa',
-    name: 'Python & DSA',
-    accent: 'linear-gradient(135deg,#10b981,#4D8BFF)',
-    color: '#10b981',
-    notes: [],
-  },
-  {
-    id: 'dbms',
-    name: 'DBMS',
-    accent: 'linear-gradient(135deg,#f97316,#ef4444)',
-    color: '#f97316',
-    notes: [],
-  },
-  {
-    id: 'miscellaneous',
-    name: 'Miscellaneous',
-    accent: 'linear-gradient(135deg,#8B5CF6,#FF7FB7)',
-    color: '#8B5CF6',
-    notes: [],
-  },
-];
+const SUBJECTS = [];
 
 // ── Icons ─────────────────────────────────────────────────────────
 const DownloadIcon = () => (
@@ -443,21 +377,23 @@ function App() {
       <section style={{ padding: '56px 0 96px' }}>
         <div className="container">
 
-          {/* Filter bar */}
-          <div className="filter-bar-wrap">
-            <div className="filter-bar">
-              <button className={`filter-btn${active === 'all' ? ' active' : ''}`} onClick={() => setActive('all')}>
-                All subjects
-                {totalNotes > 0 && <span className="filter-btn-dot" />}
-              </button>
-              {SUBJECTS.map(s => (
-                <button key={s.id} className={`filter-btn${active === s.id ? ' active' : ''}`} onClick={() => setActive(s.id)}>
-                  {s.name}
-                  {s.notes.length > 0 && <span className="filter-btn-dot" />}
+          {/* Filter bar — shown only when subjects exist */}
+          {SUBJECTS.length > 0 && (
+            <div className="filter-bar-wrap">
+              <div className="filter-bar">
+                <button className={`filter-btn${active === 'all' ? ' active' : ''}`} onClick={() => setActive('all')}>
+                  All subjects
+                  {totalNotes > 0 && <span className="filter-btn-dot" />}
                 </button>
-              ))}
+                {SUBJECTS.map(s => (
+                  <button key={s.id} className={`filter-btn${active === s.id ? ' active' : ''}`} onClick={() => setActive(s.id)}>
+                    {s.name}
+                    {s.notes.length > 0 && <span className="filter-btn-dot" />}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Subject sections */}
           {filtered.length === 0 ? (
