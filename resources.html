@@ -168,6 +168,44 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .subject-count { font-size: 11px; color: var(--ink-soft); font-family: var(--font-mono); letter-spacing: .08em; margin-left: auto; background: var(--bg-soft); border: 1px solid var(--line); padding: 4px 10px; border-radius: 999px; }
 .notes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
 
+/* Dark strip */
+.res-strip { background: #07051a; background-image: radial-gradient(circle,rgba(255,255,255,0.065) 1px,transparent 1px); background-size: 24px 24px; color: #fff; padding: 64px 0; position: relative; overflow: hidden; }
+.res-strip::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 40% 80% at 15% 50%,rgba(255,127,183,0.18) 0%,transparent 65%), radial-gradient(ellipse 35% 80% at 50% 50%,rgba(139,92,246,0.15) 0%,transparent 65%), radial-gradient(ellipse 40% 80% at 85% 50%,rgba(77,139,255,0.14) 0%,transparent 65%); pointer-events: none; }
+.res-strip-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 0; max-width: 760px; margin: 0 auto; position: relative; z-index: 1; }
+.res-strip-item { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 40px; position: relative; }
+.res-strip-item + .res-strip-item { border-left: 1px solid rgba(255,255,255,0.07); }
+.res-strip-item::before { content: ''; display: block; width: 28px; height: 2px; border-radius: 2px; margin-bottom: 20px; }
+.res-strip-item:nth-child(1)::before { background: #ec4899; box-shadow: 0 0 10px 2px rgba(236,72,153,0.7); }
+.res-strip-item:nth-child(2)::before { background: #8b5cf6; box-shadow: 0 0 10px 2px rgba(139,92,246,0.7); }
+.res-strip-item:nth-child(3)::before { background: #38bdf8; box-shadow: 0 0 10px 2px rgba(56,189,248,0.7); }
+.res-strip-num { font-family: var(--font-display); font-size: clamp(44px,7vw,72px); font-weight: 600; letter-spacing: -0.05em; line-height: 1; margin-bottom: 12px; -webkit-background-clip: text; background-clip: text; color: transparent; }
+.res-strip-item:nth-child(1) .res-strip-num { background-image: linear-gradient(160deg,#fff 25%,#ffc0dc 65%,#ec4899 100%); }
+.res-strip-item:nth-child(2) .res-strip-num { background-image: linear-gradient(160deg,#fff 25%,#d8b4fe 65%,#8b5cf6 100%); }
+.res-strip-item:nth-child(3) .res-strip-num { background-image: linear-gradient(160deg,#fff 25%,#bae6fd 65%,#38bdf8 100%); }
+.res-strip-label { font-size: 11px; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: .13em; line-height: 1.5; }
+
+/* Dark CTA */
+.res-cta { padding: var(--section-pad) 0; background: #07051a; position: relative; overflow: hidden; }
+.res-cta::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 70% 80% at 50% 50%,rgba(139,92,246,0.14) 0%,transparent 70%); pointer-events: none; }
+.res-cta-inner { position: relative; z-index: 1; text-align: center; max-width: 640px; margin: 0 auto; padding: 0 24px; }
+.res-cta-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,0.38); margin-bottom: 18px; }
+.res-cta h2 { font-family: var(--font-display); font-size: clamp(32px,4vw,54px); font-weight: 600; letter-spacing: -0.035em; line-height: 1.05; color: #fff; margin-bottom: 16px; }
+.res-cta h2 em { font-style: normal; background: linear-gradient(120deg,var(--pink),var(--lilac),var(--blue)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.res-cta p { font-size: 16px; color: rgba(255,255,255,0.52); line-height: 1.6; margin-bottom: 36px; }
+.res-cta-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.btn-cta-primary { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; border-radius: 999px; font-size: 15px; font-weight: 600; text-decoration: none; background: linear-gradient(135deg,var(--pink),var(--purple),var(--blue)); color: #fff; box-shadow: 0 8px 28px rgba(139,92,246,0.4); transition: transform .28s cubic-bezier(.34,1.1,.64,1), box-shadow .22s; }
+.btn-cta-primary:hover { transform: translateY(-3px); box-shadow: 0 14px 36px rgba(139,92,246,0.55); }
+.btn-cta-ghost { display: inline-flex; align-items: center; gap: 8px; padding: 13px 26px; border-radius: 999px; font-size: 15px; font-weight: 600; text-decoration: none; background: transparent; color: rgba(255,255,255,0.7); border: 1.5px solid rgba(255,255,255,0.2); transition: color .22s, border-color .22s, background .22s, transform .28s cubic-bezier(.34,1.1,.64,1); }
+.btn-cta-ghost:hover { color: #fff; border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.07); transform: translateY(-3px); }
+@media (max-width: 768px) {
+  .res-strip-grid { grid-template-columns: 1fr; gap: 32px; max-width: 280px; }
+  .res-strip-item + .res-strip-item { border-left: none; border-top: 1px solid rgba(255,255,255,0.07); padding-top: 32px; }
+  .res-strip-item { padding: 0; }
+  .res-strip-num { font-size: clamp(40px,10vw,60px); }
+  .res-cta-btns { flex-direction: column; align-items: center; }
+  .btn-cta-primary, .btn-cta-ghost { width: 100%; justify-content: center; }
+}
+
 /* Note card */
 .note-card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-md); padding: 22px 24px; display: flex; flex-direction: column; gap: 12px; position: relative; overflow: hidden; animation: card-in .42s cubic-bezier(.34,1.1,.64,1) calc(var(--i,0) * 55ms + 100ms) both; transition: transform .28s cubic-bezier(.34,1.1,.64,1), box-shadow .28s ease, border-color .22s; }
 .note-card:hover { transform: translateY(-6px) scale(1.01); box-shadow: 0 16px 44px rgba(107,75,255,0.14), 0 4px 12px rgba(0,0,0,0.06); border-color: rgba(139,92,246,0.28); }
@@ -486,6 +524,24 @@ function App() {
         </div>
       </section>
 
+      {/* Dark stats strip */}
+      <section className="res-strip">
+        <div className="res-strip-grid container">
+          <div className="res-strip-item fade-in">
+            <div className="res-strip-num">Free</div>
+            <div className="res-strip-label">No paywall · always</div>
+          </div>
+          <div className="res-strip-item fade-in">
+            <div className="res-strip-num">8</div>
+            <div className="res-strip-label">GATE DA subjects covered</div>
+          </div>
+          <div className="res-strip-item fade-in">
+            <div className="res-strip-num">PDF</div>
+            <div className="res-strip-label">Instant download · no sign-in</div>
+          </div>
+        </div>
+      </section>
+
       {/* Main content */}
       <section style={{ padding: '56px 0 96px' }}>
         <div className="container">
@@ -538,6 +594,22 @@ function App() {
 
           {/* All filter with no notes */}
           {active === 'all' && filtered.length === 0 && null}
+        </div>
+      </section>
+
+      {/* Dark CTA */}
+      <section className="res-cta">
+        <div className="res-cta-inner">
+          <div className="res-cta-eyebrow">Go deeper</div>
+          <h2>Notes not enough?<br />Try the full <em>course.</em></h2>
+          <p>These notes are a starting point. The TAAI full course takes you through every concept visually, with mentorship, quizzes, and the community that gets you ranked.</p>
+          <div className="res-cta-btns">
+            <a href="courses.html" className="btn-cta-primary">
+              Explore courses
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M13 8L8 3M13 8L8 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </a>
+            <a href="contact.html" className="btn-cta-ghost">Talk to us</a>
+          </div>
         </div>
       </section>
 
