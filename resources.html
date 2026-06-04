@@ -171,18 +171,58 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .menu-overlay.open { opacity: 1; pointer-events: auto; }
 }
 @media (max-width: 768px) {
-  :root { --section-pad: 56px; }
+  :root { --section-pad: 48px; }
   .nav-inner { height: 64px; }
-  .notes-grid { grid-template-columns: 1fr; }
-  .filter-bar-wrap { margin: 32px 0 28px; margin-left: -24px; margin-right: -24px; padding: 0 24px; }
-  .filter-btn { padding: 7px 14px; font-size: 12px; }
-  .page-hero { padding: 48px 0 40px; }
-  .page-hero h1 { font-size: clamp(36px,10vw,56px); }
+
+  /* Hero */
+  .page-hero { padding: 44px 0 36px; }
+  .page-hero h1 { font-size: clamp(36px,10vw,52px); margin-bottom: 14px; }
   .page-hero-sub { font-size: 15px; }
-  .subject-section { margin-bottom: 40px; }
-  .note-card { padding: 18px 20px; }
-  body { padding-bottom: 0; }
+  .page-hero::before { width: 280px; height: 280px; top: -60px; right: -40px; animation: none; }
+  .page-hero::after  { width: 200px; height: 200px; bottom: -40px; left: -30px; animation: none; }
+
+  /* Filter bar — edge-to-edge horizontal scroll */
+  .filter-bar-wrap { margin: 28px 0 24px; margin-left: -24px; margin-right: -24px; padding: 0 24px; }
+  .filter-btn { padding: 7px 14px; font-size: 12px; }
+
+  /* Subject header */
+  .subject-section { margin-bottom: 36px; }
+  .subject-icon { width: 38px; height: 38px; border-radius: 11px; }
+  .subject-name { font-size: 20px; }
+  .subject-count { font-size: 10px; padding: 3px 8px; }
+
+  /* Notes grid — single column */
+  .notes-grid { grid-template-columns: 1fr; gap: 12px; }
+  .note-card { padding: 16px 18px; }
+
+  /* Download button full-width on mobile for easy tapping */
+  .note-download { justify-content: center; padding: 12px 18px; font-size: 14px; }
+
+  /* Empty state */
+  .notes-empty { padding: 48px 20px; }
+
+  /* Footer */
   .footer-inner { flex-direction: column; align-items: center; text-align: center; }
+  .footer-socials a { width: 44px; height: 44px; }
+  .footer-socials a svg { width: 16px; height: 16px; }
+}
+
+/* Touch devices — tap feedback instead of hover */
+@media (hover: none) {
+  .note-card:active { transform: scale(0.97); transition-duration: .1s; }
+  .filter-btn:active { transform: scale(0.94); transition-duration: .1s; }
+  .note-download:active { transform: scale(0.96); transition-duration: .1s; }
+  .subject-icon { transition: none; }
+  /* Disable hover-only card animations */
+  .note-card:hover { transform: none; box-shadow: var(--shadow-sm); }
+  .note-card:hover::after { opacity: 0; }
+  .note-card:hover .note-card::before { opacity: 0; }
+}
+
+@media (max-width: 480px) {
+  .page-hero h1 { font-size: clamp(32px,9vw,44px); }
+  .page-hero-sub { font-size: 14px; }
+  .subject-name { font-size: 18px; }
 }
 </style>
 </head>
