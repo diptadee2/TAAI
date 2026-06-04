@@ -307,22 +307,52 @@ body.buttons-visible .mcb-call:hover, body.buttons-visible .mcb-wa:hover { trans
   /* Empty state */
   .notes-empty { padding: 48px 20px; }
 
+  /* Dark CTA */
+  .res-cta { padding: 56px 0; }
+  .res-cta h2 { font-size: clamp(28px,8vw,42px); }
+  .res-cta p { font-size: 14px; margin-bottom: 28px; }
+  .btn-cta-primary, .btn-cta-ghost { width: 100%; justify-content: center; max-width: 320px; }
+
+  /* Mobile sticky enroll bar */
+  body { padding-bottom: 68px; }
+  .mobile-enroll-bar { display: flex; align-items: center; justify-content: space-between; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; background: rgba(248,246,255,0.94); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid rgba(139,92,246,0.15); padding: 10px 20px calc(10px + env(safe-area-inset-bottom,0px)); box-shadow: 0 -4px 24px rgba(20,16,43,0.08); }
+  .mobile-enroll-label { font-size: 13px; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
+  .mobile-enroll-sub { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+  .mobile-enroll-btn { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: 999px; font-size: 13px; font-weight: 600; text-decoration: none; background: linear-gradient(135deg,var(--pink),var(--purple)); color: #fff; box-shadow: 0 4px 14px rgba(139,92,246,0.4); white-space: nowrap; }
+  .back-to-top { bottom: 80px; width: 40px; height: 40px; right: 14px; }
+
   /* Footer */
   .footer-inner { flex-direction: column; align-items: center; text-align: center; }
   .footer-socials a { width: 44px; height: 44px; }
   .footer-socials a svg { width: 16px; height: 16px; }
 }
 
+@media (max-width: 480px) {
+  .page-hero h1 { font-size: clamp(32px,9vw,44px); }
+  .page-hero-sub { font-size: 14px; }
+  .subject-name { font-size: 18px; }
+  .res-cta h2 { font-size: clamp(26px,8vw,36px); }
+}
+
 /* Touch devices — tap feedback instead of hover */
 @media (hover: none) {
-  .note-card:active { transform: scale(0.97); transition-duration: .1s; }
-  .filter-btn:active { transform: scale(0.94); transition-duration: .1s; }
-  .note-download:active { transform: scale(0.96); transition-duration: .1s; }
-  .subject-icon { transition: none; }
-  /* Disable hover-only card animations */
   .note-card:hover { transform: none; box-shadow: var(--shadow-sm); }
   .note-card:hover::after { opacity: 0; }
-  .note-card:hover .note-card::before { opacity: 0; }
+  .note-card:active { transform: scale(0.97); transition-duration: .1s; }
+  .filter-btn:hover { transform: none; box-shadow: none; }
+  .filter-btn:active { transform: scale(0.94); transition-duration: .1s; }
+  .note-download:hover { transform: none; }
+  .note-download:active { transform: scale(0.96); transition-duration: .1s; }
+  .subject-icon { transition: none; }
+  .btn-cta-primary:hover, .btn-cta-ghost:hover { transform: none; }
+  .btn-cta-primary:active { transform: scale(0.96); }
+  .btn-cta-ghost:active { transform: scale(0.96); }
+}
+
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.15s !important; }
+  .page-hero::before, .page-hero::after { animation: none; }
 }
 
 @media (max-width: 480px) {
@@ -503,6 +533,22 @@ function MobileContactBar() {
   );
 }
 
+// ── Mobile enroll bar ─────────────────────────────────────────────
+function MobileEnrollBar() {
+  return (
+    <div className="mobile-enroll-bar">
+      <div>
+        <div className="mobile-enroll-label">Want deeper prep?</div>
+        <div className="mobile-enroll-sub">Full course · mentorship · quizzes</div>
+      </div>
+      <a href="courses.html" className="mobile-enroll-btn">
+        Enroll
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M13 8L8 3M13 8L8 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      </a>
+    </div>
+  );
+}
+
 // ── Note Card ─────────────────────────────────────────────────────
 function NoteCard({ note, accent, index = 0 }) {
   return (
@@ -562,6 +608,7 @@ function App() {
       <div className="scroll-progress" />
       <BackToTop />
       <MobileContactBar />
+      <MobileEnrollBar />
       <Nav />
       <div className="nav-spacer" />
 
