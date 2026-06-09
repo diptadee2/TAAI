@@ -216,6 +216,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .note-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.5; flex: 1; }
 .note-meta { display: flex; align-items: center; gap: 8px; }
 .note-type { font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); background: var(--bg-soft); border: 1px solid var(--line); padding: 3px 8px; border-radius: 4px; }
+.note-date { font-size: 11px; color: var(--ink-soft); margin-left: auto; }
 .note-download { display: inline-flex; align-items: center; gap: 6px; margin-top: auto; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; background: var(--purple-soft); color: var(--purple); border: 1.5px solid rgba(139,92,246,0.2); transition: background .22s, transform .28s cubic-bezier(.34,1.2,.64,1), box-shadow .22s, color .22s; }
 .note-download:hover { background: var(--purple); color: #fff; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(139,92,246,0.35); }
 .note-download svg { flex-shrink: 0; transition: transform .28s cubic-bezier(.34,1.4,.64,1); }
@@ -557,6 +558,7 @@ function NoteCard({ note, accent, index = 0 }) {
       {note.desc && <div className="note-desc">{note.desc}</div>}
       <div className="note-meta">
         <span className="note-type">PDF</span>
+        {note.postedOn && <span className="note-date">{new Date(note.postedOn).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>}
       </div>
       <a href={note.file} download className="note-download">
         <DownloadIcon /> Download
