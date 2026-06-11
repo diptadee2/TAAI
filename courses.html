@@ -1127,6 +1127,13 @@ const fmtPrice    = n => n ? '₹' + Number(n).toLocaleString('en-IN') : '';
 const fmtValidity = d => { if (!d) return ''; const dt = new Date(d + 'T00:00:00'); return 'VALID UNTIL ' + dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase(); };
 const fmtDeadline = d => { if (!d) return ''; const dt = new Date(d + 'T00:00:00'); return 'Offer ends ' + dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };
 
+// Pre-fetch pricing before React mounts so cards render once with correct data
+let _pricingCache = null;
+const _pricingFetch = fetch(PRICING_CSV_URL)
+  .then(r => r.text())
+  .then(text => { const map = {}; parseCSV(text).forEach(r => { if (r.id) map[r.id] = r; }); _pricingCache = map; return map; })
+  .catch(() => { _pricingCache = {}; return {}; });
+
 const COURSE_DROPDOWN = [
   { label: 'Bundled Courses',    href: 'courses.html#combos'    },
   { label: 'Individual Courses', href: 'courses.html#individual', dividerBefore: true },
@@ -1727,17 +1734,12 @@ function MobileContactBar() {
 }
 
 function App() {
-  const [pricingMap, setPricingMap] = React.useState({});
+  const [pricingMap, setPricingMap] = React.useState(() => _pricingCache || {});
 
   React.useEffect(() => {
-    fetch(PRICING_CSV_URL)
-      .then(r => r.text())
-      .then(text => {
-        const map = {};
-        parseCSV(text).forEach(r => { if (r.id) map[r.id] = r; });
-        setPricingMap(map);
-      })
-      .catch(() => {});
+    if (!_pricingCache) {
+      _pricingFetch.then(map => setPricingMap(map));
+    }
   }, []);
 
   React.useEffect(() => {
