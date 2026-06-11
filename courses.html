@@ -1445,14 +1445,17 @@ function BundleComparison({ pricingMap }) {
 }
 
 function ComboCard({ c, pricingMap }) {
-  const p = pricingMap[c.id] || {};
-  const price           = p.price           ? fmtPrice(p.price)       : c.price;
-  const priceOld        = p.priceOld        ? fmtPrice(p.priceOld)    : c.priceOld;
-  const discountRaw     = p.discount        || c.discount;
-  const discount        = discountRaw ? (isNaN(discountRaw) ? discountRaw : discountRaw + '% off') : null;
-  const discountDeadline= p.discountDeadline? fmtDeadline(p.discountDeadline) : c.discountDeadline;
-  const saving          = c.saving;
-  const validity        = p.validity        ? fmtValidity(p.validity)  : c.validity;
+  const p = pricingMap[c.id];
+  const live = !!p;
+  const pd = p || {};
+  const price            = pd.price           ? fmtPrice(pd.price)            : c.price;
+  const priceOld         = pd.priceOld        ? fmtPrice(pd.priceOld)         : c.priceOld;
+  const discountRaw      = pd.discount        || c.discount;
+  const discount         = discountRaw ? (isNaN(discountRaw) ? discountRaw : discountRaw + '% off') : null;
+  const discountDeadline = live ? (pd.discountDeadline ? fmtDeadline(pd.discountDeadline) : null) : c.discountDeadline;
+  const discountReason   = pd.discountReason  || null;
+  const saving           = c.saving;
+  const validity         = pd.validity        ? fmtValidity(pd.validity)       : c.validity;
   const featured = c.badge === 'best';
   const cls = 'combo-card card' + (featured ? ' featured' : '') + (c.theme ? ` combo-${c.theme}` : '');
   const spotlightProps = {
@@ -1490,7 +1493,7 @@ function ComboCard({ c, pricingMap }) {
         {priceOld && <div className="combo-price-old">{priceOld}</div>}
         {discount && <div className="combo-discount">{discount}</div>}
       </div>
-      {discountDeadline && <div className="combo-saving" style={{ color: '#e05a2b', fontWeight: 600 }}>⏳ {discountDeadline}</div>}
+      {(discountReason || discountDeadline) && <div className="combo-saving" style={{ color: '#e05a2b', fontWeight: 600 }}>⏳ {[discountReason, discountDeadline].filter(Boolean).join(' · ')}</div>}
       {saving && <div className="combo-saving">{saving}</div>}
       <a href={c.href} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-full">Enrol now <Icon.ArrowRight /></a>
     </div>
