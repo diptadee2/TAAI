@@ -1451,7 +1451,7 @@ function ComboCard({ c, pricingMap }) {
   const discountRaw     = p.discount        || c.discount;
   const discount        = discountRaw ? (isNaN(discountRaw) ? discountRaw : discountRaw + '% off') : null;
   const discountDeadline= p.discountDeadline? fmtDeadline(p.discountDeadline) : c.discountDeadline;
-  const saving          = p.saving          || c.saving;
+  const saving          = c.saving;
   const validity        = p.validity        ? fmtValidity(p.validity)  : c.validity;
   const featured = c.badge === 'best';
   const cls = 'combo-card card' + (featured ? ' featured' : '') + (c.theme ? ` combo-${c.theme}` : '');
