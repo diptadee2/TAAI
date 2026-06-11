@@ -241,6 +241,14 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .btn-slides svg { flex-shrink: 0; transition: transform .28s cubic-bezier(.34,1.4,.64,1); }
 .btn-slides:hover svg { transform: translateY(3px); }
 
+/* Lecture card — dark banner override */
+.lecture-card .card-banner { background: linear-gradient(135deg, #120e28 0%, #1c1240 100%); }
+.lecture-card .card-banner::before { background: color-mix(in srgb, var(--note-color, #8B5CF6) 20%, transparent); width: 100px; height: 100px; bottom: -36px; right: -36px; }
+.lecture-card .card-banner::after { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent); }
+.lecture-card .card-banner-icon { background: rgba(220,38,38,0.85); box-shadow: 0 2px 14px rgba(220,38,38,0.55); }
+.lecture-card:hover .card-banner-icon { background: #dc2626; box-shadow: 0 4px 22px rgba(220,38,38,0.7); transform: scale(1.14); }
+.lecture-card:hover { box-shadow: 0 24px 52px rgba(0,0,0,0.07), 0 6px 20px rgba(220,38,38,0.14); border-color: rgba(220,38,38,0.3); }
+
 /* Subsection labels (Notes / Lectures within a subject) */
 .subsection-header { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-soft); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
 .subsection-header::after { content: ''; flex: 1; height: 1px; background: var(--line); }
@@ -405,9 +413,9 @@ body.buttons-visible .mcb-call:hover, body.buttons-visible .mcb-wa:hover { trans
 </head>
 <body>
 <div id="root"></div>
-<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
 <script type="text/babel" data-presets="react">
 
 // ── Nav data ──────────────────────────────────────────────────────
