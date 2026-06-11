@@ -374,6 +374,22 @@ body.buttons-visible .mcb-call:hover, body.buttons-visible .mcb-wa:hover { trans
   .btn-cta-ghost:active { transform: scale(0.96); }
 }
 
+/* Skeleton loader */
+@keyframes shimmer { 0% { background-position: -900px 0; } 100% { background-position: 900px 0; } }
+.shimmer {
+  background: linear-gradient(90deg, #f2eeff 0%, #e8e0ff 45%, #f2eeff 80%);
+  background-size: 1800px 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+.res-skeleton { animation: res-in .35s cubic-bezier(.34,1.1,.64,1) both; }
+.skel-bar { display: flex; gap: 10px; margin: 48px 0 40px; overflow: hidden; }
+.skel-pill { height: 38px; border-radius: 999px; flex-shrink: 0; }
+.skel-section-head { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+.skel-icon { width: 44px; height: 44px; border-radius: 14px; flex-shrink: 0; }
+.skel-label { height: 26px; border-radius: 8px; }
+.skel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.skel-card { height: 162px; border-radius: var(--radius-md); }
+
 /* Reduce motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.15s !important; }
@@ -580,6 +596,30 @@ function MobileEnrollBar() {
   );
 }
 
+// ── Skeleton loader ───────────────────────────────────────────────
+function SkeletonLoading() {
+  const pillWidths = [118, 92, 78, 104, 126, 88, 96, 80];
+  return (
+    <div className="res-skeleton">
+      <div className="skel-bar">
+        {pillWidths.map((w, i) => (
+          <div key={i} className="skel-pill shimmer" style={{ width: w, animationDelay: `${i * 0.07}s` }} />
+        ))}
+      </div>
+      <div className="skel-section-head">
+        <div className="skel-icon shimmer" />
+        <div className="skel-label shimmer" style={{ width: 160 }} />
+        <div className="skel-label shimmer" style={{ width: 80, marginLeft: 'auto' }} />
+      </div>
+      <div className="skel-grid">
+        {[0, 1, 2, 3].map(i => (
+          <div key={i} className="skel-card shimmer" style={{ animationDelay: `${i * 0.08}s` }} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Filter Bar ────────────────────────────────────────────────────
 function FilterBar({ subjects, active, setActive }) {
   const wrapRef = React.useRef(null);
@@ -687,6 +727,7 @@ function LectureCard({ lecture, accent, index = 0 }) {
 function App() {
   const [subjects, setSubjects] = React.useState([]);
   const [active, setActive]     = React.useState('');
+  const [loading, setLoading]   = React.useState(true);
 
   React.useEffect(() => {
     const parseCSV = text => {
@@ -719,7 +760,8 @@ function App() {
       const subjects = meta.subjects.map(s => ({ ...s, notes: notesMap[s.id] || [], lectures: lecturesMap[s.id] || [] }));
       setSubjects(subjects);
       setActive(subjects[0]?.id || '');
-    }).catch(() => {});
+      setLoading(false);
+    }).catch(() => { setLoading(false); });
   }, []);
 
   const filtered = subjects.filter(s => s.id === active);
@@ -768,11 +810,14 @@ function App() {
       <section style={{ padding: '56px 0 96px' }}>
         <div className="container">
 
+          {/* Skeleton while fetching */}
+          {loading && <SkeletonLoading />}
+
           {/* Filter bar — shown only when subjects exist */}
-          {SUBJECTS.length > 0 && <FilterBar subjects={SUBJECTS} active={active} setActive={setActive} />}
+          {!loading && SUBJECTS.length > 0 && <FilterBar subjects={SUBJECTS} active={active} setActive={setActive} />}
 
           {/* Subject sections — key on active triggers re-mount → re-animation */}
-          <div key={active}>
+          {!loading && <div key={active}>
           {filtered.length === 0 ? (
             <div className="notes-empty">
               <div className="notes-empty-icon"><FileIcon /></div>
@@ -828,10 +873,10 @@ function App() {
               );
             })
           )}
-          </div>
+          </div>}
 
           {/* All filter with no notes */}
-          {active === 'all' && filtered.length === 0 && null}
+          {!loading && active === 'all' && filtered.length === 0 && null}
         </div>
       </section>
 
