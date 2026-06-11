@@ -208,29 +208,36 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 
 /* Note card */
-.note-card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-md); padding: 22px 24px; display: flex; flex-direction: column; gap: 12px; position: relative; overflow: hidden; animation: card-in .42s cubic-bezier(.34,1.1,.64,1) calc(var(--i,0) * 55ms + 100ms) both; transition: transform .28s cubic-bezier(.34,1.1,.64,1), box-shadow .28s ease, border-color .22s; }
-.note-card:hover { transform: translateY(-6px) scale(1.01); box-shadow: 0 16px 44px rgba(107,75,255,0.14), 0 4px 12px rgba(0,0,0,0.06); border-color: rgba(139,92,246,0.28); }
-.note-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--note-accent, linear-gradient(90deg,var(--pink),var(--purple))); }
-.note-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(139,92,246,0.03) 0%, transparent 60%); opacity: 0; transition: opacity .28s ease; border-radius: inherit; pointer-events: none; }
+.note-card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-md); padding: 0; display: flex; flex-direction: column; overflow: hidden; animation: card-in .42s cubic-bezier(.34,1.1,.64,1) calc(var(--i,0) * 55ms + 100ms) both; transition: transform .28s cubic-bezier(.34,1.1,.64,1), box-shadow .28s ease, border-color .22s; }
+.note-card:hover { transform: translateY(-6px) scale(1.01); box-shadow: 0 16px 44px rgba(107,75,255,0.12), 0 4px 12px rgba(0,0,0,0.06); border-color: rgba(139,92,246,0.22); }
+.note-card::after { content: ''; position: absolute; inset: 0; background: rgba(139,92,246,0.025); opacity: 0; transition: opacity .28s ease; border-radius: inherit; pointer-events: none; }
 .note-card:hover::after { opacity: 1; }
-.note-title { font-weight: 600; font-size: 15px; color: var(--ink); line-height: 1.3; }
+.note-card-banner { padding: 18px 22px 16px; background: var(--note-accent, linear-gradient(135deg,var(--purple),var(--blue))); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; position: relative; overflow: hidden; }
+.note-card-banner::before { content: ''; position: absolute; right: -22px; top: -22px; width: 84px; height: 84px; border-radius: 50%; background: rgba(255,255,255,0.10); pointer-events: none; }
+.note-card-banner-icon { color: rgba(255,255,255,0.92); position: relative; z-index: 1; display: flex; }
+.note-card-banner-type { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,0.72); background: rgba(255,255,255,0.18); padding: 4px 10px; border-radius: 999px; position: relative; z-index: 1; }
+.note-card-body { padding: 16px 22px 20px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.note-title { font-weight: 600; font-size: 15px; color: var(--ink); line-height: 1.35; }
 .note-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.5; flex: 1; }
-.note-meta { display: flex; align-items: center; gap: 8px; }
-.note-type { font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); background: var(--bg-soft); border: 1px solid var(--line); padding: 3px 8px; border-radius: 4px; }
-.note-date { font-size: 11px; color: var(--ink-soft); margin-left: auto; }
+.note-date { font-size: 11px; color: var(--ink-soft); }
 .note-download { display: inline-flex; align-items: center; justify-content: center; gap: 6px; margin-top: auto; width: 100%; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; background: var(--purple-soft); color: var(--purple); border: 1.5px solid rgba(139,92,246,0.2); transition: background .22s, transform .28s cubic-bezier(.34,1.2,.64,1), box-shadow .22s, color .22s; }
 .note-download:hover { background: var(--purple); color: #fff; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(139,92,246,0.35); }
 .note-download svg { flex-shrink: 0; transition: transform .28s cubic-bezier(.34,1.4,.64,1); }
 .note-download:hover svg { transform: translateY(3px); }
 
 /* Lecture card */
-.lecture-card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-md); padding: 22px 24px; display: flex; flex-direction: column; gap: 12px; position: relative; overflow: hidden; animation: card-in .42s cubic-bezier(.34,1.1,.64,1) calc(var(--i,0) * 55ms + 100ms) both; transition: transform .28s cubic-bezier(.34,1.1,.64,1), box-shadow .28s ease, border-color .22s; }
-.lecture-card:hover { transform: translateY(-6px) scale(1.01); box-shadow: 0 16px 44px rgba(220,38,38,0.1), 0 4px 12px rgba(0,0,0,0.06); border-color: rgba(220,38,38,0.22); }
-.lecture-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--note-accent, linear-gradient(90deg,var(--pink),var(--purple))); }
-.lecture-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(220,38,38,0.03) 0%, transparent 60%); opacity: 0; transition: opacity .28s ease; border-radius: inherit; pointer-events: none; }
+.lecture-card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-md); padding: 0; display: flex; flex-direction: column; overflow: hidden; animation: card-in .42s cubic-bezier(.34,1.1,.64,1) calc(var(--i,0) * 55ms + 100ms) both; transition: transform .28s cubic-bezier(.34,1.1,.64,1), box-shadow .28s ease, border-color .22s; }
+.lecture-card:hover { transform: translateY(-6px) scale(1.01); box-shadow: 0 16px 44px rgba(220,38,38,0.10), 0 4px 12px rgba(0,0,0,0.06); border-color: rgba(220,38,38,0.22); }
+.lecture-card::after { content: ''; position: absolute; inset: 0; background: rgba(220,38,38,0.02); opacity: 0; transition: opacity .28s ease; border-radius: inherit; pointer-events: none; }
 .lecture-card:hover::after { opacity: 1; }
-.lecture-num { font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
-.lecture-title { font-weight: 600; font-size: 15px; color: var(--ink); line-height: 1.3; flex: 1; }
+.lecture-card-banner { padding: 18px 22px 16px; background: var(--note-accent, linear-gradient(135deg,var(--purple),var(--blue))); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; position: relative; overflow: hidden; }
+.lecture-card-banner::before { content: ''; position: absolute; right: -22px; top: -22px; width: 84px; height: 84px; border-radius: 50%; background: rgba(255,255,255,0.10); pointer-events: none; }
+.lecture-card-banner-left { position: relative; z-index: 1; }
+.lecture-card-num { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,0.65); }
+.lecture-card-banner-icon { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.20); display: grid; place-items: center; color: #fff; position: relative; z-index: 1; flex-shrink: 0; transition: background .22s; }
+.lecture-card:hover .lecture-card-banner-icon { background: rgba(255,255,255,0.30); }
+.lecture-card-body { padding: 14px 22px 18px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.lecture-title { font-weight: 600; font-size: 15px; color: var(--ink); line-height: 1.35; flex: 1; }
 .lecture-actions { display: flex; gap: 8px; margin-top: auto; flex-wrap: wrap; }
 .lecture-watch { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: 1; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; background: #fee2e2; color: #dc2626; border: 1.5px solid rgba(220,38,38,0.2); transition: background .22s, transform .28s cubic-bezier(.34,1.2,.64,1), box-shadow .22s, color .22s; }
 .lecture-watch:hover { background: #dc2626; color: #fff; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(220,38,38,0.35); }
@@ -669,7 +676,6 @@ function FilterBar({ subjects, active, setActive }) {
               style={{ '--i': i, '--subject-color': s.color, '--subject-accent': s.accent }}>
               <span className="filter-btn-swatch" />
               <span className="filter-btn-label">{s.name}</span>
-              {(s.notes.length + s.lectures.length) > 0 && <span className="filter-btn-count">{s.notes.length + s.lectures.length}</span>}
             </button>
           ))}
         </div>
@@ -687,15 +693,24 @@ function FilterBar({ subjects, active, setActive }) {
 function NoteCard({ note, accent, index = 0 }) {
   return (
     <div className="note-card" style={{ '--note-accent': accent, '--i': index }}>
-      <div className="note-title">{note.title}</div>
-      {note.desc && <div className="note-desc">{note.desc}</div>}
-      <div className="note-meta">
-        <span className="note-type">PDF</span>
-        {note.postedOn && <span className="note-date">{new Date(note.postedOn).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>}
+      <div className="note-card-banner">
+        <span className="note-card-banner-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M14 2H6C5.4 2 5 2.4 5 3V21C5 21.6 5.4 22 6 22H18C18.6 22 19 21.6 19 21V7L14 2Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
+            <path d="M14 2V7H19" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
+            <path d="M9 13H15M9 17H13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+          </svg>
+        </span>
+        <span className="note-card-banner-type">PDF</span>
       </div>
-      <a href={note.file} download className="note-download">
-        <DownloadIcon /> Download
-      </a>
+      <div className="note-card-body">
+        <div className="note-title">{note.title}</div>
+        {note.desc && <div className="note-desc">{note.desc}</div>}
+        {note.postedOn && <div className="note-date">{new Date(note.postedOn).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>}
+        <a href={note.file} download className="note-download">
+          <DownloadIcon /> Download PDF
+        </a>
+      </div>
     </div>
   );
 }
@@ -707,21 +722,27 @@ function LectureCard({ lecture, accent, index = 0 }) {
     : null;
   return (
     <div className="lecture-card" style={{ '--note-accent': accent, '--i': index }}>
-      {lecture.lectureNumber && <div className="lecture-num">Lecture {lecture.lectureNumber}</div>}
-      <div className="lecture-title">{lecture.title}</div>
-      <div className="note-meta">
-        <span className="note-type" style={{ color: '#dc2626', background: '#fee2e2', borderColor: 'rgba(220,38,38,0.2)' }}>YouTube</span>
-        {formattedDate && <span className="note-date">{formattedDate}</span>}
+      <div className="lecture-card-banner">
+        <div className="lecture-card-banner-left">
+          {lecture.lectureNumber && <div className="lecture-card-num">Lecture {lecture.lectureNumber}</div>}
+        </div>
+        <div className="lecture-card-banner-icon">
+          <PlayIcon />
+        </div>
       </div>
-      <div className="lecture-actions">
-        <a href={lecture.youtubeUrl} target="_blank" rel="noopener noreferrer" className="lecture-watch">
-          <PlayIcon /> Watch Lecture
-        </a>
-        {lecture.slidesFile && (
-          <a href={lecture.slidesFile} download className="note-download" style={{ flex: 'none' }}>
-            <DownloadIcon /> Slides
+      <div className="lecture-card-body">
+        <div className="lecture-title">{lecture.title}</div>
+        {formattedDate && <div className="note-date">{formattedDate}</div>}
+        <div className="lecture-actions">
+          <a href={lecture.youtubeUrl} target="_blank" rel="noopener noreferrer" className="lecture-watch">
+            <PlayIcon /> Watch on YouTube
           </a>
-        )}
+          {lecture.slidesFile && (
+            <a href={lecture.slidesFile} download className="note-download" style={{ flex: 'none', marginTop: 0 }}>
+              <DownloadIcon /> Slides
+            </a>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -846,7 +867,7 @@ function App() {
                 <div key={subject.id} className="subject-section">
                   <div className="subject-header">
                     <div className="subject-icon" style={{ background: subject.accent }}><FileIcon /></div>
-                    <div className="subject-name">{subject.name}</div>
+                    <div className="subject-name" style={{ backgroundImage: subject.accent, WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>{subject.name}</div>
                     <div className="subject-count">
                       {hasNotes && `${subject.notes.length} ${subject.notes.length !== 1 ? 'notes' : 'note'}`}
                       {hasNotes && hasLectures && ' · '}
