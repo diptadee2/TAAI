@@ -207,41 +207,40 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .btn-cta-primary, .btn-cta-ghost { width: 100%; justify-content: center; }
 }
 
-/* Note card */
-.note-card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-md); padding: 0; display: flex; flex-direction: column; overflow: hidden; animation: card-in .42s cubic-bezier(.34,1.1,.64,1) calc(var(--i,0) * 55ms + 100ms) both; transition: transform .28s cubic-bezier(.34,1.1,.64,1), box-shadow .28s ease, border-color .22s; }
-.note-card:hover { transform: translateY(-6px) scale(1.01); box-shadow: 0 16px 44px rgba(107,75,255,0.12), 0 4px 12px rgba(0,0,0,0.06); border-color: rgba(139,92,246,0.22); }
-.note-card::after { content: ''; position: absolute; inset: 0; background: rgba(139,92,246,0.025); opacity: 0; transition: opacity .28s ease; border-radius: inherit; pointer-events: none; }
-.note-card:hover::after { opacity: 1; }
-.note-card-banner { padding: 18px 22px 16px; background: var(--note-accent, linear-gradient(135deg,var(--purple),var(--blue))); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; position: relative; overflow: hidden; }
-.note-card-banner::before { content: ''; position: absolute; right: -22px; top: -22px; width: 84px; height: 84px; border-radius: 50%; background: rgba(255,255,255,0.10); pointer-events: none; }
-.note-card-banner-icon { color: rgba(255,255,255,0.92); position: relative; z-index: 1; display: flex; }
-.note-card-banner-type { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,0.72); background: rgba(255,255,255,0.18); padding: 4px 10px; border-radius: 999px; position: relative; z-index: 1; }
-.note-card-body { padding: 16px 22px 20px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
-.note-title { font-weight: 600; font-size: 15px; color: var(--ink); line-height: 1.35; }
-.note-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.5; flex: 1; }
-.note-date { font-size: 11px; color: var(--ink-soft); }
-.note-download { display: inline-flex; align-items: center; justify-content: center; gap: 6px; margin-top: auto; width: 100%; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; background: var(--purple-soft); color: var(--purple); border: 1.5px solid rgba(139,92,246,0.2); transition: background .22s, transform .28s cubic-bezier(.34,1.2,.64,1), box-shadow .22s, color .22s; }
-.note-download:hover { background: var(--purple); color: #fff; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(139,92,246,0.35); }
-.note-download svg { flex-shrink: 0; transition: transform .28s cubic-bezier(.34,1.4,.64,1); }
-.note-download:hover svg { transform: translateY(3px); }
+/* Cards — shared base */
+.note-card, .lecture-card { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 0; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.05); animation: card-in .42s cubic-bezier(.34,1.1,.64,1) calc(var(--i,0) * 55ms + 100ms) both; transition: transform .32s cubic-bezier(.34,1.1,.64,1), box-shadow .32s ease, border-color .24s; }
+.note-card:hover, .lecture-card:hover { transform: translateY(-9px) scale(1.01); box-shadow: 0 24px 52px rgba(0,0,0,0.07), 0 6px 20px color-mix(in srgb, var(--note-color, #8B5CF6) 22%, transparent); border-color: color-mix(in srgb, var(--note-color, #8B5CF6) 40%, transparent); }
 
-/* Lecture card */
-.lecture-card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-md); padding: 0; display: flex; flex-direction: column; overflow: hidden; animation: card-in .42s cubic-bezier(.34,1.1,.64,1) calc(var(--i,0) * 55ms + 100ms) both; transition: transform .28s cubic-bezier(.34,1.1,.64,1), box-shadow .28s ease, border-color .22s; }
-.lecture-card:hover { transform: translateY(-6px) scale(1.01); box-shadow: 0 16px 44px rgba(220,38,38,0.10), 0 4px 12px rgba(0,0,0,0.06); border-color: rgba(220,38,38,0.22); }
-.lecture-card::after { content: ''; position: absolute; inset: 0; background: rgba(220,38,38,0.02); opacity: 0; transition: opacity .28s ease; border-radius: inherit; pointer-events: none; }
-.lecture-card:hover::after { opacity: 1; }
-.lecture-card-banner { padding: 18px 22px 16px; background: var(--note-accent, linear-gradient(135deg,var(--purple),var(--blue))); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; position: relative; overflow: hidden; }
-.lecture-card-banner::before { content: ''; position: absolute; right: -22px; top: -22px; width: 84px; height: 84px; border-radius: 50%; background: rgba(255,255,255,0.10); pointer-events: none; }
-.lecture-card-banner-left { position: relative; z-index: 1; }
-.lecture-card-num { font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,0.65); }
-.lecture-card-banner-icon { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.20); display: grid; place-items: center; color: #fff; position: relative; z-index: 1; flex-shrink: 0; transition: background .22s; }
-.lecture-card:hover .lecture-card-banner-icon { background: rgba(255,255,255,0.30); }
-.lecture-card-body { padding: 14px 22px 18px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
-.lecture-title { font-weight: 600; font-size: 15px; color: var(--ink); line-height: 1.35; flex: 1; }
-.lecture-actions { display: flex; gap: 8px; margin-top: auto; flex-wrap: wrap; }
-.lecture-watch { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: 1; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; background: #fee2e2; color: #dc2626; border: 1.5px solid rgba(220,38,38,0.2); transition: background .22s, transform .28s cubic-bezier(.34,1.2,.64,1), box-shadow .22s, color .22s; }
-.lecture-watch:hover { background: #dc2626; color: #fff; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(220,38,38,0.35); }
-.lecture-watch svg { flex-shrink: 0; }
+/* Card banner */
+.card-banner { padding: 16px 20px; background: var(--note-accent, linear-gradient(135deg,var(--purple),var(--blue))); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; position: relative; overflow: hidden; }
+.card-banner::before { content: ''; position: absolute; bottom: -28px; right: -28px; width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.10); pointer-events: none; }
+.card-banner::after { content: ''; position: absolute; top: -60%; left: -25%; width: 48%; height: 220%; background: linear-gradient(90deg,transparent,rgba(255,255,255,0.13),transparent); transform: skewX(-16deg); transition: left .65s ease; pointer-events: none; }
+.note-card:hover .card-banner::after, .lecture-card:hover .card-banner::after { left: 135%; }
+.card-banner-label { font-family: var(--font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,0.8); position: relative; z-index: 1; display: flex; flex-direction: column; gap: 4px; }
+.card-banner-sublabel { font-size: 8.5px; color: rgba(255,255,255,0.48); font-weight: 600; letter-spacing: .09em; }
+.card-banner-icon { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.22); display: grid; place-items: center; color: #fff; position: relative; z-index: 1; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.14); transition: background .28s, transform .32s cubic-bezier(.34,1.4,.64,1); }
+.note-card:hover .card-banner-icon, .lecture-card:hover .card-banner-icon { background: rgba(255,255,255,0.32); transform: scale(1.12); }
+
+/* Card body */
+.card-body { padding: 15px 20px 18px; display: flex; flex-direction: column; gap: 7px; flex: 1; }
+.card-title { font-weight: 700; font-size: 14.5px; color: var(--ink); line-height: 1.35; }
+.note-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.5; flex: 1; }
+.card-date { font-size: 11px; color: var(--ink-soft); }
+.card-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 2px; flex-wrap: nowrap; }
+
+/* Action buttons */
+.btn-download { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin-top: auto; padding: 9px 16px; border-radius: 9px; font-size: 12.5px; font-weight: 600; text-decoration: none; background: var(--purple-soft); color: var(--purple); border: 1.5px solid rgba(139,92,246,0.2); transition: background .22s, transform .28s cubic-bezier(.34,1.2,.64,1), box-shadow .22s, color .22s; }
+.btn-download:hover { background: var(--purple); color: #fff; transform: translateY(-2px); box-shadow: 0 6px 18px rgba(139,92,246,0.38); }
+.btn-download svg { flex-shrink: 0; transition: transform .28s cubic-bezier(.34,1.4,.64,1); }
+.btn-download:hover svg { transform: translateY(3px); }
+.btn-watch { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 14px; border-radius: 9px; font-size: 12.5px; font-weight: 600; text-decoration: none; background: #fee2e2; color: #dc2626; border: 1.5px solid rgba(220,38,38,0.18); white-space: nowrap; transition: background .22s, transform .28s cubic-bezier(.34,1.2,.64,1), box-shadow .22s, color .22s; }
+.btn-watch:hover { background: #dc2626; color: #fff; transform: translateY(-2px); box-shadow: 0 6px 18px rgba(220,38,38,0.38); }
+.btn-watch svg { flex-shrink: 0; }
+.btn-slides { flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 9px 13px; border-radius: 9px; font-size: 12.5px; font-weight: 600; text-decoration: none; background: var(--bg-soft); color: var(--ink-dim); border: 1.5px solid var(--line); white-space: nowrap; transition: background .22s, color .22s, border-color .22s, transform .28s; }
+.btn-slides:hover { background: var(--purple-soft); color: var(--purple); border-color: rgba(139,92,246,0.25); transform: translateY(-2px); }
+.btn-slides svg { flex-shrink: 0; transition: transform .28s cubic-bezier(.34,1.4,.64,1); }
+.btn-slides:hover svg { transform: translateY(3px); }
+
 /* Subsection labels (Notes / Lectures within a subject) */
 .subsection-header { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-soft); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
 .subsection-header::after { content: ''; flex: 1; height: 1px; background: var(--line); }
@@ -326,10 +325,10 @@ body.buttons-visible .mcb-call:hover, body.buttons-visible .mcb-wa:hover { trans
 
   /* Notes grid — single column */
   .notes-grid { grid-template-columns: 1fr; gap: 12px; }
-  .note-card { padding: 16px 18px; }
 
-  /* Download button full-width on mobile for easy tapping */
-  .note-download { justify-content: center; padding: 12px 18px; font-size: 14px; }
+  /* Buttons on mobile */
+  .btn-download { padding: 11px 16px; font-size: 13.5px; }
+  .btn-watch { padding: 11px 14px; font-size: 13.5px; }
 
   /* Empty state */
   .notes-empty { padding: 48px 20px; }
@@ -363,18 +362,12 @@ body.buttons-visible .mcb-call:hover, body.buttons-visible .mcb-wa:hover { trans
 
 /* Touch devices — tap feedback instead of hover */
 @media (hover: none) {
-  .note-card:hover { transform: none; box-shadow: var(--shadow-sm); }
-  .note-card:hover::after { opacity: 0; }
-  .note-card:active { transform: scale(0.97); transition-duration: .1s; }
+  .note-card:hover, .lecture-card:hover { transform: none; box-shadow: 0 2px 12px rgba(0,0,0,0.05); border-color: var(--line); }
+  .note-card:active, .lecture-card:active { transform: scale(0.97); transition-duration: .1s; }
   .filter-btn:hover { transform: none; box-shadow: none; }
   .filter-btn:active { transform: scale(0.94); transition-duration: .1s; }
-  .note-download:hover { transform: none; }
-  .note-download:active { transform: scale(0.96); transition-duration: .1s; }
-  .lecture-card:hover { transform: none; box-shadow: var(--shadow-sm); }
-  .lecture-card:hover::after { opacity: 0; }
-  .lecture-card:active { transform: scale(0.97); transition-duration: .1s; }
-  .lecture-watch:hover { transform: none; }
-  .lecture-watch:active { transform: scale(0.96); transition-duration: .1s; }
+  .btn-download:hover, .btn-watch:hover, .btn-slides:hover { transform: none; }
+  .btn-download:active, .btn-watch:active, .btn-slides:active { transform: scale(0.96); transition-duration: .1s; }
   .subject-icon { transition: none; }
   .btn-cta-primary:hover, .btn-cta-ghost:hover { transform: none; }
   .btn-cta-primary:active { transform: scale(0.96); }
@@ -690,24 +683,26 @@ function FilterBar({ subjects, active, setActive }) {
 }
 
 // ── Note Card ─────────────────────────────────────────────────────
-function NoteCard({ note, accent, index = 0 }) {
+function NoteCard({ note, accent, color, index = 0 }) {
   return (
-    <div className="note-card" style={{ '--note-accent': accent, '--i': index }}>
-      <div className="note-card-banner">
-        <span className="note-card-banner-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <path d="M14 2H6C5.4 2 5 2.4 5 3V21C5 21.6 5.4 22 6 22H18C18.6 22 19 21.6 19 21V7L14 2Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
-            <path d="M14 2V7H19" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
-            <path d="M9 13H15M9 17H13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+    <div className="note-card" style={{ '--note-accent': accent, '--note-color': color, '--i': index }}>
+      <div className="card-banner">
+        <div className="card-banner-label">
+          PDF Notes
+        </div>
+        <div className="card-banner-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M14 2H6C5.4 2 5 2.4 5 3V21C5 21.6 5.4 22 6 22H18C18.6 22 19 21.6 19 21V7L14 2Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/>
+            <path d="M14 2V7H19" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/>
+            <path d="M9 13H15M9 17H13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
           </svg>
-        </span>
-        <span className="note-card-banner-type">PDF</span>
+        </div>
       </div>
-      <div className="note-card-body">
-        <div className="note-title">{note.title}</div>
+      <div className="card-body">
+        <div className="card-title">{note.title}</div>
         {note.desc && <div className="note-desc">{note.desc}</div>}
-        {note.postedOn && <div className="note-date">{new Date(note.postedOn).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>}
-        <a href={note.file} download className="note-download">
+        {note.postedOn && <div className="card-date">{new Date(note.postedOn).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>}
+        <a href={note.file} download className="btn-download">
           <DownloadIcon /> Download PDF
         </a>
       </div>
@@ -716,29 +711,30 @@ function NoteCard({ note, accent, index = 0 }) {
 }
 
 // ── Lecture Card ──────────────────────────────────────────────────
-function LectureCard({ lecture, accent, index = 0 }) {
+function LectureCard({ lecture, accent, color, index = 0 }) {
   const formattedDate = lecture.postedOn
     ? new Date(lecture.postedOn).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
     : null;
   return (
-    <div className="lecture-card" style={{ '--note-accent': accent, '--i': index }}>
-      <div className="lecture-card-banner">
-        <div className="lecture-card-banner-left">
-          {lecture.lectureNumber && <div className="lecture-card-num">Lecture {lecture.lectureNumber}</div>}
+    <div className="lecture-card" style={{ '--note-accent': accent, '--note-color': color, '--i': index }}>
+      <div className="card-banner">
+        <div className="card-banner-label">
+          {lecture.lectureNumber ? `Lecture ${lecture.lectureNumber}` : 'Lecture'}
+          {lecture.slidesFile && <span className="card-banner-sublabel">Slides included</span>}
         </div>
-        <div className="lecture-card-banner-icon">
+        <div className="card-banner-icon">
           <PlayIcon />
         </div>
       </div>
-      <div className="lecture-card-body">
-        <div className="lecture-title">{lecture.title}</div>
-        {formattedDate && <div className="note-date">{formattedDate}</div>}
-        <div className="lecture-actions">
-          <a href={lecture.youtubeUrl} target="_blank" rel="noopener noreferrer" className="lecture-watch">
-            <PlayIcon /> Watch on YouTube
+      <div className="card-body">
+        <div className="card-title">{lecture.title}</div>
+        {formattedDate && <div className="card-date">{formattedDate}</div>}
+        <div className="card-actions">
+          <a href={lecture.youtubeUrl} target="_blank" rel="noopener noreferrer" className="btn-watch">
+            <PlayIcon /> Watch
           </a>
           {lecture.slidesFile && (
-            <a href={lecture.slidesFile} download className="note-download" style={{ flex: 'none', marginTop: 0 }}>
+            <a href={lecture.slidesFile} download className="btn-slides">
               <DownloadIcon /> Slides
             </a>
           )}
@@ -879,7 +875,7 @@ function App() {
                       {showLabels && <div className="subsection-header">Notes</div>}
                       <div className={`notes-grid${hasLectures ? ' notes-grid--spaced' : ''}`}>
                         {subject.notes.map((note, i) => (
-                          <NoteCard key={i} note={note} accent={subject.accent} index={i} />
+                          <NoteCard key={i} note={note} accent={subject.accent} color={subject.color} index={i} />
                         ))}
                       </div>
                     </>
@@ -889,7 +885,7 @@ function App() {
                       {showLabels && <div className="subsection-header">Lectures</div>}
                       <div className="notes-grid">
                         {subject.lectures.map((lec, i) => (
-                          <LectureCard key={i} lecture={lec} accent={subject.accent} index={i} />
+                          <LectureCard key={i} lecture={lec} accent={subject.accent} color={subject.color} index={i} />
                         ))}
                       </div>
                     </>
