@@ -381,6 +381,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .combo-card:hover .combo-check svg path { stroke-dashoffset: 0; }
 .combo-card.featured .combo-check { background: rgba(255,255,255,0.13); }
 .combo-card.featured .combo-check svg path { stroke: rgba(255,255,255,0.9); stroke-dashoffset: 0; transition: none; }
+@keyframes price-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.price-loaded { animation: price-in .38s cubic-bezier(.34,1.1,.64,1) both; }
 .combo-price-row { display: flex; align-items: baseline; gap: 10px; margin-top: auto; padding-top: 20px; margin-bottom: 22px; position: relative; z-index: 1; }
 .combo-price { font-family: var(--font-display); font-size: 38px; font-weight: 600; letter-spacing: -0.04em; color: #fff; }
 .combo-card.featured .combo-price { font-size: 44px; background: linear-gradient(135deg, #ede0ff 0%, #c4b0ff 55%, #a78bfa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
@@ -1495,7 +1497,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
           ))}
         </ul>
       </div>
-      <div className="combo-price-row">
+      <div className={`combo-price-row${live ? ' price-loaded' : ''}`}>
         <div className="combo-price">{price}</div>
         {priceOld && <div className="combo-price-old">{priceOld}</div>}
         {discount && <div className="combo-discount">{discount}</div>}
@@ -1525,9 +1527,9 @@ const CourseCard = React.memo(function CourseCard({ c, pricing }) {
           <div key={i} className="course-topic" style={{ '--td': `${i * 55}ms` }}>{t}</div>
         ))}
       </div>
-      <div className="course-price-row">
+      <div className={`course-price-row${p.price ? ' price-loaded' : ''}`}>
         <div className="course-price">{price}</div>
-        <div className="course-price-old">{priceOld}</div>
+        {priceOld && <div className="course-price-old">{priceOld}</div>}
       </div>
       <div className="ticket-notch"><div className="ticket-notch-line" /></div>
       <a target="_blank" rel="noopener noreferrer" href={c.href} className="btn btn-ghost btn-full">Get course <Icon.ArrowRight /></a>
