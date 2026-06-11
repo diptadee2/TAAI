@@ -1102,6 +1102,31 @@ const Icon = {
   Note:  () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 4H20V16L16 20H4V4Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="M8 9H16M8 13H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>,
 };
 
+// ── Pricing CSV ───────────────────────────────────────────────────
+// Valid IDs — combos: full-course | maths-ml-bundle | maths-bundle
+//             individual: statistics | calculus | linear-algebra | probability | machine-learning
+const PRICING_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSVYXQcKli0NtjXf93cxRwx3A15WiNcETEw26MubPYIihLyMQs2rfZjXKm85fNsOxxlUWkoyR89DKCK/pub?gid=0&single=true&output=csv';
+
+const parseCSV = text => {
+  const parseLine = line => {
+    const out = []; let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { if (inQ && line[i+1] === '"') { cur += '"'; i++; } else inQ = !inQ; }
+      else if (ch === ',' && !inQ) { out.push(cur.trim()); cur = ''; }
+      else cur += ch;
+    }
+    out.push(cur.trim()); return out;
+  };
+  const rows = text.trim().split('\n');
+  const headers = parseLine(rows[0]);
+  return rows.slice(1).filter(r => r.trim()).map(r => Object.fromEntries(headers.map((h, i) => [h, parseLine(r)[i] || ''])));
+};
+
+const fmtPrice    = n => n ? '₹' + Number(n).toLocaleString('en-IN') : '';
+const fmtValidity = d => { if (!d) return ''; const dt = new Date(d + 'T00:00:00'); return 'VALID UNTIL ' + dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase(); };
+const fmtDeadline = d => { if (!d) return ''; const dt = new Date(d + 'T00:00:00'); return 'Offer ends ' + dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };
+
 const COURSE_DROPDOWN = [
   { label: 'Bundled Courses',    href: 'courses.html#combos'    },
   { label: 'Individual Courses', href: 'courses.html#individual', dividerBefore: true },
@@ -1222,6 +1247,7 @@ function Nav() {
 // ── COMBO PACKAGES ──────────────────────────────────────────────
 const COMBOS = [
   {
+    id: 'full-course',
     num: '01',
     badge: 'best', badgeLabel: 'Best value',
     accent: 'linear-gradient(90deg, var(--pink), var(--purple), var(--blue))',
@@ -1241,6 +1267,7 @@ const COMBOS = [
     href: 'https://learn.taai.live/learn/batch/GATE-2027/content',
   },
   {
+    id: 'maths-ml-bundle',
     num: '02',
     badge: 'combo', badgeLabel: 'Bundle',
     theme: 'blue',
@@ -1261,6 +1288,7 @@ const COMBOS = [
     href: 'https://learn.taai.live/learn/Maths--ML---AI-Bundle---GATE-2026',
   },
   {
+    id: 'maths-bundle',
     num: '03',
     badge: 'combo', badgeLabel: 'Bundle',
     theme: 'pink',
@@ -1283,23 +1311,23 @@ const COMBOS = [
 
 // ── INDIVIDUAL COURSES ───────────────────────────────────────────
 const INDIVIDUAL = [
-  { num: '01', title: 'Statistics', price: '₹1,499', priceOld: '₹2,499', validity: 'FEB 20, 2027',
+  { id: 'statistics', num: '01', title: 'Statistics', price: '₹1,499', priceOld: '₹2,499', validity: 'FEB 20, 2027',
     icon: <Icon.Book />, grad: 'linear-gradient(145deg,#4D8BFF,#7FA8FF)', shadow: 'rgba(77,139,255,0.32)',
     href: 'https://learn.taai.live/learn/Statistics',
     topics: ['Hypothesis testing', 'Estimation theory', 'Regression basics'] },
-  { num: '02', title: 'Calculus', price: '₹1,499', priceOld: '₹2,499', validity: 'FEB 20, 2027',
+  { id: 'calculus', num: '02', title: 'Calculus', price: '₹1,499', priceOld: '₹2,499', validity: 'FEB 20, 2027',
     icon: <Icon.Note />, grad: 'linear-gradient(145deg,#FF7FB7,#FF9ECB)', shadow: 'rgba(255,127,183,0.28)',
     href: 'https://learn.taai.live/learn/Calculus-and-Optimization',
     topics: ['Limits & continuity', 'Differentiation', 'Optimization & integration'] },
-  { num: '03', title: 'Linear Algebra', price: '₹1,999', priceOld: '₹2,999', validity: 'FEB 20, 2027',
+  { id: 'linear-algebra', num: '03', title: 'Linear Algebra', price: '₹1,999', priceOld: '₹2,999', validity: 'FEB 20, 2027',
     icon: <Icon.Chart />, grad: 'linear-gradient(145deg,#6B4AFF,#4D8BFF)', shadow: 'rgba(107,74,255,0.32)',
     href: 'https://learn.taai.live/learn/Linear-Algebra--Mathematics-',
     topics: ['Matrices & determinants', 'Eigenvalues & vectors', 'Linear transformations'] },
-  { num: '04', title: 'Probability', price: '₹2,499', priceOld: '₹3,499', validity: 'FEB 20, 2027',
+  { id: 'probability', num: '04', title: 'Probability', price: '₹2,499', priceOld: '₹3,499', validity: 'FEB 20, 2027',
     icon: <Icon.Target />, grad: 'linear-gradient(145deg,#FF7FB7,#8B5CF6)', shadow: 'rgba(255,127,183,0.32)',
     href: 'https://learn.taai.live/learn/Probability',
     topics: ['Conditional probability', 'Random variables', 'Distributions'] },
-  { num: '05', title: 'Machine Learning', price: '₹3,999', priceOld: '₹4,999', validity: 'FEB 20, 2027',
+  { id: 'machine-learning', num: '05', title: 'Machine Learning', price: '₹3,999', priceOld: '₹4,999', validity: 'FEB 20, 2027',
     icon: <Icon.Code />, grad: 'linear-gradient(145deg,#8B5CF6,#C4B0FF)', shadow: 'rgba(139,92,246,0.34)',
     href: 'https://learn.taai.live/learn/taAI-Machine-Learning-Full-Course',
     topics: ['Supervised & unsupervised', 'Model evaluation', 'Neural networks basics'] },
@@ -1329,7 +1357,7 @@ const INCLUDED = [
     stat: { num: '1,000+', lbl: 'weekly quiz questions' } },
 ];
 
-function BundleComparison() {
+function BundleComparison({ pricingMap }) {
   const features = [
     { label: 'Machine Learning',                      full: true,  ml: true,  maths: false, group: 'Subjects'        },
     { label: 'Artificial Intelligence',               full: true,  ml: false, maths: false, group: 'Subjects'        },
@@ -1394,15 +1422,15 @@ function BundleComparison() {
             <div className="compare-footer">
               <div className="compare-footer-cell" />
               <div className="compare-footer-cell featured">
-                <span className="compare-price best">₹10,499</span>
+                <span className="compare-price best">{fmtPrice((pricingMap['full-course']||{}).price) || '₹10,499'}</span>
                 <a href="https://learn.taai.live/learn/batch/GATE-2027/content" target="_blank" rel="noopener noreferrer" className="compare-enroll-btn featured">Enrol now</a>
               </div>
               <div className="compare-footer-cell">
-                <span className="compare-price">₹6,399</span>
+                <span className="compare-price">{fmtPrice((pricingMap['maths-ml-bundle']||{}).price) || '₹6,399'}</span>
                 <a href="https://learn.taai.live/learn/Maths--ML---AI-Bundle---GATE-2026" target="_blank" rel="noopener noreferrer" className="compare-enroll-btn">Enrol now</a>
               </div>
               <div className="compare-footer-cell">
-                <span className="compare-price">₹4,799</span>
+                <span className="compare-price">{fmtPrice((pricingMap['maths-bundle']||{}).price) || '₹4,799'}</span>
                 <a href="https://learn.taai.live/learn/Mathematics-Course-by-manoj-sir-gate-2026-gateda" target="_blank" rel="noopener noreferrer" className="compare-enroll-btn">Enrol now</a>
               </div>
             </div>
@@ -1416,7 +1444,14 @@ function BundleComparison() {
   );
 }
 
-function ComboCard({ c }) {
+function ComboCard({ c, pricingMap }) {
+  const p = pricingMap[c.id] || {};
+  const price           = p.price           ? fmtPrice(p.price)       : c.price;
+  const priceOld        = p.priceOld        ? fmtPrice(p.priceOld)    : c.priceOld;
+  const discount        = p.discount        || c.discount;
+  const discountDeadline= p.discountDeadline? fmtDeadline(p.discountDeadline) : c.discountDeadline;
+  const saving          = p.saving          || c.saving;
+  const validity        = p.validity        ? fmtValidity(p.validity)  : c.validity;
   const featured = c.badge === 'best';
   const cls = 'combo-card card' + (featured ? ' featured' : '') + (c.theme ? ` combo-${c.theme}` : '');
   const spotlightProps = {
@@ -1430,7 +1465,7 @@ function ComboCard({ c }) {
       <div className={'combo-badge ' + c.badge}><Icon.Sparkle />{c.badgeLabel}</div>
       <div className="combo-title">{c.title}</div>
       <div className="combo-validity" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        {c.validity}
+        {validity}
         {c.validityNote && <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', background: 'linear-gradient(135deg,var(--pink),var(--purple))', color: '#fff', padding: '2px 8px', borderRadius: 999 }}>{c.validityNote}</span>}
       </div>
       <div className="combo-divider" />
@@ -1450,12 +1485,12 @@ function ComboCard({ c }) {
         </ul>
       </div>
       <div className="combo-price-row">
-        <div className="combo-price">{c.price}</div>
-        {c.priceOld && <div className="combo-price-old">{c.priceOld}</div>}
-        {c.discount && <div className="combo-discount">{c.discount}</div>}
+        <div className="combo-price">{price}</div>
+        {priceOld && <div className="combo-price-old">{priceOld}</div>}
+        {discount && <div className="combo-discount">{discount}</div>}
       </div>
-      {c.discountDeadline && <div className="combo-saving" style={{ color: '#e05a2b', fontWeight: 600 }}>⏳ {c.discountDeadline}</div>}
-      {c.saving && <div className="combo-saving">{c.saving}</div>}
+      {discountDeadline && <div className="combo-saving" style={{ color: '#e05a2b', fontWeight: 600 }}>⏳ {discountDeadline}</div>}
+      {saving && <div className="combo-saving">{saving}</div>}
       <a href={c.href} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-full">Enrol now <Icon.ArrowRight /></a>
     </div>
   );
@@ -1463,21 +1498,25 @@ function ComboCard({ c }) {
   return <div className="fade-in">{inner}</div>;
 }
 
-function CourseCard({ c }) {
+function CourseCard({ c, pricingMap }) {
+  const p        = pricingMap[c.id] || {};
+  const price    = p.price    ? fmtPrice(p.price)    : c.price;
+  const priceOld = p.priceOld ? fmtPrice(p.priceOld) : c.priceOld;
+  const validity = p.validity ? fmtValidity(p.validity) : 'VALID UNTIL ' + c.validity;
   return (
     <div className="course-card card fade-in" style={{ '--course-grad': c.grad, '--course-shadow': c.shadow }}>
       <div className="course-accent" style={{ background: c.grad }} />
       <div className="course-icon" style={{ background: c.grad }}>{c.icon}</div>
       <div className="course-title">{c.title}</div>
-      <div className="course-validity mono">VALID UNTIL {c.validity}</div>
+      <div className="course-validity mono">{validity}</div>
       <div className="course-topics">
         {c.topics.map((t, i) => (
           <div key={i} className="course-topic" style={{ '--td': `${i * 55}ms` }}>{t}</div>
         ))}
       </div>
       <div className="course-price-row">
-        <div className="course-price">{c.price}</div>
-        <div className="course-price-old">{c.priceOld}</div>
+        <div className="course-price">{price}</div>
+        <div className="course-price-old">{priceOld}</div>
       </div>
       <div className="ticket-notch"><div className="ticket-notch-line" /></div>
       <a target="_blank" rel="noopener noreferrer" href={c.href} className="btn btn-ghost btn-full">Get course <Icon.ArrowRight /></a>
@@ -1684,6 +1723,19 @@ function MobileContactBar() {
 }
 
 function App() {
+  const [pricingMap, setPricingMap] = React.useState({});
+
+  React.useEffect(() => {
+    fetch(PRICING_CSV_URL)
+      .then(r => r.text())
+      .then(text => {
+        const map = {};
+        parseCSV(text).forEach(r => { if (r.id) map[r.id] = r; });
+        setPricingMap(map);
+      })
+      .catch(() => {});
+  }, []);
+
   React.useEffect(() => {
     const els = document.querySelectorAll('.fade-in');
     const mobile = window.matchMedia('(max-width: 768px)').matches;
@@ -1775,7 +1827,7 @@ function App() {
             </a>
           </div>
           <div className="combos-grid">
-            {COMBOS.map((c, i) => <ComboCard key={i} c={c} />)}
+            {COMBOS.map((c, i) => <ComboCard key={i} c={c} pricingMap={pricingMap} />)}
           </div>
         </div>
       </section>
@@ -1793,9 +1845,9 @@ function App() {
             </div>
           </div>
           <div className="courses-grid">
-            {INDIVIDUAL.map((c, i) => <CourseCard key={i} c={c} />)}
+            {INDIVIDUAL.map((c, i) => <CourseCard key={i} c={c} pricingMap={pricingMap} />)}
           </div>
-          <BundleComparison />
+          <BundleComparison pricingMap={pricingMap} />
           <div className="courses-chat-footer fade-in">
             <span>Not sure which to pick?</span>
             <a href="https://wa.me/9088553305" target="_blank" rel="noopener noreferrer">Chat with us →</a>

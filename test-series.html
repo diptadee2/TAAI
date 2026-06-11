@@ -1234,6 +1234,29 @@ function TAAILogo() {
   return <img src="logo.png" alt="TAAI" />;
 }
 
+// ── Pricing CSV ───────────────────────────────────────────────────
+// Valid IDs — test-series | weekly-quizzes | test-series-quizzes
+const PRICING_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSVYXQcKli0NtjXf93cxRwx3A15WiNcETEw26MubPYIihLyMQs2rfZjXKm85fNsOxxlUWkoyR89DKCK/pub?gid=0&single=true&output=csv';
+
+const parseCSV = text => {
+  const parseLine = line => {
+    const out = []; let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { if (inQ && line[i+1] === '"') { cur += '"'; i++; } else inQ = !inQ; }
+      else if (ch === ',' && !inQ) { out.push(cur.trim()); cur = ''; }
+      else cur += ch;
+    }
+    out.push(cur.trim()); return out;
+  };
+  const rows = text.trim().split('\n');
+  const headers = parseLine(rows[0]);
+  return rows.slice(1).filter(r => r.trim()).map(r => Object.fromEntries(headers.map((h, i) => [h, parseLine(r)[i] || ''])));
+};
+
+const fmtPrice    = n => n ? '₹' + Number(n).toLocaleString('en-IN') : '';
+const fmtDeadline = d => { if (!d) return ''; const dt = new Date(d + 'T00:00:00'); return 'Offer ends ' + dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };
+
 const COURSE_DROPDOWN = [
   { label: 'Bundled Courses',    href: 'courses.html#combos'    },
   { label: 'Individual Courses', href: 'courses.html#individual', dividerBefore: true },
@@ -2068,7 +2091,7 @@ function TSPricing() {
             <div className="ts-plan-badge ts-plan-badge-pink">Test Series</div>
             <div className="ts-plan-name">GATE DA 2027 Test Series</div>
             <div className="ts-plan-tagline">Full-length and subject-wise tests with performance analytics.</div>
-            <div className="ts-plan-price">₹1,500</div>
+            <div className="ts-plan-price">{fmtPrice((pricingMap['test-series']||{}).price) || '₹1,500'}</div>
             <div className="ts-plan-divider" />
             <div className="ts-plan-features">
               {BASIC_FEATS.map((f, i) => (
@@ -2092,7 +2115,7 @@ function TSPricing() {
             <div className="ts-plan-badge ts-plan-badge-blue">Weekly Quizzes</div>
             <div className="ts-plan-name">Weekly Quiz Pack</div>
             <div className="ts-plan-tagline">55+ concept-heavy quizzes to stay sharp throughout the year.</div>
-            <div className="ts-plan-price">₹800</div>
+            <div className="ts-plan-price">{fmtPrice((pricingMap['weekly-quizzes']||{}).price) || '₹800'}</div>
             <div className="ts-plan-divider" />
             <div className="ts-plan-features">
               {ADDON_FEATS.map((f, i) => (
@@ -2129,7 +2152,7 @@ function TSPricing() {
               </div>
               <div className="ts-plan-name">Test Series + Weekly Quizzes</div>
               <div className="ts-plan-tagline">Everything in one: full test series and weekly quizzes bundled together.</div>
-              <div className="ts-plan-price">₹2,000</div>
+              <div className="ts-plan-price">{fmtPrice((pricingMap['test-series-quizzes']||{}).price) || '₹2,000'}</div>
               <div className="ts-plan-divider" />
               <div className="ts-plan-features">
                 {BASIC_FEATS.map((f, i) => (
@@ -2175,6 +2198,19 @@ class ErrorBoundary extends React.Component {
 }
 
 function App() {
+  const [pricingMap, setPricingMap] = React.useState({});
+
+  React.useEffect(() => {
+    fetch(PRICING_CSV_URL)
+      .then(r => r.text())
+      .then(text => {
+        const map = {};
+        parseCSV(text).forEach(r => { if (r.id) map[r.id] = r; });
+        setPricingMap(map);
+      })
+      .catch(() => {});
+  }, []);
+
   React.useEffect(() => {
     const mobile = window.matchMedia('(max-width: 768px)').matches;
     const io = new IntersectionObserver(entries => {
