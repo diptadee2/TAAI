@@ -2057,7 +2057,7 @@ const QUIZ_SUBJECTS = [
   { name: 'DBMS + DWH', count: 6 },
 ];
 
-function TSPricing() {
+function TSPricing({ pricingMap }) {
   const [selected, setSelected] = React.useState(null);
   const pick = (id) => setSelected(s => s === id ? null : id);
 
@@ -2234,7 +2234,7 @@ function App() {
       <Nav />
       <div className="nav-spacer" />
       <Hero />
-      <TSPricing />
+      <TSPricing pricingMap={pricingMap} />
       <Breakdown />
       <Features />
       <Discussions />
