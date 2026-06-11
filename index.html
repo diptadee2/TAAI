@@ -1693,15 +1693,9 @@ function Stats() {
         <a href="testimonials.html" className="toppers-view-all">View all stories →</a>
       </div>
       <div className="toppers-scroll-outer">
-        <div className="toppers-rows">
-          <div className="toppers-scroll">
-            {toppers.map((t, i) => <Card key={i} t={t} />)}
-            {toppers.map((t, i) => <Card key={`d${i}`} t={t} clone />)}
-          </div>
-          <div className="toppers-scroll toppers-scroll-reverse">
-            {row2.map((t, i) => <Card key={i} t={t} />)}
-            {row2.map((t, i) => <Card key={`d${i}`} t={t} clone />)}
-          </div>
+        <div className="toppers-scroll">
+          {toppers.map((t, i) => <Card key={i} t={t} />)}
+          {toppers.map((t, i) => <Card key={`d${i}`} t={t} clone />)}
         </div>
       </div>
 
