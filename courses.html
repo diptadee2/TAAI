@@ -1448,7 +1448,8 @@ function ComboCard({ c, pricingMap }) {
   const p = pricingMap[c.id] || {};
   const price           = p.price           ? fmtPrice(p.price)       : c.price;
   const priceOld        = p.priceOld        ? fmtPrice(p.priceOld)    : c.priceOld;
-  const discount        = p.discount        || c.discount;
+  const discountRaw     = p.discount        || c.discount;
+  const discount        = discountRaw ? (isNaN(discountRaw) ? discountRaw : discountRaw + '% off') : null;
   const discountDeadline= p.discountDeadline? fmtDeadline(p.discountDeadline) : c.discountDeadline;
   const saving          = p.saving          || c.saving;
   const validity        = p.validity        ? fmtValidity(p.validity)  : c.validity;
