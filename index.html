@@ -538,19 +538,15 @@ body {
 .toppers-title { font-family: var(--font-display); font-size: clamp(24px,3vw,38px); font-weight: 600; letter-spacing: -0.03em; line-height: 1; }
 .toppers-title em { font-style: normal; background: linear-gradient(120deg,var(--pink),var(--lilac),var(--blue)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .toppers-sub { font-size: 13px; color: rgba(255,255,255,0.38); letter-spacing: .02em; }
-@keyframes toppers-marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-@keyframes toppers-marquee-rev { 0% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
 @keyframes topper-modal-in { from { opacity: 0; transform: translateY(20px) scale(0.96); } to { opacity: 1; transform: none; } }
 @keyframes topper-overlay-in { from { opacity: 0; } to { opacity: 1; } }
 .toppers-scroll-outer { overflow: hidden; position: relative; padding: 16px 0; }
-.toppers-scroll-outer::before, .toppers-scroll-outer::after { content: ''; position: absolute; top: 0; bottom: 0; width: 100px; z-index: 2; pointer-events: none; }
-.toppers-scroll-outer::before { left: 0; background: linear-gradient(to right, #07051a 30%, transparent); }
-.toppers-scroll-outer::after { right: 0; background: linear-gradient(to left, #07051a 30%, transparent); }
-.toppers-rows { display: flex; flex-direction: column; gap: 28px; }
-.toppers-scroll { display: flex; gap: 0; padding: 4px 0 4px; width: max-content; animation: toppers-marquee 52s linear infinite; }
+.toppers-scroll-outer::before, .toppers-scroll-outer::after { content: ''; position: absolute; top: 0; bottom: 0; width: 180px; z-index: 2; pointer-events: none; }
+.toppers-scroll-outer::before { left: 0; background: linear-gradient(to right, #07051a 0%, #07051a 8%, rgba(7,5,26,0.85) 28%, rgba(7,5,26,0.35) 60%, transparent 100%); }
+.toppers-scroll-outer::after  { right: 0; background: linear-gradient(to left,  #07051a 0%, #07051a 8%, rgba(7,5,26,0.85) 28%, rgba(7,5,26,0.35) 60%, transparent 100%); }
+.toppers-scroll { display: flex; gap: 0; padding: 4px 0 4px; width: max-content; will-change: transform; }
 .toppers-scroll .topper-card { margin-right: 16px; }
 .toppers-scroll-reverse { animation: toppers-marquee-rev 34s linear infinite; }
-.toppers-scroll:hover, .toppers-scroll-reverse:hover { animation-play-state: paused; }
 .topper-card { flex: 0 0 190px; border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); transition: transform .36s cubic-bezier(.34,1.1,.64,1), box-shadow .32s ease, border-color .28s; cursor: pointer; }
 .topper-card:hover { transform: translateY(-10px) rotate(2deg); box-shadow: 0 28px 60px rgba(139,92,246,0.36), 0 8px 20px rgba(0,0,0,0.3); border-color: rgba(139,92,246,0.35); }
 .topper-img-wrap { width: 100%; aspect-ratio: 3/4; overflow: hidden; }
@@ -574,7 +570,7 @@ body {
 .topper-modal-quote { font-size: 14.5px; color: rgba(255,255,255,0.62); line-height: 1.65; margin-top: 22px; font-style: italic; border-left: 2px solid rgba(139,92,246,0.45); padding-left: 16px; }
 .topper-modal-yt { display: inline-flex; align-items: center; gap: 8px; margin-top: 22px; background: #FF0000; color: #fff; padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 13px; text-decoration: none; transition: opacity .2s, transform .22s; }
 .topper-modal-yt:hover { opacity: 0.88; transform: translateY(-2px); }
-@media (max-width: 768px) { .topper-card { flex: 0 0 155px; } .toppers-head { margin-bottom: 24px; } .toppers-scroll { animation-duration: 36s; } }
+@media (max-width: 768px) { .topper-card { flex: 0 0 155px; } .toppers-head { margin-bottom: 24px; } }
 
 /* Sections */
 .section { padding: var(--section-pad) 0; position: relative; }
@@ -1665,7 +1661,37 @@ function Stats() {
     return () => document.removeEventListener('keydown', fn);
   }, [selected]);
 
-  const row2 = [...toppers].reverse();
+  const scrollRef = React.useRef(null);
+  const pausedRef = React.useRef(false);
+
+  React.useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const SPEED = 68; // px/s
+    let pos = 0;
+    let last = null;
+    let raf;
+    const tick = (now) => {
+      if (last !== null && !pausedRef.current) {
+        pos += SPEED * (now - last) / 1000;
+        const half = el.scrollWidth / 2;
+        if (pos >= half) pos -= half;
+        el.style.transform = `translateX(${-pos}px)`;
+      }
+      last = now;
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    const pause  = () => { pausedRef.current = true; };
+    const resume = () => { pausedRef.current = false; };
+    el.addEventListener('mouseenter', pause);
+    el.addEventListener('mouseleave', resume);
+    return () => {
+      cancelAnimationFrame(raf);
+      el.removeEventListener('mouseenter', pause);
+      el.removeEventListener('mouseleave', resume);
+    };
+  }, []);
 
   const Card = ({ t, clone }) => (
     <div className="topper-card" onClick={() => !clone && setSelected(t)}>
@@ -1693,7 +1719,7 @@ function Stats() {
         <a href="testimonials.html" className="toppers-view-all">View all stories →</a>
       </div>
       <div className="toppers-scroll-outer">
-        <div className="toppers-scroll">
+        <div className="toppers-scroll" ref={scrollRef}>
           {toppers.map((t, i) => <Card key={i} t={t} />)}
           {toppers.map((t, i) => <Card key={`d${i}`} t={t} clone />)}
         </div>
