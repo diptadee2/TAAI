@@ -1745,14 +1745,25 @@ function App() {
   React.useEffect(() => {
     const els = document.querySelectorAll('.fade-in');
     const mobile = window.matchMedia('(max-width: 768px)').matches;
+    const show = el => {
+      const rect = el.getBoundingClientRect();
+      const alreadyVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
+      if (alreadyVisible) {
+        el.style.transitionDuration = '0s';
+        el.classList.add('visible');
+        requestAnimationFrame(() => requestAnimationFrame(() => { el.style.transitionDuration = ''; }));
+      } else {
+        el.classList.add('visible');
+      }
+    };
     const io = new IntersectionObserver((entries) => {
       const hit = entries.filter(e => e.isIntersecting);
       hit.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
       hit.forEach((e, i) => {
         io.unobserve(e.target);
         const delay = mobile ? i * 75 : 0;
-        if (delay) setTimeout(() => e.target.classList.add('visible'), delay);
-        else e.target.classList.add('visible');
+        if (delay) setTimeout(() => show(e.target), delay);
+        else show(e.target);
       });
     }, { threshold: 0.1, rootMargin: '0px 0px 200px 0px' });
     els.forEach((el) => io.observe(el));
