@@ -580,6 +580,65 @@ function MobileEnrollBar() {
   );
 }
 
+// ── Filter Bar ────────────────────────────────────────────────────
+function FilterBar({ subjects, active, setActive }) {
+  const wrapRef = React.useRef(null);
+  const [fades, setFades] = React.useState({ left: false, right: false });
+
+  const updateFades = React.useCallback(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    setFades({ left: el.scrollLeft > 4, right: el.scrollLeft < el.scrollWidth - el.clientWidth - 4 });
+  }, []);
+
+  React.useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    updateFades();
+    el.addEventListener('scroll', updateFades, { passive: true });
+    window.addEventListener('resize', updateFades);
+    return () => { el.removeEventListener('scroll', updateFades); window.removeEventListener('resize', updateFades); };
+  }, [updateFades, subjects.length]);
+
+  React.useEffect(() => {
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    const btn = wrap.querySelector('.filter-btn.active');
+    if (!btn) return;
+    const wrapRect = wrap.getBoundingClientRect();
+    const btnRect  = btn.getBoundingClientRect();
+    const offset   = btnRect.left - wrapRect.left - wrapRect.width / 2 + btnRect.width / 2;
+    wrap.scrollBy({ left: offset, behavior: 'smooth' });
+  }, [active]);
+
+  const scroll = dir => wrapRef.current?.scrollBy({ left: dir * 220, behavior: 'smooth' });
+
+  return (
+    <div className="filter-bar-outer">
+      <button className="filter-arrow" onClick={() => scroll(-1)} aria-label="Scroll left" style={{ opacity: fades.left ? 1 : 0, pointerEvents: fades.left ? 'auto' : 'none' }}>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div className={`filter-bar-wrap${fades.left ? ' fade-left' : ''}${fades.right ? ' fade-right' : ''}`} ref={wrapRef}>
+        <div className="filter-bar">
+          {subjects.map((s, i) => (
+            <button key={s.id}
+              className={`filter-btn${active === s.id ? ' active' : ''}`}
+              onClick={() => setActive(s.id)}
+              style={{ '--i': i, '--subject-color': s.color, '--subject-accent': s.accent }}>
+              <span className="filter-btn-swatch" />
+              <span className="filter-btn-label">{s.name}</span>
+              {(s.notes.length + s.lectures.length) > 0 && <span className="filter-btn-count">{s.notes.length + s.lectures.length}</span>}
+            </button>
+          ))}
+        </div>
+      </div>
+      <button className="filter-arrow" onClick={() => scroll(1)} aria-label="Scroll right" style={{ opacity: fades.right ? 1 : 0, pointerEvents: fades.right ? 'auto' : 'none' }}>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </div>
+  );
+}
+
 // ── Note Card ─────────────────────────────────────────────────────
 function NoteCard({ note, accent, index = 0 }) {
   return (
@@ -710,63 +769,7 @@ function App() {
         <div className="container">
 
           {/* Filter bar — shown only when subjects exist */}
-          {SUBJECTS.length > 0 && (() => {
-            const wrapRef = React.useRef(null);
-            const [fades, setFades] = React.useState({ left: false, right: false });
-
-            const updateFades = React.useCallback(() => {
-              const el = wrapRef.current;
-              if (!el) return;
-              setFades({ left: el.scrollLeft > 4, right: el.scrollLeft < el.scrollWidth - el.clientWidth - 4 });
-            }, []);
-
-            React.useEffect(() => {
-              const el = wrapRef.current;
-              if (!el) return;
-              updateFades();
-              el.addEventListener('scroll', updateFades, { passive: true });
-              window.addEventListener('resize', updateFades);
-              return () => { el.removeEventListener('scroll', updateFades); window.removeEventListener('resize', updateFades); };
-            }, [updateFades, SUBJECTS.length]);
-
-            React.useEffect(() => {
-              const wrap = wrapRef.current;
-              if (!wrap) return;
-              const btn = wrap.querySelector('.filter-btn.active');
-              if (!btn) return;
-              const wrapRect = wrap.getBoundingClientRect();
-              const btnRect  = btn.getBoundingClientRect();
-              const offset   = btnRect.left - wrapRect.left - wrapRect.width / 2 + btnRect.width / 2;
-              wrap.scrollBy({ left: offset, behavior: 'smooth' });
-            }, [active]);
-
-            const scroll = dir => wrapRef.current?.scrollBy({ left: dir * 220, behavior: 'smooth' });
-
-            return (
-              <div className="filter-bar-outer">
-                <button className="filter-arrow" onClick={() => scroll(-1)} aria-label="Scroll left" style={{ opacity: fades.left ? 1 : 0, pointerEvents: fades.left ? 'auto' : 'none' }}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-                </button>
-                <div className={`filter-bar-wrap${fades.left ? ' fade-left' : ''}${fades.right ? ' fade-right' : ''}`} ref={wrapRef}>
-                  <div className="filter-bar">
-                    {SUBJECTS.map((s, i) => (
-                      <button key={s.id}
-                        className={`filter-btn${active === s.id ? ' active' : ''}`}
-                        onClick={() => setActive(s.id)}
-                        style={{ '--i': i, '--subject-color': s.color, '--subject-accent': s.accent }}>
-                        <span className="filter-btn-swatch" />
-                        <span className="filter-btn-label">{s.name}</span>
-                        {(s.notes.length + s.lectures.length) > 0 && <span className="filter-btn-count">{s.notes.length + s.lectures.length}</span>}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <button className="filter-arrow" onClick={() => scroll(1)} aria-label="Scroll right" style={{ opacity: fades.right ? 1 : 0, pointerEvents: fades.right ? 'auto' : 'none' }}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-                </button>
-              </div>
-            );
-          })()}
+          {SUBJECTS.length > 0 && <FilterBar subjects={SUBJECTS} active={active} setActive={setActive} />}
 
           {/* Subject sections — key on active triggers re-mount → re-animation */}
           <div key={active}>
