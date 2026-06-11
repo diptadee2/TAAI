@@ -1263,7 +1263,6 @@ const COMBOS = [
     accent: 'linear-gradient(90deg, var(--pink), var(--purple), var(--blue))',
     title: 'GATE 2027 Full Course',
     validity: 'VALID UNTIL APR 15, 2027', validityNote: '+2 months after GATE',
-    price: '₹10,499', priceOld: '₹14,999', discount: '30% off', discountDeadline: 'Offer ends Jun 5',
     includes: [
       'Linear Algebra, Probability, Statistics, Calculus',
       'Machine Learning, AI',
@@ -1284,7 +1283,6 @@ const COMBOS = [
     accent: 'linear-gradient(90deg, var(--purple), var(--blue))',
     title: 'Mathematics & ML Bundle',
     validity: 'VALID UNTIL FEB 15, 2027',
-    price: '₹6,399', priceOld: '₹9,999', discount: '36% off',
     saving: 'Save ~₹3,500 vs buying all 5 courses individually',
     includes: [
       'Linear Algebra',
@@ -1305,7 +1303,6 @@ const COMBOS = [
     accent: 'linear-gradient(90deg, var(--pink), var(--purple))',
     title: 'Mathematics Bundle',
     validity: 'VALID UNTIL FEB 15, 2027',
-    price: '₹4,799', priceOld: '₹7,499', discount: '36% off',
     saving: 'Save ~₹1,500 vs buying all 4 maths courses individually',
     includes: [
       'Linear Algebra',
@@ -1321,23 +1318,23 @@ const COMBOS = [
 
 // ── INDIVIDUAL COURSES ───────────────────────────────────────────
 const INDIVIDUAL = [
-  { id: 'statistics', num: '01', title: 'Statistics', price: '₹1,499', priceOld: '₹2,499', validity: 'FEB 20, 2027',
+  { id: 'statistics', num: '01', title: 'Statistics', validity: 'FEB 20, 2027',
     icon: <Icon.Book />, grad: 'linear-gradient(145deg,#4D8BFF,#7FA8FF)', shadow: 'rgba(77,139,255,0.32)',
     href: 'https://learn.taai.live/learn/Statistics',
     topics: ['Hypothesis testing', 'Estimation theory', 'Regression basics'] },
-  { id: 'calculus', num: '02', title: 'Calculus', price: '₹1,499', priceOld: '₹2,499', validity: 'FEB 20, 2027',
+  { id: 'calculus', num: '02', title: 'Calculus', validity: 'FEB 20, 2027',
     icon: <Icon.Note />, grad: 'linear-gradient(145deg,#FF7FB7,#FF9ECB)', shadow: 'rgba(255,127,183,0.28)',
     href: 'https://learn.taai.live/learn/Calculus-and-Optimization',
     topics: ['Limits & continuity', 'Differentiation', 'Optimization & integration'] },
-  { id: 'linear-algebra', num: '03', title: 'Linear Algebra', price: '₹1,999', priceOld: '₹2,999', validity: 'FEB 20, 2027',
+  { id: 'linear-algebra', num: '03', title: 'Linear Algebra', validity: 'FEB 20, 2027',
     icon: <Icon.Chart />, grad: 'linear-gradient(145deg,#6B4AFF,#4D8BFF)', shadow: 'rgba(107,74,255,0.32)',
     href: 'https://learn.taai.live/learn/Linear-Algebra--Mathematics-',
     topics: ['Matrices & determinants', 'Eigenvalues & vectors', 'Linear transformations'] },
-  { id: 'probability', num: '04', title: 'Probability', price: '₹2,499', priceOld: '₹3,499', validity: 'FEB 20, 2027',
+  { id: 'probability', num: '04', title: 'Probability', validity: 'FEB 20, 2027',
     icon: <Icon.Target />, grad: 'linear-gradient(145deg,#FF7FB7,#8B5CF6)', shadow: 'rgba(255,127,183,0.32)',
     href: 'https://learn.taai.live/learn/Probability',
     topics: ['Conditional probability', 'Random variables', 'Distributions'] },
-  { id: 'machine-learning', num: '05', title: 'Machine Learning', price: '₹3,999', priceOld: '₹4,999', validity: 'FEB 20, 2027',
+  { id: 'machine-learning', num: '05', title: 'Machine Learning', validity: 'FEB 20, 2027',
     icon: <Icon.Code />, grad: 'linear-gradient(145deg,#8B5CF6,#C4B0FF)', shadow: 'rgba(139,92,246,0.34)',
     href: 'https://learn.taai.live/learn/taAI-Machine-Learning-Full-Course',
     topics: ['Supervised & unsupervised', 'Model evaluation', 'Neural networks basics'] },
@@ -1432,15 +1429,15 @@ function BundleComparison({ pricingMap }) {
             <div className="compare-footer">
               <div className="compare-footer-cell" />
               <div className="compare-footer-cell featured">
-                <span className="compare-price best">{fmtPrice((pricingMap['full-course']||{}).price) || '₹10,499'}</span>
+                <span className="compare-price best">{fmtPrice((pricingMap['full-course']||{}).price) || '—'}</span>
                 <a href="https://learn.taai.live/learn/batch/GATE-2027/content" target="_blank" rel="noopener noreferrer" className="compare-enroll-btn featured">Enrol now</a>
               </div>
               <div className="compare-footer-cell">
-                <span className="compare-price">{fmtPrice((pricingMap['maths-ml-bundle']||{}).price) || '₹6,399'}</span>
+                <span className="compare-price">{fmtPrice((pricingMap['maths-ml-bundle']||{}).price) || '—'}</span>
                 <a href="https://learn.taai.live/learn/Maths--ML---AI-Bundle---GATE-2026" target="_blank" rel="noopener noreferrer" className="compare-enroll-btn">Enrol now</a>
               </div>
               <div className="compare-footer-cell">
-                <span className="compare-price">{fmtPrice((pricingMap['maths-bundle']||{}).price) || '₹4,799'}</span>
+                <span className="compare-price">{fmtPrice((pricingMap['maths-bundle']||{}).price) || '—'}</span>
                 <a href="https://learn.taai.live/learn/Mathematics-Course-by-manoj-sir-gate-2026-gateda" target="_blank" rel="noopener noreferrer" className="compare-enroll-btn">Enrol now</a>
               </div>
             </div>
@@ -1458,11 +1455,11 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   const p = pricing;
   const live = !!p;
   const pd = p || {};
-  const price            = pd.price           ? fmtPrice(pd.price)            : c.price;
-  const priceOld         = pd.priceOld        ? fmtPrice(pd.priceOld)         : c.priceOld;
-  const discountRaw      = pd.discount        || c.discount;
+  const price            = pd.price    ? fmtPrice(pd.price)    : '—';
+  const priceOld         = pd.priceOld ? fmtPrice(pd.priceOld) : null;
+  const discountRaw      = pd.discount || null;
   const discount         = discountRaw ? (isNaN(discountRaw) ? discountRaw : discountRaw + '% off') : null;
-  const discountDeadline = live ? (pd.discountDeadline ? fmtDeadline(pd.discountDeadline) : null) : c.discountDeadline;
+  const discountDeadline = pd.discountDeadline ? fmtDeadline(pd.discountDeadline) : null;
   const discountReason   = pd.discountReason  || null;
   const saving           = c.saving;
   const validity         = pd.validity        ? fmtValidity(pd.validity)       : c.validity;
@@ -1514,8 +1511,8 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
 
 const CourseCard = React.memo(function CourseCard({ c, pricing }) {
   const p        = pricing || {};
-  const price    = p.price    ? fmtPrice(p.price)    : c.price;
-  const priceOld = p.priceOld ? fmtPrice(p.priceOld) : c.priceOld;
+  const price    = p.price    ? fmtPrice(p.price)    : '—';
+  const priceOld = p.priceOld ? fmtPrice(p.priceOld) : null;
   const validity = p.validity ? fmtValidity(p.validity) : 'VALID UNTIL ' + c.validity;
   return (
     <div className="course-card card" style={{ '--course-grad': c.grad, '--course-shadow': c.shadow }}>
