@@ -547,7 +547,8 @@ body {
 .toppers-scroll-outer::before { left: 0; background: linear-gradient(to right, #07051a 30%, transparent); }
 .toppers-scroll-outer::after { right: 0; background: linear-gradient(to left, #07051a 30%, transparent); }
 .toppers-rows { display: flex; flex-direction: column; gap: 28px; }
-.toppers-scroll { display: flex; gap: 16px; padding: 4px 0 4px; width: max-content; animation: toppers-marquee 28s linear infinite; }
+.toppers-scroll { display: flex; gap: 0; padding: 4px 0 4px; width: max-content; animation: toppers-marquee 28s linear infinite; }
+.toppers-scroll .topper-card { margin-right: 16px; }
 .toppers-scroll-reverse { animation: toppers-marquee-rev 34s linear infinite; }
 .toppers-scroll:hover, .toppers-scroll-reverse:hover { animation-play-state: paused; }
 .topper-card { flex: 0 0 190px; border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); transition: transform .36s cubic-bezier(.34,1.1,.64,1), box-shadow .32s ease, border-color .28s; cursor: pointer; }
