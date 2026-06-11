@@ -327,7 +327,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   animation: combo-border-spin 3s linear infinite;
   box-shadow: 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12);
   transition: transform .3s cubic-bezier(.34,1.05,.64,1), box-shadow .3s ease;
+  will-change: transform;
+  transform: translateZ(0);
 }
+.fade-in:has(> .combo-featured-frame) { will-change: opacity, transform; }
 .combo-featured-frame:hover { transform: translateY(-10px); box-shadow: 0 32px 100px rgba(139,92,246,0.55), 0 0 72px rgba(139,92,246,0.2); }
 .combo-card {
   border-radius: var(--radius-xl); padding: 36px;
