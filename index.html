@@ -1709,16 +1709,21 @@ const TopperMarquee = React.memo(function TopperMarquee() {
 
     const onPause   = () => { paused.current = true; };
     const onResume  = () => { paused.current = false; };
-    const onVisible = () => { if (!document.hidden) last = null; };
+    const onVisible = () => { if (!document.hidden) { last = null; paused.current = false; } };
 
-    el.addEventListener('mouseenter', onPause);
-    el.addEventListener('mouseleave', onResume);
+    const canHover = window.matchMedia('(hover: hover)').matches;
+    if (canHover) {
+      el.addEventListener('mouseenter', onPause);
+      el.addEventListener('mouseleave', onResume);
+    }
     document.addEventListener('visibilitychange', onVisible);
     return () => {
       cancelAnimationFrame(raf);
       io.disconnect();
-      el.removeEventListener('mouseenter', onPause);
-      el.removeEventListener('mouseleave', onResume);
+      if (canHover) {
+        el.removeEventListener('mouseenter', onPause);
+        el.removeEventListener('mouseleave', onResume);
+      }
       document.removeEventListener('visibilitychange', onVisible);
     };
   }, []);
