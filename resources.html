@@ -104,10 +104,11 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 
 /* Subject filter tabs */
 .filter-bar-outer { display: flex; align-items: center; gap: 8px; margin: 48px 0 40px; animation: res-in .6s cubic-bezier(.34,1.1,.64,1) .5s both; }
-.filter-arrow { flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--line); background: #fff; display: grid; place-items: center; cursor: pointer; color: var(--ink-dim); box-shadow: var(--shadow-sm); transition: background .2s, color .2s, border-color .2s, transform .28s cubic-bezier(.34,1.2,.64,1), box-shadow .2s; }
+.filter-arrow { flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--line); background: #fff; display: grid; place-items: center; cursor: pointer; color: var(--ink-dim); box-shadow: var(--shadow-sm); transition: background .2s, color .2s, border-color .2s, transform .28s cubic-bezier(.34,1.2,.64,1), box-shadow .2s, opacity .22s; }
 .filter-arrow:hover { background: var(--purple); color: #fff; border-color: var(--purple); transform: scale(1.1); box-shadow: 0 4px 14px rgba(139,92,246,0.35); }
+.filter-arrow--hidden { opacity: 0; pointer-events: none; }
 .filter-arrow svg { display: block; }
-.filter-bar-wrap { flex: 1; min-width: 0; position: relative; overflow-x: auto; -webkit-overflow-scrolling: touch; -ms-overflow-style: none; scrollbar-width: none; }
+.filter-bar-wrap { flex: 1; min-width: 0; position: relative; overflow-x: auto; -webkit-overflow-scrolling: touch; -ms-overflow-style: none; scrollbar-width: none; -webkit-mask-image: linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent); mask-image: linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent); }
 .filter-bar-wrap::-webkit-scrollbar { display: none; }
 .filter-bar { display: flex; gap: 10px; flex-wrap: nowrap; width: max-content; padding: 4px 2px 10px; }
 .filter-btn {
@@ -712,11 +713,9 @@ function FilterBar({ subjects, active, setActive }) {
 
   return (
     <div className="filter-bar-outer">
-      {fades.left && (
-        <button className="filter-arrow" onClick={() => scroll(-1)} aria-label="Scroll left">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
-      )}
+      <button className={`filter-arrow${fades.left ? '' : ' filter-arrow--hidden'}`} onClick={() => scroll(-1)} aria-label="Scroll left" tabIndex={fades.left ? 0 : -1}>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
       <div className="filter-bar-wrap" ref={wrapRef}>
         <div className="filter-bar">
           {subjects.map((s, i) => (
@@ -730,11 +729,9 @@ function FilterBar({ subjects, active, setActive }) {
           ))}
         </div>
       </div>
-      {fades.right && (
-        <button className="filter-arrow" onClick={() => scroll(1)} aria-label="Scroll right">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-        </button>
-      )}
+      <button className={`filter-arrow${fades.right ? '' : ' filter-arrow--hidden'}`} onClick={() => scroll(1)} aria-label="Scroll right" tabIndex={fades.right ? 0 : -1}>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
     </div>
   );
 }
