@@ -250,11 +250,23 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   justify-content: center;
   align-items: center;
 }
+/* Dark tint + subject colour glow layered over the thumbnail */
 .lecture-card .card-banner::before {
-  background: radial-gradient(ellipse at 50% 100%, color-mix(in srgb, var(--note-color, #8B5CF6) 35%, transparent) 0%, transparent 70%);
+  background:
+    linear-gradient(to bottom, rgba(8,5,22,0.42) 0%, rgba(8,5,22,0.22) 50%, rgba(8,5,22,0.62) 100%),
+    radial-gradient(ellipse at 50% 110%, color-mix(in srgb, var(--note-color, #8B5CF6) 40%, transparent) 0%, transparent 65%);
   inset: 0; width: auto; height: auto; border-radius: 0; bottom: auto; right: auto;
+  z-index: 1;
 }
 .lecture-card .card-banner::after { display: none; }
+/* YouTube thumbnail image */
+.lecture-thumb-bg {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; object-position: center;
+  opacity: 0.55; filter: saturate(0.75) brightness(0.85);
+  transition: opacity .32s ease, filter .32s ease;
+}
+.lecture-card:hover .lecture-thumb-bg { opacity: 0.7; filter: saturate(0.9) brightness(0.9); }
 .lecture-play-btn {
   width: 50px; height: 50px; border-radius: 50%;
   background: #e52d27;
@@ -751,6 +763,12 @@ function NoteCard({ note, accent, color, index = 0 }) {
 }
 
 // ── Lecture Card ──────────────────────────────────────────────────
+function getYouTubeId(url) {
+  if (!url) return null;
+  const m = url.match(/(?:v=|youtu\.be\/)([^&?/\s]{11})/);
+  return m ? m[1] : null;
+}
+
 function LectureCard({ lecture, accent, color, index = 0 }) {
   const formattedDate = lecture.postedOn
     ? new Date(lecture.postedOn).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -758,6 +776,14 @@ function LectureCard({ lecture, accent, color, index = 0 }) {
   return (
     <div className="lecture-card" style={{ '--note-accent': accent, '--note-color': color, '--i': index }}>
       <div className="card-banner">
+        {getYouTubeId(lecture.youtubeUrl) && (
+          <img
+            className="lecture-thumb-bg"
+            src={`https://img.youtube.com/vi/${getYouTubeId(lecture.youtubeUrl)}/hqdefault.jpg`}
+            alt=""
+            loading="lazy"
+          />
+        )}
         <div className="lecture-play-btn">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
         </div>
