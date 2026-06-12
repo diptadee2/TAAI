@@ -1639,19 +1639,96 @@ const IISC_TAG = { label: 'IISc', bg: 'rgba(255,127,183,0.22)', color: '#ffb3d4'
 const NIT_TAG  = { label: 'NIT',  bg: 'rgba(6,182,212,0.22)',   color: '#67e8f9' };
 const IIIT_TAG = { label: 'IIIT', bg: 'rgba(77,139,255,0.22)',  color: '#93bbff' };
 
-function Stats() {
-  const toppers = [
-    { img: 'testimonials/15 AIR.webp',   air: 15,  name: 'Alin Anto',      college: null,                         tag: null,      quote: null, yt: null },
-    { img: 'testimonials/23 AIR.webp',   air: 23,  name: 'Suryamani',      college: null,                         tag: null,      quote: null, yt: 'https://www.youtube.com/watch?v=8wks9zdLvDc' },
-    { img: 'testimonials/46 AIR.webp',   air: 46,  name: 'Laksheet Mathur', college: 'IIT Madras · M.Tech Data Science & AI', tag: null, quote: null, yt: null },
-    { img: 'testimonials/46 AIR_2.webp', air: 46,  name: 'Arun',           college: null,                         tag: null,      quote: 'I followed your YouTube Concept to Combat series for ML revision, really easy to understand. I also attempted the TAAI AIMT; the question level was well suited for GATE DA. I was able to clear some conceptual doubts with ease. Thank you for your hard work.', yt: null },
-    { img: 'testimonials/91 AIR.webp',   air: 91,  name: 'Tapan Patel',    college: null,                         tag: null,      quote: 'The way Manoj Sir taught Maths and ML made even tough topics feel much easier to understand. I never really felt scared of Maths or ML while preparing for the exam. The courses and guidance from TAAI played a big role in my journey.', yt: null },
-    { img: 'testimonials/102 AIR.webp',  air: 102, name: 'Parinay Rana',   college: null,                         tag: null,      quote: 'The lectures felt just right, clear, to the point, and not overloaded with unnecessary content. Concepts were explained so intuitively, with plenty of examples. Manoj Sir\'s personal support truly stood out and made a big difference in my learning.', yt: null },
-    { initials: 'SB', grad: 'linear-gradient(135deg,#FF7FB7,#8B5CF6)', air: 38,  name: 'Sanved Bangale', college: 'IIT Madras · M.Tech DS & AI',    tag: IIT_TAG,  quote: 'The most GATE DA specific practice I\'ve found, with really excellent coverage of the content. The clarity in teaching, structured approach, and constant support from the team made all the difference.', yt: 'https://www.youtube.com/watch?v=p5Rnv2XklDQ' },
-    { initials: 'YR', grad: 'linear-gradient(135deg,#8B5CF6,#4D8BFF)', air: 49,  name: 'Yash Raj',       college: 'IIT Madras · M.Tech DS & AI',    tag: IIT_TAG,  quote: 'Preparing for GATE DA was tough; I wasted significant time on ineffective resources. Your course was a complete game-changer, bridging the gap between concepts and application. The intuitive approach to problem-solving transformed my understanding of Maths.', yt: 'https://www.youtube.com/watch?v=6vQ6V39y7lA' },
-    { initials: 'SD', grad: 'linear-gradient(135deg,#4D8BFF,#6B4BFF)', air: 129, name: 'Sarthak Dey',    college: 'IIT Kharagpur · M.Tech in AI',   tag: IIT_TAG,  quote: null, yt: null },
-  ];
+const TOPPERS = [
+  { img: 'testimonials/15 AIR.webp',   air: 15,  name: 'Alin Anto',       college: null,                                  quote: null, yt: null },
+  { img: 'testimonials/23 AIR.webp',   air: 23,  name: 'Suryamani',       college: null,                                  quote: null, yt: 'https://www.youtube.com/watch?v=8wks9zdLvDc' },
+  { img: 'testimonials/46 AIR.webp',   air: 46,  name: 'Laksheet Mathur', college: 'IIT Madras · M.Tech Data Science & AI', quote: null, yt: null },
+  { img: 'testimonials/46 AIR_2.webp', air: 46,  name: 'Arun',            college: null,                                  quote: 'I followed your YouTube Concept to Combat series for ML revision, really easy to understand. I also attempted the TAAI AIMT; the question level was well suited for GATE DA. I was able to clear some conceptual doubts with ease. Thank you for your hard work.', yt: null },
+  { img: 'testimonials/91 AIR.webp',   air: 91,  name: 'Tapan Patel',     college: null,                                  quote: 'The way Manoj Sir taught Maths and ML made even tough topics feel much easier to understand. I never really felt scared of Maths or ML while preparing for the exam. The courses and guidance from TAAI played a big role in my journey.', yt: null },
+  { img: 'testimonials/102 AIR.webp',  air: 102, name: 'Parinay Rana',    college: null,                                  quote: 'The lectures felt just right, clear, to the point, and not overloaded with unnecessary content. Concepts were explained so intuitively, with plenty of examples. Manoj Sir\'s personal support truly stood out and made a big difference in my learning.', yt: null },
+  { initials: 'SB', grad: 'linear-gradient(135deg,#FF7FB7,#8B5CF6)', air: 38,  name: 'Sanved Bangale', college: 'IIT Madras · M.Tech DS & AI',  quote: 'The most GATE DA specific practice I\'ve found, with really excellent coverage of the content. The clarity in teaching, structured approach, and constant support from the team made all the difference.', yt: 'https://www.youtube.com/watch?v=p5Rnv2XklDQ' },
+  { initials: 'YR', grad: 'linear-gradient(135deg,#8B5CF6,#4D8BFF)', air: 49,  name: 'Yash Raj',       college: 'IIT Madras · M.Tech DS & AI',  quote: 'Preparing for GATE DA was tough; I wasted significant time on ineffective resources. Your course was a complete game-changer, bridging the gap between concepts and application. The intuitive approach to problem-solving transformed my understanding of Maths.', yt: 'https://www.youtube.com/watch?v=6vQ6V39y7lA' },
+  { initials: 'SD', grad: 'linear-gradient(135deg,#4D8BFF,#6B4BFF)', air: 129, name: 'Sarthak Dey',    college: 'IIT Kharagpur · M.Tech in AI', quote: null, yt: null },
+];
 
+// Frozen: React.memo with () => true means it never re-renders after mount,
+// so imperative DOM recycling in the RAF loop is never overwritten by React.
+const TopperMarquee = React.memo(function TopperMarquee({ onClickRef }) {
+  const elRef   = React.useRef(null);
+  const paused  = React.useRef(false);
+
+  React.useEffect(() => {
+    const el = elRef.current;
+    if (!el) return;
+    const SPEED = 68, CARD_W = 206;
+    let offset = 0, last = null, raf;
+
+    const tick = (now) => {
+      if (last !== null && !paused.current) {
+        offset += SPEED * Math.min(now - last, 50) / 1000;
+        // When the first card has fully left the viewport on the left,
+        // move it to the end. Subtract CARD_W so all other cards'
+        // visual positions are unchanged — offset stays in [0, CARD_W).
+        if (offset >= CARD_W) {
+          el.appendChild(el.firstElementChild);
+          offset -= CARD_W;
+        }
+        el.style.transform = `translateX(${-offset}px)`;
+      }
+      last = now;
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+
+    const onPause   = () => { paused.current = true; };
+    const onResume  = () => { paused.current = false; };
+    const onVisible = () => { if (!document.hidden) last = null; };
+    // Event delegation for card clicks
+    const onClick = (e) => {
+      const card = e.target.closest('[data-idx]');
+      if (card) onClickRef.current(TOPPERS[+card.dataset.idx]);
+    };
+
+    el.addEventListener('click',       onClick);
+    el.addEventListener('mouseenter',  onPause);
+    el.addEventListener('mouseleave',  onResume);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      cancelAnimationFrame(raf);
+      el.removeEventListener('click',       onClick);
+      el.removeEventListener('mouseenter',  onPause);
+      el.removeEventListener('mouseleave',  onResume);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, []);
+
+  // Render 3 sets (27 cards = 5562px) — more than enough to fill any monitor
+  // before recycling kicks in, covering even 4K ultra-wide.
+  const sets = [...TOPPERS, ...TOPPERS, ...TOPPERS];
+  return (
+    <div className="toppers-scroll-outer">
+      <div ref={elRef} className="toppers-scroll">
+        {sets.map((t, i) => (
+          <div key={i} className="topper-card" data-idx={i % TOPPERS.length}>
+            <div className="topper-img-wrap">
+              {t.img
+                ? <img className="topper-img" src={t.img} alt={t.name} loading="lazy" />
+                : <div className="topper-placeholder" style={{ background: t.grad }}>{t.initials}</div>
+              }
+            </div>
+            <div className="topper-info">
+              <div className="topper-air">AIR {t.air}</div>
+              <div className="topper-name">{t.name}</div>
+              {t.college && <div className="topper-college">{t.college}</div>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}, () => true); // second arg always returns true → never re-renders
+
+function Stats() {
   const [selected, setSelected] = React.useState(null);
 
   React.useEffect(() => {
@@ -1661,55 +1738,9 @@ function Stats() {
     return () => document.removeEventListener('keydown', fn);
   }, [selected]);
 
-  const scrollRef = React.useRef(null);
-  const pausedRef = React.useRef(false);
-
-  React.useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const SPEED = 68;
-    const half = el.scrollWidth / 4; // one set width = seamless at any viewport
-    let pos = 0, last = null, raf;
-    const tick = (now) => {
-      if (last !== null && !pausedRef.current) {
-        pos += SPEED * Math.min(now - last, 50) / 1000;
-        if (pos >= half) pos -= half;
-        el.style.transform = `translateX(${-pos}px)`;
-      }
-      last = now;
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    const pause  = () => { pausedRef.current = true; };
-    const resume = () => { pausedRef.current = false; };
-    // Reset last on visibility restore so dt doesn't spike
-    const onVisible = () => { if (!document.hidden) last = null; };
-    el.addEventListener('mouseenter', pause);
-    el.addEventListener('mouseleave', resume);
-    document.addEventListener('visibilitychange', onVisible);
-    return () => {
-      cancelAnimationFrame(raf);
-      el.removeEventListener('mouseenter', pause);
-      el.removeEventListener('mouseleave', resume);
-      document.removeEventListener('visibilitychange', onVisible);
-    };
-  }, []);
-
-  const Card = ({ t, clone }) => (
-    <div className="topper-card" onClick={() => !clone && setSelected(t)}>
-      <div className="topper-img-wrap">
-        {t.img
-          ? <img className="topper-img" src={t.img} alt={t.name} loading="lazy" />
-          : <div className="topper-placeholder" style={{ background: t.grad }}>{t.initials}</div>
-        }
-      </div>
-      <div className="topper-info">
-        <div className="topper-air">AIR {t.air}</div>
-        <div className="topper-name">{t.name}</div>
-        {t.college && <div className="topper-college">{t.college}</div>}
-      </div>
-    </div>
-  );
+  // Ref keeps the click handler fresh without causing TopperMarquee to re-render
+  const onClickRef = React.useRef((t) => setSelected(t));
+  onClickRef.current = (t) => setSelected(t);
 
   return (
     <section className="toppers-strip">
@@ -1720,14 +1751,8 @@ function Stats() {
         </div>
         <a href="testimonials.html" className="toppers-view-all">View all stories →</a>
       </div>
-      <div className="toppers-scroll-outer">
-        <div className="toppers-scroll" ref={scrollRef}>
-          {toppers.map((t, i) => <Card key={i} t={t} />)}
-          {toppers.map((t, i) => <Card key={`a${i}`} t={t} clone />)}
-          {toppers.map((t, i) => <Card key={`b${i}`} t={t} clone />)}
-          {toppers.map((t, i) => <Card key={`c${i}`} t={t} clone />)}
-        </div>
-      </div>
+
+      <TopperMarquee onClickRef={onClickRef} />
 
       {selected && (
         <div className="topper-modal-overlay" onClick={() => setSelected(null)}>
