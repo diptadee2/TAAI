@@ -1661,14 +1661,11 @@ const TopperMarquee = React.memo(function TopperMarquee({ onClickRef }) {
     const el = elRef.current;
     if (!el) return;
     const SPEED = 68, CARD_W = 206;
-    let offset = 0, last = null, raf;
+    let offset = 0, last = null, raf, offscreen = false;
 
     const tick = (now) => {
-      if (last !== null && !paused.current) {
+      if (last !== null && !paused.current && !offscreen) {
         offset += SPEED * Math.min(now - last, 50) / 1000;
-        // When the first card has fully left the viewport on the left,
-        // move it to the end. Subtract CARD_W so all other cards'
-        // visual positions are unchanged — offset stays in [0, CARD_W).
         if (offset >= CARD_W) {
           el.appendChild(el.firstElementChild);
           offset -= CARD_W;
@@ -1680,24 +1677,31 @@ const TopperMarquee = React.memo(function TopperMarquee({ onClickRef }) {
     };
     raf = requestAnimationFrame(tick);
 
+    // Pause RAF work when strip is fully scrolled off screen
+    const io = new IntersectionObserver(([e]) => {
+      offscreen = !e.isIntersecting;
+      if (!offscreen) last = null; // reset dt on re-entry
+    }, { threshold: 0 });
+    io.observe(el);
+
     const onPause   = () => { paused.current = true; };
     const onResume  = () => { paused.current = false; };
     const onVisible = () => { if (!document.hidden) last = null; };
-    // Event delegation for card clicks
-    const onClick = (e) => {
+    const onClick   = (e) => {
       const card = e.target.closest('[data-idx]');
       if (card) onClickRef.current(TOPPERS[+card.dataset.idx]);
     };
 
-    el.addEventListener('click',       onClick);
-    el.addEventListener('mouseenter',  onPause);
-    el.addEventListener('mouseleave',  onResume);
+    el.addEventListener('click',      onClick);
+    el.addEventListener('mouseenter', onPause);
+    el.addEventListener('mouseleave', onResume);
     document.addEventListener('visibilitychange', onVisible);
     return () => {
       cancelAnimationFrame(raf);
-      el.removeEventListener('click',       onClick);
-      el.removeEventListener('mouseenter',  onPause);
-      el.removeEventListener('mouseleave',  onResume);
+      io.disconnect();
+      el.removeEventListener('click',      onClick);
+      el.removeEventListener('mouseenter', onPause);
+      el.removeEventListener('mouseleave', onResume);
       document.removeEventListener('visibilitychange', onVisible);
     };
   }, []);
