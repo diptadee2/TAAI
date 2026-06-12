@@ -1683,15 +1683,24 @@ const TopperMarquee = React.memo(function TopperMarquee() {
   React.useEffect(() => {
     const el = elRef.current;
     if (!el) return;
-    const SPEED = 68, CARD_W = 206;
+    const SPEED = 68;
     let offset = 0, last = null, raf, offscreen = false;
+
+    const cardWidth = () => {
+      const first = el.firstElementChild;
+      if (!first) return 206;
+      const style = getComputedStyle(first);
+      return first.getBoundingClientRect().width + parseFloat(style.marginRight || 0);
+    };
 
     const tick = (now) => {
       if (last !== null && !paused.current && !offscreen) {
         offset += SPEED * Math.min(now - last, 50) / 1000;
-        if (offset >= CARD_W) {
+        let cardW = cardWidth();
+        while (offset >= cardW) {
           el.appendChild(el.firstElementChild);
-          offset -= CARD_W;
+          offset -= cardW;
+          cardW = cardWidth();
         }
         el.style.transform = `translateX(${-offset}px)`;
       }
