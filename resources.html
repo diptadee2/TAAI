@@ -233,9 +233,23 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .btn-download:hover { background: var(--purple); color: #fff; transform: translateY(-2px); box-shadow: 0 6px 18px rgba(139,92,246,0.38); }
 .btn-download svg { flex-shrink: 0; transition: transform .28s cubic-bezier(.34,1.4,.64,1); }
 .btn-download:hover svg { transform: translateY(3px); }
-.btn-watch { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 14px; border-radius: 9px; font-size: 12.5px; font-weight: 600; text-decoration: none; background: #fee2e2; color: #dc2626; border: 1.5px solid rgba(220,38,38,0.18); white-space: nowrap; transition: background .22s, transform .28s cubic-bezier(.34,1.2,.64,1), box-shadow .22s, color .22s; }
-.btn-watch:hover { background: #dc2626; color: #fff; transform: translateY(-2px); box-shadow: 0 6px 18px rgba(220,38,38,0.38); }
-.btn-watch svg { flex-shrink: 0; }
+.btn-watch {
+  flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+  padding: 10px 16px; border-radius: 9px;
+  font-size: 13px; font-weight: 700; text-decoration: none; white-space: nowrap;
+  background: #111; color: #fff;
+  border: none; position: relative; overflow: hidden;
+  transition: transform .28s cubic-bezier(.34,1.2,.64,1), box-shadow .24s, background .22s;
+}
+.btn-watch::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+  opacity: 0; transition: opacity .24s ease;
+}
+.btn-watch:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(220,0,0,0.45); }
+.btn-watch:hover::before { opacity: 1; }
+.btn-watch-yt { flex-shrink: 0; position: relative; z-index: 1; display: flex; align-items: center; }
+.btn-watch-label { position: relative; z-index: 1; }
 .btn-slides { flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 9px 13px; border-radius: 9px; font-size: 12.5px; font-weight: 600; text-decoration: none; background: var(--bg-soft); color: var(--ink-dim); border: 1.5px solid var(--line); white-space: nowrap; transition: background .22s, color .22s, border-color .22s, transform .28s; }
 .btn-slides:hover { background: var(--purple-soft); color: var(--purple); border-color: rgba(139,92,246,0.25); transform: translateY(-2px); }
 .btn-slides svg { flex-shrink: 0; transition: transform .28s cubic-bezier(.34,1.4,.64,1); }
@@ -267,15 +281,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   transition: opacity .32s ease, filter .32s ease;
 }
 .lecture-card:hover .lecture-thumb-bg { opacity: 0.7; filter: saturate(0.9) brightness(0.9); }
-.lecture-play-btn {
-  width: 50px; height: 50px; border-radius: 50%;
-  background: #e52d27;
-  display: grid; place-items: center;
-  color: #fff; position: relative; z-index: 1; flex-shrink: 0;
-  box-shadow: 0 4px 18px rgba(229,45,39,0.55);
-  transition: transform .32s cubic-bezier(.34,1.4,.64,1), box-shadow .28s;
-}
-.lecture-card:hover .lecture-play-btn { transform: scale(1.18); box-shadow: 0 6px 28px rgba(229,45,39,0.75); }
 .lecture-thumb-meta {
   position: absolute; bottom: 10px; left: 0; right: 0;
   display: flex; align-items: center; justify-content: space-between;
@@ -784,9 +789,6 @@ function LectureCard({ lecture, accent, color, index = 0 }) {
             loading="lazy"
           />
         )}
-        <div className="lecture-play-btn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-        </div>
         <div className="lecture-thumb-meta">
           <span className="lecture-thumb-num">{lecture.lectureNumber ? `Lecture ${lecture.lectureNumber}` : 'Lecture'}</span>
           {lecture.slidesFile && <span className="lecture-slides-pill">Slides</span>}
@@ -797,7 +799,13 @@ function LectureCard({ lecture, accent, color, index = 0 }) {
         {formattedDate && <div className="card-date">{formattedDate}</div>}
         <div className="card-actions">
           <a href={lecture.youtubeUrl} target="_blank" rel="noopener noreferrer" className="btn-watch">
-            <PlayIcon /> Watch on YouTube
+            <span className="btn-watch-yt">
+              <svg width="20" height="14" viewBox="0 0 90 63" fill="none">
+                <rect width="90" height="63" rx="14" fill="#fff"/>
+                <polygon points="36,18 66,31.5 36,45" fill="#FF0000"/>
+              </svg>
+            </span>
+            <span className="btn-watch-label">Watch on YouTube</span>
           </a>
           {lecture.slidesFile && (
             <a href={lecture.slidesFile} download className="btn-slides">
