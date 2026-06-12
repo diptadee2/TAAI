@@ -241,13 +241,45 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .btn-slides svg { flex-shrink: 0; transition: transform .28s cubic-bezier(.34,1.4,.64,1); }
 .btn-slides:hover svg { transform: translateY(3px); }
 
-/* Lecture card — dark banner override */
-.lecture-card .card-banner { background: linear-gradient(135deg, #120e28 0%, #1c1240 100%); }
-.lecture-card .card-banner::before { background: color-mix(in srgb, var(--note-color, #8B5CF6) 20%, transparent); width: 100px; height: 100px; bottom: -36px; right: -36px; }
-.lecture-card .card-banner::after { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent); }
-.lecture-card .card-banner-icon { background: rgba(220,38,38,0.85); box-shadow: 0 2px 14px rgba(220,38,38,0.55); }
-.lecture-card:hover .card-banner-icon { background: #dc2626; box-shadow: 0 4px 22px rgba(220,38,38,0.7); transform: scale(1.14); }
-.lecture-card:hover { box-shadow: 0 24px 52px rgba(0,0,0,0.07), 0 6px 20px rgba(220,38,38,0.14); border-color: rgba(220,38,38,0.3); }
+/* Lecture card — video thumbnail style */
+.lecture-card .card-banner {
+  background: #0d0b1e;
+  min-height: 88px;
+  padding: 0;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.lecture-card .card-banner::before {
+  background: radial-gradient(ellipse at 50% 100%, color-mix(in srgb, var(--note-color, #8B5CF6) 35%, transparent) 0%, transparent 70%);
+  inset: 0; width: auto; height: auto; border-radius: 0; bottom: auto; right: auto;
+}
+.lecture-card .card-banner::after { display: none; }
+.lecture-play-btn {
+  width: 50px; height: 50px; border-radius: 50%;
+  background: #e52d27;
+  display: grid; place-items: center;
+  color: #fff; position: relative; z-index: 1; flex-shrink: 0;
+  box-shadow: 0 4px 18px rgba(229,45,39,0.55);
+  transition: transform .32s cubic-bezier(.34,1.4,.64,1), box-shadow .28s;
+}
+.lecture-card:hover .lecture-play-btn { transform: scale(1.18); box-shadow: 0 6px 28px rgba(229,45,39,0.75); }
+.lecture-thumb-meta {
+  position: absolute; bottom: 10px; left: 0; right: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 14px; z-index: 1;
+}
+.lecture-thumb-num {
+  font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,0.45);
+}
+.lecture-slides-pill {
+  font-family: var(--font-mono); font-size: 8.5px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.12);
+  padding: 3px 8px; border-radius: 999px;
+}
+.lecture-card:hover { box-shadow: 0 24px 52px rgba(0,0,0,0.08), 0 6px 20px rgba(229,45,39,0.16); border-color: rgba(229,45,39,0.28); }
 
 /* Subsection labels (Notes / Lectures within a subject) */
 .subsection-header { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-soft); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
@@ -726,12 +758,12 @@ function LectureCard({ lecture, accent, color, index = 0 }) {
   return (
     <div className="lecture-card" style={{ '--note-accent': accent, '--note-color': color, '--i': index }}>
       <div className="card-banner">
-        <div className="card-banner-label">
-          {lecture.lectureNumber ? `Lecture ${lecture.lectureNumber}` : 'Lecture'}
-          {lecture.slidesFile && <span className="card-banner-sublabel">Slides included</span>}
+        <div className="lecture-play-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
         </div>
-        <div className="card-banner-icon">
-          <PlayIcon />
+        <div className="lecture-thumb-meta">
+          <span className="lecture-thumb-num">{lecture.lectureNumber ? `Lecture ${lecture.lectureNumber}` : 'Lecture'}</span>
+          {lecture.slidesFile && <span className="lecture-slides-pill">Slides</span>}
         </div>
       </div>
       <div className="card-body">
@@ -739,7 +771,7 @@ function LectureCard({ lecture, accent, color, index = 0 }) {
         {formattedDate && <div className="card-date">{formattedDate}</div>}
         <div className="card-actions">
           <a href={lecture.youtubeUrl} target="_blank" rel="noopener noreferrer" className="btn-watch">
-            <PlayIcon /> Watch
+            <PlayIcon /> Watch on YouTube
           </a>
           {lecture.slidesFile && (
             <a href={lecture.slidesFile} download className="btn-slides">
