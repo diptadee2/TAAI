@@ -394,7 +394,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   pointer-events: none; filter: blur(20px);
   animation: feat-orb-b 12s ease-in-out 2s infinite;
 }
-.feat-rank { display: inline-flex; align-items: baseline; gap: 6px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .12em; color: rgba(255,255,255,0.5); text-transform: uppercase; }
 .feat-rank-num { font-family: var(--font-display); font-size: 64px; font-weight: 600; letter-spacing: -0.05em; line-height: 1; background: linear-gradient(120deg, var(--pink), var(--lilac)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .feat-quote { font-size: 16px; line-height: 1.65; color: rgba(255,255,255,0.82); font-style: italic; flex: 1; }
 .feat-author { display: flex; align-items: center; gap: 14px; }
@@ -974,8 +973,7 @@ function ThisYearGallery() {
               onMouseMove={e=>{const r=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');e.currentTarget.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%');}}
               onMouseLeave={e=>{e.currentTarget.style.setProperty('--mx','-200%');e.currentTarget.style.setProperty('--my','-200%');}}>
               <div>
-                <div className="feat-rank"><span>All India Rank</span></div>
-                <div className="feat-rank-num">{s.air}</div>
+                <div className="feat-rank-num">AIR {s.air}</div>
               </div>
               {s.quote && <p className="feat-quote">"{s.quote}"</p>}
               <div className="feat-author">
@@ -1043,8 +1041,7 @@ function PreviousBatch() {
               onMouseMove={e=>{const r=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');e.currentTarget.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%');}}
               onMouseLeave={e=>{e.currentTarget.style.setProperty('--mx','-200%');e.currentTarget.style.setProperty('--my','-200%');}}>
               <div>
-                <div className="feat-rank"><span>All India Rank</span></div>
-                <div className="feat-rank-num">{f.air}</div>
+                <div className="feat-rank-num">AIR {f.air}</div>
               </div>
               <p className="feat-quote">"{f.quote}"</p>
               <div className="feat-author">
