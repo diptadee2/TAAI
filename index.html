@@ -1668,7 +1668,7 @@ function Stats() {
     const el = scrollRef.current;
     if (!el) return;
     const SPEED = 68;
-    const half = el.scrollWidth / 2;
+    const half = el.scrollWidth / 4; // one set width = seamless at any viewport
     let pos = 0, last = null, raf;
     const tick = (now) => {
       if (last !== null && !pausedRef.current) {
@@ -1723,7 +1723,9 @@ function Stats() {
       <div className="toppers-scroll-outer">
         <div className="toppers-scroll" ref={scrollRef}>
           {toppers.map((t, i) => <Card key={i} t={t} />)}
-          {toppers.map((t, i) => <Card key={`d${i}`} t={t} clone />)}
+          {toppers.map((t, i) => <Card key={`a${i}`} t={t} clone />)}
+          {toppers.map((t, i) => <Card key={`b${i}`} t={t} clone />)}
+          {toppers.map((t, i) => <Card key={`c${i}`} t={t} clone />)}
         </div>
       </div>
 
