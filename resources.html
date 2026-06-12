@@ -280,18 +280,19 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .lecture-thumb-bg {
   position: absolute; inset: 0; width: 100%; height: 100%;
   object-fit: cover; object-position: center;
-  opacity: 0.55; filter: saturate(0.5) brightness(0.65) blur(1.5px);
+  opacity: 0.45; filter: saturate(0.5) brightness(0.65);
   transition: opacity .32s ease, filter .32s ease;
 }
-.lecture-card:hover .lecture-thumb-bg { opacity: 0.65; filter: saturate(0.65) brightness(0.72) blur(1px); }
+.lecture-card:hover .lecture-thumb-bg { opacity: 0.55; filter: saturate(0.65) brightness(0.75); }
 .lecture-thumb-meta {
   position: absolute; bottom: 10px; left: 0; right: 0;
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 14px; z-index: 1;
 }
-.lecture-thumb-num {
-  font-family: var(--font-mono); font-size: 9px; font-weight: 700;
-  letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,0.45);
+.lecture-thumb-num { display: none; }
+.lecture-card-num {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft);
 }
 .lecture-slides-pill {
   font-family: var(--font-mono); font-size: 8.5px; font-weight: 700;
@@ -792,12 +793,14 @@ function LectureCard({ lecture, accent, color, index = 0 }) {
             loading="lazy"
           />
         )}
-        <div className="lecture-thumb-meta">
-          <span className="lecture-thumb-num">{lecture.lectureNumber ? `Lecture ${lecture.lectureNumber}` : 'Lecture'}</span>
-          {lecture.slidesFile && <span className="lecture-slides-pill">Slides</span>}
-        </div>
+        {lecture.slidesFile && (
+          <div className="lecture-thumb-meta">
+            <span className="lecture-slides-pill">Slides</span>
+          </div>
+        )}
       </div>
       <div className="card-body">
+        {lecture.lectureNumber && <div className="lecture-card-num">Lecture {lecture.lectureNumber}</div>}
         <div className="card-title">{lecture.title}</div>
         {formattedDate && <div className="card-date">{formattedDate}</div>}
         <div className="card-actions">
