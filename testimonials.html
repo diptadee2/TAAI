@@ -1071,9 +1071,7 @@ function ThisYearGallery() {
                 </div>
                 <div>
                   <div className="feat-name">{s.name || 'GATE DA 2026'}</div>
-                  <div className="feat-role" style={{ color: s.college ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.2)', fontStyle: s.college ? 'normal' : 'italic' }}>
-                    {s.college || 'Institute · coming soon'}
-                  </div>
+                  {s.college && <div className="feat-role">{s.college}</div>}
                 </div>
               </div>
             </div>
