@@ -759,7 +759,7 @@ function NoteCard({ note, accent, color, index = 0 }) {
         <div className="card-title">{note.title}</div>
         {note.desc && <div className="note-desc">{note.desc}</div>}
         {note.postedOn && <div className="card-date">{new Date(note.postedOn).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>}
-        <a href={note.file} download className="btn-download">
+        <a href={note.file} target="_blank" rel="noopener noreferrer" className="btn-download">
           <DownloadIcon /> Download PDF
         </a>
       </div>
