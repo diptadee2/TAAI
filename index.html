@@ -1697,12 +1697,7 @@ const TopperMarquee = React.memo(function TopperMarquee() {
     const onPause   = () => { paused.current = true; };
     const onResume  = () => { paused.current = false; };
     const onVisible = () => { if (!document.hidden) last = null; };
-    const onClick   = (e) => {
-      const card = e.target.closest('[data-idx]');
-      if (card) onClickRef.current(TOPPERS[+card.dataset.idx]);
-    };
 
-    el.addEventListener('click',      onClick);
     el.addEventListener('mouseenter', onPause);
     el.addEventListener('mouseleave', onResume);
     document.addEventListener('visibilitychange', onVisible);
@@ -1735,7 +1730,7 @@ const TopperMarquee = React.memo(function TopperMarquee() {
               <div className="topper-name">{t.name}</div>
               {t.college && <div className="topper-college">{t.college}</div>}
               {t.products && <div className="topper-products">{t.products.map((p,i) => {
-                const cls = p === 'Full Course' ? 'fc' : p === 'Test Series' ? 'ts' : p === 'Test Series' ? 'aimt' : 'free';
+                const cls = p === 'Full Course' ? 'fc' : p === 'Test Series' ? 'ts' : 'free';
                 return <span key={i} className={`topper-pill topper-pill--${cls}`}>{p}</span>;
               })}</div>}
             </div>
@@ -1747,16 +1742,6 @@ const TopperMarquee = React.memo(function TopperMarquee() {
 }, () => true); // second arg always returns true → never re-renders
 
 function Stats() {
-
-  React.useEffect(() => {
-    if (!selected) return;
-    const fn = e => { if (e.key === 'Escape') setSelected(null); };
-    document.addEventListener('keydown', fn);
-    return () => document.removeEventListener('keydown', fn);
-  }, [selected]);
-
-  // Ref keeps the click handler fresh without causing TopperMarquee to re-render
-
   return (
     <section className="toppers-strip">
       <div style={{ maxWidth: 1280, margin: '0 auto 36px', width: '100%', padding: '0 max(20px,16px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
