@@ -234,25 +234,19 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .btn-download svg { flex-shrink: 0; transition: transform .28s cubic-bezier(.34,1.4,.64,1); }
 .btn-download:hover svg { transform: translateY(3px); }
 .btn-watch {
-  flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 7px;
-  padding: 9px 16px; border-radius: 9px;
-  font-size: 12.5px; font-weight: 600; text-decoration: none; white-space: nowrap;
-  background: transparent; color: #dc2626;
-  border: 1.5px solid rgba(220,38,38,0.28);
-  position: relative; overflow: hidden;
-  transition: color .24s, border-color .24s, transform .28s cubic-bezier(.34,1.2,.64,1), box-shadow .24s;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: 999px;
+  font-size: 12px; font-weight: 600; text-decoration: none; white-space: nowrap;
+  background: rgba(220,38,38,0.08); color: #dc2626;
+  border: 1.5px solid rgba(220,38,38,0.22);
+  transition: background .22s, color .22s, border-color .22s, transform .28s cubic-bezier(.34,1.2,.64,1), box-shadow .22s;
 }
-.btn-watch::before {
-  content: ''; position: absolute; inset: 0;
-  background: #dc2626;
-  transform: scaleX(0); transform-origin: left;
-  transition: transform .3s cubic-bezier(.4,0,.2,1);
+.btn-watch:hover {
+  background: #dc2626; color: #fff; border-color: #dc2626;
+  transform: translateY(-2px); box-shadow: 0 5px 16px rgba(220,38,38,0.32);
 }
-.btn-watch:hover { color: #fff; border-color: #dc2626; transform: translateY(-2px); box-shadow: 0 5px 16px rgba(220,38,38,0.32); }
-.btn-watch:hover::before { transform: scaleX(1); }
-.btn-watch svg { flex-shrink: 0; position: relative; z-index: 1; transition: transform .28s cubic-bezier(.34,1.4,.64,1); }
-.btn-watch:hover svg { transform: translateX(3px); }
-.btn-watch span { position: relative; z-index: 1; }
+.btn-watch svg { flex-shrink: 0; transition: transform .28s cubic-bezier(.34,1.4,.64,1); }
+.btn-watch:hover svg { transform: scale(1.2); }
 .btn-slides { flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 9px 13px; border-radius: 9px; font-size: 12.5px; font-weight: 600; text-decoration: none; background: var(--bg-soft); color: var(--ink-dim); border: 1.5px solid var(--line); white-space: nowrap; transition: background .22s, color .22s, border-color .22s, transform .28s; }
 .btn-slides:hover { background: var(--purple-soft); color: var(--purple); border-color: rgba(139,92,246,0.25); transform: translateY(-2px); }
 .btn-slides svg { flex-shrink: 0; transition: transform .28s cubic-bezier(.34,1.4,.64,1); }
@@ -805,8 +799,8 @@ function LectureCard({ lecture, accent, color, index = 0 }) {
         {formattedDate && <div className="card-date">{formattedDate}</div>}
         <div className="card-actions">
           <a href={lecture.youtubeUrl} target="_blank" rel="noopener noreferrer" className="btn-watch">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-            <span>Watch on YouTube</span>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            Play
           </a>
           {lecture.slidesFile && (
             <a href={lecture.slidesFile} download className="btn-slides">
