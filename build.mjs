@@ -72,7 +72,9 @@ const SUBJECT_META = {
   'calculus':         { name: 'Calculus',                accent: 'linear-gradient(135deg,#f59e0b,#ef4444)', color: '#f59e0b' },
   'machine-learning': { name: 'Machine Learning',        accent: 'linear-gradient(135deg,#8B5CF6,#ec4899)', color: '#8B5CF6' },
   'ai':               { name: 'Artificial Intelligence', accent: 'linear-gradient(135deg,#06b6d4,#4D8BFF)', color: '#06b6d4' },
-  'python-dsa':       { name: 'Python & DSA',            accent: 'linear-gradient(135deg,#10b981,#4D8BFF)', color: '#10b981' },
+  'python':           { name: 'Python',                  accent: 'linear-gradient(135deg,#10b981,#06b6d4)', color: '#10b981' },
+  'data-structures':  { name: 'Data Structures',         accent: 'linear-gradient(135deg,#4D8BFF,#8B5CF6)', color: '#4D8BFF' },
+  'algorithms':       { name: 'Algorithms',               accent: 'linear-gradient(135deg,#f97316,#FF7FB7)', color: '#f97316' },
   'dbms':             { name: 'DBMS',                    accent: 'linear-gradient(135deg,#f97316,#ef4444)', color: '#f97316' },
 };
 
