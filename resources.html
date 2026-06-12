@@ -162,13 +162,14 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .filter-btn.active .filter-btn-count { background: rgba(255,255,255,0.22); color: rgba(255,255,255,0.9); }
 
 /* Subject sections */
-.subject-section { margin-bottom: 56px; }
+.subject-section { margin-bottom: 80px; }
 .subject-header { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--line); animation: tab-in .38s cubic-bezier(.34,1.1,.64,1) both; }
 .subject-icon { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; color: #fff; flex-shrink: 0; transition: transform .32s cubic-bezier(.34,1.4,.64,1), box-shadow .28s ease; box-shadow: 0 4px 14px rgba(107,75,255,0.2); }
 .subject-header:hover .subject-icon { transform: scale(1.12) rotate(-6deg); box-shadow: 0 8px 24px rgba(107,75,255,0.35); }
 .subject-name { font-family: var(--font-display); font-size: 24px; font-weight: 600; letter-spacing: -0.025em; }
 .subject-count { font-size: 11px; color: var(--ink-soft); font-family: var(--font-mono); letter-spacing: .08em; margin-left: auto; background: var(--bg-soft); border: 1px solid var(--line); padding: 4px 10px; border-radius: 999px; }
 .notes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.resources-content { background: var(--bg-soft); background-image: radial-gradient(circle, rgba(139,92,246,0.045) 1.5px, transparent 1.5px); background-size: 28px 28px; }
 
 /* Dark strip */
 .res-strip { background: #07051a; background-image: radial-gradient(circle,rgba(255,255,255,0.065) 1px,transparent 1px); background-size: 24px 24px; color: #fff; padding: 64px 0; position: relative; overflow: hidden; }
@@ -298,9 +299,9 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .lecture-card:hover { box-shadow: 0 24px 52px rgba(0,0,0,0.08), 0 6px 20px rgba(229,45,39,0.16); border-color: rgba(229,45,39,0.28); }
 
 /* Subsection labels (Notes / Lectures within a subject) */
-.subsection-header { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-soft); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+.subsection-header { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-soft); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
 .subsection-header::after { content: ''; flex: 1; height: 1px; background: var(--line); }
-.notes-grid--spaced { margin-bottom: 32px; }
+.notes-grid--spaced { margin-bottom: 56px; }
 
 /* Empty state */
 .notes-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 64px 24px; background: var(--bg-soft); border: 1.5px dashed var(--line); border-radius: var(--radius-lg); text-align: center; gap: 12px; animation: tab-in .38s cubic-bezier(.34,1.1,.64,1) both, dash-pulse 3.5s ease-in-out 1s infinite; }
@@ -898,7 +899,7 @@ function App() {
       </section>
 
 {/* Main content */}
-      <section style={{ padding: '56px 0 96px' }}>
+      <section className="resources-content" style={{ padding: '64px 0 96px' }}>
         <div className="container">
 
           {/* Skeleton while fetching */}
