@@ -1,6 +1,6 @@
 /**
  * Pre-compiles JSX in HTML files so the browser ships plain JS.
- * Removes babel standalone + swaps dev React for production builds.
+ * Removes Babel standalone; swaps CDN React/ReactDOM for local vendor files.
  *
  * Usage:
  *   node build.mjs          → writes compiled files to dist/
@@ -18,19 +18,6 @@ const DIST  = path.join(__dir, 'dist');
 
 const PAGES = ['index.html', 'courses.html', 'test-series.html', 'testimonials.html', 'contact.html', 'resources.html'];
 
-// Swap CDN URLs: dev → production, remove Babel standalone
-const CDN_SWAPS = [
-  // React dev → prod
-  [
-    'https://unpkg.com/react@18.3.1/umd/react.development.js',
-    'https://unpkg.com/react@18.3.1/umd/react.production.min.js',
-  ],
-  // ReactDOM dev → prod
-  [
-    'https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js',
-    'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js',
-  ],
-];
 
 function compilePage(filename) {
   const src  = fs.readFileSync(path.join(SRC, filename), 'utf8');
@@ -57,25 +44,20 @@ function compilePage(filename) {
   // 3. Replace <script type="text/babel"…> with <script>
   let out = src.replace(babelRe, `<script>\n${code}\n</script>`);
 
-  // 4. Remove the Babel standalone <script> tag entirely
+  // 4. Remove Babel standalone <script> tag entirely
   out = out.replace(
     /<script\s[^>]*unpkg\.com\/@babel\/standalone[^>]*><\/script>\s*/i,
     ''
   );
 
-  // 5. Swap dev React builds for production builds + fix integrity hashes
-  const REACT_PROD_INTEGRITY    = 'sha384-DGyLxAyjq0f9SPpVevD6IgztCFlnMF6oW/XQGmfe+IsZ8TqEiDrcHkMLKI6fiB/Z';
-  const REACTDOM_PROD_INTEGRITY = 'sha384-gTGxhz21lVGYNMcdJOyq01Edg0jhn/c22nsx0kyqP0TxaV5WVdsSH1fSDUf5YJj1';
-
-  // Replace full <script> tag for react (URL + integrity hash)
+  // 5. Replace CDN React/ReactDOM with local vendor files
   out = out.replace(
-    /<script\s[^>]*unpkg\.com\/react@18\.3\.1\/umd\/react\.development\.js[^>]*><\/script>/i,
-    `<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" integrity="${REACT_PROD_INTEGRITY}" crossorigin="anonymous"></script>`
+    /<script\s[^>]*unpkg\.com\/react@[^/]+\/umd\/react\.[^"]*"[^>]*><\/script>/i,
+    '<script src="vendor/react.min.js"></script>'
   );
-  // Replace full <script> tag for react-dom
   out = out.replace(
-    /<script\s[^>]*unpkg\.com\/react-dom@18\.3\.1\/umd\/react-dom\.development\.js[^>]*><\/script>/i,
-    `<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" integrity="${REACTDOM_PROD_INTEGRITY}" crossorigin="anonymous"></script>`
+    /<script\s[^>]*unpkg\.com\/react-dom@[^/]+\/umd\/react-dom\.[^"]*"[^>]*><\/script>/i,
+    '<script src="vendor/react-dom.min.js"></script>'
   );
 
   fs.writeFileSync(path.join(DIST, filename), out);
