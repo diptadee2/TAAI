@@ -1,20 +1,135 @@
 [
-  { "air": 15,  "name": "Alin Anto",                    "file": "alin-anto.jpeg",                      "product": "Test Series and Resources" },
-  { "air": 23,  "name": "Surya Mani Shankar Bharatula", "file": "surya-mani-shankar-bharatula.jpeg",   "product": "unknown" },
-  { "air": 46,  "name": "Laksheet Mathur",              "file": "laksheet-mathur.jpeg",                "product": "Full Course" },
-  { "air": 46,  "name": "Arun",                         "file": "arun.jpeg",                           "product": "AIMT and Free Resources" },
-  { "air": 51,  "name": "Mradul Bharadwaj",             "file": "mradul-bharadwaj.jpeg",               "product": "Test Series" },
-  { "air": 84,  "name": "Arnab Chatterjee",             "file": "arnab-chatterjee.png",                "product": "Test Series" },
-  { "air": 91,  "name": "Tapan Patel",                  "file": "tapan-patel.jpeg",                    "product": "Full Course" },
-  { "air": 102, "name": "Parinay Rana",                 "file": "parinay-rana.jpeg",                   "product": "Full Course" },
-  { "air": 111, "name": "Vamsi",                        "file": "vamsi.jpeg",                          "product": "Full Course" },
-  { "air": 117, "name": "Pal Jain",                     "file": "pal-jain.jpeg",                       "product": "AIMT" },
-  { "air": 125, "name": "Soumyadeep Ghosh",             "file": "soumyadeep-ghosh.png",                "product": "Full Course" },
-  { "air": 137, "name": "Kotla Abhiram",                "file": "kotla-abhiram.jpeg",                  "product": "Test Series" },
-  { "air": 149, "name": "Deen Dayal",                   "file": "deen-dayal.jpeg",                     "product": "Full Course" },
-  { "air": 168, "name": "Mohit Mayank Chakraborty",     "file": "mohit-mayank-chakraborty.jpg",        "product": "Free Resources" },
-  { "air": 178, "name": "Pratik Aman",                  "file": "pratik-aman.jpeg",                    "product": "Test Series" },
-  { "air": 221, "name": "Dhruv Tibarewal",              "file": "dhruv-tibarewal.jpeg",                "product": "Free Resources and AIMT" },
-  { "air": 235, "name": "Krishna Kishore Kamalay",      "file": "krishna-kishore-kamalay.jpeg",        "product": "Test Series" },
-  { "air": 296, "name": "Omkar Punjaji",                "file": "omkar-punjaji.jpeg",                  "product": "Full Course" }
+  {
+    "air": 15,
+    "name": "Alin Anto",
+    "file": "alin-anto.jpeg",
+    "products": ["Test Series", "Free Resources"],
+    "source": "filename: 'Test Series AND Resources'; testimonial: used test series + practice PDFs and revision notes"
+  },
+  {
+    "air": 23,
+    "name": "Surya Mani Shankar Bharatula",
+    "file": "surya-mani-shankar-bharatula.jpeg",
+    "products": ["AIMTs", "Free Resources"],
+    "source": "filename: no product info; testimonial: 'Free AIMTs and course notes helped me bridge the gap'"
+  },
+  {
+    "air": 46,
+    "name": "Laksheet Mathur",
+    "file": "laksheet-mathur.jpeg",
+    "products": ["Full Course"],
+    "source": "filename: 'Full Course'; testimonial: credits Manoj Sir for Maths and ML foundation, clearly a full course student"
+  },
+  {
+    "air": 46,
+    "name": "Arun",
+    "file": "arun.jpeg",
+    "products": ["AIMTs", "Free Resources"],
+    "source": "filename: 'AIMT FREE RESOURCES'; testimonial: 'YouTube Concept to Combat series' + 'TAAI AIMT'"
+  },
+  {
+    "air": 51,
+    "name": "Mradul Bharadwaj",
+    "file": "mradul-bharadwaj.jpeg",
+    "products": ["Test Series"],
+    "source": "filename: 'Test Series'; testimonial: 'I had enrolled in the TAAI test series'"
+  },
+  {
+    "air": 84,
+    "name": "Arnab Chatterjee",
+    "file": "arnab-chatterjee.jpg",
+    "products": ["Test Series"],
+    "source": "filename: 'Test Series'; testimonial: 'TAAI's test series was phenomenal and very helpful'"
+  },
+  {
+    "air": 91,
+    "name": "Tapan Patel",
+    "file": "tapan-patel.jpeg",
+    "products": ["Full Course"],
+    "source": "filename: 'Full Course'; testimonial: lectures, quizzes, courses and guidance from TAAI"
+  },
+  {
+    "air": 102,
+    "name": "Parinay Rana",
+    "file": "parinay-rana.jpeg",
+    "products": ["Full Course"],
+    "source": "filename: 'Full Course'; testimonial: 'I was enrolled as a full-course student'"
+  },
+  {
+    "air": 111,
+    "name": "Vamsi",
+    "file": "vamsi.jpeg",
+    "products": ["Full Course", "Test Series"],
+    "source": "filename: 'Full Course'; testimonial: 'overall structure of the course' + 'test series was very well designed'"
+  },
+  {
+    "air": 117,
+    "name": "Pal Jain",
+    "file": "pal-jain.jpeg",
+    "products": ["AIMTs"],
+    "source": "filename: 'AIMT'; testimonial: 'Your All India Mock Tests (AIMT) were a huge help'"
+  },
+  {
+    "air": 125,
+    "name": "Soumyadeep Ghosh",
+    "file": "soumyadeep-ghosh.jpg",
+    "products": ["Full Course", "Test Series", "AIMTs"],
+    "source": "filename: 'Full Course'; testimonial: 'test series — brainstorming questions' + 'AIMT series, which was absolutely free'"
+  },
+  {
+    "air": 137,
+    "name": "Kotla Abhiram",
+    "file": "kotla-abhiram.jpeg",
+    "products": ["Test Series"],
+    "source": "filename: 'Test Series'; testimonial: 'What makes the TAAI Test Series unique'"
+  },
+  {
+    "air": 149,
+    "name": "Deen Dayal",
+    "file": "deen-dayal.jpeg",
+    "products": ["Full Course", "Test Series", "Free Resources"],
+    "source": "filename: 'Full Course'; testimonial: attempted test series first, then 'started learning from Manoj Sir through TAAI and his YouTube lectures'"
+  },
+  {
+    "air": 155,
+    "name": "Ayush Dwivedi",
+    "file": null,
+    "products": ["Full Course", "Test Series"],
+    "source": "filename: '155 AIR AYUSH DWIVEDI FULL COURSE.webp'; testimonial: 'preparation with TAAI under the guidance of Manoj Sir' + 'test series at TAAI was another big factor'"
+  },
+  {
+    "air": 168,
+    "name": "Mohit Mayank Chakraborty",
+    "file": "mohit-mayank-chakraborty.jpg",
+    "products": ["Free Resources"],
+    "source": "filename: 'Free Resources'; testimonial: 'Concept to Combat series for Machine Learning on YouTube'"
+  },
+  {
+    "air": 178,
+    "name": "Pratik Aman",
+    "file": "pratik-aman.jpeg",
+    "products": ["Test Series"],
+    "source": "filename: 'Test Series'; testimonial: 'The TAAI test series, especially for Linear Algebra and Statistics'"
+  },
+  {
+    "air": 221,
+    "name": "Dhruv Tibarewal",
+    "file": "dhruv-tibarewal.jpeg",
+    "products": ["AIMTs", "Free Resources"],
+    "source": "filename: 'Free Resources AND AIMT'; testimonial: 'found out about TAAI through their All India Test Series' (AIMT) + referred to free topic content"
+  },
+  {
+    "air": 235,
+    "name": "Krishna Kishore Kamalay",
+    "file": "krishna-kishore-kamalay.jpeg",
+    "products": ["Test Series"],
+    "source": "filename: 'Test Series'; testimonial: 'The test series were nearly GATE level'"
+  },
+  {
+    "air": 296,
+    "name": "Omkar Punjaji",
+    "file": "omkar-punjaji.jpeg",
+    "products": ["Full Course", "Test Series"],
+    "source": "filename: 'Full Course'; testimonial: 'course content was well-structured' + 'test series was one of the best parts'"
+  }
 ]
