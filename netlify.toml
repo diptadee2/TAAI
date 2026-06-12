@@ -7,3 +7,28 @@
   to = "https://taai.live/index.html"
   status = 301
   force = true
+
+[[redirects]]
+  from = "/courses"
+  to = "/courses.html"
+  status = 200
+
+[[redirects]]
+  from = "/test-series"
+  to = "/test-series.html"
+  status = 200
+
+[[redirects]]
+  from = "/testimonials"
+  to = "/testimonials.html"
+  status = 200
+
+[[redirects]]
+  from = "/resources"
+  to = "/resources.html"
+  status = 200
+
+[[redirects]]
+  from = "/contact"
+  to = "/contact.html"
+  status = 200
