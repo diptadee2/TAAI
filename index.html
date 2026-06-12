@@ -548,8 +548,10 @@ body {
 .toppers-scroll { display: flex; gap: 0; padding: 4px 0 4px; width: max-content; will-change: transform; }
 .toppers-scroll .topper-card { margin-right: 16px; }
 .toppers-scroll-reverse { animation: toppers-marquee-rev 34s linear infinite; }
-.topper-card { flex: 0 0 190px; border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); transition: transform .36s cubic-bezier(.34,1.1,.64,1), box-shadow .32s ease, border-color .28s; cursor: pointer; }
+.topper-card { flex: 0 0 190px; border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); transition: transform .36s cubic-bezier(.34,1.1,.64,1), box-shadow .32s ease, border-color .28s; cursor: pointer; position: relative; }
 .topper-card:hover { transform: translateY(-10px) rotate(2deg); box-shadow: 0 28px 60px rgba(139,92,246,0.36), 0 8px 20px rgba(0,0,0,0.3); border-color: rgba(139,92,246,0.35); }
+.topper-interview-badge { position: absolute; top: 10px; right: 10px; z-index: 2; display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.52); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: rgba(255,255,255,0.75); font-size: 8.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; padding: 3px 8px 3px 6px; border-radius: 999px; opacity: 0; transform: translateY(-4px); transition: opacity .22s ease, transform .28s cubic-bezier(.34,1.2,.64,1), background .2s; pointer-events: none; }
+.topper-card:hover .topper-interview-badge { opacity: 1; transform: translateY(0); background: rgba(220,38,38,0.82); color: #fff; }
 .topper-img-wrap { width: 100%; aspect-ratio: 3/4; overflow: hidden; }
 .topper-img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; transition: transform .55s cubic-bezier(.25,.46,.45,.94); }
 .topper-card:hover .topper-img { transform: scale(1.05); }
@@ -1728,6 +1730,7 @@ const TopperMarquee = React.memo(function TopperMarquee({ onClickRef }) {
                 : <div className="topper-placeholder" style={{ background: t.grad }}>{t.initials}</div>
               }
             </div>
+            {t.yt && <div className="topper-interview-badge"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Interview</div>}
             <div className="topper-info">
               <div className="topper-air">AIR {t.air}</div>
               <div className="topper-name">{t.name}</div>
