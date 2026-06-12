@@ -1,0 +1,20 @@
+[
+  { "air": 15,  "name": "Alin Anto",                    "file": "alin-anto.jpeg",                      "product": "Test Series and Resources" },
+  { "air": 23,  "name": "Surya Mani Shankar Bharatula", "file": "surya-mani-shankar-bharatula.jpeg",   "product": "unknown" },
+  { "air": 46,  "name": "Laksheet Mathur",              "file": "laksheet-mathur.jpeg",                "product": "Full Course" },
+  { "air": 46,  "name": "Arun",                         "file": "arun.jpeg",                           "product": "AIMT and Free Resources" },
+  { "air": 51,  "name": "Mradul Bharadwaj",             "file": "mradul-bharadwaj.jpeg",               "product": "Test Series" },
+  { "air": 84,  "name": "Arnab Chatterjee",             "file": "arnab-chatterjee.png",                "product": "Test Series" },
+  { "air": 91,  "name": "Tapan Patel",                  "file": "tapan-patel.jpeg",                    "product": "Full Course" },
+  { "air": 102, "name": "Parinay Rana",                 "file": "parinay-rana.jpeg",                   "product": "Full Course" },
+  { "air": 111, "name": "Vamsi",                        "file": "vamsi.jpeg",                          "product": "Full Course" },
+  { "air": 117, "name": "Pal Jain",                     "file": "pal-jain.jpeg",                       "product": "AIMT" },
+  { "air": 125, "name": "Soumyadeep Ghosh",             "file": "soumyadeep-ghosh.png",                "product": "Full Course" },
+  { "air": 137, "name": "Kotla Abhiram",                "file": "kotla-abhiram.jpeg",                  "product": "Test Series" },
+  { "air": 149, "name": "Deen Dayal",                   "file": "deen-dayal.jpeg",                     "product": "Full Course" },
+  { "air": 168, "name": "Mohit Mayank Chakraborty",     "file": "mohit-mayank-chakraborty.jpg",        "product": "Free Resources" },
+  { "air": 178, "name": "Pratik Aman",                  "file": "pratik-aman.jpeg",                    "product": "Test Series" },
+  { "air": 221, "name": "Dhruv Tibarewal",              "file": "dhruv-tibarewal.jpeg",                "product": "Free Resources and AIMT" },
+  { "air": 235, "name": "Krishna Kishore Kamalay",      "file": "krishna-kishore-kamalay.jpeg",        "product": "Test Series" },
+  { "air": 296, "name": "Omkar Punjaji",                "file": "omkar-punjaji.jpeg",                  "product": "Full Course" }
+]
