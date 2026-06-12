@@ -166,12 +166,17 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 
 /* ── Hero ────────────────────────────────────────────── */
 .hero {
-  padding: 80px 0 72px;
+  padding: 80px 0 40px;
   position: relative; overflow: hidden;
   background-color: var(--bg);
   background-image: radial-gradient(circle, rgba(139,92,246,0.14) 1.5px, transparent 1.5px);
   background-size: 32px 32px;
   text-align: center;
+}
+.hero::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 120px;
+  background: linear-gradient(to bottom, transparent, var(--bg));
+  pointer-events: none;
 }
 .hero-orb-1 { position: absolute; width: 600px; height: 600px; border-radius: 50%; background: radial-gradient(circle, var(--pink-soft) 0%, transparent 65%); top: -200px; right: -100px; pointer-events: none; animation: orb-drift 13s ease-in-out infinite; }
 .hero-orb-2 { position: absolute; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, var(--blue-soft) 0%, transparent 65%); bottom: -180px; left: -120px; pointer-events: none; animation: orb-drift 17s ease-in-out infinite reverse; }
@@ -198,6 +203,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 
 /* ── Section base ────────────────────────────────────── */
 .section { padding: var(--section-pad) 0; scroll-margin-top: 100px; }
+.hero + .section { padding-top: 48px; }
 .section + .section { border-top: 1px solid transparent; border-image: linear-gradient(90deg, transparent, rgba(139,92,246,0.2) 35%, rgba(236,72,153,0.2) 65%, transparent) 1; }
 .section-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--purple); margin-bottom: 18px; }
 .section-eyebrow::before { content: ''; display: inline-block; width: 18px; height: 2px; background: linear-gradient(90deg, var(--pink), var(--purple)); border-radius: 2px; }
