@@ -561,7 +561,6 @@ body {
 .topper-pill { font-size: 8.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; white-space: nowrap; }
 .topper-pill--fc   { background: rgba(139,92,246,0.22); color: rgba(196,176,255,0.95); }
 .topper-pill--ts   { background: rgba(77,139,255,0.22); color: rgba(147,187,255,0.95); }
-.topper-pill--aimt { background: rgba(255,127,183,0.22); color: rgba(255,179,210,0.95); }
 .topper-pill--free { background: rgba(6,182,212,0.22);  color: rgba(103,232,249,0.95); }
 .topper-name { font-size: 12.5px; font-weight: 600; color: rgba(255,255,255,0.9); margin-top: 4px; }
 .topper-college { font-size: 10.5px; color: rgba(255,255,255,0.35); margin-top: 2px; letter-spacing: .01em; line-height: 1.4; }
@@ -1648,9 +1647,9 @@ const IIIT_TAG = { label: 'IIIT', bg: 'rgba(77,139,255,0.22)',  color: '#93bbff'
 
 const TOPPERS = [
   { img: 'testimonials/photos/2026/alin-anto.jpeg',                        air: 15,  name: 'Alin Anto',       college: null,   products: ['Test Series','Free Resources'],           quote: null, yt: null },
-  { img: 'testimonials/photos/2026/surya-mani-shankar-bharatula.jpeg',     air: 23,  name: 'Suryamani',       college: 'IISc · M.Tech AI', products: ['AIMTs','Free Resources'],     quote: null, yt: 'https://www.youtube.com/watch?v=8wks9zdLvDc' },
+  { img: 'testimonials/photos/2026/surya-mani-shankar-bharatula.jpeg',     air: 23,  name: 'Suryamani',       college: 'IISc · M.Tech AI', products: ['Test Series','Free Resources'],     quote: null, yt: 'https://www.youtube.com/watch?v=8wks9zdLvDc' },
   { img: 'testimonials/photos/2026/laksheet-mathur.jpeg',                  air: 46,  name: 'Laksheet Mathur', college: 'IIT Madras · M.Tech Data Science & AI', products: ['Full Course'], quote: null, yt: null },
-  { img: 'testimonials/photos/2026/arun.jpeg',        imgPos: 'center 25%', air: 46,  name: 'Arun',            college: null,   products: ['AIMTs','Free Resources'],           quote: 'I followed your YouTube Concept to Combat series for ML revision, really easy to understand. I also attempted the TAAI AIMT; the question level was well suited for GATE DA. I was able to clear some conceptual doubts with ease. Thank you for your hard work.', yt: null },
+  { img: 'testimonials/photos/2026/arun.jpeg',        imgPos: 'center 25%', air: 46,  name: 'Arun',            college: null,   products: ['Test Series','Free Resources'],           quote: 'I followed your YouTube Concept to Combat series for ML revision, really easy to understand. I also attempted the TAAI AIMT; the question level was well suited for GATE DA. I was able to clear some conceptual doubts with ease. Thank you for your hard work.', yt: null },
   { img: 'testimonials/photos/2026/mradul-bharadwaj.jpeg',                 air: 51,  name: 'Mradul Bharadwaj', college: null,  products: ['Test Series'],                      quote: 'I had enrolled in the TAAI test series, and it significantly helped me strengthen my conceptual clarity. The questions were designed to target intuitive understanding and helped me handle unexpected questions in the final GATE DA examination.', yt: null },
   { img: 'testimonials/photos/2026/arnab-chatterjee.jpg', imgPos: 'center 15%', air: 84, name: 'Arnab Chatterjee', college: null,  products: ['Test Series'],                      quote: "TAAI's test series was phenomenal and very helpful for me. It helped me in building exam temperament and problem solving skills. The difficulty level was extremely good.", yt: null },
   { img: 'testimonials/photos/2026/tapan-patel.jpeg',                      air: 91,  name: 'Tapan Patel',     college: 'IIT Delhi · MINDS', products: ['Full Course'],         quote: 'The way Manoj Sir taught Maths and ML made even tough topics feel much easier to understand. I never really felt scared of Maths or ML while preparing for the exam. The courses and guidance from TAAI played a big role in my journey.', yt: null },
@@ -1734,7 +1733,7 @@ const TopperMarquee = React.memo(function TopperMarquee({ onClickRef }) {
               <div className="topper-name">{t.name}</div>
               {t.college && <div className="topper-college">{t.college}</div>}
               {t.products && <div className="topper-products">{t.products.map((p,i) => {
-                const cls = p === 'Full Course' ? 'fc' : p === 'Test Series' ? 'ts' : p === 'AIMTs' ? 'aimt' : 'free';
+                const cls = p === 'Full Course' ? 'fc' : p === 'Test Series' ? 'ts' : p === 'Test Series' ? 'aimt' : 'free';
                 return <span key={i} className={`topper-pill topper-pill--${cls}`}>{p}</span>;
               })}</div>}
             </div>
