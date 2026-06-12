@@ -1667,14 +1667,12 @@ function Stats() {
   React.useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const SPEED = 68; // px/s
-    let pos = 0;
-    let last = null;
-    let raf;
+    const SPEED = 68;
+    const half = el.scrollWidth / 2;
+    let pos = 0, last = null, raf;
     const tick = (now) => {
       if (last !== null && !pausedRef.current) {
-        pos += SPEED * (now - last) / 1000;
-        const half = el.scrollWidth / 2;
+        pos += SPEED * Math.min(now - last, 50) / 1000;
         if (pos >= half) pos -= half;
         el.style.transform = `translateX(${-pos}px)`;
       }
@@ -1684,12 +1682,16 @@ function Stats() {
     raf = requestAnimationFrame(tick);
     const pause  = () => { pausedRef.current = true; };
     const resume = () => { pausedRef.current = false; };
+    // Reset last on visibility restore so dt doesn't spike
+    const onVisible = () => { if (!document.hidden) last = null; };
     el.addEventListener('mouseenter', pause);
     el.addEventListener('mouseleave', resume);
+    document.addEventListener('visibilitychange', onVisible);
     return () => {
       cancelAnimationFrame(raf);
       el.removeEventListener('mouseenter', pause);
       el.removeEventListener('mouseleave', resume);
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, []);
 
