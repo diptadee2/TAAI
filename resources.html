@@ -109,11 +109,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .filter-arrow svg { display: block; }
 .filter-bar-wrap { flex: 1; min-width: 0; position: relative; overflow-x: auto; -webkit-overflow-scrolling: touch; -ms-overflow-style: none; scrollbar-width: none; }
 .filter-bar-wrap::-webkit-scrollbar { display: none; }
-.filter-bar-wrap::before, .filter-bar-wrap::after { content: ''; position: absolute; top: 0; bottom: 0; width: 48px; pointer-events: none; z-index: 1; transition: opacity .22s; opacity: 0; }
-.filter-bar-wrap::before { left: 0; background: linear-gradient(to right, var(--bg), transparent); }
-.filter-bar-wrap::after  { right: 0; background: linear-gradient(to left, var(--bg), transparent); }
-.filter-bar-wrap.fade-left::before  { opacity: 1; }
-.filter-bar-wrap.fade-right::after  { opacity: 1; }
 .filter-bar { display: flex; gap: 10px; flex-wrap: nowrap; width: max-content; padding: 4px 2px 10px; }
 .filter-btn {
   display: inline-flex; align-items: center; gap: 8px;
@@ -722,7 +717,7 @@ function FilterBar({ subjects, active, setActive }) {
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
       )}
-      <div className={`filter-bar-wrap${fades.left ? ' fade-left' : ''}${fades.right ? ' fade-right' : ''}`} ref={wrapRef}>
+      <div className="filter-bar-wrap" ref={wrapRef}>
         <div className="filter-bar">
           {subjects.map((s, i) => (
             <button key={s.id}
