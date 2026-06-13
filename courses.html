@@ -387,6 +387,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .combo-card.featured .combo-check svg path { stroke: rgba(255,255,255,0.9); }
 @keyframes price-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 .price-loaded { animation: price-in .38s cubic-bezier(.34,1.1,.64,1) both; }
+@keyframes data-fade-in { from { opacity: 0; } to { opacity: 1; } }
+.data-fade-in { animation: data-fade-in .38s ease both; }
 .combo-price-row { display: flex; align-items: baseline; gap: 10px; margin-top: auto; padding-top: 20px; margin-bottom: 22px; position: relative; z-index: 1; }
 .combo-price { font-family: var(--font-display); font-size: 38px; font-weight: 600; letter-spacing: -0.04em; color: #fff; }
 .combo-card.featured .combo-price { font-size: 44px; background: linear-gradient(135deg, #ede0ff 0%, #c4b0ff 55%, #a78bfa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
@@ -1271,7 +1273,6 @@ const COMBOS = [
     badge: 'best', badgeLabel: 'Best value',
     accent: 'linear-gradient(90deg, var(--pink), var(--purple), var(--blue))',
     title: 'GATE 2027 Full Course',
-    validity: 'VALID UNTIL FEB 15, 2027',
     includes: [
       'Linear Algebra, Probability, Statistics, Calculus',
       'Machine Learning, AI',
@@ -1291,7 +1292,6 @@ const COMBOS = [
     theme: 'blue',
     accent: 'linear-gradient(90deg, var(--purple), var(--blue))',
     title: 'Mathematics & ML Bundle',
-    validity: 'VALID UNTIL FEB 15, 2027',
     saving: 'Save ~₹3,500 vs buying all 5 courses individually',
     includes: [
       'Linear Algebra',
@@ -1311,7 +1311,6 @@ const COMBOS = [
     theme: 'pink',
     accent: 'linear-gradient(90deg, var(--pink), var(--purple))',
     title: 'Mathematics Bundle',
-    validity: 'VALID UNTIL FEB 15, 2027',
     saving: 'Save ~₹1,500 vs buying all 4 maths courses individually',
     includes: [
       'Linear Algebra',
@@ -1327,23 +1326,23 @@ const COMBOS = [
 
 // ── INDIVIDUAL COURSES ───────────────────────────────────────────
 const INDIVIDUAL = [
-  { id: 'statistics', num: '01', title: 'Statistics', validity: 'FEB 20, 2027',
+  { id: 'statistics', num: '01', title: 'Statistics',
     icon: <Icon.Book />, grad: 'linear-gradient(145deg,#4D8BFF,#7FA8FF)', shadow: 'rgba(77,139,255,0.32)',
     href: 'https://learn.taai.live/learn/Statistics',
     topics: ['Hypothesis testing', 'Estimation theory', 'Regression basics'] },
-  { id: 'calculus', num: '02', title: 'Calculus', validity: 'FEB 20, 2027',
+  { id: 'calculus', num: '02', title: 'Calculus',
     icon: <Icon.Note />, grad: 'linear-gradient(145deg,#FF7FB7,#FF9ECB)', shadow: 'rgba(255,127,183,0.28)',
     href: 'https://learn.taai.live/learn/Calculus-and-Optimization',
     topics: ['Limits & continuity', 'Differentiation', 'Optimization & integration'] },
-  { id: 'linear-algebra', num: '03', title: 'Linear Algebra', validity: 'FEB 20, 2027',
+  { id: 'linear-algebra', num: '03', title: 'Linear Algebra',
     icon: <Icon.Chart />, grad: 'linear-gradient(145deg,#6B4AFF,#4D8BFF)', shadow: 'rgba(107,74,255,0.32)',
     href: 'https://learn.taai.live/learn/Linear-Algebra--Mathematics-',
     topics: ['Matrices & determinants', 'Eigenvalues & vectors', 'Linear transformations'] },
-  { id: 'probability', num: '04', title: 'Probability', validity: 'FEB 20, 2027',
+  { id: 'probability', num: '04', title: 'Probability',
     icon: <Icon.Target />, grad: 'linear-gradient(145deg,#FF7FB7,#8B5CF6)', shadow: 'rgba(255,127,183,0.32)',
     href: 'https://learn.taai.live/learn/Probability',
     topics: ['Conditional probability', 'Random variables', 'Distributions'] },
-  { id: 'machine-learning', num: '05', title: 'Machine Learning', validity: 'FEB 20, 2027',
+  { id: 'machine-learning', num: '05', title: 'Machine Learning',
     icon: <Icon.Code />, grad: 'linear-gradient(145deg,#8B5CF6,#C4B0FF)', shadow: 'rgba(139,92,246,0.34)',
     href: 'https://learn.taai.live/learn/taAI-Machine-Learning-Full-Course',
     topics: ['Supervised & unsupervised', 'Model evaluation', 'Neural networks basics'] },
@@ -1389,11 +1388,12 @@ function BundleComparison({ pricingMap }) {
     { label: '1,000+ quiz questions',                 full: true,  ml: true,  maths: true,  group: 'Study Materials' },
     { label: 'Discord community support',             full: true,  ml: true,  maths: true,  group: 'Support'         },
     { label: 'Course valid until',
-      fullText:  fmtDate((pricingMap['full-course']    || {}).validity) || 'Feb 15, 2027',
-      mlText:    fmtDate((pricingMap['maths-ml-bundle']|| {}).validity) || 'Feb 15, 2027',
-      mathsText: fmtDate((pricingMap['maths-bundle']   || {}).validity) || 'Feb 15, 2027',
+      fullText:  fmtDate((pricingMap['full-course']    || {}).validity) || '—',
+      mlText:    fmtDate((pricingMap['maths-ml-bundle']|| {}).validity) || '—',
+      mathsText: fmtDate((pricingMap['maths-bundle']   || {}).validity) || '—',
       group: 'Support' },
   ];
+  const loaded = Object.keys(pricingMap).length > 0;
   const Yes = () => (
     <span className="compare-yes">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -1434,23 +1434,23 @@ function BundleComparison({ pricingMap }) {
             {features.map((f, i) => (
               <div key={i} className={`compare-row${i % 2 === 0 ? ' zebra' : ''}`}>
                 <div className="compare-cell feat-name">{f.label}</div>
-                <div className="compare-cell featured">{f.fullText ? <span className="compare-val-text">{f.fullText}{f.fullNote && <span className="compare-val-note">{f.fullNote}</span>}</span> : (f.full ? <Yes /> : <No />)}</div>
-                <div className="compare-cell">{f.mlText ? <span className="compare-val-text">{f.mlText}</span> : (f.ml ? <Yes /> : <No />)}</div>
-                <div className="compare-cell">{f.mathsText ? <span className="compare-val-text">{f.mathsText}</span> : (f.maths ? <Yes /> : <No />)}</div>
+                <div className="compare-cell featured">{f.fullText ? <span className={`compare-val-text${loaded ? ' data-fade-in' : ''}`}>{f.fullText}{f.fullNote && <span className="compare-val-note">{f.fullNote}</span>}</span> : (f.full ? <Yes /> : <No />)}</div>
+                <div className="compare-cell">{f.mlText ? <span className={`compare-val-text${loaded ? ' data-fade-in' : ''}`}>{f.mlText}</span> : (f.ml ? <Yes /> : <No />)}</div>
+                <div className="compare-cell">{f.mathsText ? <span className={`compare-val-text${loaded ? ' data-fade-in' : ''}`}>{f.mathsText}</span> : (f.maths ? <Yes /> : <No />)}</div>
               </div>
             ))}
             <div className="compare-footer">
               <div className="compare-footer-cell" />
               <div className="compare-footer-cell featured">
-                <span className="compare-price best">{fmtPrice((pricingMap['full-course']||{}).price) || '—'}</span>
+                <span className={`compare-price best${loaded ? ' data-fade-in' : ''}`}>{fmtPrice((pricingMap['full-course']||{}).price) || '—'}</span>
                 <a href="https://learn.taai.live/learn/batch/GATE-2027/content" target="_blank" rel="noopener noreferrer" className="compare-enroll-btn featured">Enrol now</a>
               </div>
               <div className="compare-footer-cell">
-                <span className="compare-price">{fmtPrice((pricingMap['maths-ml-bundle']||{}).price) || '—'}</span>
+                <span className={`compare-price${loaded ? ' data-fade-in' : ''}`}>{fmtPrice((pricingMap['maths-ml-bundle']||{}).price) || '—'}</span>
                 <a href="https://learn.taai.live/learn/Maths--ML---AI-Bundle---GATE-2026" target="_blank" rel="noopener noreferrer" className="compare-enroll-btn">Enrol now</a>
               </div>
               <div className="compare-footer-cell">
-                <span className="compare-price">{fmtPrice((pricingMap['maths-bundle']||{}).price) || '—'}</span>
+                <span className={`compare-price${loaded ? ' data-fade-in' : ''}`}>{fmtPrice((pricingMap['maths-bundle']||{}).price) || '—'}</span>
                 <a href="https://learn.taai.live/learn/Mathematics-Course-by-manoj-sir-gate-2026-gateda" target="_blank" rel="noopener noreferrer" className="compare-enroll-btn">Enrol now</a>
               </div>
             </div>
@@ -1475,7 +1475,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   const discountDeadline = pd.discountDeadline ? fmtDeadline(pd.discountDeadline) : null;
   const discountReason   = pd.discountReason  || null;
   const saving           = c.saving;
-  const validity         = pd.validity        ? fmtValidity(pd.validity)       : c.validity;
+  const validity         = pd.validity ? fmtValidity(pd.validity) : '—';
   const featured = c.badge === 'best';
   const cls = 'combo-card card' + (featured ? ' featured' : '') + (c.theme ? ` combo-${c.theme}` : '');
   const spotlightProps = {
@@ -1488,7 +1488,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
       <div className="combo-accent" style={{ background: c.accent }} />
       <div className={'combo-badge ' + c.badge}><Icon.Sparkle />{c.badgeLabel}</div>
       <div className="combo-title">{c.title}</div>
-      <div className="combo-validity" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+      <div className={`combo-validity${live ? ' data-fade-in' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         {validity}
         {c.validityNote && <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase', background: 'linear-gradient(135deg,var(--pink),var(--purple))', color: '#fff', padding: '2px 8px', borderRadius: 999 }}>{c.validityNote}</span>}
       </div>
@@ -1526,13 +1526,13 @@ const CourseCard = React.memo(function CourseCard({ c, pricing }) {
   const p        = pricing || {};
   const price    = p.price    ? fmtPrice(p.price)    : '—';
   const priceOld = p.priceOld ? fmtPrice(p.priceOld) : null;
-  const validity = p.validity ? fmtValidity(p.validity) : 'VALID UNTIL ' + c.validity;
+  const validity = p.validity ? fmtValidity(p.validity) : '—';
   return (
     <div className="course-card card" style={{ '--course-grad': c.grad, '--course-shadow': c.shadow }}>
       <div className="course-accent" style={{ background: c.grad }} />
       <div className="course-icon" style={{ background: c.grad }}>{c.icon}</div>
       <div className="course-title">{c.title}</div>
-      <div className="course-validity mono">{validity}</div>
+      <div className={`course-validity mono${p.validity ? ' data-fade-in' : ''}`}>{validity}</div>
       <div className="course-topics">
         {c.topics.map((t, i) => (
           <div key={i} className="course-topic" style={{ '--td': `${i * 55}ms` }}>{t}</div>

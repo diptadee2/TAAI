@@ -802,6 +802,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .ts-plan-price-old { font-size: 14px; color: rgba(255,255,255,0.28); text-decoration: line-through; }
 .ts-plan-discount { font-size: 11px; font-weight: 700; color: #fff; background: linear-gradient(135deg, #ff7fb7, #8b5cf6); padding: 3px 9px; border-radius: 999px; letter-spacing: .04em; }
 .ts-plan-meta-dot { font-size: 10px; color: rgba(255,255,255,0.18); user-select: none; }
+@keyframes data-fade-in { from { opacity: 0; } to { opacity: 1; } }
+.data-fade-in { animation: data-fade-in .38s ease both; }
 .ts-plan-btn-disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
 .ts-plan-validity { font-size: 12px; color: rgba(255,255,255,0.26); position: relative; z-index: 2; }
 .ts-plan-divider { height: 1px; background: rgba(255,255,255,0.08); margin-bottom: 20px; position: relative; z-index: 2; }
@@ -2063,19 +2065,19 @@ function TSPricing({ pricingMap }) {
   const [selected, setSelected] = React.useState(null);
   const pick = (id) => setSelected(s => s === id ? null : id);
 
-  const planPricing = (id, fallback) => {
+  const planPricing = (id) => {
     const pd = pricingMap[id] || {};
     const priceOld    = pd.priceOld ? fmtPrice(pd.priceOld) : null;
     const discountRaw = pd.discount || null;
     const discount    = discountRaw ? (isNaN(discountRaw) ? discountRaw : discountRaw + '% off') : null;
-    return { price: fmtPrice(pd.price) || fallback, priceOld, discount };
+    return { price: fmtPrice(pd.price) || '—', priceOld, discount, live: !!pd.price };
   };
 
-  const PriceBlock = ({ price, priceOld, discount }) => (
+  const PriceBlock = ({ price, priceOld, discount, live }) => (
     <>
-      <div className="ts-plan-price" style={(priceOld || discount) ? { marginBottom: 0 } : undefined}>{price}</div>
+      <div className={`ts-plan-price${live ? ' data-fade-in' : ''}`} style={(priceOld || discount) ? { marginBottom: 0 } : undefined}>{price}</div>
       {(priceOld || discount) && (
-        <div className="ts-plan-price-meta">
+        <div className="ts-plan-price-meta data-fade-in">
           {priceOld && <span className="ts-plan-price-old">{priceOld}</span>}
           {discount && <span className="ts-plan-discount">{discount}</span>}
         </div>
@@ -2113,7 +2115,7 @@ function TSPricing({ pricingMap }) {
             <div className="ts-plan-badge ts-plan-badge-pink">Test Series</div>
             <div className="ts-plan-name">GATE DA 2027 Test Series</div>
             <div className="ts-plan-tagline">Full-length and subject-wise tests with performance analytics.</div>
-            <PriceBlock {...planPricing('test-series', '₹1,500')} />
+            <PriceBlock {...planPricing('test-series')} />
             <div className="ts-plan-divider" />
             <div className="ts-plan-features">
               {BASIC_FEATS.map((f, i) => (
@@ -2137,7 +2139,7 @@ function TSPricing({ pricingMap }) {
             <div className="ts-plan-badge ts-plan-badge-blue">Weekly Quizzes</div>
             <div className="ts-plan-name">Weekly Quiz Pack</div>
             <div className="ts-plan-tagline">55+ concept-heavy quizzes to stay sharp throughout the year.</div>
-            <PriceBlock {...planPricing('weekly-quizzes', '₹800')} />
+            <PriceBlock {...planPricing('weekly-quizzes')} />
             <div className="ts-plan-divider" />
             <div className="ts-plan-features">
               {ADDON_FEATS.map((f, i) => (
@@ -2174,7 +2176,7 @@ function TSPricing({ pricingMap }) {
               </div>
               <div className="ts-plan-name">Test Series + Weekly Quizzes</div>
               <div className="ts-plan-tagline">Everything in one: full test series and weekly quizzes bundled together.</div>
-              <PriceBlock {...planPricing('test-series-quizzes', '₹2,000')} />
+              <PriceBlock {...planPricing('test-series-quizzes')} />
               <div className="ts-plan-divider" />
               <div className="ts-plan-features">
                 {BASIC_FEATS.map((f, i) => (
