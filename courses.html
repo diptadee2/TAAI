@@ -1135,6 +1135,7 @@ const parseCSV = text => {
 
 const fmtPrice    = n => n ? '₹' + Number(n).toLocaleString('en-IN') : '';
 const fmtValidity = d => { if (!d) return ''; const dt = new Date(d + 'T00:00:00'); return 'VALID UNTIL ' + dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase(); };
+const fmtDate     = d => { if (!d) return ''; const dt = new Date(d + 'T00:00:00'); return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); };
 const fmtDeadline = d => { if (!d) return ''; const dt = new Date(d + 'T00:00:00'); return 'Offer ends ' + dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };
 
 // Pre-fetch pricing before React mounts so cards render once with correct data
@@ -1387,7 +1388,11 @@ function BundleComparison({ pricingMap }) {
     { label: 'Calculus',                              full: true,  ml: true,  maths: true,  group: 'Subjects'        },
     { label: '1,000+ quiz questions',                 full: true,  ml: true,  maths: true,  group: 'Study Materials' },
     { label: 'Discord community support',             full: true,  ml: true,  maths: true,  group: 'Support'         },
-    { label: 'Course valid until', fullText: 'Feb 15, 2027', mlText: 'Feb 15, 2027', mathsText: 'Feb 15, 2027', group: 'Support' },
+    { label: 'Course valid until',
+      fullText:  fmtDate((pricingMap['full-course']    || {}).validity) || 'Feb 15, 2027',
+      mlText:    fmtDate((pricingMap['maths-ml-bundle']|| {}).validity) || 'Feb 15, 2027',
+      mathsText: fmtDate((pricingMap['maths-bundle']   || {}).validity) || 'Feb 15, 2027',
+      group: 'Support' },
   ];
   const Yes = () => (
     <span className="compare-yes">
