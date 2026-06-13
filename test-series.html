@@ -2063,6 +2063,26 @@ function TSPricing({ pricingMap }) {
   const [selected, setSelected] = React.useState(null);
   const pick = (id) => setSelected(s => s === id ? null : id);
 
+  const planPricing = (id, fallback) => {
+    const pd = pricingMap[id] || {};
+    const priceOld    = pd.priceOld ? fmtPrice(pd.priceOld) : null;
+    const discountRaw = pd.discount || null;
+    const discount    = discountRaw ? (isNaN(discountRaw) ? discountRaw : discountRaw + '% off') : null;
+    return { price: fmtPrice(pd.price) || fallback, priceOld, discount };
+  };
+
+  const PriceBlock = ({ price, priceOld, discount }) => (
+    <>
+      <div className="ts-plan-price" style={(priceOld || discount) ? { marginBottom: 0 } : undefined}>{price}</div>
+      {(priceOld || discount) && (
+        <div className="ts-plan-price-meta">
+          {priceOld && <span className="ts-plan-price-old">{priceOld}</span>}
+          {discount && <span className="ts-plan-discount">{discount}</span>}
+        </div>
+      )}
+    </>
+  );
+
   const Tick = ({ featured }) => (
     <div className={`ts-plan-check ${featured ? 'ts-plan-check-featured' : 'ts-plan-check-basic'}`}>
       <svg width="10" height="8" viewBox="0 0 10 8" fill="none" overflow="visible">
@@ -2093,7 +2113,7 @@ function TSPricing({ pricingMap }) {
             <div className="ts-plan-badge ts-plan-badge-pink">Test Series</div>
             <div className="ts-plan-name">GATE DA 2027 Test Series</div>
             <div className="ts-plan-tagline">Full-length and subject-wise tests with performance analytics.</div>
-            <div className="ts-plan-price">{fmtPrice((pricingMap['test-series']||{}).price) || '₹1,500'}</div>
+            <PriceBlock {...planPricing('test-series', '₹1,500')} />
             <div className="ts-plan-divider" />
             <div className="ts-plan-features">
               {BASIC_FEATS.map((f, i) => (
@@ -2117,7 +2137,7 @@ function TSPricing({ pricingMap }) {
             <div className="ts-plan-badge ts-plan-badge-blue">Weekly Quizzes</div>
             <div className="ts-plan-name">Weekly Quiz Pack</div>
             <div className="ts-plan-tagline">55+ concept-heavy quizzes to stay sharp throughout the year.</div>
-            <div className="ts-plan-price">{fmtPrice((pricingMap['weekly-quizzes']||{}).price) || '₹800'}</div>
+            <PriceBlock {...planPricing('weekly-quizzes', '₹800')} />
             <div className="ts-plan-divider" />
             <div className="ts-plan-features">
               {ADDON_FEATS.map((f, i) => (
@@ -2154,7 +2174,7 @@ function TSPricing({ pricingMap }) {
               </div>
               <div className="ts-plan-name">Test Series + Weekly Quizzes</div>
               <div className="ts-plan-tagline">Everything in one: full test series and weekly quizzes bundled together.</div>
-              <div className="ts-plan-price">{fmtPrice((pricingMap['test-series-quizzes']||{}).price) || '₹2,000'}</div>
+              <PriceBlock {...planPricing('test-series-quizzes', '₹2,000')} />
               <div className="ts-plan-divider" />
               <div className="ts-plan-features">
                 {BASIC_FEATS.map((f, i) => (
