@@ -332,7 +332,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .fade-in.visible { opacity: 1; transform: translateY(0); }
 
 /* Subject content — color slab slide transition on filter switch */
-.subject-content { position: relative; }
+.subject-content { position: relative; overflow: hidden; transition: height .32s cubic-bezier(.4,0,.2,1); }
 .subject-swipe {
   position: absolute; inset: 0; z-index: 20; pointer-events: none;
   border-radius: 24px; opacity: 0.94;
@@ -341,10 +341,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   box-shadow: 0 12px 48px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.7);
   transform: translateX(-110%);
 }
-.subject-swipe.dir-rev { transform: translateX(110%); }
 .subject-swipe.phase-cover  { transform: translateX(0%);   transition: transform .36s cubic-bezier(.65,0,.35,1); }
 .subject-swipe.phase-reveal { transform: translateX(110%); transition: transform .42s cubic-bezier(.65,0,.35,1); }
-.subject-swipe.phase-reveal.dir-rev { transform: translateX(-110%); }
 
 /* Footer */
 .footer { padding: 40px 0; border-top: 1px solid var(--line); }
@@ -854,9 +852,11 @@ function App() {
   const [active, setActive]     = React.useState('');
   const [displayActive, setDisplayActive] = React.useState('');
   const [swipePhase, setSwipePhase] = React.useState('idle');
-  const [swipeDir, setSwipeDir] = React.useState(1);
   const [swipeKey, setSwipeKey] = React.useState(0);
+  const [heightLock, setHeightLock] = React.useState(null);
   const [loading, setLoading]   = React.useState(true);
+  const contentRef = React.useRef(null);
+  const newHRef = React.useRef(null);
 
   React.useEffect(() => {
     const parseCSV = text => {
@@ -894,17 +894,29 @@ function App() {
     }).catch(() => { setLoading(false); });
   }, []);
 
-  // Color slab slide transition when the active filter changes — direction
-  // follows the order of the clicked subject relative to the current one,
-  // and only one transition runs at a time (extra clicks are ignored).
+  // Color slab slide transition when the active filter changes — only one
+  // transition runs at a time (extra clicks while sliding are ignored).
+  // The content area's height is locked to the larger of the old/new
+  // subject's height during the slide so the page doesn't jump when
+  // switching between subjects with very different content lengths.
   const selectSubject = id => {
     if (id === active || swipePhase !== 'idle') return;
-    const oldIdx = subjects.findIndex(s => s.id === displayActive);
-    const newIdx = subjects.findIndex(s => s.id === id);
-    setSwipeDir(newIdx >= oldIdx ? 1 : -1);
+    if (contentRef.current) setHeightLock(contentRef.current.getBoundingClientRect().height);
     setActive(id);
     setSwipePhase('cover');
   };
+
+  // Measure the new subject's natural height right after content swaps
+  React.useLayoutEffect(() => {
+    if (swipePhase !== 'reveal' || !contentRef.current) return;
+    const el = contentRef.current;
+    const locked = el.style.height;
+    el.style.height = 'auto';
+    const newH = el.getBoundingClientRect().height;
+    el.style.height = locked;
+    newHRef.current = newH;
+    setHeightLock(prev => Math.max(prev || 0, newH));
+  }, [displayActive]);
 
   const handleSwipeTransitionEnd = e => {
     if (e.propertyName !== 'transform') return;
@@ -914,7 +926,14 @@ function App() {
     } else if (swipePhase === 'reveal') {
       setSwipePhase('idle');
       setSwipeKey(k => k + 1);
+      const newH = newHRef.current;
+      if (newH != null && newH !== heightLock) setHeightLock(newH);
+      else setHeightLock(null);
     }
+  };
+
+  const handleContentTransitionEnd = e => {
+    if (e.propertyName === 'height' && swipePhase === 'idle') setHeightLock(null);
   };
 
   const filtered = subjects.filter(s => s.id === displayActive);
@@ -971,10 +990,15 @@ function App() {
           {!loading && SUBJECTS.length > 0 && <FilterBar subjects={SUBJECTS} active={active} setActive={selectSubject} />}
 
           {/* Subject sections — color slab slides across on filter switch */}
-          {!loading && <div className="subject-content">
+          {!loading && <div
+            className="subject-content"
+            ref={contentRef}
+            style={heightLock != null ? { height: heightLock } : undefined}
+            onTransitionEnd={handleContentTransitionEnd}
+          >
           <div
             key={swipeKey}
-            className={`subject-swipe phase-${swipePhase}${swipeDir === -1 ? ' dir-rev' : ''}`}
+            className={`subject-swipe phase-${swipePhase}`}
             style={{ background: (subjects.find(s => s.id === active) || subjects.find(s => s.id === displayActive))?.accent }}
             onTransitionEnd={handleSwipeTransitionEnd}
           />
