@@ -332,7 +332,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .fade-in.visible { opacity: 1; transform: translateY(0); }
 
 /* Subject content — color slab slide transition on filter switch */
-.subject-content { position: relative; overflow: hidden; transition: height .32s cubic-bezier(.4,0,.2,1); }
+.subject-content { position: relative; overflow: hidden; }
 .subject-swipe {
   position: absolute; inset: 0; z-index: 20; pointer-events: none;
   border-radius: 24px; opacity: 0.94;
@@ -856,7 +856,6 @@ function App() {
   const [heightLock, setHeightLock] = React.useState(null);
   const [loading, setLoading]   = React.useState(true);
   const contentRef = React.useRef(null);
-  const newHRef = React.useRef(null);
 
   React.useEffect(() => {
     const parseCSV = text => {
@@ -896,26 +895,19 @@ function App() {
 
   // Color slab slide transition when the active filter changes — only one
   // transition runs at a time (extra clicks while sliding are ignored).
-  // The content area's height is locked to the larger of the old/new
-  // subject's height during the slide so the page doesn't jump when
-  // switching between subjects with very different content lengths.
+  // The content area is resized to the new subject's height the instant
+  // the slab is fully covering it (between the cover and reveal phases),
+  // so the page below never visibly jumps — it's hidden behind the slab.
   const selectSubject = id => {
     if (id === active || swipePhase !== 'idle') return;
-    if (contentRef.current) setHeightLock(contentRef.current.getBoundingClientRect().height);
     setActive(id);
     setSwipePhase('cover');
   };
 
-  // Measure the new subject's natural height right after content swaps
+  // Swap content and resize while fully covered, before the reveal slide begins
   React.useLayoutEffect(() => {
     if (swipePhase !== 'reveal' || !contentRef.current) return;
-    const el = contentRef.current;
-    const locked = el.style.height;
-    el.style.height = 'auto';
-    const newH = el.getBoundingClientRect().height;
-    el.style.height = locked;
-    newHRef.current = newH;
-    setHeightLock(prev => Math.max(prev || 0, newH));
+    setHeightLock(contentRef.current.getBoundingClientRect().height);
   }, [displayActive]);
 
   const handleSwipeTransitionEnd = e => {
@@ -926,14 +918,8 @@ function App() {
     } else if (swipePhase === 'reveal') {
       setSwipePhase('idle');
       setSwipeKey(k => k + 1);
-      const newH = newHRef.current;
-      if (newH != null && newH !== heightLock) setHeightLock(newH);
-      else setHeightLock(null);
+      setHeightLock(null);
     }
-  };
-
-  const handleContentTransitionEnd = e => {
-    if (e.propertyName === 'height' && swipePhase === 'idle') setHeightLock(null);
   };
 
   const filtered = subjects.filter(s => s.id === displayActive);
@@ -994,7 +980,6 @@ function App() {
             className="subject-content"
             ref={contentRef}
             style={heightLock != null ? { height: heightLock } : undefined}
-            onTransitionEnd={handleContentTransitionEnd}
           >
           <div
             key={swipeKey}
