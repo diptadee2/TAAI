@@ -124,7 +124,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   background: rgba(255,255,255,0.45); color: var(--ink-dim);
   backdrop-filter: blur(10px) saturate(160%); -webkit-backdrop-filter: blur(10px) saturate(160%);
   animation: filter-pop .45s cubic-bezier(.34,1.2,.64,1) calc(var(--i,0) * 45ms + 550ms) both;
-  transition: border-color .06s, color .06s, background .06s, box-shadow .08s, transform .08s cubic-bezier(.34,1.2,.64,1);
+  transition: border-color .15s ease, color .15s ease, background .06s, box-shadow .25s cubic-bezier(.4,0,.2,1), transform .25s cubic-bezier(.34,1.4,.64,1);
   position: relative; overflow: hidden;
 }
 .filter-btn::before {
