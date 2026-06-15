@@ -340,6 +340,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   border: 1px solid rgba(255,255,255,0.6);
   box-shadow: 0 16px 60px color-mix(in srgb, var(--slab-color, #8B5CF6) 38%, transparent), 0 12px 48px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.75), inset 0 0 60px rgba(255,255,255,0.12);
   transform: translateX(-110%);
+  will-change: transform;
 }
 .subject-swipe::after {
   content: ''; position: absolute; top: -10%; bottom: -10%; right: 0; width: 10px;
@@ -361,19 +362,22 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   opacity: 1; transform: scale(1); transition-delay: .08s;
 }
 .subject-swipe-logo {
+  position: relative;
   width: 124px; height: 124px; border-radius: 50%; flex-shrink: 0;
   background: rgba(255,255,255,0.95);
-  display: grid; place-items: center; overflow: hidden;
-  animation: slab-logo-pulse 2.2s ease-in-out infinite;
+  display: grid; place-items: center;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.5), 0 8px 28px color-mix(in srgb, var(--slab-color, #8B5CF6) 50%, transparent);
+}
+.subject-swipe-logo::before {
+  content: ''; position: absolute; inset: -22px; border-radius: 50%; z-index: -1;
+  background: radial-gradient(circle, color-mix(in srgb, var(--slab-color, #8B5CF6) 55%, transparent) 0%, transparent 72%);
+  animation: slab-glow-pulse 2.2s ease-in-out infinite;
+  will-change: transform, opacity;
 }
 .subject-swipe-logo img { width: 96px; height: auto; display: block; }
-@keyframes slab-logo-pulse {
-  0%, 100% {
-    box-shadow: 0 0 0 1px rgba(255,255,255,0.5), 0 8px 28px color-mix(in srgb, var(--slab-color, #8B5CF6) 50%, transparent), 0 0 0 8px color-mix(in srgb, var(--slab-color, #8B5CF6) 16%, transparent);
-  }
-  50% {
-    box-shadow: 0 0 0 1px rgba(255,255,255,0.5), 0 8px 36px color-mix(in srgb, var(--slab-color, #8B5CF6) 65%, transparent), 0 0 0 16px color-mix(in srgb, var(--slab-color, #8B5CF6) 8%, transparent);
-  }
+@keyframes slab-glow-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(0.9); }
+  50%      { opacity: 1;    transform: scale(1.15); }
 }
 
 /* Footer */
