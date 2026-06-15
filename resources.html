@@ -352,14 +352,15 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 
 /* Dot-grid pattern layer that drifts slower than the slab for a parallax feel */
 .subject-swipe-pattern {
-  position: absolute; inset: -25% -50%; z-index: 0; pointer-events: none;
-  background-image: radial-gradient(circle, rgba(255,255,255,0.45) 1.5px, transparent 1.6px);
-  background-size: 30px 30px;
-  opacity: 0.55;
-  transform: translateX(66%);
+  position: absolute; inset: -25% -60%; z-index: 0; pointer-events: none;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.9) 2.5px, transparent 2.6px);
+  background-size: 38px 38px;
+  opacity: 0.45;
+  mix-blend-mode: overlay;
+  transform: translateX(85%);
 }
 .subject-swipe.phase-cover  .subject-swipe-pattern { transform: translateX(0%);   transition: transform .5s cubic-bezier(.22,.61,.36,1); }
-.subject-swipe.phase-reveal .subject-swipe-pattern { transform: translateX(-66%); transition: transform .55s cubic-bezier(.22,.61,.36,1); }
+.subject-swipe.phase-reveal .subject-swipe-pattern { transform: translateX(-85%); transition: transform .55s cubic-bezier(.22,.61,.36,1); }
 
 .subject-swipe-label {
   position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
