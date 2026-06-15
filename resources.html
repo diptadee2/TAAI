@@ -141,11 +141,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .filter-btn.active {
   border-color: transparent; color: #fff;
   transform: translateY(-2px);
-  animation: filter-activate-pulse .12s cubic-bezier(.34,1.1,.64,1) both;
-}
-@keyframes filter-activate-pulse {
-  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--subject-color, var(--purple)) 45%, transparent); }
-  100% { box-shadow: 0 6px 20px color-mix(in srgb, var(--subject-color, var(--purple)) 0%, transparent); }
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--subject-color, var(--purple)) 35%, transparent);
 }
 .filter-btn.active::before { opacity: 1; }
 .filter-btn-swatch {
