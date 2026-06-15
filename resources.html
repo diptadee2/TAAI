@@ -341,8 +341,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   box-shadow: 0 12px 48px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.7);
   transform: translateX(-110%);
 }
+.subject-swipe.dir-rev { transform: translateX(110%); }
 .subject-swipe.phase-cover  { transform: translateX(0%);   transition: transform .36s cubic-bezier(.65,0,.35,1); }
 .subject-swipe.phase-reveal { transform: translateX(110%); transition: transform .42s cubic-bezier(.65,0,.35,1); }
+.subject-swipe.phase-reveal.dir-rev { transform: translateX(-110%); }
 
 /* Footer */
 .footer { padding: 40px 0; border-top: 1px solid var(--line); }
@@ -852,6 +854,7 @@ function App() {
   const [active, setActive]     = React.useState('');
   const [displayActive, setDisplayActive] = React.useState('');
   const [swipePhase, setSwipePhase] = React.useState('idle');
+  const [swipeDir, setSwipeDir] = React.useState(1);
   const [swipeKey, setSwipeKey] = React.useState(0);
   const [loading, setLoading]   = React.useState(true);
 
@@ -891,25 +894,28 @@ function App() {
     }).catch(() => { setLoading(false); });
   }, []);
 
-  // Color slab slide transition when the active filter changes
-  React.useEffect(() => {
-    if (!active || active === displayActive) return;
+  // Color slab slide transition when the active filter changes — direction
+  // follows the order of the clicked subject relative to the current one,
+  // and only one transition runs at a time (extra clicks are ignored).
+  const selectSubject = id => {
+    if (id === active || swipePhase !== 'idle') return;
+    const oldIdx = subjects.findIndex(s => s.id === displayActive);
+    const newIdx = subjects.findIndex(s => s.id === id);
+    setSwipeDir(newIdx >= oldIdx ? 1 : -1);
+    setActive(id);
     setSwipePhase('cover');
-    const t = setTimeout(() => {
+  };
+
+  const handleSwipeTransitionEnd = e => {
+    if (e.propertyName !== 'transform') return;
+    if (swipePhase === 'cover') {
       setDisplayActive(active);
       setSwipePhase('reveal');
-    }, 360);
-    return () => clearTimeout(t);
-  }, [active]);
-
-  React.useEffect(() => {
-    if (swipePhase !== 'reveal') return;
-    const t = setTimeout(() => {
+    } else if (swipePhase === 'reveal') {
       setSwipePhase('idle');
       setSwipeKey(k => k + 1);
-    }, 420);
-    return () => clearTimeout(t);
-  }, [swipePhase]);
+    }
+  };
 
   const filtered = subjects.filter(s => s.id === displayActive);
   const SUBJECTS = subjects;
@@ -962,11 +968,16 @@ function App() {
           {loading && <SkeletonLoading />}
 
           {/* Filter bar — shown only when subjects exist */}
-          {!loading && SUBJECTS.length > 0 && <FilterBar subjects={SUBJECTS} active={active} setActive={setActive} />}
+          {!loading && SUBJECTS.length > 0 && <FilterBar subjects={SUBJECTS} active={active} setActive={selectSubject} />}
 
           {/* Subject sections — color slab slides across on filter switch */}
           {!loading && <div className="subject-content">
-          <div key={swipeKey} className={`subject-swipe phase-${swipePhase}`} style={{ background: (subjects.find(s => s.id === active) || subjects.find(s => s.id === displayActive))?.accent }} />
+          <div
+            key={swipeKey}
+            className={`subject-swipe phase-${swipePhase}${swipeDir === -1 ? ' dir-rev' : ''}`}
+            style={{ background: (subjects.find(s => s.id === active) || subjects.find(s => s.id === displayActive))?.accent }}
+            onTransitionEnd={handleSwipeTransitionEnd}
+          />
           {filtered.length === 0 ? (
             <div className="notes-empty">
               <div className="notes-empty-icon"><FileIcon /></div>
