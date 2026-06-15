@@ -128,9 +128,9 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   position: relative; overflow: hidden;
 }
 .filter-btn::before {
-  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  content: ''; position: absolute; inset: 0; border-radius: inherit; z-index: 0;
   background: var(--subject-accent, linear-gradient(135deg,var(--purple),var(--blue)));
-  opacity: 0; transition: opacity .06s ease;
+  transform: translateX(-102%); transition: transform .28s cubic-bezier(.4,0,.2,1);
 }
 .filter-btn:hover {
   border-color: var(--subject-color, var(--purple));
@@ -143,7 +143,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   transform: translateY(-2px);
   box-shadow: 0 6px 20px color-mix(in srgb, var(--subject-color, var(--purple)) 35%, transparent);
 }
-.filter-btn.active::before { opacity: 1; }
+.filter-btn.active::before { transform: translateX(0); }
 .filter-btn-swatch {
   width: 8px; height: 8px; border-radius: 50%;
   background: var(--subject-color, var(--purple));
