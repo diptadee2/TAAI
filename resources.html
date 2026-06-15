@@ -331,10 +331,18 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .fade-in { opacity: 0; transform: translateY(24px); transition: opacity .7s cubic-bezier(.4,0,.2,1), transform .7s cubic-bezier(.34,1.1,.64,1); transition-delay: var(--delay, 0ms); }
 .fade-in.visible { opacity: 1; transform: translateY(0); }
 
-/* Subject content crossfade on filter switch */
-.subject-content { opacity: 1; transform: translateY(0) scale(1); transition: opacity .26s cubic-bezier(.4,0,.2,1), transform .32s cubic-bezier(.34,1.1,.64,1); }
-.subject-content.phase-leave { opacity: 0; transform: translateY(10px) scale(0.985); }
-.subject-content.phase-enter { opacity: 1; transform: translateY(0) scale(1); }
+/* Subject content — color slab slide transition on filter switch */
+.subject-content { position: relative; }
+.subject-swipe {
+  position: absolute; inset: 0; z-index: 20; pointer-events: none;
+  border-radius: 24px; opacity: 0.94;
+  backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.55);
+  box-shadow: 0 12px 48px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.7);
+  transform: translateX(-110%);
+}
+.subject-swipe.phase-cover  { transform: translateX(0%);   transition: transform .36s cubic-bezier(.65,0,.35,1); }
+.subject-swipe.phase-reveal { transform: translateX(110%); transition: transform .42s cubic-bezier(.65,0,.35,1); }
 
 /* Footer */
 .footer { padding: 40px 0; border-top: 1px solid var(--line); }
@@ -843,7 +851,8 @@ function App() {
   const [subjects, setSubjects] = React.useState([]);
   const [active, setActive]     = React.useState('');
   const [displayActive, setDisplayActive] = React.useState('');
-  const [phase, setPhase]       = React.useState('enter');
+  const [swipePhase, setSwipePhase] = React.useState('idle');
+  const [swipeKey, setSwipeKey] = React.useState(0);
   const [loading, setLoading]   = React.useState(true);
 
   React.useEffect(() => {
@@ -882,16 +891,25 @@ function App() {
     }).catch(() => { setLoading(false); });
   }, []);
 
-  // Crossfade subject content when the active filter changes
+  // Color slab slide transition when the active filter changes
   React.useEffect(() => {
     if (!active || active === displayActive) return;
-    setPhase('leave');
+    setSwipePhase('cover');
     const t = setTimeout(() => {
       setDisplayActive(active);
-      setPhase('enter');
-    }, 220);
+      setSwipePhase('reveal');
+    }, 360);
     return () => clearTimeout(t);
   }, [active]);
+
+  React.useEffect(() => {
+    if (swipePhase !== 'reveal') return;
+    const t = setTimeout(() => {
+      setSwipePhase('idle');
+      setSwipeKey(k => k + 1);
+    }, 420);
+    return () => clearTimeout(t);
+  }, [swipePhase]);
 
   const filtered = subjects.filter(s => s.id === displayActive);
   const SUBJECTS = subjects;
@@ -946,8 +964,9 @@ function App() {
           {/* Filter bar — shown only when subjects exist */}
           {!loading && SUBJECTS.length > 0 && <FilterBar subjects={SUBJECTS} active={active} setActive={setActive} />}
 
-          {/* Subject sections — crossfade between subjects on filter switch */}
-          {!loading && <div className={`subject-content phase-${phase}`}>
+          {/* Subject sections — color slab slides across on filter switch */}
+          {!loading && <div className="subject-content">
+          <div key={swipeKey} className={`subject-swipe phase-${swipePhase}`} style={{ background: (subjects.find(s => s.id === active) || subjects.find(s => s.id === displayActive))?.accent }} />
           {filtered.length === 0 ? (
             <div className="notes-empty">
               <div className="notes-empty-icon"><FileIcon /></div>
