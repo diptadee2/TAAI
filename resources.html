@@ -757,6 +757,18 @@ function SkeletonLoading() {
 }
 
 // ── Filter Bar ────────────────────────────────────────────────────
+function smoothScrollBy(el, delta, duration = 480) {
+  const start = el.scrollLeft;
+  const startTime = performance.now();
+  const ease = t => 1 - Math.pow(1 - t, 3); // easeOutCubic
+  const step = now => {
+    const t = Math.min(1, (now - startTime) / duration);
+    el.scrollLeft = start + delta * ease(t);
+    if (t < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
 function FilterBar({ subjects, active, setActive }) {
   const wrapRef = React.useRef(null);
   const [fades, setFades] = React.useState({ left: false, right: false });
@@ -784,10 +796,10 @@ function FilterBar({ subjects, active, setActive }) {
     const wrapRect = wrap.getBoundingClientRect();
     const btnRect  = btn.getBoundingClientRect();
     const offset   = btnRect.left - wrapRect.left - wrapRect.width / 2 + btnRect.width / 2;
-    wrap.scrollBy({ left: offset, behavior: 'smooth' });
+    smoothScrollBy(wrap, offset);
   }, [active]);
 
-  const scroll = dir => wrapRef.current?.scrollBy({ left: dir * 220, behavior: 'smooth' });
+  const scroll = dir => { const el = wrapRef.current; if (el) smoothScrollBy(el, dir * 220, 380); };
 
   return (
     <div className="filter-bar-outer">
