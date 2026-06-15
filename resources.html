@@ -105,7 +105,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 
 /* Subject filter tabs */
 .filter-bar-outer { display: flex; align-items: center; gap: 8px; margin: 48px 0 22px; animation: res-in .6s cubic-bezier(.34,1.1,.64,1) .5s both; }
-.filter-arrow { flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--line); background: #fff; display: grid; place-items: center; cursor: pointer; color: var(--ink-dim); box-shadow: var(--shadow-sm); transition: background .2s, color .2s, border-color .2s, transform .28s cubic-bezier(.34,1.2,.64,1), box-shadow .2s, opacity .22s; }
+.filter-arrow { flex-shrink: 0; width: 34px; height: 34px; margin-top: -12px; border-radius: 50%; border: 1.5px solid var(--line); background: #fff; display: grid; place-items: center; cursor: pointer; color: var(--ink-dim); box-shadow: var(--shadow-sm); transition: background .2s, color .2s, border-color .2s, transform .28s cubic-bezier(.34,1.2,.64,1), box-shadow .2s, opacity .22s; }
 .filter-arrow:hover { background: var(--purple); color: #fff; border-color: var(--purple); transform: scale(1.1); box-shadow: 0 4px 14px rgba(139,92,246,0.35); }
 .filter-arrow--hidden { opacity: 0; pointer-events: none; }
 .filter-arrow svg { display: block; }
