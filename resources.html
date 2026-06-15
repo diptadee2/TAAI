@@ -152,7 +152,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   width: 8px; height: 8px; border-radius: 50%;
   background: var(--subject-color, var(--purple));
   flex-shrink: 0; position: relative; z-index: 1;
-  transition: transform .28s cubic-bezier(.34,1.4,.64,1), box-shadow .24s;
+  transition: transform .08s cubic-bezier(.34,1.4,.64,1), box-shadow .06s;
 }
 .filter-btn:hover .filter-btn-swatch { transform: scale(1.5); }
 .filter-btn.active .filter-btn-swatch { background: rgba(255,255,255,0.85); box-shadow: 0 0 0 2px rgba(255,255,255,0.3); transform: scale(1.2); }
@@ -162,7 +162,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   background: var(--bg-soft); color: var(--ink-soft);
   border-radius: 999px; padding: 1px 7px;
   font-size: 10px; font-family: var(--font-mono); font-weight: 700; letter-spacing: .04em;
-  transition: background .24s, color .24s;
+  transition: background .06s, color .06s;
 }
 .filter-btn.active .filter-btn-count { background: rgba(255,255,255,0.22); color: rgba(255,255,255,0.9); }
 
