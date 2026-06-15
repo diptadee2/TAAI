@@ -332,7 +332,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .fade-in.visible { opacity: 1; transform: translateY(0); }
 
 /* Subject content — color slab slide transition on filter switch */
-.subject-content { position: relative; overflow: hidden; }
+.subject-content { position: relative; overflow: hidden; transition: height .4s cubic-bezier(.4,0,.2,1); }
 .subject-swipe {
   position: absolute; inset: 0; z-index: 20; pointer-events: none;
   border-radius: 24px; opacity: 0.94;
@@ -856,6 +856,7 @@ function App() {
   const [heightLock, setHeightLock] = React.useState(null);
   const [loading, setLoading]   = React.useState(true);
   const contentRef = React.useRef(null);
+  const newHRef = React.useRef(null);
 
   React.useEffect(() => {
     const parseCSV = text => {
@@ -895,19 +896,25 @@ function App() {
 
   // Color slab slide transition when the active filter changes — only one
   // transition runs at a time (extra clicks while sliding are ignored).
-  // The content area is resized to the new subject's height the instant
-  // the slab is fully covering it (between the cover and reveal phases),
-  // so the page below never visibly jumps — it's hidden behind the slab.
+  // The content area stays at the old subject's height while the slab
+  // slides, then smoothly animates (slides) to the new subject's height
+  // once the slab is gone — so the page below eases into place instead
+  // of jumping or moving in lockstep with the slab.
   const selectSubject = id => {
     if (id === active || swipePhase !== 'idle') return;
+    if (contentRef.current) setHeightLock(contentRef.current.getBoundingClientRect().height);
     setActive(id);
     setSwipePhase('cover');
   };
 
-  // Swap content and resize while fully covered, before the reveal slide begins
+  // Measure the new subject's natural height without disturbing layout
   React.useLayoutEffect(() => {
     if (swipePhase !== 'reveal' || !contentRef.current) return;
-    setHeightLock(contentRef.current.getBoundingClientRect().height);
+    const el = contentRef.current;
+    const locked = el.style.height;
+    el.style.height = 'auto';
+    newHRef.current = el.getBoundingClientRect().height;
+    el.style.height = locked;
   }, [displayActive]);
 
   const handleSwipeTransitionEnd = e => {
@@ -918,8 +925,14 @@ function App() {
     } else if (swipePhase === 'reveal') {
       setSwipePhase('idle');
       setSwipeKey(k => k + 1);
-      setHeightLock(null);
+      const newH = newHRef.current;
+      if (newH != null && newH !== heightLock) setHeightLock(newH);
+      else setHeightLock(null);
     }
+  };
+
+  const handleContentTransitionEnd = e => {
+    if (e.propertyName === 'height' && swipePhase === 'idle') setHeightLock(null);
   };
 
   const filtered = subjects.filter(s => s.id === displayActive);
@@ -980,6 +993,7 @@ function App() {
             className="subject-content"
             ref={contentRef}
             style={heightLock != null ? { height: heightLock } : undefined}
+            onTransitionEnd={handleContentTransitionEnd}
           >
           <div
             key={swipeKey}
