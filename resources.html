@@ -124,13 +124,13 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   background: rgba(255,255,255,0.45); color: var(--ink-dim);
   backdrop-filter: blur(10px) saturate(160%); -webkit-backdrop-filter: blur(10px) saturate(160%);
   animation: filter-pop .45s cubic-bezier(.34,1.2,.64,1) calc(var(--i,0) * 45ms + 550ms) both;
-  transition: border-color .14s, color .14s, background .14s, box-shadow .18s, transform .18s cubic-bezier(.34,1.2,.64,1);
+  transition: border-color .06s, color .06s, background .06s, box-shadow .08s, transform .08s cubic-bezier(.34,1.2,.64,1);
   position: relative; overflow: hidden;
 }
 .filter-btn::before {
   content: ''; position: absolute; inset: 0; border-radius: inherit;
   background: var(--subject-accent, linear-gradient(135deg,var(--purple),var(--blue)));
-  opacity: 0; transition: opacity .16s ease;
+  opacity: 0; transition: opacity .06s ease;
 }
 .filter-btn:hover {
   border-color: var(--subject-color, var(--purple));
@@ -141,7 +141,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .filter-btn.active {
   border-color: transparent; color: #fff;
   transform: translateY(-2px);
-  animation: filter-activate-pulse .28s cubic-bezier(.34,1.1,.64,1) both;
+  animation: filter-activate-pulse .12s cubic-bezier(.34,1.1,.64,1) both;
 }
 @keyframes filter-activate-pulse {
   0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--subject-color, var(--purple)) 45%, transparent); }
