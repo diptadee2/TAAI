@@ -350,7 +350,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .subject-swipe.phase-reveal { transform: translateX(110%); transition: transform .42s cubic-bezier(.65,0,.35,1); }
 
 .subject-swipe-label {
-  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 14px;
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
   color: #fff; font-family: var(--font-display); font-size: 24px; font-weight: 600; letter-spacing: -0.01em;
   text-shadow: 0 2px 20px rgba(0,0,0,0.2);
   opacity: 0; transform: scale(0.94);
@@ -360,8 +360,24 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .subject-swipe.phase-reveal .subject-swipe-label {
   opacity: 1; transform: scale(1); transition-delay: .08s;
 }
+.subject-swipe-logo {
+  width: 92px; height: 92px; border-radius: 50%; flex-shrink: 0;
+  background: rgba(255,255,255,0.95);
+  display: grid; place-items: center; overflow: hidden;
+  animation: slab-logo-pulse 2.2s ease-in-out infinite;
+}
+.subject-swipe-logo img { width: 70px; height: auto; display: block; }
+@keyframes slab-logo-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.5), 0 8px 28px color-mix(in srgb, var(--slab-color, #8B5CF6) 50%, transparent), 0 0 0 8px color-mix(in srgb, var(--slab-color, #8B5CF6) 16%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.5), 0 8px 36px color-mix(in srgb, var(--slab-color, #8B5CF6) 65%, transparent), 0 0 0 16px color-mix(in srgb, var(--slab-color, #8B5CF6) 8%, transparent);
+  }
+}
+.subject-swipe-subject { display: flex; align-items: center; gap: 12px; }
 .subject-swipe-icon {
-  width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; color: #fff; flex-shrink: 0;
+  width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; color: #fff; flex-shrink: 0;
   box-shadow: 0 6px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.5);
 }
 
@@ -1029,8 +1045,11 @@ function App() {
                 onTransitionEnd={handleSwipeTransitionEnd}
               >
                 <div className="subject-swipe-label">
-                  <div className="subject-swipe-icon" style={{ background: slabSubject?.accent }}><FileIcon /></div>
-                  <div className="subject-swipe-name">{slabSubject?.name}</div>
+                  <div className="subject-swipe-logo"><img src="logo.webp" alt="TAAI" /></div>
+                  <div className="subject-swipe-subject">
+                    <div className="subject-swipe-icon" style={{ background: slabSubject?.accent }}><FileIcon /></div>
+                    <div className="subject-swipe-name">{slabSubject?.name}</div>
+                  </div>
                 </div>
               </div>
             );
