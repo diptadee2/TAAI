@@ -1246,7 +1246,7 @@ function App() {
   );
 }
 
-class ErrorBoundary extends React.Component { componentDidCatch() { window.location.reload(); } render() { return this.props.children; } }
+class ErrorBoundary extends React.Component { constructor(p){super(p);this.state={err:false};} static getDerivedStateFromError(){return{err:true};} componentDidCatch(){const n=+(sessionStorage.getItem('_eb')||0);if(n<2){sessionStorage.setItem('_eb',n+1);window.location.reload();}} render(){return this.state.err?null:this.props.children;} }
 ReactDOM.createRoot(document.getElementById('root')).render(<ErrorBoundary><App /></ErrorBoundary>);
 
 function scrollToEl(hash) {
