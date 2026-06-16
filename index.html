@@ -3,7 +3,7 @@
 <html lang="en" data-hero="asym" data-density="normal" data-cards="shadowed" data-decos="on">
 <head>
 <meta charset="UTF-8">
-<script>window.addEventListener("pageshow",function(e){if(e.persisted)window.location.reload();});</script>
+<script>window.addEventListener("pageshow",function(e){if(e.persisted)window.location.reload();});window.addEventListener("unload",function(){});</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TAAI · One-stop for all your GATE DA 2027 needs</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2352,7 +2352,7 @@ function MobileContactBar() {
 }
 
 function App() {
-  React.useEffect(() => { sessionStorage.removeItem('_eb'); }, []);
+  React.useEffect(() => { try { sessionStorage.removeItem('_eb'); } catch(e) {} }, []);
   React.useEffect(() => {
     const els = document.querySelectorAll('.fade-in');
     const mobile = window.matchMedia('(max-width: 768px)').matches;
@@ -2395,8 +2395,10 @@ class ErrorBoundary extends React.Component {
   constructor(p) { super(p); this.state = { err: false }; }
   static getDerivedStateFromError() { return { err: true }; }
   componentDidCatch() {
-    const n = +sessionStorage.getItem('_eb') || 0;
-    if (n < 2) { sessionStorage.setItem('_eb', n + 1); window.location.reload(); }
+    try {
+      const n = +(sessionStorage.getItem('_eb') || 0);
+      if (n < 2) { sessionStorage.setItem('_eb', n + 1); window.location.reload(); }
+    } catch(e) { window.location.reload(); }
   }
   render() { return this.state.err ? null : this.props.children; }
 }
