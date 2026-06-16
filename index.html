@@ -728,13 +728,6 @@ body {
 .whyus-tab.active .whyus-tab-sub { color: var(--tab-color, var(--purple)); }
 .whyus-tab-chevron { margin-left: auto; flex-shrink: 0; opacity: 0; transform: translateX(-4px); transition: opacity .2s, transform .22s cubic-bezier(.34,1.1,.64,1); color: var(--tab-color, var(--purple)); }
 .whyus-tab.active .whyus-tab-chevron { opacity: 1; transform: translateX(0); }
-.whyus-tab-progress {
-  position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
-  background: linear-gradient(90deg, var(--tab-color, var(--purple)), rgba(139,92,246,0.4));
-  transform-origin: left; transform: scaleX(0);
-  animation: wyProgress var(--dur, 4500ms) linear forwards;
-}
-@keyframes wyProgress { to { transform: scaleX(1); } }
 
 .whyus-panel {
   background-color: transparent;
@@ -1935,9 +1928,7 @@ const WHY_FEATURES = [
 ];
 
 function WhyUs() {
-  const DURATION = 4500;
   const [active, setActive] = React.useState(0);
-  const [paused, setPaused] = React.useState(false);
   const [isMobile, setIsMobile] = React.useState(window.matchMedia('(max-width: 1280px)').matches);
 
   React.useEffect(() => {
@@ -1946,13 +1937,6 @@ function WhyUs() {
     mq.addEventListener('change', fn);
     return () => mq.removeEventListener('change', fn);
   }, []);
-
-  // Auto-advance, resets whenever active changes or paused toggles
-  React.useEffect(() => {
-    if (paused || isMobile) return;
-    const id = setInterval(() => setActive(a => (a + 1) % WHY_FEATURES.length), DURATION);
-    return () => clearInterval(id);
-  }, [paused, isMobile, active]);
 
   // Keyboard navigation
   React.useEffect(() => {
@@ -1964,7 +1948,7 @@ function WhyUs() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const go = i => { setActive(i); setPaused(true); setTimeout(() => setPaused(false), 8000); };
+  const go = i => setActive(i);
   const toggle = i => setActive(prev => prev === i ? -1 : i);
   const f = WHY_FEATURES[Math.max(0, active)];
 
@@ -2038,7 +2022,6 @@ function WhyUs() {
                 <svg className="whyus-tab-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                {active === i && <div key={`p-${active}`} className="whyus-tab-progress" style={{ '--dur': `${DURATION}ms`, animationPlayState: paused ? 'paused' : 'running' }} />}
               </button>
             ))}
           </div>
