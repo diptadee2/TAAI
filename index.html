@@ -420,7 +420,6 @@ body {
   border-radius: var(--radius-lg); padding: 24px; border: 1px solid rgba(255,255,255,0.18);
   display: flex; flex-direction: column; gap: 6px; min-height: 160px;
   position: relative; overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.30), inset 0 1.5px 0 rgba(255,255,255,0.42);
   transition: transform .28s cubic-bezier(.34,1.05,.64,1), box-shadow .28s ease;
 }
 /* floating orb 1 */
@@ -487,12 +486,14 @@ body {
   background: radial-gradient(circle, rgba(255,255,255,0.14) 1.5px, transparent 1.5px), linear-gradient(135deg, #6d28d9 0%, #4f46e5 50%, #2563eb 100%);
   background-size: 24px 24px, auto; color: #fff;
 }
-.hero-bento-1:hover { box-shadow: 0 16px 48px rgba(79,40,217,0.42), inset 0 1.5px 0 rgba(255,255,255,0.52); }
+.hero-bento-1 { box-shadow: 0 0 48px rgba(109,40,217,0.50), 0 12px 28px rgba(0,0,0,0.32), inset 0 1.5px 0 rgba(255,255,255,0.42); }
+.hero-bento-1:hover { box-shadow: 0 0 72px rgba(109,40,217,0.70), 0 18px 36px rgba(0,0,0,0.36), inset 0 1.5px 0 rgba(255,255,255,0.52); }
 .hero-bento-2 {
   background: radial-gradient(circle, rgba(255,255,255,0.14) 1.5px, transparent 1.5px), linear-gradient(135deg, #db2777 0%, #9333ea 50%, #6d28d9 100%);
   background-size: 24px 24px, auto; color: #fff;
 }
-.hero-bento-2:hover { box-shadow: 0 16px 48px rgba(147,51,234,0.42), inset 0 1.5px 0 rgba(255,255,255,0.52); }
+.hero-bento-2 { box-shadow: 0 0 48px rgba(219,39,119,0.50), 0 12px 28px rgba(0,0,0,0.32), inset 0 1.5px 0 rgba(255,255,255,0.42); }
+.hero-bento-2:hover { box-shadow: 0 0 72px rgba(219,39,119,0.70), 0 18px 36px rgba(0,0,0,0.36), inset 0 1.5px 0 rgba(255,255,255,0.52); }
 
 /* Stats strip */
 .stats {
