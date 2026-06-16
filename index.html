@@ -388,6 +388,10 @@ body {
   from { opacity: 0; transform: translateY(26px) scale(0.97); }
   to   { opacity: 1; transform: translateY(0)    scale(1);    }
 }
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-12px); }
+}
 .hero-eyebrow { animation: heroIn .65s cubic-bezier(.34,1.12,.64,1) .08s both; }
 .hero h1      { animation: heroIn .72s cubic-bezier(.34,1.12,.64,1) .20s both; }
 .hero-sub     { animation: heroIn .62s cubic-bezier(.34,1.12,.64,1) .34s both; }
@@ -395,8 +399,8 @@ body {
 .hero-cta     { animation: heroIn .60s cubic-bezier(.34,1.12,.64,1) .58s both; }
 .hero-meta    { animation: heroIn .58s cubic-bezier(.34,1.12,.64,1) .66s both; }
 .hero-visual  { animation: heroIn .78s cubic-bezier(.34,1.12,.64,1) .42s both; }
-.hero-bento-1 { animation: heroIn .65s cubic-bezier(.34,1.12,.64,1) .54s both; }
-.hero-bento-2 { animation: heroIn .65s cubic-bezier(.34,1.12,.64,1) .62s both; }
+.hero-bento-1 { animation: heroIn .65s cubic-bezier(.34,1.12,.64,1) .54s both, float 4s ease-in-out 1.2s infinite; }
+.hero-bento-2 { animation: heroIn .65s cubic-bezier(.34,1.12,.64,1) .62s both, float 4s ease-in-out 2.4s infinite; }
 
 .hero-sticker {
   position: absolute; width: 120px; height: 120px; border-radius: 50%;
@@ -481,7 +485,7 @@ body {
 }
 .pen-body { animation: pen-move 3.6s ease-in-out infinite; transform-box: fill-box; transform-origin: bottom left; }
 @keyframes pen-move { 0%,15%{transform:translate(0,0)} 22%,78%{transform:translate(6px,6px)} 93%,100%{transform:translate(0,0)} }
-.hero-bento-card:hover { transform: translateY(-5px); }
+.hero-bento-card:hover { transform: translateY(-8px); animation-play-state: paused; }
 .hero-bento-1 {
   background: radial-gradient(circle, rgba(255,255,255,0.14) 1.5px, transparent 1.5px), linear-gradient(135deg, #6d28d9 0%, #4f46e5 50%, #2563eb 100%);
   background-size: 24px 24px, auto; color: #fff;
