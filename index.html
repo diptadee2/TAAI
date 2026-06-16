@@ -334,14 +334,19 @@ body {
 
 /* Hero visual card */
 .hero-visual { position: relative; aspect-ratio: 4 / 5; max-width: 460px; justify-self: end; width: 100%; }
+.hero-visual::before {
+  content: ''; position: absolute; inset: 0; border-radius: var(--radius-xl);
+  background: linear-gradient(145deg, #8B5CF6 0%, #EC4899 48%, #38BDF8 100%);
+  z-index: 0;
+}
 .hero-card {
-  position: absolute; inset: 0; border-radius: var(--radius-xl);
-  background: linear-gradient(150deg, rgba(20,16,43,0.80) 0%, rgba(30,17,82,0.72) 55%, rgba(23,14,69,0.78) 100%);
-  backdrop-filter: blur(36px) saturate(200%);
-  -webkit-backdrop-filter: blur(36px) saturate(200%);
-  border: 1px solid rgba(255,255,255,0.14);
+  position: absolute; inset: 0; border-radius: var(--radius-xl); z-index: 1;
+  background: linear-gradient(150deg, rgba(20,16,43,0.52) 0%, rgba(30,17,82,0.44) 55%, rgba(23,14,69,0.50) 100%);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.22);
   overflow: hidden;
-  box-shadow: 0 28px 72px rgba(139,92,246,0.32), 0 8px 24px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.28), inset 0 0 90px rgba(139,92,246,0.06);
+  box-shadow: 0 28px 72px rgba(139,92,246,0.38), 0 8px 24px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.38), inset 0 0 90px rgba(139,92,246,0.08);
 }
 .hero-card::before {
   content: ''; position: absolute; inset: 0;
@@ -699,21 +704,21 @@ body {
 
 /* Why TAAI, interactive tabs */
 .whyus-layout { display: grid; grid-template-columns: 360px 1fr; gap: 20px; align-items: stretch; }
-.whyus-tabs { display: flex; flex-direction: column; gap: 6px; justify-content: center; }
+.whyus-tabs { display: flex; flex-direction: column; gap: 6px; justify-content: center; background: #E8E2F5; border-radius: 20px; padding: 12px; }
 .whyus-tab {
   display: flex; align-items: center; gap: 14px;
   padding: 15px 16px; border-radius: var(--radius-md);
   cursor: pointer; text-align: left; width: 100%;
-  background: var(--bg-soft); border: 1.5px solid transparent;
+  background: #E8E2F5; border: 1.5px solid transparent;
   border-left: 3px solid transparent;
-  box-shadow: 5px 5px 13px rgba(155,140,210,0.22), -4px -4px 10px rgba(255,255,255,0.92);
+  box-shadow: 6px 6px 14px rgba(140,120,200,0.32), -4px -4px 11px rgba(255,255,255,0.96);
   transition: background .2s, border-color .2s, box-shadow .28s cubic-bezier(.4,0,.2,1), transform .22s cubic-bezier(.34,1.1,.64,1);
   font-family: inherit; position: relative; overflow: hidden;
   animation: tabSlideIn .38s cubic-bezier(.34,1.1,.64,1) calc(var(--i,0) * 55ms + 100ms) both;
 }
 @keyframes tabSlideIn { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: translateX(0); } }
-.whyus-tab:hover { background: var(--bg-soft); border-color: transparent; border-left-color: var(--tab-color, var(--purple)); box-shadow: 7px 7px 18px rgba(155,140,210,0.26), -5px -5px 13px rgba(255,255,255,0.96); transform: translateX(3px); }
-.whyus-tab.active { background: var(--bg-soft); border-color: transparent; border-left-color: var(--tab-color, var(--purple)); box-shadow: inset 3px 3px 9px rgba(155,140,210,0.28), inset -2px -2px 7px rgba(255,255,255,0.88); transform: translateX(5px); }
+.whyus-tab:hover { background: #E8E2F5; border-color: transparent; border-left-color: var(--tab-color, var(--purple)); box-shadow: 8px 8px 20px rgba(140,120,200,0.36), -6px -6px 14px rgba(255,255,255,0.98); transform: translateX(3px); }
+.whyus-tab.active { background: #E8E2F5; border-color: transparent; border-left-color: var(--tab-color, var(--purple)); box-shadow: inset 4px 4px 11px rgba(140,120,200,0.38), inset -3px -3px 8px rgba(255,255,255,0.92); transform: translateX(5px); }
 .whyus-tab-icon { width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0; display: grid; place-items: center; color: #fff; transition: transform .22s cubic-bezier(.34,1.2,.64,1); }
 .whyus-tab.active .whyus-tab-icon { transform: scale(1.12) rotate(-4deg); }
 .whyus-tab:hover:not(.active) .whyus-tab-icon { transform: scale(1.06); }
