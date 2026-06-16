@@ -692,12 +692,18 @@ body {
 .offer-card:hover .offer-badge-dot { background: rgba(255,255,255,0.7); }
 
 /* Why TAAI, interactive tabs */
-.whyus-layout { display: grid; grid-template-columns: 360px 1fr; gap: 20px; align-items: stretch; }
+.whyus-layout {
+  display: grid; grid-template-columns: 360px 1fr; gap: 0; align-items: stretch;
+  border-radius: var(--radius-xl); overflow: hidden;
+  background: rgba(10,6,28,0.92);
+  backdrop-filter: blur(40px) saturate(180%); -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: 0 24px 64px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.14);
+}
 .whyus-tabs {
   display: flex; flex-direction: column; gap: 6px; justify-content: center;
-  background: rgba(255,255,255,0.72); border-radius: 20px; padding: 12px;
-  border: 1px solid rgba(255,255,255,0.9);
-  box-shadow: 0 4px 24px rgba(139,92,246,0.07), inset 0 1px 0 rgba(255,255,255,1);
+  background: none; border-radius: 0; padding: 20px;
+  border: none; border-right: 1px solid rgba(255,255,255,0.07); box-shadow: none;
 }
 .whyus-tab {
   display: flex; align-items: center; gap: 14px;
@@ -711,14 +717,14 @@ body {
   animation: tabSlideIn .38s cubic-bezier(.34,1.1,.64,1) calc(var(--i,0) * 55ms + 100ms) both;
 }
 @keyframes tabSlideIn { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: translateX(0); } }
-.whyus-tab:hover { background: rgba(255,255,255,0.45); border-color: rgba(255,255,255,0.55); border-left-color: var(--tab-color, var(--purple)); box-shadow: 0 4px 16px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.9); transform: translateX(3px); }
-.whyus-tab.active { background: rgba(255,255,255,0.65); border-color: rgba(255,255,255,0.7); border-left-color: var(--tab-color, var(--purple)); box-shadow: 0 6px 22px rgba(139,92,246,0.12), inset 0 1px 0 rgba(255,255,255,0.95); transform: translateX(5px); }
+.whyus-tab:hover { background: rgba(255,255,255,0.06); border-color: transparent; border-left-color: var(--tab-color, var(--purple)); box-shadow: none; transform: translateX(3px); }
+.whyus-tab.active { background: rgba(255,255,255,0.10); border-color: transparent; border-left-color: var(--tab-color, var(--purple)); box-shadow: none; transform: translateX(5px); }
 .whyus-tab-icon { width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0; display: grid; place-items: center; color: #fff; transition: transform .22s cubic-bezier(.34,1.2,.64,1); }
 .whyus-tab.active .whyus-tab-icon { transform: scale(1.12) rotate(-4deg); }
 .whyus-tab:hover:not(.active) .whyus-tab-icon { transform: scale(1.06); }
 .whyus-tab-info { min-width: 0; flex: 1; }
-.whyus-tab-label { font-family: var(--font-display); font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); line-height: 1.2; }
-.whyus-tab-sub { font-size: 12px; color: var(--ink-soft); margin-top: 2px; transition: color .2s; }
+.whyus-tab-label { font-family: var(--font-display); font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: rgba(255,255,255,0.82); line-height: 1.2; }
+.whyus-tab-sub { font-size: 12px; color: rgba(255,255,255,0.38); margin-top: 2px; transition: color .2s; }
 .whyus-tab.active .whyus-tab-sub { color: var(--tab-color, var(--purple)); }
 .whyus-tab-chevron { margin-left: auto; flex-shrink: 0; opacity: 0; transform: translateX(-4px); transition: opacity .2s, transform .22s cubic-bezier(.34,1.1,.64,1); color: var(--tab-color, var(--purple)); }
 .whyus-tab.active .whyus-tab-chevron { opacity: 1; transform: translateX(0); }
@@ -731,13 +737,9 @@ body {
 @keyframes wyProgress { to { transform: scaleX(1); } }
 
 .whyus-panel {
-  border-radius: var(--radius-xl);
-  background-color: rgba(10,6,28,0.92);
-  background-image: radial-gradient(circle at var(--mx, -200%) var(--my, -200%), rgba(139,92,246,0.32) 0%, transparent 55%);
+  background-color: transparent;
+  background-image: radial-gradient(circle at var(--mx, -200%) var(--my, -200%), rgba(139,92,246,0.28) 0%, transparent 55%);
   background-size: 100% 100%;
-  backdrop-filter: blur(40px) saturate(180%); -webkit-backdrop-filter: blur(40px) saturate(180%);
-  border: 1px solid rgba(255,255,255,0.10);
-  box-shadow: 0 24px 64px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.14), inset 0 0 80px rgba(139,92,246,0.06);
   padding: 48px; position: relative; overflow: hidden;
   display: flex; flex-direction: column; justify-content: center;
   min-height: 380px;
@@ -763,7 +765,7 @@ body {
 .whyus-dots { display: flex; gap: 6px; position: absolute; bottom: 20px; right: 24px; z-index: 2; }
 .whyus-dot { width: 6px; height: 6px; border-radius: 999px; background: rgba(255,255,255,0.22); transition: background .3s, width .3s cubic-bezier(.34,1.1,.64,1); cursor: pointer; }
 .whyus-dot.active { width: 18px; background: #fff; }
-@media (max-width: 1024px) { .whyus-layout { grid-template-columns: 1fr; } }
+@media (max-width: 1024px) { .whyus-layout { grid-template-columns: 1fr; } .whyus-tabs { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.07); } }
 
 /* Results highlight row */
 .results-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
