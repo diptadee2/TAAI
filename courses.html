@@ -116,7 +116,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .nav-dropdown::before { content: ''; position: absolute; top: -18px; left: 0; right: 0; height: 18px; }
 
 .nav-dropdown-wrap:hover .nav-dropdown { opacity: 1; transform: translateY(12px) scaleY(1); pointer-events: auto; }
-.nav-dd-item::before { content: ''; display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--purple); flex-shrink: 0; opacity: 0.5; transition: opacity .15s ease, transform .2s cubic-bezier(.34,1.56,.64,1); }
+.nav-dd-item::before { content: ''; display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: var(--purple); flex-shrink: 0; opacity: 0.5; align-self: center; transition: opacity .15s ease, transform .2s cubic-bezier(.34,1.56,.64,1); }
 .nav-dd-item:hover::before { opacity: 1; transform: scale(1.3); }
 .nav-dd-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 9px; text-decoration: none; color: var(--ink-dim); font-size: 11.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; white-space: nowrap; position: relative; opacity: 0; transform: translateY(5px); transition: background .14s ease, color .14s ease, opacity .13s ease, transform .13s ease; }
 .nav-dd-item:hover { background: linear-gradient(90deg, rgba(139,92,246,0.14) 0%, rgba(109,40,217,0.05) 100%); color: var(--purple); }
