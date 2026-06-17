@@ -198,6 +198,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .page-hero .hero-sub        { animation: pageHeroIn .60s cubic-bezier(.34,1.12,.64,1) .30s both; }
 .page-hero .ph-cta          { animation: pageHeroIn .58s cubic-bezier(.34,1.12,.64,1) .42s both; }
 .page-hero .hero-proof-row  { animation: pageHeroIn .65s cubic-bezier(.34,1.12,.64,1) .54s both; }
+.page-hero .hero-proof-link { animation: pageHeroIn .58s cubic-bezier(.34,1.12,.64,1) .72s both; }
 .page-hero { padding: 72px 0 56px; position: relative; overflow: hidden; background-image: radial-gradient(circle, rgba(139,92,246,0.14) 1.5px, transparent 1.5px); background-size: 32px 32px; }
 .page-hero::before { content: ''; position: absolute; top: -120px; right: -120px; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, var(--pink-soft) 0%, transparent 70%); pointer-events: none; }
 .page-hero::after { content: ''; position: absolute; bottom: -120px; left: -100px; width: 460px; height: 460px; border-radius: 50%; background: radial-gradient(circle, var(--blue-soft) 0%, transparent 70%); pointer-events: none; }
@@ -1845,7 +1846,7 @@ function App() {
                 </div>
               </div>
             </div>
-            <a href="testimonials.html" className="hero-proof-link fade-in">See all student stories <Icon.ArrowRight /></a>
+            <a href="testimonials.html" className="hero-proof-link">See all student stories <Icon.ArrowRight /></a>
           </div>
         </div>
       </section>
