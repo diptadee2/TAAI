@@ -4,7 +4,13 @@
 
 [[redirects]]
   from = "/learn"
-  to = "https://taai.live/index.html"
+  to = "https://taai.live/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/learn/*"
+  to = "https://taai.live/"
   status = 301
   force = true
 
