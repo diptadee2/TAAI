@@ -38,3 +38,33 @@
   from = "/contact"
   to = "/contact.html"
   status = 200
+
+[[redirects]]
+  from = "/courses.html"
+  to = "/courses"
+  status = 301
+
+[[redirects]]
+  from = "/test-series.html"
+  to = "/test-series"
+  status = 301
+
+[[redirects]]
+  from = "/testimonials.html"
+  to = "/testimonials"
+  status = 301
+
+[[redirects]]
+  from = "/resources.html"
+  to = "/resources"
+  status = 301
+
+[[redirects]]
+  from = "/contact.html"
+  to = "/contact"
+  status = 301
+
+[[redirects]]
+  from = "/index.html"
+  to = "/"
+  status = 301
