@@ -1215,6 +1215,53 @@ body.buttons-visible .mcb-wa:hover { transform: scale(1.12); transition-delay: 0
   .back-to-top { bottom: 32px; width: 48px; height: 48px; right: 16px; }
 }
 </style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://taai.live/#organization",
+      "name": "TAAI",
+      "url": "https://taai.live",
+      "logo": "https://taai.live/logo.webp",
+      "email": "support@taai.live"
+    },
+    {
+      "@type": "Course",
+      "name": "TAAI GATE DA 2027 Test Series",
+      "description": "Full-length mock tests, subject-wise and topic-wise quizzes with detailed solutions. 1000+ questions in a GATE-like CBT interface.",
+      "provider": { "@id": "https://taai.live/#organization" },
+      "url": "https://taai.live/test-series"
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What types of tests are included?",
+          "acceptedAnswer": { "@type": "Answer", "text": "The test series includes topic-wise tests, subject-wise tests, and full-length tests (3 hours, full syllabus, real GATE DA pattern). Every category is live according to the schedule." }
+        },
+        {
+          "@type": "Question",
+          "name": "What does the GATE-like interface look like?",
+          "acceptedAnswer": { "@type": "Answer", "text": "It replicates the official GATE CBT environment — question palette, section timer, marking scheme (+1, +2 and −0.33, −0.66), review later, and submit. You'll have zero interface anxiety on exam day." }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I attempt tests on mobile?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes, the platform works on mobile browsers. However, we strongly recommend desktop for full-length tests to match real GATE conditions — they're three-hour sessions." }
+        },
+        {
+          "@type": "Question",
+          "name": "Who makes the solutions?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Everything is curated by Manoj Kumar and his team." }
+        }
+      ]
+    }
+  ]
+}
+</script>
 </head>
 <body>
 <div id="root"></div>

@@ -1139,6 +1139,50 @@ body.buttons-visible .mcb-wa:hover { transform: scale(1.12); transition-delay: 0
   .course-testi-card:active { transform: scale(0.975); transition-duration: .12s; }
 }
 </style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://taai.live/#organization",
+      "name": "TAAI",
+      "url": "https://taai.live",
+      "logo": "https://taai.live/logo.webp",
+      "email": "support@taai.live"
+    },
+    {
+      "@type": "ItemList",
+      "name": "GATE DA 2027 Courses by TAAI",
+      "url": "https://taai.live/courses",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "item": {
+            "@type": "Course",
+            "name": "TAAI Full Course — GATE DA 2027",
+            "description": "Complete GATE DA preparation covering Mathematics, Machine Learning, and Data Science taught visually and conceptually.",
+            "provider": { "@id": "https://taai.live/#organization" },
+            "url": "https://taai.live/courses#combos"
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "item": {
+            "@type": "Course",
+            "name": "Interview Preparation — DS & AI",
+            "description": "Career prep for AI and Data Science roles including live sessions, real-world projects, and interview mentorship.",
+            "provider": { "@id": "https://taai.live/#organization" },
+            "url": "https://taai.live/courses#interview"
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
 </head>
 <body>
 <div id="root"></div>
