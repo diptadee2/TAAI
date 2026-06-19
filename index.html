@@ -805,8 +805,9 @@ body {
   max-width: 700px; margin: 0 auto;
   gap: 56px; align-items: start; position: relative; z-index: 1;
 }
-.instructor-photo-wrap { position: relative; border-radius: var(--radius-xl); overflow: hidden; }
-.instructor-photo { width: 100%; display: block; border-radius: var(--radius-xl); transition: transform .55s cubic-bezier(.25,.46,.45,.94); }
+.instructor-photo-wrap { position: relative; border-radius: var(--radius-xl); overflow: hidden; width: 100%; }
+.instructor-faculty-grid > * { min-width: 0; }
+.instructor-photo { width: 100%; max-width: 100%; height: auto; display: block; border-radius: var(--radius-xl); transition: transform .55s cubic-bezier(.25,.46,.45,.94); }
 .instructor-photo-wrap:hover .instructor-photo { transform: scale(1.04); }
 @keyframes play-pulse-ring {
   0%   { box-shadow: 0 4px 20px rgba(255,0,0,0.42), 0 2px 8px rgba(0,0,0,0.22), 0 0 0 0px  rgba(255,65,108,0.55); }
