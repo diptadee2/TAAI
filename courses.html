@@ -227,11 +227,13 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .page-hero .hero-proof-row .hero-proof:nth-child(1) {
   background: radial-gradient(circle at 88% -15%, rgba(255,255,255,0.22) 0%, transparent 55%), linear-gradient(135deg, #6d28d9 0%, #4f46e5 50%, #2563eb 100%);
   animation: proof-float1 5s ease-in-out 0s infinite;
+  filter: saturate(0.6);
 }
 .page-hero .hero-proof-row .hero-proof:nth-child(2) {
   background: radial-gradient(circle at 88% -15%, rgba(255,255,255,0.22) 0%, transparent 55%), linear-gradient(135deg, #db2777 0%, #9333ea 50%, #6d28d9 100%);
   animation: proof-float2 6.5s ease-in-out -3.25s infinite;
   margin-top: 12px;
+  filter: saturate(0.6);
 }
 @keyframes proof-orb-a { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-12px,10px) scale(1.1)} }
 @keyframes proof-orb-b { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(8px,-8px) scale(1.08)} }
