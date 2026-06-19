@@ -7,7 +7,7 @@
 <title>TAAI · GATE DA Courses</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #FFFFFF;
@@ -34,7 +34,7 @@
   --shadow-md: 0 2px 0 rgba(20,16,43,0.03), 0 12px 32px rgba(107,75,255,0.08);
   --shadow-lg: 0 24px 60px rgba(107,75,255,0.16);
 
-  --font-display: 'Instrument Serif', ui-serif, serif;
+  --font-display: 'Playfair Display', ui-serif, serif;
   --font-body: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'DM Mono', ui-monospace, monospace;
 
@@ -241,7 +241,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .page-hero-right { min-width: 0; }
 .page-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--purple); margin-bottom: 20px; }
 .page-eyebrow::before { content: ''; display: inline-block; width: 20px; height: 2px; background: linear-gradient(90deg, var(--pink), var(--purple)); border-radius: 2px; }
-.page-hero h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(42px, 5.5vw, 80px); line-height: 0.95; letter-spacing: -0.04em; margin-bottom: 22px; }
+.page-hero h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(42px, 5.5vw, 80px); line-height: 0.95; letter-spacing: -0.04em; margin-bottom: 22px; }
 .page-hero h1 em { font-style: normal; background: linear-gradient(120deg, var(--pink) 0%, var(--purple) 50%, var(--blue) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
 /* Hero proof strip */
@@ -259,7 +259,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .hero-proof::before {
   content: '\201D';
   position: absolute; bottom: -16px; right: 12px;
-  font-family: var(--font-display); font-size: 80px; font-weight: 400; line-height: 1;
+  font-family: var(--font-display); font-size: 80px; font-weight: 600; line-height: 1;
   color: var(--purple); opacity: 0.07;
   pointer-events: none; user-select: none;
   transition: opacity .32s ease, transform .32s cubic-bezier(.34,1.1,.64,1);
@@ -279,7 +279,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .hero-proof-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .hero-proof-rank { font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--purple); background: var(--purple-soft); padding: 3px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: .08em; }
 .hero-proof-stars { color: #F59E0B; font-size: 12px; letter-spacing: 1px; }
-.hero-proof-quote { font-family: var(--font-display); font-size: 14px; font-weight: 400; color: var(--ink); line-height: 1.6; letter-spacing: -0.01em; margin-bottom: 0; flex: 1; }
+.hero-proof-quote { font-family: var(--font-display); font-size: 14px; font-weight: 600; color: var(--ink); line-height: 1.6; letter-spacing: -0.01em; margin-bottom: 0; flex: 1; }
 .hero-proof-footer { display: flex; align-items: center; gap: 10px; padding-top: 14px; margin-top: 16px; border-top: 1px solid var(--line); }
 .hero-proof-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--pink), var(--purple)); display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 12px; flex-shrink: 0; box-shadow: 0 2px 8px rgba(139,92,246,.28); }
 .hero-proof-name { font-size: 13px; font-weight: 700; color: var(--ink); }
@@ -307,7 +307,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .section + .section { border-top: 1px solid transparent; border-image: linear-gradient(90deg, transparent, rgba(139,92,246,0.2) 35%, rgba(236,72,153,0.2) 65%, transparent) 1; }
 .section-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--purple); margin-bottom: 16px; }
 .section-eyebrow::before { content: ''; display: inline-block; width: 20px; height: 2px; background: linear-gradient(90deg, var(--pink), var(--purple)); border-radius: 2px; }
-.section h2 { font-family: var(--font-display); font-size: clamp(30px, 3.8vw, 52px); font-weight: 400; letter-spacing: -0.035em; line-height: 1; margin-bottom: 16px; }
+.section h2 { font-family: var(--font-display); font-size: clamp(30px, 3.8vw, 52px); font-weight: 600; letter-spacing: -0.035em; line-height: 1; margin-bottom: 16px; }
 .section h2 em { font-style: normal; background: linear-gradient(120deg, var(--pink), var(--purple), var(--blue), var(--purple), var(--pink)); background-size: 250% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: grad-drift 9s ease infinite; }
 .section-sub { font-size: 17px; color: var(--ink-dim); line-height: 1.5; max-width: 560px; margin-bottom: 48px; }
 
@@ -414,7 +414,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .combo-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 13px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; align-self: flex-start; margin-bottom: 22px; position: relative; z-index: 1; }
 .combo-badge.best { background: linear-gradient(135deg, var(--pink), var(--purple)); color: #fff; box-shadow: 0 4px 14px rgba(139,92,246,0.4); }
 .combo-badge.combo { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.72); border: 1px solid rgba(255,255,255,0.14); }
-.combo-title { font-family: var(--font-display); font-size: 26px; font-weight: 400; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 6px; color: #fff; position: relative; z-index: 1; }
+.combo-title { font-family: var(--font-display); font-size: 26px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 6px; color: #fff; position: relative; z-index: 1; }
 .combo-card.featured .combo-title { font-size: 30px; }
 .combo-validity { font-family: var(--font-mono); font-size: 10px; color: rgba(255,255,255,0.35); margin-bottom: 18px; letter-spacing: .08em; position: relative; z-index: 1; }
 .combo-divider { height: 1px; background: rgba(255,255,255,0.09); margin: 0 0 18px; position: relative; z-index: 1; }
@@ -434,7 +434,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 @keyframes data-fade-in { from { opacity: 0; } to { opacity: 1; } }
 .data-fade-in { animation: data-fade-in .38s ease both; }
 .combo-price-row { display: flex; align-items: baseline; gap: 10px; margin-top: auto; padding-top: 20px; margin-bottom: 22px; position: relative; z-index: 1; }
-.combo-price { font-family: var(--font-display); font-size: 38px; font-weight: 400; letter-spacing: -0.04em; color: #fff; }
+.combo-price { font-family: var(--font-display); font-size: 38px; font-weight: 600; letter-spacing: -0.04em; color: #fff; }
 .combo-card.featured .combo-price { font-size: 44px; background: linear-gradient(135deg, #ede0ff 0%, #c4b0ff 55%, #a78bfa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 .combo-price-old { font-size: 15px; color: rgba(255,255,255,0.3); text-decoration: line-through; }
 .combo-discount { font-size: 11px; font-weight: 700; color: #fff; background: linear-gradient(135deg, var(--pink), var(--purple)); padding: 4px 10px; border-radius: 999px; }
@@ -452,7 +452,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .combo-card .btn-primary svg { transition: transform .28s ease-out; flex-shrink: 0; }
 .combo-card .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 16px 40px rgba(139,92,246,0.5), 0 4px 12px rgba(236,72,153,0.3); }
 .combo-card .btn-primary:hover svg { transform: translateX(3px); }
-.combo-num { position: absolute; top: 22px; right: 24px; z-index: 0; font-family: var(--font-display); font-size: 52px; font-weight: 400; letter-spacing: -0.05em; line-height: 1; pointer-events: none; color: #fff; opacity: 0.07; transition: opacity .32s ease; }
+.combo-num { position: absolute; top: 22px; right: 24px; z-index: 0; font-family: var(--font-display); font-size: 52px; font-weight: 600; letter-spacing: -0.05em; line-height: 1; pointer-events: none; color: #fff; opacity: 0.07; transition: opacity .32s ease; }
 .combo-card:hover .combo-num { opacity: 0.18; }
 .combo-card.featured .combo-num { opacity: 0.12; }
 .combo-card.featured:hover .combo-num { opacity: 0.24; }
@@ -501,7 +501,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 .course-card:hover .course-icon { transform: scale(1.14) translateY(-3px); box-shadow: 0 10px 28px rgba(0,0,0,0.28); }
 .course-title {
-  font-family: var(--font-display); font-size: 20px; font-weight: 400;
+  font-family: var(--font-display); font-size: 20px; font-weight: 600;
   letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 6px;
   position: relative; z-index: 1; transition: color .28s ease;
 }
@@ -538,7 +538,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   margin-top: auto; margin-bottom: 18px; position: relative; z-index: 1;
 }
 .course-price {
-  font-family: var(--font-display); font-size: 26px; font-weight: 400;
+  font-family: var(--font-display); font-size: 26px; font-weight: 600;
   letter-spacing: -0.03em; transition: color .28s ease;
 }
 .course-card:hover .course-price { color: #fff; }
@@ -588,7 +588,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 .placement-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lilac); animation: live-blink 2s ease-in-out infinite; }
 .placement-title {
-  font-family: var(--font-display); font-size: clamp(26px,2.8vw,38px); font-weight: 400;
+  font-family: var(--font-display); font-size: clamp(26px,2.8vw,38px); font-weight: 600;
   letter-spacing: -0.03em; line-height: 1.1; color: #fff; margin-bottom: 14px;
 }
 .placement-title em { background: linear-gradient(120deg, var(--purple), var(--lilac)); -webkit-background-clip: text; background-clip: text; color: transparent; font-style: normal; }
@@ -627,7 +627,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .incl-tab-icon { width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0; display: grid; place-items: center; color: #fff; transition: transform .2s; }
 .incl-tab.active .incl-tab-icon { transform: scale(1.1); }
 .incl-tab-info { min-width: 0; flex: 1; }
-.incl-tab-label { font-family: var(--font-display); font-size: 15px; font-weight: 400; letter-spacing: -0.01em; color: var(--ink); line-height: 1.2; }
+.incl-tab-label { font-family: var(--font-display); font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); line-height: 1.2; }
 .incl-tab-sub { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
 .incl-tab-chevron { margin-left: auto; flex-shrink: 0; opacity: 0; transform: translateX(-4px); transition: opacity .2s, transform .2s; color: var(--purple); }
 .incl-tab.active .incl-tab-chevron { opacity: 1; transform: translateX(0); }
@@ -648,10 +648,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 @keyframes inclIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 .incl-content { position: relative; z-index: 1; animation: inclIn 0.32s cubic-bezier(.4,0,.2,1) both; }
 .incl-eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: .15em; text-transform: uppercase; color: rgba(255,255,255,0.38); margin-bottom: 14px; }
-.incl-ptitle { font-family: var(--font-display); font-size: clamp(26px,3vw,40px); font-weight: 400; letter-spacing: -0.035em; line-height: 1.06; color: #fff; margin-bottom: 16px; }
+.incl-ptitle { font-family: var(--font-display); font-size: clamp(26px,3vw,40px); font-weight: 600; letter-spacing: -0.035em; line-height: 1.06; color: #fff; margin-bottom: 16px; }
 .incl-pdesc { font-size: 15px; color: rgba(255,255,255,0.56); line-height: 1.66; margin-bottom: 32px; max-width: 400px; }
 .incl-pstat { display: flex; align-items: baseline; gap: 10px; }
-.incl-pstat-num { font-family: var(--font-display); font-size: clamp(34px, 5vw, 52px); font-weight: 400; letter-spacing: -0.05em; line-height: 1; }
+.incl-pstat-num { font-family: var(--font-display); font-size: clamp(34px, 5vw, 52px); font-weight: 600; letter-spacing: -0.05em; line-height: 1; }
 .incl-pstat-lbl { font-size: 13px; color: rgba(255,255,255,0.42); }
 @media (max-width: 1024px) { .incl-layout { grid-template-columns: 1fr; } }
 
@@ -725,7 +725,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .compare-footer-cell { padding: 18px 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
 .compare-footer-cell:first-child { position: sticky; left: 0; background: var(--bg-soft); z-index: 1; }
 .compare-footer-cell.featured { background: rgba(139,92,246,0.08); border-bottom: 3px solid var(--purple); }
-.compare-price { font-family: var(--font-display); font-size: 22px; font-weight: 400; letter-spacing: -0.03em; color: var(--ink); }
+.compare-price { font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: -0.03em; color: var(--ink); }
 .compare-price.best { color: var(--purple); }
 
 .compare-row.zebra { background: rgba(0,0,0,0.018); }
@@ -775,7 +775,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   padding: 22px 20px 26px;
   opacity: 1;
 }
-.incl-accordion-body-title { font-family: var(--font-display); font-size: 22px; font-weight: 400; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 10px; }
+.incl-accordion-body-title { font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 10px; }
 .incl-accordion-body-desc { font-size: 14px; color: rgba(255,255,255,0.56); line-height: 1.65; margin-bottom: 16px; }
 
 @media (max-width: 768px) {
@@ -938,7 +938,7 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 }
 .why-strip-label::before { content: ''; display: inline-block; width: 20px; height: 2px; background: linear-gradient(90deg, var(--pink), var(--purple)); border-radius: 2px; }
 .why-strip-h2 {
-  font-family: var(--font-display); font-size: clamp(30px, 3.8vw, 52px); font-weight: 400;
+  font-family: var(--font-display); font-size: clamp(30px, 3.8vw, 52px); font-weight: 600;
   letter-spacing: -0.035em; line-height: 1; margin-bottom: 16px; color: var(--ink);
 }
 .why-strip-h2 em { font-style: normal; background: linear-gradient(120deg, var(--pink) 0%, var(--purple) 50%, var(--blue) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
@@ -975,7 +975,7 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 .why-bd-2 .why-icon-wrap { background: linear-gradient(135deg, #ec4899, #c45fcf); }
 .why-bd-3 .why-icon-wrap { background: linear-gradient(135deg, #06b6d4, #4da8ff); }
 .why-heading {
-  font-family: var(--font-display); font-size: 20px; font-weight: 400;
+  font-family: var(--font-display); font-size: 20px; font-weight: 600;
   letter-spacing: -0.02em; line-height: 1.2; color: #fff;
   position: relative; z-index: 2; margin-bottom: 12px;
 }
@@ -1110,7 +1110,7 @@ body.buttons-visible .mcb-wa:hover { transform: scale(1.12); transition-delay: 0
 }
 .course-testi-stars { color: #F59E0B; font-size: 13px; letter-spacing: 2px; }
 .course-testi-quote {
-  font-family: var(--font-display); font-size: 15.5px; font-weight: 400;
+  font-family: var(--font-display); font-size: 15.5px; font-weight: 600;
   color: var(--ink); line-height: 1.7; letter-spacing: -0.01em;
   flex: 1;
 }
@@ -1614,7 +1614,7 @@ function IncludedShowcase() {
     <section className="section" style={{ background: 'var(--bg-soft)' }}>
       <div className="container">
         <div className="section-eyebrow fade-in">Every course includes</div>
-        <h2 className="fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 400, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 12 }}>
+        <h2 className="fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 12 }}>
           More than just <em>video lectures</em>
         </h2>
         <p className="section-sub fade-in">Every TAAI course ships with the full support stack, not just recorded classes.</p>
@@ -1895,7 +1895,7 @@ function App() {
           <div className="combos-header">
             <div className="combos-header-text">
               <div className="section-eyebrow fade-in">Packages</div>
-              <h2 className="section fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 400, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 12, padding: 0 }}>
+              <h2 className="section fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 12, padding: 0 }}>
                 Best value <em>bundles</em>
               </h2>
               <p className="section-sub fade-in">Save more when you bundle. All bundles include quizzes and full course includes quizzes, weekly schedules, subject wise monthly schedules, and GATE mentorship.</p>
@@ -1917,7 +1917,7 @@ function App() {
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 12 }}>
             <div>
               <div className="section-eyebrow fade-in">Individual</div>
-              <h2 className="fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 400, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 12 }}>
+              <h2 className="fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 12 }}>
                 Pick a <em>single subject</em>
               </h2>
               <p className="section-sub fade-in">Need to strengthen one area? Get any subject standalone.</p>
@@ -1941,7 +1941,7 @@ function App() {
       <section className="course-testi-section">
         <div className="container" style={{ position: 'relative', zIndex: 1 }}>
           <div className="section-eyebrow fade-in">Student Stories</div>
-          <h2 className="fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 400, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 0 }}>
+          <h2 className="fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 0 }}>
             What our <em>rankers said.</em>
           </h2>
           <div className="course-testi-grid">
@@ -1984,7 +1984,7 @@ function App() {
       <section className="section" id="interview" style={{ background: 'var(--bg)', paddingTop: 'var(--section-pad)' }}>
         <div className="container">
           <div className="section-eyebrow fade-in">What's next</div>
-          <h2 className="fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 400, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 12 }}>
+          <h2 className="fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 12 }}>
             From GATE to your <em>dream job</em>
           </h2>
           <p className="section-sub fade-in">GATE gets you the IIT tag. We'll help you convert it into a career in DS and AI.</p>
