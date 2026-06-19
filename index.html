@@ -681,6 +681,8 @@ body {
 .offer-bullets { list-style: none; margin: 14px 0 0; display: flex; flex-direction: column; gap: 7px; }
 .offer-bullets li { font-size: 13px; color: rgba(255,255,255,0.78); display: flex; align-items: center; gap: 9px; }
 .offer-bullets li::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.55); flex-shrink: 0; }
+@keyframes offerValidityIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+.offer-validity { animation: offerValidityIn 0.4s ease forwards; }
 .offer-footer { position: relative; z-index: 1; margin-top: 24px; }
 .offer-link { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; font-size: 14px; color: var(--purple); transition: color .28s ease, gap .2s ease; }
 .offer-card:hover .offer-link { color: #fff; gap: 12px; }
@@ -1956,7 +1958,7 @@ function Offer() {
                   <div className="offer-desc">{c.desc}</div>
                   <div className="offer-detail">
                     <ul className="offer-bullets">
-                      {bullets.map((b, j) => <li key={j}>{b}</li>)}
+                      {bullets.map((b, j) => <li key={j} className={validity && j === bullets.length - 1 ? 'offer-validity' : undefined}>{b}</li>)}
                     </ul>
                   </div>
                 </div>
