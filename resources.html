@@ -7,7 +7,7 @@
 <title>TAAI · Resources</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #FFFFFF; --bg-soft: #FBF9FF; --ink: #14102B; --ink-dim: #4A4270; --ink-soft: #857CAE;
@@ -21,6 +21,7 @@
   --font-display: 'Poppins', ui-sans-serif, system-ui, sans-serif;
   --font-body: 'Poppins', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'DM Mono', ui-monospace, monospace;
+  --font-nav: 'Fraunces', ui-serif, serif;
   --gutter: 32px; --section-pad: 96px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -36,7 +37,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .nav-logo { display: flex; align-items: center; text-decoration: none; transition: transform .22s ease-out, opacity .22s ease; }
 .nav-logo img { width: 180px; height: auto; }
 .nav-logo:hover { transform: translateY(-2px); opacity: 0.82; }
-.nav-links { display: flex; gap: 36px; font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; position: relative; }
+.nav-links { display: flex; gap: 36px; font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; font-family: var(--font-nav); position: relative; }
 .nav-links a { color: var(--ink-dim); text-decoration: none; transition: color .2s, transform .3s cubic-bezier(.34,1.1,.64,1); position: relative; z-index: 1; cursor: pointer; display: inline-block; white-space: nowrap; }
 .nav-links a:hover, .nav-links a.active { color: var(--purple); transform: scale(1.08) translateY(-1px); }
 .nav-pill { position: absolute; top: 50%; transform: translateY(-50%); height: 34px; border-radius: 10px; pointer-events: none; z-index: 0; background: linear-gradient(150deg,rgba(255,255,255,0.36) 0%,rgba(180,155,255,0.14) 40%,rgba(139,92,246,0.10) 68%,rgba(255,255,255,0.24) 100%); border: 1px solid rgba(255,255,255,0.55); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 2px 12px rgba(139,92,246,0.10), inset 0 1.5px 0 rgba(255,255,255,0.82); transition: left .3s cubic-bezier(0.34,1.2,0.64,1), width .28s cubic-bezier(0.34,1.15,0.64,1), opacity .2s ease; }
@@ -57,7 +58,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .mobile-menu-link:hover .mobile-menu-link-chevron, .mobile-menu-link.active .mobile-menu-link-chevron { opacity: 0.65; transform: translateX(3px); }
 .mobile-menu-link:hover .mobile-menu-link-icon, .mobile-menu-link.active .mobile-menu-link-icon { opacity: 1; }
 .mobile-menu-link.active::before { content: ''; position: absolute; left: 0; top: 22%; bottom: 22%; width: 3px; border-radius: 2px; background: var(--purple); }
-.mobile-menu-link { position: relative; }
+.mobile-menu-link { font-family: var(--font-nav); position: relative; }
 .nav-cta { display: flex; gap: 10px; align-items: center; }
 .btn-nav-signin { display: inline-flex; align-items: center; padding: 10px 22px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; background: rgba(139,92,246,0.07); color: var(--ink); border: 1px solid rgba(139,92,246,0.22); transition: background .2s, transform .32s cubic-bezier(.34,1.1,.64,1); white-space: nowrap; }
 .btn-nav-signin:hover { background: rgba(139,92,246,0.13); transform: scale(1.06) translateY(-1px); }
@@ -78,7 +79,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .mobile-menu::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--purple), rgba(139,92,246,0.15)); pointer-events: none; }
 .mobile-menu.open { transform: translateY(0); opacity: 1; pointer-events: auto; }
 @keyframes menuItemIn { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: translateX(0); } }
-.mobile-menu-link { display: flex; align-items: center; gap: 11px; padding: 12px 14px; border-radius: 12px; font-size: 14px; font-weight: 700; color: var(--ink-dim); text-decoration: none; letter-spacing: .05em; text-transform: uppercase; transition: background .18s, color .18s, transform .12s ease; position: relative; }
+.mobile-menu-link { font-family: var(--font-nav); display: flex; align-items: center; gap: 11px; padding: 12px 14px; border-radius: 12px; font-size: 14px; font-weight: 700; color: var(--ink-dim); text-decoration: none; letter-spacing: .05em; text-transform: uppercase; transition: background .18s, color .18s, transform .12s ease; position: relative; }
 .mobile-menu.open .mobile-menu-link { animation: menuItemIn .3s both cubic-bezier(.4,0,.2,1); }
 .mobile-menu-link:active { transform: scale(0.97) !important; }
 .mobile-menu-link:hover { background: rgba(139,92,246,0.08); color: var(--purple); }
