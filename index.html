@@ -1122,8 +1122,9 @@ body {
   :root { --section-pad: 56px; }
   .nav-inner { height: 64px; }
   .mobile-menu { top: 64px; }
-  .hero-bento-1, .hero-bento-2 { display: none; }
-  .hero-visual { display: none; }
+  .hero-visual { display: flex !important; flex-direction: row !important; gap: 12px !important; margin-top: 8px; place-self: unset !important; }
+  .hero-bento-1, .hero-bento-2 { display: flex; min-height: 130px; flex: 1; }
+  .hero-bento-2 { margin-top: 0; }
   .stats-grid { grid-template-columns: repeat(3, 1fr); }
   .stat-item { padding: 0 20px; }
   .stat-num { font-size: 46px; }
@@ -1174,6 +1175,8 @@ body {
   :root { --section-pad: 40px; }
   .results-grid { grid-template-columns: 1fr; }
   .section-head { margin-bottom: 28px; }
+  .hero h1 { letter-spacing: -0.02em; }
+  .section h2 { letter-spacing: -0.02em; }
 }
 /* Why TAAI mobile accordion */
 .whyus-acc { display: flex; flex-direction: column; gap: 8px; }
