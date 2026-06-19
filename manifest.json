@@ -1,0 +1,21 @@
+{
+  "name": "TAAI – GATE DA 2027 Prep",
+  "short_name": "TAAI",
+  "description": "India's top GATE DA prep — mathematics, ML, and data science taught visually.",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#0a0a0f",
+  "theme_color": "#6d28d9",
+  "icons": [
+    {
+      "src": "/logo.webp",
+      "sizes": "192x192",
+      "type": "image/webp"
+    },
+    {
+      "src": "/logo.webp",
+      "sizes": "512x512",
+      "type": "image/webp"
+    }
+  ]
+}
