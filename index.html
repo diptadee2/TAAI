@@ -1879,6 +1879,13 @@ function Stats() {
   );
 }
 
+// ============ PRICING CSV ============
+const PRICING_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSVYXQcKli0NtjXf93cxRwx3A15WiNcETEw26MubPYIihLyMQs2rfZjXKm85fNsOxxlUWkoyR89DKCK/pub?gid=0&single=true&output=csv';
+const _parseCSV = text => { const parseLine = line => { const out = []; let cur = '', inQ = false; for (let i = 0; i < line.length; i++) { const ch = line[i]; if (ch === '"') { if (inQ && line[i+1] === '"') { cur += '"'; i++; } else inQ = !inQ; } else if (ch === ',' && !inQ) { out.push(cur.trim()); cur = ''; } else cur += ch; } out.push(cur.trim()); return out; }; const rows = text.trim().split('\n'); const headers = parseLine(rows[0]); return rows.slice(1).filter(r => r.trim()).map(r => Object.fromEntries(headers.map((h, i) => [h, parseLine(r)[i] || '']))); };
+const _fmtDate = d => { if (!d) return ''; const dt = new Date(d + 'T00:00:00'); return dt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); };
+let _pricingCache = null;
+const _pricingFetch = fetch(PRICING_CSV_URL).then(r => r.text()).then(text => { const map = {}; _parseCSV(text).forEach(r => { if (r.id) map[r.id] = r; }); _pricingCache = map; return map; }).catch(() => { _pricingCache = {}; return {}; });
+
 // ============ OFFER STRIP ============
 const OFFERS = [
   {
@@ -1888,7 +1895,8 @@ const OFFERS = [
     tagline: 'Visual · Conceptual · Ranked',
     title: 'GATE DA Courses',
     desc: 'Conceptual, visualized, GATE-relevant. Learn the "why", not just the formulas.',
-    bullets: ['Recorded + GATE mentorship', '1,000+ weekly quiz questions', 'Valid till April 15, 2027'],
+    bullets: ['Recorded + GATE mentorship', '1,000+ weekly quiz questions'],
+    validityId: 'full-course',
     link: 'Explore courses', href: '/courses',
   },
   {
@@ -1914,6 +1922,8 @@ const OFFERS = [
 ];
 
 function Offer() {
+  const [pricingMap, setPricingMap] = React.useState(_pricingCache || {});
+  React.useEffect(() => { if (!_pricingCache) _pricingFetch.then(setPricingMap); }, []);
   return (
     <section className="section" id="offer">
       <div className="container">
@@ -1925,33 +1935,37 @@ function Offer() {
           </div>
         </div>
         <div className="offer-grid">
-          {OFFERS.map((c, i) => (
-            <a key={i} href={c.href} className={`offer-card card fade-in ${c.cls}`} style={{ '--delay': `${i * 90}ms` }} {...(c.newTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
-              <div className="offer-num">{c.num}</div>
-              <div className="offer-top">
-                <div className="offer-icon">{c.icon}</div>
-                {c.badge && (
-                  <div className={`offer-badge offer-badge-${c.badge.type}`}>
-                    <span className="offer-badge-dot" />
-                    {c.badge.label}
-                  </div>
-                )}
-              </div>
-              <div className="offer-body">
-                <div className="offer-tagline">{c.tagline}</div>
-                <div className="offer-title">{c.title}</div>
-                <div className="offer-desc">{c.desc}</div>
-                <div className="offer-detail">
-                  <ul className="offer-bullets">
-                    {c.bullets.map((b, j) => <li key={j}>{b}</li>)}
-                  </ul>
+          {OFFERS.map((c, i) => {
+            const validity = c.validityId ? _fmtDate((pricingMap[c.validityId] || {}).validity) : null;
+            const bullets = validity ? [...c.bullets, `Valid till ${validity}`] : c.bullets;
+            return (
+              <a key={i} href={c.href} className={`offer-card card fade-in ${c.cls}`} style={{ '--delay': `${i * 90}ms` }} {...(c.newTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+                <div className="offer-num">{c.num}</div>
+                <div className="offer-top">
+                  <div className="offer-icon">{c.icon}</div>
+                  {c.badge && (
+                    <div className={`offer-badge offer-badge-${c.badge.type}`}>
+                      <span className="offer-badge-dot" />
+                      {c.badge.label}
+                    </div>
+                  )}
                 </div>
-              </div>
-              <div className="offer-footer">
-                {c.link && <span className="offer-link">{c.link} <Icon.ArrowRight size={14} /></span>}
-              </div>
-            </a>
-          ))}
+                <div className="offer-body">
+                  <div className="offer-tagline">{c.tagline}</div>
+                  <div className="offer-title">{c.title}</div>
+                  <div className="offer-desc">{c.desc}</div>
+                  <div className="offer-detail">
+                    <ul className="offer-bullets">
+                      {bullets.map((b, j) => <li key={j}>{b}</li>)}
+                    </ul>
+                  </div>
+                </div>
+                <div className="offer-footer">
+                  {c.link && <span className="offer-link">{c.link} <Icon.ArrowRight size={14} /></span>}
+                </div>
+              </a>
+            );
+          })}
         </div>
       </div>
     </section>
