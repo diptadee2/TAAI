@@ -300,9 +300,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 @media (hover: none) { .hero-proof:active { transform: scale(0.975); transition-duration: .12s; } }
 @media (max-width: 768px) {
   .page-hero-inner { grid-template-columns: 1fr; gap: 36px; }
-  .hero-proof-row { flex-direction: row; flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; margin-left: calc(-1 * max(var(--gutter), 24px)); margin-right: calc(-1 * max(var(--gutter), 24px)); padding-left: max(var(--gutter), 24px); padding-right: max(var(--gutter), 24px); padding-bottom: 4px; gap: 12px; }
-  .hero-proof-row::-webkit-scrollbar { display: none; }
-  .hero-proof { flex: 0 0 82vw; scroll-snap-align: start; }
+  .hero-proof-row { flex-direction: column; gap: 12px; overflow: visible; }
+  .hero-proof { flex: none; width: 100%; animation: none !important; }
+  .page-hero .hero-proof-row .hero-proof:nth-child(1),
+  .page-hero .hero-proof-row .hero-proof:nth-child(2) { animation: none !important; }
   .hero-proof-link { display: flex; justify-content: center; margin-top: 16px; }
 }
 

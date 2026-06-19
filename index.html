@@ -61,11 +61,11 @@
 [data-cards="hard"] .card { box-shadow: 5px 5px 0 var(--ink); border: 1.5px solid var(--ink); }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; overflow-x: hidden; }
 body {
   font-family: var(--font-body);
   background: var(--bg); color: var(--ink);
-  -webkit-font-smoothing: antialiased; font-size: 16px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased; font-size: 16px; line-height: 1.5; overflow-x: hidden;
 }
 .display { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.01em; line-height: 1; }
 .mono { font-family: var(--font-mono); font-size: .78rem; letter-spacing: .02em; text-transform: uppercase; }
@@ -554,7 +554,7 @@ body {
 .toppers-sub { font-size: 13px; color: rgba(255,255,255,0.38); letter-spacing: .02em; }
 @keyframes topper-modal-in { from { opacity: 0; transform: translateY(20px) scale(0.96); } to { opacity: 1; transform: none; } }
 @keyframes topper-overlay-in { from { opacity: 0; } to { opacity: 1; } }
-.toppers-scroll-outer { overflow: visible; position: relative; padding: 44px 0; }
+.toppers-scroll-outer { overflow: hidden; position: relative; padding: 44px 0; }
 .toppers-scroll-outer::before, .toppers-scroll-outer::after { content: ''; position: absolute; top: 0; bottom: 0; width: 180px; z-index: 2; pointer-events: none; }
 .toppers-scroll-outer::before { left: 0; background: linear-gradient(to right, #07051a 0%, #07051a 8%, rgba(7,5,26,0.85) 28%, rgba(7,5,26,0.35) 60%, transparent 100%); }
 .toppers-scroll-outer::after  { right: 0; background: linear-gradient(to left,  #07051a 0%, #07051a 8%, rgba(7,5,26,0.85) 28%, rgba(7,5,26,0.35) 60%, transparent 100%); }
@@ -1125,9 +1125,12 @@ body {
   :root { --section-pad: 56px; }
   .nav-inner { height: 64px; }
   .mobile-menu { top: 64px; }
-  .hero-visual { display: flex !important; flex-direction: row !important; gap: 12px !important; margin-top: 8px; place-self: unset !important; }
-  .hero-bento-1, .hero-bento-2 { display: flex; min-height: 130px; flex: 1; }
+  .hero-visual { display: flex !important; flex-direction: row !important; gap: 10px !important; margin-top: 8px; place-self: unset !important; width: 100%; }
+  .hero-bento-1, .hero-bento-2 { display: flex; min-height: 120px; flex: 1; min-width: 0; }
   .hero-bento-2 { margin-top: 0; }
+  .hero-bento-card { padding: 16px; }
+  .bento-num { font-size: 28px; }
+  .bento-desc { font-size: 12px; }
   .stats-grid { grid-template-columns: repeat(3, 1fr); }
   .stat-item { padding: 0 20px; }
   .stat-num { font-size: 46px; }
