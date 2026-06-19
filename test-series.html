@@ -35,8 +35,8 @@
   --shadow-lg: 0 24px 60px rgba(107,75,255,0.16);
   --shadow-xl: 0 40px 80px rgba(107,75,255,0.22);
 
-  --font-display: 'Playfair Display', ui-serif, serif;
-  --font-body: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Poppins', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'DM Mono', ui-monospace, monospace;
 
   --gutter: 32px;
@@ -463,7 +463,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .feat-f:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(107,75,255,0.14); }
 .feat-icon { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; color: #fff; flex-shrink: 0; }
 .feat-dark .feat-icon { background: rgba(255,255,255,0.1) !important; }
-.feat-title { font-family: var(--font-display); font-size: 20px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; color: var(--ink); }
+.feat-title { font-family: var(--font-display); font-size: 20px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; color: var(--ink); }
 .feat-desc { font-size: 13.5px; color: var(--ink-dim); line-height: 1.6; }
 .feat-spacer { flex: 1; min-height: 6px; }
 .feat-chip { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 6px 13px; font-size: 11.5px; font-weight: 500; align-self: flex-start; }
@@ -498,7 +498,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .feat-dark:hover .feat-stat:nth-child(1) .feat-stat-num { animation-delay:  80ms; }
 .feat-dark:hover .feat-stat:nth-child(2) .feat-stat-num { animation-delay: 160ms; }
 .feat-dark:hover .feat-stat:nth-child(3) .feat-stat-num { animation-delay: 240ms; }
-.feat-stat-num { font-family: var(--font-display); font-size: 24px; font-weight: 600; letter-spacing: -0.04em; line-height: 1; background: linear-gradient(120deg, var(--lilac), #fff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.feat-stat-num { font-family: var(--font-display); font-size: 24px; font-weight: 600; letter-spacing: -0.01em; line-height: 1; background: linear-gradient(120deg, var(--lilac), #fff); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .feat-stat-lbl { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,0.32); }
 /* Question palette */
 .feat-palette { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin: 4px 0; }
@@ -555,7 +555,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .feat-rank-score { font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft); }
 .feat-rank-you-badge { font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 999px; background: rgba(139,92,246,0.18); border: 1px solid rgba(139,92,246,0.28); color: var(--purple); }
 /* Rank */
-.feat-rank-num { font-family: var(--font-display); font-size: clamp(44px,4.5vw,64px); font-weight: 600; letter-spacing: -0.05em; line-height: 1; background: linear-gradient(120deg,var(--pink),var(--purple),var(--lilac)); -webkit-background-clip: text; background-clip: text; color: transparent; flex-shrink: 0; width: clamp(130px,13vw,175px); text-align: center; font-variant-numeric: tabular-nums; transition: transform .3s cubic-bezier(.34,1.2,.64,1); }
+.feat-rank-num { font-family: var(--font-display); font-size: clamp(44px,4.5vw,64px); font-weight: 600; letter-spacing: -0.01em; line-height: 1; background: linear-gradient(120deg,var(--pink),var(--purple),var(--lilac)); -webkit-background-clip: text; background-clip: text; color: transparent; flex-shrink: 0; width: clamp(130px,13vw,175px); text-align: center; font-variant-numeric: tabular-nums; transition: transform .3s cubic-bezier(.34,1.2,.64,1); }
 .feat-f:hover .feat-rank-num { transform: scale(1.06); }
 .feat-rank-label { font-size: 10px; color: var(--ink-soft); font-family: var(--font-mono); letter-spacing: .06em; text-transform: uppercase; }
 .feat-rank-divider { width: 1px; align-self: stretch; background: rgba(139,92,246,0.2); flex-shrink: 0; }
@@ -641,7 +641,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .mentor-commit-text { flex: 1; min-width: 0; }
 .mentor-commit-label { font-size: 13.5px; font-weight: 600; color: rgba(255,255,255,0.82); }
 .mentor-commit-sub { font-size: 11.5px; color: rgba(255,255,255,0.36); margin-top: 2px; }
-.mentor-commit-num { font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: -0.04em; color: var(--lilac); flex-shrink: 0; }
+.mentor-commit-num { font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: -0.01em; color: var(--lilac); flex-shrink: 0; }
 @keyframes commitDetailIn {
   from { opacity: 0; transform: translateY(8px) scale(0.98); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
@@ -675,10 +675,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .pricing-card::after  { width: 320px; height: 320px; bottom: -140px; left: -60px; }
 .pricing-left { position: relative; z-index: 1; }
 .pricing-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 999px; padding: 6px 14px; font-size: 12px; font-weight: 600; margin-bottom: 20px; letter-spacing: .04em; }
-.pricing-title { font-family: var(--font-display); font-size: clamp(24px, 5vw, 36px); font-weight: 600; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 14px; }
+.pricing-title { font-family: var(--font-display); font-size: clamp(24px, 5vw, 36px); font-weight: 600; letter-spacing: -0.01em; line-height: 1.1; margin-bottom: 14px; }
 .pricing-subtitle { font-size: 15px; opacity: 0.7; line-height: 1.6; margin-bottom: 28px; max-width: 400px; }
 .pricing-row { display: flex; align-items: baseline; gap: 12px; margin-bottom: 6px; }
-.pricing-amount { font-family: var(--font-display); font-size: clamp(44px, 6vw, 64px); font-weight: 600; letter-spacing: -0.04em; line-height: 1; }
+.pricing-amount { font-family: var(--font-display); font-size: clamp(44px, 6vw, 64px); font-weight: 600; letter-spacing: -0.01em; line-height: 1; }
 .pricing-validity { font-size: 13px; opacity: 0.6; }
 .pricing-right { position: relative; z-index: 1; }
 .pricing-includes { display: flex; flex-direction: column; gap: 14px; margin-bottom: 32px; }
@@ -797,7 +797,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .ts-plan-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; margin-bottom: 20px; align-self: flex-start; position: relative; z-index: 2; }
 .ts-plan-badge-basic { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.38); border: 1px solid rgba(255,255,255,0.12); }
 .ts-plan-badge-featured { background: linear-gradient(135deg, rgba(139,92,246,0.32), rgba(99,102,241,0.22)); color: #c4b0ff; border: 1px solid rgba(139,92,246,0.44); }
-.ts-plan-name { font-family: var(--font-display); font-size: 22px; font-weight: 600; color: #fff; margin-bottom: 6px; line-height: 1.2; letter-spacing: -0.02em; position: relative; z-index: 2; }
+.ts-plan-name { font-family: var(--font-display); font-size: 22px; font-weight: 600; color: #fff; margin-bottom: 6px; line-height: 1.2; letter-spacing: -0.01em; position: relative; z-index: 2; }
 .ts-plan-tagline { font-size: 13px; color: rgba(255,255,255,0.36); margin-bottom: 24px; line-height: 1.55; position: relative; z-index: 2; }
 .ts-plan-price { font-family: var(--font-display); font-size: 54px; font-weight: 600; letter-spacing: -0.045em; color: #fff; line-height: 1; position: relative; z-index: 2; margin-bottom: 30px; }
 .ts-plan-featured .ts-plan-price { font-size: 62px; background: linear-gradient(135deg, #ede0ff 0%, #c4b0ff 55%, #a78bfa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }

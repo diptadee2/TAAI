@@ -7,7 +7,7 @@
 <title>TAAI · Student Testimonials, Real Ranks, Real Stories</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #FFFFFF;
@@ -30,8 +30,8 @@
   --shadow-sm: 0 1px 0 rgba(20,16,43,0.04), 0 2px 6px rgba(20,16,43,0.04);
   --shadow-md: 0 2px 0 rgba(20,16,43,0.03), 0 12px 32px rgba(107,75,255,0.08);
   --shadow-lg: 0 24px 60px rgba(107,75,255,0.16);
-  --font-display: 'Playfair Display', ui-serif, serif;
-  --font-body: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Poppins', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'DM Mono', ui-monospace, monospace;
   --gutter: 32px;
   --section-pad: 96px;
@@ -200,7 +200,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .hero-sub { font-size: 18px; color: var(--ink-dim); line-height: 1.6; max-width: 560px; margin: 0 auto 36px; }
 .hero-stats { display: flex; align-items: center; justify-content: center; gap: 40px; flex-wrap: wrap; }
 .hero-stat { text-align: center; }
-.hero-stat-num { font-family: var(--font-display); font-size: 40px; font-weight: 600; letter-spacing: -0.04em; line-height: 1; background: linear-gradient(120deg, var(--pink), var(--purple)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero-stat-num { font-family: var(--font-display); font-size: 40px; font-weight: 600; letter-spacing: -0.01em; line-height: 1; background: linear-gradient(120deg, var(--pink), var(--purple)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .hero-stat-label { font-size: 13px; color: var(--ink-soft); margin-top: 4px; }
 .hero-stat-div { width: 1px; height: 40px; background: var(--line); }
 
@@ -397,7 +397,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   pointer-events: none; filter: blur(20px);
   animation: feat-orb-b 12s ease-in-out 2s infinite;
 }
-.feat-rank-num { font-family: var(--font-display); font-size: 64px; font-weight: 600; letter-spacing: -0.05em; line-height: 1; background: linear-gradient(120deg, var(--pink), var(--lilac)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.feat-rank-num { font-family: var(--font-display); font-size: 64px; font-weight: 600; letter-spacing: -0.01em; line-height: 1; background: linear-gradient(120deg, var(--pink), var(--lilac)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .feat-quote { font-size: 16px; line-height: 1.65; color: rgba(255,255,255,0.82); font-style: italic; flex: 1; }
 .feat-author { display: flex; align-items: center; gap: 14px; }
 .feat-avatar { width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 22px; color: #fff; flex-shrink: 0; overflow: hidden; }
@@ -496,7 +496,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   pointer-events: none; animation: vcta-orb-2 9s ease-in-out infinite;
 }
 .video-cta-left { position: relative; z-index: 1; }
-.video-cta-left h2 { font-family: var(--font-display); font-size: clamp(28px,3vw,42px); font-weight: 600; letter-spacing: -0.03em; line-height: 1.05; margin-bottom: 14px; color: #fff; }
+.video-cta-left h2 { font-family: var(--font-display); font-size: clamp(28px,3vw,42px); font-weight: 600; letter-spacing: -0.01em; line-height: 1.05; margin-bottom: 14px; color: #fff; }
 .video-cta-left h2 em { font-style: normal; background: linear-gradient(120deg, var(--pink), var(--purple), #38bdf8); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: grad-drift 5s ease infinite; }
 .video-cta-left p { font-size: 15px; color: rgba(255,255,255,0.55); line-height: 1.6; max-width: 440px; }
 .video-cta-right { display: flex; flex-direction: column; gap: 12px; align-items: flex-end; flex-shrink: 0; position: relative; z-index: 1; }
