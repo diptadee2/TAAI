@@ -622,28 +622,44 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .placement-divider { height: 1px; background: rgba(255,255,255,0.07); }
 
 /* Every course includes, tab showcase (mirrors Why TAAI on landing page) */
-.incl-layout { display: grid; grid-template-columns: 360px 1fr; gap: 20px; align-items: stretch; }
-.incl-tabs { display: flex; flex-direction: column; gap: 6px; }
+.incl-layout {
+  display: grid; grid-template-columns: 360px 1fr; gap: 0; align-items: stretch;
+  border-radius: var(--radius-xl); overflow: hidden;
+  background: rgba(10,6,28,0.92);
+  backdrop-filter: blur(40px) saturate(180%); -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: 0 24px 64px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.14);
+}
+.incl-tabs {
+  display: flex; flex-direction: column; gap: 6px; justify-content: center;
+  background: none; border-radius: 0; padding: 20px;
+  border: none; border-right: 1px solid rgba(255,255,255,0.07); box-shadow: none;
+}
 .incl-tab {
   display: flex; align-items: center; gap: 14px;
   padding: 15px 16px; border-radius: var(--radius-md);
   cursor: pointer; text-align: left; width: 100%;
-  background: none; border: 1.5px solid transparent;
-  transition: background .2s, border-color .2s, box-shadow .2s, transform .18s;
-  font-family: inherit;
+  background: transparent; border: 1px solid transparent;
+  border-left: 3px solid transparent;
+  box-shadow: none;
+  transition: background .2s, border-color .2s, box-shadow .24s ease, transform .22s cubic-bezier(.34,1.1,.64,1);
+  font-family: inherit; position: relative; overflow: hidden;
+  animation: tabSlideIn .38s cubic-bezier(.34,1.1,.64,1) calc(var(--i,0) * 55ms + 100ms) both;
 }
-.incl-tab:hover { background: #fff; border-color: var(--line); }
-.incl-tab.active { background: #fff; border-color: var(--line); box-shadow: var(--shadow-md); transform: translateX(5px); }
-.incl-tab-icon { width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0; display: grid; place-items: center; color: #fff; transition: transform .2s; }
-.incl-tab.active .incl-tab-icon { transform: scale(1.1); }
+@keyframes tabSlideIn { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: translateX(0); } }
+.incl-tab:hover { background: rgba(255,255,255,0.06); border-color: transparent; border-left-color: var(--tab-color, var(--purple)); box-shadow: none; transform: translateX(3px); }
+.incl-tab.active { background: rgba(255,255,255,0.10); border-color: transparent; border-left-color: var(--tab-color, var(--purple)); box-shadow: none; transform: translateX(5px); }
+.incl-tab-icon { width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0; display: grid; place-items: center; color: #fff; transition: transform .22s cubic-bezier(.34,1.2,.64,1); }
+.incl-tab.active .incl-tab-icon { transform: scale(1.12) rotate(-4deg); }
+.incl-tab:hover:not(.active) .incl-tab-icon { transform: scale(1.06); }
 .incl-tab-info { min-width: 0; flex: 1; }
-.incl-tab-label { font-family: var(--font-display); font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); line-height: 1.2; }
-.incl-tab-sub { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
-.incl-tab-chevron { margin-left: auto; flex-shrink: 0; opacity: 0; transform: translateX(-4px); transition: opacity .2s, transform .2s; color: var(--purple); }
+.incl-tab-label { font-family: var(--font-display); font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: rgba(255,255,255,0.82); line-height: 1.2; }
+.incl-tab-sub { font-size: 12px; color: rgba(255,255,255,0.38); margin-top: 2px; transition: color .2s; }
+.incl-tab.active .incl-tab-sub { color: var(--tab-color, var(--purple)); }
+.incl-tab-chevron { margin-left: auto; flex-shrink: 0; opacity: 0; transform: translateX(-4px); transition: opacity .2s, transform .22s cubic-bezier(.34,1.1,.64,1); color: var(--tab-color, var(--purple)); }
 .incl-tab.active .incl-tab-chevron { opacity: 1; transform: translateX(0); }
 .incl-panel {
-  border-radius: var(--radius-xl);
-  background-color: var(--ink);
+  background-color: transparent;
   background-image: radial-gradient(circle at var(--mx, -200%) var(--my, -200%), rgba(139,92,246,0.28) 0%, transparent 55%);
   background-size: 100% 100%;
   padding: 48px; position: relative; overflow: hidden;
@@ -663,7 +679,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .incl-pstat { display: flex; align-items: baseline; gap: 10px; }
 .incl-pstat-num { font-family: var(--font-display); font-size: clamp(34px, 5vw, 52px); font-weight: 600; letter-spacing: -0.01em; line-height: 1; }
 .incl-pstat-lbl { font-size: 13px; color: rgba(255,255,255,0.42); }
-@media (max-width: 1024px) { .incl-layout { grid-template-columns: 1fr; } }
+@media (max-width: 1024px) { .incl-layout { grid-template-columns: 1fr; } .incl-tabs { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.07); } }
 
 /* Scroll fade-in */
 .fade-in { opacity: 0; transform: translateY(24px); transition: opacity .7s cubic-bezier(.4,0,.2,1), transform .7s cubic-bezier(.4,0,.2,1); }
@@ -934,8 +950,6 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   .combo-featured-frame, .combo-card.featured { -webkit-tap-highlight-color: transparent; }
   .combo-card.featured::after { animation: none; }
   .combo-card .btn-primary::before { animation: none; }
-  .incl-tab:hover { background: none; border-color: transparent; }
-  .incl-tab.active { transform: none; }
 }
 
 
@@ -1702,7 +1716,7 @@ function IncludedShowcase() {
           <div className="incl-layout fade-in">
             <div className="incl-tabs">
               {INCLUDED.map((feat, i) => (
-                <button key={i} className={`incl-tab${active === i ? ' active' : ''}`} onClick={() => setActive(i)}>
+                <button key={i} className={`incl-tab${active === i ? ' active' : ''}`} style={{ '--tab-color': feat.color, '--i': i }} onClick={() => setActive(i)}>
                   <div className="incl-tab-icon" style={{ background: feat.grad }}>{feat.icon}</div>
                   <div className="incl-tab-info">
                     <div className="incl-tab-label">{feat.label}</div>
