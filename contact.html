@@ -106,9 +106,9 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .nav-dropdown-wrap:hover .nav-dd-divider:nth-child(2) { transition-delay: .05s; }
 .nav-dropdown-wrap:hover .nav-dd-divider:nth-child(4) { transition-delay: .095s; }
 .nav-cta { display: flex; gap: 10px; align-items: center; }
-.btn-nav-signin { display: inline-flex; align-items: center; padding: 12px 28px; border-radius: 999px; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; background: #FFFFFF; color: var(--ink); border: none; box-shadow: 5px 5px 12px rgba(139,92,246,0.16), -5px -5px 12px rgba(255,255,255,0.9), inset 0 0 0 1px rgba(139,92,246,0.05); transition: box-shadow .25s ease, transform .32s cubic-bezier(.34,1.1,.64,1); white-space: nowrap; }
-.btn-nav-signin:hover { transform: scale(1.05) translateY(-1px); box-shadow: 7px 7px 16px rgba(139,92,246,0.2), -6px -6px 14px rgba(255,255,255,0.95), inset 0 0 0 1px rgba(139,92,246,0.08); }
-.btn-nav-signin:active { transform: scale(0.97); box-shadow: inset 4px 4px 10px rgba(139,92,246,0.18), inset -4px -4px 10px rgba(255,255,255,0.8); }
+.btn-nav-signin { display: inline-flex; align-items: center; padding: 12px 28px; border-radius: 999px; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; background: #FFFFFF; color: var(--ink); border: 1px solid rgba(139,92,246,0.14); box-shadow: 0 3px 10px rgba(139,92,246,0.14), 0 1px 3px rgba(0,0,0,0.04); transition: box-shadow .25s ease, transform .32s cubic-bezier(.34,1.1,.64,1); white-space: nowrap; }
+.btn-nav-signin:hover { transform: scale(1.05) translateY(-1px); box-shadow: 0 6px 18px rgba(139,92,246,0.2), 0 2px 5px rgba(0,0,0,0.06); }
+.btn-nav-signin:active { transform: scale(0.97); box-shadow: inset 0 2px 6px rgba(139,92,246,0.16); }
 .btn-nav-signup { display: inline-flex; align-items: center; padding: 12px 28px; border-radius: 999px; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; background: linear-gradient(160deg, #1d1748, var(--ink)); color: #fff; border: none; box-shadow: 6px 6px 16px rgba(20,16,43,0.45), -4px -4px 14px rgba(139,92,246,0.25), inset 0 1px 1px rgba(255,255,255,0.08); transition: box-shadow .25s ease, transform .32s cubic-bezier(.34,1.1,.64,1); white-space: nowrap; }
 .btn-nav-signup:hover { transform: scale(1.05) translateY(-1px); box-shadow: 8px 8px 20px rgba(20,16,43,0.5), -5px -5px 16px rgba(139,92,246,0.35), inset 0 1px 1px rgba(255,255,255,0.12); }
 .btn-nav-signup:active { transform: scale(0.97); box-shadow: inset 4px 4px 10px rgba(0,0,0,0.5), inset -3px -3px 8px rgba(139,92,246,0.15); }
@@ -116,11 +116,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .btn-nav-contact:hover { background: rgba(139,92,246,0.07); transform: scale(1.06) translateY(-1px); }
 .phone-icon { display: inline-flex; align-items: center; margin-right: 5px; transform-origin: 50% 55%; }
 .btn-nav-contact:hover .phone-icon { animation: phone-ring 0.52s ease-in-out; }
-.nav-cta .btn-nav-signin,
-.nav-cta .btn-nav-signup,
 .nav-cta .btn-nav-contact { position: relative; overflow: hidden; }
-.nav-cta .btn-nav-signin::before,
-.nav-cta .btn-nav-signup::before,
 .nav-cta .btn-nav-contact::before {
   content: '';
   position: absolute; inset: 0;
@@ -130,8 +126,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   border-radius: inherit;
   transition: none;
 }
-.nav-cta .btn-nav-signin:hover::before,
-.nav-cta .btn-nav-signup:hover::before,
 .nav-cta .btn-nav-contact:hover::before {
   transform: translateX(220%) skewX(-12deg);
   transition: transform .52s cubic-bezier(.2,.8,.4,1);
