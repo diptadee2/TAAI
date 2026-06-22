@@ -315,7 +315,8 @@ body {
 .hero-sub { font-size: 18px; color: rgba(255,255,255,0.62); max-width: 500px; margin-bottom: 24px; line-height: 1.55; }
 .hero-checks { display: flex; flex-direction: column; gap: 10px; margin-bottom: 32px; }
 .hero-check { display: flex; align-items: center; gap: 11px; font-size: 14.5px; color: rgba(255,255,255,0.86); font-weight: 450; }
-.hero-check-icon { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; }
+.hero-check-icon { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; transition: transform .2s cubic-bezier(.34,1.4,.64,1); }
+.hero-check:hover .hero-check-icon { transform: scale(1.12); }
 [data-hero="centered"] .hero-sub { margin-left: auto; margin-right: auto; }
 .hero-cta { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 32px; }
 .hero-meta { display: flex; gap: 32px; align-items: center; font-size: 14px; color: rgba(255,255,255,0.62); flex-wrap: wrap; }
@@ -2040,15 +2041,15 @@ function Hero() {
           </p>
           <div className="hero-checks">
             <div className="hero-check">
-              <span className="hero-check-icon" style={{ background: 'var(--purple-soft)' }}><Icon.Check size={11} style={{ color: 'var(--purple)' }} /></span>
+              <span className="hero-check-icon" style={{ background: 'linear-gradient(135deg, var(--purple), #6D3FE0)', boxShadow: '0 2px 10px rgba(139,92,246,0.55)' }}><Icon.Check size={12} style={{ color: '#fff' }} /></span>
               Built for GATE DA, not a repurposed CSE course
             </div>
             <div className="hero-check">
-              <span className="hero-check-icon" style={{ background: 'var(--pink-soft)' }}><Icon.Check size={11} style={{ color: 'var(--pink)' }} /></span>
+              <span className="hero-check-icon" style={{ background: 'linear-gradient(135deg, var(--pink), #E85A9A)', boxShadow: '0 2px 10px rgba(255,127,183,0.55)' }}><Icon.Check size={12} style={{ color: '#fff' }} /></span>
               Visual, conceptual teaching, understand the why, not just formulas
             </div>
             <div className="hero-check">
-              <span className="hero-check-icon" style={{ background: 'var(--blue-soft)' }}><Icon.Check size={11} style={{ color: 'var(--blue)' }} /></span>
+              <span className="hero-check-icon" style={{ background: 'linear-gradient(135deg, var(--blue), #2D6BE0)', boxShadow: '0 2px 10px rgba(77,139,255,0.55)' }}><Icon.Check size={12} style={{ color: '#fff' }} /></span>
               End-to-end: GATE prep, IIT admission, and AI/ML interview prep
             </div>
           </div>
