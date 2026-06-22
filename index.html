@@ -163,6 +163,8 @@ body {
 .btn-nav-signin { display: inline-flex; align-items: center; padding: 12px 28px; border-radius: 999px; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; background: #FFFFFF; color: var(--ink); border: 1px solid rgba(139,92,246,0.14); box-shadow: 0 3px 10px rgba(139,92,246,0.14), 0 1px 3px rgba(0,0,0,0.04); transition: box-shadow .25s ease, transform .32s cubic-bezier(.34,1.1,.64,1); white-space: nowrap; }
 .btn-nav-signin:hover { transform: scale(1.05) translateY(-1px); box-shadow: 0 6px 18px rgba(139,92,246,0.2), 0 2px 5px rgba(0,0,0,0.06); }
 .btn-nav-signin:active { transform: scale(0.97); box-shadow: inset 0 2px 6px rgba(139,92,246,0.16); }
+.btn-nav-signin.btn-swap { min-width: 168px; justify-content: center; }
+.btn-nav-signin.btn-swap:hover { background: linear-gradient(135deg, #FF416C 0%, #FF0000 55%, #CC0022 100%); border-color: transparent; color: #fff; box-shadow: 0 8px 28px rgba(255,0,0,0.38), 0 2px 8px rgba(255,65,108,0.22); }
 .btn-nav-signup { display: inline-flex; align-items: center; padding: 12px 28px; border-radius: 999px; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; background: linear-gradient(160deg, #1d1748, var(--ink)); color: #fff; border: none; box-shadow: 6px 6px 16px rgba(20,16,43,0.45), -4px -4px 14px rgba(139,92,246,0.25), inset 0 1px 1px rgba(255,255,255,0.08); transition: box-shadow .25s ease, transform .32s cubic-bezier(.34,1.1,.64,1); white-space: nowrap; }
 .btn-nav-signup:hover { transform: scale(1.05) translateY(-1px); box-shadow: 8px 8px 20px rgba(20,16,43,0.5), -5px -5px 16px rgba(139,92,246,0.35), inset 0 1px 1px rgba(255,255,255,0.12); }
 .btn-nav-signup:active { transform: scale(0.97); box-shadow: inset 4px 4px 10px rgba(0,0,0,0.5), inset -3px -3px 8px rgba(139,92,246,0.15); }
@@ -1496,6 +1498,14 @@ function TAAILogo() {
   return <img src="logo.webp" alt="TAAI" width="360" height="216" />;
 }
 
+function daysUntilFeb1() {
+  const now = new Date();
+  let target = new Date(now.getFullYear(), 1, 1); // Feb 1, this year
+  target.setHours(0, 0, 0, 0);
+  if (target <= now) target = new Date(now.getFullYear() + 1, 1, 1); // roll to next year if passed
+  return Math.ceil((target - now) / (1000 * 60 * 60 * 24));
+}
+
 function Nav() {
   const linksRef = React.useRef(null);
   const [pill, setPill] = React.useState({ left: 0, width: 0, visible: false });
@@ -1553,7 +1563,10 @@ function Nav() {
             ))}
           </div>
           <div className="nav-cta">
-            <a target="_blank" rel="noopener noreferrer" href="https://learn.taai.live/learn/account/signin" className="btn-nav-signin">Sign In</a>
+            <a target="_blank" rel="noopener noreferrer" href="https://learn.taai.live/learn/account/signin" className="btn-nav-signin btn-swap">
+              <span className="swap-default">Sign In</span>
+              <span className="swap-hover">{daysUntilFeb1()} days left!</span>
+            </a>
             <a target="_blank" rel="noopener noreferrer" href="https://learn.taai.live/learn/account/signup" className="btn-nav-signup">Sign Up</a>
             <a href="/contact" className="btn-nav-contact"><span className="phone-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></span>Contact Us</a>
           </div>
