@@ -261,10 +261,10 @@ body {
   animation: hero-orb 13s ease-in-out 3s infinite reverse;
 }
 @keyframes hero-orb { 0%,100%{transform:translate(0,0)} 50%{transform:translate(18px,-18px)} }
-.hero-silk { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0.35; }
-.hero-silk-scrim {
-  position: absolute; inset: 0; z-index: 0; pointer-events: none;
-  background: linear-gradient(to bottom, transparent 0%, transparent calc(100% - 320px), #07051a 100%);
+.hero-silk {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0.35;
+  mask-image: linear-gradient(to bottom, black 0%, black calc(100% - 320px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black calc(100% - 320px), transparent 100%);
 }
 .silk-container { position: relative; width: 100%; height: 100%; }
 .silk-container canvas { display: block; width: 100%; height: 100%; }
@@ -2020,18 +2020,15 @@ function Hero() {
   return (
     <section className="hero" id="top">
       {showSilk && (
-        <>
-          <div className="hero-silk">
-            <Silk
-              speed={3}
-              scale={1}
-              color="#8B5CF6"
-              noiseIntensity={1.5}
-              rotation={0}
-            />
-          </div>
-          <div className="hero-silk-scrim" />
-        </>
+        <div className="hero-silk">
+          <Silk
+            speed={3}
+            scale={1}
+            color="#8B5CF6"
+            noiseIntensity={1.5}
+            rotation={0}
+          />
+        </div>
       )}
       <div className="container hero-inner">
         <div className="hero-text">
