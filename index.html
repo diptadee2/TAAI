@@ -209,6 +209,8 @@ body {
 .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(139,92,246,0.35); }
 .btn-ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--ink); }
 .btn-ghost:hover { background: var(--ink); color: #fff; }
+.hero .btn-ghost { color: #fff; border-color: rgba(255,255,255,0.55); }
+.hero .btn-ghost:hover { background: #fff; color: var(--ink); }
 .btn-stories {
   position: relative; overflow: hidden;
   border-color: var(--purple); color: var(--purple);
@@ -243,7 +245,7 @@ body {
 .btn-lg { padding: 15px 28px; font-size: 16px; }
 
 /* Hero */
-.hero { padding: 72px 0 var(--section-pad); position: relative; overflow: hidden; background-image: radial-gradient(circle, rgba(139,92,246,0.14) 1.5px, transparent 1.5px); background-size: 32px 32px; }
+.hero { padding: 72px 0 var(--section-pad); position: relative; overflow: hidden; background-color: #07051a; background-image: radial-gradient(circle, rgba(139,92,246,0.22) 1.5px, transparent 1.5px); background-size: 32px 32px; }
 .hero::before {
   content: ''; position: absolute; top: -140px; right: -100px;
   width: 680px; height: 680px; border-radius: 50%;
@@ -259,10 +261,10 @@ body {
   animation: hero-orb 13s ease-in-out 3s infinite reverse;
 }
 @keyframes hero-orb { 0%,100%{transform:translate(0,0)} 50%{transform:translate(18px,-18px)} }
-.hero-silk { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0.16; }
+.hero-silk { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0.35; }
 .hero-silk-scrim {
   position: absolute; inset: 0; z-index: 0; pointer-events: none;
-  background: linear-gradient(to bottom, transparent 0%, transparent 55%, var(--bg) 96%);
+  background: linear-gradient(to bottom, transparent 0%, transparent 55%, #07051a 96%);
 }
 .silk-container { position: relative; width: 100%; height: 100%; }
 .silk-container canvas { display: block; width: 100%; height: 100%; }
@@ -309,13 +311,13 @@ body {
   background: var(--pink-soft); z-index: -1; border-radius: 4px;
 }
 
-.hero-sub { font-size: 18px; color: var(--ink-dim); max-width: 500px; margin-bottom: 24px; line-height: 1.55; }
+.hero-sub { font-size: 18px; color: rgba(255,255,255,0.62); max-width: 500px; margin-bottom: 24px; line-height: 1.55; }
 .hero-checks { display: flex; flex-direction: column; gap: 10px; margin-bottom: 32px; }
-.hero-check { display: flex; align-items: center; gap: 11px; font-size: 14.5px; color: var(--ink); font-weight: 450; }
+.hero-check { display: flex; align-items: center; gap: 11px; font-size: 14.5px; color: rgba(255,255,255,0.86); font-weight: 450; }
 .hero-check-icon { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; }
 [data-hero="centered"] .hero-sub { margin-left: auto; margin-right: auto; }
 .hero-cta { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 32px; }
-.hero-meta { display: flex; gap: 32px; align-items: center; font-size: 14px; color: var(--ink-dim); flex-wrap: wrap; }
+.hero-meta { display: flex; gap: 32px; align-items: center; font-size: 14px; color: rgba(255,255,255,0.62); flex-wrap: wrap; }
 .hero-meta-item { display: flex; align-items: center; gap: 8px; }
 .hero-avatars { display: flex; }
 .hero-avatar {
@@ -328,7 +330,7 @@ body {
 .hero-rating-top { display: flex; align-items: center; gap: 8px; }
 .hero-rating-num {
   font-family: var(--font-display); font-size: 19px; font-weight: 600;
-  letter-spacing: -0.03em; color: var(--ink); line-height: 1;
+  letter-spacing: -0.03em; color: #fff; line-height: 1;
 }
 .hero-rating-stars { display: flex; gap: 2px; }
 .hero-rating-star {
@@ -344,7 +346,7 @@ body {
   from { opacity: 0; transform: scale(0.2) rotate(-30deg); }
   to   { opacity: 1; transform: scale(1)   rotate(0deg);   }
 }
-.hero-rating-label { font-size: 11.5px; color: var(--ink-dim); letter-spacing: .01em; white-space: nowrap; }
+.hero-rating-label { font-size: 11.5px; color: rgba(255,255,255,0.62); letter-spacing: .01em; white-space: nowrap; }
 
 /* Hero visual card */
 .hero-visual { position: relative; aspect-ratio: 4 / 5; max-width: 460px; justify-self: end; width: 100%; }
