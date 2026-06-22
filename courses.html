@@ -390,7 +390,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   transition: transform .3s cubic-bezier(.34,1.05,.64,1), box-shadow .3s ease;
 }
 .combo-featured-frame::before {
-  content: ''; position: absolute; inset: -50%; z-index: 0;
+  /* inset must be generous enough that the rotated square's nearest edge never clears the
+     card's corners (a tall card needs more margin than -50% gives — was leaving a ~21px gap
+     that revealed the background at certain rotation angles, looking like flicker) */
+  content: ''; position: absolute; inset: -100%; z-index: 0;
   background: conic-gradient(from 0deg, #8b5cf6, #6366f1 33%, #38bdf8 55%, #a78bfa 75%, #8b5cf6 100%);
   animation: combo-border-spin 3s linear infinite;
   will-change: transform;
