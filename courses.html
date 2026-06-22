@@ -213,7 +213,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   0%, 100% { transform: translateY(0px); }
   50%      { transform: translateY(-14px); }
 }
-.page-hero .hero-proof { border: 1px solid rgba(255,255,255,0.18); transition: filter .35s ease, box-shadow .35s ease; will-change: transform; box-shadow: 0 0 48px rgba(109,40,217,0.50), 0 12px 28px rgba(0,0,0,0.30), inset 0 1.5px 0 rgba(255,255,255,0.40); }
+.page-hero .hero-proof { border: 1px solid rgba(255,255,255,0.18); transition: filter .35s ease, box-shadow .35s ease; box-shadow: 0 0 48px rgba(109,40,217,0.50), 0 12px 28px rgba(0,0,0,0.30), inset 0 1.5px 0 rgba(255,255,255,0.40); }
 .page-hero .hero-proof:hover { transform: none; box-shadow: none; border-color: rgba(255,255,255,0.18); filter: brightness(1.10); }
 .page-hero .hero-proof::before { color: rgba(255,255,255,0.14); opacity: 0.14; }
 .page-hero .hero-proof::after { display: none; }
@@ -223,15 +223,15 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .page-hero .hero-proof-college { color: rgba(255,255,255,0.60); }
 .page-hero .hero-proof-footer { border-top-color: rgba(255,255,255,0.15); }
 .page-hero .hero-proof-avatar { background: rgba(255,255,255,0.20); box-shadow: 0 2px 8px rgba(0,0,0,0.20); }
-.page-hero .hero-proof-row .hero-proof:nth-child(1) {
+.hero-proof-float { display: block; }
+.hero-proof-float-1 { animation: proof-float1 5s ease-in-out 0s infinite; will-change: transform; }
+.hero-proof-float-2 { animation: proof-float2 6.5s ease-in-out -3.25s infinite; margin-top: 12px; will-change: transform; }
+.page-hero .hero-proof-row .hero-proof-float-1 .hero-proof {
   background: radial-gradient(circle at 88% -15%, rgba(255,255,255,0.22) 0%, transparent 55%), linear-gradient(135deg, #6d28d9 0%, #4f46e5 50%, #2563eb 100%);
-  animation: proof-float1 5s ease-in-out 0s infinite;
   filter: saturate(0.6);
 }
-.page-hero .hero-proof-row .hero-proof:nth-child(2) {
+.page-hero .hero-proof-row .hero-proof-float-2 .hero-proof {
   background: radial-gradient(circle at 88% -15%, rgba(255,255,255,0.22) 0%, transparent 55%), linear-gradient(135deg, #db2777 0%, #9333ea 50%, #6d28d9 100%);
-  animation: proof-float2 6.5s ease-in-out -3.25s infinite;
-  margin-top: 12px;
   filter: saturate(0.6);
 }
 @keyframes proof-orb-a { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-12px,10px) scale(1.1)} }
@@ -302,9 +302,9 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 @media (max-width: 768px) {
   .page-hero-inner { grid-template-columns: 1fr; gap: 36px; }
   .hero-proof-row { flex-direction: column; gap: 12px; overflow: visible; }
-  .hero-proof { flex: none; width: 100%; animation: none !important; }
-  .page-hero .hero-proof-row .hero-proof:nth-child(1),
-  .page-hero .hero-proof-row .hero-proof:nth-child(2) { animation: none !important; }
+  .hero-proof { flex: none; width: 100%; }
+  .hero-proof-float { width: 100%; }
+  .hero-proof-float-1, .hero-proof-float-2 { animation: none !important; }
   .hero-proof-link { display: flex; justify-content: center; width: 100%; margin-top: 28px; margin-bottom: 8px; }
 }
 
@@ -330,12 +330,18 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .btn-swap:hover .swap-hover   { transform: translateY(0);     opacity: 1; }
 .btn-primary.btn-swap:hover { background: linear-gradient(135deg, #FF416C 0%, #FF0000 55%, #CC0022 100%); box-shadow: 0 8px 28px rgba(255,0,0,0.38), 0 2px 8px rgba(255,65,108,0.22); }
 @keyframes btn-attract {
-  0%   { box-shadow: 0 8px 24px rgba(139,92,246,0.30), 0 0 0 0px  rgba(139,92,246,0.45); }
-  65%  { box-shadow: 0 8px 24px rgba(139,92,246,0.30), 0 0 0 12px rgba(139,92,246,0);    }
-  100% { box-shadow: 0 8px 24px rgba(139,92,246,0.30), 0 0 0 0px  rgba(139,92,246,0);    }
+  0%   { transform: scale(1); opacity: 0.7; }
+  65%  { transform: scale(1.18); opacity: 0; }
+  100% { transform: scale(1.18); opacity: 0; }
 }
-.btn-attract { animation: btn-attract 2.2s ease-out infinite; }
-.btn-attract:hover { animation: none; }
+.btn-attract { position: relative; }
+.btn-attract::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  border: 2px solid rgba(139,92,246,0.45);
+  animation: btn-attract 2.2s ease-out infinite;
+  pointer-events: none;
+}
+.btn-attract:hover::after { animation: none; opacity: 0; }
 .orientation-pill {
   display: inline-flex; align-items: center; gap: 8px;
   font-size: 13px; font-weight: 600; color: var(--purple);
@@ -360,10 +366,9 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 
 /* Combos grid, redesigned */
-@property --combo-angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
 @property --mx { syntax: '<percentage>'; initial-value: -200%; inherits: false; }
 @property --my { syntax: '<percentage>'; initial-value: -200%; inherits: false; }
-@keyframes combo-border-spin { to { --combo-angle: 360deg; } }
+@keyframes combo-border-spin { to { transform: rotate(360deg); } }
 @keyframes combo-shimmer-sweep { from { transform: translateX(-130%) skewX(-15deg); } to { transform: translateX(260%) skewX(-15deg); } }
 #combos {
   background: #07060f;
@@ -380,14 +385,17 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .combos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: stretch; }
 .combo-featured-frame {
   border-radius: calc(var(--radius-xl) + 2px); padding: 2px;
-  position: relative;
-  background: conic-gradient(from var(--combo-angle), #8b5cf6, #6366f1 33%, #38bdf8 55%, #a78bfa 75%, #8b5cf6 100%);
-  animation: combo-border-spin 3s linear infinite;
+  position: relative; overflow: hidden;
   box-shadow: 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12);
   transition: transform .3s cubic-bezier(.34,1.05,.64,1), box-shadow .3s ease;
-  will-change: transform;
-  transform: translateZ(0);
 }
+.combo-featured-frame::before {
+  content: ''; position: absolute; inset: -50%; z-index: 0;
+  background: conic-gradient(from 0deg, #8b5cf6, #6366f1 33%, #38bdf8 55%, #a78bfa 75%, #8b5cf6 100%);
+  animation: combo-border-spin 3s linear infinite;
+  will-change: transform;
+}
+.combo-featured-frame > .combo-card { position: relative; z-index: 1; }
 .fade-in:has(> .combo-featured-frame) { will-change: opacity, transform; }
 .combo-featured-frame:hover { transform: translateY(-10px); box-shadow: 0 32px 100px rgba(139,92,246,0.55), 0 0 72px rgba(139,92,246,0.2); }
 .combo-card {
@@ -2175,33 +2183,37 @@ function App() {
           </div>
           <div className="page-hero-right">
             <div className="hero-proof-row">
-              <div className="hero-proof">
-                <div className="proof-orb-1" /><div className="proof-orb-2" />
-                <div className="hero-proof-top">
-                  <div className="hero-proof-rank">AIR 91 · GATE DA 2026</div>
-                  <div className="hero-proof-stars">★★★★★</div>
-                </div>
-                <p className="hero-proof-quote">"The way Manoj Sir taught Maths and ML made even tough topics feel much easier to understand. I never really felt scared of Maths or ML while preparing for the exam. The courses and guidance from TAAI played a big role in my journey."</p>
-                <div className="hero-proof-footer">
-                  <div className="hero-proof-avatar">TP</div>
-                  <div>
-                    <div className="hero-proof-name">Tapan Patel</div>
-                    <div className="hero-proof-college">IIT Delhi · MINDS</div>
+              <div className="hero-proof-float hero-proof-float-1">
+                <div className="hero-proof">
+                  <div className="proof-orb-1" /><div className="proof-orb-2" />
+                  <div className="hero-proof-top">
+                    <div className="hero-proof-rank">AIR 91 · GATE DA 2026</div>
+                    <div className="hero-proof-stars">★★★★★</div>
+                  </div>
+                  <p className="hero-proof-quote">"The way Manoj Sir taught Maths and ML made even tough topics feel much easier to understand. I never really felt scared of Maths or ML while preparing for the exam. The courses and guidance from TAAI played a big role in my journey."</p>
+                  <div className="hero-proof-footer">
+                    <div className="hero-proof-avatar">TP</div>
+                    <div>
+                      <div className="hero-proof-name">Tapan Patel</div>
+                      <div className="hero-proof-college">IIT Delhi · MINDS</div>
+                    </div>
                   </div>
                 </div>
               </div>
-              <div className="hero-proof">
-                <div className="proof-orb-1" /><div className="proof-orb-2" />
-                <div className="hero-proof-top">
-                  <div className="hero-proof-rank">AIR 102 · GATE DA 2026</div>
-                  <div className="hero-proof-stars">★★★★★</div>
-                </div>
-                <p className="hero-proof-quote">"The lectures felt just right, clear, to the point, and not overloaded with unnecessary content. Concepts were explained so intuitively, with plenty of examples. Manoj Sir's personal support truly stood out and made a big difference in my learning."</p>
-                <div className="hero-proof-footer">
-                  <div className="hero-proof-avatar">PR</div>
-                  <div>
-                    <div className="hero-proof-name">Parinay Rana</div>
-                    <div className="hero-proof-college">IIT Bombay · CMINDS</div>
+              <div className="hero-proof-float hero-proof-float-2">
+                <div className="hero-proof">
+                  <div className="proof-orb-1" /><div className="proof-orb-2" />
+                  <div className="hero-proof-top">
+                    <div className="hero-proof-rank">AIR 102 · GATE DA 2026</div>
+                    <div className="hero-proof-stars">★★★★★</div>
+                  </div>
+                  <p className="hero-proof-quote">"The lectures felt just right, clear, to the point, and not overloaded with unnecessary content. Concepts were explained so intuitively, with plenty of examples. Manoj Sir's personal support truly stood out and made a big difference in my learning."</p>
+                  <div className="hero-proof-footer">
+                    <div className="hero-proof-avatar">PR</div>
+                    <div>
+                      <div className="hero-proof-name">Parinay Rana</div>
+                      <div className="hero-proof-college">IIT Bombay · CMINDS</div>
+                    </div>
                   </div>
                 </div>
               </div>
