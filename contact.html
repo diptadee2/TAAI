@@ -144,7 +144,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 
 /* Section */
 .section { padding: var(--section-pad) 0; }
-#contact-form { padding-top: 48px; }
 .section + .section { border-top: 1px solid transparent; border-image: linear-gradient(90deg, transparent, rgba(139,92,246,0.2) 35%, rgba(236,72,153,0.2) 65%, transparent) 1; }
 .section-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 14px; letter-spacing: .14em; text-transform: uppercase; color: var(--purple); margin-bottom: 16px; }
 .section-eyebrow::before { content: ''; display: inline-block; width: 20px; height: 2px; background: linear-gradient(90deg, var(--pink), var(--purple)); border-radius: 2px; }
@@ -294,14 +293,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .channels-sidebar .channel-card:hover .channel-detail { opacity: 1; transform: translateY(0); }
 @media (max-width: 900px) { .contact-main-grid { grid-template-columns: 1fr; } }
 
-/* Embedded form wrapper */
-/* Embedded form */
-.form-embed-wrap {
-  border-radius: var(--radius-xl); overflow: hidden;
-  border: 1px solid var(--line); background: var(--bg-soft);
-  min-height: 400px;
-}
-.form-embed-wrap lyst-mkt-form { display: block; width: 100%; }
 
 /* ── Offer cards ─────────────────────────────────────── */
 .offer-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
@@ -553,7 +544,6 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   ]
 }
 </script>
-<script type="module" id="lyst-widgets" src="https://res-cdn-g.learnyst.com/widgets/pro/src/raven/index.js" async></script>
 </head>
 <body>
 <div id="root"></div>
@@ -685,17 +675,6 @@ function Nav() {
       <a href="/contact" className="mobile-menu-contact"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>Contact Us</a>
     </div>
     </>
-  );
-}
-
-function ContactForm() {
-  return (
-    <div className="form-embed-wrap"
-      dangerouslySetInnerHTML={{ __html:
-        '<lyst-config school-id="182642"></lyst-config>' +
-        '<lyst-mkt-form form-id="1492"></lyst-mkt-form>'
-      }}
-    />
   );
 }
 
@@ -876,19 +855,6 @@ function App() {
           </div>
         </div>
       </div>
-
-      {/* Contact form */}
-      <section className="section" id="contact-form">
-        <div className="container">
-          <div style={{ marginBottom: 36 }}>
-            <h2 className="fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(26px,3vw,42px)', fontWeight: 600, letterSpacing: '-0.03em', lineHeight: 1.05, marginBottom: 8 }}>
-              Have a query?<br /><em style={{ fontStyle: 'normal', background: 'linear-gradient(120deg,var(--pink),var(--purple),var(--blue),var(--purple),var(--pink))', backgroundSize: '250% 100%', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', animation: 'grad-drift 9s ease infinite' }}>We'll reach out to you.</em>
-            </h2>
-            <p className="fade-in" style={{ fontSize: 15, color: 'var(--ink-dim)', lineHeight: 1.6 }}>Fill in your details and we'll get back to you within a few hours.</p>
-          </div>
-          <ContactForm />
-        </div>
-      </section>
 
       <CtaBanner />
       <Footer />
