@@ -374,9 +374,9 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 #combos::before { content: ''; position: absolute; width: 900px; height: 900px; top: -350px; left: -250px; border-radius: 50%; background: radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 60%); pointer-events: none; z-index: 0; }
 #combos::after { content: ''; position: absolute; width: 700px; height: 700px; bottom: -250px; right: -200px; border-radius: 50%; background: radial-gradient(circle, rgba(77,139,255,0.08) 0%, transparent 60%); pointer-events: none; z-index: 0; }
 #combos .container { position: relative; z-index: 1; }
-#combos .section-eyebrow { color: rgba(255,255,255,0.5); border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.06); }
+#combos .section-eyebrow { color: rgba(255,255,255,0.68); border-color: rgba(255,255,255,0.14); background: rgba(255,255,255,0.09); }
 #combos h2 { color: #fff; }
-#combos .section-sub { color: rgba(255,255,255,0.45); }
+#combos .section-sub { color: rgba(255,255,255,0.62); }
 .combos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: stretch; }
 .combo-featured-frame {
   border-radius: calc(var(--radius-xl) + 2px); padding: 2px;
@@ -2223,8 +2223,8 @@ function App() {
             glowRadius={0}
             sparkle={false}
             waveAmplitude={0}
-            gradientFrom="rgba(139,92,246,0.5)"
-            gradientTo="rgba(255,127,183,0.3)"
+            gradientFrom="rgba(139,92,246,0.22)"
+            gradientTo="rgba(255,127,183,0.14)"
             glowColor="#8B5CF6"
           />
         </div>
