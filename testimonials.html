@@ -854,7 +854,13 @@ function Nav() {
     setSigninPhase(phases[i]);
     clearInterval(signinTimerRef.current);
     signinTimerRef.current = setInterval(() => {
-      i = (i + 1) % phases.length;
+      i++;
+      if (i >= phases.length) {
+        setSigninPhase(phases[0]);
+        clearInterval(signinTimerRef.current);
+        signinTimerRef.current = null;
+        return;
+      }
       setSigninPhase(phases[i]);
     }, 550);
   };
