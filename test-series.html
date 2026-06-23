@@ -148,6 +148,9 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .btn-nav-signin.btn-swap { justify-content: center; width: 106px; margin-left: 0; transition: box-shadow .25s ease, transform .32s cubic-bezier(.34,1.1,.64,1), width .35s cubic-bezier(.34,1.1,.64,1), margin-left .35s cubic-bezier(.34,1.1,.64,1), background .25s ease; }
 .btn-nav-signin.btn-swap::before { display: none; }
 .btn-nav-signin.btn-swap:hover { width: 168px; margin-left: -62px; background: linear-gradient(135deg, #FF416C 0%, #FF0000 55%, #CC0022 100%); border-color: transparent; color: #fff; box-shadow: 0 8px 28px rgba(255,0,0,0.38), 0 2px 8px rgba(255,65,108,0.22); }
+.btn-nav-signin.btn-swap.signin-tight:hover { width: 106px; margin-left: 0; }
+.btn-nav-signin.btn-swap.signin-tight:hover .swap-default { transform: none; opacity: 1; }
+.btn-nav-signin.btn-swap.signin-tight:hover .swap-hover { transform: translateY(100%); opacity: 0; }
 .btn-nav-signup { display: inline-flex; align-items: center; padding: 12px 28px; border-radius: 999px; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; background: linear-gradient(160deg, #1d1748, var(--ink)); color: #fff; border: none; box-shadow: 6px 6px 16px rgba(20,16,43,0.45), -4px -4px 14px rgba(139,92,246,0.25), inset 0 1px 1px rgba(255,255,255,0.08); transition: box-shadow .25s ease, transform .32s cubic-bezier(.34,1.1,.64,1); white-space: nowrap; }
 .btn-nav-signup:hover { transform: scale(1.05) translateY(-1px); box-shadow: 8px 8px 20px rgba(20,16,43,0.5), -5px -5px 16px rgba(139,92,246,0.35), inset 0 1px 1px rgba(255,255,255,0.12); }
 .btn-nav-signup:active { transform: scale(0.97); box-shadow: inset 4px 4px 10px rgba(0,0,0,0.5), inset -3px -3px 8px rgba(139,92,246,0.15); }
@@ -1410,7 +1413,14 @@ function Nav() {
             ))}
           </div>
           <div className="nav-cta">
-            <a target="_blank" rel="noopener noreferrer" href="https://learn.taai.live/learn/account/signin" className="btn-nav-signin btn-swap">
+            <a target="_blank" rel="noopener noreferrer" href="https://learn.taai.live/learn/account/signin" className="btn-nav-signin btn-swap"
+               onMouseEnter={(e) => {
+                 const btn = e.currentTarget;
+                 const linksEl = linksRef.current;
+                 if (!linksEl) return;
+                 const available = btn.getBoundingClientRect().left - linksEl.getBoundingClientRect().right;
+                 btn.classList.toggle('signin-tight', available < 78);
+               }}>
               <span className="swap-default">Sign In</span>
               <span className="swap-hover">{daysLeft} days left!</span>
             </a>
