@@ -856,7 +856,7 @@ function Nav() {
     signinTimerRef.current = setInterval(() => {
       i = (i + 1) % phases.length;
       setSigninPhase(phases[i]);
-    }, 1400);
+    }, 800);
   };
   const stopSigninCycle = () => {
     clearInterval(signinTimerRef.current);
