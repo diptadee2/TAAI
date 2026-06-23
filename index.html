@@ -555,12 +555,12 @@ body {
 .stats-note { text-align: center; grid-column: 1 / -1; font-size: 12px; color: rgba(255,255,255,0.22); letter-spacing: .05em; font-style: italic; margin-top: 40px; position: relative; z-index: 1; }
 
 /* Toppers strip */
-.toppers-strip { padding: 36px 0 80px; color: #fff; overflow: hidden; position: relative; }
+.toppers-strip { padding: 60px 0 80px; color: #fff; overflow: hidden; position: relative; }
 .toppers-strip::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 60% 40% at 50% 50%, rgba(139,92,246,0.12) 0%, transparent 60%); }
 .toppers-head { padding: 0 max(var(--gutter),24px); margin-bottom: 36px; position: relative; z-index: 1; display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-.toppers-title { font-family: var(--font-display); font-size: clamp(24px,3vw,38px); font-weight: 600; letter-spacing: -0.01em; line-height: 1; }
+.toppers-title { font-family: var(--font-display); font-size: clamp(32px,4.4vw,58px); font-weight: 600; letter-spacing: -0.02em; line-height: 1; }
 .toppers-title em { font-style: normal; background: linear-gradient(120deg,var(--pink),var(--lilac),var(--blue)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.toppers-sub { font-size: 13px; color: rgba(255,255,255,0.38); letter-spacing: .02em; }
+.toppers-sub { font-size: 15px; color: rgba(255,255,255,0.55); letter-spacing: .01em; }
 @keyframes topper-modal-in { from { opacity: 0; transform: translateY(20px) scale(0.96); } to { opacity: 1; transform: none; } }
 @keyframes topper-overlay-in { from { opacity: 0; } to { opacity: 1; } }
 .toppers-scroll-outer { overflow: hidden; position: relative; padding: 90px 0; margin: -46px 0; }
@@ -1901,10 +1901,10 @@ const TopperMarquee = React.memo(function TopperMarquee() {
 function Stats() {
   return (
     <section className="toppers-strip">
-      <div className="fade-in" style={{ maxWidth: 1280, margin: '0 auto 36px', width: '100%', padding: '0 max(20px,16px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+      <div className="fade-in" style={{ maxWidth: 1280, margin: '0 auto 36px', width: '100%', padding: '0 max(20px,16px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
         <div>
           <div className="toppers-title">GATE DA <em>Hall of Fame.</em></div>
-          <div className="toppers-sub" style={{ marginTop: 6 }}>Our courses, tests, AIMTs, lectures and free resources. Their rank.</div>
+          <div className="toppers-sub" style={{ marginTop: 10 }}>Our courses, tests, AIMTs, lectures and free resources. Their rank.</div>
         </div>
         <a href="/testimonials" className="toppers-view-all">View all stories →</a>
       </div>
