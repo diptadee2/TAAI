@@ -605,10 +605,13 @@ function TAAILogo() {
 
 function daysUntilFeb1() {
   const now = new Date();
-  let target = new Date(now.getFullYear(), 1, 1); // Feb 1, this year
-  target.setHours(0, 0, 0, 0);
-  if (target <= now) target = new Date(now.getFullYear() + 1, 1, 1); // roll to next year if passed
-  return Math.ceil((target - now) / (1000 * 60 * 60 * 24));
+  const year = now.getFullYear();
+  const feb1 = new Date(year, 1, 1); feb1.setHours(0, 0, 0, 0);
+  const mar1 = new Date(year, 2, 1); mar1.setHours(0, 0, 0, 0);
+  if (now < feb1) return Math.max(1, Math.ceil((feb1 - now) / (1000 * 60 * 60 * 24)));
+  if (now < mar1) return null; // dead zone: Feb 1 - Mar 1, no countdown
+  const nextFeb1 = new Date(year + 1, 1, 1); nextFeb1.setHours(0, 0, 0, 0);
+  return Math.max(1, Math.ceil((nextFeb1 - now) / (1000 * 60 * 60 * 24)));
 }
 
 function Nav() {
@@ -662,17 +665,21 @@ function Nav() {
           ))}
         </div>
         <div className="nav-cta">
-          <a target="_blank" rel="noopener noreferrer" href="https://learn.taai.live/learn/account/signin" className="btn-nav-signin btn-swap"
-             onMouseEnter={(e) => {
-               const btn = e.currentTarget;
-               const linksEl = linksRef.current;
-               if (!linksEl) return;
-               const available = btn.getBoundingClientRect().left - linksEl.getBoundingClientRect().right;
-               btn.classList.toggle('signin-tight', available < 78);
-             }}>
-            <span className="swap-default">Sign In</span>
-            <span className="swap-hover">{daysLeft} days left!</span>
-          </a>
+          {daysLeft !== null ? (
+            <a target="_blank" rel="noopener noreferrer" href="https://learn.taai.live/learn/account/signin" className="btn-nav-signin btn-swap"
+               onMouseEnter={(e) => {
+                 const btn = e.currentTarget;
+                 const linksEl = linksRef.current;
+                 if (!linksEl) return;
+                 const available = btn.getBoundingClientRect().left - linksEl.getBoundingClientRect().right;
+                 btn.classList.toggle('signin-tight', available < 78);
+               }}>
+              <span className="swap-default">Sign In</span>
+              <span className="swap-hover">{daysLeft} days left!</span>
+            </a>
+          ) : (
+            <a target="_blank" rel="noopener noreferrer" href="https://learn.taai.live/learn/account/signin" className="btn-nav-signin">Sign In</a>
+          )}
           <a target="_blank" rel="noopener noreferrer" href="https://learn.taai.live/learn/account/signup" className="btn-nav-signup">Sign Up</a>
           <a href="/contact" className="btn-nav-contact">
             <span className="phone-icon"><Icon.Phone /></span>Contact Us
