@@ -1193,7 +1193,7 @@ body.buttons-visible .mcb-wa:hover { transform: scale(1.12); transition-delay: 0
   .course-testi-card:active { transform: scale(0.975); transition-duration: .12s; }
 }
 </style>
-<script type="application/ld+json">
+<script type="application/ld+json" id="course-jsonld">
 {
   "@context": "https://schema.org",
   "@graph": [
@@ -1211,23 +1211,90 @@ body.buttons-visible .mcb-wa:hover { transform: scale(1.12); transition-delay: 0
       "url": "https://taai.live/courses",
       "itemListElement": [
         {
-          "@type": "ListItem",
-          "position": 1,
+          "@type": "ListItem", "position": 1,
           "item": {
-            "@type": "Course",
-            "name": "TAAI Full Course — GATE DA 2027",
-            "description": "Complete GATE DA preparation covering Mathematics, Machine Learning, and Data Science taught visually and conceptually.",
+            "@type": "Course", "name": "GATE 2027 Full Course",
+            "description": "Complete GATE DA preparation: Linear Algebra, Probability, Statistics, Calculus, Machine Learning, AI, DBMS, DSA, and Python, with weekly quizzes and GATE mentorship from Manoj Kumar.",
             "provider": { "@id": "https://taai.live/#organization" },
-            "url": "https://taai.live/courses#combos"
+            "url": "https://taai.live/courses#combos",
+            "offers": { "@type": "Offer", "price": "11999", "priceCurrency": "INR", "priceValidUntil": "2027-02-15", "availability": "https://schema.org/InStock", "url": "https://learn.taai.live/learn/batch/GATE-2027/content" }
           }
         },
         {
-          "@type": "ListItem",
-          "position": 2,
+          "@type": "ListItem", "position": 2,
           "item": {
-            "@type": "Course",
-            "name": "Interview Preparation — DS & AI",
-            "description": "Career prep for AI and Data Science roles including live sessions, real-world projects, and interview mentorship.",
+            "@type": "Course", "name": "Mathematics & ML Bundle",
+            "description": "Linear Algebra, Probability, Statistics, Calculus, and Machine Learning bundled together with quizzes and Discord community support.",
+            "provider": { "@id": "https://taai.live/#organization" },
+            "url": "https://taai.live/courses#combos",
+            "offers": { "@type": "Offer", "price": "7999", "priceCurrency": "INR", "priceValidUntil": "2027-02-15", "availability": "https://schema.org/InStock", "url": "https://learn.taai.live/learn/Maths--ML---AI-Bundle---GATE-2026" }
+          }
+        },
+        {
+          "@type": "ListItem", "position": 3,
+          "item": {
+            "@type": "Course", "name": "Mathematics Bundle",
+            "description": "Linear Algebra, Probability, Statistics, and Calculus for GATE DA, with topic-wise quizzes and Discord community support.",
+            "provider": { "@id": "https://taai.live/#organization" },
+            "url": "https://taai.live/courses#combos",
+            "offers": { "@type": "Offer", "price": "5999", "priceCurrency": "INR", "priceValidUntil": "2027-02-15", "availability": "https://schema.org/InStock", "url": "https://learn.taai.live/learn/Mathematics-Course-by-manoj-sir-gate-2026-gateda" }
+          }
+        },
+        {
+          "@type": "ListItem", "position": 4,
+          "item": {
+            "@type": "Course", "name": "Statistics for GATE DA",
+            "description": "Hypothesis testing, estimation theory, and regression basics, taught visually for GATE DA 2027.",
+            "provider": { "@id": "https://taai.live/#organization" },
+            "url": "https://taai.live/courses#individual",
+            "offers": { "@type": "Offer", "price": "1499", "priceCurrency": "INR", "priceValidUntil": "2027-02-20", "availability": "https://schema.org/InStock", "url": "https://learn.taai.live/learn/Statistics" }
+          }
+        },
+        {
+          "@type": "ListItem", "position": 5,
+          "item": {
+            "@type": "Course", "name": "Calculus & Optimization for GATE DA",
+            "description": "Limits and continuity, differentiation, optimization, and integration, taught visually for GATE DA 2027.",
+            "provider": { "@id": "https://taai.live/#organization" },
+            "url": "https://taai.live/courses#individual",
+            "offers": { "@type": "Offer", "price": "1499", "priceCurrency": "INR", "priceValidUntil": "2027-02-20", "availability": "https://schema.org/InStock", "url": "https://learn.taai.live/learn/Calculus-and-Optimization" }
+          }
+        },
+        {
+          "@type": "ListItem", "position": 6,
+          "item": {
+            "@type": "Course", "name": "Linear Algebra for GATE DA",
+            "description": "Matrices and determinants, eigenvalues and eigenvectors, and linear transformations, taught visually for GATE DA 2027.",
+            "provider": { "@id": "https://taai.live/#organization" },
+            "url": "https://taai.live/courses#individual",
+            "offers": { "@type": "Offer", "price": "1999", "priceCurrency": "INR", "priceValidUntil": "2027-02-20", "availability": "https://schema.org/InStock", "url": "https://learn.taai.live/learn/Linear-Algebra--Mathematics-" }
+          }
+        },
+        {
+          "@type": "ListItem", "position": 7,
+          "item": {
+            "@type": "Course", "name": "Probability for GATE DA",
+            "description": "Conditional probability, random variables, and distributions, taught visually for GATE DA 2027.",
+            "provider": { "@id": "https://taai.live/#organization" },
+            "url": "https://taai.live/courses#individual",
+            "offers": { "@type": "Offer", "price": "2499", "priceCurrency": "INR", "priceValidUntil": "2027-02-20", "availability": "https://schema.org/InStock", "url": "https://learn.taai.live/learn/Probability" }
+          }
+        },
+        {
+          "@type": "ListItem", "position": 8,
+          "item": {
+            "@type": "Course", "name": "Machine Learning for GATE DA",
+            "description": "Supervised and unsupervised learning, model evaluation, and neural network basics, taught visually for GATE DA 2027.",
+            "provider": { "@id": "https://taai.live/#organization" },
+            "url": "https://taai.live/courses#individual",
+            "offers": { "@type": "Offer", "price": "3999", "priceCurrency": "INR", "priceValidUntil": "2027-02-20", "availability": "https://schema.org/InStock", "url": "https://learn.taai.live/learn/taAI-Machine-Learning-Full-Course" }
+          }
+        },
+        {
+          "@type": "ListItem", "position": 9,
+          "item": {
+            "@type": "Course", "name": "Interview Preparation — DS & AI",
+            "description": "Career prep for AI and Data Science roles: end-to-end projects, practice interviews, resume reviews, and industry mentorship. Coming soon — preview available on YouTube now.",
             "provider": { "@id": "https://taai.live/#organization" },
             "url": "https://taai.live/courses#interview"
           }
@@ -2196,6 +2263,11 @@ function MobileContactBar() {
   );
 }
 
+const COURSE_JSONLD_IDS = {
+  1: 'full-course', 2: 'maths-ml-bundle', 3: 'maths-bundle',
+  4: 'statistics', 5: 'calculus', 6: 'linear-algebra', 7: 'probability', 8: 'machine-learning',
+};
+
 function App() {
   const [pricingMap, setPricingMap] = React.useState(() => _pricingCache || {});
 
@@ -2204,6 +2276,25 @@ function App() {
       _pricingFetch.then(map => setPricingMap(map));
     }
   }, []);
+
+  React.useEffect(() => {
+    if (!Object.keys(pricingMap).length) return;
+    const el = document.getElementById('course-jsonld');
+    if (!el) return;
+    try {
+      const data = JSON.parse(el.textContent);
+      const list = data['@graph'].find(g => g['@type'] === 'ItemList');
+      list.itemListElement.forEach(li => {
+        const id = COURSE_JSONLD_IDS[li.position];
+        const row = id && pricingMap[id];
+        if (row && row.price && li.item.offers) {
+          li.item.offers.price = String(row.price);
+          if (row.validity) li.item.offers.priceValidUntil = row.validity;
+        }
+      });
+      el.textContent = JSON.stringify(data);
+    } catch (e) { /* leave static fallback in place */ }
+  }, [pricingMap]);
 
   React.useEffect(() => {
     const els = document.querySelectorAll('.fade-in');
