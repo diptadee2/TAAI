@@ -225,10 +225,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .subject-count { font-size: 11px; color: var(--ink-soft); font-family: var(--font-mono); letter-spacing: .08em; margin-left: auto; background: rgba(139,92,246,0.07); border: none; padding: 4px 10px; border-radius: 999px; }
 .notes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
 .resources-content { position: relative; background: linear-gradient(135deg, #F3EEFF 0%, #FCEEF8 48%, #ECF2FF 100%); overflow: hidden; }
-.resources-content::before { content: ''; position: absolute; top: -220px; right: -180px; width: 760px; height: 760px; border-radius: 50%; background: radial-gradient(circle, rgba(139,92,246,0.42) 0%, transparent 62%); pointer-events: none; animation: res-orb-a 12s ease-in-out infinite; }
-.resources-content::after { content: ''; position: absolute; bottom: 60px; left: -180px; width: 660px; height: 660px; border-radius: 50%; background: radial-gradient(circle, rgba(77,139,255,0.36) 0%, transparent 62%); pointer-events: none; animation: res-orb-b 15s ease-in-out 2s infinite; }
+.resources-content::before { content: ''; position: absolute; top: -220px; right: -180px; width: 760px; height: 760px; border-radius: 50%; background: radial-gradient(circle, rgba(139,92,246,0.42) 0%, transparent 62%); pointer-events: none; }
+.resources-content::after { content: ''; position: absolute; bottom: 60px; left: -180px; width: 660px; height: 660px; border-radius: 50%; background: radial-gradient(circle, rgba(77,139,255,0.36) 0%, transparent 62%); pointer-events: none; }
 .resources-content > .container { position: relative; z-index: 1; }
-.resources-content-orb3 { position: absolute; top: 45%; left: 50%; transform: translate(-50%,-50%); width: 560px; height: 560px; border-radius: 50%; background: radial-gradient(circle, rgba(255,127,183,0.32) 0%, transparent 62%); pointer-events: none; animation: res-orb-a 18s ease-in-out 4s infinite; }
+.resources-content-orb3 { position: absolute; top: 45%; left: 50%; transform: translate(-50%,-50%); width: 560px; height: 560px; border-radius: 50%; background: radial-gradient(circle, rgba(255,127,183,0.32) 0%, transparent 62%); pointer-events: none; }
 
 /* Dark strip */
 .res-strip { background: #07051a; background-image: radial-gradient(circle,rgba(255,255,255,0.065) 1px,transparent 1px); background-size: 24px 24px; color: #fff; padding: 64px 0; position: relative; overflow: hidden; }
