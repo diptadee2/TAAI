@@ -568,9 +568,14 @@ body.buttons-visible .mcb-call:hover, body.buttons-visible .mcb-wa:hover { trans
 /* Skeleton loader */
 @keyframes shimmer { 0% { background-position: -900px 0; } 100% { background-position: 900px 0; } }
 .shimmer {
-  background: linear-gradient(90deg, #f2eeff 0%, #e8e0ff 45%, #f2eeff 80%);
+  background: linear-gradient(90deg, rgba(139,92,246,0.12) 0%, rgba(139,92,246,0.28) 45%, rgba(139,92,246,0.12) 80%);
   background-size: 1800px 100%;
-  animation: shimmer 1.8s ease-in-out infinite;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+.shimmer-banner {
+  background: linear-gradient(90deg, rgba(139,92,246,0.55) 0%, rgba(77,139,255,0.7) 45%, rgba(139,92,246,0.55) 80%);
+  background-size: 1800px 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
 }
 .res-skeleton { animation: res-in .35s cubic-bezier(.34,1.1,.64,1) both; }
 .skel-bar { display: flex; gap: 10px; margin: 48px 0 40px; overflow: hidden; }
@@ -578,7 +583,20 @@ body.buttons-visible .mcb-call:hover, body.buttons-visible .mcb-wa:hover { trans
 .skel-section-head { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
 .skel-icon { width: 44px; height: 44px; border-radius: 14px; flex-shrink: 0; }
 .skel-label { height: 26px; border-radius: 8px; }
+.skel-subhead { display: flex; align-items: center; gap: 12px; margin: 28px 0 24px; }
+.skel-subhead::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--purple-soft); border: 1.5px solid var(--purple); flex-shrink: 0; }
+.skel-subhead-label { height: 12px; width: 70px; border-radius: 6px; }
 .skel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.skel-card {
+  border-radius: 20px; overflow: hidden; display: flex; flex-direction: column;
+  background: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.7);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.6);
+  animation: card-in .42s cubic-bezier(.34,1.1,.64,1) both;
+}
+.skel-card-banner { height: 58px; flex-shrink: 0; }
+.skel-card-body { padding: 15px 20px 18px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.skel-line { border-radius: 6px; }
+.skel-card-btn { height: 32px; border-radius: 9px; margin-top: auto; }
 .skel-card { height: 162px; border-radius: var(--radius-md); }
 
 /* Reduce motion */
@@ -861,6 +879,19 @@ function MobileEnrollBar() {
 }
 
 // ── Skeleton loader ───────────────────────────────────────────────
+function SkeletonCard({ i, titleWidth, descWidth }) {
+  return (
+    <div className="skel-card" style={{ animationDelay: `${i * 70}ms` }}>
+      <div className="skel-card-banner shimmer-banner" />
+      <div className="skel-card-body">
+        <div className="skel-line shimmer" style={{ width: titleWidth, height: 14 }} />
+        <div className="skel-line shimmer" style={{ width: descWidth, height: 11 }} />
+        <div className="skel-card-btn shimmer" />
+      </div>
+    </div>
+  );
+}
+
 function SkeletonLoading() {
   const pillWidths = [118, 92, 78, 104, 126, 88, 96, 80];
   return (
@@ -875,10 +906,16 @@ function SkeletonLoading() {
         <div className="skel-label shimmer" style={{ width: 160 }} />
         <div className="skel-label shimmer" style={{ width: 80, marginLeft: 'auto' }} />
       </div>
+      <div className="skel-subhead"><div className="skel-subhead-label shimmer" /></div>
       <div className="skel-grid">
-        {[0, 1, 2, 3].map(i => (
-          <div key={i} className="skel-card shimmer" style={{ animationDelay: `${i * 0.08}s` }} />
-        ))}
+        <SkeletonCard i={0} titleWidth="78%" descWidth="45%" />
+        <SkeletonCard i={1} titleWidth="65%" descWidth="50%" />
+      </div>
+      <div className="skel-subhead" style={{ marginTop: 36 }}><div className="skel-subhead-label shimmer" style={{ width: 86 }} /></div>
+      <div className="skel-grid">
+        <SkeletonCard i={2} titleWidth="85%" descWidth="40%" />
+        <SkeletonCard i={3} titleWidth="70%" descWidth="55%" />
+        <SkeletonCard i={4} titleWidth="60%" descWidth="35%" />
       </div>
     </div>
   );
