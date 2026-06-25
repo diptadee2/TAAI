@@ -593,22 +593,22 @@ body.buttons-visible .mcb-call:hover, body.buttons-visible .mcb-wa:hover { trans
 </style>
 <script type="application/ld+json">
 {
-  "": "https://schema.org",
-  "": [
+  "@context": "https://schema.org",
+  "@graph": [
     {
-      "": "Organization",
-      "": "https://taai.live/#organization",
+      "@type": "Organization",
+      "@id": "https://taai.live/#organization",
       "name": "TAAI",
       "url": "https://taai.live",
       "logo": "https://taai.live/logo.webp",
-      "email": "support.live"
+      "email": "support@taai.live"
     },
     {
-      "": "WebPage",
+      "@type": "WebPage",
       "name": "Free GATE DA Resources — TAAI",
       "url": "https://taai.live/resources",
       "description": "Free GATE DA 2027 resources including syllabus, previous year papers, and study plans.",
-      "publisher": { "": "https://taai.live/#organization" }
+      "publisher": { "@id": "https://taai.live/#organization" }
     }
   ]
 }
