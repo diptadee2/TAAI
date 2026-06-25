@@ -964,12 +964,12 @@ body {
   transition: transform .45s cubic-bezier(.16,1,.3,1), box-shadow .45s ease;
 }
 .testi:hover { transform: translateY(-6px); box-shadow: 0 4px 12px rgba(20,16,43,0.08), 0 14px 38px rgba(255,127,183,0.28), 0 28px 68px rgba(139,92,246,0.20); }
-.testi-rank {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-family: var(--font-display); font-size: 13px; font-weight: 600;
-  padding: 6px 12px; border-radius: 999px;
-  background: linear-gradient(90deg, var(--pink-soft), var(--purple-soft));
-  align-self: flex-start; margin-bottom: 20px;
+.testi-rank { margin-bottom: 22px; }
+.testi-rank-num {
+  font-family: var(--font-display); font-size: clamp(40px,5vw,56px); font-weight: 700;
+  letter-spacing: -0.03em; line-height: 1;
+  background: linear-gradient(120deg, var(--pink), var(--purple));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 .testi-quote { font-family: var(--font-display); font-size: clamp(16px, 4.5vw, 20px); font-weight: 600; letter-spacing: -0.015em; line-height: 1.3; margin-bottom: 24px; flex: 1; }
 .testi-author { display: flex; align-items: center; gap: 12px; padding-top: 20px; border-top: 1px solid var(--line); }
@@ -2307,7 +2307,9 @@ function Testimonials() {
             </div>
           ) : (
             <div key={i} className="testi card fade-in" style={{ '--delay': `${i * 60}ms` }}>
-              <div className="testi-rank"><Icon.Sparkle size={12} />AIR {t.air}</div>
+              <div className="testi-rank">
+                <span className="testi-rank-num">AIR {t.air}</span>
+              </div>
               <div className="testi-quote">"{t.quote}"</div>
               <div className="testi-author">
                 <div className="testi-avatar" style={{ background: t.grad }}>
