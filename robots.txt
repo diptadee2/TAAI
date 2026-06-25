@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://taai.live/sitemap.xml
