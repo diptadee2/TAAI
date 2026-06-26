@@ -981,8 +981,9 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   .course-topic { transform: none; opacity: 1; color: var(--ink-dim); }
   .course-topic::before { background: var(--purple); }
   .combo-card:hover { transform: none; }
-  .combo-featured-frame:hover { transform: none; box-shadow: 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12); }
-  .combo-featured-frame { background: none; padding: 0; animation: none; box-shadow: 0 0 0 2px #8b5cf6, 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12); -webkit-tap-highlight-color: transparent; }
+  .combo-featured-frame:hover { transform: none; box-shadow: 0 0 0 2px #8b5cf6, 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12); }
+  .combo-featured-frame { background: none; padding: 0; box-shadow: 0 0 0 2px #8b5cf6, 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12); transition: none; -webkit-tap-highlight-color: transparent; }
+  .combo-featured-frame::before { animation: none; }
   .combo-featured-frame, .combo-card.featured { -webkit-tap-highlight-color: transparent; }
   .combo-card.featured::after { animation: none; }
   .combo-card .btn-primary::before { animation: none; }
