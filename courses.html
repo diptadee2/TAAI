@@ -820,6 +820,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .incl-accordion { display: flex; flex-direction: column; gap: 8px; }
 .incl-accordion-item { border-radius: var(--radius-md); border: 1.5px solid var(--line); background: #fff; overflow: hidden; }
 .incl-accordion-btn { display: flex; align-items: center; gap: 14px; padding: 15px 16px; width: 100%; background: none; border: none; font-family: inherit; cursor: pointer; text-align: left; }
+.incl-accordion-item .incl-tab-label { color: var(--ink); }
+.incl-accordion-item .incl-tab-sub { color: var(--ink-dim); }
 .incl-accordion-item.active .incl-accordion-btn { border-bottom: 1px solid rgba(255,255,255,0.1); }
 .incl-accordion-chevron { margin-left: auto; flex-shrink: 0; color: var(--purple); transition: transform .26s cubic-bezier(.4,0,.2,1); }
 .incl-accordion-item.active .incl-accordion-chevron { transform: rotate(90deg); }
