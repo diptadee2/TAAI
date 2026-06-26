@@ -1263,6 +1263,10 @@ body {
   .offer-card:hover .offer-badge-dot { background: revert; }
   /* Tap feedback */
   .offer-card:active { transform: scale(0.975); transition-duration: .12s; }
+  /* btn-stories' nice look is a :hover reveal, which touch devices never trigger -
+     show the gradient fill by default instead of leaving it permanently plain */
+  .btn-stories::before { transform: translateX(0); }
+  .btn-stories { color: #fff; border-color: transparent; box-shadow: 0 8px 32px rgba(139,92,246,0.38), 0 2px 8px rgba(236,72,153,0.2); }
 }
 
 /* YouTube link wiggle */
