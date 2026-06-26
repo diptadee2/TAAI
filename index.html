@@ -1267,6 +1267,9 @@ body {
      show the gradient fill by default instead of leaving it permanently plain */
   .btn-stories::before { transform: translateX(0); }
   .btn-stories { color: #fff; border-color: transparent; box-shadow: none; }
+  /* .toppers-view-all has its own :hover box-shadow (more specific than the rule above) -
+     iOS Safari can still match :hover on tap, so it must be neutralized here too */
+  .toppers-view-all:hover { box-shadow: none; }
 }
 
 /* YouTube link wiggle */
