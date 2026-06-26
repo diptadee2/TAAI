@@ -863,6 +863,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 
 /* ── Touch-device interaction overrides ─────────────────────── */
 @media (hover: none) {
+  /* iOS can transiently match :hover on tap - keep btn-stories' resting look unchanged */
+  .btn-stories:hover { color: var(--purple); border-color: var(--purple); box-shadow: none; transform: none; background: transparent; }
+  .btn-stories:hover::before { transform: translateX(-102%); }
+  .btn-stories:hover svg { transform: none; }
   .orientation-pill:hover { transform: none; background: var(--purple-soft); border-color: rgba(139,92,246,0.22); color: var(--purple); }
   .orientation-pill:active { transform: scale(0.97); transition-duration: .12s; }
   /* Kill hover lifts, replace with tap feedback */
