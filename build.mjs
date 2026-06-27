@@ -274,7 +274,7 @@ function generateBlog() {
   const cardIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 20h9" stroke="currentColor" stroke-width="2" stroke-linecap="round" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" /></svg>';
   const cards = posts.length
     ? posts.map((p, i) => `<a href="/blog/${p.slug}/" class="blog-card fade-in" style="--delay: ${Math.min(i, 5) * 80}ms">
-          <div class="blog-card-icon">${cardIcon}</div>
+          ${p.cover ? `<img class="blog-card-cover" src="${escapeHtml(p.cover)}" alt="" loading="lazy">` : `<div class="blog-card-icon">${cardIcon}</div>`}
           <div class="blog-card-date">${formatDate(p.date)}</div>
           <div class="blog-card-title">${escapeHtml(p.title)}</div>
           <div class="blog-card-desc">${escapeHtml(p.description)}</div>
@@ -321,6 +321,7 @@ ${renderChrome(indexBody)}
         </div>
       </div>
       <div class="container">
+        ${post.cover ? `<img class="blog-post-cover" src="${escapeHtml(post.cover)}" alt="">` : ''}
         <div class="blog-post-content">
           ${post.html}
         </div>
