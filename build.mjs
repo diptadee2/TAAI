@@ -263,7 +263,11 @@ function loadPosts() {
 
 function generateBlog() {
   const posts = loadPosts();
-  const blogDir = path.join(DIST, 'blog');
+  // Written into the source blog/ folder (not dist/) so the regular dev
+  // server — which serves source directly, same as the other pages —
+  // can preview it without a build. The generic asset-copy step then
+  // carries it into dist/ for the production build.
+  const blogDir = path.join(SRC, 'blog');
   if (!fs.existsSync(blogDir)) fs.mkdirSync(blogDir, { recursive: true });
 
   // Listing page
@@ -360,12 +364,19 @@ ${entries.map(u => `  <url>
   </url>`).join('\n')}
 </urlset>
 `;
-  fs.writeFileSync(path.join(DIST, 'sitemap.xml'), xml);
+  fs.writeFileSync(path.join(SRC, 'sitemap.xml'), xml);
   console.log('  ✓ sitemap.xml');
 }
 
 function build() {
   if (!fs.existsSync(DIST)) fs.mkdirSync(DIST);
+
+  console.log('Building…');
+  // Generate blog pages + sitemap into source first, so the generic
+  // copy step below carries the fresh output into dist/ along with
+  // everything else.
+  const posts = generateBlog();
+  generateSitemap(posts);
 
   // Copy static assets (images, etc.) — skip dist/ and node_modules/
   const SKIP_DIRS = new Set(['dist', 'node_modules', '.git', 'content']);
@@ -380,13 +391,10 @@ function build() {
     }
   }
 
-  console.log('Building…');
   generateNotesData();
   for (const page of PAGES) {
     if (fs.existsSync(path.join(SRC, page))) compilePage(page);
   }
-  const posts = generateBlog();
-  generateSitemap(posts);
   console.log('Done → dist/');
 }
 
