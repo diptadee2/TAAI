@@ -1226,7 +1226,7 @@ body.buttons-visible .mcb-wa:hover { transform: scale(1.12); transition-delay: 0
             "@type": "Course", "name": "GATE 2027 Full Course",
             "description": "Complete GATE DA preparation: Linear Algebra, Probability, Statistics, Calculus, Machine Learning, AI, DBMS, DSA, and Python, with weekly quizzes and GATE mentorship from Manoj Kumar.",
             "provider": { "@id": "https://taai.live/#organization" },
-            "url": "https://taai.live/courses#combos",
+            "url": "https://taai.live/courses#full-course",
             "offers": { "@type": "Offer", "price": "11999", "priceCurrency": "INR", "priceValidUntil": "2027-02-15", "availability": "https://schema.org/InStock", "url": "https://learn.taai.live/learn/batch/GATE-2027/content" }
           }
         },
@@ -1236,7 +1236,7 @@ body.buttons-visible .mcb-wa:hover { transform: scale(1.12); transition-delay: 0
             "@type": "Course", "name": "Mathematics & ML Bundle",
             "description": "Linear Algebra, Probability, Statistics, Calculus, and Machine Learning bundled together with quizzes and Discord community support.",
             "provider": { "@id": "https://taai.live/#organization" },
-            "url": "https://taai.live/courses#combos",
+            "url": "https://taai.live/courses#maths-ml-bundle",
             "offers": { "@type": "Offer", "price": "7999", "priceCurrency": "INR", "priceValidUntil": "2027-02-15", "availability": "https://schema.org/InStock", "url": "https://learn.taai.live/learn/Maths--ML---AI-Bundle---GATE-2026" }
           }
         },
@@ -1246,7 +1246,7 @@ body.buttons-visible .mcb-wa:hover { transform: scale(1.12); transition-delay: 0
             "@type": "Course", "name": "Mathematics Bundle",
             "description": "Linear Algebra, Probability, Statistics, and Calculus for GATE DA, with topic-wise quizzes and Discord community support.",
             "provider": { "@id": "https://taai.live/#organization" },
-            "url": "https://taai.live/courses#combos",
+            "url": "https://taai.live/courses#maths-bundle",
             "offers": { "@type": "Offer", "price": "5999", "priceCurrency": "INR", "priceValidUntil": "2027-02-15", "availability": "https://schema.org/InStock", "url": "https://learn.taai.live/learn/Mathematics-Course-by-manoj-sir-gate-2026-gateda" }
           }
         },
@@ -1256,7 +1256,7 @@ body.buttons-visible .mcb-wa:hover { transform: scale(1.12); transition-delay: 0
             "@type": "Course", "name": "Statistics for GATE DA",
             "description": "Hypothesis testing, estimation theory, and regression basics, taught visually for GATE DA 2027.",
             "provider": { "@id": "https://taai.live/#organization" },
-            "url": "https://taai.live/courses#individual",
+            "url": "https://taai.live/courses#statistics",
             "offers": { "@type": "Offer", "price": "1499", "priceCurrency": "INR", "priceValidUntil": "2027-02-20", "availability": "https://schema.org/InStock", "url": "https://learn.taai.live/learn/Statistics" }
           }
         },
@@ -1266,7 +1266,7 @@ body.buttons-visible .mcb-wa:hover { transform: scale(1.12); transition-delay: 0
             "@type": "Course", "name": "Calculus & Optimization for GATE DA",
             "description": "Limits and continuity, differentiation, optimization, and integration, taught visually for GATE DA 2027.",
             "provider": { "@id": "https://taai.live/#organization" },
-            "url": "https://taai.live/courses#individual",
+            "url": "https://taai.live/courses#calculus",
             "offers": { "@type": "Offer", "price": "1499", "priceCurrency": "INR", "priceValidUntil": "2027-02-20", "availability": "https://schema.org/InStock", "url": "https://learn.taai.live/learn/Calculus-and-Optimization" }
           }
         },
@@ -1276,7 +1276,7 @@ body.buttons-visible .mcb-wa:hover { transform: scale(1.12); transition-delay: 0
             "@type": "Course", "name": "Linear Algebra for GATE DA",
             "description": "Matrices and determinants, eigenvalues and eigenvectors, and linear transformations, taught visually for GATE DA 2027.",
             "provider": { "@id": "https://taai.live/#organization" },
-            "url": "https://taai.live/courses#individual",
+            "url": "https://taai.live/courses#linear-algebra",
             "offers": { "@type": "Offer", "price": "1999", "priceCurrency": "INR", "priceValidUntil": "2027-02-20", "availability": "https://schema.org/InStock", "url": "https://learn.taai.live/learn/Linear-Algebra--Mathematics-" }
           }
         },
@@ -1286,7 +1286,7 @@ body.buttons-visible .mcb-wa:hover { transform: scale(1.12); transition-delay: 0
             "@type": "Course", "name": "Probability for GATE DA",
             "description": "Conditional probability, random variables, and distributions, taught visually for GATE DA 2027.",
             "provider": { "@id": "https://taai.live/#organization" },
-            "url": "https://taai.live/courses#individual",
+            "url": "https://taai.live/courses#probability",
             "offers": { "@type": "Offer", "price": "2499", "priceCurrency": "INR", "priceValidUntil": "2027-02-20", "availability": "https://schema.org/InStock", "url": "https://learn.taai.live/learn/Probability" }
           }
         },
@@ -1296,7 +1296,7 @@ body.buttons-visible .mcb-wa:hover { transform: scale(1.12); transition-delay: 0
             "@type": "Course", "name": "Machine Learning for GATE DA",
             "description": "Supervised and unsupervised learning, model evaluation, and neural network basics, taught visually for GATE DA 2027.",
             "provider": { "@id": "https://taai.live/#organization" },
-            "url": "https://taai.live/courses#individual",
+            "url": "https://taai.live/courses#machine-learning",
             "offers": { "@type": "Offer", "price": "3999", "priceCurrency": "INR", "priceValidUntil": "2027-02-20", "availability": "https://schema.org/InStock", "url": "https://learn.taai.live/learn/taAI-Machine-Learning-Full-Course" }
           }
         },
@@ -2012,7 +2012,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
     onMouseLeave: e => { e.currentTarget.style.setProperty('--mx', '-200%'); e.currentTarget.style.setProperty('--my', '-200%'); }
   };
   const inner = (
-    <div className={cls} {...spotlightProps}>
+    <div id={c.id} className={cls} {...spotlightProps}>
       <div className="combo-num">{c.num}</div>
       <div className="combo-accent" style={{ background: c.accent }} />
       <div className={'combo-badge ' + c.badge}><Icon.Sparkle />{c.badgeLabel}</div>
@@ -2057,7 +2057,7 @@ const CourseCard = React.memo(function CourseCard({ c, pricing }) {
   const priceOld = p.priceOld ? fmtPrice(p.priceOld) : null;
   const validity = p.validity ? fmtValidity(p.validity) : '—';
   return (
-    <div className="course-card card" style={{ '--course-grad': c.grad, '--course-shadow': c.shadow }}>
+    <div id={c.id} className="course-card card" style={{ '--course-grad': c.grad, '--course-shadow': c.shadow }}>
       <div className="course-accent" style={{ background: c.grad }} />
       <div className="course-icon" style={{ background: c.grad }}>{c.icon}</div>
       <div className="course-title">{c.title}</div>
