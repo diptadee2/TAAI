@@ -1,0 +1,25 @@
+backend:
+  name: git-gateway
+  branch: master
+
+publish_mode: simple
+media_folder: "blog-uploads"
+public_folder: "/blog-uploads"
+
+collections:
+  - name: "blog"
+    label: "Blog Posts"
+    folder: "content/blog"
+    create: true
+    slug: "{{slug}}"
+    extension: "md"
+    format: "frontmatter"
+    summary: "{{title}} — {{date}}"
+    sortable_fields: ["date", "title"]
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Slug", name: "slug", widget: "string", hint: "Used in the URL: taai.live/blog/<slug>. Lowercase, words separated by dashes." }
+      - { label: "Publish Date", name: "date", widget: "datetime", format: "YYYY-MM-DD" }
+      - { label: "Description", name: "description", widget: "text", hint: "Shown on the blog listing page and used as the SEO meta description (~155 characters)." }
+      - { label: "Cover Image", name: "cover", widget: "image", required: false }
+      - { label: "Body", name: "body", widget: "markdown" }
