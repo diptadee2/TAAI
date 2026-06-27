@@ -271,8 +271,10 @@ function generateBlog() {
   if (!fs.existsSync(blogDir)) fs.mkdirSync(blogDir, { recursive: true });
 
   // Listing page
+  const cardIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 20h9" stroke="currentColor" stroke-width="2" stroke-linecap="round" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" /></svg>';
   const cards = posts.length
-    ? posts.map(p => `<a href="/blog/${p.slug}/" class="blog-card fade-in">
+    ? posts.map((p, i) => `<a href="/blog/${p.slug}/" class="blog-card fade-in" style="--delay: ${Math.min(i, 5) * 80}ms">
+          <div class="blog-card-icon">${cardIcon}</div>
           <div class="blog-card-date">${formatDate(p.date)}</div>
           <div class="blog-card-title">${escapeHtml(p.title)}</div>
           <div class="blog-card-desc">${escapeHtml(p.description)}</div>
@@ -282,9 +284,9 @@ function generateBlog() {
 
   const indexBody = `<section class="blog-hero">
       <div class="container">
-        <div class="blog-eyebrow">TAAI Blog</div>
-        <h1>GATE DA guides, syllabus<br>breakdowns, and prep tips.</h1>
-        <p class="blog-hero-sub">Written by the TAAI team to help you prepare smarter for GATE DA.</p>
+        <div class="blog-eyebrow fade-in">TAAI Blog</div>
+        <h1 class="fade-in">GATE DA guides, syllabus<br>breakdowns, <em>and prep tips.</em></h1>
+        <p class="blog-hero-sub fade-in">Written by the TAAI team to help you prepare smarter for GATE DA.</p>
       </div>
     </section>
     <section class="blog-list">
@@ -314,8 +316,8 @@ ${renderChrome(indexBody)}
       <div class="blog-post-hero">
         <div class="container">
           <a href="/blog" class="blog-post-back">← Back to blog</a>
-          <div class="blog-post-date">${formatDate(post.date)}</div>
-          <h1>${escapeHtml(post.title)}</h1>
+          <div class="blog-post-date fade-in">${formatDate(post.date)}</div>
+          <h1 class="fade-in">${escapeHtml(post.title)}</h1>
         </div>
       </div>
       <div class="container">
