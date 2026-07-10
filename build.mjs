@@ -112,8 +112,7 @@ const BLOG_NAV_LINKS = [
   { label: 'Courses', href: '/courses' },
   { label: 'Test Series 2027', href: '/test-series' },
   { label: 'Testimonials', href: '/testimonials' },
-  { label: 'Resources', href: '/resources' },
-  { label: 'Blog', href: '/blog', active: true },
+  { label: 'Resources', href: '/resources' }, // renders as dropdown — see renderNav()
 ];
 
 const BLOG_MENU_ICONS = {
@@ -183,7 +182,24 @@ function renderHead({ title, description, canonicalPath, ogImage }) {
 }
 
 function renderNav() {
-  const links = BLOG_NAV_LINKS.map(l => `<a href="${l.href}" class="${l.active ? 'active' : ''}">${l.label}</a>`).join('\n          ');
+  const links = BLOG_NAV_LINKS.map(l => l.href === '/resources'
+    ? `<div class="nav-dropdown-wrap">
+            <span class="nav-resources-label">Resources</span>
+            <div class="nav-dropdown">
+              <a href="/resources" class="nav-dd-item">Free Notes &amp; Lectures</a>
+              <div class="nav-dd-divider"></div>
+              <a href="/blog" class="nav-dd-item active">Blog</a>
+            </div>
+          </div>`
+    : `<a href="${l.href}" class="${l.active ? 'active' : ''}">${l.label}</a>`
+  ).join('\n          ');
+  // mobile menu expands Resources into its two sub-items directly
+  const mobileLinks = [{ label: 'Home', href: '/' },
+    ...BLOG_NAV_LINKS.flatMap(l => l.href === '/resources'
+      ? [{ href: '/resources', label: 'Free Notes &amp; Lectures' }, { href: '/blog', label: 'Blog', active: true }]
+      : [l]
+    )
+  ];
   return `<div class="menu-overlay"></div>
     <nav class="nav">
       <div class="nav-inner">
@@ -200,7 +216,7 @@ function renderNav() {
       </div>
     </nav>
     <div class="mobile-menu">
-      ${[{ label: 'Home', href: '/' }, ...BLOG_NAV_LINKS].map(l => `<a href="${l.href}" class="mobile-menu-link${l.active ? ' active' : ''}">
+      ${mobileLinks.map(l => `<a href="${l.href}" class="mobile-menu-link${l.active ? ' active' : ''}">
         <span class="mobile-menu-link-icon">${BLOG_MENU_ICONS[l.href] || ''}</span>
         <span class="mobile-menu-link-label">${l.label}</span>
       </a>`).join('\n      ')}
