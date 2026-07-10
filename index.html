@@ -1513,12 +1513,15 @@ const TESTIMONIALS_DROPDOWN = [
   { label: 'Batch of 2026', href: '/testimonials#batch-2026' },
   { label: 'Batch of 2025', href: '/testimonials#batch-2025', dividerBefore: true },
 ];
+const RESOURCES_DROPDOWN = [
+  { label: 'Free Notes & Lectures', href: '/resources' },
+  { label: 'Blog', href: '/blog', dividerBefore: true },
+];
 const NAV_LINKS = [
   { label: 'Courses',      href: '/courses',      dropdown: COURSE_DROPDOWN },
   { label: 'Test Series 2027',  href: '/test-series' },
   { label: 'Testimonials', href: '/testimonials', dropdown: TESTIMONIALS_DROPDOWN },
-  { label: 'Resources',    href: '/resources' },
-  { label: 'Blog',         href: '/blog' },
+  { label: 'Resources',    href: '/resources', dropdown: RESOURCES_DROPDOWN, noClick: true },
 ];
 const MENU_ICONS = {
   '/':        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M3 12L12 4L21 12V20C21 20.6 20.6 21 20 21H15V16H9V21H4C3.4 21 3 20.6 3 20V12Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" /></svg>,
@@ -1615,7 +1618,7 @@ function Nav() {
             <div className="nav-pill" style={{ left: pill.left, width: pill.width, opacity: pill.visible ? 1 : 0 }} />
             {NAV_LINKS.map((l) => l.dropdown ? (
               <div key={l.href} className="nav-dropdown-wrap" onMouseEnter={(e) => moveTo(e.currentTarget)}>
-                <a href={l.href} className={l.active ? 'active' : ''}>{l.label}</a>
+                {l.noClick ? <span className={l.active ? 'active' : ''}>{l.label}</span> : <a href={l.href} className={l.active ? 'active' : ''}>{l.label}</a>}
                 <div className="nav-dropdown">
                   {l.dropdown.map((d, i) => (
                     <React.Fragment key={i}>
@@ -1650,7 +1653,7 @@ function Nav() {
         </div>
       </nav>
       <div className={`mobile-menu${menuOpen ? ' open' : ''}`}>
-        {[{ label: 'Home', href: '/', active: true }, ...NAV_LINKS].map((l, i) => (
+        {[{ label: 'Home', href: '/', active: true }, ...NAV_LINKS].flatMap((l) => l.noClick && l.dropdown ? l.dropdown : [l]).map((l, i) => (
           <a key={l.href} href={l.href} className={`mobile-menu-link${l.active ? ' active' : ''}`} style={{ animationDelay: `${0.04 + i * 0.05}s` }} onClick={() => setMenuOpen(false)}>
             <span className="mobile-menu-link-icon">{MENU_ICONS[l.href]}</span>
             <span className="mobile-menu-link-label">{l.label}</span>
