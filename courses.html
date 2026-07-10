@@ -874,13 +874,33 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 
   .combo-card:active { transform: scale(0.975); transition-duration: .12s; }
   .combo-card.featured:active { transform: scale(0.975); transition-duration: .12s; }
-  .course-card, .course-card * { transition: none !important; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; user-select: none; touch-action: manipulation; }
-  .course-card:hover, .course-card:active { transform: none; box-shadow: none; }
-  .course-card:hover::before { opacity: 0.18; }
-  .course-card:hover .course-icon { transform: none; box-shadow: none; }
-  .course-card:hover .course-title { color: inherit; }
-  .course-card:hover .course-validity { color: var(--ink-soft); }
-  .course-card:hover .course-topics { max-height: 0; opacity: 0; margin-bottom: 0; }
+  /* Course cards fully static on touch — no tap, no hold, no hover flash */
+  .course-card,
+  .course-card::before,
+  .course-card::after,
+  .course-card *,
+  .course-card *::before,
+  .course-card *::after {
+    transition: none !important;
+    animation: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none !important;
+    user-select: none !important;
+    touch-action: manipulation !important;
+  }
+  .course-card,
+  .course-card:hover,
+  .course-card:active,
+  .course-card:focus { transform: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.05) !important; border-color: var(--line) !important; }
+  .course-card:hover::before, .course-card:active::before { opacity: 0.18 !important; }
+  .course-card:hover .course-icon,
+  .course-card:active .course-icon { transform: none !important; box-shadow: none !important; }
+  .course-card:hover .course-title,
+  .course-card:active .course-title { color: inherit !important; }
+  .course-card:hover .course-validity,
+  .course-card:active .course-validity { color: var(--ink-soft) !important; }
+  .course-card:hover .course-topics,
+  .course-card:active .course-topics { max-height: 0 !important; opacity: 0 !important; margin-bottom: 0 !important; }
   /* Combo includes, show without hover */
   .combo-includes li { opacity: 1; transform: translateX(0); }
   .combo-check svg path { stroke-dashoffset: 0; }
