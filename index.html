@@ -1365,6 +1365,9 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 .mobile-menu-contact:hover { color: var(--purple); background: rgba(139,92,246,0.06); }
 @media (max-width: 1024px) { .nav-hamburger { display: flex; } .nav-cta { display: none; } .nav-links { display: none; } .btn-nav-contact { display: none; } .nav-inner { height: 64px; padding: 0 14px; position: relative; justify-content: flex-end; } .mobile-menu { top: 64px; } .nav-spacer { height: 64px; } .nav-logo { position: absolute; left: 50%; transform: translateX(-50%); } .nav-logo:hover { transform: translateX(-50%) translateY(-2px); } .nav-logo:active { transform: translateX(-50%) translateY(1px); } .nav-logo svg, .nav-logo img { width: 150px; height: auto; filter: drop-shadow(0 0 14px rgba(255,255,255,0.22)) drop-shadow(0 0 36px rgba(255,255,255,0.12)) drop-shadow(0 0 72px rgba(255,255,255,0.07)); } .nav-hamburger span { background: var(--purple); } }
 @media (min-width: 768px) and (max-width: 1024px) {
+  /* Touch overrides set left:16px right:16px making the button span the full photo width.
+     On iPad the photo is much wider so cap the button at a sensible size. */
+  .instructor-play-btn { left: auto; right: 16px; max-width: 300px; }
 }
 /* ── Mobile sticky CTA ──────────────────────────────── */
 .mobile-sticky-cta { display: none; }
