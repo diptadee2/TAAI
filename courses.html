@@ -874,7 +874,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 
   .combo-card:active { transform: scale(0.975); transition-duration: .12s; }
   .combo-card.featured:active { transform: scale(0.975); transition-duration: .12s; }
-  .course-card:hover { transform: none; box-shadow: none; }
+  .course-card { transition: none; -webkit-tap-highlight-color: transparent; }
+  .course-card:hover, .course-card:active { transform: none; box-shadow: none; }
   .course-card:hover::before { opacity: 0.18; }
   .course-card:hover .course-icon { transform: none; box-shadow: none; }
   .course-card:hover .course-title { color: inherit; }
