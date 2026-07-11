@@ -1639,7 +1639,7 @@ const COMBOS = [
     theme: 'blue',
     accent: 'linear-gradient(90deg, var(--purple), var(--blue))',
     title: 'Mathematics & ML Bundle',
-    saving: 'Save ~₹3,500 vs buying all 5 courses individually',
+    bundleOf: ['linear-algebra', 'probability', 'statistics', 'calculus', 'machine-learning'],
     includes: [
       'Linear Algebra',
       'Probability',
@@ -1658,7 +1658,7 @@ const COMBOS = [
     theme: 'pink',
     accent: 'linear-gradient(90deg, var(--pink), var(--purple))',
     title: 'Mathematics Bundle',
-    saving: 'Save ~₹1,500 vs buying all 4 maths courses individually',
+    bundleOf: ['linear-algebra', 'probability', 'statistics', 'calculus'],
     includes: [
       'Linear Algebra',
       'Probability',
@@ -2506,7 +2506,18 @@ function App() {
             </a>
           </div>
           <div className="combos-grid">
-            {COMBOS.map((c, i) => <div key={i} className="fade-in"><ComboCard c={c} pricing={pricingMap[c.id] || null} /></div>)}
+            {COMBOS.map((c, i) => {
+              const comboPrice = parseInt((pricingMap[c.id] || {}).price) || 0;
+              const saving = c.bundleOf && comboPrice
+                ? (() => {
+                    const total = c.bundleOf.reduce((s, id) => s + (parseInt((pricingMap[id] || {}).price) || 0), 0);
+                    const diff = total - comboPrice;
+                    if (diff <= 0) return null;
+                    return `Save ₹${diff.toLocaleString('en-IN')} vs buying ${c.bundleOf.length === 5 ? 'all 5' : 'all 4'} courses individually`;
+                  })()
+                : null;
+              return <div key={i} className="fade-in"><ComboCard c={{ ...c, saving }} pricing={pricingMap[c.id] || null} /></div>;
+            })}
           </div>
         </div>
       </section>
