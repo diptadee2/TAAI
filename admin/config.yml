@@ -8,7 +8,7 @@ media_library:
   name: cloudinary
   config:
     cloud_name: nc0b6ri2
-    api_key: 452317453532565
+    api_key: 222157219219989
     upload_preset: REPLACE_WITH_YOUR_PRESET_NAME
 
 collections:
