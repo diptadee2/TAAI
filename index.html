@@ -1370,6 +1370,8 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   .instructor-play-btn { left: auto; right: 16px; max-width: 300px; }
   .offer-grid { grid-template-columns: 1fr; }
   .offer-card { padding: 24px; }
+  /* Inline justifySelf:end on hero-visual beats the 1024px CSS rule — use !important */
+  .hero-visual { justify-self: center !important; margin: 20px auto 0 !important; }
 }
 /* ── Mobile sticky CTA ──────────────────────────────── */
 .mobile-sticky-cta { display: none; }
