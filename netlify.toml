@@ -14,25 +14,25 @@
   status = 301
   force = true
 
-# ── New keyword-rich clean URLs (200 = serve HTML file at this path) ───────
+# ── New keyword-rich clean URLs (200 = serve renamed HTML file) ─────────────
 [[redirects]]
   from = "/gate-da-courses"
-  to = "/courses.html"
+  to = "/gate-da-courses.html"
   status = 200
 
 [[redirects]]
   from = "/gate-da-test-series"
-  to = "/test-series.html"
+  to = "/gate-da-test-series.html"
   status = 200
 
 [[redirects]]
   from = "/gate-da-toppers"
-  to = "/testimonials.html"
+  to = "/gate-da-toppers.html"
   status = 200
 
 [[redirects]]
   from = "/gate-da-free-notes"
-  to = "/resources.html"
+  to = "/gate-da-free-notes.html"
   status = 200
 
 [[redirects]]
@@ -61,7 +61,7 @@
   to = "/gate-da-free-notes"
   status = 301
 
-# ── 301s from .html extensions ──────────────────────────────────────────────
+# ── 301s from old .html extensions ─────────────────────────────────────────
 [[redirects]]
   from = "/courses.html"
   to = "/gate-da-courses"
@@ -79,6 +79,26 @@
 
 [[redirects]]
   from = "/resources.html"
+  to = "/gate-da-free-notes"
+  status = 301
+
+[[redirects]]
+  from = "/gate-da-courses.html"
+  to = "/gate-da-courses"
+  status = 301
+
+[[redirects]]
+  from = "/gate-da-test-series.html"
+  to = "/gate-da-test-series"
+  status = 301
+
+[[redirects]]
+  from = "/gate-da-toppers.html"
+  to = "/gate-da-toppers"
+  status = 301
+
+[[redirects]]
+  from = "/gate-da-free-notes.html"
   to = "/gate-da-free-notes"
   status = 301
 

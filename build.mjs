@@ -19,7 +19,7 @@ const SRC   = __dir;
 const DIST  = path.join(__dir, 'dist');
 const BLOG_CONTENT_DIR = path.join(__dir, 'content', 'blog');
 
-const PAGES = ['index.html', 'courses.html', 'test-series.html', 'testimonials.html', 'contact.html', 'resources.html'];
+const PAGES = ['index.html', 'gate-da-courses.html', 'gate-da-test-series.html', 'gate-da-toppers.html', 'contact.html', 'gate-da-free-notes.html'];
 const SITE_URL = 'https://taai.live';
 
 
