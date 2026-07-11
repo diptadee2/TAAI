@@ -883,8 +883,9 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
     user-select: none !important; touch-action: manipulation !important;
   }
   .combo-card:hover, .combo-card:active,
-  .combo-card.card:hover, .combo-featured-frame:hover { transform: none !important; box-shadow: none !important; }
-  .combo-card.featured:active, .combo-featured-frame:active { transform: none !important; }
+  .combo-card.card:hover { transform: none !important; box-shadow: 0 4px 32px rgba(0,0,0,0.35) !important; border-color: rgba(255,255,255,0.09) !important; }
+  .combo-featured-frame:hover, .combo-featured-frame:active,
+  .combo-card.featured:active { transform: none !important; box-shadow: 0 0 0 2px #8b5cf6, 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12) !important; }
   /* Course cards fully static on touch — no tap, no hold, no hover flash */
   .course-card,
   .course-card::before,
