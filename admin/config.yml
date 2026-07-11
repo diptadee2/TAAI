@@ -18,6 +18,7 @@ collections:
     sortable_fields: ["date", "title"]
     fields:
       - { label: "Title", name: "title", widget: "string" }
+      - { label: "Custom URL Slug", name: "slug", widget: "string", required: false, hint: "Leave blank to auto-generate from title. If you fill this in, use lowercase words separated by dashes only — e.g. gate-da-syllabus-2027" }
       - { label: "Publish Date", name: "date", widget: "datetime", format: "YYYY-MM-DD" }
       - { label: "Description", name: "description", widget: "text", hint: "Shown on the blog listing page and used as the SEO meta description (~155 characters)." }
       - { label: "Cover Image", name: "cover", widget: "image", required: false }
