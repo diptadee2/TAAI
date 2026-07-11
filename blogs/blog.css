@@ -84,8 +84,21 @@ a { color: inherit; }
 .btn-nav-signup { display: inline-flex; align-items: center; padding: 12px 28px; border-radius: 999px; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; background: linear-gradient(160deg, #1d1748, var(--ink)); color: #fff; border: none; box-shadow: 6px 6px 16px rgba(20,16,43,0.45), -4px -4px 14px rgba(139,92,246,0.25), inset 0 1px 1px rgba(255,255,255,0.08); transition: box-shadow .25s ease, transform .32s cubic-bezier(.34,1.1,.64,1); white-space: nowrap; }
 .btn-nav-signup:hover { transform: scale(1.05) translateY(-1px); box-shadow: 8px 8px 20px rgba(20,16,43,0.5), -5px -5px 16px rgba(139,92,246,0.35), inset 0 1px 1px rgba(255,255,255,0.12); }
 .btn-nav-contact { font-size: 14px; font-weight: 500; color: var(--purple); text-decoration: none; padding: 10px 20px; border-radius: 8px; background: none; border: none; transition: color .2s, transform .32s cubic-bezier(.34,1.1,.64,1), background .2s; white-space: nowrap; }
-.btn-nav-contact:hover { background: rgba(139,92,246,0.07); transform: scale(1.06) translateY(-1px); }
-.phone-icon { display: inline-flex; align-items: center; margin-right: 5px; }
+.btn-nav-contact:hover { color: var(--purple); background: rgba(139,92,246,0.07); transform: scale(1.06) translateY(-1px); }
+.phone-icon { display: inline-flex; align-items: center; margin-right: 5px; transform-origin: 50% 55%; }
+.btn-nav-contact:hover .phone-icon { animation: phone-ring 0.52s ease-in-out; }
+.nav-cta .btn-nav-contact { position: relative; overflow: hidden; }
+.nav-cta .btn-nav-contact::before { content: ''; position: absolute; inset: 0; background: linear-gradient(108deg, transparent 20%, rgba(255,255,255,0.42) 48%, rgba(210,195,255,0.25) 56%, transparent 74%); transform: translateX(-120%) skewX(-12deg); pointer-events: none; border-radius: inherit; transition: none; }
+.nav-cta .btn-nav-contact:hover::before { transform: translateX(220%) skewX(-12deg); transition: transform .52s cubic-bezier(.2,.8,.4,1); }
+@keyframes phone-ring {
+  0%,100% { transform: rotate(0); }
+  12%     { transform: rotate(-22deg); }
+  28%     { transform: rotate(18deg); }
+  44%     { transform: rotate(-12deg); }
+  60%     { transform: rotate(8deg); }
+  76%     { transform: rotate(-4deg); }
+  90%     { transform: rotate(2deg); }
+}
 
 /* Buttons */
 .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 999px; font-family: var(--font-body); font-size: 15px; font-weight: 500; text-decoration: none; border: none; cursor: pointer; transition: transform .15s ease, box-shadow .15s ease, background .15s, color .15s; white-space: nowrap; }
