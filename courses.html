@@ -884,6 +884,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   }
   .combo-card:hover, .combo-card:active,
   .combo-card.card:hover { transform: none !important; box-shadow: 0 4px 32px rgba(0,0,0,0.35) !important; border-color: rgba(255,255,255,0.09) !important; }
+  .combo-card.combo-blue:hover, .combo-card.combo-blue:active { border-color: rgba(77,139,255,0.22) !important; }
+  .combo-card.combo-pink:hover, .combo-card.combo-pink:active { border-color: rgba(255,65,108,0.22) !important; }
   .combo-featured-frame:hover, .combo-featured-frame:active,
   .combo-card.featured:active { transform: none !important; box-shadow: 0 0 0 2px #8b5cf6, 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12) !important; }
   /* Course cards fully static on touch — no tap, no hold, no hover flash */
@@ -911,8 +913,17 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .course-card:active .course-title { color: inherit !important; }
   .course-card:hover .course-validity,
   .course-card:active .course-validity { color: var(--ink-soft) !important; }
-  /* Topics are visible in resting state on touch — keep them visible on hover/active
-     so iOS sticky-hover doesn't cause a collapse flash on tap */
+  .course-card:hover .course-price,
+  .course-card:active .course-price { color: var(--ink) !important; }
+  .course-card:hover .course-price-old,
+  .course-card:active .course-price-old { color: var(--ink-soft) !important; }
+  .course-card:hover .ticket-notch-line,
+  .course-card:active .ticket-notch-line { border-color: var(--line) !important; }
+  .course-card:hover .btn-ghost,
+  .course-card:active .btn-ghost { background: transparent !important; color: var(--ink) !important; border-color: var(--line) !important; }
+  .course-card:hover .btn-ghost svg,
+  .course-card:active .btn-ghost svg { transform: none !important; }
+  /* Topics are visible in resting state on touch */
   .course-card:hover .course-topics,
   .course-card:active .course-topics { max-height: 200px !important; opacity: 1 !important; }
   /* Combo includes — always visible, hover/active locked to resting */
