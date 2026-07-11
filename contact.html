@@ -549,6 +549,8 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   .offer-card:active { transform: scale(0.97) !important; transition-duration: .12s; }
 }
 @media (max-width: 1024px) { .nav-hamburger { display: flex; } .nav-cta { display: none; } .nav-links { display: none; } .btn-nav-contact { display: none; } .nav-inner { height: 64px; padding: 0 14px; position: relative; justify-content: flex-end; } .mobile-menu { top: 64px; } .nav-spacer { height: 64px; } .nav-logo { position: absolute; left: 50%; transform: translateX(-50%); } .nav-logo:hover { transform: translateX(-50%) translateY(-2px); } .nav-logo:active { transform: translateX(-50%) translateY(1px); } .nav-logo svg, .nav-logo img { width: 150px; height: auto; filter: drop-shadow(0 0 14px rgba(255,255,255,0.22)) drop-shadow(0 0 36px rgba(255,255,255,0.12)) drop-shadow(0 0 72px rgba(255,255,255,0.07)); } .nav-hamburger span { background: var(--purple); } }
+@media (min-width: 768px) and (max-width: 1024px) {
+}
 
 </style>
 <script type="application/ld+json">
@@ -594,26 +596,31 @@ const Icon = {
 };
 
 const COURSE_DROPDOWN = [
-  { label: 'Bundled Courses',    href: '/courses#combos'    },
-  { label: 'Individual Courses', href: '/courses#individual', dividerBefore: true },
-  { label: 'Interview Prep',     href: '/courses#interview',  dividerBefore: true },
+  { label: 'Bundled Courses',    href: '/gate-da-courses#combos'    },
+  { label: 'Individual Courses', href: '/gate-da-courses#individual', dividerBefore: true },
+  { label: 'Interview Prep',     href: '/gate-da-courses#interview',  dividerBefore: true },
 ];
 const TESTIMONIALS_DROPDOWN = [
-  { label: 'Batch of 2026', href: '/testimonials#batch-2026' },
-  { label: 'Batch of 2025', href: '/testimonials#batch-2025', dividerBefore: true },
+  { label: 'Batch of 2026', href: '/gate-da-toppers#batch-2026' },
+  { label: 'Batch of 2025', href: '/gate-da-toppers#batch-2025', dividerBefore: true },
+];
+const RESOURCES_DROPDOWN = [
+  { label: 'Free Notes & Lectures', href: '/gate-da-free-notes' },
+  { label: 'Blogs', href: '/blogs', dividerBefore: true },
 ];
 const NAV_LINKS = [
-  { label: 'Courses',      href: '/courses',      dropdown: COURSE_DROPDOWN },
-  { label: 'Test Series 2027',  href: '/test-series' },
-  { label: 'Testimonials', href: '/testimonials', dropdown: TESTIMONIALS_DROPDOWN },
-  { label: 'Resources',    href: '/resources' },
+  { label: 'Courses',      href: '/gate-da-courses',      dropdown: COURSE_DROPDOWN },
+  { label: 'Test Series 2027',  href: '/gate-da-test-series' },
+  { label: 'Testimonials', href: '/gate-da-toppers', dropdown: TESTIMONIALS_DROPDOWN },
+  { label: 'Resources',    href: '/gate-da-free-notes', dropdown: RESOURCES_DROPDOWN, noClick: true },
 ];
 const MENU_ICONS = {
   '/':        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M3 12L12 4L21 12V20C21 20.6 20.6 21 20 21H15V16H9V21H4C3.4 21 3 20.6 3 20V12Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" /></svg>,
-  '/courses':      <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 5C4 4 4.5 3 6 3H11V20H6C4.5 20 4 19 4 18V5Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" /><path d="M20 5C20 4 19.5 3 18 3H13V20H18C19.5 20 20 19 20 18V5Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" /></svg>,
-  '/test-series':  <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.7" /><circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.7" /><circle cx="12" cy="12" r="1.5" fill="currentColor" /></svg>,
-  '/testimonials': <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="8" cy="9" r="3" stroke="currentColor" strokeWidth="1.7" /><circle cx="16" cy="9" r="3" stroke="currentColor" strokeWidth="1.7" /><path d="M3 19C3 16 5 14 8 14C11 14 13 16 13 19" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /><path d="M13 19C13 16 15 14 18 14C19 14 20 14.3 21 15" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /></svg>,
-  '/resources':    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M14 2H6C5.4 2 5 2.4 5 3V21C5 21.6 5.4 22 6 22H18C18.6 22 19 21.6 19 21V7L14 2Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" /><path d="M14 2V7H19" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" /><path d="M9 13H15M9 17H13" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /></svg>,
+  '/gate-da-courses':      <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 5C4 4 4.5 3 6 3H11V20H6C4.5 20 4 19 4 18V5Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" /><path d="M20 5C20 4 19.5 3 18 3H13V20H18C19.5 20 20 19 20 18V5Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" /></svg>,
+  '/gate-da-test-series':  <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.7" /><circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.7" /><circle cx="12" cy="12" r="1.5" fill="currentColor" /></svg>,
+  '/gate-da-toppers': <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="8" cy="9" r="3" stroke="currentColor" strokeWidth="1.7" /><circle cx="16" cy="9" r="3" stroke="currentColor" strokeWidth="1.7" /><path d="M3 19C3 16 5 14 8 14C11 14 13 16 13 19" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /><path d="M13 19C13 16 15 14 18 14C19 14 20 14.3 21 15" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /></svg>,
+  '/gate-da-free-notes':    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M14 2H6C5.4 2 5 2.4 5 3V21C5 21.6 5.4 22 6 22H18C18.6 22 19 21.6 19 21V7L14 2Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" /><path d="M14 2V7H19" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" /><path d="M9 13H15M9 17H13" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /></svg>,
+  '/blogs':         <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 20h9" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round" /></svg>,
 };
 
 function TAAILogo() {
@@ -696,7 +703,7 @@ function Nav() {
           <div className="nav-pill" style={{ left: pill.left, width: pill.width, opacity: pill.visible ? 1 : 0 }} />
           {NAV_LINKS.map((l) => l.dropdown ? (
             <div key={l.href} className="nav-dropdown-wrap" onMouseEnter={(e) => moveTo(e.currentTarget)}>
-              <a href={l.href} className={l.active ? 'active' : ''}>{l.label}</a>
+              {l.noClick ? <span className={l.active ? 'active' : ''}>{l.label}</span> : <a href={l.href} className={l.active ? 'active' : ''}>{l.label}</a>}
               <div className="nav-dropdown">
                 {l.dropdown.map((d, i) => (
                   <React.Fragment key={i}>
@@ -733,7 +740,7 @@ function Nav() {
       </div>
     </nav>
     <div className={`mobile-menu${menuOpen ? ' open' : ''}`}>
-      {[{ label: 'Home', href: '/' }, ...NAV_LINKS].map((l, i) => (
+      {[{ label: 'Home', href: '/' }, ...NAV_LINKS].flatMap((l) => l.noClick && l.dropdown ? l.dropdown : [l]).map((l, i) => (
         <a key={l.href} href={l.href} className={`mobile-menu-link${l.active ? ' active' : ''}`} style={{ animationDelay: `${0.04 + i * 0.05}s` }} onClick={() => setMenuOpen(false)}>
           <span className="mobile-menu-link-icon">{MENU_ICONS[l.href]}</span>
           <span className="mobile-menu-link-label">{l.label}</span>
@@ -759,8 +766,8 @@ function Nav() {
 
 function Offers() {
   const offers = [
-    { cls: 'oc-1', num: '01', icon: <Icon.BookOpen />, title: 'GATE DA Courses', desc: 'Complete GATE DA coverage by Manoj Kumar, Linear Algebra, Probability, Statistics, Calculus, ML and more. Valid until GATE 2027.', href: '/courses', cta: 'View courses' },
-    { cls: 'oc-2', num: '02', icon: <Icon.Target />, title: 'Test Series', desc: '67 tests: 45 topic-wise, 10 subject-wise, 12 full-length tests. GATE-like interface with detailed performance analytics.', href: '/test-series', cta: 'Explore test series' },
+    { cls: 'oc-1', num: '01', icon: <Icon.BookOpen />, title: 'GATE DA Courses', desc: 'Complete GATE DA coverage by Manoj Kumar, Linear Algebra, Probability, Statistics, Calculus, ML and more. Valid until GATE 2027.', href: '/gate-da-courses', cta: 'View courses' },
+    { cls: 'oc-2', num: '02', icon: <Icon.Target />, title: 'Test Series', desc: '67 tests: 45 topic-wise, 10 subject-wise, 12 full-length tests. GATE-like interface with detailed performance analytics.', href: '/gate-da-test-series', cta: 'Explore test series' },
     { cls: 'oc-3', num: '03', icon: <Icon.Briefcase />, title: 'Interview Preparation', desc: 'Career prep for DS/AI roles, projects, practice interviews, and industry mentorship. Preview available on YouTube now.', href: 'https://www.youtube.com/watch?v=iobgxxTluUc&list=PLZvuMBNC5r0UEjm31D56LdoYzd4L-vtaF', cta: 'Watch preview' },
   ];
   return (

@@ -1,0 +1,30 @@
+backend:
+  name: git-gateway
+  branch: master
+
+publish_mode: simple
+
+media_library:
+  name: cloudinary
+  config:
+    cloud_name: nc0b6ri2
+    api_key: 222157219219989
+    upload_preset: TAAI_website
+
+collections:
+  - name: "blog"
+    label: "Blog Posts"
+    folder: "content/blog"
+    create: true
+    slug: "{{slug}}"
+    extension: "md"
+    format: "frontmatter"
+    summary: "{{title}} — {{date}}"
+    sortable_fields: ["date", "title"]
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Custom URL Slug", name: "slug", widget: "string", required: false, hint: "Leave blank to auto-generate from title. If you fill this in, use lowercase words separated by dashes only — e.g. gate-da-syllabus-2027" }
+      - { label: "Publish Date", name: "date", widget: "datetime", format: "YYYY-MM-DD" }
+      - { label: "Description", name: "description", widget: "text", hint: "Shown on the blog listing page and used as the SEO meta description (~155 characters)." }
+      - { label: "Cover Image", name: "cover", widget: "image", required: false }
+      - { label: "Body", name: "body", widget: "markdown" }

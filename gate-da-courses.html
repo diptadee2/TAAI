@@ -13,12 +13,12 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="description" content="Explore TAAI's GATE DA 2027 courses — bundled and individual. Maths, ML, and DA taught from scratch, built for GATE DA not repurposed CSE content.">
 <title>TAAI · GATE DA Courses</title>
-<link rel="canonical" href="https://taai.live/courses">
+<link rel="canonical" href="https://taai.live/gate-da-courses">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="TAAI">
 <meta property="og:title" content="TAAI · GATE DA Courses">
 <meta property="og:description" content="Explore TAAI's GATE DA 2027 courses — bundled and individual. Maths, ML, and DA taught from scratch, built for GATE DA not repurposed CSE content.">
-<meta property="og:url" content="https://taai.live/courses">
+<meta property="og:url" content="https://taai.live/gate-da-courses">
 <meta property="og:image" content="https://taai.live/og-banner.webp">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -321,7 +321,11 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .hero-proof-link:hover { opacity: 1; }
 .hero-proof-link svg { transition: transform .38s cubic-bezier(.34,1.28,.64,1); flex-shrink: 0; }
 .hero-proof-link:hover svg { transform: translateX(5px); }
-@media (hover: none) { .hero-proof:active { transform: scale(0.975); transition-duration: .12s; } }
+@media (hover: none) {
+  /* iOS synthesises mousemove during long-press/scroll, firing onMouseMove
+     which sets --mx/--my inline. !important beats inline styles in CSS cascade. */
+  * { --mx: -200% !important; --my: -200% !important; }
+ .hero-proof:active { transform: scale(0.975); transition-duration: .12s; } }
 @media (max-width: 768px) {
   .page-hero-inner { grid-template-columns: 1fr; gap: 36px; }
   .hero-proof-row { flex-direction: column; gap: 12px; overflow: visible; }
@@ -869,20 +873,75 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .btn-stories:hover svg { transform: none; }
   .orientation-pill:hover { transform: none; background: var(--purple-soft); border-color: rgba(139,92,246,0.22); color: var(--purple); }
   .orientation-pill:active { transform: scale(0.97); transition-duration: .12s; }
-  /* Kill hover lifts, replace with tap feedback */
-  .combo-card.card:hover,
-
-  .combo-card:active { transform: scale(0.975); transition-duration: .12s; }
-  .combo-card.featured:active { transform: scale(0.975); transition-duration: .12s; }
-  .course-card:hover { transform: none; box-shadow: none; }
-  .course-card:hover::before { opacity: 0.18; }
-  .course-card:hover .course-icon { transform: none; box-shadow: none; }
-  .course-card:hover .course-title { color: inherit; }
-  .course-card:hover .course-validity { color: var(--ink-soft); }
-  .course-card:hover .course-topics { max-height: 0; opacity: 0; margin-bottom: 0; }
-  /* Combo includes, show without hover */
+  /* Combo/bundled price cards — fully static on touch.
+     pointer-events:none on the card div prevents :hover ever matching (the div has
+     no click handler; only the <a> button inside navigates). */
+  .combo-card, .combo-featured-frame {
+    pointer-events: none !important;
+  }
+  .combo-card .btn-primary, .combo-card .btn-primary * { pointer-events: auto !important; }
+  .combo-card, .combo-card::before, .combo-card::after,
+  .combo-card *, .combo-card *::before, .combo-card *::after,
+  .combo-featured-frame, .combo-featured-frame::before, .combo-featured-frame::after {
+    transition: none !important; animation: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none !important;
+    user-select: none !important; touch-action: manipulation !important;
+  }
+  .combo-card:hover, .combo-card:active,
+  .combo-card.card:hover { transform: none !important; box-shadow: 0 4px 32px rgba(0,0,0,0.35) !important; border-color: rgba(255,255,255,0.09) !important; }
+  .combo-card.combo-blue:hover, .combo-card.combo-blue:active { border-color: rgba(77,139,255,0.22) !important; }
+  .combo-card.combo-pink:hover, .combo-card.combo-pink:active { border-color: rgba(255,65,108,0.22) !important; }
+  .combo-featured-frame:hover, .combo-featured-frame:active,
+  .combo-card.featured:active { transform: none !important; box-shadow: 0 0 0 2px #8b5cf6, 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12) !important; }
+  /* Course cards — pointer-events:none on the card div; only <a> button is tappable */
+  .course-card { pointer-events: none !important; }
+  .course-card .btn-ghost, .course-card .btn-ghost * { pointer-events: auto !important; }
+  /* Course cards fully static on touch — no tap, no hold, no hover flash */
+  .course-card,
+  .course-card::before,
+  .course-card::after,
+  .course-card *,
+  .course-card *::before,
+  .course-card *::after {
+    transition: none !important;
+    animation: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none !important;
+    user-select: none !important;
+    touch-action: manipulation !important;
+  }
+  .course-card,
+  .course-card:hover,
+  .course-card:active,
+  .course-card:focus { transform: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.05) !important; border-color: var(--line) !important; }
+  .course-card:hover::before, .course-card:active::before { opacity: 0.18 !important; }
+  .course-card:hover .course-icon,
+  .course-card:active .course-icon { transform: none !important; box-shadow: none !important; }
+  .course-card:hover .course-title,
+  .course-card:active .course-title { color: inherit !important; }
+  .course-card:hover .course-validity,
+  .course-card:active .course-validity { color: var(--ink-soft) !important; }
+  .course-card:hover .course-price,
+  .course-card:active .course-price { color: var(--ink) !important; }
+  .course-card:hover .course-price-old,
+  .course-card:active .course-price-old { color: var(--ink-soft) !important; }
+  .course-card:hover .ticket-notch-line,
+  .course-card:active .ticket-notch-line { border-color: var(--line) !important; }
+  .course-card:hover .btn-ghost,
+  .course-card:active .btn-ghost { background: transparent !important; color: var(--ink) !important; border-color: var(--line) !important; }
+  .course-card:hover .btn-ghost svg,
+  .course-card:active .btn-ghost svg { transform: none !important; }
+  /* Topics are visible in resting state on touch */
+  .course-card:hover .course-topics,
+  .course-card:active .course-topics { max-height: 200px !important; opacity: 1 !important; }
+  /* Combo includes — always visible, hover/active locked to resting */
   .combo-includes li { opacity: 1; transform: translateX(0); }
   .combo-check svg path { stroke-dashoffset: 0; }
+  .combo-card:hover .combo-includes li,
+  .combo-card:active .combo-includes li { color: rgba(255,255,255,0.62) !important; }
+  .combo-card:hover .combo-num,
+  .combo-card:active .combo-num { opacity: 0.035 !important; transform: none !important; }
   /* Restore featured-card box-shadow */
 
 }
@@ -969,6 +1028,18 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 .mobile-menu-contact { display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 10px; padding: 13px 16px; font-size: 13px; font-weight: 600; color: var(--ink-dim); text-decoration: none; border-radius: 10px; transition: color .18s, background .18s; letter-spacing: .04em; text-transform: uppercase; }
 .mobile-menu-contact:hover { color: var(--purple); background: rgba(139,92,246,0.06); }
 @media (max-width: 1024px) { .nav-hamburger { display: flex; } .nav-cta { display: none; } .nav-links { display: none; } .btn-nav-contact { display: none; } .nav-inner { height: 64px; padding: 0 14px; position: relative; justify-content: flex-end; } .mobile-menu { top: 64px; } .nav-spacer { height: 64px; } .nav-logo { position: absolute; left: 50%; transform: translateX(-50%); } .nav-logo:hover { transform: translateX(-50%) translateY(-2px); } .nav-logo:active { transform: translateX(-50%) translateY(1px); } .nav-logo svg, .nav-logo img { width: 150px; height: auto; filter: drop-shadow(0 0 14px rgba(255,255,255,0.22)) drop-shadow(0 0 36px rgba(255,255,255,0.12)) drop-shadow(0 0 72px rgba(255,255,255,0.07)); } .nav-hamburger span { background: var(--purple); } }
+@media (min-width: 768px) and (max-width: 1024px) {
+  /* incl-panel has a 440px min-height for the side-by-side desktop layout;
+     when stacked vertically on iPad that just creates a large empty dark area */
+  .incl-panel { min-height: 0; padding: 32px; }
+  /* page-hero-inner only collapses at 768px but iPad is 820px — the unequal
+     column heights (testimonials taller than heading) leave a big blank gap */
+  .page-hero-inner { grid-template-columns: 1fr; gap: 36px; }
+  .hero-proof-row { flex-direction: column; gap: 12px; }
+  .hero-proof { flex: none; width: 100%; }
+  .hero-proof-float { width: 100%; }
+  .hero-proof-link { justify-content: center; width: 100%; }
+}
 
 /* ── Disable hover animations on touch devices ──────── */
 @media (hover: none) {
@@ -1218,7 +1289,7 @@ body.buttons-visible .mcb-wa:hover { transform: scale(1.12); transition-delay: 0
     {
       "@type": "ItemList",
       "name": "GATE DA 2027 Courses by TAAI",
-      "url": "https://taai.live/courses",
+      "url": "https://taai.live/gate-da-courses",
       "itemListElement": [
         {
           "@type": "ListItem", "position": 1,
@@ -1226,7 +1297,7 @@ body.buttons-visible .mcb-wa:hover { transform: scale(1.12); transition-delay: 0
             "@type": "Course", "name": "GATE 2027 Full Course",
             "description": "Complete GATE DA preparation: Linear Algebra, Probability, Statistics, Calculus, Machine Learning, AI, DBMS, DSA, and Python, with weekly quizzes and GATE mentorship from Manoj Kumar.",
             "provider": { "@id": "https://taai.live/#organization" },
-            "url": "https://taai.live/courses#full-course",
+            "url": "https://taai.live/gate-da-courses#full-course",
             "offers": { "@type": "Offer", "price": "11999", "priceCurrency": "INR", "priceValidUntil": "2027-02-15", "availability": "https://schema.org/InStock", "url": "https://learn.taai.live/learn/batch/GATE-2027/content" }
           }
         },
@@ -1236,7 +1307,7 @@ body.buttons-visible .mcb-wa:hover { transform: scale(1.12); transition-delay: 0
             "@type": "Course", "name": "Mathematics & ML Bundle",
             "description": "Linear Algebra, Probability, Statistics, Calculus, and Machine Learning bundled together with quizzes and Discord community support.",
             "provider": { "@id": "https://taai.live/#organization" },
-            "url": "https://taai.live/courses#maths-ml-bundle",
+            "url": "https://taai.live/gate-da-courses#maths-ml-bundle",
             "offers": { "@type": "Offer", "price": "7999", "priceCurrency": "INR", "priceValidUntil": "2027-02-15", "availability": "https://schema.org/InStock", "url": "https://learn.taai.live/learn/Maths--ML---AI-Bundle---GATE-2026" }
           }
         },
@@ -1246,7 +1317,7 @@ body.buttons-visible .mcb-wa:hover { transform: scale(1.12); transition-delay: 0
             "@type": "Course", "name": "Mathematics Bundle",
             "description": "Linear Algebra, Probability, Statistics, and Calculus for GATE DA, with topic-wise quizzes and Discord community support.",
             "provider": { "@id": "https://taai.live/#organization" },
-            "url": "https://taai.live/courses#maths-bundle",
+            "url": "https://taai.live/gate-da-courses#maths-bundle",
             "offers": { "@type": "Offer", "price": "5999", "priceCurrency": "INR", "priceValidUntil": "2027-02-15", "availability": "https://schema.org/InStock", "url": "https://learn.taai.live/learn/Mathematics-Course-by-manoj-sir-gate-2026-gateda" }
           }
         },
@@ -1256,7 +1327,7 @@ body.buttons-visible .mcb-wa:hover { transform: scale(1.12); transition-delay: 0
             "@type": "Course", "name": "Statistics for GATE DA",
             "description": "Hypothesis testing, estimation theory, and regression basics, taught visually for GATE DA 2027.",
             "provider": { "@id": "https://taai.live/#organization" },
-            "url": "https://taai.live/courses#statistics",
+            "url": "https://taai.live/gate-da-courses#statistics",
             "offers": { "@type": "Offer", "price": "1499", "priceCurrency": "INR", "priceValidUntil": "2027-02-20", "availability": "https://schema.org/InStock", "url": "https://learn.taai.live/learn/Statistics" }
           }
         },
@@ -1266,7 +1337,7 @@ body.buttons-visible .mcb-wa:hover { transform: scale(1.12); transition-delay: 0
             "@type": "Course", "name": "Calculus & Optimization for GATE DA",
             "description": "Limits and continuity, differentiation, optimization, and integration, taught visually for GATE DA 2027.",
             "provider": { "@id": "https://taai.live/#organization" },
-            "url": "https://taai.live/courses#calculus",
+            "url": "https://taai.live/gate-da-courses#calculus",
             "offers": { "@type": "Offer", "price": "1499", "priceCurrency": "INR", "priceValidUntil": "2027-02-20", "availability": "https://schema.org/InStock", "url": "https://learn.taai.live/learn/Calculus-and-Optimization" }
           }
         },
@@ -1276,7 +1347,7 @@ body.buttons-visible .mcb-wa:hover { transform: scale(1.12); transition-delay: 0
             "@type": "Course", "name": "Linear Algebra for GATE DA",
             "description": "Matrices and determinants, eigenvalues and eigenvectors, and linear transformations, taught visually for GATE DA 2027.",
             "provider": { "@id": "https://taai.live/#organization" },
-            "url": "https://taai.live/courses#linear-algebra",
+            "url": "https://taai.live/gate-da-courses#linear-algebra",
             "offers": { "@type": "Offer", "price": "1999", "priceCurrency": "INR", "priceValidUntil": "2027-02-20", "availability": "https://schema.org/InStock", "url": "https://learn.taai.live/learn/Linear-Algebra--Mathematics-" }
           }
         },
@@ -1286,7 +1357,7 @@ body.buttons-visible .mcb-wa:hover { transform: scale(1.12); transition-delay: 0
             "@type": "Course", "name": "Probability for GATE DA",
             "description": "Conditional probability, random variables, and distributions, taught visually for GATE DA 2027.",
             "provider": { "@id": "https://taai.live/#organization" },
-            "url": "https://taai.live/courses#probability",
+            "url": "https://taai.live/gate-da-courses#probability",
             "offers": { "@type": "Offer", "price": "2499", "priceCurrency": "INR", "priceValidUntil": "2027-02-20", "availability": "https://schema.org/InStock", "url": "https://learn.taai.live/learn/Probability" }
           }
         },
@@ -1296,7 +1367,7 @@ body.buttons-visible .mcb-wa:hover { transform: scale(1.12); transition-delay: 0
             "@type": "Course", "name": "Machine Learning for GATE DA",
             "description": "Supervised and unsupervised learning, model evaluation, and neural network basics, taught visually for GATE DA 2027.",
             "provider": { "@id": "https://taai.live/#organization" },
-            "url": "https://taai.live/courses#machine-learning",
+            "url": "https://taai.live/gate-da-courses#machine-learning",
             "offers": { "@type": "Offer", "price": "3999", "priceCurrency": "INR", "priceValidUntil": "2027-02-20", "availability": "https://schema.org/InStock", "url": "https://learn.taai.live/learn/taAI-Machine-Learning-Full-Course" }
           }
         },
@@ -1306,7 +1377,7 @@ body.buttons-visible .mcb-wa:hover { transform: scale(1.12); transition-delay: 0
             "@type": "Course", "name": "Interview Preparation — DS & AI",
             "description": "Career prep for AI and Data Science roles: end-to-end projects, practice interviews, resume reviews, and industry mentorship. Coming soon — preview available on YouTube now.",
             "provider": { "@id": "https://taai.live/#organization" },
-            "url": "https://taai.live/courses#interview"
+            "url": "https://taai.live/gate-da-courses#interview"
           }
         }
       ]
@@ -1369,26 +1440,31 @@ const _pricingFetch = fetch(PRICING_CSV_URL)
   .catch(() => { _pricingCache = {}; return {}; });
 
 const COURSE_DROPDOWN = [
-  { label: 'Bundled Courses',    href: '/courses#combos'    },
-  { label: 'Individual Courses', href: '/courses#individual', dividerBefore: true },
-  { label: 'Interview Prep',     href: '/courses#interview',  dividerBefore: true },
+  { label: 'Bundled Courses',    href: '/gate-da-courses#combos'    },
+  { label: 'Individual Courses', href: '/gate-da-courses#individual', dividerBefore: true },
+  { label: 'Interview Prep',     href: '/gate-da-courses#interview',  dividerBefore: true },
 ];
 const TESTIMONIALS_DROPDOWN = [
-  { label: 'Batch of 2026', href: '/testimonials#batch-2026' },
-  { label: 'Batch of 2025', href: '/testimonials#batch-2025', dividerBefore: true },
+  { label: 'Batch of 2026', href: '/gate-da-toppers#batch-2026' },
+  { label: 'Batch of 2025', href: '/gate-da-toppers#batch-2025', dividerBefore: true },
+];
+const RESOURCES_DROPDOWN = [
+  { label: 'Free Notes & Lectures', href: '/gate-da-free-notes' },
+  { label: 'Blogs', href: '/blogs', dividerBefore: true },
 ];
 const NAV_LINKS = [
-  { label: 'Courses',      href: '/courses',      active: true, dropdown: COURSE_DROPDOWN },
-  { label: 'Test Series 2027',  href: '/test-series' },
-  { label: 'Testimonials', href: '/testimonials', dropdown: TESTIMONIALS_DROPDOWN },
-  { label: 'Resources',    href: '/resources' },
+  { label: 'Courses',      href: '/gate-da-courses',      active: true, dropdown: COURSE_DROPDOWN },
+  { label: 'Test Series 2027',  href: '/gate-da-test-series' },
+  { label: 'Testimonials', href: '/gate-da-toppers', dropdown: TESTIMONIALS_DROPDOWN },
+  { label: 'Resources',    href: '/gate-da-free-notes', dropdown: RESOURCES_DROPDOWN, noClick: true },
 ];
 const MENU_ICONS = {
   '/':        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M3 12L12 4L21 12V20C21 20.6 20.6 21 20 21H15V16H9V21H4C3.4 21 3 20.6 3 20V12Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" /></svg>,
-  '/courses':      <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 5C4 4 4.5 3 6 3H11V20H6C4.5 20 4 19 4 18V5Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" /><path d="M20 5C20 4 19.5 3 18 3H13V20H18C19.5 20 20 19 20 18V5Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" /></svg>,
-  '/test-series':  <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.7" /><circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.7" /><circle cx="12" cy="12" r="1.5" fill="currentColor" /></svg>,
-  '/testimonials': <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="8" cy="9" r="3" stroke="currentColor" strokeWidth="1.7" /><circle cx="16" cy="9" r="3" stroke="currentColor" strokeWidth="1.7" /><path d="M3 19C3 16 5 14 8 14C11 14 13 16 13 19" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /><path d="M13 19C13 16 15 14 18 14C19 14 20 14.3 21 15" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /></svg>,
-  '/resources':    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M14 2H6C5.4 2 5 2.4 5 3V21C5 21.6 5.4 22 6 22H18C18.6 22 19 21.6 19 21V7L14 2Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" /><path d="M14 2V7H19" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" /><path d="M9 13H15M9 17H13" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /></svg>,
+  '/gate-da-courses':      <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 5C4 4 4.5 3 6 3H11V20H6C4.5 20 4 19 4 18V5Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" /><path d="M20 5C20 4 19.5 3 18 3H13V20H18C19.5 20 20 19 20 18V5Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" /></svg>,
+  '/gate-da-test-series':  <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.7" /><circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.7" /><circle cx="12" cy="12" r="1.5" fill="currentColor" /></svg>,
+  '/gate-da-toppers': <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="8" cy="9" r="3" stroke="currentColor" strokeWidth="1.7" /><circle cx="16" cy="9" r="3" stroke="currentColor" strokeWidth="1.7" /><path d="M3 19C3 16 5 14 8 14C11 14 13 16 13 19" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /><path d="M13 19C13 16 15 14 18 14C19 14 20 14.3 21 15" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /></svg>,
+  '/gate-da-free-notes':    <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M14 2H6C5.4 2 5 2.4 5 3V21C5 21.6 5.4 22 6 22H18C18.6 22 19 21.6 19 21V7L14 2Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" /><path d="M14 2V7H19" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" /><path d="M9 13H15M9 17H13" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /></svg>,
+  '/blogs':         <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 20h9" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round" /></svg>,
 };
 
 function TAAILogo() {
@@ -1477,7 +1553,7 @@ function Nav() {
             <div className="nav-pill" style={{ left: pill.left, width: pill.width, opacity: pill.visible ? 1 : 0 }} />
             {NAV_LINKS.map((l) => l.dropdown ? (
               <div key={l.href} className="nav-dropdown-wrap" onMouseEnter={(e) => moveTo(e.currentTarget)}>
-                <a href={l.href} className={l.active ? 'active' : ''}>{l.label}</a>
+                {l.noClick ? <span className={l.active ? 'active' : ''}>{l.label}</span> : <a href={l.href} className={l.active ? 'active' : ''}>{l.label}</a>}
                 <div className="nav-dropdown">
                   {l.dropdown.map((d, i) => (
                     <React.Fragment key={i}>
@@ -1512,7 +1588,7 @@ function Nav() {
         </div>
       </nav>
       <div className={`mobile-menu${menuOpen ? ' open' : ''}`}>
-        {[{ label: 'Home', href: '/' }, ...NAV_LINKS].map((l, i) => (
+        {[{ label: 'Home', href: '/' }, ...NAV_LINKS].flatMap((l) => l.noClick && l.dropdown ? l.dropdown : [l]).map((l, i) => (
           <a key={l.href} href={l.href} className={`mobile-menu-link${l.active ? ' active' : ''}`} style={{ animationDelay: `${0.04 + i * 0.05}s` }} onClick={() => setMenuOpen(false)}>
             <span className="mobile-menu-link-icon">{MENU_ICONS[l.href]}</span>
             <span className="mobile-menu-link-label">{l.label}</span>
@@ -1563,7 +1639,7 @@ const COMBOS = [
     theme: 'blue',
     accent: 'linear-gradient(90deg, var(--purple), var(--blue))',
     title: 'Mathematics & ML Bundle',
-    saving: 'Save ~₹3,500 vs buying all 5 courses individually',
+    bundleOf: ['linear-algebra', 'probability', 'statistics', 'calculus', 'machine-learning'],
     includes: [
       'Linear Algebra',
       'Probability',
@@ -1582,7 +1658,7 @@ const COMBOS = [
     theme: 'pink',
     accent: 'linear-gradient(90deg, var(--pink), var(--purple))',
     title: 'Mathematics Bundle',
-    saving: 'Save ~₹1,500 vs buying all 4 maths courses individually',
+    bundleOf: ['linear-algebra', 'probability', 'statistics', 'calculus'],
     includes: [
       'Linear Algebra',
       'Probability',
@@ -2393,7 +2469,7 @@ function App() {
                 </div>
               </div>
             </div>
-            <a href="/testimonials" className="hero-proof-link">See all student stories <Icon.ArrowRight /></a>
+            <a href="/gate-da-toppers" className="hero-proof-link">See all student stories <Icon.ArrowRight /></a>
           </div>
         </div>
       </section>
@@ -2430,7 +2506,18 @@ function App() {
             </a>
           </div>
           <div className="combos-grid">
-            {COMBOS.map((c, i) => <div key={i} className="fade-in"><ComboCard c={c} pricing={pricingMap[c.id] || null} /></div>)}
+            {COMBOS.map((c, i) => {
+              const comboPrice = parseInt((pricingMap[c.id] || {}).price) || 0;
+              const saving = c.bundleOf && comboPrice
+                ? (() => {
+                    const total = c.bundleOf.reduce((s, id) => s + (parseInt((pricingMap[id] || {}).price) || 0), 0);
+                    const diff = total - comboPrice;
+                    if (diff <= 0) return null;
+                    return `Save ₹${diff.toLocaleString('en-IN')} vs buying ${c.bundleOf.length === 5 ? 'all 5' : 'all 4'} courses individually`;
+                  })()
+                : null;
+              return <div key={i} className="fade-in"><ComboCard c={{ ...c, saving }} pricing={pricingMap[c.id] || null} /></div>;
+            })}
           </div>
         </div>
       </section>
@@ -2499,7 +2586,7 @@ function App() {
             </div>
           </div>
           <div style={{ textAlign: 'center', marginTop: 40 }} className="fade-in">
-            <a href="/testimonials" className="btn btn-ghost btn-lg btn-stories"><span>See all student stories</span> <Icon.ArrowRight /></a>
+            <a href="/gate-da-toppers" className="btn btn-ghost btn-lg btn-stories"><span>See all student stories</span> <Icon.ArrowRight /></a>
           </div>
         </div>
       </section>

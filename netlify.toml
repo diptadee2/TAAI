@@ -14,24 +14,25 @@
   status = 301
   force = true
 
+# ── New keyword-rich clean URLs (200 = serve renamed HTML file) ─────────────
 [[redirects]]
-  from = "/courses"
-  to = "/courses.html"
+  from = "/gate-da-courses"
+  to = "/gate-da-courses.html"
   status = 200
 
 [[redirects]]
-  from = "/test-series"
-  to = "/test-series.html"
+  from = "/gate-da-test-series"
+  to = "/gate-da-test-series.html"
   status = 200
 
 [[redirects]]
-  from = "/testimonials"
-  to = "/testimonials.html"
+  from = "/gate-da-toppers"
+  to = "/gate-da-toppers.html"
   status = 200
 
 [[redirects]]
-  from = "/resources"
-  to = "/resources.html"
+  from = "/gate-da-free-notes"
+  to = "/gate-da-free-notes.html"
   status = 200
 
 [[redirects]]
@@ -39,24 +40,66 @@
   to = "/contact.html"
   status = 200
 
+# ── 301s from old short URLs so existing links/bookmarks don't break ────────
+[[redirects]]
+  from = "/courses"
+  to = "/gate-da-courses"
+  status = 301
+
+[[redirects]]
+  from = "/test-series"
+  to = "/gate-da-test-series"
+  status = 301
+
+[[redirects]]
+  from = "/testimonials"
+  to = "/gate-da-toppers"
+  status = 301
+
+[[redirects]]
+  from = "/resources"
+  to = "/gate-da-free-notes"
+  status = 301
+
+# ── 301s from old .html extensions ─────────────────────────────────────────
 [[redirects]]
   from = "/courses.html"
-  to = "/courses"
+  to = "/gate-da-courses"
   status = 301
 
 [[redirects]]
   from = "/test-series.html"
-  to = "/test-series"
+  to = "/gate-da-test-series"
   status = 301
 
 [[redirects]]
   from = "/testimonials.html"
-  to = "/testimonials"
+  to = "/gate-da-toppers"
   status = 301
 
 [[redirects]]
   from = "/resources.html"
-  to = "/resources"
+  to = "/gate-da-free-notes"
+  status = 301
+
+[[redirects]]
+  from = "/gate-da-courses.html"
+  to = "/gate-da-courses"
+  status = 301
+
+[[redirects]]
+  from = "/gate-da-test-series.html"
+  to = "/gate-da-test-series"
+  status = 301
+
+[[redirects]]
+  from = "/gate-da-toppers.html"
+  to = "/gate-da-toppers"
+  status = 301
+
+[[redirects]]
+  from = "/gate-da-free-notes.html"
+  to = "/gate-da-free-notes"
   status = 301
 
 [[redirects]]
@@ -67,4 +110,15 @@
 [[redirects]]
   from = "/index.html"
   to = "/"
+  status = 301
+
+# ── Blog: /blog/* → /blogs/* ────────────────────────────────────────────────
+[[redirects]]
+  from = "/blog"
+  to = "/blogs"
+  status = 301
+
+[[redirects]]
+  from = "/blog/*"
+  to = "/blogs/:splat"
   status = 301

@@ -9,5 +9,9 @@
   "devDependencies": {
     "@babel/core": "^7.29.0",
     "@babel/preset-react": "^7.26.0"
+  },
+  "dependencies": {
+    "katex": "^0.17.0",
+    "marked": "^18.0.5"
   }
 }
