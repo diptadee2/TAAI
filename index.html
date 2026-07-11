@@ -1315,9 +1315,18 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
     transition: none; animation: none;
     letter-spacing: -.01em;
   }
+  /* Make testi-watch always visible + in normal flow on ALL touch devices.
+     On real iPads iOS sticky-hover briefly fires :hover, making the absolute-
+     positioned button appear over the author name. Static positioning fixes both. */
   .testi-watch {
+    position: static !important;
+    opacity: 1 !important;
+    transform: none !important;
+    align-self: flex-start;
+    margin-top: 14px;
     animation: watch-pill-pulse 2.6s ease-in-out 2s infinite;
   }
+  .testi:hover .testi-watch { transform: none !important; opacity: 1 !important; }
 }
 /* ── Menu overlay ───────────────────────────────────── */
 .menu-overlay { display: none; }
