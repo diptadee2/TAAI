@@ -9,6 +9,7 @@
 
 import { transformSync } from '@babel/core';
 import { marked } from 'marked';
+import katex from 'katex';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -135,6 +136,37 @@ function formatDate(dateStr) {
   return d.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
+// Renders Markdown with KaTeX math support.
+// Strategy: extract $...$ and $$...$$ before marked runs (so marked doesn't
+// mangle them), replace with unique tokens, restore as KaTeX HTML after.
+function renderMarkdown(content) {
+  const blocks = [];
+
+  let src = content
+    // Display math $$...$$ (extract first to avoid matching inner $)
+    .replace(/\$\$([\s\S]*?)\$\$/g, (_, tex) => {
+      const i = blocks.length;
+      try {
+        blocks.push(`<div class="math-display">${katex.renderToString(tex.trim(), { displayMode: true, throwOnError: false })}</div>`);
+      } catch { blocks.push(`<div class="math-display math-error">${tex}</div>`); }
+      return `MATHPLACEHOLDER_${i}_`;
+    })
+    // Inline math $...$
+    .replace(/\$([^$\n]+?)\$/g, (_, tex) => {
+      const i = blocks.length;
+      try {
+        blocks.push(`<span class="math-inline">${katex.renderToString(tex.trim(), { displayMode: false, throwOnError: false })}</span>`);
+      } catch { blocks.push(`<span class="math-inline math-error">${tex}</span>`); }
+      return `MATHPLACEHOLDER_${i}_`;
+    });
+
+  let html = marked.parse(src);
+
+  // Restore KaTeX HTML
+  html = html.replace(/MATHPLACEHOLDER_(\d+)_/g, (_, i) => blocks[+i]);
+  return html;
+}
+
 function parseFrontmatter(raw) {
   const m = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
   if (!m) return { data: {}, content: raw };
@@ -178,7 +210,8 @@ function renderHead({ title, description, canonicalPath, ogImage }) {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/blog/blog.css">`;
+<link rel="stylesheet" href="/blog/blog.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">`;
 }
 
 function renderNav() {
@@ -271,7 +304,7 @@ function loadPosts() {
         date: data.date || '',
         description: data.description || '',
         cover: data.cover || '',
-        html: marked.parse(content),
+        html: renderMarkdown(content),
       };
     })
     .sort((a, b) => new Date(b.date) - new Date(a.date));
