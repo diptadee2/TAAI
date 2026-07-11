@@ -911,11 +911,17 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .course-card:active .course-title { color: inherit !important; }
   .course-card:hover .course-validity,
   .course-card:active .course-validity { color: var(--ink-soft) !important; }
+  /* Topics are visible in resting state on touch — keep them visible on hover/active
+     so iOS sticky-hover doesn't cause a collapse flash on tap */
   .course-card:hover .course-topics,
-  .course-card:active .course-topics { max-height: 0 !important; opacity: 0 !important; margin-bottom: 0 !important; }
-  /* Combo includes, show without hover */
+  .course-card:active .course-topics { max-height: 200px !important; opacity: 1 !important; }
+  /* Combo includes — always visible, hover/active locked to resting */
   .combo-includes li { opacity: 1; transform: translateX(0); }
   .combo-check svg path { stroke-dashoffset: 0; }
+  .combo-card:hover .combo-includes li,
+  .combo-card:active .combo-includes li { color: rgba(255,255,255,0.62) !important; }
+  .combo-card:hover .combo-num,
+  .combo-card:active .combo-num { opacity: 0.035 !important; transform: none !important; }
   /* Restore featured-card box-shadow */
 
 }
