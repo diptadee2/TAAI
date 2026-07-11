@@ -994,6 +994,13 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   /* incl-panel has a 440px min-height for the side-by-side desktop layout;
      when stacked vertically on iPad that just creates a large empty dark area */
   .incl-panel { min-height: 0; padding: 32px; }
+  /* page-hero-inner only collapses at 768px but iPad is 820px — the unequal
+     column heights (testimonials taller than heading) leave a big blank gap */
+  .page-hero-inner { grid-template-columns: 1fr; gap: 36px; }
+  .hero-proof-row { flex-direction: column; gap: 12px; }
+  .hero-proof { flex: none; width: 100%; }
+  .hero-proof-float { width: 100%; }
+  .hero-proof-link { justify-content: center; width: 100%; }
 }
 
 /* ── Disable hover animations on touch devices ──────── */
