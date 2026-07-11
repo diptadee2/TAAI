@@ -321,7 +321,11 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .hero-proof-link:hover { opacity: 1; }
 .hero-proof-link svg { transition: transform .38s cubic-bezier(.34,1.28,.64,1); flex-shrink: 0; }
 .hero-proof-link:hover svg { transform: translateX(5px); }
-@media (hover: none) { .hero-proof:active { transform: scale(0.975); transition-duration: .12s; } }
+@media (hover: none) {
+  /* iOS synthesises mousemove during long-press/scroll, firing onMouseMove
+     which sets --mx/--my inline. !important beats inline styles in CSS cascade. */
+  * { --mx: -200% !important; --my: -200% !important; }
+ .hero-proof:active { transform: scale(0.975); transition-duration: .12s; } }
 @media (max-width: 768px) {
   .page-hero-inner { grid-template-columns: 1fr; gap: 36px; }
   .hero-proof-row { flex-direction: column; gap: 12px; overflow: visible; }

@@ -1053,7 +1053,11 @@ body {
 .trust-item:hover .trust-icon { transform: scale(1.18) rotate(-10deg); box-shadow: 0 6px 18px rgba(217,119,6,0.55); }
 .trust-check { width: 14px; height: 14px; color: #fff; }
 .trust-desc { font-size: 13px; color: rgba(0,0,0,0.52); line-height: 1.6; }
-@media (hover: none) { .trust-item:active { transform: scale(0.97); box-shadow: 0 4px 14px rgba(0,0,0,0.08); } }
+@media (hover: none) {
+  /* iOS synthesises mousemove during long-press/scroll, firing onMouseMove
+     which sets --mx/--my inline. !important beats inline styles in CSS cascade. */
+  * { --mx: -200% !important; --my: -200% !important; }
+ .trust-item:active { transform: scale(0.97); box-shadow: 0 4px 14px rgba(0,0,0,0.08); } }
 @media (max-width: 600px) { .trust-strip { display: none; } }
 .faq-item {
   background: #fff; border-radius: var(--radius-md);
