@@ -869,11 +869,18 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .btn-stories:hover svg { transform: none; }
   .orientation-pill:hover { transform: none; background: var(--purple-soft); border-color: rgba(139,92,246,0.22); color: var(--purple); }
   .orientation-pill:active { transform: scale(0.97); transition-duration: .12s; }
-  /* Kill hover lifts, replace with tap feedback */
-  .combo-card.card:hover,
-
-  .combo-card:active { transform: scale(0.975); transition-duration: .12s; }
-  .combo-card.featured:active { transform: scale(0.975); transition-duration: .12s; }
+  /* Combo/bundled price cards — fully static on touch */
+  .combo-card, .combo-card::before, .combo-card::after,
+  .combo-card *, .combo-card *::before, .combo-card *::after,
+  .combo-featured-frame, .combo-featured-frame::before, .combo-featured-frame::after {
+    transition: none !important; animation: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none !important;
+    user-select: none !important; touch-action: manipulation !important;
+  }
+  .combo-card:hover, .combo-card:active,
+  .combo-card.card:hover, .combo-featured-frame:hover { transform: none !important; box-shadow: none !important; }
+  .combo-card.featured:active, .combo-featured-frame:active { transform: none !important; }
   /* Course cards fully static on touch — no tap, no hold, no hover flash */
   .course-card,
   .course-card::before,
