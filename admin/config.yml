@@ -3,8 +3,13 @@ backend:
   branch: master
 
 publish_mode: simple
-media_folder: "blog-uploads"
-public_folder: "/blog-uploads"
+
+media_library:
+  name: cloudinary
+  config:
+    cloud_name: nc0b6ri2
+    api_key: 452317453532565
+    api_secret: 59oyF2hQgMfQOnVUvNYJiZAZJeQ
 
 collections:
   - name: "blog"
