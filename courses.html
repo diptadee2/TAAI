@@ -873,7 +873,13 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .btn-stories:hover svg { transform: none; }
   .orientation-pill:hover { transform: none; background: var(--purple-soft); border-color: rgba(139,92,246,0.22); color: var(--purple); }
   .orientation-pill:active { transform: scale(0.97); transition-duration: .12s; }
-  /* Combo/bundled price cards — fully static on touch */
+  /* Combo/bundled price cards — fully static on touch.
+     pointer-events:none on the card div prevents :hover ever matching (the div has
+     no click handler; only the <a> button inside navigates). */
+  .combo-card, .combo-featured-frame {
+    pointer-events: none !important;
+  }
+  .combo-card .btn-primary, .combo-card .btn-primary * { pointer-events: auto !important; }
   .combo-card, .combo-card::before, .combo-card::after,
   .combo-card *, .combo-card *::before, .combo-card *::after,
   .combo-featured-frame, .combo-featured-frame::before, .combo-featured-frame::after {
@@ -888,6 +894,9 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .combo-card.combo-pink:hover, .combo-card.combo-pink:active { border-color: rgba(255,65,108,0.22) !important; }
   .combo-featured-frame:hover, .combo-featured-frame:active,
   .combo-card.featured:active { transform: none !important; box-shadow: 0 0 0 2px #8b5cf6, 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12) !important; }
+  /* Course cards — pointer-events:none on the card div; only <a> button is tappable */
+  .course-card { pointer-events: none !important; }
+  .course-card .btn-ghost, .course-card .btn-ghost * { pointer-events: auto !important; }
   /* Course cards fully static on touch — no tap, no hold, no hover flash */
   .course-card,
   .course-card::before,
