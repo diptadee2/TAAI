@@ -110,19 +110,19 @@ function generateNotesData() {
 // and renders them as static pages matching the rest of the site's design.
 
 const BLOG_NAV_LINKS = [
-  { label: 'Courses', href: '/courses' },
-  { label: 'Test Series 2027', href: '/test-series' },
-  { label: 'Testimonials', href: '/testimonials' },
-  { label: 'Resources', href: '/resources' }, // renders as dropdown — see renderNav()
+  { label: 'Courses', href: '/gate-da-courses' },
+  { label: 'Test Series 2027', href: '/gate-da-test-series' },
+  { label: 'Testimonials', href: '/gate-da-toppers' },
+  { label: 'Resources', href: '/gate-da-free-notes' }, // renders as dropdown — see renderNav()
 ];
 
 const BLOG_MENU_ICONS = {
   '/': '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M3 12L12 4L21 12V20C21 20.6 20.6 21 20 21H15V16H9V21H4C3.4 21 3 20.6 3 20V12Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" /></svg>',
-  '/courses': '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 5C4 4 4.5 3 6 3H11V20H6C4.5 20 4 19 4 18V5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" /><path d="M20 5C20 4 19.5 3 18 3H13V20H18C19.5 20 20 19 20 18V5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" /></svg>',
-  '/test-series': '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.7" /><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7" /><circle cx="12" cy="12" r="1.5" fill="currentColor" /></svg>',
-  '/testimonials': '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="8" cy="9" r="3" stroke="currentColor" stroke-width="1.7" /><circle cx="16" cy="9" r="3" stroke="currentColor" stroke-width="1.7" /><path d="M3 19C3 16 5 14 8 14C11 14 13 16 13 19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /><path d="M13 19C13 16 15 14 18 14C19 14 20 14.3 21 15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /></svg>',
-  '/resources': '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M14 2H6C5.4 2 5 2.4 5 3V21C5 21.6 5.4 22 6 22H18C18.6 22 19 21.6 19 21V7L14 2Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" /><path d="M14 2V7H19" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" /><path d="M9 13H15M9 17H13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /></svg>',
-  '/blog': '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 20h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" /></svg>',
+  '/gate-da-courses': '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 5C4 4 4.5 3 6 3H11V20H6C4.5 20 4 19 4 18V5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" /><path d="M20 5C20 4 19.5 3 18 3H13V20H18C19.5 20 20 19 20 18V5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" /></svg>',
+  '/gate-da-test-series': '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.7" /><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7" /><circle cx="12" cy="12" r="1.5" fill="currentColor" /></svg>',
+  '/gate-da-toppers': '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="8" cy="9" r="3" stroke="currentColor" stroke-width="1.7" /><circle cx="16" cy="9" r="3" stroke="currentColor" stroke-width="1.7" /><path d="M3 19C3 16 5 14 8 14C11 14 13 16 13 19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /><path d="M13 19C13 16 15 14 18 14C19 14 20 14.3 21 15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /></svg>',
+  '/gate-da-free-notes': '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M14 2H6C5.4 2 5 2.4 5 3V21C5 21.6 5.4 22 6 22H18C18.6 22 19 21.6 19 21V7L14 2Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" /><path d="M14 2V7H19" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" /><path d="M9 13H15M9 17H13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /></svg>',
+  '/blogs': '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 20h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" /></svg>',
 };
 
 function escapeHtml(str) {
@@ -210,26 +210,26 @@ function renderHead({ title, description, canonicalPath, ogImage }) {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/blog/blog.css">
+<link rel="stylesheet" href="/blogs/blog.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">`;
 }
 
 function renderNav() {
-  const links = BLOG_NAV_LINKS.map(l => l.href === '/resources'
+  const links = BLOG_NAV_LINKS.map(l => l.href === '/gate-da-free-notes'
     ? `<div class="nav-dropdown-wrap">
             <span class="nav-resources-label">Resources</span>
             <div class="nav-dropdown">
-              <a href="/resources" class="nav-dd-item">Free Notes &amp; Lectures</a>
+              <a href="/gate-da-free-notes" class="nav-dd-item">Free Notes &amp; Lectures</a>
               <div class="nav-dd-divider"></div>
-              <a href="/blog" class="nav-dd-item active">Blog</a>
+              <a href="/blogs" class="nav-dd-item active">Blog</a>
             </div>
           </div>`
     : `<a href="${l.href}" class="${l.active ? 'active' : ''}">${l.label}</a>`
   ).join('\n          ');
   // mobile menu expands Resources into its two sub-items directly
   const mobileLinks = [{ label: 'Home', href: '/' },
-    ...BLOG_NAV_LINKS.flatMap(l => l.href === '/resources'
-      ? [{ href: '/resources', label: 'Free Notes &amp; Lectures' }, { href: '/blog', label: 'Blog', active: true }]
+    ...BLOG_NAV_LINKS.flatMap(l => l.href === '/gate-da-free-notes'
+      ? [{ href: '/gate-da-free-notes', label: 'Free Notes &amp; Lectures' }, { href: '/blogs', label: 'Blogs', active: true }]
       : [l]
     )
   ];
@@ -287,7 +287,7 @@ function renderChrome(bodyHtml) {
     ${bodyHtml}
     ${renderFooter()}
     <button class="back-to-top" aria-label="Back to top"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg></button>
-    <script src="/blog/blog.js"></script>`;
+    <script src="/blogs/blog.js"></script>`;
 }
 
 function loadPosts() {
@@ -316,13 +316,13 @@ function generateBlog() {
   // server — which serves source directly, same as the other pages —
   // can preview it without a build. The generic asset-copy step then
   // carries it into dist/ for the production build.
-  const blogDir = path.join(SRC, 'blog');
+  const blogDir = path.join(SRC, 'blogs');
   if (!fs.existsSync(blogDir)) fs.mkdirSync(blogDir, { recursive: true });
 
   // Listing page
   const cardIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 20h9" stroke="currentColor" stroke-width="2" stroke-linecap="round" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" /></svg>';
   const cards = posts.length
-    ? posts.map((p, i) => `<a href="/blog/${p.slug}/" class="blog-card fade-in" style="--delay: ${Math.min(i, 5) * 80}ms">
+    ? posts.map((p, i) => `<a href="/blogs/${p.slug}/" class="blog-card fade-in" style="--delay: ${Math.min(i, 5) * 80}ms">
           ${p.cover ? `<img class="blog-card-cover" src="${escapeHtml(p.cover)}" alt="" loading="lazy">` : `<div class="blog-card-icon">${cardIcon}</div>`}
           <div class="blog-card-date">${formatDate(p.date)}</div>
           <div class="blog-card-title">${escapeHtml(p.title)}</div>
@@ -333,7 +333,7 @@ function generateBlog() {
 
   const indexBody = `<section class="blog-hero">
       <div class="container">
-        <div class="blog-eyebrow fade-in">TAAI Blog</div>
+        <div class="blog-eyebrow fade-in">TAAI Blogs</div>
         <h1 class="fade-in">GATE DA guides, syllabus<br>breakdowns, <em>and prep tips.</em></h1>
         <p class="blog-hero-sub fade-in">Written by the TAAI team to help you prepare smarter for GATE DA.</p>
       </div>
@@ -349,7 +349,7 @@ function generateBlog() {
   const indexHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
-${renderHead({ title: 'Blog | TAAI', description: 'GATE DA prep guides, syllabus breakdowns, and study tips from the TAAI team.', canonicalPath: '/blog' })}
+${renderHead({ title: 'Blog | TAAI', description: 'GATE DA prep guides, syllabus breakdowns, and study tips from the TAAI team.', canonicalPath: '/blogs' })}
 </head>
 <body>
 ${renderChrome(indexBody)}
@@ -364,7 +364,7 @@ ${renderChrome(indexBody)}
     const postBody = `<article class="blog-post">
       <div class="blog-post-hero">
         <div class="container">
-          <a href="/blog" class="blog-post-back">← Back to blog</a>
+          <a href="/blogs" class="blog-post-back">← Back to blog</a>
           <div class="blog-post-date fade-in">${formatDate(post.date)}</div>
           <h1 class="fade-in">${escapeHtml(post.title)}</h1>
         </div>
@@ -379,7 +379,7 @@ ${renderChrome(indexBody)}
     const postHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
-${renderHead({ title: `${post.title} | TAAI Blog`, description: post.description, canonicalPath: `/blog/${post.slug}`, ogImage: post.cover ? `${SITE_URL}${post.cover}` : undefined })}
+${renderHead({ title: `${post.title} | TAAI Blogs`, description: post.description, canonicalPath: `/blogs/${post.slug}`, ogImage: post.cover ? `${SITE_URL}${post.cover}` : undefined })}
 </head>
 <body>
 ${renderChrome(postBody)}
@@ -395,15 +395,15 @@ ${renderChrome(postBody)}
 function generateSitemap(posts) {
   const staticUrls = [
     { loc: '/', priority: '1.0', freq: 'weekly' },
-    { loc: '/courses', priority: '0.9', freq: 'weekly' },
-    { loc: '/test-series', priority: '0.8', freq: 'weekly' },
-    { loc: '/testimonials', priority: '0.7', freq: 'weekly' },
-    { loc: '/resources', priority: '0.7', freq: 'weekly' },
-    { loc: '/blog', priority: '0.7', freq: 'weekly' },
+    { loc: '/gate-da-courses', priority: '0.9', freq: 'weekly' },
+    { loc: '/gate-da-test-series', priority: '0.8', freq: 'weekly' },
+    { loc: '/gate-da-toppers', priority: '0.7', freq: 'weekly' },
+    { loc: '/gate-da-free-notes', priority: '0.7', freq: 'weekly' },
+    { loc: '/blogs', priority: '0.7', freq: 'weekly' },
     { loc: '/contact', priority: '0.5', freq: 'monthly' },
   ];
   const today = new Date().toISOString().slice(0, 10);
-  const postUrls = posts.map(p => ({ loc: `/blog/${p.slug}`, priority: '0.6', freq: 'monthly', lastmod: p.date || today }));
+  const postUrls = posts.map(p => ({ loc: `/blogs/${p.slug}`, priority: '0.6', freq: 'monthly', lastmod: p.date || today }));
 
   const entries = [...staticUrls.map(u => ({ ...u, lastmod: today })), ...postUrls];
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
