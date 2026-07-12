@@ -2586,30 +2586,30 @@ function App() {
             What our <em>rankers said.</em>
           </h2>
           <div className="course-testi-grid">
-            <div className="course-testi-card card fade-in" style={{ '--delay': '0ms' }}>
+            <div className="course-testi-card card fade-in" style={{ '--delay': '0ms' }} itemScope itemType="https://schema.org/Review">
               <div className="course-testi-air">
                 <span className="course-testi-air-badge">AIR 125 · GATE DA 2026</span>
                 <span className="course-testi-stars">★★★★★</span>
               </div>
-              <p className="course-testi-quote">"Manoj Sir's way of breaking down complex mathematical concepts, along with sharing smart tricks and shortcuts, made a massive difference in solving problems faster. He doesn't just teach concepts; he teaches how to think through questions efficiently. Concepts that initially felt abstract became much clearer, especially as we learned to connect them with the underlying mathematics."</p>
+              <p className="course-testi-quote" itemProp="reviewBody">"Manoj Sir's way of breaking down complex mathematical concepts, along with sharing smart tricks and shortcuts, made a massive difference in solving problems faster. He doesn't just teach concepts; he teaches how to think through questions efficiently. Concepts that initially felt abstract became much clearer, especially as we learned to connect them with the underlying mathematics."</p>
               <div className="course-testi-footer">
                 <div className="course-testi-avatar">SG</div>
-                <div>
-                  <div className="course-testi-name">Soumyadeep Ghosh</div>
+                <div itemProp="author" itemScope itemType="https://schema.org/Person">
+                  <div className="course-testi-name" itemProp="name">Soumyadeep Ghosh</div>
                   <div className="course-testi-college">IISc · M.Tech AI</div>
                 </div>
               </div>
             </div>
-            <div className="course-testi-card card fade-in" style={{ '--delay': '120ms' }}>
+            <div className="course-testi-card card fade-in" style={{ '--delay': '120ms' }} itemScope itemType="https://schema.org/Review">
               <div className="course-testi-air">
                 <span className="course-testi-air-badge">AIR 155 · GATE DA 2026</span>
                 <span className="course-testi-stars">★★★★★</span>
               </div>
-              <p className="course-testi-quote">"His way of breaking down complex mathematical and data science concepts, focusing on intuition and problem-solving rather than just formulas, completely changed how I approached the exam. Topics like statistics and ML, which initially felt abstract, became much clearer and more enjoyable to study. Grateful to Manoj Sir and the entire TAAI team for their support, guidance, and constant motivation throughout this journey."</p>
+              <p className="course-testi-quote" itemProp="reviewBody">"His way of breaking down complex mathematical and data science concepts, focusing on intuition and problem-solving rather than just formulas, completely changed how I approached the exam. Topics like statistics and ML, which initially felt abstract, became much clearer and more enjoyable to study. Grateful to Manoj Sir and the entire TAAI team for their support, guidance, and constant motivation throughout this journey."</p>
               <div className="course-testi-footer">
                 <div className="course-testi-avatar">AD</div>
-                <div>
-                  <div className="course-testi-name">Ayush Dwivedi</div>
+                <div itemProp="author" itemScope itemType="https://schema.org/Person">
+                  <div className="course-testi-name" itemProp="name">Ayush Dwivedi</div>
                   <div className="course-testi-college">IISc · M.Tech AI</div>
                 </div>
               </div>
@@ -2668,38 +2668,6 @@ function App() {
               ))}
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Student Reviews — visible to Google to verify AggregateRating */}
-      <section className="section" style={{ background: 'var(--bg-soft)' }}>
-        <div className="container">
-          <div className="section-eyebrow fade-in">Student Reviews</div>
-          <h2 className="fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,3.5vw,46px)', fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1, marginBottom: 12 }}>
-            Rated <em style={{ fontStyle: 'normal', background: 'linear-gradient(120deg,var(--pink),var(--purple))', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>4.8 / 5</em> by our students
-          </h2>
-          <p className="fade-in" style={{ color: 'var(--ink-dim)', fontSize: 16, marginBottom: 40 }}>Based on 51 verified student reviews</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
-            {[
-              { name: 'Sanved Bangale', rank: 'AIR 38', college: 'IIT Madras', quote: 'The most GATE DA specific practice I\'ve found, with really excellent coverage of the content. The clarity in teaching, structured approach, and constant support from the team made all the difference.', rating: 5 },
-              { name: 'Yash Raj', rank: 'AIR 49', college: 'IIT Madras', quote: 'Your course was a complete game-changer, bridging the gap between concepts and application. The intuitive approach to problem-solving transformed my understanding of Maths, making Linear Algebra and Probability my strongest areas.', rating: 5 },
-              { name: 'Tapan Patel', rank: 'AIR 91', college: 'IIT Delhi', quote: 'Manoj Sir taught Maths and ML in a way that made even tough topics feel much easier to understand. The courses and guidance from TAAI played a big role in my journey.', rating: 5 },
-            ].map((r, i) => (
-              <div key={i} className="fade-in" itemScope itemType="https://schema.org/Review" style={{ background: 'var(--card)', border: '1px solid var(--line)', borderRadius: 'var(--radius-lg)', padding: '24px 22px' }}>
-                <div style={{ display: 'flex', gap: 2, marginBottom: 12 }}>
-                  {[1,2,3,4,5].map(s => <svg key={s} width="14" height="14" viewBox="0 0 24 24" fill="var(--purple)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>)}
-                </div>
-                <p itemProp="reviewBody" style={{ fontSize: 14, color: 'var(--ink-dim)', lineHeight: 1.6, marginBottom: 16 }}>"{r.quote}"</p>
-                <div itemProp="author" itemScope itemType="https://schema.org/Person" style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <span itemProp="name" style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink)' }}>{r.name}</span>
-                  <span style={{ fontSize: 12, color: 'var(--purple)', fontWeight: 600 }}>{r.rank} · {r.college}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-          <p className="fade-in" style={{ marginTop: 24, textAlign: 'center' }}>
-            <a href="/gate-da-toppers" style={{ color: 'var(--purple)', fontWeight: 600, fontSize: 14 }}>See all student stories and results →</a>
-          </p>
         </div>
       </section>
 
