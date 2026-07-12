@@ -125,6 +125,19 @@ const BLOG_MENU_ICONS = {
   '/blogs': '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 20h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" /></svg>',
 };
 
+const TAG_LABELS = {
+  'linear-algebra': 'Linear Algebra', 'probability': 'Probability',
+  'statistics': 'Statistics', 'calculus': 'Calculus',
+  'machine-learning': 'Machine Learning', 'ai': 'AI', 'dbms': 'DBMS',
+  'python-dsa': 'Python & DSA', 'gate-strategy': 'GATE Strategy',
+  'announcement': 'Announcement', 'career': 'Career', 'tips': 'Tips',
+};
+
+function renderTags(tags) {
+  if (!tags || !tags.length) return '';
+  return `<div class="blog-tags">${tags.map(t => `<span class="blog-tag">${escapeHtml(TAG_LABELS[t] || t)}</span>`).join('')}</div>`;
+}
+
 function escapeHtml(str) {
   return String(str || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
@@ -171,13 +184,24 @@ function parseFrontmatter(raw) {
   const m = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
   if (!m) return { data: {}, content: raw };
   const data = {};
+  let currentListKey = null;
   for (const line of m[1].split('\n')) {
+    const listItem = line.match(/^[ \t]*-[ \t]+(.+)$/);
+    if (listItem && currentListKey) {
+      data[currentListKey].push(listItem[1].trim().replace(/^["']|["']$/g, ''));
+      continue;
+    }
+    currentListKey = null;
     const idx = line.indexOf(':');
     if (idx === -1) continue;
     const key = line.slice(0, idx).trim();
     let val = line.slice(idx + 1).trim();
-    val = val.replace(/^["']|["']$/g, '');
-    data[key] = val;
+    if (!val) { data[key] = []; currentListKey = key; continue; } // YAML list start
+    if (val.startsWith('[') && val.endsWith(']')) { // inline list [a, b]
+      data[key] = val.slice(1,-1).split(',').map(s => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
+    } else {
+      data[key] = val.replace(/^["']|["']$/g, '');
+    }
   }
   return { data, content: m[2] };
 }
@@ -308,6 +332,7 @@ function loadPosts() {
         date: data.date || '',
         description: data.description || '',
         cover: data.cover || '',
+        tags: Array.isArray(data.tags) ? data.tags : (data.tags ? [data.tags] : []),
         html: renderMarkdown(content),
       };
     })
@@ -331,6 +356,7 @@ function generateBlog() {
           <div class="blog-card-date">${formatDate(p.date)}</div>
           <div class="blog-card-title">${escapeHtml(p.title)}</div>
           <div class="blog-card-desc">${escapeHtml(p.description)}</div>
+          ${renderTags(p.tags)}
           <span class="blog-card-link">Read more →</span>
         </a>`).join('\n        ')
     : '<p class="blog-empty">No posts yet — check back soon.</p>';
@@ -370,6 +396,7 @@ ${renderChrome(indexBody)}
         <div class="container">
           <a href="/blogs" class="blog-post-back">← Back to blog</a>
           <div class="blog-post-date fade-in">${formatDate(post.date)}</div>
+          ${post.tags.length ? `<div class="fade-in">${renderTags(post.tags)}</div>` : ''}
           <h1 class="fade-in">${escapeHtml(post.title)}</h1>
         </div>
       </div>

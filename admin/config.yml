@@ -27,4 +27,23 @@ collections:
       - { label: "Publish Date", name: "date", widget: "datetime", format: "YYYY-MM-DD" }
       - { label: "Description", name: "description", widget: "text", hint: "Shown on the blog listing page and used as the SEO meta description (~155 characters)." }
       - { label: "Cover Image", name: "cover", widget: "image", required: false }
+      - label: "Tags"
+        name: "tags"
+        widget: "select"
+        multiple: true
+        required: false
+        hint: "Select all that apply. Academic tags describe the subject; non-academic tags describe the post type."
+        options:
+          - { label: "Linear Algebra", value: "linear-algebra" }
+          - { label: "Probability", value: "probability" }
+          - { label: "Statistics", value: "statistics" }
+          - { label: "Calculus", value: "calculus" }
+          - { label: "Machine Learning", value: "machine-learning" }
+          - { label: "AI", value: "ai" }
+          - { label: "DBMS", value: "dbms" }
+          - { label: "Python & DSA", value: "python-dsa" }
+          - { label: "GATE Strategy", value: "gate-strategy" }
+          - { label: "Announcement", value: "announcement" }
+          - { label: "Career", value: "career" }
+          - { label: "Tips", value: "tips" }
       - { label: "Body", name: "body", widget: "markdown" }

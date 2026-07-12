@@ -221,6 +221,9 @@ a { color: inherit; }
 .blog-card-title { font-family: var(--font-display); font-size: 21px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.25; margin-bottom: 10px; position: relative; z-index: 1; }
 .blog-card:hover .blog-card-title { color: var(--purple); }
 .blog-card-desc { font-size: 14.5px; color: var(--ink-dim); line-height: 1.6; flex: 1; position: relative; z-index: 1; }
+.blog-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; position: relative; z-index: 1; }
+.blog-tag { display: inline-flex; align-items: center; font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; background: var(--purple-soft); color: var(--purple); white-space: nowrap; }
+.blog-post-hero .blog-tags { margin-bottom: 4px; }
 .blog-card-link { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 600; color: var(--purple); margin-top: 16px; position: relative; z-index: 1; transition: gap .2s; }
 .blog-card:hover .blog-card-link { gap: 10px; }
 .blog-empty { color: var(--ink-soft); font-size: 15px; }
