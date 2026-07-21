@@ -11,15 +11,17 @@
   var FOCUS_KEY = 'taai_progress_focus';
 
   // Full GATE DA syllabus — shown in "Progress by subject" even before a
-  // schedule for that subject has been uploaded (0% until then). Names
-  // that already appear in real schedule data ("Linear Algebra",
-  // "AI (Logic)") match that data's exact spelling so they merge into one
-  // row instead of appearing twice; the rest are best-guess names — if a
-  // future month's sheet uses a different header for one of these, it'll
-  // show up as an extra row rather than merging until the names match.
+  // schedule for that subject has been uploaded (0% until then). "AI" is
+  // deliberately separate from "AI (Logic)" — Logic is just the portion
+  // of AI already scheduled, not the whole subject, so they're two
+  // distinct rows, not one to merge. Names that already appear in real
+  // schedule data ("Linear Algebra") match that data's exact spelling so
+  // they merge into one row instead of duplicating; the rest are
+  // best-guess names — if a future month's sheet uses a different header
+  // for one of these, it'll show up as an extra row until the names match.
   var CANONICAL_SUBJECTS = [
     'Linear Algebra', 'Probability', 'Statistics', 'Calculus',
-    'Machine Learning', 'AI (Logic)', 'DBMS', 'Python', 'Data Structures & Algorithms',
+    'Machine Learning', 'AI', 'DBMS', 'Python', 'Data Structures & Algorithms',
   ];
 
   var app = document.getElementById('app');
@@ -282,6 +284,10 @@
   // month or to elapsed days. A subject can span many months, so
   // month-scoping it would make progress look like it resets every time
   // the student navigates months.
+  function isAssessment(name) {
+    return /quiz|test series/i.test(name);
+  }
+
   function renderSubjectBreakdown() {
     // Keep whatever's already come back from real schedule data, then
     // append any canonical GATE DA subject not already represented —
@@ -295,12 +301,19 @@
       if (!present[name]) subjects.push({ subject: name, done: 0, total: 0 });
     });
 
-    var rows = subjects.map(function (s) {
+    // Quizzes/test series aren't a syllabus subject — sort them after
+    // everything else instead of wherever they happen to fall.
+    var syllabus = subjects.filter(function (s) { return !isAssessment(s.subject); });
+    var assessments = subjects.filter(function (s) { return isAssessment(s.subject); });
+    var ordered = syllabus.concat(assessments);
+
+    var rows = ordered.map(function (s) {
       var pct = s.total ? Math.round((s.done / s.total) * 100) : 0;
-      return '<div class="subject-row" data-subject="' + escapeAttr(s.subject) + '">' +
+      var rowClass = 'subject-row' + (isAssessment(s.subject) ? ' subject-row--assessment' : '');
+      return '<div class="' + rowClass + '" data-subject="' + escapeAttr(s.subject) + '">' +
         '<div class="subject-row-name">' + escapeHtml(s.subject) + '</div>' +
-        '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
-        '<div class="subject-row-pct">' + pct + '%</div>' +
+        '<div class="subject-row-line"><div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
+        '<div class="subject-row-pct">' + pct + '%</div></div>' +
         '</div>';
     }).join('');
 
