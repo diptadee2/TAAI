@@ -314,29 +314,19 @@
       '<div class="heatmap-grid">' + cells + '</div></div>';
   }
 
-  // Overall stats: streak + "days started" + subject breakdown. Grouped so
-  // a single task toggle can refresh just this panel instead of the whole
-  // page, which would otherwise collapse any day cards the student had
-  // manually expanded elsewhere.
+  // Overall stats: streak + optional exam countdown + subject breakdown.
+  // Grouped so a single task toggle can refresh just this panel instead of
+  // the whole page, which would otherwise collapse any day cards the
+  // student had manually expanded elsewhere.
   function buildStatsPanelHtml() {
-    var today = todayIso();
-    var elapsedScheduled = state.days.filter(function (d) { return d.date <= today; });
-    var startedCount = elapsedScheduled.filter(function (d) {
-      return d.tasks.some(function (t) { return t.completed; });
-    }).length;
-    var elapsedCount = elapsedScheduled.length;
-    var pct = elapsedCount ? Math.round((startedCount / elapsedCount) * 100) : 0;
+    var html = renderStreakHero();
 
-    var examStat = '';
     if (EXAM_DATE) {
+      var today = todayIso();
       var daysLeft = Math.max(0, Math.ceil((new Date(EXAM_DATE) - new Date(today)) / 864e5));
-      examStat = '<div class="stats-row"><span>📅 ' + daysLeft + ' days till exam</span></div>';
+      html += '<div class="exam-countdown fade-in">📅 ' + daysLeft + ' days till exam</div>';
     }
 
-    var html = renderStreakHero();
-    html += '<div class="stats-bar fade-in">' + examStat +
-      '<div class="stats-row"><span>' + startedCount + ' / ' + elapsedCount + ' days started this month</span><span>' + pct + '%</span></div>' +
-      '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div></div>';
     html += renderSubjectBreakdown();
     return html;
   }
@@ -375,6 +365,8 @@
       '<button id="focus-toggle" class="focus-toggle' + (state.focus ? ' active' : '') + '">' + (state.focus ? '✕ Exit focus' : '◎ Focus mode') + '</button>' +
       '</div>';
 
+    if (!state.focus) html += '<div class="page-grid"><div class="main-col">';
+
     if (!state.focus) {
       html += '<div id="stats-panel">' + buildStatsPanelHtml() + '</div>';
 
@@ -407,7 +399,9 @@
         html += '<p class="center-note">Nothing scheduled for ' + monthLabel(state.month) + ' yet.</p>';
       }
 
-      html += '<div id="heatmap-panel">' + renderHeatmap() + '</div>';
+      html += '</div>'; // main-col
+      html += '<div class="side-col"><div id="heatmap-panel">' + renderHeatmap() + '</div></div>';
+      html += '</div>'; // page-grid
     }
 
     app.innerHTML = html;
