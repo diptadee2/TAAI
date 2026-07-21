@@ -125,9 +125,11 @@
   .streak-hero::before { content: ''; position: absolute; top: -70px; right: -50px; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, rgba(251,191,36,0.16) 0%, transparent 70%); pointer-events: none; }
   .streak-hero::after { content: ''; position: absolute; bottom: -80px; left: -50px; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle, rgba(139,92,246,0.18) 0%, transparent 70%); pointer-events: none; }
   .streak-flame { position: relative; font-size: 32px; line-height: 1; margin-bottom: 6px; filter: drop-shadow(0 6px 14px rgba(251,191,36,0.3)); }
-  .streak-number { position: relative; font-family: var(--font-body); font-size: 52px; font-weight: 700; line-height: 1; background: linear-gradient(120deg,#FF7FB7,var(--purple),#4D8BFF); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: streak-grad 6s ease infinite; }
+  .streak-number { position: relative; display: inline-block; font-family: var(--font-body); font-size: 52px; font-weight: 700; line-height: 1; background: linear-gradient(120deg,#FF7FB7,var(--purple),#4D8BFF); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: streak-grad 6s ease infinite; }
+  .streak-number.bump { animation: streak-grad 6s ease infinite, streak-bump .55s cubic-bezier(.34,1.5,.64,1); }
   .streak-label { position: relative; font-family: var(--font-nav); font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); margin-top: 6px; }
   @keyframes streak-grad { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+  @keyframes streak-bump { 0% { transform: scale(1); } 45% { transform: scale(1.35); } 100% { transform: scale(1); } }
 
   .exam-countdown { text-align: center; font-family: var(--font-nav); font-size: 13px; font-weight: 600; color: var(--ink-dim); background: rgba(255,255,255,0.045); border: 1px solid rgba(255,255,255,0.1); border-radius: 999px; padding: 10px 16px; margin-bottom: 18px; }
   .progress-track { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }

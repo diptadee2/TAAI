@@ -137,9 +137,19 @@
   function refreshStreak() {
     return api('/streak?email=' + encodeURIComponent(state.student.email))
       .then(function (r) {
+        var changed = state.streak !== null && r.streak !== state.streak;
         state.streak = r.streak;
         var el = document.getElementById('streak-number');
-        if (el) el.textContent = state.streak;
+        if (!el) return;
+        el.textContent = state.streak;
+        if (changed) {
+          // Restart the bump animation even if it's already mid-run from a
+          // rapid previous toggle — force a reflow between remove/add so
+          // the browser treats it as a fresh animation, not a no-op.
+          el.classList.remove('bump');
+          void el.offsetWidth;
+          el.classList.add('bump');
+        }
       })
       .catch(function () { /* non-critical — leave last known value on screen */ });
   }
@@ -314,12 +324,14 @@
       '<div class="heatmap-grid">' + cells + '</div></div>';
   }
 
-  // Overall stats: streak + optional exam countdown + subject breakdown.
-  // Grouped so a single task toggle can refresh just this panel instead of
-  // the whole page, which would otherwise collapse any day cards the
-  // student had manually expanded elsewhere.
+  // Exam countdown + subject breakdown. Streak lives in its own separate
+  // #streak-panel (see renderCalendar) rather than being rebuilt here —
+  // it's driven by its own async fetch (refreshStreak), and regenerating
+  // its whole card on every task toggle meant the entire streak-hero
+  // (flame, glow, label) replayed its fade-in-from-nothing entrance every
+  // single tick, instead of just the number changing.
   function buildStatsPanelHtml() {
-    var html = renderStreakHero();
+    var html = '';
 
     if (EXAM_DATE) {
       var today = todayIso();
@@ -368,6 +380,7 @@
     if (!state.focus) html += '<div class="page-grid"><div class="main-col">';
 
     if (!state.focus) {
+      html += '<div id="streak-panel">' + renderStreakHero() + '</div>';
       html += '<div id="stats-panel">' + buildStatsPanelHtml() + '</div>';
 
       html += '<div class="month-nav"><button id="prev-month" aria-label="Previous month">&larr;</button>' +
