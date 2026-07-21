@@ -235,8 +235,8 @@
     var today = todayIso();
     if (day.date === today) return 'today';
     var allDone = day.tasks.length > 0 && day.tasks.every(function (t) { return t.completed; });
-    if (day.date < today) return allDone ? 'complete' : 'missed';
-    return 'upcoming';
+    if (allDone) return 'complete';
+    return day.date < today ? 'missed' : 'upcoming';
   }
 
   // ── Streak hero ────────────────────────────────────────────────────
@@ -433,15 +433,9 @@
     var statusLabel = status === 'complete' ? '✅ Complete' : status === 'missed' ? '⚠️ Missed' : 'Upcoming';
 
     var body = '';
-    if (status === 'upcoming') {
-      day.tasks.forEach(function (t) {
-        body += '<div class="task-preview"><span class="task-subject">' + escapeHtml(t.subject) + ':</span> ' + escapeHtml(t.task_text) + '</div>';
-      });
-    } else {
-      day.tasks.forEach(function (t) {
-        body += taskRowHtml(day.date, t);
-      });
-    }
+    day.tasks.forEach(function (t) {
+      body += taskRowHtml(day.date, t);
+    });
 
     return '<div class="day fade-in" data-date="' + day.date + '">' +
       '<div class="day-summary" role="button" tabindex="0" aria-expanded="' + isOpen + '">' +
