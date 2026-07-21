@@ -15,6 +15,8 @@
     student: null,
     month: currentMonthStr(),
     days: [], // [{ date, tasks: [{subject, task_text, position, completed}] }]
+    streak: null,
+    expanded: new Set(), // dates whose day-card is open, non-native accordion
     focus: localStorage.getItem(FOCUS_KEY) === '1',
   };
 
@@ -132,6 +134,16 @@
     });
   }
 
+  function refreshStreak() {
+    return api('/streak?email=' + encodeURIComponent(state.student.email))
+      .then(function (r) {
+        state.streak = r.streak;
+        var el = document.getElementById('streak-number');
+        if (el) el.textContent = state.streak;
+      })
+      .catch(function () { /* non-critical — leave last known value on screen */ });
+  }
+
   // ── Registration ────────────────────────────────────────────────────
   function renderRegisterForm(errorMsg) {
     app.innerHTML =
@@ -180,10 +192,12 @@
     Promise.all([
       api('/schedule?month=' + monthStr),
       api('/progress?email=' + encodeURIComponent(state.student.email) + '&month=' + monthStr),
+      api('/streak?email=' + encodeURIComponent(state.student.email)).catch(function () { return { streak: null }; }),
     ])
       .then(function (results) {
         var scheduleDays = results[0].days || [];
         var progressRows = results[1].progress || [];
+        state.streak = results[2].streak;
 
         var completedSet = new Set(
           progressRows.filter(function (r) { return r.completed; })
@@ -203,6 +217,13 @@
           })
           .sort(function (a, b) { return a.date < b.date ? -1 : 1; });
 
+        // Missed days start expanded so their checkboxes are immediately usable.
+        var today = todayIso();
+        state.days.forEach(function (d) {
+          var allDone = d.tasks.length > 0 && d.tasks.every(function (t) { return t.completed; });
+          if (d.date < today && !allDone) state.expanded.add(d.date);
+        });
+
         renderCalendar();
       })
       .catch(function (err) {
@@ -216,6 +237,17 @@
     var allDone = day.tasks.length > 0 && day.tasks.every(function (t) { return t.completed; });
     if (day.date < today) return allDone ? 'complete' : 'missed';
     return 'upcoming';
+  }
+
+  // ── Streak hero ────────────────────────────────────────────────────
+  function renderStreakHero() {
+    var n = state.streak;
+    var label = n === 1 ? 'day streak' : 'day streak';
+    return '<div class="streak-hero fade-in">' +
+      '<div class="streak-flame">🔥</div>' +
+      '<div class="streak-number" id="streak-number">' + (n === null ? '—' : n) + '</div>' +
+      '<div class="streak-label">' + label + '</div>' +
+      '</div>';
   }
 
   // ── Per-subject breakdown (elapsed days only, same scope as the
@@ -246,7 +278,8 @@
     return '<div class="subject-breakdown fade-in"><div class="subject-breakdown-title">Progress by subject</div>' + rows + '</div>';
   }
 
-  // ── Completion heatmap for the visible month ──────────────────────
+  // ── Completion heatmap for the visible month — compact, secondary,
+  // placed at the bottom of the page rather than up top. ────────────
   function heatLevel(day) {
     if (!day || !day.tasks.length) return 0;
     var total = day.tasks.length;
@@ -267,7 +300,6 @@
     state.days.forEach(function (d) { byDate[d.date] = d; });
 
     var cells = '';
-    ['M', 'T', 'W', 'T', 'F', 'S', 'S'].forEach(function (l) { cells += '<div class="heatmap-dow">' + l + '</div>'; });
     for (var i = 0; i < leadBlanks; i++) cells += '<div class="heatmap-cell" style="visibility:hidden"></div>';
     for (var day = 1; day <= daysInMonth; day++) {
       var dateStr = year + '-' + pad(month) + '-' + pad(day);
@@ -276,13 +308,16 @@
       cells += '<div class="heatmap-cell' + isToday + '" data-level="' + level + '" title="' + dateStr + '"></div>';
     }
 
-    return '<div class="heatmap-card fade-in"><div class="heatmap-title">Completion heatmap</div><div class="heatmap-grid">' + cells + '</div></div>';
+    return '<div class="heatmap-card fade-in">' +
+      '<div class="heatmap-head"><span class="heatmap-title">' + monthLabel(state.month) + ' at a glance</span>' +
+      '<span class="heatmap-legend">Less <span class="heatmap-cell" data-level="0"></span><span class="heatmap-cell" data-level="1"></span><span class="heatmap-cell" data-level="2"></span><span class="heatmap-cell" data-level="3"></span><span class="heatmap-cell" data-level="4"></span> More</span></div>' +
+      '<div class="heatmap-grid">' + cells + '</div></div>';
   }
 
-  // Overall stats bar + subject breakdown + heatmap — grouped so a single
-  // task toggle can refresh just this panel instead of the whole page,
-  // which would otherwise collapse any day cards the student had manually
-  // expanded elsewhere on the page.
+  // Overall stats: streak + "days started" + subject breakdown. Grouped so
+  // a single task toggle can refresh just this panel instead of the whole
+  // page, which would otherwise collapse any day cards the student had
+  // manually expanded elsewhere.
   function buildStatsPanelHtml() {
     var today = todayIso();
     var elapsedScheduled = state.days.filter(function (d) { return d.date <= today; });
@@ -298,19 +333,19 @@
       examStat = '<div class="stats-row"><span>📅 ' + daysLeft + ' days till exam</span></div>';
     }
 
-    var html = '<div class="stats-bar fade-in">' + examStat +
+    var html = renderStreakHero();
+    html += '<div class="stats-bar fade-in">' + examStat +
       '<div class="stats-row"><span>' + startedCount + ' / ' + elapsedCount + ' days started this month</span><span>' + pct + '%</span></div>' +
       '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div></div>';
     html += renderSubjectBreakdown();
-    html += renderHeatmap();
     return html;
   }
 
   function patchStatsPanel() {
     var panel = document.getElementById('stats-panel');
-    if (!panel) return;
-    panel.innerHTML = buildStatsPanelHtml();
-    observeFadeIns();
+    if (panel) { panel.innerHTML = buildStatsPanelHtml(); observeFadeIns(); }
+    var heatmapPanel = document.getElementById('heatmap-panel');
+    if (heatmapPanel) { heatmapPanel.innerHTML = renderHeatmap(); observeFadeIns(); }
   }
 
   // Updates one day card's status badge in place (e.g. Missed → Complete
@@ -371,6 +406,8 @@
       if (!state.days.length) {
         html += '<p class="center-note">Nothing scheduled for ' + monthLabel(state.month) + ' yet.</p>';
       }
+
+      html += '<div id="heatmap-panel">' + renderHeatmap() + '</div>';
     }
 
     app.innerHTML = html;
@@ -393,26 +430,32 @@
     return html;
   }
 
+  // Non-native accordion (div-based, not <details>/<summary>) so the
+  // expand/collapse animates smoothly via a CSS grid-rows transition,
+  // instead of the native element's instant snap-open.
   function renderDay(day) {
     var status = dayStatus(day);
-    var openAttr = (status === 'missed') ? ' open' : '';
+    var isOpen = state.expanded.has(day.date);
     var statusLabel = status === 'complete' ? '✅ Complete' : status === 'missed' ? '⚠️ Missed' : 'Upcoming';
 
-    var html = '<details class="day fade-in" data-date="' + day.date + '"' + openAttr + '>';
-    html += '<summary><span class="day-date">' + dayLabel(day.date) + '</span>' +
-      '<span class="day-status ' + status + '">' + statusLabel + '</span></summary>';
-    html += '<div class="day-body">';
+    var body = '';
     if (status === 'upcoming') {
       day.tasks.forEach(function (t) {
-        html += '<div class="task-preview"><span class="task-subject">' + escapeHtml(t.subject) + ':</span> ' + escapeHtml(t.task_text) + '</div>';
+        body += '<div class="task-preview"><span class="task-subject">' + escapeHtml(t.subject) + ':</span> ' + escapeHtml(t.task_text) + '</div>';
       });
     } else {
       day.tasks.forEach(function (t) {
-        html += taskRowHtml(day.date, t);
+        body += taskRowHtml(day.date, t);
       });
     }
-    html += '</div></details>';
-    return html;
+
+    return '<div class="day fade-in" data-date="' + day.date + '">' +
+      '<div class="day-summary" role="button" tabindex="0" aria-expanded="' + isOpen + '">' +
+      '<svg class="day-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 6L15 12L9 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+      '<span class="day-date">' + dayLabel(day.date) + '</span>' +
+      '<span class="day-status ' + status + '">' + statusLabel + '</span></div>' +
+      '<div class="day-body-wrap' + (isOpen ? ' expanded' : '') + '"><div class="day-body-inner"><div class="day-body">' + body + '</div></div></div>' +
+      '</div>';
   }
 
   function taskRowHtml(date, t) {
@@ -444,9 +487,27 @@
     var next = document.getElementById('next-month');
     if (next) next.addEventListener('click', function () { loadMonth(shiftMonth(state.month, 1)); });
 
+    Array.prototype.forEach.call(document.querySelectorAll('.day-summary'), function (el) {
+      el.addEventListener('click', function () { toggleDay(el.closest('.day').dataset.date); });
+      el.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleDay(el.closest('.day').dataset.date); }
+      });
+    });
+
     Array.prototype.forEach.call(document.querySelectorAll('.task-row input[type="checkbox"]'), function (cb) {
       cb.addEventListener('change', onTaskToggle);
     });
+  }
+
+  function toggleDay(date) {
+    var el = document.querySelector('.day[data-date="' + date + '"]');
+    if (!el) return;
+    var wrap = el.querySelector('.day-body-wrap');
+    var summary = el.querySelector('.day-summary');
+    var open = state.expanded.has(date);
+    if (open) { state.expanded.delete(date); } else { state.expanded.add(date); }
+    wrap.classList.toggle('expanded', !open);
+    summary.setAttribute('aria-expanded', String(!open));
   }
 
   function onTaskToggle(e) {
@@ -469,6 +530,7 @@
         cb.disabled = false;
         patchStatsPanel();
         patchDayStatus(date);
+        refreshStreak();
       })
       .catch(function () {
         cb.checked = !completed;
