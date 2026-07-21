@@ -8,3 +8,6 @@ sheets/
 /sitemap.xml
 /blogs/index.html
 /blogs/*/
+
+# Internal planning doc, not part of the deployed site
+/taai-technical-spec-v4.md

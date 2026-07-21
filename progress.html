@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#6d28d9">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" href="/favicon.ico?v=6" sizes="any">
+<title>My Progress — TAAI GATE DA 2027</title>
+<meta name="description" content="Track your daily GATE DA 2027 study schedule and mark tasks complete as you go.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FFFFFF; --bg-soft: #FBF9FF;
+    --ink: #14102B; --ink-dim: #4A4270; --ink-soft: #857CAE;
+    --line: #ECE6F8; --card: #FFFFFF;
+    --purple: #8B5CF6; --purple-soft: #E6DCFF;
+    --green: #16a34a; --green-soft: #DCFCE7;
+    --amber: #d97706; --amber-soft: #FEF3C7;
+    --radius-md: 18px; --radius-lg: 26px;
+    --shadow-sm: 0 1px 0 rgba(20,16,43,0.04), 0 2px 6px rgba(20,16,43,0.04);
+    --shadow-md: 0 2px 0 rgba(20,16,43,0.03), 0 12px 32px rgba(107,75,255,0.08);
+    --font-body: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+    --font-nav: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { font-family: var(--font-body); background: var(--bg-soft); color: var(--ink); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; }
+
+  .top { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: var(--bg); border-bottom: 1px solid var(--line); }
+  .top-logo { display: flex; align-items: center; gap: 8px; text-decoration: none; font-family: var(--font-nav); font-weight: 700; color: var(--ink); font-size: 15px; }
+  .top-logo img { width: 32px; height: 32px; }
+  .top-back { font-family: var(--font-nav); font-size: 12.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-soft); text-decoration: none; }
+  .top-back:hover { color: var(--purple); }
+
+  .wrap { max-width: 760px; margin: 0 auto; padding: 28px 18px 80px; }
+
+  #app { min-height: 40vh; }
+
+  .center-note { text-align: center; color: var(--ink-soft); font-size: 14px; padding: 60px 0; }
+
+  /* Registration form */
+  .reg-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); padding: 36px 28px; max-width: 420px; margin: 40px auto; text-align: center; }
+  .reg-card h1 { font-family: var(--font-nav); font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+  .reg-card p { color: var(--ink-soft); font-size: 14px; margin-bottom: 22px; }
+  .reg-field { text-align: left; margin-bottom: 14px; }
+  .reg-field label { display: block; font-family: var(--font-nav); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-dim); margin-bottom: 6px; }
+  .reg-field input { width: 100%; padding: 11px 14px; border: 1.5px solid var(--line); border-radius: 12px; font-family: var(--font-body); font-size: 14.5px; color: var(--ink); background: var(--bg-soft); }
+  .reg-field input:focus { outline: none; border-color: var(--purple); background: var(--bg); }
+  .btn-primary { width: 100%; padding: 13px; border: none; border-radius: 999px; background: var(--purple); color: #fff; font-family: var(--font-nav); font-weight: 700; font-size: 14.5px; cursor: pointer; margin-top: 6px; transition: transform .15s ease, background .15s ease; }
+  .btn-primary:hover { background: #7c3aed; transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: .6; cursor: default; transform: none; }
+  .form-error { color: #dc2626; font-size: 13px; margin-top: 10px; }
+
+  /* Header / stats */
+  .roadmap-head { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+  .roadmap-head h1 { font-family: var(--font-nav); font-size: 19px; font-weight: 700; }
+  .roadmap-sub { font-size: 13px; color: var(--ink-soft); margin-bottom: 18px; }
+  .roadmap-sub button { background: none; border: none; color: var(--purple); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; padding: 0; text-decoration: underline; }
+
+  .stats-bar { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 16px 18px; margin-bottom: 18px; box-shadow: var(--shadow-sm); }
+  .stats-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-dim); margin-bottom: 8px; font-family: var(--font-nav); font-weight: 600; }
+  .progress-track { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--purple), #a78bfa); border-radius: 999px; transition: width .3s ease; }
+
+  .month-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  .month-nav button { background: var(--card); border: 1px solid var(--line); border-radius: 10px; width: 34px; height: 34px; font-size: 16px; cursor: pointer; color: var(--ink-dim); }
+  .month-nav button:hover { border-color: var(--purple); color: var(--purple); }
+  .month-nav .month-label { font-family: var(--font-nav); font-weight: 700; font-size: 15px; }
+
+  .week-label { font-family: var(--font-nav); font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); margin: 22px 0 10px; }
+
+  .day { background: var(--card); border: 1px solid var(--line); border-radius: 14px; margin-bottom: 8px; box-shadow: var(--shadow-sm); overflow: hidden; }
+  .day > summary { list-style: none; cursor: pointer; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .day > summary::-webkit-details-marker { display: none; }
+  .day-date { font-family: var(--font-nav); font-weight: 700; font-size: 13.5px; }
+  .day-status { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+  .day-status.complete { background: var(--green-soft); color: var(--green); }
+  .day-status.missed { background: var(--amber-soft); color: var(--amber); }
+  .day-status.upcoming { background: var(--line); color: var(--ink-soft); }
+  .day-body { padding: 0 16px 14px; }
+  .task-row { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; font-size: 14px; }
+  .task-row input[type="checkbox"] { margin-top: 3px; width: 17px; height: 17px; accent-color: var(--purple); cursor: pointer; flex-shrink: 0; }
+  .task-row .task-subject { font-weight: 600; color: var(--purple); }
+  .task-row.done .task-text { text-decoration: line-through; color: var(--ink-soft); }
+  .task-preview { font-size: 13.5px; color: var(--ink-dim); padding: 2px 0; }
+  .task-preview .task-subject { font-weight: 600; color: var(--ink-soft); }
+
+  .today-card { border: 2px solid var(--purple); border-radius: var(--radius-lg); background: var(--card); box-shadow: 0 12px 32px rgba(139,92,246,0.16); padding: 18px 18px 14px; margin-bottom: 20px; }
+  .today-card .today-tag { font-family: var(--font-nav); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--purple); margin-bottom: 4px; }
+  .today-card .today-date { font-family: var(--font-nav); font-weight: 700; font-size: 16px; margin-bottom: 10px; }
+  .catchup-warn { background: var(--amber-soft); color: #92400e; font-size: 13px; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; line-height: 1.4; }
+
+  .not-you { display: inline; }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <a class="top-logo" href="/">
+    <img src="favicon-32.png" alt="">
+    TAAI
+  </a>
+  <a class="top-back" href="/">← taai.live</a>
+</div>
+
+<div class="wrap">
+  <div id="app"><p class="center-note">Loading your roadmap…</p></div>
+</div>
+
+<script src="progress.js"></script>
+</body>
+</html>

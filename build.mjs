@@ -19,7 +19,7 @@ const SRC   = __dir;
 const DIST  = path.join(__dir, 'dist');
 const BLOG_CONTENT_DIR = path.join(__dir, 'content', 'blog');
 
-const PAGES = ['index.html', 'gate-da-courses.html', 'gate-da-test-series.html', 'gate-da-toppers.html', 'contact.html', 'gate-da-free-notes.html'];
+const PAGES = ['index.html', 'gate-da-courses.html', 'gate-da-test-series.html', 'gate-da-toppers.html', 'contact.html', 'gate-da-free-notes.html', 'progress.html'];
 const SITE_URL = 'https://taai.live';
 
 
@@ -462,7 +462,7 @@ function build() {
   generateSitemap(posts);
 
   // Copy static assets (images, etc.) — skip dist/ and node_modules/
-  const SKIP_DIRS = new Set(['dist', 'node_modules', '.git', 'content']);
+  const SKIP_DIRS = new Set(['dist', 'node_modules', '.git', 'content', 'netlify', 'supabase']);
   for (const entry of fs.readdirSync(SRC)) {
     if (PAGES.includes(entry)) continue;
     if (SKIP_DIRS.has(entry)) continue;
