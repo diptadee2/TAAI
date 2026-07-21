@@ -10,6 +10,18 @@
   var COOKIE_DAYS = 365;
   var FOCUS_KEY = 'taai_progress_focus';
 
+  // Full GATE DA syllabus — shown in "Progress by subject" even before a
+  // schedule for that subject has been uploaded (0% until then). Names
+  // that already appear in real schedule data ("Linear Algebra",
+  // "AI (Logic)") match that data's exact spelling so they merge into one
+  // row instead of appearing twice; the rest are best-guess names — if a
+  // future month's sheet uses a different header for one of these, it'll
+  // show up as an extra row rather than merging until the names match.
+  var CANONICAL_SUBJECTS = [
+    'Linear Algebra', 'Probability', 'Statistics', 'Calculus',
+    'Machine Learning', 'AI (Logic)', 'DBMS', 'Python', 'Data Structures & Algorithms',
+  ];
+
   var app = document.getElementById('app');
   var state = {
     student: null,
@@ -271,8 +283,17 @@
   // month-scoping it would make progress look like it resets every time
   // the student navigates months.
   function renderSubjectBreakdown() {
-    var subjects = state.subjectProgress || [];
-    if (!subjects.length) return '';
+    // Keep whatever's already come back from real schedule data, then
+    // append any canonical GATE DA subject not already represented —
+    // those show at 0% until a schedule with that subject gets uploaded
+    // and synced, at which point they start progressing with each tick
+    // like any other row.
+    var subjects = (state.subjectProgress || []).slice();
+    var present = {};
+    subjects.forEach(function (s) { present[s.subject] = true; });
+    CANONICAL_SUBJECTS.forEach(function (name) {
+      if (!present[name]) subjects.push({ subject: name, done: 0, total: 0 });
+    });
 
     var rows = subjects.map(function (s) {
       var pct = s.total ? Math.round((s.done / s.total) * 100) : 0;
@@ -308,6 +329,7 @@
     state.days.forEach(function (d) { byDate[d.date] = d; });
 
     var cells = '';
+    ['M', 'T', 'W', 'T', 'F', 'S', 'S'].forEach(function (l) { cells += '<div class="heatmap-dow">' + l + '</div>'; });
     for (var i = 0; i < leadBlanks; i++) cells += '<div class="heatmap-cell" style="visibility:hidden"></div>';
     for (var day = 1; day <= daysInMonth; day++) {
       var dateStr = year + '-' + pad(month) + '-' + pad(day);
