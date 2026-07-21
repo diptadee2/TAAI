@@ -326,7 +326,10 @@
     if (!day || !day.tasks.length) return 0;
     var total = day.tasks.length;
     var done = day.tasks.filter(function (t) { return t.completed; }).length;
-    if (done === 0) return 1;
+    // Untouched (nothing ticked yet) renders the same dotted "0" state as a
+    // day with nothing scheduled — color only appears once real progress
+    // has been made, not just because content exists for that day.
+    if (done === 0) return 0;
     if (done === total) return 4;
     return done / total < 0.5 ? 2 : 3;
   }
