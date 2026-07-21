@@ -230,11 +230,13 @@
           })
           .sort(function (a, b) { return a.date < b.date ? -1 : 1; });
 
-        // Missed days start expanded so their checkboxes are immediately usable.
-        var today = todayIso();
+        // Any day with something left to tick starts expanded, not just past
+        // ones — with pre-ticking allowed, a fully-future month (nothing
+        // "missed" yet) would otherwise render with every checkbox hidden
+        // behind a collapsed row, which just looks like nothing is clickable.
         state.days.forEach(function (d) {
           var allDone = d.tasks.length > 0 && d.tasks.every(function (t) { return t.completed; });
-          if (d.date < today && !allDone) state.expanded.add(d.date);
+          if (!allDone) state.expanded.add(d.date);
         });
 
         renderCalendar();
