@@ -202,6 +202,42 @@
   .task-row .task-text { transition: color .25s ease; }
   .task-row.done .task-text { text-decoration: line-through; color: var(--ink-soft); }
 
+  /* Pomodoro timer — Focus Mode only */
+  .pomodoro-card { position: relative; overflow: hidden; text-align: center; padding: 26px 20px 22px; border-radius: var(--radius-lg); margin-bottom: 20px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 10px 36px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.07); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); transition: box-shadow .4s ease; }
+  .pomodoro-card::before { content: ''; position: absolute; top: -70px; left: -50px; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle, rgba(139,92,246,0.22) 0%, transparent 70%); pointer-events: none; transition: background .5s ease; }
+  .pomodoro-card.on-break::before { background: radial-gradient(circle, rgba(74,222,128,0.2) 0%, transparent 70%); }
+
+  .pomo-settings-toggle { position: absolute; top: 14px; right: 14px; width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: var(--ink-soft); display: grid; place-items: center; cursor: pointer; transition: transform .4s cubic-bezier(.34,1.1,.64,1), color .2s, border-color .2s; }
+  .pomo-settings-toggle:hover { color: var(--purple); border-color: rgba(139,92,246,0.3); transform: rotate(45deg); }
+
+  .pomodoro-ring-wrap { position: relative; width: 190px; height: 190px; margin: 4px auto 14px; }
+  .pomodoro-ring { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .pomo-ring-track { fill: none; stroke: rgba(255,255,255,0.07); stroke-width: 10; }
+  .pomo-ring-progress { fill: none; stroke: var(--purple); stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 1s linear, stroke .4s ease; }
+  .pomodoro-card.on-break .pomo-ring-progress { stroke: var(--green); }
+  .pomodoro-ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .pomodoro-mode { font-family: var(--font-nav); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--purple); margin-bottom: 6px; transition: color .3s ease; }
+  .pomodoro-card.on-break .pomodoro-mode { color: var(--green); }
+  .pomodoro-time { font-family: var(--font-body); font-size: 40px; font-weight: 700; line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  .pomodoro-dots { position: relative; font-size: 14px; letter-spacing: 5px; margin-bottom: 20px; opacity: .85; }
+  .pomodoro-controls { position: relative; display: flex; gap: 10px; justify-content: center; }
+  .pomo-btn { padding: 10px 24px; border-radius: 999px; border: none; font-family: var(--font-nav); font-weight: 700; font-size: 13px; cursor: pointer; transition: transform .25s cubic-bezier(.34,1.1,.64,1), box-shadow .2s, background .2s; }
+  .pomo-btn-primary { background: linear-gradient(135deg,#FF7FB7,var(--purple),#4D8BFF); color: #fff; box-shadow: 0 8px 24px rgba(139,92,246,0.35); min-width: 84px; }
+  .pomo-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(139,92,246,0.5); }
+  .pomo-btn-primary:active { transform: scale(0.96); }
+  .pomo-btn-secondary { background: rgba(255,255,255,0.06); color: var(--ink-dim); border: 1px solid rgba(255,255,255,0.1); }
+  .pomo-btn-secondary:hover { background: rgba(255,255,255,0.11); color: var(--ink); transform: translateY(-2px); }
+  .pomo-btn-secondary:active { transform: scale(0.96); }
+
+  .pomo-settings { position: relative; margin-top: 20px; padding-top: 18px; border-top: 1px dashed rgba(255,255,255,0.1); text-align: left; }
+  .pomo-setting-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; font-size: 13px; color: var(--ink-dim); }
+  .pomo-setting-row label { flex: 1; }
+  .pomo-setting-row input { width: 56px; padding: 7px 8px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--bg-soft); color: var(--ink); font-family: var(--font-body); font-size: 13.5px; text-align: center; }
+  .pomo-setting-row input:focus { outline: none; border-color: var(--purple); }
+  .pomo-setting-row span { font-size: 12px; color: var(--ink-soft); width: 26px; }
+  .pomo-settings-save { width: 100%; margin-top: 4px; }
+
   .today-card { position: relative; overflow: hidden; border: 2px solid var(--purple); border-radius: var(--radius-lg); background: rgba(255,255,255,0.055); box-shadow: 0 12px 36px rgba(139,92,246,0.28), inset 0 1px 0 rgba(255,255,255,0.08); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); padding: 18px 18px 14px; margin-bottom: 20px; }
   .today-card::before { content: ''; position: absolute; top: -60px; right: -40px; width: 180px; height: 180px; border-radius: 50%; background: radial-gradient(circle, rgba(139,92,246,0.3) 0%, transparent 70%); pointer-events: none; }
   .today-card .today-tag { position: relative; font-family: var(--font-nav); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--purple); margin-bottom: 4px; }

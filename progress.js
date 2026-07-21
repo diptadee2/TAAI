@@ -24,6 +24,47 @@
     'Machine Learning', 'AI', 'DBMS', 'Python', 'Data Structures', 'Algorithms',
   ];
 
+  // ── Pomodoro timer (Focus Mode only) ──────────────────────────────
+  var POMO_SETTINGS_KEY = 'taai_pomo_settings';
+  var DEFAULT_POMO_SETTINGS = { work: 25, shortBreak: 5, longBreak: 15, cycle: 4 };
+  var POMO_RING_R = 90;
+  var POMO_RING_CIRCUMFERENCE = 2 * Math.PI * POMO_RING_R;
+
+  function clampMinutes(val, fallback, min, max) {
+    var n = Number(val);
+    if (!isFinite(n) || n < min || n > max) return fallback;
+    return Math.round(n);
+  }
+
+  function loadPomoSettings() {
+    try {
+      var raw = localStorage.getItem(POMO_SETTINGS_KEY);
+      if (!raw) return Object.assign({}, DEFAULT_POMO_SETTINGS);
+      var parsed = JSON.parse(raw);
+      return {
+        work: clampMinutes(parsed.work, DEFAULT_POMO_SETTINGS.work, 1, 180),
+        shortBreak: clampMinutes(parsed.shortBreak, DEFAULT_POMO_SETTINGS.shortBreak, 1, 60),
+        longBreak: clampMinutes(parsed.longBreak, DEFAULT_POMO_SETTINGS.longBreak, 1, 90),
+        cycle: clampMinutes(parsed.cycle, DEFAULT_POMO_SETTINGS.cycle, 1, 12),
+      };
+    } catch (e) { return Object.assign({}, DEFAULT_POMO_SETTINGS); }
+  }
+
+  function savePomoSettings() {
+    localStorage.setItem(POMO_SETTINGS_KEY, JSON.stringify(pomoSettings));
+  }
+
+  var pomoSettings = loadPomoSettings();
+
+  var pomo = {
+    mode: 'work', // 'work' | 'break'
+    secondsLeft: pomoSettings.work * 60,
+    totalSeconds: pomoSettings.work * 60,
+    running: false,
+    timerId: null,
+    completedSessions: 0,
+  };
+
   var app = document.getElementById('app');
   var state = {
     student: null,
@@ -447,6 +488,8 @@
         '<button id="next-month" aria-label="Next month">&rarr;</button></div>';
     }
 
+    if (state.focus) html += renderPomodoro();
+
     if (todayDay) {
       html += renderTodayCard(todayDay, missedBefore.length);
     } else if (state.focus) {
@@ -482,6 +525,175 @@
     app.innerHTML = html;
     bindCalendarEvents();
     observeFadeIns();
+  }
+
+  function pomoDurationFor(mode) {
+    if (mode === 'work') return pomoSettings.work * 60;
+    var isLongBreak = pomo.completedSessions > 0 && pomo.completedSessions % pomoSettings.cycle === 0;
+    return (isLongBreak ? pomoSettings.longBreak : pomoSettings.shortBreak) * 60;
+  }
+
+  function formatPomoTime(totalSeconds) {
+    var m = Math.floor(totalSeconds / 60), s = totalSeconds % 60;
+    return pad(m) + ':' + pad(s);
+  }
+
+  function pomoDotsText() {
+    var filled = pomo.completedSessions % pomoSettings.cycle;
+    var dots = '';
+    for (var i = 0; i < pomoSettings.cycle; i++) dots += (i < filled ? '🍅' : '⚪');
+    return dots;
+  }
+
+  // Short two-tone chime via Web Audio — no audio asset to manage, and it's a
+  // one-shot synthesized tone rather than a decoded/streamed file, so there's
+  // nothing to preload or fail to load.
+  function playPomoChime() {
+    try {
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      var ctx = new Ctx();
+      [660, 880].forEach(function (freq, i) {
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = freq;
+        var start = ctx.currentTime + i * 0.16;
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(0.25, start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.35);
+        osc.start(start);
+        osc.stop(start + 0.35);
+      });
+    } catch (e) { /* Web Audio unsupported/blocked — not critical */ }
+  }
+
+  // Patches the existing DOM in place — never regenerates the pomodoro
+  // card's innerHTML, so a once-a-second tick never touches (and never
+  // replays the entrance animation of) a .fade-in ancestor.
+  function updatePomoDisplay() {
+    var card = document.getElementById('pomo-card');
+    if (!card) return;
+    card.classList.toggle('on-break', pomo.mode === 'break');
+    var modeEl = document.getElementById('pomo-mode');
+    if (modeEl) modeEl.textContent = pomo.mode === 'work' ? 'Focus' : 'Break';
+    var timeEl = document.getElementById('pomo-time');
+    if (timeEl) timeEl.textContent = formatPomoTime(pomo.secondsLeft);
+    var dotsEl = document.getElementById('pomo-dots');
+    if (dotsEl) dotsEl.textContent = pomoDotsText();
+    var toggleBtn = document.getElementById('pomo-toggle');
+    if (toggleBtn) toggleBtn.textContent = pomo.running ? 'Pause' : 'Start';
+    var ring = document.getElementById('pomo-ring-progress');
+    if (ring) {
+      var frac = pomo.totalSeconds > 0 ? pomo.secondsLeft / pomo.totalSeconds : 0;
+      ring.style.strokeDashoffset = String(POMO_RING_CIRCUMFERENCE * (1 - frac));
+    }
+  }
+
+  function pomoAdvance() {
+    if (pomo.mode === 'work') pomo.completedSessions++;
+    pomo.mode = pomo.mode === 'work' ? 'break' : 'work';
+    pomo.totalSeconds = pomoDurationFor(pomo.mode);
+    pomo.secondsLeft = pomo.totalSeconds;
+    playPomoChime();
+    updatePomoDisplay();
+  }
+
+  function pomoTick() {
+    pomo.secondsLeft--;
+    if (pomo.secondsLeft <= 0) {
+      pomoAdvance();
+    } else {
+      updatePomoDisplay();
+    }
+  }
+
+  function pomoToggleRun() {
+    if (pomo.running) {
+      clearInterval(pomo.timerId);
+      pomo.running = false;
+    } else {
+      pomo.running = true;
+      pomo.timerId = setInterval(pomoTick, 1000);
+    }
+    updatePomoDisplay();
+  }
+
+  function pomoReset() {
+    clearInterval(pomo.timerId);
+    pomo.running = false;
+    pomo.mode = 'work';
+    pomo.totalSeconds = pomoDurationFor('work');
+    pomo.secondsLeft = pomo.totalSeconds;
+    updatePomoDisplay();
+  }
+
+  function pomoSkip() {
+    clearInterval(pomo.timerId);
+    pomoAdvance();
+    if (pomo.running) pomo.timerId = setInterval(pomoTick, 1000);
+  }
+
+  // Reads the settings form, clamps/validates, persists, and — only if the
+  // timer isn't currently mid-countdown — applies immediately to the
+  // current phase. A running timer keeps counting down on the old
+  // duration; new settings take effect starting next phase, so changing
+  // "Focus minutes" mid-focus-session can't yank time out from under you.
+  function applyPomoSettings() {
+    var work = clampMinutes(document.getElementById('pomo-set-work').value, pomoSettings.work, 1, 180);
+    var shortBreak = clampMinutes(document.getElementById('pomo-set-short').value, pomoSettings.shortBreak, 1, 60);
+    var longBreak = clampMinutes(document.getElementById('pomo-set-long').value, pomoSettings.longBreak, 1, 90);
+    var cycle = clampMinutes(document.getElementById('pomo-set-cycle').value, pomoSettings.cycle, 1, 12);
+    pomoSettings = { work: work, shortBreak: shortBreak, longBreak: longBreak, cycle: cycle };
+    savePomoSettings();
+
+    document.getElementById('pomo-set-work').value = work;
+    document.getElementById('pomo-set-short').value = shortBreak;
+    document.getElementById('pomo-set-long').value = longBreak;
+    document.getElementById('pomo-set-cycle').value = cycle;
+
+    if (!pomo.running) {
+      pomo.totalSeconds = pomoDurationFor(pomo.mode);
+      pomo.secondsLeft = pomo.totalSeconds;
+    }
+    updatePomoDisplay();
+
+    var panel = document.getElementById('pomo-settings');
+    if (panel) panel.hidden = true;
+  }
+
+  function renderPomodoro() {
+    var frac = pomo.totalSeconds > 0 ? pomo.secondsLeft / pomo.totalSeconds : 1;
+    var offset = POMO_RING_CIRCUMFERENCE * (1 - frac);
+
+    return '<div class="pomodoro-card fade-in' + (pomo.mode === 'break' ? ' on-break' : '') + '" id="pomo-card">' +
+      '<button class="pomo-settings-toggle" id="pomo-settings-toggle" aria-label="Timer settings" type="button">' +
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" stroke-width="1.7"/><path d="M19.4 13.5a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V19.5a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1.08-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H2.5a2 2 0 110-4h.09a1.65 1.65 0 001.51-1.08 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H8.5a1.65 1.65 0 001-1.51V2.5a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v.09a1.65 1.65 0 001.51 1H21.5a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" stroke-width="1.7"/></svg>' +
+      '</button>' +
+      '<div class="pomodoro-ring-wrap">' +
+      '<svg class="pomodoro-ring" viewBox="0 0 200 200">' +
+      '<circle class="pomo-ring-track" cx="100" cy="100" r="' + POMO_RING_R + '"></circle>' +
+      '<circle class="pomo-ring-progress" id="pomo-ring-progress" cx="100" cy="100" r="' + POMO_RING_R + '" ' +
+      'stroke-dasharray="' + POMO_RING_CIRCUMFERENCE + '" stroke-dashoffset="' + offset + '"></circle>' +
+      '</svg>' +
+      '<div class="pomodoro-ring-center">' +
+      '<div class="pomodoro-mode" id="pomo-mode">' + (pomo.mode === 'work' ? 'Focus' : 'Break') + '</div>' +
+      '<div class="pomodoro-time" id="pomo-time">' + formatPomoTime(pomo.secondsLeft) + '</div>' +
+      '</div></div>' +
+      '<div class="pomodoro-dots" id="pomo-dots">' + pomoDotsText() + '</div>' +
+      '<div class="pomodoro-controls">' +
+      '<button id="pomo-toggle" class="pomo-btn pomo-btn-primary">' + (pomo.running ? 'Pause' : 'Start') + '</button>' +
+      '<button id="pomo-reset" class="pomo-btn pomo-btn-secondary">Reset</button>' +
+      '<button id="pomo-skip" class="pomo-btn pomo-btn-secondary">Skip</button>' +
+      '</div>' +
+      '<div class="pomo-settings" id="pomo-settings" hidden>' +
+      '<div class="pomo-setting-row"><label for="pomo-set-work">Focus</label><input type="number" id="pomo-set-work" min="1" max="180" value="' + pomoSettings.work + '"><span>min</span></div>' +
+      '<div class="pomo-setting-row"><label for="pomo-set-short">Short break</label><input type="number" id="pomo-set-short" min="1" max="60" value="' + pomoSettings.shortBreak + '"><span>min</span></div>' +
+      '<div class="pomo-setting-row"><label for="pomo-set-long">Long break</label><input type="number" id="pomo-set-long" min="1" max="90" value="' + pomoSettings.longBreak + '"><span>min</span></div>' +
+      '<div class="pomo-setting-row"><label for="pomo-set-cycle">Sessions / long break</label><input type="number" id="pomo-set-cycle" min="1" max="12" value="' + pomoSettings.cycle + '"></div>' +
+      '<button class="pomo-btn pomo-btn-primary pomo-settings-save" id="pomo-settings-save" type="button">Save</button>' +
+      '</div>' +
+      '</div>';
   }
 
   function renderTodayCard(day, missedBeforeCount) {
@@ -543,6 +755,21 @@
       localStorage.setItem(FOCUS_KEY, state.focus ? '1' : '0');
       renderCalendar();
     });
+
+    var pomoToggle = document.getElementById('pomo-toggle');
+    if (pomoToggle) pomoToggle.addEventListener('click', pomoToggleRun);
+    var pomoReset_ = document.getElementById('pomo-reset');
+    if (pomoReset_) pomoReset_.addEventListener('click', pomoReset);
+    var pomoSkip_ = document.getElementById('pomo-skip');
+    if (pomoSkip_) pomoSkip_.addEventListener('click', pomoSkip);
+
+    var pomoSettingsToggle = document.getElementById('pomo-settings-toggle');
+    if (pomoSettingsToggle) pomoSettingsToggle.addEventListener('click', function () {
+      var panel = document.getElementById('pomo-settings');
+      if (panel) panel.hidden = !panel.hidden;
+    });
+    var pomoSettingsSave = document.getElementById('pomo-settings-save');
+    if (pomoSettingsSave) pomoSettingsSave.addEventListener('click', applyPomoSettings);
 
     var prev = document.getElementById('prev-month');
     if (prev) prev.addEventListener('click', function () { loadMonth(shiftMonth(state.month, -1)); });
