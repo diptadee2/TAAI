@@ -16,6 +16,7 @@
     month: currentMonthStr(),
     days: [], // [{ date, tasks: [{subject, task_text, position, completed}] }]
     streak: null,
+    subjectProgress: [], // [{ subject, done, total }] — global, independent of viewed month
     expanded: new Set(), // dates whose day-card is open, non-native accordion
     focus: localStorage.getItem(FOCUS_KEY) === '1',
   };
@@ -203,11 +204,13 @@
       api('/schedule?month=' + monthStr),
       api('/progress?email=' + encodeURIComponent(state.student.email) + '&month=' + monthStr),
       api('/streak?email=' + encodeURIComponent(state.student.email)).catch(function () { return { streak: null }; }),
+      api('/subject-progress?email=' + encodeURIComponent(state.student.email)).catch(function () { return { subjects: [] }; }),
     ])
       .then(function (results) {
         var scheduleDays = results[0].days || [];
         var progressRows = results[1].progress || [];
         state.streak = results[2].streak;
+        state.subjectProgress = results[3].subjects || [];
 
         var completedSet = new Set(
           progressRows.filter(function (r) { return r.completed; })
@@ -260,26 +263,19 @@
       '</div>';
   }
 
-  // ── Per-subject breakdown (elapsed days only, same scope as the
-  // overall "days started" stat) ────────────────────────────────────
+  // ── Per-subject breakdown — global across the whole schedule (see
+  // netlify/functions/subject-progress.js), not scoped to the viewed
+  // month or to elapsed days. A subject can span many months, so
+  // month-scoping it would make progress look like it resets every time
+  // the student navigates months.
   function renderSubjectBreakdown() {
-    var today = todayIso();
-    var bySubject = {};
-    state.days.filter(function (d) { return d.date <= today; }).forEach(function (d) {
-      d.tasks.forEach(function (t) {
-        if (!bySubject[t.subject]) bySubject[t.subject] = { done: 0, total: 0 };
-        bySubject[t.subject].total++;
-        if (t.completed) bySubject[t.subject].done++;
-      });
-    });
-    var subjects = Object.keys(bySubject);
+    var subjects = state.subjectProgress || [];
     if (!subjects.length) return '';
 
-    var rows = subjects.map(function (name) {
-      var s = bySubject[name];
+    var rows = subjects.map(function (s) {
       var pct = s.total ? Math.round((s.done / s.total) * 100) : 0;
-      return '<div class="subject-row" data-subject="' + escapeAttr(name) + '">' +
-        '<div class="subject-row-name">' + escapeHtml(name) + '</div>' +
+      return '<div class="subject-row" data-subject="' + escapeAttr(s.subject) + '">' +
+        '<div class="subject-row-name">' + escapeHtml(s.subject) + '</div>' +
         '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
         '<div class="subject-row-pct">' + pct + '%</div>' +
         '</div>';
@@ -343,29 +339,26 @@
     return html;
   }
 
-  // Updates each subject row's bar/percentage in place — no innerHTML
-  // replace, so the .subject-breakdown card (which carries .fade-in)
-  // never gets recreated and never replays its entrance animation.
-  function patchSubjectBreakdown() {
-    var today = todayIso();
-    var bySubject = {};
-    state.days.filter(function (d) { return d.date <= today; }).forEach(function (d) {
-      d.tasks.forEach(function (t) {
-        if (!bySubject[t.subject]) bySubject[t.subject] = { done: 0, total: 0 };
-        bySubject[t.subject].total++;
-        if (t.completed) bySubject[t.subject].done++;
-      });
-    });
-    Object.keys(bySubject).forEach(function (name) {
-      var row = document.querySelector('.subject-row[data-subject="' + CSS.escape(name) + '"]');
-      if (!row) return;
-      var s = bySubject[name];
-      var pct = s.total ? Math.round((s.done / s.total) * 100) : 0;
-      var fill = row.querySelector('.progress-fill');
-      var label = row.querySelector('.subject-row-pct');
-      if (fill) fill.style.width = pct + '%';
-      if (label) label.textContent = pct + '%';
-    });
+  // Re-fetches the global per-subject totals (a tick anywhere in the
+  // schedule, not just this month, can change them) and patches each
+  // row's bar/percentage in place — no innerHTML replace, so the
+  // .subject-breakdown card (which carries .fade-in) never gets
+  // recreated and never replays its entrance animation.
+  function refreshSubjectProgress() {
+    return api('/subject-progress?email=' + encodeURIComponent(state.student.email))
+      .then(function (r) {
+        state.subjectProgress = r.subjects || [];
+        state.subjectProgress.forEach(function (s) {
+          var row = document.querySelector('.subject-row[data-subject="' + CSS.escape(s.subject) + '"]');
+          if (!row) return;
+          var pct = s.total ? Math.round((s.done / s.total) * 100) : 0;
+          var fill = row.querySelector('.progress-fill');
+          var label = row.querySelector('.subject-row-pct');
+          if (fill) fill.style.width = pct + '%';
+          if (label) label.textContent = pct + '%';
+        });
+      })
+      .catch(function () { /* non-critical — leave last known values on screen */ });
   }
 
   // Same idea for a single heatmap cell — just flip its data-level
@@ -556,7 +549,7 @@
         var task = day && day.tasks.find(function (t) { return t.subject === subject && t.task_text === taskText; });
         if (task) task.completed = completed;
         cb.disabled = false;
-        patchSubjectBreakdown();
+        refreshSubjectProgress();
         patchHeatmapCell(date);
         patchDayStatus(date);
         refreshStreak();
