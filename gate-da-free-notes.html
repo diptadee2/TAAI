@@ -372,39 +372,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .subsection-header::after { display: none; }
 .notes-grid--spaced { margin-bottom: 56px; }
 
-/* External resource callout */
-.external-resource-card { margin-top: 20px; display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 14px; background: rgba(255,255,255,0.55); border: 1px solid rgba(139,92,246,0.16); border-left: 3px solid var(--ext-accent, var(--purple)); text-decoration: none; color: var(--ink); transition: transform .22s cubic-bezier(.34,1.1,.64,1), box-shadow .22s; }
-.external-resource-card:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(139,92,246,0.14); }
-.external-resource-badge { flex-shrink: 0; font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ext-accent, var(--purple)); background: color-mix(in srgb, var(--ext-accent, var(--purple)) 14%, transparent); padding: 4px 10px; border-radius: 999px; }
-.external-resource-title { flex: 1; font-size: 14px; font-weight: 600; }
-.external-resource-card svg { flex-shrink: 0; color: var(--ink-soft); }
-
-/* Syllabus map */
-.syllabus-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
-.syllabus-card { padding: 22px; border-radius: 18px; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.75); box-shadow: 0 2px 16px rgba(139,92,246,0.08); }
-.syllabus-card-name { font-family: var(--font-display); font-weight: 600; font-size: 16px; margin-bottom: 12px; }
-.syllabus-topics { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-.syllabus-topics li { font-size: 13.5px; color: var(--ink-dim); padding-left: 16px; position: relative; }
-.syllabus-topics li::before { content: ''; position: absolute; left: 0; top: 7px; width: 6px; height: 6px; border-radius: 50%; background: var(--syl-accent, var(--purple)); }
-.syllabus-more { font-size: 13px; color: var(--ink-soft); font-style: italic; }
-
-/* Free quiz */
-.quiz-card { max-width: 720px; margin: 0 auto; }
-.quiz-progress { font-family: var(--font-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 10px; }
-.quiz-question-box { padding: 26px 28px; border-radius: 20px; background: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.75); box-shadow: 0 4px 22px rgba(139,92,246,0.1); margin-bottom: 20px; }
-.quiz-subject { font-family: var(--font-mono); font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--purple); margin-bottom: 8px; }
-.quiz-question-text { font-size: 17px; font-weight: 600; margin-bottom: 18px; line-height: 1.4; }
-.quiz-options { display: flex; flex-direction: column; gap: 10px; }
-.quiz-option { display: flex; align-items: center; gap: 12px; padding: 13px 16px; border-radius: 12px; border: 1.5px solid var(--line); background: #fff; cursor: pointer; font-size: 14.5px; text-align: left; transition: border-color .18s, background .18s; }
-.quiz-option:hover:not(:disabled) { border-color: var(--purple); background: var(--purple-soft); }
-.quiz-option.selected { border-color: var(--purple); background: var(--purple-soft); font-weight: 600; }
-.quiz-option.correct { border-color: #16a34a; background: #DCFCE7; font-weight: 600; }
-.quiz-option.incorrect { border-color: #dc2626; background: #FEE2E2; }
-.quiz-option:disabled { cursor: default; }
-.quiz-result { text-align: center; padding: 40px 28px; }
-.quiz-result-score { font-family: var(--font-display); font-size: 44px; font-weight: 700; background: linear-gradient(120deg,var(--pink),var(--purple),var(--blue)); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 8px; }
-.quiz-result-label { color: var(--ink-soft); margin-bottom: 24px; }
-
 /* Empty state */
 .notes-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 64px 24px; background: rgba(255,255,255,0.4); backdrop-filter: blur(14px) saturate(160%); -webkit-backdrop-filter: blur(14px) saturate(160%); border: 1.5px dashed rgba(139,92,246,0.25); border-radius: var(--radius-lg); text-align: center; gap: 12px; animation: tab-in .38s cubic-bezier(.34,1.1,.64,1) both, dash-pulse 3.5s ease-in-out 1s infinite; }
 .notes-empty-icon { width: 56px; height: 56px; border-radius: 16px; background: var(--purple-soft); display: grid; place-items: center; color: var(--purple); animation: empty-float 3s ease-in-out infinite; box-shadow: 0 8px 24px rgba(139,92,246,0.18); }
@@ -701,55 +668,6 @@ const NAV_LINKS = [
 // For each sheet: File → Share → Publish to web → Sheet tab → CSV → Copy link
 const NOTES_CSV_URL    = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSVYXQcKli0NtjXf93cxRwx3A15WiNcETEw26MubPYIihLyMQs2rfZjXKm85fNsOxxlUWkoyR89DKCK/pub?gid=850997370&single=true&output=csv';
 const LECTURES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSVYXQcKli0NtjXf93cxRwx3A15WiNcETEw26MubPYIihLyMQs2rfZjXKm85fNsOxxlUWkoyR89DKCK/pub?gid=725480532&single=true&output=csv';
-
-// One curated external resource per subject — NPTEL (official IIT/IISc
-// courses) by default, 3Blue1Brown as the only exception, for Linear
-// Algebra and Calculus specifically, where its "Essence of..." series is
-// the best free visual explanation available for those two topics.
-const EXTERNAL_RESOURCES = {
-  'linear-algebra':   { source: '3Blue1Brown', title: 'Essence of Linear Algebra', url: 'https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab' },
-  'calculus':         { source: '3Blue1Brown', title: 'Essence of Calculus', url: 'https://www.youtube.com/playlist?list=PLZHQObOWTQDMsr9K-rj53DwVRMYO3t5Yr' },
-  'probability':      { source: 'NPTEL', title: 'Probability and Statistics — IIT Kharagpur', url: 'https://nptel.ac.in/courses/111105041' },
-  'statistics':       { source: 'NPTEL', title: 'Probability and Statistics — IIT Kharagpur', url: 'https://nptel.ac.in/courses/111105041' },
-  'machine-learning': { source: 'NPTEL', title: 'Introduction to Machine Learning — IIT Madras', url: 'https://nptel.ac.in/courses/106106139' },
-  'ai':               { source: 'NPTEL', title: 'Artificial Intelligence: Foundations and Algorithms — IIT Delhi', url: 'https://nptel.ac.in/courses/106102220' },
-  'dbms':             { source: 'NPTEL', title: 'Introduction to Database Systems — IIT Madras', url: 'https://nptel.ac.in/courses/106106220' },
-  'python':           { source: 'NPTEL', title: 'The Joy of Computing using Python — IIT Ropar', url: 'https://nptel.ac.in/courses/106106182' },
-  'data-structures':  { source: 'NPTEL', title: 'Data Structures and Algorithms — IIT Delhi', url: 'https://nptel.ac.in/courses/106102064' },
-  'algorithms':       { source: 'NPTEL', title: 'Data Structures and Algorithms — IIT Delhi', url: 'https://nptel.ac.in/courses/106102064' },
-};
-
-// Real sample topics pulled from the course pages (gate-da-courses.html)
-// for subjects that have them; the rest show a "full breakdown inside the
-// course" note rather than an invented topic list.
-const SYLLABUS_TOPICS = {
-  'statistics':       ['Hypothesis testing', 'Estimation theory', 'Regression basics'],
-  'calculus':         ['Limits & continuity', 'Differentiation', 'Optimization & integration'],
-  'linear-algebra':   ['Matrices & determinants', 'Eigenvalues & vectors', 'Linear transformations'],
-  'probability':      ['Conditional probability', 'Random variables', 'Distributions'],
-  'machine-learning': ['Supervised & unsupervised', 'Model evaluation', 'Neural networks basics'],
-};
-
-// Free sample quiz — original questions, not sourced from any paywalled
-// TAAI material, one per subject.
-const QUIZ_QUESTIONS = [
-  { subject: 'Probability', q: 'If A and B are independent events with P(A) = 0.4 and P(B) = 0.5, what is P(A ∩ B)?',
-    options: ['0.1', '0.2', '0.45', '0.9'], answer: 1 },
-  { subject: 'Linear Algebra', q: 'What are the eigenvalues of a diagonal matrix?',
-    options: ['Always zero', 'The diagonal entries themselves', 'The row sums', 'Undefined'], answer: 1 },
-  { subject: 'Calculus', q: 'What is the derivative of x³ with respect to x?',
-    options: ['x²', '3x', '3x²', 'x³/3'], answer: 2 },
-  { subject: 'Machine Learning', q: 'Which of these is primarily a classification algorithm, not regression?',
-    options: ['Linear Regression', 'Logistic Regression', 'PCA', 'K-Means'], answer: 1 },
-  { subject: 'DBMS', q: 'Which normal form removes transitive dependency on the primary key?',
-    options: ['1NF', '2NF', '3NF', 'BCNF only'], answer: 2 },
-  { subject: 'Python & DSA', q: 'What is the time complexity of binary search on a sorted array of n elements?',
-    options: ['O(n)', 'O(n log n)', 'O(log n)', 'O(1)'], answer: 2 },
-  { subject: 'Artificial Intelligence', q: 'Breadth-First Search uses which data structure to track nodes to visit?',
-    options: ['Stack', 'Queue', 'Priority heap', 'Linked list'], answer: 1 },
-  { subject: 'Statistics', q: 'Which measure of central tendency is most affected by outliers?',
-    options: ['Mean', 'Median', 'Mode', 'None of these'], answer: 0 },
-];
 
 // ── Icons ─────────────────────────────────────────────────────────
 const DownloadIcon = () => (
@@ -1156,85 +1074,6 @@ function LectureCard({ lecture, accent, color, index = 0 }) {
   );
 }
 
-// ── Free sample quiz ────────────────────────────────────────────────
-function Quiz() {
-  const [index, setIndex] = React.useState(0);
-  const [selected, setSelected] = React.useState(null);
-  const [score, setScore] = React.useState(0);
-  const [done, setDone] = React.useState(false);
-
-  const current = QUIZ_QUESTIONS[index];
-
-  const choose = (i) => {
-    if (selected !== null) return;
-    setSelected(i);
-    if (i === current.answer) setScore(s => s + 1);
-  };
-
-  const next = () => {
-    if (index + 1 < QUIZ_QUESTIONS.length) {
-      setIndex(i => i + 1);
-      setSelected(null);
-    } else {
-      setDone(true);
-    }
-  };
-
-  const restart = () => {
-    setIndex(0);
-    setSelected(null);
-    setScore(0);
-    setDone(false);
-  };
-
-  if (done) {
-    return (
-      <div className="quiz-card">
-        <div className="quiz-question-box quiz-result">
-          <div className="quiz-result-score">{score} / {QUIZ_QUESTIONS.length}</div>
-          <div className="quiz-result-label">
-            {score === QUIZ_QUESTIONS.length ? 'Perfect score!' : score >= QUIZ_QUESTIONS.length / 2 ? 'Good start — keep going.' : 'Plenty to build on — that’s exactly what the full course covers.'}
-          </div>
-          <button className="btn-cta-primary" style={{ border: 'none', cursor: 'pointer' }} onClick={restart}>Try again</button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="quiz-card">
-      <div className="quiz-progress">Question {index + 1} of {QUIZ_QUESTIONS.length}</div>
-      <div className="quiz-question-box">
-        <div className="quiz-subject">{current.subject}</div>
-        <div className="quiz-question-text">{current.q}</div>
-        <div className="quiz-options">
-          {current.options.map((opt, i) => {
-            let cls = 'quiz-option';
-            if (selected !== null) {
-              if (i === current.answer) cls += ' correct';
-              else if (i === selected) cls += ' incorrect';
-            } else if (i === selected) {
-              cls += ' selected';
-            }
-            return (
-              <button key={i} className={cls} disabled={selected !== null} onClick={() => choose(i)}>
-                {opt}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-      {selected !== null && (
-        <div style={{ textAlign: 'center' }}>
-          <button className="btn-cta-primary" style={{ border: 'none', cursor: 'pointer' }} onClick={next}>
-            {index + 1 < QUIZ_QUESTIONS.length ? 'Next question' : 'See my score'}
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ── App ───────────────────────────────────────────────────────────
 function App() {
   const [subjects, setSubjects] = React.useState([]);
@@ -1416,26 +1255,11 @@ function App() {
               const showLabels  = hasNotes && hasLectures;
               if (!hasNotes && !hasLectures) {
                 return (
-                  <React.Fragment key={subject.id}>
-                    <div className="notes-empty">
-                      <div className="notes-empty-icon"><FileIcon /></div>
-                      <div className="notes-empty-label">Content coming soon</div>
-                      <div className="notes-empty-text">{subject.name} notes and lectures are being prepared.</div>
-                    </div>
-                    {EXTERNAL_RESOURCES[subject.id] && (
-                      <a
-                        className="external-resource-card"
-                        href={EXTERNAL_RESOURCES[subject.id].url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ '--ext-accent': subject.color }}
-                      >
-                        <span className="external-resource-badge">{EXTERNAL_RESOURCES[subject.id].source}</span>
-                        <span className="external-resource-title">In the meantime: {EXTERNAL_RESOURCES[subject.id].title}</span>
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M7 17L17 7M17 7H8M17 7V16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                      </a>
-                    )}
-                  </React.Fragment>
+                  <div key={subject.id} className="notes-empty">
+                    <div className="notes-empty-icon"><FileIcon /></div>
+                    <div className="notes-empty-label">Content coming soon</div>
+                    <div className="notes-empty-text">{subject.name} notes and lectures are being prepared.</div>
+                  </div>
                 );
               }
               return (
@@ -1469,19 +1293,6 @@ function App() {
                       </div>
                     </>
                   )}
-                  {EXTERNAL_RESOURCES[subject.id] && (
-                    <a
-                      className="external-resource-card"
-                      href={EXTERNAL_RESOURCES[subject.id].url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ '--ext-accent': subject.color }}
-                    >
-                      <span className="external-resource-badge">{EXTERNAL_RESOURCES[subject.id].source}</span>
-                      <span className="external-resource-title">{EXTERNAL_RESOURCES[subject.id].title}</span>
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M7 17L17 7M17 7H8M17 7V16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    </a>
-                  )}
                 </div>
               );
             })
@@ -1490,35 +1301,6 @@ function App() {
 
           {/* All filter with no notes */}
           {!loading && active === 'all' && filtered.length === 0 && null}
-        </div>
-      </section>
-
-      {/* Syllabus map */}
-      <section className="resources-content" style={{ padding: '0 0 96px' }}>
-        <div className="container">
-          <div className="subsection-header" style={{ marginBottom: '20px' }}>GATE DA syllabus at a glance</div>
-          <div className="syllabus-grid">
-            {(subjects.length ? subjects : Object.keys(SYLLABUS_TOPICS).map(id => ({ id, name: id, color: '#8B5CF6' }))).map(s => (
-              <div key={s.id} className="syllabus-card" style={{ '--syl-accent': s.color }}>
-                <div className="syllabus-card-name">{s.name}</div>
-                {SYLLABUS_TOPICS[s.id] ? (
-                  <ul className="syllabus-topics">
-                    {SYLLABUS_TOPICS[s.id].map((t, i) => <li key={i}>{t}</li>)}
-                  </ul>
-                ) : (
-                  <div className="syllabus-more">Full topic breakdown inside the course</div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Free sample quiz */}
-      <section className="resources-content" style={{ padding: '0 0 96px' }}>
-        <div className="container">
-          <div className="subsection-header" style={{ marginBottom: '20px', justifyContent: 'center' }}>Test yourself — free sample quiz</div>
-          <Quiz />
         </div>
       </section>
 
