@@ -5,6 +5,11 @@
 [build.environment]
   NODE_VERSION = "22"
 
+# `netlify dev` serves the SOURCE root (live Babel-in-browser transpile,
+# same as the plain `npx serve` workflow), not the compiled dist/ build.
+[dev]
+  publish = "."
+
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"

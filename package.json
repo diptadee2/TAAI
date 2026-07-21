@@ -13,6 +13,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
     "katex": "^0.17.0",
-    "marked": "^18.0.5"
+    "marked": "^18.0.5",
+    "ws": "^8.21.1"
   }
 }
