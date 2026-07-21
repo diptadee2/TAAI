@@ -8,15 +8,15 @@
 
   var COOKIE_NAME = 'taai_user';
   var COOKIE_DAYS = 365;
+  var FOCUS_KEY = 'taai_progress_focus';
 
   var app = document.getElementById('app');
   var state = {
     student: null,
     month: currentMonthStr(),
     days: [], // [{ date, tasks: [{subject, task_text, position, completed}] }]
+    focus: localStorage.getItem(FOCUS_KEY) === '1',
   };
-
-  init();
 
   function init() {
     var student = readCookie();
@@ -26,6 +26,44 @@
     } else {
       renderRegisterForm();
     }
+  }
+
+  // ── Scroll progress + back-to-top — same pattern as blog.js ──────────
+  function setupScrollEffects() {
+    var bar = document.getElementById('scroll-progress-bar');
+    function updateProgress() {
+      if (!bar) return;
+      var total = document.documentElement.scrollHeight - window.innerHeight;
+      bar.style.width = (total > 0 ? (window.scrollY / total) * 100 : 0) + '%';
+    }
+    window.addEventListener('scroll', updateProgress, { passive: true });
+    updateProgress();
+
+    var backToTop = document.getElementById('back-to-top');
+    if (backToTop) {
+      window.addEventListener('scroll', function () {
+        backToTop.classList.toggle('visible', window.scrollY > 400);
+      }, { passive: true });
+      backToTop.addEventListener('click', function () {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
+  }
+
+  // Fade-in reveal — content is swapped via innerHTML on every render, so
+  // re-observe the current .fade-in elements each time rather than once.
+  var fadeObserver = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        fadeObserver.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.05, rootMargin: '0px 0px -40px 0px' });
+  function observeFadeIns() {
+    Array.prototype.forEach.call(document.querySelectorAll('.fade-in:not(.visible)'), function (el) {
+      fadeObserver.observe(el);
+    });
   }
 
   // ── Cookie helpers ──────────────────────────────────────────────────
@@ -97,7 +135,7 @@
   // ── Registration ────────────────────────────────────────────────────
   function renderRegisterForm(errorMsg) {
     app.innerHTML =
-      '<div class="reg-card">' +
+      '<div class="reg-card fade-in">' +
       '<h1>Welcome to your GATE DA 2027 Roadmap</h1>' +
       '<p>Enter your details once — we’ll remember you on this browser.</p>' +
       '<form id="reg-form">' +
@@ -130,6 +168,8 @@
           renderRegisterForm(err.message);
         });
     });
+
+    observeFadeIns();
   }
 
   // ── Calendar ────────────────────────────────────────────────────────
@@ -178,11 +218,73 @@
     return 'upcoming';
   }
 
-  function renderCalendar() {
+  // ── Per-subject breakdown (elapsed days only, same scope as the
+  // overall "days started" stat) ────────────────────────────────────
+  function renderSubjectBreakdown() {
     var today = todayIso();
-    var todayDay = state.days.find(function (d) { return d.date === today; });
-    var missedBefore = state.days.filter(function (d) { return d.date < today && dayStatus(d) === 'missed'; });
+    var bySubject = {};
+    state.days.filter(function (d) { return d.date <= today; }).forEach(function (d) {
+      d.tasks.forEach(function (t) {
+        if (!bySubject[t.subject]) bySubject[t.subject] = { done: 0, total: 0 };
+        bySubject[t.subject].total++;
+        if (t.completed) bySubject[t.subject].done++;
+      });
+    });
+    var subjects = Object.keys(bySubject);
+    if (!subjects.length) return '';
 
+    var rows = subjects.map(function (name) {
+      var s = bySubject[name];
+      var pct = s.total ? Math.round((s.done / s.total) * 100) : 0;
+      return '<div class="subject-row">' +
+        '<div class="subject-row-name">' + escapeHtml(name) + '</div>' +
+        '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
+        '<div class="subject-row-pct">' + pct + '%</div>' +
+        '</div>';
+    }).join('');
+
+    return '<div class="subject-breakdown fade-in"><div class="subject-breakdown-title">Progress by subject</div>' + rows + '</div>';
+  }
+
+  // ── Completion heatmap for the visible month ──────────────────────
+  function heatLevel(day) {
+    if (!day || !day.tasks.length) return 0;
+    var total = day.tasks.length;
+    var done = day.tasks.filter(function (t) { return t.completed; }).length;
+    if (done === 0) return 1;
+    if (done === total) return 4;
+    return done / total < 0.5 ? 2 : 3;
+  }
+
+  function renderHeatmap() {
+    var parts = state.month.split('-').map(Number);
+    var year = parts[0], month = parts[1];
+    var daysInMonth = new Date(year, month, 0).getDate();
+    var firstDow = new Date(year, month - 1, 1).getDay();
+    var leadBlanks = firstDow === 0 ? 6 : firstDow - 1;
+    var today = todayIso();
+    var byDate = {};
+    state.days.forEach(function (d) { byDate[d.date] = d; });
+
+    var cells = '';
+    ['M', 'T', 'W', 'T', 'F', 'S', 'S'].forEach(function (l) { cells += '<div class="heatmap-dow">' + l + '</div>'; });
+    for (var i = 0; i < leadBlanks; i++) cells += '<div class="heatmap-cell" style="visibility:hidden"></div>';
+    for (var day = 1; day <= daysInMonth; day++) {
+      var dateStr = year + '-' + pad(month) + '-' + pad(day);
+      var level = heatLevel(byDate[dateStr]);
+      var isToday = dateStr === today ? ' is-today' : '';
+      cells += '<div class="heatmap-cell' + isToday + '" data-level="' + level + '" title="' + dateStr + '"></div>';
+    }
+
+    return '<div class="heatmap-card fade-in"><div class="heatmap-title">Completion heatmap</div><div class="heatmap-grid">' + cells + '</div></div>';
+  }
+
+  // Overall stats bar + subject breakdown + heatmap — grouped so a single
+  // task toggle can refresh just this panel instead of the whole page,
+  // which would otherwise collapse any day cards the student had manually
+  // expanded elsewhere on the page.
+  function buildStatsPanelHtml() {
+    var today = todayIso();
     var elapsedScheduled = state.days.filter(function (d) { return d.date <= today; });
     var startedCount = elapsedScheduled.filter(function (d) {
       return d.tasks.some(function (t) { return t.completed; });
@@ -196,45 +298,88 @@
       examStat = '<div class="stats-row"><span>📅 ' + daysLeft + ' days till exam</span></div>';
     }
 
-    var html = '';
-    html += '<div class="roadmap-head"><h1>🗺 GATE DA 2027 Roadmap</h1></div>';
-    html += '<div class="roadmap-sub">' + escapeHtml(state.student.display_name) + ' &middot; <button id="not-you">Not you?</button></div>';
-
-    html += '<div class="stats-bar">' + examStat +
+    var html = '<div class="stats-bar fade-in">' + examStat +
       '<div class="stats-row"><span>' + startedCount + ' / ' + elapsedCount + ' days started this month</span><span>' + pct + '%</span></div>' +
       '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div></div>';
+    html += renderSubjectBreakdown();
+    html += renderHeatmap();
+    return html;
+  }
 
-    html += '<div class="month-nav"><button id="prev-month" aria-label="Previous month">&larr;</button>' +
-      '<span class="month-label">' + monthLabel(state.month) + '</span>' +
-      '<button id="next-month" aria-label="Next month">&rarr;</button></div>';
+  function patchStatsPanel() {
+    var panel = document.getElementById('stats-panel');
+    if (!panel) return;
+    panel.innerHTML = buildStatsPanelHtml();
+    observeFadeIns();
+  }
+
+  // Updates one day card's status badge in place (e.g. Missed → Complete
+  // once its last task is ticked) without touching its open/closed state
+  // or any other day card on the page.
+  function patchDayStatus(date) {
+    var day = state.days.find(function (d) { return d.date === date; });
+    if (!day) return;
+    var el = document.querySelector('.day[data-date="' + date + '"] .day-status');
+    if (!el) return;
+    var status = dayStatus(day);
+    if (status === 'today') return;
+    var label = status === 'complete' ? '✅ Complete' : status === 'missed' ? '⚠️ Missed' : 'Upcoming';
+    el.className = 'day-status ' + status;
+    el.textContent = label;
+  }
+
+  function renderCalendar() {
+    var today = todayIso();
+    var todayDay = state.days.find(function (d) { return d.date === today; });
+    var missedBefore = state.days.filter(function (d) { return d.date < today && dayStatus(d) === 'missed'; });
+
+    var html = '';
+    html += '<div class="roadmap-head"><h1>🗺 GATE DA 2027 Roadmap</h1></div>';
+    html += '<div class="roadmap-sub">' +
+      '<div class="roadmap-sub-left">' + escapeHtml(state.student.display_name) + ' &middot; <button id="not-you">Not you?</button></div>' +
+      '<button id="focus-toggle" class="focus-toggle' + (state.focus ? ' active' : '') + '">' + (state.focus ? '✕ Exit focus' : '◎ Focus mode') + '</button>' +
+      '</div>';
+
+    if (!state.focus) {
+      html += '<div id="stats-panel">' + buildStatsPanelHtml() + '</div>';
+
+      html += '<div class="month-nav"><button id="prev-month" aria-label="Previous month">&larr;</button>' +
+        '<span class="month-label">' + monthLabel(state.month) + '</span>' +
+        '<button id="next-month" aria-label="Next month">&rarr;</button></div>';
+    }
 
     if (todayDay) {
       html += renderTodayCard(todayDay, missedBefore.length);
+    } else if (state.focus) {
+      html += '<p class="center-note">Nothing scheduled for today.</p>';
     }
 
-    var otherDays = state.days.filter(function (d) { return d.date !== today; });
-    var lastWeekKey = null;
-    var weekNum = 0;
-    otherDays.forEach(function (day) {
-      var wk = mondayOf(day.date);
-      if (wk !== lastWeekKey) {
-        weekNum++;
-        lastWeekKey = wk;
-        html += '<div class="week-label">Week ' + weekNum + '</div>';
-      }
-      html += renderDay(day);
-    });
+    if (!state.focus) {
+      var otherDays = state.days.filter(function (d) { return d.date !== today; });
+      var lastWeekKey = null;
+      var weekNum = 0;
+      otherDays.forEach(function (day) {
+        var wk = mondayOf(day.date);
+        if (wk !== lastWeekKey) {
+          weekNum++;
+          lastWeekKey = wk;
+          html += '<div class="week-label">Week ' + weekNum + '</div>';
+        }
+        html += renderDay(day);
+      });
 
-    if (!state.days.length) {
-      html += '<p class="center-note">Nothing scheduled for ' + monthLabel(state.month) + ' yet.</p>';
+      if (!state.days.length) {
+        html += '<p class="center-note">Nothing scheduled for ' + monthLabel(state.month) + ' yet.</p>';
+      }
     }
 
     app.innerHTML = html;
     bindCalendarEvents();
+    observeFadeIns();
   }
 
   function renderTodayCard(day, missedBeforeCount) {
-    var html = '<div class="today-card">';
+    var html = '<div class="today-card fade-in">';
     html += '<div class="today-tag">Today</div>';
     html += '<div class="today-date">' + dayLabel(day.date) + '</div>';
     if (missedBeforeCount > 0) {
@@ -253,7 +398,7 @@
     var openAttr = (status === 'missed') ? ' open' : '';
     var statusLabel = status === 'complete' ? '✅ Complete' : status === 'missed' ? '⚠️ Missed' : 'Upcoming';
 
-    var html = '<details class="day"' + openAttr + '>';
+    var html = '<details class="day fade-in" data-date="' + day.date + '"' + openAttr + '>';
     html += '<summary><span class="day-date">' + dayLabel(day.date) + '</span>' +
       '<span class="day-status ' + status + '">' + statusLabel + '</span></summary>';
     html += '<div class="day-body">';
@@ -286,6 +431,13 @@
       renderRegisterForm();
     });
 
+    var focusToggle = document.getElementById('focus-toggle');
+    if (focusToggle) focusToggle.addEventListener('click', function () {
+      state.focus = !state.focus;
+      localStorage.setItem(FOCUS_KEY, state.focus ? '1' : '0');
+      renderCalendar();
+    });
+
     var prev = document.getElementById('prev-month');
     if (prev) prev.addEventListener('click', function () { loadMonth(shiftMonth(state.month, -1)); });
 
@@ -315,6 +467,8 @@
         var task = day && day.tasks.find(function (t) { return t.subject === subject && t.task_text === taskText; });
         if (task) task.completed = completed;
         cb.disabled = false;
+        patchStatsPanel();
+        patchDayStatus(date);
       })
       .catch(function () {
         cb.checked = !completed;
@@ -335,4 +489,7 @@
     for (var i = 0; i < str.length; i++) { h = ((h << 5) - h + str.charCodeAt(i)) | 0; }
     return Math.abs(h).toString(36);
   }
+
+  init();
+  setupScrollEffects();
 })();
