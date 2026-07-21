@@ -5,7 +5,7 @@
 // actually scheduled that day — rest days with nothing assigned neither
 // extend nor break it. Today gets a pass if nothing's ticked yet, since
 // the day isn't over.
-import { getSupabase, json } from './lib/supabase.js';
+import { getSupabase, json, todayIST } from './lib/supabase.js';
 
 export async function handler(event) {
   if (event.httpMethod !== 'GET') return json(405, { error: 'method not allowed' });
@@ -14,7 +14,7 @@ export async function handler(event) {
   if (!email) return json(400, { error: 'email is required' });
 
   const supabase = getSupabase();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayIST();
 
   const { data: scheduled, error: schedErr } = await supabase
     .from('schedule_tasks')

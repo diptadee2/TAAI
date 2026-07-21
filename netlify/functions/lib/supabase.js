@@ -25,6 +25,19 @@ export function json(statusCode, body) {
   };
 }
 
+// "Today" as a calendar date in IST (the site's audience), not the
+// function runtime's own timezone. Netlify Functions run on infrastructure
+// with no guaranteed local timezone (typically UTC) — for roughly the
+// first 5.5 hours of every IST calendar day, naive `new Date()`-based
+// "today" logic on the server disagrees with what students actually see
+// on their own devices (which compute "today" from the browser's local
+// time, correctly IST for this audience), silently treating same-day
+// completions as belonging to "yesterday".
+const IST_FORMATTER = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' });
+export function todayIST() {
+  return IST_FORMATTER.format(new Date());
+}
+
 // Validates "YYYY-MM" and returns the [start, end) date range for a SQL query.
 export function monthRange(month) {
   if (!/^\d{4}-\d{2}$/.test(month || '')) return null;
