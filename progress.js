@@ -335,7 +335,6 @@
       html += '<div class="exam-countdown fade-in">📅 ' + daysLeft + ' days till exam</div>';
     }
 
-    html += renderSubjectBreakdown();
     return html;
   }
 
@@ -433,7 +432,10 @@
       }
 
       html += '</div>'; // main-col
-      html += '<div class="side-col"><div id="heatmap-panel">' + renderHeatmap() + '</div></div>';
+      html += '<div class="side-col">' +
+        '<div id="heatmap-panel">' + renderHeatmap() + '</div>' +
+        '<div id="subject-panel">' + renderSubjectBreakdown() + '</div>' +
+        '</div>'; // side-col
       html += '</div>'; // page-grid
     }
 
