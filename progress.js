@@ -278,7 +278,7 @@
     var rows = subjects.map(function (name) {
       var s = bySubject[name];
       var pct = s.total ? Math.round((s.done / s.total) * 100) : 0;
-      return '<div class="subject-row">' +
+      return '<div class="subject-row" data-subject="' + escapeAttr(name) + '">' +
         '<div class="subject-row-name">' + escapeHtml(name) + '</div>' +
         '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
         '<div class="subject-row-pct">' + pct + '%</div>' +
@@ -315,7 +315,7 @@
       var dateStr = year + '-' + pad(month) + '-' + pad(day);
       var level = heatLevel(byDate[dateStr]);
       var isToday = dateStr === today ? ' is-today' : '';
-      cells += '<div class="heatmap-cell' + isToday + '" data-level="' + level + '" title="' + dateStr + '"></div>';
+      cells += '<div class="heatmap-cell' + isToday + '" data-level="' + level + '" data-date="' + dateStr + '" title="' + dateStr + '"></div>';
     }
 
     return '<div class="heatmap-card fade-in">' +
@@ -343,11 +343,38 @@
     return html;
   }
 
-  function patchStatsPanel() {
-    var panel = document.getElementById('stats-panel');
-    if (panel) { panel.innerHTML = buildStatsPanelHtml(); observeFadeIns(); }
-    var heatmapPanel = document.getElementById('heatmap-panel');
-    if (heatmapPanel) { heatmapPanel.innerHTML = renderHeatmap(); observeFadeIns(); }
+  // Updates each subject row's bar/percentage in place — no innerHTML
+  // replace, so the .subject-breakdown card (which carries .fade-in)
+  // never gets recreated and never replays its entrance animation.
+  function patchSubjectBreakdown() {
+    var today = todayIso();
+    var bySubject = {};
+    state.days.filter(function (d) { return d.date <= today; }).forEach(function (d) {
+      d.tasks.forEach(function (t) {
+        if (!bySubject[t.subject]) bySubject[t.subject] = { done: 0, total: 0 };
+        bySubject[t.subject].total++;
+        if (t.completed) bySubject[t.subject].done++;
+      });
+    });
+    Object.keys(bySubject).forEach(function (name) {
+      var row = document.querySelector('.subject-row[data-subject="' + CSS.escape(name) + '"]');
+      if (!row) return;
+      var s = bySubject[name];
+      var pct = s.total ? Math.round((s.done / s.total) * 100) : 0;
+      var fill = row.querySelector('.progress-fill');
+      var label = row.querySelector('.subject-row-pct');
+      if (fill) fill.style.width = pct + '%';
+      if (label) label.textContent = pct + '%';
+    });
+  }
+
+  // Same idea for a single heatmap cell — just flip its data-level
+  // attribute (CSS handles the color via the existing [data-level="n"]
+  // selectors) instead of rebuilding the whole grid.
+  function patchHeatmapCell(date) {
+    var day = state.days.find(function (d) { return d.date === date; });
+    var cell = document.querySelector('.heatmap-cell[data-date="' + date + '"]');
+    if (cell) cell.setAttribute('data-level', String(heatLevel(day)));
   }
 
   // Updates one day card's status badge in place (e.g. Missed → Complete
@@ -529,7 +556,8 @@
         var task = day && day.tasks.find(function (t) { return t.subject === subject && t.task_text === taskText; });
         if (task) task.completed = completed;
         cb.disabled = false;
-        patchStatsPanel();
+        patchSubjectBreakdown();
+        patchHeatmapCell(date);
         patchDayStatus(date);
         refreshStreak();
       })
