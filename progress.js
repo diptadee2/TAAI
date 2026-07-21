@@ -21,7 +21,7 @@
   // for one of these, it'll show up as an extra row until the names match.
   var CANONICAL_SUBJECTS = [
     'Linear Algebra', 'Probability', 'Statistics', 'Calculus',
-    'Machine Learning', 'AI', 'DBMS', 'Python', 'Data Structures & Algorithms',
+    'Machine Learning', 'AI', 'DBMS', 'Python', 'Data Structures', 'Algorithms',
   ];
 
   var app = document.getElementById('app');

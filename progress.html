@@ -136,7 +136,11 @@
   .progress-fill { height: 100%; background: linear-gradient(90deg, var(--purple), #a78bfa); border-radius: 999px; transition: width .5s cubic-bezier(.34,1.1,.64,1); }
 
   /* Per-subject breakdown */
-  .subject-breakdown { background: rgba(255,255,255,0.045); border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 2px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border-radius: var(--radius-md); padding: 16px 18px; margin-top: 20px; }
+  .subject-breakdown { background: rgba(255,255,255,0.045); border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 2px 20px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border-radius: var(--radius-md); padding: 16px 18px; margin-top: 20px; max-height: 360px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) transparent; }
+  .subject-breakdown::-webkit-scrollbar { width: 6px; }
+  .subject-breakdown::-webkit-scrollbar-track { background: transparent; }
+  .subject-breakdown::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 999px; }
+  .subject-breakdown::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
   .subject-breakdown-title { font-family: var(--font-nav); font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 14px; }
   .subject-row { margin-bottom: 14px; }
   .subject-row:last-child { margin-bottom: 0; }
