@@ -14,10 +14,10 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
-[functions."sync-schedule"]
-  schedule = "30 21 * * *"
-
 # ── Progress tracker (taai.live/progress) ────────────────────────────────
+# Schedule data is provided directly (as PDFs/etc.) and loaded via
+# `npm run load-schedule`, not synced automatically from anywhere —
+# there is deliberately no cron job or external fetch for this.
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
