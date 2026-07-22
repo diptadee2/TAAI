@@ -465,6 +465,33 @@
     el.textContent = label;
   }
 
+  // Recomputes the "N days incomplete before today" banner and patches it
+  // in place — ticking a missed day's task changes this count but doesn't
+  // touch the today-card itself otherwise, so it was going stale until the
+  // next full re-render (month nav or reload).
+  function refreshCatchupWarn() {
+    var today = todayIso();
+    var count = state.days.filter(function (d) { return d.date < today && dayStatus(d) === 'missed'; }).length;
+    var card = document.querySelector('.today-card');
+    if (!card) return;
+    var warn = card.querySelector('.catchup-warn');
+    if (count > 0) {
+      var text = '⚠️ ' + count + ' day' + (count === 1 ? '' : 's') +
+        ' incomplete before today. Today’s content builds on those — consider catching up first.';
+      if (warn) {
+        warn.textContent = text;
+      } else {
+        warn = document.createElement('div');
+        warn.className = 'catchup-warn';
+        warn.textContent = text;
+        var dateEl = card.querySelector('.today-date');
+        if (dateEl) dateEl.insertAdjacentElement('afterend', warn);
+      }
+    } else if (warn) {
+      warn.remove();
+    }
+  }
+
   function renderCalendar() {
     var today = todayIso();
     var todayDay = state.days.find(function (d) { return d.date === today; });
@@ -821,6 +848,7 @@
         refreshSubjectProgress();
         patchHeatmapCell(date);
         patchDayStatus(date);
+        refreshCatchupWarn();
         refreshStreak();
       })
       .catch(function () {
