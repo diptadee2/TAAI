@@ -440,7 +440,7 @@
     if (EXAM_DATE) {
       var today = todayIso();
       var daysLeft = Math.max(0, Math.ceil((new Date(EXAM_DATE) - new Date(today)) / 864e5));
-      html += '<div class="exam-countdown fade-in">📅 ' + daysLeft + ' days till exam</div>';
+      html += '<div class="exam-countdown fade-in">📅 ' + daysLeft + ' days till GATE</div>';
     }
 
     return html;
@@ -535,7 +535,6 @@
 
     if (!state.focus) {
       html += '<div id="streak-panel">' + renderStreakHero() + '</div>';
-      html += '<div id="stats-panel">' + buildStatsPanelHtml() + '</div>';
 
       html += '<div class="month-nav"><button id="prev-month" aria-label="Previous month">&larr;</button>' +
         '<span class="month-label">' + monthLabel(state.month) + '</span>' +
