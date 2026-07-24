@@ -214,7 +214,7 @@
   function renderRegisterForm(errorMsg) {
     app.innerHTML =
       '<div class="reg-card fade-in">' +
-      '<h1>Welcome to your MISSION IIT🎯</h1>' +
+      '<h1>MISSION IIT🎯</h1>' +
       '<p>Enter your details once — we’ll remember you on this browser.</p>' +
       '<form id="reg-form">' +
       '<div class="reg-field"><label for="reg-email">Your email</label>' +
