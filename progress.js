@@ -1,10 +1,8 @@
 (function () {
   'use strict';
 
-  // Set this to the confirmed official GATE DA 2027 exam date ("YYYY-MM-DD")
-  // to enable the exam countdown stat. Left null until that date is official
-  // — showing a countdown to a guessed date would mislead students.
-  var EXAM_DATE = null;
+  // Confirmed official GATE DA 2027 exam date.
+  var EXAM_DATE = '2027-02-06';
 
   var COOKIE_NAME = 'taai_user';
   var COOKIE_DAYS = 365;
@@ -544,7 +542,10 @@
         '<button id="next-month" aria-label="Next month">&rarr;</button></div>';
     }
 
-    if (state.focus) html += renderPomodoro();
+    if (state.focus) {
+      html += '<div id="stats-panel">' + buildStatsPanelHtml() + '</div>';
+      html += renderPomodoro();
+    }
 
     if (todayDay) {
       html += renderTodayCard(todayDay, missedBefore.length);
