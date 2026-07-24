@@ -214,7 +214,7 @@
   function renderRegisterForm(errorMsg) {
     app.innerHTML =
       '<div class="reg-card fade-in">' +
-      '<h1>Welcome to your GATE DA 2027 Roadmap</h1>' +
+      '<h1>Welcome to your MISSION IIT🎯</h1>' +
       '<p>Enter your details once — we’ll remember you on this browser.</p>' +
       '<form id="reg-form">' +
       '<div class="reg-field"><label for="reg-email">Your email</label>' +
@@ -498,7 +498,7 @@
     var missedBefore = state.days.filter(function (d) { return d.date < today && dayStatus(d) === 'missed'; });
 
     var html = '';
-    html += '<div class="roadmap-head"><h1>🗺 GATE DA 2027 Roadmap</h1></div>';
+    html += '<div class="roadmap-head"><h1>MISSION IIT🎯</h1></div>';
     html += '<div class="roadmap-sub">' +
       '<div class="roadmap-sub-left">' + escapeHtml(state.student.display_name) + ' &middot; <button id="not-you">Not you?</button></div>' +
       '<button id="focus-toggle" class="focus-toggle' + (state.focus ? ' active' : '') + '">' + (state.focus ? '✕ Exit focus' : '◎ Focus mode') + '</button>' +
