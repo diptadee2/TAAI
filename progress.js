@@ -76,14 +76,18 @@
     focus: localStorage.getItem(FOCUS_KEY) === '1',
   };
 
+  // Set when a signed-out visitor tries to check a task — captured so
+  // registration can complete it automatically instead of the tick being
+  // silently dropped once they're signed in.
+  var pendingTask = null;
+
+  // No cookie just means browsing as a guest, not "show the login screen" —
+  // the schedule itself (schedule.js) needs no email, so anyone can view and
+  // navigate the roadmap. Only actions tied to a specific student (ticking a
+  // task) require signing in, prompted at the point of that action.
   function init() {
-    var student = readCookie();
-    if (student) {
-      state.student = student;
-      loadMonth(state.month);
-    } else {
-      renderRegisterForm();
-    }
+    state.student = readCookie();
+    loadMonth(state.month);
   }
 
   // ── Scroll progress + back-to-top — same pattern as blog.js ──────────
@@ -215,7 +219,7 @@
     app.innerHTML =
       '<div class="reg-card fade-in">' +
       '<h1>MISSION IIT🎯</h1>' +
-      '<p>Enter your details once — we’ll remember you on this browser.</p>' +
+      '<p>' + (pendingTask ? 'Sign up to save your progress — it only takes a few seconds.' : 'Enter your details once — we’ll remember you on this browser.') + '</p>' +
       '<form id="reg-form">' +
       '<div class="reg-field"><label for="reg-email">Your email</label>' +
       '<input id="reg-email" type="email" required autocomplete="email"></div>' +
@@ -223,6 +227,7 @@
       '<input id="reg-name" type="text" required autocomplete="name"></div>' +
       (errorMsg ? '<p class="form-error">' + escapeHtml(errorMsg) + '</p>' : '') +
       '<button class="btn-primary" type="submit">Start Tracking</button>' +
+      (pendingTask ? '<button type="button" class="reg-cancel-link" id="reg-cancel">← Keep browsing without an account</button>' : '') +
       '</form></div>';
 
     document.getElementById('reg-form').addEventListener('submit', function (e) {
@@ -240,11 +245,29 @@
         .then(function (student) {
           writeCookie(student);
           state.student = student;
-          loadMonth(state.month);
+          var task = pendingTask;
+          pendingTask = null;
+          if (task) {
+            api('/complete-task', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: student.email, date: task.date, subject: task.subject, task_text: task.task_text, completed: task.completed }),
+            })
+              .catch(function () { /* non-critical — task just won't be pre-ticked */ })
+              .then(function () { loadMonth(state.month); });
+          } else {
+            loadMonth(state.month);
+          }
         })
         .catch(function (err) {
           renderRegisterForm(err.message);
         });
+    });
+
+    var cancelBtn = document.getElementById('reg-cancel');
+    if (cancelBtn) cancelBtn.addEventListener('click', function () {
+      pendingTask = null;
+      renderCalendar();
     });
 
     observeFadeIns();
@@ -255,17 +278,23 @@
     state.month = monthStr;
     app.innerHTML = '<p class="center-note">Loading your roadmap…</p>';
 
-    Promise.all([
-      api('/schedule?month=' + monthStr),
-      api('/progress?email=' + encodeURIComponent(state.student.email) + '&month=' + monthStr),
-      api('/streak?email=' + encodeURIComponent(state.student.email)).catch(function () { return { streak: null }; }),
-      api('/subject-progress?email=' + encodeURIComponent(state.student.email)).catch(function () { return { subjects: [] }; }),
-    ])
+    // Guests (no student yet) only need the public schedule — the other
+    // three endpoints are all per-student and would 400 without an email.
+    var calls = [api('/schedule?month=' + monthStr)];
+    if (state.student) {
+      calls.push(
+        api('/progress?email=' + encodeURIComponent(state.student.email) + '&month=' + monthStr),
+        api('/streak?email=' + encodeURIComponent(state.student.email)).catch(function () { return { streak: null }; }),
+        api('/subject-progress?email=' + encodeURIComponent(state.student.email)).catch(function () { return { subjects: [] }; })
+      );
+    }
+
+    Promise.all(calls)
       .then(function (results) {
         var scheduleDays = results[0].days || [];
-        var progressRows = results[1].progress || [];
-        state.streak = results[2].streak;
-        state.subjectProgress = results[3].subjects || [];
+        var progressRows = state.student ? (results[1].progress || []) : [];
+        state.streak = state.student ? results[2].streak : null;
+        state.subjectProgress = state.student ? (results[3].subjects || []) : [];
 
         var completedSet = new Set(
           progressRows.filter(function (r) { return r.completed; })
@@ -500,7 +529,7 @@
     var html = '';
     html += '<div class="roadmap-head"><h1>MISSION IIT🎯</h1></div>';
     html += '<div class="roadmap-sub">' +
-      '<div class="roadmap-sub-left">' + escapeHtml(state.student.display_name) + ' &middot; <button id="not-you">Not you?</button></div>' +
+      '<div class="roadmap-sub-left">' + (state.student ? escapeHtml(state.student.display_name) + ' &middot; <button id="not-you">Not you?</button>' : 'Browsing as guest — tick a task to save your progress') + '</div>' +
       '<button id="focus-toggle" class="focus-toggle' + (state.focus ? ' active' : '') + '">' + (state.focus ? '✕ Exit focus' : '◎ Focus mode') + '</button>' +
       '</div>';
 
@@ -773,7 +802,7 @@
     if (notYou) notYou.addEventListener('click', function () {
       clearCookie();
       state.student = null;
-      renderRegisterForm();
+      loadMonth(state.month);
     });
 
     var focusToggle = document.getElementById('focus-toggle');
@@ -832,6 +861,14 @@
     var completed = cb.checked;
     var date = cb.dataset.date, subject = cb.dataset.subject, taskText = cb.dataset.task;
     var row = cb.closest('.task-row');
+
+    if (!state.student) {
+      cb.checked = !completed;
+      pendingTask = { date: date, subject: subject, task_text: taskText, completed: completed };
+      renderRegisterForm();
+      return;
+    }
+
     row.classList.toggle('done', completed);
     cb.disabled = true;
 
