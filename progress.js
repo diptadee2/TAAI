@@ -6,9 +6,11 @@
   // — showing a countdown to a guessed date would mislead students.
   var EXAM_DATE = null;
 
-  var COOKIE_NAME = 'taai_user';
-  var COOKIE_DAYS = 365;
   var FOCUS_KEY = 'taai_progress_focus';
+
+  // Demo mode — login temporarily disabled. Every visitor shares this one
+  // account/progress record until real registration comes back.
+  var DEMO_STUDENT = { email: 'demo@taai.live', display_name: 'Demo Student' };
 
   // Full GATE DA syllabus — shown in "Progress by subject" even before a
   // schedule for that subject has been uploaded (0% until then). "AI" is
@@ -77,13 +79,19 @@
   };
 
   function init() {
-    var student = readCookie();
-    if (student) {
-      state.student = student;
-      loadMonth(state.month);
-    } else {
-      renderRegisterForm();
-    }
+    app.innerHTML = '<p class="center-note">Loading your roadmap…</p>';
+    api('/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(DEMO_STUDENT),
+    })
+      .then(function (student) {
+        state.student = student;
+        loadMonth(state.month);
+      })
+      .catch(function (err) {
+        app.innerHTML = '<p class="center-note">Couldn’t load your roadmap: ' + escapeHtml(err.message) + '</p>';
+      });
   }
 
   // ── Scroll progress + back-to-top — same pattern as blog.js ──────────
@@ -122,30 +130,6 @@
     Array.prototype.forEach.call(document.querySelectorAll('.fade-in:not(.visible)'), function (el) {
       fadeObserver.observe(el);
     });
-  }
-
-  // ── Cookie helpers ──────────────────────────────────────────────────
-  function b64Encode(str) { return btoa(unescape(encodeURIComponent(str))); }
-  function b64Decode(str) { return decodeURIComponent(escape(atob(str))); }
-
-  function readCookie() {
-    var match = document.cookie.match(new RegExp('(?:^|; )' + COOKIE_NAME + '=([^;]*)'));
-    if (!match) return null;
-    try {
-      return JSON.parse(b64Decode(decodeURIComponent(match[1])));
-    } catch (e) {
-      return null;
-    }
-  }
-
-  function writeCookie(student) {
-    var value = encodeURIComponent(b64Encode(JSON.stringify(student)));
-    var expires = new Date(Date.now() + COOKIE_DAYS * 864e5).toUTCString();
-    document.cookie = COOKIE_NAME + '=' + value + '; expires=' + expires + '; path=/; SameSite=Lax';
-  }
-
-  function clearCookie() {
-    document.cookie = COOKIE_NAME + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Lax';
   }
 
   // ── Date helpers ────────────────────────────────────────────────────
@@ -210,46 +194,6 @@
       .catch(function () { /* non-critical — leave last known value on screen */ });
   }
 
-  // ── Registration ────────────────────────────────────────────────────
-  function renderRegisterForm(errorMsg) {
-    app.innerHTML =
-      '<div class="reg-card fade-in">' +
-      '<h1>Welcome to your GATE DA 2027 Roadmap</h1>' +
-      '<p>Enter your details once — we’ll remember you on this browser.</p>' +
-      '<form id="reg-form">' +
-      '<div class="reg-field"><label for="reg-email">Your email</label>' +
-      '<input id="reg-email" type="email" required autocomplete="email"></div>' +
-      '<div class="reg-field"><label for="reg-name">Your display name</label>' +
-      '<input id="reg-name" type="text" required autocomplete="name"></div>' +
-      (errorMsg ? '<p class="form-error">' + escapeHtml(errorMsg) + '</p>' : '') +
-      '<button class="btn-primary" type="submit">Start Tracking</button>' +
-      '</form></div>';
-
-    document.getElementById('reg-form').addEventListener('submit', function (e) {
-      e.preventDefault();
-      var btn = e.target.querySelector('button');
-      var email = document.getElementById('reg-email').value.trim();
-      var name = document.getElementById('reg-name').value.trim();
-      btn.disabled = true;
-      btn.textContent = 'Starting…';
-      api('/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email, display_name: name }),
-      })
-        .then(function (student) {
-          writeCookie(student);
-          state.student = student;
-          loadMonth(state.month);
-        })
-        .catch(function (err) {
-          renderRegisterForm(err.message);
-        });
-    });
-
-    observeFadeIns();
-  }
-
   // ── Calendar ────────────────────────────────────────────────────────
   function loadMonth(monthStr) {
     state.month = monthStr;
@@ -297,7 +241,7 @@
         renderCalendar();
       })
       .catch(function (err) {
-        app.innerHTML = '<p class="center-note">Couldn’t load your roadmap — ' + escapeHtml(err.message) + '</p>';
+        app.innerHTML = '<p class="center-note">Couldn’t load your roadmap: ' + escapeHtml(err.message) + '</p>';
       });
   }
 
@@ -315,7 +259,7 @@
     var label = n === 1 ? 'day streak' : 'day streak';
     return '<div class="streak-hero fade-in">' +
       '<div class="streak-flame">🔥</div>' +
-      '<div class="streak-number" id="streak-number">' + (n === null ? '—' : n) + '</div>' +
+      '<div class="streak-number" id="streak-number">' + (n === null ? '-' : n) + '</div>' +
       '<div class="streak-label">' + label + '</div>' +
       '</div>';
   }
@@ -477,7 +421,7 @@
     var warn = card.querySelector('.catchup-warn');
     if (count > 0) {
       var text = '⚠️ ' + count + ' day' + (count === 1 ? '' : 's') +
-        ' incomplete before today. Today’s content builds on those — consider catching up first.';
+        ' incomplete before today. Today’s content builds on those, so consider catching up first.';
       if (warn) {
         warn.textContent = text;
       } else {
@@ -500,7 +444,7 @@
     var html = '';
     html += '<div class="roadmap-head"><h1>🗺 GATE DA 2027 Roadmap</h1></div>';
     html += '<div class="roadmap-sub">' +
-      '<div class="roadmap-sub-left">' + escapeHtml(state.student.display_name) + ' &middot; <button id="not-you">Not you?</button></div>' +
+      '<div class="roadmap-sub-left">' + escapeHtml(state.student.display_name) + '</div>' +
       '<button id="focus-toggle" class="focus-toggle' + (state.focus ? ' active' : '') + '">' + (state.focus ? '✕ Exit focus' : '◎ Focus mode') + '</button>' +
       '</div>';
 
@@ -729,7 +673,7 @@
     html += '<div class="today-date">' + dayLabel(day.date) + '</div>';
     if (missedBeforeCount > 0) {
       html += '<div class="catchup-warn">⚠️ ' + missedBeforeCount + ' day' + (missedBeforeCount === 1 ? '' : 's') +
-        ' incomplete before today. Today’s content builds on those — consider catching up first.</div>';
+        ' incomplete before today. Today’s content builds on those, so consider catching up first.</div>';
     }
     day.tasks.forEach(function (t) {
       html += taskRowHtml(day.date, t);
@@ -769,13 +713,6 @@
   }
 
   function bindCalendarEvents() {
-    var notYou = document.getElementById('not-you');
-    if (notYou) notYou.addEventListener('click', function () {
-      clearCookie();
-      state.student = null;
-      renderRegisterForm();
-    });
-
     var focusToggle = document.getElementById('focus-toggle');
     if (focusToggle) focusToggle.addEventListener('click', function () {
       state.focus = !state.focus;
