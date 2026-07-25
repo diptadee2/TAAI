@@ -440,7 +440,9 @@
     if (EXAM_DATE) {
       var today = todayIso();
       var daysLeft = Math.max(0, Math.ceil((new Date(EXAM_DATE) - new Date(today)) / 864e5));
-      html += '<div class="exam-countdown fade-in">📅 ' + daysLeft + ' days till GATE</div>';
+      html += '<div class="exam-countdown fade-in">' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="3" stroke="currentColor" stroke-width="1.7"/><path d="M3 9.5h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>' +
+        '<span class="exam-countdown-num">' + daysLeft + '</span> days till GATE</div>';
     }
 
     return html;
