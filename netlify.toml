@@ -14,7 +14,7 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
-# ── Progress tracker (taai.live/progress) ────────────────────────────────
+# ── Progress tracker (taai.live/gate-da-progress-tracker) ────────────────
 # Schedule data is provided directly (as PDFs/etc.) and loaded via
 # `npm run load-schedule`, not synced automatically from anywhere —
 # there is deliberately no cron job or external fetch for this.
@@ -24,14 +24,17 @@
   status = 200
 
 [[redirects]]
-  from = "/progress"
-  to = "/progress.html"
+  from = "/gate-da-progress-tracker"
+  to = "/gate-da-progress-tracker.html"
   status = 200
 
 [[redirects]]
-  from = "/progress.html"
-  to = "/progress"
+  from = "/gate-da-progress-tracker.html"
+  to = "/gate-da-progress-tracker"
   status = 301
+
+# No redirect from the old /progress or /progress.html slug on purpose —
+# the file itself was renamed, so old links to it 404 rather than forward.
 
 [[redirects]]
   from = "/learn"

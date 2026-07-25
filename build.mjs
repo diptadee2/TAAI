@@ -19,7 +19,7 @@ const SRC   = __dir;
 const DIST  = path.join(__dir, 'dist');
 const BLOG_CONTENT_DIR = path.join(__dir, 'content', 'blog');
 
-const PAGES = ['index.html', 'gate-da-courses.html', 'gate-da-test-series.html', 'gate-da-toppers.html', 'contact.html', 'gate-da-free-notes.html', 'progress.html'];
+const PAGES = ['index.html', 'gate-da-courses.html', 'gate-da-test-series.html', 'gate-da-toppers.html', 'contact.html', 'gate-da-free-notes.html', 'gate-da-progress-tracker.html'];
 const SITE_URL = 'https://taai.live';
 
 
@@ -452,7 +452,12 @@ ${entries.map(u => `  <url>
 }
 
 function build() {
-  if (!fs.existsSync(DIST)) fs.mkdirSync(DIST);
+  // Full clean before every build — dist/ previously only ever had files
+  // added/overwritten, never removed, so a renamed or deleted source page
+  // left its old compiled output orphaned in dist/ (and thus still live on
+  // Netlify, regardless of what netlify.toml's redirects said).
+  fs.rmSync(DIST, { recursive: true, force: true });
+  fs.mkdirSync(DIST, { recursive: true });
 
   console.log('Building…');
   // Generate blog pages + sitemap into source first, so the generic

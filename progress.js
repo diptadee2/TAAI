@@ -801,7 +801,7 @@
   }
 
   // Focus Mode integrates with the History API so the browser Back button
-  // exits it instead of navigating away from /progress entirely — entering
+  // exits it instead of navigating away from the tracker page entirely — entering
   // pushes a history entry, and leaving (Back button or the Exit focus
   // button, which triggers the same pop) is what flips state.focus back off.
   function enterFocus() {
