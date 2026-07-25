@@ -1503,19 +1503,18 @@ function TAAILogo() {
   return <img src="logo.webp" alt="TAAI" />;
 }
 
-function daysUntilFeb1() {
+function daysUntilExam() {
+  // Same date + same day-count math as EXAM_DATE in progress.js, so this
+  // matches the /progress countdown exactly.
+  const pad = n => String(n).padStart(2, '0');
   const now = new Date();
-  const year = now.getFullYear();
-  const feb1 = new Date(year, 1, 1); feb1.setHours(0, 0, 0, 0);
-  const mar1 = new Date(year, 2, 1); mar1.setHours(0, 0, 0, 0);
-  if (now < feb1) return Math.max(1, Math.ceil((feb1 - now) / (1000 * 60 * 60 * 24)));
-  if (now < mar1) return null; // dead zone: Feb 1 - Mar 1, no countdown
-  const nextFeb1 = new Date(year + 1, 1, 1); nextFeb1.setHours(0, 0, 0, 0);
-  return Math.max(1, Math.ceil((nextFeb1 - now) / (1000 * 60 * 60 * 24)));
+  const todayStr = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+  const daysLeft = Math.ceil((new Date('2027-02-06') - new Date(todayStr)) / 864e5);
+  return daysLeft > 0 ? daysLeft : null;
 }
 
 function Nav() {
-  const daysLeft = daysUntilFeb1();
+  const daysLeft = daysUntilExam();
   const linksRef = React.useRef(null);
   const [pill, setPill] = React.useState({ left: 0, width: 0, visible: false });
   const resetTimer = React.useRef(null);
