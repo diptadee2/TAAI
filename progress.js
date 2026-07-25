@@ -6,7 +6,6 @@
 
   var COOKIE_NAME = 'taai_user';
   var COOKIE_DAYS = 365;
-  var FOCUS_KEY = 'taai_progress_focus';
 
   // Full GATE DA syllabus — shown in "Progress by subject" even before a
   // schedule for that subject has been uploaded (0% until then). "AI" is
@@ -71,7 +70,9 @@
     streak: null,
     subjectProgress: [], // [{ subject, done, total }] — global, independent of viewed month
     expanded: new Set(), // dates whose day-card is open, non-native accordion
-    focus: localStorage.getItem(FOCUS_KEY) === '1',
+    // Never persisted — every fresh visit (reload or reopen) lands on the
+    // main checklist, never resumes straight into Focus Mode.
+    focus: false,
   };
 
   // Set when a signed-out visitor tries to check a task — captured so
@@ -799,6 +800,33 @@
       '</label>';
   }
 
+  // Focus Mode integrates with the History API so the browser Back button
+  // exits it instead of navigating away from /progress entirely — entering
+  // pushes a history entry, and leaving (Back button or the Exit focus
+  // button, which triggers the same pop) is what flips state.focus back off.
+  function enterFocus() {
+    state.focus = true;
+    history.pushState({ focus: true }, '');
+    renderCalendar();
+  }
+
+  function exitFocus() {
+    if (history.state && history.state.focus) {
+      history.back();
+    } else {
+      state.focus = false;
+      renderCalendar();
+    }
+  }
+
+  function setupFocusHistory() {
+    window.addEventListener('popstate', function (e) {
+      var wasFocus = state.focus;
+      state.focus = !!(e.state && e.state.focus);
+      if (wasFocus !== state.focus) renderCalendar();
+    });
+  }
+
   function bindCalendarEvents() {
     var notYou = document.getElementById('not-you');
     if (notYou) notYou.addEventListener('click', function () {
@@ -809,9 +837,7 @@
 
     var focusToggle = document.getElementById('focus-toggle');
     if (focusToggle) focusToggle.addEventListener('click', function () {
-      state.focus = !state.focus;
-      localStorage.setItem(FOCUS_KEY, state.focus ? '1' : '0');
-      renderCalendar();
+      if (state.focus) exitFocus(); else enterFocus();
     });
 
     var pomoToggle = document.getElementById('pomo-toggle');
@@ -912,4 +938,5 @@
 
   init();
   setupScrollEffects();
+  setupFocusHistory();
 })();
