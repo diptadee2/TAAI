@@ -15,6 +15,12 @@
   // file would otherwise have run.
   var DEMO_TODAY_FLOOR = '2026-08-01';
 
+  // Earliest month with any schedule content — unlike DEMO_TODAY_FLOOR
+  // above, this doesn't self-expire with the real date; July has no data
+  // and never will, so month-nav's "previous" arrow stays disabled on
+  // this month regardless of what today's date is.
+  var SCHEDULE_START_MONTH = '2026-08';
+
   var COOKIE_NAME = 'taai_user';
   var COOKIE_DAYS = 365;
 
@@ -550,7 +556,8 @@
     if (!state.focus) {
       html += '<div id="streak-panel">' + renderStreakHero() + '</div>';
 
-      html += '<div class="month-nav"><button id="prev-month" aria-label="Previous month">&larr;</button>' +
+      html += '<div class="month-nav"><button id="prev-month" aria-label="Previous month"' +
+        (state.month <= SCHEDULE_START_MONTH ? ' disabled' : '') + '>&larr;</button>' +
         '<span class="month-label">' + monthLabel(state.month) + '</span>' +
         '<button id="next-month" aria-label="Next month">&rarr;</button></div>';
     }

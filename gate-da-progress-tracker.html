@@ -309,6 +309,8 @@
   .month-nav button { background: var(--card); border: 1px solid var(--line); border-radius: 10px; width: 34px; height: 34px; font-size: 16px; cursor: pointer; color: var(--ink-dim); transition: transform .28s cubic-bezier(.34,1.1,.64,1), border-color .2s, color .2s, box-shadow .22s; }
   .month-nav button:hover { border-color: var(--purple); color: var(--purple); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(139,92,246,0.18); }
   .month-nav button:active { transform: scale(0.92); }
+  .month-nav button:disabled { opacity: .35; cursor: not-allowed; }
+  .month-nav button:disabled:hover { border-color: var(--line); color: var(--ink-dim); transform: none; box-shadow: none; }
   .month-nav .month-label { font-family: var(--font-nav); font-weight: 700; font-size: 15px; }
 
   .week-label { font-family: var(--font-nav); font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); margin: 22px 0 10px; }
