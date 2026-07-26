@@ -4,6 +4,17 @@
   // Confirmed official GATE DA 2027 exam date.
   var EXAM_DATE = '2027-02-06';
 
+  // Launch floor — the schedule starts Aug 1, so "today" (and the default
+  // opening month) is clamped up to Aug 1 for anyone visiting before then,
+  // instead of showing a real "today" with nothing scheduled yet. Self-
+  // expiring: once the real date reaches Aug 1, max() has no effect and
+  // this stops doing anything — remove this block after 2026-08-01 rather
+  // than leaving a permanently-clamped date behind. Declared this early
+  // (not next to todayIso() below) because state's initializer calls
+  // currentMonthStr() -> todayIso() immediately, before that point in the
+  // file would otherwise have run.
+  var DEMO_TODAY_FLOOR = '2026-08-01';
+
   var COOKIE_NAME = 'taai_user';
   var COOKIE_DAYS = 365;
 
@@ -155,11 +166,11 @@
   function pad(n) { return String(n).padStart(2, '0'); }
   function todayIso() {
     var d = new Date();
-    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    var real = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    return real > DEMO_TODAY_FLOOR ? real : DEMO_TODAY_FLOOR;
   }
   function currentMonthStr() {
-    var d = new Date();
-    return d.getFullYear() + '-' + pad(d.getMonth() + 1);
+    return todayIso().slice(0, 7);
   }
   function shiftMonth(monthStr, delta) {
     var parts = monthStr.split('-').map(Number);
