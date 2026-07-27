@@ -87,6 +87,8 @@
     streak: null,
     subjectProgress: [], // [{ subject, done, total }] — global, independent of viewed month
     expanded: new Set(), // dates whose day-card is open, non-native accordion
+    collapsedWeeks: new Set(), // week keys (Monday date) currently collapsed
+    initializedWeeks: new Set(), // week keys already given their one-time default collapse state
     // Never persisted — every fresh visit (reload or reopen) lands on the
     // main checklist, never resumes straight into Focus Mode.
     focus: false,
@@ -340,6 +342,19 @@
           if (!allDone) state.expanded.add(d.date);
         });
 
+        // Every week collapses by default except the one containing today,
+        // so the page isn't a huge wall of past/future weeks on load — but
+        // only the first time a given week is ever seen, so a week the
+        // student has manually expanded/collapsed stays that way across
+        // month navigation and reloads instead of resetting.
+        var todayWk = mondayOf(todayIso());
+        state.days.forEach(function (d) {
+          var wk = mondayOf(d.date);
+          if (state.initializedWeeks.has(wk)) return;
+          state.initializedWeeks.add(wk);
+          if (wk !== todayWk) state.collapsedWeeks.add(wk);
+        });
+
         renderCalendar();
       })
       .catch(function (err) {
@@ -591,15 +606,23 @@
       var otherDays = state.days.filter(function (d) { return d.date !== today; });
       var lastWeekKey = null;
       var weekNum = 0;
+      var weekOpen = true;
       otherDays.forEach(function (day) {
         var wk = mondayOf(day.date);
         if (wk !== lastWeekKey) {
+          if (lastWeekKey !== null) html += '</div></div></div>'; // week-body-inner, week-body-wrap, week
           weekNum++;
           lastWeekKey = wk;
-          html += '<div class="week-label">Week ' + weekNum + '</div>';
+          weekOpen = !state.collapsedWeeks.has(wk);
+          html += '<div class="week" data-week="' + wk + '">' +
+            '<div class="week-label" role="button" tabindex="0" aria-expanded="' + weekOpen + '">' +
+            '<svg class="week-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M9 6L15 12L9 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+            '<span>Week ' + weekNum + '</span></div>' +
+            '<div class="week-body-wrap' + (weekOpen ? ' expanded' : '') + '"><div class="week-body-inner">';
         }
         html += renderDay(day);
       });
+      if (lastWeekKey !== null) html += '</div></div></div>'; // week-body-inner, week-body-wrap, week
 
       if (!state.days.length) {
         html += '<p class="center-note">Nothing scheduled for ' + monthLabel(state.month) + ' yet.</p>';
@@ -973,6 +996,13 @@
       });
     });
 
+    Array.prototype.forEach.call(document.querySelectorAll('.week-label'), function (el) {
+      el.addEventListener('click', function () { toggleWeek(el.closest('.week').dataset.week); });
+      el.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleWeek(el.closest('.week').dataset.week); }
+      });
+    });
+
     Array.prototype.forEach.call(document.querySelectorAll('.task-row input[type="checkbox"]'), function (cb) {
       cb.addEventListener('change', onTaskToggle);
     });
@@ -987,6 +1017,17 @@
     if (open) { state.expanded.delete(date); } else { state.expanded.add(date); }
     wrap.classList.toggle('expanded', !open);
     summary.setAttribute('aria-expanded', String(!open));
+  }
+
+  function toggleWeek(wk) {
+    var el = document.querySelector('.week[data-week="' + wk + '"]');
+    if (!el) return;
+    var wrap = el.querySelector('.week-body-wrap');
+    var label = el.querySelector('.week-label');
+    var collapsed = state.collapsedWeeks.has(wk);
+    if (collapsed) { state.collapsedWeeks.delete(wk); } else { state.collapsedWeeks.add(wk); }
+    wrap.classList.toggle('expanded', collapsed);
+    label.setAttribute('aria-expanded', String(collapsed));
   }
 
   function onTaskToggle(e) {
