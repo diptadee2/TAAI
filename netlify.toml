@@ -39,6 +39,11 @@
   status = 301
 
 [[redirects]]
+  from = "/progress.html"
+  to = "/gate-da-progress-tracker"
+  status = 301
+
+[[redirects]]
   from = "/learn"
   to = "https://taai.live/"
   status = 301

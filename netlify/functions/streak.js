@@ -7,6 +7,16 @@
 // the day isn't over.
 import { getSupabase, json, todayIST } from './lib/supabase.js';
 
+// Matches DEMO_TODAY_FLOOR in progress.js — the schedule starts Aug 1, so
+// streak math needs the same floor as the frontend's clamped "today". Without
+// this, a completion on the frontend's Aug 1 "today" would have this function
+// still looking for scheduled dates <= the real (pre-Aug-1) date, find
+// nothing (July's schedule was removed), and always report streak 0 no
+// matter what's completed, until the real calendar reaches August. Self-
+// expiring: remove this once real dates are past 2026-08-01, same as the
+// frontend's copy.
+const DEMO_TODAY_FLOOR = '2026-08-01';
+
 export async function handler(event) {
   if (event.httpMethod !== 'GET') return json(405, { error: 'method not allowed' });
 
@@ -14,7 +24,8 @@ export async function handler(event) {
   if (!email) return json(400, { error: 'email is required' });
 
   const supabase = getSupabase();
-  const today = todayIST();
+  const realToday = todayIST();
+  const today = realToday > DEMO_TODAY_FLOOR ? realToday : DEMO_TODAY_FLOOR;
 
   const { data: scheduled, error: schedErr } = await supabase
     .from('schedule_tasks')
