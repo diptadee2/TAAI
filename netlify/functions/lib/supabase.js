@@ -38,6 +38,18 @@ export function todayIST() {
   return IST_FORMATTER.format(new Date());
 }
 
+// Monday of the current ISO week, based on the IST calendar date. Same
+// Monday-start-week convention progress.js's mondayOf() already uses
+// client-side for the calendar's "Week N" labels. Used to key the
+// pomodoro leaderboard's per-week rows.
+export function weekStartIST() {
+  const d = new Date(todayIST() + 'T00:00:00Z');
+  const day = d.getUTCDay(); // 0=Sun, 1=Mon, ...
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setUTCDate(d.getUTCDate() + diff);
+  return d.toISOString().slice(0, 10);
+}
+
 // Validates "YYYY-MM" and returns the [start, end) date range for a SQL query.
 export function monthRange(month) {
   if (!/^\d{4}-\d{2}$/.test(month || '')) return null;

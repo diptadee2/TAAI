@@ -33,8 +33,10 @@
   to = "/gate-da-progress-tracker"
   status = 301
 
-# No redirect from the old /progress or /progress.html slug on purpose —
-# the file itself was renamed, so old links to it 404 rather than forward.
+[[redirects]]
+  from = "/progress"
+  to = "/gate-da-progress-tracker"
+  status = 301
 
 [[redirects]]
   from = "/learn"

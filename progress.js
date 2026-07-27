@@ -90,6 +90,7 @@
     // Never persisted — every fresh visit (reload or reopen) lands on the
     // main checklist, never resumes straight into Focus Mode.
     focus: false,
+    leaderboard: [], // [{ display_name, total_minutes, total_sessions }] — Focus Mode only
   };
 
   // Set when a signed-out visitor tries to check a task — captured so
@@ -235,7 +236,7 @@
     app.innerHTML =
       '<div class="reg-card fade-in">' +
       '<h1>MISSION IIT🎯</h1>' +
-      '<p>' + (pendingTask ? 'Sign up to save your progress — it only takes a few seconds.' : 'Enter your details once — we’ll remember you on this browser.') + '</p>' +
+      '<p>' + (pendingTask ? 'Sign up to save your progress. It only takes a few seconds.' : 'Enter your details once. We’ll remember you on this browser.') + '</p>' +
       '<form id="reg-form">' +
       '<div class="reg-field"><label for="reg-email">Your email</label>' +
       '<input id="reg-email" type="email" required autocomplete="email"></div>' +
@@ -342,7 +343,7 @@
         renderCalendar();
       })
       .catch(function (err) {
-        app.innerHTML = '<p class="center-note">Couldn’t load your roadmap — ' + escapeHtml(err.message) + '</p>';
+        app.innerHTML = '<p class="center-note">Couldn’t load your roadmap: ' + escapeHtml(err.message) + '</p>';
       });
   }
 
@@ -360,7 +361,7 @@
     var label = n === 1 ? 'day streak' : 'day streak';
     return '<div class="streak-hero fade-in">' +
       '<div class="streak-flame">🔥</div>' +
-      '<div class="streak-number" id="streak-number">' + (n === null ? '—' : n) + '</div>' +
+      '<div class="streak-number" id="streak-number">' + (n === null ? '-' : n) + '</div>' +
       '<div class="streak-label">' + label + '</div>' +
       '</div>';
   }
@@ -547,7 +548,7 @@
     var html = '';
     html += '<div class="roadmap-head"><h1>MISSION IIT🎯</h1></div>';
     html += '<div class="roadmap-sub">' +
-      '<div class="roadmap-sub-left">' + (state.student ? escapeHtml(state.student.display_name) + ' &middot; <button id="not-you">Not you?</button>' : 'Browsing as guest — tick a task to save your progress') + '</div>' +
+      '<div class="roadmap-sub-left">' + (state.student ? escapeHtml(state.student.display_name) + ' &middot; <button id="not-you">Not you?</button>' : 'Browsing as guest, tick a task to save your progress') + '</div>' +
       '<button id="focus-toggle" class="focus-toggle' + (state.focus ? ' active' : '') + '">' + (state.focus ? '✕ Exit focus' : '◎ Focus mode') + '</button>' +
       '</div>';
 
@@ -571,6 +572,10 @@
       html += renderTodayCard(todayDay, missedBefore.length);
     } else if (state.focus) {
       html += '<p class="center-note">Nothing scheduled for today.</p>';
+    }
+
+    if (state.focus) {
+      html += renderLeaderboardCard();
     }
 
     if (!state.focus) {
@@ -679,6 +684,11 @@
   function pomoTick() {
     pomo.secondsLeft--;
     if (pomo.secondsLeft <= 0) {
+      // Only a genuine tick-to-zero finish counts toward the leaderboard —
+      // checked here (before pomoAdvance flips the mode), not inside
+      // pomoAdvance itself, since pomoSkip also calls that and shouldn't
+      // award credit for a session that wasn't actually completed.
+      if (pomo.mode === 'work') recordPomodoroCompletion(pomoSettings.work);
       pomoAdvance();
     } else {
       updatePomoDisplay();
@@ -826,6 +836,56 @@
     state.focus = true;
     history.pushState({ focus: true }, '');
     renderCalendar();
+    refreshLeaderboard();
+  }
+
+  // ── Weekly focus leaderboard — public display names, ranked by focus
+  // minutes logged since Monday (resets weekly server-side, see
+  // pomodoro-leaderboard.js). Only rendered/fetched in Focus Mode.
+  function renderLeaderboardRows() {
+    if (!state.leaderboard.length) {
+      return '<p class="center-note" style="padding:14px 0;">No focus sessions logged yet. Be the first!</p>';
+    }
+    return state.leaderboard.map(function (r, i) {
+      var hrs = Math.floor(r.total_minutes / 60);
+      var mins = r.total_minutes % 60;
+      var timeLabel = (hrs > 0 ? hrs + 'h ' : '') + mins + 'm';
+      return '<div class="leaderboard-row">' +
+        '<span class="leaderboard-rank">' + (i + 1) + '</span>' +
+        '<span class="leaderboard-name">' + escapeHtml(r.display_name) + '</span>' +
+        '<span class="leaderboard-time">' + timeLabel + '</span>' +
+        '</div>';
+    }).join('');
+  }
+
+  function renderLeaderboardCard() {
+    return '<div class="leaderboard-card fade-in" id="leaderboard-card">' +
+      '<div class="leaderboard-title">🏆 Weekly Focus Leaderboard</div>' +
+      '<div id="leaderboard-rows">' + renderLeaderboardRows() + '</div>' +
+      '</div>';
+  }
+
+  // Patches #leaderboard-rows in place rather than the whole card, so the
+  // card's own .fade-in entrance doesn't replay every time this refreshes.
+  function refreshLeaderboard() {
+    api('/pomodoro-leaderboard')
+      .then(function (r) {
+        state.leaderboard = r.leaderboard || [];
+        var rows = document.getElementById('leaderboard-rows');
+        if (rows) rows.innerHTML = renderLeaderboardRows();
+      })
+      .catch(function () { /* non-critical — leaderboard just stays stale */ });
+  }
+
+  function recordPomodoroCompletion(minutes) {
+    if (!state.student) return; // guests aren't tracked — no identity to credit
+    api('/pomodoro-complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: state.student.email, minutes: minutes }),
+    })
+      .then(refreshLeaderboard)
+      .catch(function () { /* non-critical — this session just won't count this time */ });
   }
 
   function exitFocus() {
