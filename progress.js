@@ -525,7 +525,7 @@
     var warn = card.querySelector('.catchup-warn');
     if (count > 0) {
       var text = '⚠️ ' + count + ' day' + (count === 1 ? '' : 's') +
-        ' incomplete before today. Today’s content builds on those — consider catching up first.';
+        ' incomplete before today. Today’s content builds on those, so consider catching up first.';
       if (warn) {
         warn.textContent = text;
       } else {
@@ -564,18 +564,20 @@
     }
 
     if (state.focus) {
-      html += '<div id="stats-panel">' + buildStatsPanelHtml() + '</div>';
+      html += '<div class="focus-card fade-in" id="focus-card">';
+      html += buildStatsPanelHtml();
       html += renderPomodoro();
-    }
-
-    if (todayDay) {
-      html += renderTodayCard(todayDay, missedBefore.length);
-    } else if (state.focus) {
-      html += '<p class="center-note">Nothing scheduled for today.</p>';
-    }
-
-    if (state.focus) {
+      html += '<div class="focus-divider"></div>';
+      if (todayDay) {
+        html += renderTodayCard(todayDay, missedBefore.length);
+      } else {
+        html += '<p class="center-note">Nothing scheduled for today.</p>';
+      }
+      html += '<div class="focus-divider"></div>';
       html += renderLeaderboardCard();
+      html += '</div>'; // focus-card
+    } else if (todayDay) {
+      html += renderTodayCard(todayDay, missedBefore.length);
     }
 
     if (!state.focus) {
@@ -789,7 +791,7 @@
     html += '<div class="today-date">' + dayLabel(day.date) + '</div>';
     if (missedBeforeCount > 0) {
       html += '<div class="catchup-warn">⚠️ ' + missedBeforeCount + ' day' + (missedBeforeCount === 1 ? '' : 's') +
-        ' incomplete before today. Today’s content builds on those — consider catching up first.</div>';
+        ' incomplete before today. Today’s content builds on those, so consider catching up first.</div>';
     }
     day.tasks.forEach(function (t) {
       html += taskRowHtml(day.date, t);
