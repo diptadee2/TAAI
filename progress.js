@@ -844,6 +844,8 @@
   // ── Weekly focus leaderboard — public display names, ranked by focus
   // minutes logged since Monday (resets weekly server-side, see
   // pomodoro-leaderboard.js). Only rendered/fetched in Focus Mode.
+  var LEADERBOARD_MEDALS = ['🥇', '🥈', '🥉'];
+
   function renderLeaderboardRows() {
     if (!state.leaderboard.length) {
       return '<p class="center-note" style="padding:14px 0;">No focus sessions logged yet. Be the first!</p>';
@@ -852,9 +854,14 @@
       var hrs = Math.floor(r.total_minutes / 60);
       var mins = r.total_minutes % 60;
       var timeLabel = (hrs > 0 ? hrs + 'h ' : '') + mins + 'm';
-      return '<div class="leaderboard-row">' +
-        '<span class="leaderboard-rank">' + (i + 1) + '</span>' +
-        '<span class="leaderboard-name">' + escapeHtml(r.display_name) + '</span>' +
+      var sessionLabel = r.total_sessions + (r.total_sessions === 1 ? ' session' : ' sessions');
+      var rankLabel = LEADERBOARD_MEDALS[i] || (i + 1);
+      return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (r.is_me ? ' leaderboard-row--me' : '') + '">' +
+        '<span class="leaderboard-rank">' + rankLabel + '</span>' +
+        '<span class="leaderboard-info">' +
+        '<span class="leaderboard-name">' + escapeHtml(r.display_name) + (r.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
+        '<span class="leaderboard-sessions">' + sessionLabel + '</span>' +
+        '</span>' +
         '<span class="leaderboard-time">' + timeLabel + '</span>' +
         '</div>';
     }).join('');
@@ -870,7 +877,8 @@
   // Patches #leaderboard-rows in place rather than the whole card, so the
   // card's own .fade-in entrance doesn't replay every time this refreshes.
   function refreshLeaderboard() {
-    api('/pomodoro-leaderboard')
+    var q = state.student ? '?email=' + encodeURIComponent(state.student.email) : '';
+    api('/pomodoro-leaderboard' + q)
       .then(function (r) {
         state.leaderboard = r.leaderboard || [];
         var rows = document.getElementById('leaderboard-rows');

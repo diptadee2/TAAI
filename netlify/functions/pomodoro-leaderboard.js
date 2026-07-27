@@ -1,7 +1,9 @@
-// GET /api/pomodoro-leaderboard
+// GET /api/pomodoro-leaderboard?email=...
 // Top students by focus minutes logged *this week* (Mon-start, IST), for
 // Focus Mode's weekly leaderboard. Display names are shown publicly by
-// design; no email or other identity is returned.
+// design; no email or other identity is returned in the response. The
+// optional `email` query param (the viewer's own, if logged in) is only
+// used to flag their own row with is_me, never anyone else's.
 import { getSupabase, json, weekStartIST } from './lib/supabase.js';
 
 const LIMIT = 20;
@@ -9,6 +11,7 @@ const LIMIT = 20;
 export async function handler(event) {
   if (event.httpMethod !== 'GET') return json(405, { error: 'method not allowed' });
 
+  const viewerEmail = String(event.queryStringParameters?.email || '').trim().toLowerCase();
   const supabase = getSupabase();
 
   const { data: stats, error: statsError } = await supabase
@@ -32,6 +35,7 @@ export async function handler(event) {
     display_name: nameByEmail[s.email] || 'Anonymous',
     total_minutes: s.total_minutes,
     total_sessions: s.total_sessions,
+    is_me: !!viewerEmail && s.email === viewerEmail,
   }));
 
   return json(200, { leaderboard });
