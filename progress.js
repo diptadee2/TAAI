@@ -549,8 +549,8 @@
     html += '<div class="roadmap-head"><h1>MISSION IIT🎯</h1></div>';
     html += '<div class="roadmap-sub">' +
       '<div class="roadmap-sub-left">' + (state.student ? escapeHtml(state.student.display_name) + ' &middot; <button id="not-you">Not you?</button>' : 'Browsing as guest, tick a task to save your progress') + '</div>' +
-      '<button id="focus-toggle" class="focus-toggle' + (state.focus ? ' active' : '') + '">' + (state.focus ? '✕ Exit focus' : '◎ Focus mode') + '</button>' +
       '</div>';
+    html += '<div class="focus-toggle-wrap"><button id="focus-toggle" class="focus-toggle' + (state.focus ? ' active' : '') + '">' + (state.focus ? '✕ Exit focus' : '◎ Focus mode') + '</button></div>';
 
     if (!state.focus) html += '<div class="page-grid"><div class="main-col">';
 
