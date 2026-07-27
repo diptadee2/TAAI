@@ -881,6 +881,7 @@
   function renderLeaderboardCard() {
     return '<div class="leaderboard-card fade-in" id="leaderboard-card">' +
       '<div class="leaderboard-title">🏆 Weekly Focus Leaderboard</div>' +
+      '<div class="leaderboard-subtitle">Resets every Monday</div>' +
       '<div id="leaderboard-rows">' + renderLeaderboardRows() + '</div>' +
       '</div>';
   }
