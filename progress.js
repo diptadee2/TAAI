@@ -869,9 +869,7 @@
       return '<p class="center-note" style="padding:14px 0;">No focus sessions logged yet. Be the first!</p>';
     }
     return state.leaderboard.map(function (r, i) {
-      var hrs = Math.floor(r.total_minutes / 60);
-      var mins = r.total_minutes % 60;
-      var timeLabel = (hrs > 0 ? hrs + 'h ' : '') + mins + 'm';
+      var timeLabel = r.total_minutes + 'm';
       var rankLabel = LEADERBOARD_MEDALS[i] || (i + 1);
       // Session count isn't shown — it's not a comparable stat once session
       // length is customizable per student (pomoSettings.work, 1-180min);
