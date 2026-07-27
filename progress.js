@@ -865,14 +865,14 @@
       var hrs = Math.floor(r.total_minutes / 60);
       var mins = r.total_minutes % 60;
       var timeLabel = (hrs > 0 ? hrs + 'h ' : '') + mins + 'm';
-      var sessionLabel = r.total_sessions + (r.total_sessions === 1 ? ' session' : ' sessions');
       var rankLabel = LEADERBOARD_MEDALS[i] || (i + 1);
+      // Session count isn't shown — it's not a comparable stat once session
+      // length is customizable per student (pomoSettings.work, 1-180min);
+      // total_minutes already accounts for that correctly and is what
+      // actually ranks the list, so it's the only number displayed too.
       return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (r.is_me ? ' leaderboard-row--me' : '') + '">' +
         '<span class="leaderboard-rank">' + rankLabel + '</span>' +
-        '<span class="leaderboard-info">' +
         '<span class="leaderboard-name">' + escapeHtml(r.display_name) + (r.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
-        '<span class="leaderboard-sessions">' + sessionLabel + '</span>' +
-        '</span>' +
         '<span class="leaderboard-time">' + timeLabel + '</span>' +
         '</div>';
     }).join('');
