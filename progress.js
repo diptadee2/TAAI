@@ -43,12 +43,6 @@
   var DEFAULT_POMO_SETTINGS = { work: 25, shortBreak: 5, longBreak: 15, cycle: 4 };
   var POMO_RING_R = 90;
   var POMO_RING_CIRCUMFERENCE = 2 * Math.PI * POMO_RING_R;
-  // If the timer has been ticking continuously for this long with no
-  // manual interaction (Start/Reset/Skip), pause and confirm the student
-  // is actually still there, instead of letting a forgotten-but-open tab
-  // auto-cycle work/break sessions (and rack up leaderboard credit)
-  // indefinitely for days.
-  var POMO_IDLE_CHECK_SECONDS = 10 * 60 * 60;
 
   function clampMinutes(val, fallback, min, max) {
     var n = Number(val);
@@ -83,7 +77,6 @@
     running: false,
     timerId: null,
     completedSessions: 0,
-    activeSeconds: 0, // ticks up while running, reset on any manual interaction
   };
 
   var app = document.getElementById('app');
@@ -691,54 +684,28 @@
   }
 
   function pomoTick() {
-    pomo.activeSeconds++;
-    if (pomo.activeSeconds >= POMO_IDLE_CHECK_SECONDS) {
-      clearInterval(pomo.timerId);
-      pomo.running = false;
-      updatePomoDisplay();
-      showPomoIdleCheck();
-      return;
-    }
-
     pomo.secondsLeft--;
     if (pomo.secondsLeft <= 0) {
       // Only a genuine tick-to-zero finish counts toward the leaderboard —
       // checked here (before pomoAdvance flips the mode), not inside
       // pomoAdvance itself, since pomoSkip also calls that and shouldn't
       // award credit for a session that wasn't actually completed.
-      if (pomo.mode === 'work') recordPomodoroCompletion(pomoSettings.work);
+      var finishedMode = pomo.mode;
+      if (finishedMode === 'work') recordPomodoroCompletion(pomoSettings.work);
       pomoAdvance();
+      if (finishedMode === 'break') {
+        // A break just ended — pause here and require a manual Start for
+        // the next work session, instead of auto-continuing. This is what
+        // actually stops a forgotten-but-open tab from racking up
+        // leaderboard credit indefinitely: it just sits paused after the
+        // first break, earning nothing further, until someone clicks Start.
+        clearInterval(pomo.timerId);
+        pomo.running = false;
+        updatePomoDisplay();
+      }
     } else {
       updatePomoDisplay();
     }
-  }
-
-  // Shown when the timer's been running unattended for POMO_IDLE_CHECK_SECONDS
-  // straight. "Yes" resets the clock and resumes; "No"/dismiss just leaves it
-  // paused, same as if the student had clicked Pause themselves.
-  function showPomoIdleCheck() {
-    var overlay = document.createElement('div');
-    overlay.className = 'pomo-idle-overlay';
-    overlay.innerHTML =
-      '<div class="pomo-idle-modal">' +
-      '<h3>Still there?</h3>' +
-      '<p>Your focus timer has been running for 10 hours straight. Are you still studying?</p>' +
-      '<div class="pomo-idle-actions">' +
-      '<button class="pomo-btn pomo-btn-primary" id="pomo-idle-yes">Yes, continue</button>' +
-      '<button class="pomo-btn pomo-btn-secondary" id="pomo-idle-no">No, stop</button>' +
-      '</div></div>';
-    document.body.appendChild(overlay);
-    document.getElementById('pomo-idle-yes').addEventListener('click', function () {
-      pomo.activeSeconds = 0;
-      pomo.running = true;
-      pomo.timerId = setInterval(pomoTick, 1000);
-      overlay.remove();
-      updatePomoDisplay();
-    });
-    document.getElementById('pomo-idle-no').addEventListener('click', function () {
-      pomo.activeSeconds = 0;
-      overlay.remove();
-    });
   }
 
   function pomoToggleRun() {
@@ -746,7 +713,6 @@
       clearInterval(pomo.timerId);
       pomo.running = false;
     } else {
-      pomo.activeSeconds = 0;
       pomo.running = true;
       pomo.timerId = setInterval(pomoTick, 1000);
     }
@@ -756,7 +722,6 @@
   function pomoReset() {
     clearInterval(pomo.timerId);
     pomo.running = false;
-    pomo.activeSeconds = 0;
     pomo.mode = 'work';
     pomo.totalSeconds = pomoDurationFor('work');
     pomo.secondsLeft = pomo.totalSeconds;
@@ -765,7 +730,6 @@
 
   function pomoSkip() {
     clearInterval(pomo.timerId);
-    pomo.activeSeconds = 0;
     pomoAdvance();
     if (pomo.running) pomo.timerId = setInterval(pomoTick, 1000);
   }
