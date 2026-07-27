@@ -5,6 +5,11 @@
 // pomoTick), not Skip, otherwise a student could spam Skip for free credit.
 import { getSupabase, json, weekStartIST } from './lib/supabase.js';
 
+// Matches the Focus settings panel's own max (progress.js's pomo-set-work
+// input has max="180") — a single real session can never legitimately
+// exceed this, so reject anything bigger rather than trusting the caller.
+const MAX_MINUTES_PER_SESSION = 180;
+
 export async function handler(event) {
   if (event.httpMethod !== 'POST') return json(405, { error: 'method not allowed' });
 
@@ -15,6 +20,9 @@ export async function handler(event) {
   const minutes = Number(body.minutes);
   if (!email || !Number.isFinite(minutes) || minutes <= 0) {
     return json(400, { error: 'email and a positive minutes are required' });
+  }
+  if (minutes > MAX_MINUTES_PER_SESSION) {
+    return json(400, { error: `minutes cannot exceed ${MAX_MINUTES_PER_SESSION}` });
   }
 
   const supabase = getSupabase();
