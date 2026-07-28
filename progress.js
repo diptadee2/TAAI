@@ -891,9 +891,20 @@
       html += '<div class="pomo-gate-title">Focus Timer isn’t available here</div>' +
         '<p class="pomo-gate-body">This browser doesn’t support notifications, which the Focus Timer requires. Try a different browser to use it.</p>';
     } else if (state === 'denied') {
+      // requestPermission() can never re-show the prompt once a browser has
+      // recorded "denied" for this origin — it just silently returns
+      // "denied" again immediately, no dialog, no matter how it's called.
+      // Only the student flipping it in their own browser's site settings
+      // can undo that, so the instructions have to be specific enough to
+      // actually follow rather than a vague "check your settings".
       html += '<div class="pomo-gate-title">Notifications are blocked</div>' +
-        '<p class="pomo-gate-body">Enable notifications for this site in your browser settings, then reload this page to use the Focus Timer.</p>' +
-        '<button class="pomo-btn pomo-btn-primary" id="pomo-gate-reload" type="button">Reload page</button>';
+        '<p class="pomo-gate-body">Your browser saved a “Block” choice for this site earlier, so it can’t prompt you again automatically. To fix it:</p>' +
+        '<ol class="pomo-gate-steps">' +
+        '<li>Click the 🔒 or ⓘ icon next to this page’s address (on Safari: the <strong>Safari</strong> menu → Settings → Websites → Notifications)</li>' +
+        '<li>Set Notifications for this site to <strong>Allow</strong></li>' +
+        '<li>Come back here and reload</li>' +
+        '</ol>' +
+        '<button class="pomo-btn pomo-btn-primary" id="pomo-gate-reload" type="button">I’ve updated it — Reload</button>';
     } else {
       html += '<div class="pomo-gate-title">Focus Timer needs notifications</div>' +
         '<p class="pomo-gate-body">So you’re alerted the moment a session ends, even if you switch tabs. Enable notifications to start.</p>' +
