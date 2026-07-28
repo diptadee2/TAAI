@@ -340,13 +340,17 @@
     app.innerHTML = '<p class="center-note">Loading your roadmap…</p>';
 
     // Guests (no student yet) only need the public schedule — the other
-    // three endpoints are all per-student and would 400 without an email.
+    // endpoints are all per-student and would 400 without an email.
     var calls = [api('/schedule?month=' + monthStr)];
     if (state.student) {
       calls.push(
         api('/progress?email=' + encodeURIComponent(state.student.email) + '&month=' + monthStr),
         api('/streak?email=' + encodeURIComponent(state.student.email)).catch(function () { return { streak: null }; }),
-        api('/subject-progress?email=' + encodeURIComponent(state.student.email)).catch(function () { return { subjects: [] }; })
+        api('/subject-progress?email=' + encodeURIComponent(state.student.email)).catch(function () { return { subjects: [] }; }),
+        // Non-critical if it fails — a fetch error here just means whatever
+        // localStorage/defaults are already loaded stay in effect for this
+        // load, not that the pomodoro timer breaks.
+        api('/pomo-settings?email=' + encodeURIComponent(state.student.email)).catch(function () { return null; })
       );
     }
 
@@ -356,6 +360,26 @@
         var progressRows = state.student ? (results[1].progress || []) : [];
         state.streak = state.student ? results[2].streak : null;
         state.subjectProgress = state.student ? (results[3].subjects || []) : [];
+
+        // Only present once a student has actually saved custom durations
+        // somewhere before (see applyPomoSettings) — merge in place of
+        // whatever localStorage/defaults loaded at module-init time, so a
+        // student's setup follows them to a new device/browser instead of
+        // only living in the one that saved it.
+        var savedPomo = state.student ? results[4] : null;
+        if (savedPomo && savedPomo.work != null) {
+          pomoSettings = {
+            work: savedPomo.work,
+            shortBreak: savedPomo.shortBreak,
+            longBreak: savedPomo.longBreak,
+            cycle: savedPomo.cycle,
+          };
+          savePomoSettings(); // cache locally too, so a later guest-mode reload isn't stuck back on defaults
+          if (!pomo.running) {
+            pomo.totalSeconds = pomoDurationFor(pomo.mode);
+            pomo.secondsLeft = pomo.totalSeconds;
+          }
+        }
 
         var completedSet = new Set(
           progressRows.filter(function (r) { return r.completed; })
@@ -863,6 +887,20 @@
     if (pomo.running) pomo.timerId = setInterval(pomoTick, 1000);
   }
 
+  // Guests have no identity to save durations against — localStorage (see
+  // savePomoSettings) is all they get, same as before this existed. For a
+  // signed-in student this is what makes a customized setup follow them to
+  // a different device/browser instead of only living in the one that
+  // saved it (see loadMonth's pomo-settings fetch for the read side).
+  function saveRemotePomoSettings() {
+    if (!state.student) return;
+    api('/pomo-settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: state.student.email, work: pomoSettings.work, shortBreak: pomoSettings.shortBreak, longBreak: pomoSettings.longBreak, cycle: pomoSettings.cycle }),
+    }).catch(function () { /* non-critical — localStorage on this device still has it */ });
+  }
+
   // Reads the settings form, clamps/validates, persists, and — only if the
   // timer isn't currently mid-countdown — applies immediately to the
   // current phase. A running timer keeps counting down on the old
@@ -875,6 +913,7 @@
     var cycle = clampMinutes(document.getElementById('pomo-set-cycle').value, pomoSettings.cycle, 1, 12);
     pomoSettings = { work: work, shortBreak: shortBreak, longBreak: longBreak, cycle: cycle };
     savePomoSettings();
+    saveRemotePomoSettings();
 
     document.getElementById('pomo-set-work').value = work;
     document.getElementById('pomo-set-short').value = shortBreak;

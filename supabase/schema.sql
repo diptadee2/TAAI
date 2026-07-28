@@ -9,6 +9,16 @@ CREATE TABLE IF NOT EXISTS students (
   created_at    TIMESTAMP DEFAULT now()
 );
 
+-- Per-student pomodoro timer durations, so a customized setup follows a
+-- student across devices/browsers instead of only living in one device's
+-- localStorage (see pomo-settings.js, progress.js's applyPomoSettings).
+-- Nullable — NULL means "never customized, use the client's defaults"
+-- rather than baking DEFAULT_POMO_SETTINGS into the database itself.
+ALTER TABLE students ADD COLUMN IF NOT EXISTS pomo_work_min INTEGER;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS pomo_short_break_min INTEGER;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS pomo_long_break_min INTEGER;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS pomo_cycle_sessions INTEGER;
+
 -- Schedule synced from Google Sheets daily
 CREATE TABLE IF NOT EXISTS schedule_days (
   id          UUID DEFAULT gen_random_uuid() PRIMARY KEY,
