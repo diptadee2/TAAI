@@ -959,6 +959,7 @@
       '<div class="pomo-setting-row"><label for="pomo-set-cycle">Sessions / long break</label><input type="number" id="pomo-set-cycle" min="1" max="12" value="' + pomoSettings.cycle + '"><span></span></div>' +
       '<button class="pomo-test-sound" id="pomo-test-sound" type="button">🔊 Test sound</button>' +
       '<button class="pomo-test-sound" id="pomo-test-notify" type="button">🔔 Test notification</button>' +
+      '<p class="pomo-notify-tip">Nothing showed up? The site allowing notifications isn’t the same as your computer allowing them for this browser — check your OS’s own notification settings for it too.</p>' +
       '<button class="pomo-btn pomo-btn-primary pomo-settings-save" id="pomo-settings-save" type="button">Save</button>' +
       '</div>' +
       '</div>';
