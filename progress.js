@@ -684,26 +684,46 @@
     return filled + ' / ' + pomoSettings.cycle + ' sessions';
   }
 
-  // Short two-tone chime via Web Audio — no audio asset to manage, and it's a
-  // one-shot synthesized tone rather than a decoded/streamed file, so there's
-  // nothing to preload or fail to load.
+  // Created lazily on the first real click of Start, Skip, or the settings
+  // panel's test-sound button — any of those is a genuine user gesture, and
+  // creating the context inside one is what makes the browser start it
+  // "running" instead of auto-suspended. Called from every place that can
+  // trigger a chime (not just Start) because Skip can fire a chime without
+  // Start ever having been pressed first.
+  function ensurePomoAudioCtx() {
+    try {
+      if (!pomoAudioCtx) {
+        var Ctx = window.AudioContext || window.webkitAudioContext;
+        pomoAudioCtx = new Ctx();
+      } else if (pomoAudioCtx.state === 'suspended') {
+        pomoAudioCtx.resume();
+      }
+    } catch (e) { /* Web Audio unsupported — chime just won't play */ }
+  }
+
+  // Two-tone chime via Web Audio — no audio asset to manage, and it's a
+  // one-shot synthesized tone rather than a decoded/streamed file, so
+  // there's nothing to preload or fail to load. Gain peaks at 0.5 (up from
+  // an initial 0.25, which several people testing on laptop speakers
+  // reported as inaudible) — still calling ensurePomoAudioCtx() defensively
+  // here too, in case this ever gets called before any gesture has fired.
   function playPomoChime() {
     try {
+      ensurePomoAudioCtx();
       var ctx = pomoAudioCtx;
-      if (!ctx) return; // no context yet (chime fired before any Start click) — nothing to play
-      if (ctx.state === 'suspended') ctx.resume();
+      if (!ctx) return;
       [660, 880].forEach(function (freq, i) {
         var osc = ctx.createOscillator();
         var gain = ctx.createGain();
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.frequency.value = freq;
-        var start = ctx.currentTime + i * 0.16;
+        var start = ctx.currentTime + i * 0.18;
         gain.gain.setValueAtTime(0.0001, start);
-        gain.gain.exponentialRampToValueAtTime(0.25, start + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.35);
+        gain.gain.exponentialRampToValueAtTime(0.5, start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.45);
         osc.start(start);
-        osc.stop(start + 0.35);
+        osc.stop(start + 0.45);
       });
     } catch (e) { /* Web Audio unsupported/blocked — not critical */ }
   }
@@ -772,17 +792,7 @@
       clearInterval(pomo.timerId);
       pomo.running = false;
     } else {
-      // Create (or resume) the shared chime AudioContext right here, inside
-      // the actual click handler — see the pomoAudioCtx declaration for why
-      // this has to happen on a real gesture rather than lazily on first chime.
-      if (!pomoAudioCtx) {
-        try {
-          var Ctx = window.AudioContext || window.webkitAudioContext;
-          pomoAudioCtx = new Ctx();
-        } catch (e) { /* Web Audio unsupported — chime just won't play */ }
-      } else if (pomoAudioCtx.state === 'suspended') {
-        pomoAudioCtx.resume();
-      }
+      ensurePomoAudioCtx(); // real click — unlocks audio for the chime that fires later, unattended
       pomo.phaseEndAt = Date.now() + pomo.secondsLeft * 1000;
       pomo.running = true;
       pomo.timerId = setInterval(pomoTick, 1000);
@@ -800,6 +810,7 @@
   }
 
   function pomoSkip() {
+    ensurePomoAudioCtx(); // real click — Skip can fire a chime even if Start was never pressed
     clearInterval(pomo.timerId);
     pomoAdvance();
     if (pomo.running) pomo.timerId = setInterval(pomoTick, 1000);
@@ -863,6 +874,7 @@
       '<div class="pomo-setting-row"><label for="pomo-set-short">Short break</label><input type="number" id="pomo-set-short" min="1" max="60" value="' + pomoSettings.shortBreak + '"><span>min</span></div>' +
       '<div class="pomo-setting-row"><label for="pomo-set-long">Long break</label><input type="number" id="pomo-set-long" min="1" max="90" value="' + pomoSettings.longBreak + '"><span>min</span></div>' +
       '<div class="pomo-setting-row"><label for="pomo-set-cycle">Sessions / long break</label><input type="number" id="pomo-set-cycle" min="1" max="12" value="' + pomoSettings.cycle + '"><span></span></div>' +
+      '<button class="pomo-test-sound" id="pomo-test-sound" type="button">🔊 Test sound</button>' +
       '<button class="pomo-btn pomo-btn-primary pomo-settings-save" id="pomo-settings-save" type="button">Save</button>' +
       '</div>' +
       '</div>';
@@ -1024,6 +1036,12 @@
     });
     var pomoSettingsSave = document.getElementById('pomo-settings-save');
     if (pomoSettingsSave) pomoSettingsSave.addEventListener('click', applyPomoSettings);
+
+    var pomoTestSound = document.getElementById('pomo-test-sound');
+    if (pomoTestSound) pomoTestSound.addEventListener('click', function () {
+      ensurePomoAudioCtx();
+      playPomoChime();
+    });
 
     var prev = document.getElementById('prev-month');
     if (prev) prev.addEventListener('click', function () { loadMonth(shiftMonth(state.month, -1)); });
