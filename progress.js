@@ -128,6 +128,8 @@
     // main checklist, never resumes straight into Focus Mode.
     focus: false,
     leaderboard: [], // [{ display_name, total_minutes, total_sessions }] — Focus Mode only
+    renaming: false, // showing the inline rename form in place of the name + Rename/Not you? line
+    renameError: null,
   };
 
   // Set when a signed-out visitor tries to check a task — captured so
@@ -640,6 +642,22 @@
     }
   }
 
+  // Explicit rename only, via the "Rename" link below — separate from
+  // registration, which recognizes a returning student by email and
+  // deliberately ignores a differently-typed name (see register.js).
+  function renderIdentityLine() {
+    if (!state.student) return 'Browsing as guest, tick a task to save your progress';
+    if (state.renaming) {
+      return '<form id="rename-form" class="rename-form">' +
+        '<input id="rename-input" type="text" value="' + escapeAttr(state.student.display_name) + '" maxlength="60" required autocomplete="name">' +
+        '<button type="submit" class="rename-save">Save</button>' +
+        '<button type="button" id="rename-cancel" class="rename-cancel">Cancel</button>' +
+        (state.renameError ? '<span class="rename-error">' + escapeHtml(state.renameError) + '</span>' : '') +
+        '</form>';
+    }
+    return escapeHtml(state.student.display_name) + ' &middot; <button id="rename-toggle">Rename</button> &middot; <button id="not-you">Not you?</button>';
+  }
+
   function renderCalendar() {
     var today = todayIso();
     var todayDay = state.days.find(function (d) { return d.date === today; });
@@ -648,7 +666,7 @@
     var html = '';
     html += '<div class="roadmap-head"><h1>MISSION IIT🎯</h1></div>';
     html += '<div class="roadmap-sub">' +
-      '<div class="roadmap-sub-left">' + (state.student ? escapeHtml(state.student.display_name) + ' &middot; <button id="not-you">Not you?</button>' : 'Browsing as guest, tick a task to save your progress') + '</div>' +
+      '<div class="roadmap-sub-left">' + renderIdentityLine() + '</div>' +
       '</div>';
     // Rendered inside main-col below (not here) when not in Focus Mode, so it
     // centers against the calendar column's own width, not the full page
@@ -1155,6 +1173,48 @@
       clearCookie();
       state.student = null;
       loadMonth(state.month);
+    });
+
+    var renameToggle = document.getElementById('rename-toggle');
+    if (renameToggle) renameToggle.addEventListener('click', function () {
+      state.renaming = true;
+      state.renameError = null;
+      renderCalendar();
+      var input = document.getElementById('rename-input');
+      if (input) { input.focus(); input.select(); }
+    });
+
+    var renameCancel = document.getElementById('rename-cancel');
+    if (renameCancel) renameCancel.addEventListener('click', function () {
+      state.renaming = false;
+      state.renameError = null;
+      renderCalendar();
+    });
+
+    var renameForm = document.getElementById('rename-form');
+    if (renameForm) renameForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var input = document.getElementById('rename-input');
+      var newName = input.value.trim();
+      if (!newName) return;
+      var btn = renameForm.querySelector('.rename-save');
+      btn.disabled = true;
+      api('/rename', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: state.student.email, display_name: newName }),
+      })
+        .then(function (updated) {
+          state.student.display_name = updated.display_name;
+          writeCookie(state.student);
+          state.renaming = false;
+          state.renameError = null;
+          renderCalendar();
+        })
+        .catch(function (err) {
+          state.renameError = err.message;
+          renderCalendar();
+        });
     });
 
     var focusToggle = document.getElementById('focus-toggle');
