@@ -119,6 +119,7 @@
     student: null,
     month: currentMonthStr(),
     days: [], // [{ date, tasks: [{subject, task_text, position, completed}] }]
+    latestScheduledMonth: null, // 'YYYY-MM' with any schedule data at all, from schedule.js — caps month-nav's "next" arrow
     streak: null,
     subjectProgress: [], // [{ subject, done, total }] — global, independent of viewed month
     expanded: new Set(), // dates whose day-card is open, non-native accordion
@@ -381,6 +382,7 @@
     Promise.all(calls)
       .then(function (results) {
         var scheduleDays = results[0].days || [];
+        state.latestScheduledMonth = results[0].latestMonth || null;
         var progressRows = state.student ? (results[1].progress || []) : [];
         state.streak = state.student ? results[2].streak : null;
         state.subjectProgress = state.student ? (results[3].subjects || []) : [];
@@ -706,7 +708,8 @@
       html += '<div class="month-nav"><button id="prev-month" aria-label="Previous month"' +
         (state.month <= SCHEDULE_START_MONTH ? ' disabled' : '') + '>&larr;</button>' +
         '<span class="month-label">' + monthLabel(state.month) + '</span>' +
-        '<button id="next-month" aria-label="Next month">&rarr;</button></div>';
+        '<button id="next-month" aria-label="Next month"' +
+        (state.latestScheduledMonth && state.month >= state.latestScheduledMonth ? ' disabled' : '') + '>&rarr;</button></div>';
     }
 
     if (state.focus) {
