@@ -440,9 +440,13 @@
   function renderStreakHero() {
     var n = state.streak;
     var label = n === 1 ? 'day streak' : 'day streak';
+    // The gradient-clipped-text style below makes any short flat glyph
+    // (like the guest placeholder "-") render as a solid colored block
+    // instead of reading as a dash — streak-number--empty turns that
+    // effect off just for this state so it actually looks like a dash.
     return '<div class="streak-hero fade-in">' +
       '<div class="streak-flame">🔥</div>' +
-      '<div class="streak-number" id="streak-number">' + (n === null ? '-' : n) + '</div>' +
+      '<div class="streak-number' + (n === null ? ' streak-number--empty' : '') + '" id="streak-number">' + (n === null ? '–' : n) + '</div>' +
       '<div class="streak-label">' + label + '</div>' +
       '</div>';
   }
