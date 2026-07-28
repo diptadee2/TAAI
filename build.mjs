@@ -45,8 +45,19 @@ function compilePage(filename) {
     compact: false,
   });
 
-  // 3. Replace <script type="text/babel"…> with <script>
-  let out = src.replace(babelRe, `<script>\n${code}\n</script>`);
+  // 3. Replace <script type="text/babel"…> with a plain <script>, but
+  // with its body wrapped in a DOMContentLoaded listener rather than run
+  // immediately. This has to happen because step 5 below defers the
+  // React/ReactDOM vendor scripts, and `defer` has NO EFFECT on inline
+  // scripts (only ones with a src attribute) per the HTML spec — a plain
+  // inline script always runs the instant the parser reaches it,
+  // regardless of a defer attribute on the tag. Without this wrapper the
+  // compiled app code would run before the deferred React/ReactDOM
+  // scripts had actually executed, throwing "React is not defined".
+  // DOMContentLoaded fires only after every deferred script has run, so
+  // wrapping in that guarantees the same effective ordering `defer` would
+  // have given an external script.
+  let out = src.replace(babelRe, `<script>\ndocument.addEventListener('DOMContentLoaded', function () {\n${code}\n});\n</script>`);
 
   // 4. Remove Babel standalone <script> tag entirely
   out = out.replace(
@@ -54,14 +65,17 @@ function compilePage(filename) {
     ''
   );
 
-  // 5. Replace CDN React/ReactDOM with local vendor files
+  // 5. Replace CDN React/ReactDOM with local vendor files, deferred so
+  // they don't block initial render (see the comment on step 3 above for
+  // why the compiled app script also has to be deferred for this to be
+  // safe).
   out = out.replace(
     /<script\s[^>]*unpkg\.com\/react@[^/]+\/umd\/react\.[^"]*"[^>]*><\/script>/i,
-    '<script src="vendor/react.min.js"></script>'
+    '<script defer src="vendor/react.min.js"></script>'
   );
   out = out.replace(
     /<script\s[^>]*unpkg\.com\/react-dom@[^/]+\/umd\/react-dom\.[^"]*"[^>]*><\/script>/i,
-    '<script src="vendor/react-dom.min.js"></script>'
+    '<script defer src="vendor/react-dom.min.js"></script>'
   );
 
   fs.writeFileSync(path.join(DIST, filename), out);
