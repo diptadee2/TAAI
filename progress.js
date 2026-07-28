@@ -70,24 +70,23 @@
 
   var pomoSettings = loadPomoSettings();
 
-  // Opt-in browser notification on phase change — mainly a Safari fallback:
-  // WebKit blocks a webpage from starting *new* audio from an unattended
-  // timer (only audio started synchronously inside a real click/tap is
-  // allowed), so the chime is unreliable there no matter how the
-  // AudioContext is managed. A Notification isn't subject to that same
-  // audio-autoplay rule, so it's the one alert that can actually reach
-  // someone on Safari who's tabbed away. This flag mirrors the user's own
-  // choice (localStorage), separate from the browser's own granted/denied
-  // Notification.permission — turning the setting off shouldn't require
-  // revoking the browser permission too.
-  var POMO_NOTIFY_KEY = 'taai_pomo_notify';
-  function loadPomoNotifyPref() {
-    return localStorage.getItem(POMO_NOTIFY_KEY) === '1';
+  // Notifications are mandatory to use the Focus Timer at all (not just an
+  // opt-in extra) — mainly a Safari fallback: WebKit blocks a webpage from
+  // starting *new* audio from an unattended timer (only audio started
+  // synchronously inside a real click/tap is allowed), so the chime alone
+  // is unreliable there no matter how the AudioContext is managed. A
+  // Notification isn't subject to that same audio-autoplay rule, so
+  // requiring it up front guarantees every student actually gets alerted
+  // when a phase ends, not just the ones who happen to have the tab
+  // focused. renderPomodoro() gates the whole card on this — no Start
+  // button exists at all until it returns 'granted'. Deliberately no
+  // "unsupported browser" exception: a browser with no Notification API at
+  // all (e.g. iOS Safari outside an installed home-screen app) simply
+  // can't use the Focus Timer, by explicit choice, not oversight.
+  function pomoNotifyState() {
+    if (typeof Notification === 'undefined') return 'unsupported';
+    return Notification.permission; // 'default' | 'denied' | 'granted'
   }
-  function savePomoNotifyPref() {
-    localStorage.setItem(POMO_NOTIFY_KEY, pomoNotifyEnabled ? '1' : '0');
-  }
-  var pomoNotifyEnabled = loadPomoNotifyPref();
 
   // Created lazily, only inside a real click handler (see pomoToggleRun) —
   // browsers auto-suspend an AudioContext instantiated outside a genuine
@@ -751,8 +750,11 @@
   // pomoAdvance directly) — same reasoning as the leaderboard credit gating,
   // so skipping a phase doesn't also spam a notification.
   function maybeSendPomoNotification(finishedMode) {
-    if (!pomoNotifyEnabled) return;
-    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    // Defensive, not the primary gate — the Start button can't even be
+    // reached unless permission was already 'granted' (see renderPomodoro),
+    // but a student could revoke it mid-session via browser settings, so
+    // this still checks fresh rather than assuming.
+    if (pomoNotifyState() !== 'granted') return;
     var title = finishedMode === 'work' ? 'Focus session complete 🎉' : "Break's over ⏰";
     var body = finishedMode === 'work' ? 'Nice work — time for a break.' : 'Come back and hit Start to keep going.';
     try {
@@ -879,20 +881,32 @@
     if (panel) panel.hidden = true;
   }
 
-  // There's nothing our own toggle can do to override a browser-level
-  // block from JS, so the hint (patched via updatePomoNotifyHint, never a
-  // full re-render — see the notify-toggle change handler for why) points
-  // the student at their browser settings instead of leaving the checkbox
-  // silently un-checkable with no explanation.
-  function pomoNotifyBlocked() {
-    return typeof Notification !== 'undefined' && Notification.permission === 'denied';
-  }
-  function updatePomoNotifyHint() {
-    var hint = document.getElementById('pomo-notify-hint');
-    if (hint) hint.hidden = !pomoNotifyBlocked();
+  // The gate shown in place of the real timer until notifications are
+  // granted (see renderPomodoro). Not a full-featured card — no settings,
+  // no Start/Reset/Skip — since nothing about the timer is usable yet.
+  function renderPomoGate(state) {
+    var html = '<div class="pomodoro-card pomodoro-gate fade-in" id="pomo-card">' +
+      '<div class="pomo-gate-icon">🔔</div>';
+    if (state === 'unsupported') {
+      html += '<div class="pomo-gate-title">Focus Timer isn’t available here</div>' +
+        '<p class="pomo-gate-body">This browser doesn’t support notifications, which the Focus Timer requires. Try a different browser to use it.</p>';
+    } else if (state === 'denied') {
+      html += '<div class="pomo-gate-title">Notifications are blocked</div>' +
+        '<p class="pomo-gate-body">Enable notifications for this site in your browser settings, then reload this page to use the Focus Timer.</p>' +
+        '<button class="pomo-btn pomo-btn-primary" id="pomo-gate-reload" type="button">Reload page</button>';
+    } else {
+      html += '<div class="pomo-gate-title">Focus Timer needs notifications</div>' +
+        '<p class="pomo-gate-body">So you’re alerted the moment a session ends, even if you switch tabs. Enable notifications to start.</p>' +
+        '<button class="pomo-btn pomo-btn-primary" id="pomo-gate-enable" type="button">Enable notifications</button>';
+    }
+    html += '</div>';
+    return html;
   }
 
   function renderPomodoro() {
+    var notifyState = pomoNotifyState();
+    if (notifyState !== 'granted') return renderPomoGate(notifyState);
+
     var frac = pomo.totalSeconds > 0 ? pomo.secondsLeft / pomo.totalSeconds : 1;
     var offset = POMO_RING_CIRCUMFERENCE * (1 - frac);
 
@@ -922,8 +936,6 @@
       '<div class="pomo-setting-row"><label for="pomo-set-short">Short break</label><input type="number" id="pomo-set-short" min="1" max="60" value="' + pomoSettings.shortBreak + '"><span>min</span></div>' +
       '<div class="pomo-setting-row"><label for="pomo-set-long">Long break</label><input type="number" id="pomo-set-long" min="1" max="90" value="' + pomoSettings.longBreak + '"><span>min</span></div>' +
       '<div class="pomo-setting-row"><label for="pomo-set-cycle">Sessions / long break</label><input type="number" id="pomo-set-cycle" min="1" max="12" value="' + pomoSettings.cycle + '"><span></span></div>' +
-      '<div class="pomo-setting-row"><label for="pomo-notify-toggle">🔔 Notify on session end</label><input type="checkbox" id="pomo-notify-toggle"' + (pomoNotifyEnabled ? ' checked' : '') + '></div>' +
-      '<div class="pomo-notify-hint" id="pomo-notify-hint"' + (pomoNotifyBlocked() ? '' : ' hidden') + '>Blocked — enable notifications for this site in your browser settings to turn this on.</div>' +
       '<button class="pomo-test-sound" id="pomo-test-sound" type="button">🔊 Test sound</button>' +
       '<button class="pomo-btn pomo-btn-primary pomo-settings-save" id="pomo-settings-save" type="button">Save</button>' +
       '</div>' +
@@ -1093,35 +1105,19 @@
       playPomoChime();
     });
 
-    var pomoNotifyToggle = document.getElementById('pomo-notify-toggle');
-    if (pomoNotifyToggle) pomoNotifyToggle.addEventListener('change', function () {
-      if (!pomoNotifyToggle.checked) {
-        pomoNotifyEnabled = false;
-        savePomoNotifyPref();
-        return;
-      }
-      if (typeof Notification === 'undefined') { pomoNotifyToggle.checked = false; return; }
-      if (Notification.permission === 'denied') {
-        // Browser already blocked this origin — JS can't re-prompt, only
-        // the student's own browser settings can undo that.
-        pomoNotifyToggle.checked = false;
-        updatePomoNotifyHint();
-        return;
-      }
-      if (Notification.permission === 'granted') {
-        pomoNotifyEnabled = true;
-        savePomoNotifyPref();
-        return;
-      }
-      // 'default' — this click is the real user gesture the permission
-      // prompt requires; requesting it from anywhere else gets auto-denied
-      // or silently ignored by modern browsers.
-      Notification.requestPermission().then(function (perm) {
-        pomoNotifyEnabled = perm === 'granted';
-        pomoNotifyToggle.checked = pomoNotifyEnabled;
-        savePomoNotifyPref();
-        updatePomoNotifyHint();
+    var pomoGateEnable = document.getElementById('pomo-gate-enable');
+    if (pomoGateEnable) pomoGateEnable.addEventListener('click', function () {
+      // This click is the real user gesture the permission prompt
+      // requires; requesting it from anywhere else gets auto-denied or
+      // silently ignored by modern browsers.
+      Notification.requestPermission().then(function () {
+        renderCalendar(); // re-render swaps the gate for the real timer once granted
       });
+    });
+
+    var pomoGateReload = document.getElementById('pomo-gate-reload');
+    if (pomoGateReload) pomoGateReload.addEventListener('click', function () {
+      location.reload();
     });
 
     var prev = document.getElementById('prev-month');
