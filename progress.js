@@ -793,12 +793,19 @@
   // an initial 0.25, which several people testing on laptop speakers
   // reported as inaudible) — still calling ensurePomoAudioCtx() defensively
   // here too, in case this ever gets called before any gesture has fired.
-  function playPomoChime() {
+  //
+  // finishedMode picks which phase just ended: an ascending pair for a
+  // finished work session (entering a break — the "reward" chime) vs. a
+  // descending pair for a finished break (back to work), so the two are
+  // tellable apart by ear alone. Defaults to the work-session chime when
+  // called with no argument (the Test sound button plays both explicitly).
+  function playPomoChime(finishedMode) {
     try {
       ensurePomoAudioCtx();
       var ctx = pomoAudioCtx;
       if (!ctx) return;
-      [660, 880].forEach(function (freq, i) {
+      var freqs = finishedMode === 'break' ? [784, 659] : [660, 880];
+      freqs.forEach(function (freq, i) {
         var osc = ctx.createOscillator();
         var gain = ctx.createGain();
         osc.connect(gain);
@@ -857,12 +864,17 @@
   }
 
   function pomoAdvance() {
+    // Captured before pomo.mode flips below, so playPomoChime knows which
+    // phase just ended (also correct when called from pomoSkip, which
+    // skips straight to this — the mode being left is still whatever
+    // pomo.mode was a moment ago).
+    var finishedMode = pomo.mode;
     if (pomo.mode === 'work') pomo.completedSessions++;
     pomo.mode = pomo.mode === 'work' ? 'break' : 'work';
     pomo.totalSeconds = pomoDurationFor(pomo.mode);
     pomo.secondsLeft = pomo.totalSeconds;
     pomo.phaseEndAt = Date.now() + pomo.totalSeconds * 1000;
-    playPomoChime();
+    playPomoChime(finishedMode);
     updatePomoDisplay();
   }
 
@@ -1240,7 +1252,11 @@
     var pomoTestSound = document.getElementById('pomo-test-sound');
     if (pomoTestSound) pomoTestSound.addEventListener('click', function () {
       ensurePomoAudioCtx();
-      playPomoChime();
+      // Previews both, back to back, since there are now two distinct
+      // chimes — 700ms covers one chime's own ~0.63s (two tones 0.18s
+      // apart, each ringing for 0.45s) before the next one starts.
+      playPomoChime('work');
+      setTimeout(function () { playPomoChime('break'); }, 700);
     });
 
     var pomoTestNotify = document.getElementById('pomo-test-notify');
