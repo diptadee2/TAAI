@@ -831,7 +831,10 @@
     // this still checks fresh rather than assuming.
     if (pomoNotifyState() !== 'granted') return;
     var title = finishedMode === 'work' ? 'Focus session complete 🎉' : "Break's over ⏰";
-    var body = finishedMode === 'work' ? 'Nice work — time for a break.' : 'Come back and hit Start to keep going.';
+    var progress = pomoSessionLabel() + ' today';
+    var body = finishedMode === 'work'
+      ? 'Nice work — time for a break. ' + progress + '.'
+      : 'Come back and hit Start to keep going. ' + progress + '.';
     try {
       // tag replaces any notification already showing instead of stacking
       // them, in case several phases finish while the tab is untouched.
@@ -887,8 +890,11 @@
       // award credit for a session that wasn't actually completed.
       var finishedMode = pomo.mode;
       if (finishedMode === 'work') recordPomodoroCompletion(pomoSettings.work);
-      maybeSendPomoNotification(finishedMode);
+      // pomoAdvance first, not after — it's what increments
+      // completedSessions, and the notification body wants that already
+      // updated rather than showing the pre-completion count.
       pomoAdvance();
+      maybeSendPomoNotification(finishedMode);
       if (finishedMode === 'break') {
         // A break just ended — pause here and require a manual Start for
         // the next work session, instead of auto-continuing. This is what
