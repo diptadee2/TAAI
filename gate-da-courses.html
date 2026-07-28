@@ -1404,8 +1404,8 @@ body.buttons-visible .mcb-wa:hover { transform: scale(1.12); transition-delay: 0
         {
           "@type": "ListItem", "position": 9,
           "item": {
-            "@type": "Course", "name": "Interview Preparation — DS & AI",
-            "description": "Career prep for AI and Data Science roles: end-to-end projects, practice interviews, resume reviews, and industry mentorship. Coming soon — preview available on YouTube now.",
+            "@type": "Course", "name": "Interview Preparation: DS & AI",
+            "description": "Career prep for AI and Data Science roles: end-to-end projects, practice interviews, resume reviews, and industry mentorship. Coming soon, preview available on YouTube now.",
             "provider": { "@id": "https://taai.live/#organization" },
             "url": "https://taai.live/gate-da-courses#interview"
           }
@@ -2024,9 +2024,9 @@ function BundleComparison({ pricingMap }) {
     { label: '1,000+ quiz questions',                 full: true,  ml: true,  maths: true,  group: 'Study Materials' },
     { label: 'Discord community support',             full: true,  ml: true,  maths: true,  group: 'Support'         },
     { label: 'Course valid until',
-      fullText:  fmtDate((pricingMap['full-course']    || {}).validity) || '—',
-      mlText:    fmtDate((pricingMap['maths-ml-bundle']|| {}).validity) || '—',
-      mathsText: fmtDate((pricingMap['maths-bundle']   || {}).validity) || '—',
+      fullText:  fmtDate((pricingMap['full-course']    || {}).validity) || '-',
+      mlText:    fmtDate((pricingMap['maths-ml-bundle']|| {}).validity) || '-',
+      mathsText: fmtDate((pricingMap['maths-bundle']   || {}).validity) || '-',
       group: 'Support' },
   ];
   const loaded = Object.keys(pricingMap).length > 0;
@@ -2078,15 +2078,15 @@ function BundleComparison({ pricingMap }) {
             <div className="compare-footer">
               <div className="compare-footer-cell" />
               <div className="compare-footer-cell featured">
-                <span className={`compare-price best${loaded ? ' data-fade-in' : ''}`}>{fmtPrice((pricingMap['full-course']||{}).price) || '—'}</span>
+                <span className={`compare-price best${loaded ? ' data-fade-in' : ''}`}>{fmtPrice((pricingMap['full-course']||{}).price) || '-'}</span>
                 <a href="https://learn.taai.live/learn/batch/GATE-2027/content" target="_blank" rel="noopener noreferrer" className="compare-enroll-btn featured">Enrol now</a>
               </div>
               <div className="compare-footer-cell">
-                <span className={`compare-price${loaded ? ' data-fade-in' : ''}`}>{fmtPrice((pricingMap['maths-ml-bundle']||{}).price) || '—'}</span>
+                <span className={`compare-price${loaded ? ' data-fade-in' : ''}`}>{fmtPrice((pricingMap['maths-ml-bundle']||{}).price) || '-'}</span>
                 <a href="https://learn.taai.live/learn/Maths--ML---AI-Bundle---GATE-2026" target="_blank" rel="noopener noreferrer" className="compare-enroll-btn">Enrol now</a>
               </div>
               <div className="compare-footer-cell">
-                <span className={`compare-price${loaded ? ' data-fade-in' : ''}`}>{fmtPrice((pricingMap['maths-bundle']||{}).price) || '—'}</span>
+                <span className={`compare-price${loaded ? ' data-fade-in' : ''}`}>{fmtPrice((pricingMap['maths-bundle']||{}).price) || '-'}</span>
                 <a href="https://learn.taai.live/learn/Mathematics-Course-by-manoj-sir-gate-2026-gateda" target="_blank" rel="noopener noreferrer" className="compare-enroll-btn">Enrol now</a>
               </div>
             </div>
@@ -2104,14 +2104,14 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   const p = pricing;
   const live = !!p;
   const pd = p || {};
-  const price            = pd.price    ? fmtPrice(pd.price)    : '—';
+  const price            = pd.price    ? fmtPrice(pd.price)    : '-';
   const priceOld         = pd.priceOld ? fmtPrice(pd.priceOld) : null;
   const discountRaw      = pd.discount || null;
   const discount         = discountRaw ? (isNaN(discountRaw) ? discountRaw : discountRaw + '% off') : null;
   const discountDeadline = pd.discountDeadline ? fmtDeadline(pd.discountDeadline) : null;
   const discountReason   = pd.discountReason  || null;
   const saving           = c.saving;
-  const validity         = pd.validity ? fmtValidity(pd.validity) : '—';
+  const validity         = pd.validity ? fmtValidity(pd.validity) : '-';
   const featured = c.badge === 'best';
   const cls = 'combo-card card' + (featured ? ' featured' : '') + (c.theme ? ` combo-${c.theme}` : '');
   const spotlightProps = {
@@ -2160,9 +2160,9 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
 
 const CourseCard = React.memo(function CourseCard({ c, pricing }) {
   const p        = pricing || {};
-  const price    = p.price    ? fmtPrice(p.price)    : '—';
+  const price    = p.price    ? fmtPrice(p.price)    : '-';
   const priceOld = p.priceOld ? fmtPrice(p.priceOld) : null;
-  const validity = p.validity ? fmtValidity(p.validity) : '—';
+  const validity = p.validity ? fmtValidity(p.validity) : '-';
   return (
     <div id={c.id} className="course-card card" style={{ '--course-grad': c.grad, '--course-shadow': c.shadow }}>
       <div className="course-accent" style={{ background: c.grad }} />
