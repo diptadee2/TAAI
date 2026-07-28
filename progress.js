@@ -70,6 +70,14 @@
 
   var pomoSettings = loadPomoSettings();
 
+  // Created lazily, only inside a real click handler (see pomoToggleRun) —
+  // browsers auto-suspend an AudioContext instantiated outside a genuine
+  // user gesture, and a chime fired later from setInterval doesn't count as
+  // one, so a fresh `new AudioContext()` per tick silently never plays.
+  // Reusing one context created at Start-click time and resuming it avoids
+  // that.
+  var pomoAudioCtx = null;
+
   var pomo = {
     mode: 'work', // 'work' | 'break'
     secondsLeft: pomoSettings.work * 60,
@@ -664,8 +672,9 @@
   // nothing to preload or fail to load.
   function playPomoChime() {
     try {
-      var Ctx = window.AudioContext || window.webkitAudioContext;
-      var ctx = new Ctx();
+      var ctx = pomoAudioCtx;
+      if (!ctx) return; // no context yet (chime fired before any Start click) — nothing to play
+      if (ctx.state === 'suspended') ctx.resume();
       [660, 880].forEach(function (freq, i) {
         var osc = ctx.createOscillator();
         var gain = ctx.createGain();
@@ -743,6 +752,17 @@
       clearInterval(pomo.timerId);
       pomo.running = false;
     } else {
+      // Create (or resume) the shared chime AudioContext right here, inside
+      // the actual click handler — see the pomoAudioCtx declaration for why
+      // this has to happen on a real gesture rather than lazily on first chime.
+      if (!pomoAudioCtx) {
+        try {
+          var Ctx = window.AudioContext || window.webkitAudioContext;
+          pomoAudioCtx = new Ctx();
+        } catch (e) { /* Web Audio unsupported — chime just won't play */ }
+      } else if (pomoAudioCtx.state === 'suspended') {
+        pomoAudioCtx.resume();
+      }
       pomo.running = true;
       pomo.timerId = setInterval(pomoTick, 1000);
     }
