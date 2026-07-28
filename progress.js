@@ -1095,6 +1095,7 @@
       '<button id="pomo-reset" class="pomo-btn pomo-btn-secondary">Reset</button>' +
       '<button id="pomo-skip" class="pomo-btn pomo-btn-secondary">Skip</button>' +
       '</div>' +
+      '<p class="pomo-notify-permanent-tip">🔔 Notifications need your computer’s permission too, not just this site’s — check your OS’s own notification settings for this browser if they don’t show up.</p>' +
       renderPomoNotifyNotice() +
       '<div class="pomo-settings" id="pomo-settings" hidden>' +
       '<div class="pomo-setting-row"><label for="pomo-set-work">Focus</label><input type="number" id="pomo-set-work" min="1" max="180" value="' + pomoSettings.work + '"><span>min</span></div>' +
