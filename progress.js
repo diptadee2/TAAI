@@ -85,6 +85,15 @@
     running: false,
     timerId: null,
     completedSessions: 0,
+    // Wall-clock deadline (Date.now() + secondsLeft*1000) set whenever the
+    // timer starts/resumes. pomoTick derives secondsLeft from this rather
+    // than decrementing per-tick, because background tabs get their
+    // setInterval throttled (Chrome clamps a hidden tab's timers to ~once/
+    // minute after it's been backgrounded a while) — a pure decrement would
+    // silently fall behind real elapsed time whenever the student switches
+    // tabs. Deriving from a deadline means whatever tick eventually does
+    // fire always reports the true remaining time.
+    phaseEndAt: null,
   };
 
   var app = document.getElementById('app');
@@ -667,6 +676,14 @@
     return dots;
   }
 
+  // The dots alone are easy to miss/misread at a glance (tiny, same shape,
+  // color is the only distinguishing signal) — this spells out the same
+  // count as text underneath.
+  function pomoSessionLabel() {
+    var filled = pomo.completedSessions % pomoSettings.cycle;
+    return filled + ' / ' + pomoSettings.cycle + ' sessions';
+  }
+
   // Short two-tone chime via Web Audio — no audio asset to manage, and it's a
   // one-shot synthesized tone rather than a decoded/streamed file, so there's
   // nothing to preload or fail to load.
@@ -704,6 +721,8 @@
     if (timeEl) timeEl.textContent = formatPomoTime(pomo.secondsLeft);
     var dotsEl = document.getElementById('pomo-dots');
     if (dotsEl) dotsEl.textContent = pomoDotsText();
+    var sessionLabelEl = document.getElementById('pomo-session-label');
+    if (sessionLabelEl) sessionLabelEl.textContent = pomoSessionLabel();
     var toggleBtn = document.getElementById('pomo-toggle');
     if (toggleBtn) toggleBtn.textContent = pomo.running ? 'Pause' : 'Start';
     var ring = document.getElementById('pomo-ring-progress');
@@ -718,12 +737,13 @@
     pomo.mode = pomo.mode === 'work' ? 'break' : 'work';
     pomo.totalSeconds = pomoDurationFor(pomo.mode);
     pomo.secondsLeft = pomo.totalSeconds;
+    pomo.phaseEndAt = Date.now() + pomo.totalSeconds * 1000;
     playPomoChime();
     updatePomoDisplay();
   }
 
   function pomoTick() {
-    pomo.secondsLeft--;
+    pomo.secondsLeft = Math.max(0, Math.round((pomo.phaseEndAt - Date.now()) / 1000));
     if (pomo.secondsLeft <= 0) {
       // Only a genuine tick-to-zero finish counts toward the leaderboard —
       // checked here (before pomoAdvance flips the mode), not inside
@@ -763,6 +783,7 @@
       } else if (pomoAudioCtx.state === 'suspended') {
         pomoAudioCtx.resume();
       }
+      pomo.phaseEndAt = Date.now() + pomo.secondsLeft * 1000;
       pomo.running = true;
       pomo.timerId = setInterval(pomoTick, 1000);
     }
@@ -831,6 +852,7 @@
       '<div class="pomodoro-time" id="pomo-time">' + formatPomoTime(pomo.secondsLeft) + '</div>' +
       '</div></div>' +
       '<div class="pomodoro-dots" id="pomo-dots">' + pomoDotsText() + '</div>' +
+      '<div class="pomodoro-session-label" id="pomo-session-label">' + pomoSessionLabel() + '</div>' +
       '<div class="pomodoro-controls">' +
       '<button id="pomo-toggle" class="pomo-btn pomo-btn-primary">' + (pomo.running ? 'Pause' : 'Start') + '</button>' +
       '<button id="pomo-reset" class="pomo-btn pomo-btn-secondary">Reset</button>' +
@@ -1101,6 +1123,15 @@
     for (var i = 0; i < str.length; i++) { h = ((h << 5) - h + str.charCodeAt(i)) | 0; }
     return Math.abs(h).toString(36);
   }
+
+  // Recompute immediately on returning to the tab, rather than waiting for
+  // the next throttled interval tick — a background tab's timer can be
+  // delayed by Chrome's intensive throttling, so without this the display
+  // would sit stale (or a finished phase wouldn't advance) until whenever
+  // the browser next lets the interval fire.
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && pomo.running) pomoTick();
+  });
 
   init();
   setupScrollEffects();
