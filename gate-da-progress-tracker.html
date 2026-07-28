@@ -392,16 +392,18 @@
   .pomo-settings { position: relative; margin-top: 20px; padding-top: 18px; border-top: 1px dashed rgba(255,255,255,0.1); text-align: left; }
   .pomo-setting-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; font-size: 13px; color: var(--ink-dim); }
   .pomo-setting-row label { flex: 1; }
-  .pomo-setting-row input { width: 56px; padding: 7px 8px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--bg-soft); color: var(--ink); font-family: var(--font-body); font-size: 13.5px; text-align: center; -moz-appearance: textfield; appearance: textfield; }
+  .pomo-setting-row input[type="number"] { width: 56px; padding: 7px 8px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--bg-soft); color: var(--ink); font-family: var(--font-body); font-size: 13.5px; text-align: center; -moz-appearance: textfield; appearance: textfield; }
   /* Native spin buttons render inconsistently dark/near-invisible across
      engines (tried color-scheme + invert filters — still black in some
      browsers). Removing them entirely is the only reliable cross-browser
      fix; typing a number directly, or the keyboard up/down arrows (which
      still work with the visual spinner hidden), cover the same need. */
-  .pomo-setting-row input::-webkit-inner-spin-button,
-  .pomo-setting-row input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-  .pomo-setting-row input:focus { outline: none; border-color: var(--purple); }
+  .pomo-setting-row input[type="number"]::-webkit-inner-spin-button,
+  .pomo-setting-row input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  .pomo-setting-row input[type="number"]:focus { outline: none; border-color: var(--purple); }
+  .pomo-setting-row input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--purple); cursor: pointer; flex-shrink: 0; }
   .pomo-setting-row span { font-size: 12px; color: var(--ink-soft); width: 26px; }
+  .pomo-notify-hint { font-size: 11.5px; color: var(--amber); margin: -4px 0 10px; line-height: 1.4; }
   .pomo-test-sound { display: block; margin: 6px auto 0; padding: 7px 16px; font-size: 12px; font-family: var(--font-body); border-radius: 999px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: var(--ink-dim); cursor: pointer; transition: background .2s, color .2s, border-color .2s; }
   .pomo-test-sound:hover { background: rgba(139,92,246,0.14); border-color: rgba(139,92,246,0.4); color: var(--ink); }
   .pomo-settings-save { display: block; margin: 10px auto 0; padding: 9px 28px; font-size: 12px; }
