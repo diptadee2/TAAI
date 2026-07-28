@@ -1332,15 +1332,14 @@ function TAAILogo() {
 }
 
 function daysUntilExam() {
-  // Same date + same day-count math as EXAM_DATE/DEMO_TODAY_FLOOR in
-  // progress.js, so this matches the tracker's countdown exactly. The
-  // Aug-1 floor is self-expiring — remove it after 2026-08-01 alongside
-  // the matching block in progress.js, not before.
+  // Real calendar date — no Aug-1 floor here. That floor exists in
+  // progress.js only for the tracker's schedule/streak math (which
+  // genuinely starts Aug 1); this countdown has no such dependency and
+  // should tick down every real day, not sit frozen until then.
   const pad = n => String(n).padStart(2, '0');
   const now = new Date();
   const todayStr = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
-  const flooredToday = todayStr > '2026-08-01' ? todayStr : '2026-08-01';
-  const daysLeft = Math.ceil((new Date('2027-02-06') - new Date(flooredToday)) / 864e5);
+  const daysLeft = Math.ceil((new Date('2027-02-06') - new Date(todayStr)) / 864e5);
   return daysLeft > 0 ? daysLeft : null;
 }
 

@@ -208,9 +208,16 @@
 
   // ── Date helpers ────────────────────────────────────────────────────
   function pad(n) { return String(n).padStart(2, '0'); }
-  function todayIso() {
+  // The actual calendar date, never floored — for anything that should
+  // keep ticking every real day regardless of the schedule's Aug-1 start
+  // (the exam countdown; todayIso() below is deliberately NOT this, since
+  // the calendar/streak genuinely need the floor).
+  function realTodayIso() {
     var d = new Date();
-    var real = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
+  function todayIso() {
+    var real = realTodayIso();
     return real > DEMO_TODAY_FLOOR ? real : DEMO_TODAY_FLOOR;
   }
   function currentMonthStr() {
@@ -507,7 +514,10 @@
     var html = '';
 
     if (EXAM_DATE) {
-      var today = todayIso();
+      // Real date, not the Aug-1-floored todayIso() — this countdown has no
+      // reason to sit frozen just because the demo schedule clamp hasn't
+      // expired yet; it should tick down every actual calendar day.
+      var today = realTodayIso();
       var daysLeft = Math.max(0, Math.ceil((new Date(EXAM_DATE) - new Date(today)) / 864e5));
       html += '<div class="exam-countdown fade-in">' +
         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="3" stroke="currentColor" stroke-width="1.7"/><path d="M3 9.5h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>' +
