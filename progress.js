@@ -958,6 +958,7 @@
       '<div class="pomo-setting-row"><label for="pomo-set-long">Long break</label><input type="number" id="pomo-set-long" min="1" max="90" value="' + pomoSettings.longBreak + '"><span>min</span></div>' +
       '<div class="pomo-setting-row"><label for="pomo-set-cycle">Sessions / long break</label><input type="number" id="pomo-set-cycle" min="1" max="12" value="' + pomoSettings.cycle + '"><span></span></div>' +
       '<button class="pomo-test-sound" id="pomo-test-sound" type="button">🔊 Test sound</button>' +
+      '<button class="pomo-test-sound" id="pomo-test-notify" type="button">🔔 Test notification</button>' +
       '<button class="pomo-btn pomo-btn-primary pomo-settings-save" id="pomo-settings-save" type="button">Save</button>' +
       '</div>' +
       '</div>';
@@ -1124,6 +1125,23 @@
     if (pomoTestSound) pomoTestSound.addEventListener('click', function () {
       ensurePomoAudioCtx();
       playPomoChime();
+    });
+
+    var pomoTestNotify = document.getElementById('pomo-test-notify');
+    if (pomoTestNotify) pomoTestNotify.addEventListener('click', function () {
+      // Reachable only once notifications are already 'granted' (this
+      // button lives in the unlocked timer view, not the gate), so this
+      // isolates whether a real OS notification actually reaches the
+      // screen — if this test button also shows nothing, the site's own
+      // logic isn't the problem; look at the OS's own per-app notification
+      // settings for the browser instead of the website's permission.
+      try {
+        new Notification('Test notification 🔔', {
+          body: 'If you can see this, notifications are working.',
+          tag: 'taai-pomo-test',
+          icon: '/favicon-32.png',
+        });
+      } catch (e) { /* not critical */ }
     });
 
     var pomoGateEnable = document.getElementById('pomo-gate-enable');
