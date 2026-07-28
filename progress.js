@@ -130,12 +130,18 @@
     leaderboard: [], // [{ display_name, total_minutes, total_sessions }] — Focus Mode only
     renaming: false, // showing the inline rename form in place of the name + Rename/Not you? line
     renameError: null,
+    pomoBlockedReason: null, // null | 'denied' | 'unsupported' — set when Start needed notification permission and didn't get it
   };
 
   // Set when a signed-out visitor tries to check a task — captured so
   // registration can complete it automatically instead of the tick being
   // silently dropped once they're signed in.
   var pendingTask = null;
+
+  // Same idea, for a guest clicking "Focus mode" — captured so registration
+  // can drop them straight into Focus Mode afterward instead of just back
+  // on the main checklist.
+  var pendingFocusMode = false;
 
   // No cookie just means browsing as a guest, not "show the login screen" —
   // the schedule itself (schedule.js) needs no email, so anyone can view and
@@ -279,10 +285,16 @@
 
   // ── Registration ────────────────────────────────────────────────────
   function renderRegisterForm(errorMsg) {
+    var hasPending = pendingTask || pendingFocusMode;
+    var promptText = pendingTask
+      ? 'Sign up to save your progress. It only takes a few seconds.'
+      : pendingFocusMode
+        ? 'Sign up to use Focus Mode. It only takes a few seconds.'
+        : 'Enter your details once. We’ll remember you on this browser.';
     app.innerHTML =
       '<div class="reg-card fade-in">' +
       '<h1>MISSION IIT🎯</h1>' +
-      '<p>' + (pendingTask ? 'Sign up to save your progress. It only takes a few seconds.' : 'Enter your details once. We’ll remember you on this browser.') + '</p>' +
+      '<p>' + promptText + '</p>' +
       '<form id="reg-form">' +
       '<div class="reg-field"><label for="reg-email">Your email</label>' +
       '<input id="reg-email" type="email" required autocomplete="email"></div>' +
@@ -290,7 +302,7 @@
       '<input id="reg-name" type="text" required autocomplete="name"></div>' +
       (errorMsg ? '<p class="form-error">' + escapeHtml(errorMsg) + '</p>' : '') +
       '<button class="btn-primary" type="submit">Start Tracking</button>' +
-      (pendingTask ? '<button type="button" class="reg-cancel-link" id="reg-cancel">← Keep browsing without an account</button>' : '') +
+      (hasPending ? '<button type="button" class="reg-cancel-link" id="reg-cancel">← Keep browsing without an account</button>' : '') +
       '</form></div>';
 
     document.getElementById('reg-form').addEventListener('submit', function (e) {
@@ -310,6 +322,8 @@
           state.student = student;
           var task = pendingTask;
           pendingTask = null;
+          var wantsFocus = pendingFocusMode;
+          pendingFocusMode = false;
           if (task) {
             api('/complete-task', {
               method: 'POST',
@@ -321,6 +335,12 @@
           } else {
             loadMonth(state.month);
           }
+          // Renders immediately using whatever schedule data is already
+          // loaded from browsing as a guest — loadMonth's own renderCalendar
+          // (once its fetch resolves) will refresh it again with the
+          // now-available streak/settings, still in focus mode since
+          // state.focus is already true by then.
+          if (wantsFocus) enterFocus();
         })
         .catch(function (err) {
           renderRegisterForm(err.message);
@@ -330,6 +350,7 @@
     var cancelBtn = document.getElementById('reg-cancel');
     if (cancelBtn) cancelBtn.addEventListener('click', function () {
       pendingTask = null;
+      pendingFocusMode = false;
       renderCalendar();
     });
 
@@ -910,17 +931,50 @@
     }
   }
 
+  // The actual "begin counting down" logic, split out so both the
+  // synchronous (already granted) and asynchronous (just granted via the
+  // prompt below) paths in pomoToggleRun share it instead of duplicating it.
+  function pomoActuallyStart() {
+    ensurePomoAudioCtx(); // real click — unlocks audio for the chime that fires later, unattended
+    pomo.phaseEndAt = Date.now() + pomo.secondsLeft * 1000;
+    pomo.running = true;
+    pomo.timerId = setInterval(pomoTick, 1000);
+  }
+
   function pomoToggleRun() {
     if (pomo.running) {
       clearInterval(pomo.timerId);
       pomo.running = false;
-    } else {
-      ensurePomoAudioCtx(); // real click — unlocks audio for the chime that fires later, unattended
-      pomo.phaseEndAt = Date.now() + pomo.secondsLeft * 1000;
-      pomo.running = true;
-      pomo.timerId = setInterval(pomoTick, 1000);
+      updatePomoDisplay();
+      return;
     }
-    updatePomoDisplay();
+
+    var notifyState = pomoNotifyState();
+    if (notifyState === 'granted') {
+      pomoActuallyStart();
+      updatePomoDisplay();
+      return;
+    }
+    if (notifyState === 'unsupported' || notifyState === 'denied') {
+      // Nothing left to ask — either there's no Notification API at all, or
+      // the browser already recorded "denied" and won't re-prompt. Surface
+      // why Start didn't do anything instead of silently doing nothing.
+      state.pomoBlockedReason = notifyState;
+      renderCalendar();
+      return;
+    }
+    // 'default' — this click is the real user gesture the permission
+    // prompt requires; requesting it from anywhere else gets auto-denied
+    // or silently ignored by modern browsers. Whatever the student decides
+    // here, this is what actually presses "Start" on their behalf.
+    Notification.requestPermission().then(function (perm) {
+      if (perm === 'granted') {
+        pomoActuallyStart();
+      } else {
+        state.pomoBlockedReason = 'denied';
+      }
+      renderCalendar();
+    });
   }
 
   function pomoReset() {
@@ -985,13 +1039,18 @@
   // The gate shown in place of the real timer until notifications are
   // granted (see renderPomodoro). Not a full-featured card — no settings,
   // no Start/Reset/Skip — since nothing about the timer is usable yet.
-  function renderPomoGate(state) {
-    var html = '<div class="pomodoro-card pomodoro-gate fade-in" id="pomo-card">' +
-      '<div class="pomo-gate-icon">🔔</div>';
-    if (state === 'unsupported') {
+  // Only appears after a Start click actually needed notification
+  // permission and didn't get it (see pomoToggleRun, which sets
+  // state.pomoBlockedReason) — never shown just because permission
+  // happens to not be granted yet, so the clock/dots/Start button stay
+  // fully visible the whole time, before anyone's clicked anything.
+  function renderPomoNotifyNotice() {
+    if (!state.pomoBlockedReason) return '';
+    var html = '<div class="pomo-notify-notice fade-in" id="pomo-notify-notice">';
+    if (state.pomoBlockedReason === 'unsupported') {
       html += '<div class="pomo-gate-title">Focus Timer isn’t available here</div>' +
         '<p class="pomo-gate-body">This browser doesn’t support notifications, which the Focus Timer requires. Try a different browser to use it.</p>';
-    } else if (state === 'denied') {
+    } else {
       // requestPermission() can never re-show the prompt once a browser has
       // recorded "denied" for this origin — it just silently returns
       // "denied" again immediately, no dialog, no matter how it's called.
@@ -999,26 +1058,19 @@
       // can undo that, so the instructions have to be specific enough to
       // actually follow rather than a vague "check your settings".
       html += '<div class="pomo-gate-title">Notifications are blocked</div>' +
-        '<p class="pomo-gate-body">Your browser saved a “Block” choice for this site earlier, so it can’t prompt you again automatically. To fix it:</p>' +
+        '<p class="pomo-gate-body">Your browser saved a “Block” choice for this site, so it can’t prompt you again automatically. To fix it:</p>' +
         '<ol class="pomo-gate-steps">' +
         '<li>Click the 🔒 or ⓘ icon next to this page’s address (on Safari: the <strong>Safari</strong> menu → Settings → Websites → Notifications)</li>' +
         '<li>Set Notifications for this site to <strong>Allow</strong></li>' +
         '<li>Come back here and reload</li>' +
         '</ol>' +
         '<button class="pomo-btn pomo-btn-primary" id="pomo-gate-reload" type="button">I’ve updated it — Reload</button>';
-    } else {
-      html += '<div class="pomo-gate-title">Focus Timer needs notifications</div>' +
-        '<p class="pomo-gate-body">So you’re alerted the moment a session ends, even if you switch tabs. Enable notifications to start.</p>' +
-        '<button class="pomo-btn pomo-btn-primary" id="pomo-gate-enable" type="button">Enable notifications</button>';
     }
     html += '</div>';
     return html;
   }
 
   function renderPomodoro() {
-    var notifyState = pomoNotifyState();
-    if (notifyState !== 'granted') return renderPomoGate(notifyState);
-
     var frac = pomo.totalSeconds > 0 ? pomo.secondsLeft / pomo.totalSeconds : 1;
     var offset = POMO_RING_CIRCUMFERENCE * (1 - frac);
 
@@ -1043,6 +1095,7 @@
       '<button id="pomo-reset" class="pomo-btn pomo-btn-secondary">Reset</button>' +
       '<button id="pomo-skip" class="pomo-btn pomo-btn-secondary">Skip</button>' +
       '</div>' +
+      renderPomoNotifyNotice() +
       '<div class="pomo-settings" id="pomo-settings" hidden>' +
       '<div class="pomo-setting-row"><label for="pomo-set-work">Focus</label><input type="number" id="pomo-set-work" min="1" max="180" value="' + pomoSettings.work + '"><span>min</span></div>' +
       '<div class="pomo-setting-row"><label for="pomo-set-short">Short break</label><input type="number" id="pomo-set-short" min="1" max="60" value="' + pomoSettings.shortBreak + '"><span>min</span></div>' +
@@ -1237,7 +1290,14 @@
 
     var focusToggle = document.getElementById('focus-toggle');
     if (focusToggle) focusToggle.addEventListener('click', function () {
-      if (state.focus) exitFocus(); else enterFocus();
+      if (state.focus) {
+        exitFocus();
+      } else if (!state.student) {
+        pendingFocusMode = true;
+        renderRegisterForm();
+      } else {
+        enterFocus();
+      }
     });
 
     var pomoToggle = document.getElementById('pomo-toggle');
@@ -1280,16 +1340,6 @@
           icon: '/favicon-32.png',
         });
       } catch (e) { /* not critical */ }
-    });
-
-    var pomoGateEnable = document.getElementById('pomo-gate-enable');
-    if (pomoGateEnable) pomoGateEnable.addEventListener('click', function () {
-      // This click is the real user gesture the permission prompt
-      // requires; requesting it from anywhere else gets auto-denied or
-      // silently ignored by modern browsers.
-      Notification.requestPermission().then(function () {
-        renderCalendar(); // re-render swaps the gate for the real timer once granted
-      });
     });
 
     var pomoGateReload = document.getElementById('pomo-gate-reload');
