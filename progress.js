@@ -1456,6 +1456,16 @@
     if (!document.hidden && pomo.running) pomoTick();
   });
 
+  // Focus Mode is desktop-only (same 1080px breakpoint that hides
+  // .focus-toggle-wrap in CSS) — the button being hidden stops someone from
+  // entering it fresh on a phone/iPad-portrait, but doesn't help if they
+  // rotate an iPad from landscape to portrait mid-session, since state.focus
+  // stays true and CSS alone can't back that out. This kicks them back to
+  // the normal checklist the moment the viewport crosses the breakpoint.
+  window.addEventListener('resize', function () {
+    if (state.focus && window.innerWidth <= 1080) exitFocus();
+  });
+
   init();
   setupScrollEffects();
   setupFocusHistory();
