@@ -1,9 +1,10 @@
 // POST /api/pomodoro-complete  { email, minutes }
 // Called once a focus (work) pomodoro session actually finishes, accumulating
-// this week's focus time per student for Focus Mode's weekly leaderboard.
-// Only the genuine tick-to-zero completion path calls this (see progress.js's
-// pomoTick), not Skip, otherwise a student could spam Skip for free credit.
-import { getSupabase, json, weekStartIST } from './lib/supabase.js';
+// this week's focus time per student for Focus Mode's weekly leaderboard,
+// and today's session count for the session dots. Only the genuine
+// tick-to-zero completion path calls this (see progress.js's pomoTick), not
+// Skip, otherwise a student could spam Skip for free credit on either stat.
+import { getSupabase, json, weekStartIST, todayIST } from './lib/supabase.js';
 
 // Matches the Focus settings panel's own max (progress.js's pomo-set-work
 // input has max="180") — a single real session can never legitimately
@@ -47,5 +48,23 @@ export async function handler(event) {
     );
   if (upsertError) return json(500, { error: upsertError.message });
 
-  return json(200, { ok: true, total_minutes: totalMinutes, total_sessions: totalSessions });
+  const today = todayIST();
+  const { data: existingDaily, error: fetchDailyError } = await supabase
+    .from('pomo_daily_sessions')
+    .select('sessions_completed')
+    .eq('email', email)
+    .eq('date', today)
+    .maybeSingle();
+  if (fetchDailyError) return json(500, { error: fetchDailyError.message });
+
+  const sessionsToday = (existingDaily?.sessions_completed || 0) + 1;
+  const { error: upsertDailyError } = await supabase
+    .from('pomo_daily_sessions')
+    .upsert(
+      { email, date: today, sessions_completed: sessionsToday, updated_at: new Date().toISOString() },
+      { onConflict: 'email,date' }
+    );
+  if (upsertDailyError) return json(500, { error: upsertDailyError.message });
+
+  return json(200, { ok: true, total_minutes: totalMinutes, total_sessions: totalSessions, sessions_today: sessionsToday });
 }

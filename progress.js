@@ -350,7 +350,8 @@
         // Non-critical if it fails — a fetch error here just means whatever
         // localStorage/defaults are already loaded stay in effect for this
         // load, not that the pomodoro timer breaks.
-        api('/pomo-settings?email=' + encodeURIComponent(state.student.email)).catch(function () { return null; })
+        api('/pomo-settings?email=' + encodeURIComponent(state.student.email)).catch(function () { return null; }),
+        api('/pomo-sessions?email=' + encodeURIComponent(state.student.email)).catch(function () { return null; })
       );
     }
 
@@ -379,6 +380,17 @@
             pomo.totalSeconds = pomoDurationFor(pomo.mode);
             pomo.secondsLeft = pomo.totalSeconds;
           }
+        }
+
+        // Math.max, not a straight overwrite: loadMonth can re-run mid-Focus-
+        // session (e.g. a guest registers via the pending-task flow while a
+        // pomodoro they started as a guest is still running) — a lower
+        // server count in that moment (a fresh account has no history yet)
+        // shouldn't erase sessions already completed earlier in this same
+        // page load.
+        var dailySessions = state.student ? results[5] : null;
+        if (dailySessions) {
+          pomo.completedSessions = Math.max(pomo.completedSessions, dailySessions.sessionsCompleted || 0);
         }
 
         var completedSet = new Set(

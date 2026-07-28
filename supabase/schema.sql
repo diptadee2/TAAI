@@ -64,6 +64,24 @@ CREATE TABLE IF NOT EXISTS pomodoro_stats (
   PRIMARY KEY (email, week_start)
 );
 
+-- Completed work-session count per student, per day, for Focus Mode's
+-- session dots ("N / cycle sessions") — persisted so a student's daily
+-- progress toward a long break follows them across reloads/devices
+-- instead of resetting to 0 on every page load, while still resetting
+-- naturally at midnight IST since a new day is just a new row starting
+-- from zero (same reset-by-construction pattern as pomodoro_stats'
+-- week_start key, see the comment above it). Only genuine completions
+-- count — see pomodoro-complete.js, which writes to this table and
+-- pomodoro_stats together, since both are driven by the same "a work
+-- session actually finished" event.
+CREATE TABLE IF NOT EXISTS pomo_daily_sessions (
+  email              TEXT REFERENCES students(email),
+  date               DATE NOT NULL, -- IST calendar date, see todayIST()
+  sessions_completed INTEGER NOT NULL DEFAULT 0,
+  updated_at         TIMESTAMP DEFAULT now(),
+  PRIMARY KEY (email, date)
+);
+
 -- Supports the month-range queries schedule.js / progress.js run on every page load
 CREATE INDEX IF NOT EXISTS idx_schedule_tasks_date ON schedule_tasks(date);
 CREATE INDEX IF NOT EXISTS idx_task_progress_email_date ON task_progress(email, date);
@@ -73,4 +91,4 @@ CREATE INDEX IF NOT EXISTS idx_pomodoro_stats_week_minutes ON pomodoro_stats(wee
 -- projects usually grant this by default for tables created via the SQL
 -- editor, but it's not guaranteed (and isn't set up on `supabase start`'s
 -- local Postgres image) — so grant explicitly rather than relying on it.
-GRANT SELECT, INSERT, UPDATE, DELETE ON students, schedule_days, schedule_tasks, task_progress, pomodoro_stats TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON students, schedule_days, schedule_tasks, task_progress, pomodoro_stats, pomo_daily_sessions TO service_role;
