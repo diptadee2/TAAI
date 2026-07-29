@@ -470,7 +470,11 @@
     if (day.date === today) return 'today';
     var allDone = day.tasks.length > 0 && day.tasks.every(function (t) { return t.completed; });
     if (allDone) return 'complete';
-    return day.date < today ? 'missed' : 'upcoming';
+    // A guest has no completion history at all, so every past day would
+    // otherwise show as "missed" no matter when they show up — not
+    // meaningful without an account to actually track against, so it only
+    // ever shows for a signed-in student.
+    return (day.date < today && state.student) ? 'missed' : 'upcoming';
   }
 
   // ── Streak hero ────────────────────────────────────────────────────
@@ -684,14 +688,10 @@
   function renderCalendar() {
     var today = todayIso();
     var todayDay = state.days.find(function (d) { return d.date === today; });
-    // Guests have no completion history at all, so every day before today
-    // trivially shows as "missed" no matter when they happen to visit —
-    // that's not really "falling behind," it's just never having started.
-    // Only meaningful for a signed-in student who's actually been ticking
-    // things off and could plausibly be behind.
-    var missedBefore = state.student
-      ? state.days.filter(function (d) { return d.date < today && dayStatus(d) === 'missed'; })
-      : [];
+    // dayStatus() itself already only ever returns 'missed' for a
+    // signed-in student (see its guest guard), so this is naturally empty
+    // for guests without needing a separate check here too.
+    var missedBefore = state.days.filter(function (d) { return d.date < today && dayStatus(d) === 'missed'; });
 
     var html = '';
     html += '<div class="roadmap-head"><h1>MISSION IIT🎯</h1></div>';
