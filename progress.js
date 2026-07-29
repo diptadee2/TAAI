@@ -70,6 +70,39 @@
 
   var pomoSettings = loadPomoSettings();
 
+  // Persists the *currently running/paused* timer itself (not the saved
+  // duration settings above) — so a refresh mid-session doesn't silently
+  // discard the countdown back to a fresh 25:00. Deliberately keyed
+  // separately from pomoSettings since this is transient session state,
+  // not a preference. While running, phaseEndAt (a wall-clock deadline) is
+  // the authoritative field on restore — the same reasoning as the
+  // background-tab-throttling fix, recomputing real elapsed time rather
+  // than trusting a stale secondsLeft snapshot. While paused, secondsLeft
+  // is authoritative instead, since there's no ticking deadline to measure
+  // against. completedSessions is included too, mainly so a guest (who has
+  // no server-side sync for this) doesn't lose today's count on refresh
+  // either — a student's is already covered by loadMonth's Math.max merge,
+  // but persisting it here doesn't conflict with that.
+  var POMO_ACTIVE_KEY = 'taai_pomo_active';
+  function savePomoActiveState() {
+    try {
+      localStorage.setItem(POMO_ACTIVE_KEY, JSON.stringify({
+        mode: pomo.mode,
+        running: pomo.running,
+        secondsLeft: pomo.secondsLeft,
+        totalSeconds: pomo.totalSeconds,
+        phaseEndAt: pomo.phaseEndAt,
+        completedSessions: pomo.completedSessions,
+      }));
+    } catch (e) { /* localStorage unavailable — refresh just won't resume, not critical */ }
+  }
+  function loadPomoActiveState() {
+    try {
+      var raw = localStorage.getItem(POMO_ACTIVE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+
   // Notifications are mandatory to use the Focus Timer at all (not just an
   // opt-in extra) — mainly a Safari fallback: WebKit blocks a webpage from
   // starting *new* audio from an unattended timer (only audio started
@@ -148,8 +181,36 @@
   // the schedule itself (schedule.js) needs no email, so anyone can view and
   // navigate the roadmap. Only actions tied to a specific student (ticking a
   // task) require signing in, prompted at the point of that action.
+  // Restores a running/paused pomodoro across a refresh (see
+  // savePomoActiveState). Deliberately restarts the interval right here —
+  // independent of whether Focus Mode happens to be open — so the timer
+  // keeps counting down, completing phases, and crediting sessions in the
+  // background exactly as if the refresh had never happened; Focus Mode
+  // just displays whatever it finds whenever it's next opened. One
+  // limitation that can't be worked around: the chime needs a fresh user
+  // gesture to unlock audio (see ensurePomoAudioCtx), which a page load
+  // doesn't provide, so a phase that completes before the next click will
+  // only notify, not chime — the notification is what's mandatory instead.
+  function restorePomoActiveState() {
+    var saved = loadPomoActiveState();
+    if (!saved) return;
+    pomo.mode = saved.mode;
+    pomo.totalSeconds = saved.totalSeconds;
+    pomo.completedSessions = saved.completedSessions || 0;
+    if (saved.running) {
+      pomo.phaseEndAt = saved.phaseEndAt;
+      pomo.running = true;
+      pomoTick(); // catches up immediately if time already ran out while away
+      if (pomo.running) pomo.timerId = setInterval(pomoTick, 1000);
+    } else {
+      pomo.secondsLeft = saved.secondsLeft;
+      pomo.running = false;
+    }
+  }
+
   function init() {
     state.student = readCookie();
+    restorePomoActiveState();
     loadMonth(state.month);
   }
 
@@ -910,6 +971,7 @@
     pomo.phaseEndAt = Date.now() + pomo.totalSeconds * 1000;
     playPomoChime(finishedMode);
     updatePomoDisplay();
+    savePomoActiveState();
   }
 
   function pomoTick() {
@@ -949,6 +1011,7 @@
     pomo.phaseEndAt = Date.now() + pomo.secondsLeft * 1000;
     pomo.running = true;
     pomo.timerId = setInterval(pomoTick, 1000);
+    savePomoActiveState();
   }
 
   function pomoToggleRun() {
@@ -956,6 +1019,7 @@
       clearInterval(pomo.timerId);
       pomo.running = false;
       updatePomoDisplay();
+      savePomoActiveState();
       return;
     }
 
@@ -994,6 +1058,7 @@
     pomo.totalSeconds = pomoDurationFor('work');
     pomo.secondsLeft = pomo.totalSeconds;
     updatePomoDisplay();
+    savePomoActiveState();
   }
 
   function pomoSkip() {
