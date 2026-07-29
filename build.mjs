@@ -480,8 +480,14 @@ function build() {
   const posts = generateBlog();
   generateSitemap(posts);
 
-  // Copy static assets (images, etc.) — skip dist/ and node_modules/
-  const SKIP_DIRS = new Set(['dist', 'node_modules', '.git', 'content', 'netlify', 'supabase']);
+  // Copy static assets (images, etc.) — skip dist/, node_modules/, and
+  // anything that's internal tooling/docs rather than something a visitor
+  // should ever be able to fetch (this loop has no other allowlist, so
+  // anything not named here gets copied and publicly served as-is).
+  const SKIP_DIRS = new Set([
+    'dist', 'node_modules', '.git', 'content', 'netlify', 'supabase', 'scripts',
+    'CLAUDE.md', 'build.mjs', 'package.json', 'package-lock.json', 'netlify.toml',
+  ]);
   for (const entry of fs.readdirSync(SRC)) {
     if (PAGES.includes(entry)) continue;
     if (SKIP_DIRS.has(entry)) continue;
