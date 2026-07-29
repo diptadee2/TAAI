@@ -684,7 +684,14 @@
   function renderCalendar() {
     var today = todayIso();
     var todayDay = state.days.find(function (d) { return d.date === today; });
-    var missedBefore = state.days.filter(function (d) { return d.date < today && dayStatus(d) === 'missed'; });
+    // Guests have no completion history at all, so every day before today
+    // trivially shows as "missed" no matter when they happen to visit —
+    // that's not really "falling behind," it's just never having started.
+    // Only meaningful for a signed-in student who's actually been ticking
+    // things off and could plausibly be behind.
+    var missedBefore = state.student
+      ? state.days.filter(function (d) { return d.date < today && dayStatus(d) === 'missed'; })
+      : [];
 
     var html = '';
     html += '<div class="roadmap-head"><h1>MISSION IIT🎯</h1></div>';
