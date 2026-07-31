@@ -275,8 +275,19 @@
      so there's no second flex child at all). */
   .top-row { display: flex; gap: 20px; align-items: stretch; margin-bottom: 18px; }
   .top-row #streak-panel { flex: 1; min-width: 0; }
-  .top-row .streak-hero { margin-bottom: 0; height: 100%; }
-  .top-champions-card { flex: 0 0 300px; max-width: none; margin-left: 0; margin-right: 0; margin-bottom: 0; }
+  /* The card's stretched height (to match champions beside it) leaves its
+     compact content — just a flame, a number, a label — sitting at the
+     top with a lot of empty space below otherwise; centering it in the
+     available height reads as intentional instead of like a bug. */
+  .top-row .streak-hero { margin-bottom: 0; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  /* Compound selector, not just .top-champions-card — a bare single-class
+     selector here loses a CSS specificity tie to the base .leaderboard-card
+     rule's own margin-bottom (same specificity, later source position
+     wins), leaving a stray 20px margin that made this card's visible
+     bottom edge sit 20px above the streak card's despite align-items:
+     stretch. Same reason .focus-card .leaderboard-card is a compound
+     selector below, not bare .leaderboard-card. */
+  .top-row .top-champions-card { flex: 0 0 300px; max-width: none; margin-left: 0; margin-right: 0; margin-bottom: 0; }
   @media (max-width: 1080px) { .top-champions-card { display: none; } }
 
   /* Streak hero — the page's primary visual now, replacing the old heatmap-up-top */
