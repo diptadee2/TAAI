@@ -964,19 +964,39 @@
     // skips straight to this — the mode being left is still whatever
     // pomo.mode was a moment ago).
     var finishedMode = pomo.mode;
+    var oldPhaseEndAt = pomo.phaseEndAt;
     if (pomo.mode === 'work') pomo.completedSessions++;
     pomo.mode = pomo.mode === 'work' ? 'break' : 'work';
     pomo.totalSeconds = pomoDurationFor(pomo.mode);
-    pomo.secondsLeft = pomo.totalSeconds;
-    pomo.phaseEndAt = Date.now() + pomo.totalSeconds * 1000;
+    // Cascades from whichever is earlier: the phase that just ended's own
+    // deadline, or right now. Matters after a long gap (closed tab, OS
+    // sleep) where multiple phases' worth of time may have already
+    // elapsed — anchoring the next phase to "now" would make it look
+    // freshly started even if IT had also already elapsed during the same
+    // gap, silently skipping past a break that should have triggered the
+    // mandatory pause. Anchoring to the old deadline instead lets this
+    // next phase's own remaining time come out zero-or-negative too, so
+    // pomoTick's loop below can catch that and keep cascading. This still
+    // behaves correctly for a manual Skip, where the old deadline is still
+    // in the *future* — Math.min just picks "now" in that case, same as
+    // before.
+    pomo.phaseEndAt = Math.min(Date.now(), oldPhaseEndAt) + pomo.totalSeconds * 1000;
+    pomo.secondsLeft = Math.max(0, Math.round((pomo.phaseEndAt - Date.now()) / 1000));
     playPomoChime(finishedMode);
     updatePomoDisplay();
     savePomoActiveState();
   }
 
   function pomoTick() {
-    pomo.secondsLeft = Math.max(0, Math.round((pomo.phaseEndAt - Date.now()) / 1000));
-    if (pomo.secondsLeft <= 0) {
+    // A loop, not a single check — after a long gap (closed tab, OS sleep)
+    // more than one phase can have already elapsed (e.g. a whole work+break
+    // cycle), and each needs its own credit/notification/pause handling
+    // rather than silently collapsing into one. Bounded naturally: pause-
+    // after-break always halts this within at most two iterations (a work
+    // finish followed immediately by a break finish), never runaway.
+    while (pomo.running) {
+      pomo.secondsLeft = Math.max(0, Math.round((pomo.phaseEndAt - Date.now()) / 1000));
+      if (pomo.secondsLeft > 0) break;
       // Only a genuine tick-to-zero finish counts toward the leaderboard —
       // checked here (before pomoAdvance flips the mode), not inside
       // pomoAdvance itself, since pomoSkip also calls that and shouldn't
@@ -996,11 +1016,16 @@
         // first break, earning nothing further, until someone clicks Start.
         clearInterval(pomo.timerId);
         pomo.running = false;
-        updatePomoDisplay();
+        // The work phase pomoAdvance just set up hasn't actually started
+        // counting down (Start hasn't been clicked yet), so its
+        // secondsLeft shouldn't be the cascaded-from-the-past value —
+        // after a long catch-up that value can itself already be 0,
+        // which would incorrectly show a paused "00:00" instead of the
+        // full fresh duration waiting to begin.
+        pomo.secondsLeft = pomo.totalSeconds;
       }
-    } else {
-      updatePomoDisplay();
     }
+    updatePomoDisplay();
   }
 
   // The actual "begin counting down" logic, split out so both the
