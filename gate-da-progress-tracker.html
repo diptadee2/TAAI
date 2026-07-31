@@ -280,6 +280,13 @@
      top with a lot of empty space below otherwise; centering it in the
      available height reads as intentional instead of like a bug. */
   .top-row .streak-hero { margin-bottom: 0; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  /* Centering alone just redistributes the empty space, it doesn't remove
+     it — this actually fills more of the card's now-larger area by making
+     the number itself the size the "primary visual of the page" framing
+     implies, instead of small text floating in a big card. */
+  .top-row .streak-flame { font-size: 56px; margin-bottom: 10px; }
+  .top-row .streak-number { font-size: 84px; }
+  .top-row .streak-label { margin-top: 10px; font-size: 13px; }
   /* Compound selector, not just .top-champions-card — a bare single-class
      selector here loses a CSS specificity tie to the base .leaderboard-card
      rule's own margin-bottom (same specificity, later source position
