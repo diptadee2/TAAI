@@ -153,6 +153,7 @@
     month: currentMonthStr(),
     days: [], // [{ date, tasks: [{subject, task_text, position, completed}] }]
     latestScheduledMonth: null, // 'YYYY-MM' with any schedule data at all, from schedule.js — caps month-nav's "next" arrow
+    lastWeekLeaders: [], // [{ display_name, total_minutes }] — top 5 by focus minutes last week, shown outside Focus Mode
     streak: null,
     subjectProgress: [], // [{ subject, done, total }] — global, independent of viewed month
     expanded: new Set(), // dates whose day-card is open, non-native accordion
@@ -426,7 +427,15 @@
 
     // Guests (no student yet) only need the public schedule — the other
     // endpoints are all per-student and would 400 without an email.
-    var calls = [api('/schedule?month=' + monthStr)];
+    // last-week-focus-leaders is public/unpersonalized like the schedule,
+    // so it's always included regardless of login state — it's re-fetched
+    // on every month nav too, which is mildly redundant (the data has
+    // nothing to do with which month is being browsed) but simple, and
+    // cheap enough not to matter.
+    var calls = [
+      api('/schedule?month=' + monthStr),
+      api('/last-week-focus-leaders').catch(function () { return { leaders: [] }; }),
+    ];
     if (state.student) {
       calls.push(
         api('/progress?email=' + encodeURIComponent(state.student.email) + '&month=' + monthStr),
@@ -444,16 +453,17 @@
       .then(function (results) {
         var scheduleDays = results[0].days || [];
         state.latestScheduledMonth = results[0].latestMonth || null;
-        var progressRows = state.student ? (results[1].progress || []) : [];
-        state.streak = state.student ? results[2].streak : null;
-        state.subjectProgress = state.student ? (results[3].subjects || []) : [];
+        state.lastWeekLeaders = results[1].leaders || [];
+        var progressRows = state.student ? (results[2].progress || []) : [];
+        state.streak = state.student ? results[3].streak : null;
+        state.subjectProgress = state.student ? (results[4].subjects || []) : [];
 
         // Only present once a student has actually saved custom durations
         // somewhere before (see applyPomoSettings) — merge in place of
         // whatever localStorage/defaults loaded at module-init time, so a
         // student's setup follows them to a new device/browser instead of
         // only living in the one that saved it.
-        var savedPomo = state.student ? results[4] : null;
+        var savedPomo = state.student ? results[5] : null;
         if (savedPomo && savedPomo.work != null) {
           pomoSettings = {
             work: savedPomo.work,
@@ -474,7 +484,7 @@
         // server count in that moment (a fresh account has no history yet)
         // shouldn't erase sessions already completed earlier in this same
         // page load.
-        var dailySessions = state.student ? results[5] : null;
+        var dailySessions = state.student ? results[6] : null;
         if (dailySessions) {
           pomo.completedSessions = Math.max(pomo.completedSessions, dailySessions.sessionsCompleted || 0);
         }
@@ -592,6 +602,30 @@
     }).join('');
 
     return '<div class="subject-breakdown fade-in"><div class="subject-breakdown-title">Progress by subject</div>' + rows + '</div>';
+  }
+
+  // ── Last week's top 5 by focus minutes — outside Focus Mode, in the
+  // side column, so it's visible without entering the timer. Public/
+  // unpersonalized like the live weekly leaderboard, so this shows for
+  // guests too. Renders nothing at all if last week had no data yet
+  // (a brand new week, or nobody used the timer) rather than showing an
+  // empty-looking card.
+  function renderLastWeekChampions() {
+    var leaders = state.lastWeekLeaders || [];
+    if (!leaders.length) return '';
+    var rows = leaders.map(function (l, i) {
+      var rank = LEADERBOARD_MEDALS[i] || (i + 1);
+      return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + '">' +
+        '<span class="leaderboard-rank">' + rank + '</span>' +
+        '<span class="leaderboard-name">' + escapeHtml(l.display_name) + '</span>' +
+        '<span class="leaderboard-time">' + l.total_minutes + 'm</span>' +
+        '</div>';
+    }).join('');
+    return '<div class="leaderboard-card side-champions-card fade-in">' +
+      '<div class="leaderboard-title">🏆 Last Week’s Focus Champions</div>' +
+      '<div class="leaderboard-subtitle">Top 5 by minutes logged</div>' +
+      rows +
+      '</div>';
   }
 
   // ── Completion heatmap for the visible month — compact, secondary,
@@ -827,6 +861,7 @@
       html += '<div class="side-col">' +
         '<div id="heatmap-panel">' + renderHeatmap() + '</div>' +
         '<div id="subject-panel">' + renderSubjectBreakdown() + '</div>' +
+        renderLastWeekChampions() +
         '</div>'; // side-col
       html += '</div>'; // page-grid
     }
