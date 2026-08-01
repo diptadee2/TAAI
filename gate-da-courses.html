@@ -564,27 +564,25 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   position: relative; z-index: 1; transition: color .28s ease;
 }
 .course-card:hover .course-validity { color: rgba(255,255,255,0.45); }
+/* Always visible now, not hidden until hover — that hid real content
+   (what the course actually covers) behind an interaction most visitors
+   never discover, and left a real empty gap in the card's resting state
+   that got a lot more obvious once the grid went from 5 columns to 3
+   (same content, proportionally wider card). Was already the mobile/
+   touch fallback (see the max-width:768px block below); this just makes
+   that the only behavior instead of a fallback for one breakpoint. */
 .course-topics {
   position: relative; z-index: 1;
-  display: flex; flex-direction: column; gap: 7px; margin-bottom: 0;
-  max-height: 0; overflow: hidden; opacity: 0;
-  transition: max-height .32s ease, opacity .2s ease, margin-bottom .32s ease;
-}
-.course-card:hover .course-topics {
-  max-height: 120px; opacity: 1; margin-bottom: 16px;
-  transition: max-height .5s cubic-bezier(.22,1,.36,1), opacity .38s ease .08s, margin-bottom .5s cubic-bezier(.22,1,.36,1);
+  display: flex; flex-direction: column; gap: 7px; margin-bottom: 16px;
 }
 .course-topic {
   display: flex; align-items: center; gap: 7px;
-  font-size: 12px; color: rgba(255,255,255,0.82); line-height: 1.35;
-  transform: translateY(6px); opacity: 0;
-  transition: transform .22s ease, opacity .22s ease;
+  font-size: 12px; color: var(--ink-dim); line-height: 1.35;
+  transition: color .28s ease;
 }
-.course-card:hover .course-topic {
-  transform: translateY(0); opacity: 1;
-  transition: transform .44s cubic-bezier(.22,1,.36,1) var(--td, 0ms), opacity .36s ease var(--td, 0ms);
-}
-.course-topic::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.55); flex-shrink: 0; }
+.course-card:hover .course-topic { color: rgba(255,255,255,0.82); }
+.course-topic::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--ink-soft); flex-shrink: 0; transition: background .28s ease; }
+.course-card:hover .course-topic::before { background: rgba(255,255,255,0.55); }
 .course-price-row {
   display: flex; align-items: baseline; gap: 8px;
   margin-top: auto; margin-bottom: 18px; position: relative; z-index: 1;
@@ -934,9 +932,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .course-card:active .btn-ghost { background: transparent !important; color: var(--ink) !important; border-color: var(--line) !important; }
   .course-card:hover .btn-ghost svg,
   .course-card:active .btn-ghost svg { transform: none !important; }
-  /* Topics are visible in resting state on touch */
-  .course-card:hover .course-topics,
-  .course-card:active .course-topics { max-height: 200px !important; opacity: 1 !important; }
   /* Combo includes — always visible, hover/active locked to resting */
   .combo-includes li { opacity: 1; transform: translateX(0); }
   .combo-check svg path { stroke-dashoffset: 0; }
@@ -969,8 +964,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   }
   .course-card:active,
   .course-card:hover { transform: none; }
-  .course-topics { max-height: none !important; opacity: 1 !important; margin-bottom: 14px !important; overflow: visible !important; }
-  .course-topic { transform: none !important; opacity: 1 !important; color: var(--ink-dim) !important; }
+  .course-topics { margin-bottom: 14px !important; }
 }
 
 /* YouTube link wiggle */
