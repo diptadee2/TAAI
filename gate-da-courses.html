@@ -520,7 +520,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 .ticket-notch {
   position: relative; height: 0;
-  margin: 16px -24px; z-index: 3;
+  margin: 12px -24px; z-index: 3;
 }
 .ticket-notch::before, .ticket-notch::after {
   content: ''; position: absolute;
@@ -585,7 +585,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .course-card:hover .course-topic::before { background: rgba(255,255,255,0.55); }
 .course-price-row {
   display: flex; align-items: baseline; gap: 8px;
-  margin-top: auto; margin-bottom: 18px; position: relative; z-index: 1;
+  margin-top: auto; margin-bottom: 12px; position: relative; z-index: 1;
 }
 .course-price {
   font-family: var(--font-display); font-size: 26px; font-weight: 600;
@@ -593,6 +593,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 .course-card:hover .course-price { color: #fff; }
 .course-price-old { font-size: 13px; color: var(--ink-soft); text-decoration: line-through; transition: color .28s ease; }
+.course-price-fallback { font-size: 15px; font-weight: 500; letter-spacing: normal; color: var(--ink-dim); }
+.course-card:hover .course-price-fallback { color: rgba(255,255,255,0.7); }
 .course-card:hover .course-price-old { color: rgba(255,255,255,0.42); }
 .course-card .btn-ghost {
   position: relative; z-index: 1; overflow: hidden;
@@ -2160,22 +2162,22 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
 
 const CourseCard = React.memo(function CourseCard({ c, pricing }) {
   const p        = pricing || {};
-  const price    = p.price    ? fmtPrice(p.price)    : '-';
+  const price    = p.price    ? fmtPrice(p.price)    : 'Contact for price';
   const priceOld = p.priceOld ? fmtPrice(p.priceOld) : null;
-  const validity = p.validity ? fmtValidity(p.validity) : '-';
+  const validity = p.validity ? fmtValidity(p.validity) : null;
   return (
     <div id={c.id} className="course-card card" style={{ '--course-grad': c.grad, '--course-shadow': c.shadow }}>
       <div className="course-accent" style={{ background: c.grad }} />
       <div className="course-icon" style={{ background: c.grad }}>{c.icon}</div>
       <div className="course-title">{c.title}</div>
-      <div className={`course-validity mono${p.validity ? ' data-fade-in' : ''}`}>{validity}</div>
+      {validity && <div className="course-validity mono data-fade-in">{validity}</div>}
       <div className="course-topics">
         {c.topics.map((t, i) => (
           <div key={i} className="course-topic" style={{ '--td': `${i * 55}ms` }}>{t}</div>
         ))}
       </div>
       <div className={`course-price-row${p.price ? ' price-loaded' : ''}`}>
-        <div className="course-price">{price}</div>
+        <div className={`course-price${p.price ? '' : ' course-price-fallback'}`}>{price}</div>
         {priceOld && <div className="course-price-old">{priceOld}</div>}
       </div>
       <div className="ticket-notch"><div className="ticket-notch-line" /></div>
