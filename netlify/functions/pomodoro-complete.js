@@ -27,44 +27,29 @@ export async function handler(event) {
   }
 
   const supabase = getSupabase();
-  const weekStart = weekStartIST();
 
-  const { data: existing, error: fetchError } = await supabase
-    .from('pomodoro_stats')
-    .select('total_minutes, total_sessions')
-    .eq('email', email)
-    .eq('week_start', weekStart)
-    .maybeSingle();
-  if (fetchError) return json(500, { error: fetchError.message });
+  // Atomic UPSERTs (see increment_pomodoro_stats/increment_pomo_daily_sessions
+  // in schema.sql), not a read-then-write from here — a student with two
+  // tabs open both completing the same session around the same moment
+  // previously raced a plain fetch-then-upsert into double-crediting one
+  // of these (confirmed in testing). Postgres serializes these correctly
+  // via row-level locking during the UPDATE regardless of how many
+  // concurrent calls arrive, since there's no separate "read" step for
+  // another request to race against.
+  const { data: weekData, error: weekError } = await supabase
+    .rpc('increment_pomodoro_stats', { p_email: email, p_week_start: weekStartIST(), p_minutes: Math.round(minutes) })
+    .single();
+  if (weekError) return json(500, { error: weekError.message });
 
-  const totalMinutes = (existing?.total_minutes || 0) + Math.round(minutes);
-  const totalSessions = (existing?.total_sessions || 0) + 1;
+  const { data: dayData, error: dayError } = await supabase
+    .rpc('increment_pomo_daily_sessions', { p_email: email, p_date: todayIST() })
+    .single();
+  if (dayError) return json(500, { error: dayError.message });
 
-  const { error: upsertError } = await supabase
-    .from('pomodoro_stats')
-    .upsert(
-      { email, week_start: weekStart, total_minutes: totalMinutes, total_sessions: totalSessions, updated_at: new Date().toISOString() },
-      { onConflict: 'email,week_start' }
-    );
-  if (upsertError) return json(500, { error: upsertError.message });
-
-  const today = todayIST();
-  const { data: existingDaily, error: fetchDailyError } = await supabase
-    .from('pomo_daily_sessions')
-    .select('sessions_completed')
-    .eq('email', email)
-    .eq('date', today)
-    .maybeSingle();
-  if (fetchDailyError) return json(500, { error: fetchDailyError.message });
-
-  const sessionsToday = (existingDaily?.sessions_completed || 0) + 1;
-  const { error: upsertDailyError } = await supabase
-    .from('pomo_daily_sessions')
-    .upsert(
-      { email, date: today, sessions_completed: sessionsToday, updated_at: new Date().toISOString() },
-      { onConflict: 'email,date' }
-    );
-  if (upsertDailyError) return json(500, { error: upsertDailyError.message });
-
-  return json(200, { ok: true, total_minutes: totalMinutes, total_sessions: totalSessions, sessions_today: sessionsToday });
+  return json(200, {
+    ok: true,
+    total_minutes: weekData.total_minutes,
+    total_sessions: weekData.total_sessions,
+    sessions_today: dayData.sessions_completed,
+  });
 }

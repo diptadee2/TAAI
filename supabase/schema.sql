@@ -92,3 +92,39 @@ CREATE INDEX IF NOT EXISTS idx_pomodoro_stats_week_minutes ON pomodoro_stats(wee
 -- editor, but it's not guaranteed (and isn't set up on `supabase start`'s
 -- local Postgres image) — so grant explicitly rather than relying on it.
 GRANT SELECT, INSERT, UPDATE, DELETE ON students, schedule_days, schedule_tasks, task_progress, pomodoro_stats, pomo_daily_sessions TO service_role;
+
+-- Atomic increments for pomodoro_stats and pomo_daily_sessions. A plain
+-- read-then-write from the Netlify Function (fetch the current total,
+-- add to it, upsert) is vulnerable to a lost-update race if two requests
+-- land close together — confirmed in practice: a student with two tabs
+-- open, both completing the same session around the same real moment,
+-- ended up with the daily session count credited twice from one genuine
+-- completion. Pushing the increment into a single UPSERT statement
+-- instead lets Postgres serialize it correctly via row-level locking
+-- during the UPDATE, no matter how many concurrent calls arrive —
+-- there's no separate "read" step for another request to race against.
+CREATE OR REPLACE FUNCTION increment_pomodoro_stats(p_email TEXT, p_week_start DATE, p_minutes INTEGER)
+RETURNS TABLE(total_minutes INTEGER, total_sessions INTEGER) AS $$
+  INSERT INTO pomodoro_stats (email, week_start, total_minutes, total_sessions, updated_at)
+  VALUES (p_email, p_week_start, p_minutes, 1, now())
+  ON CONFLICT (email, week_start)
+  DO UPDATE SET
+    total_minutes = pomodoro_stats.total_minutes + p_minutes,
+    total_sessions = pomodoro_stats.total_sessions + 1,
+    updated_at = now()
+  RETURNING total_minutes, total_sessions;
+$$ LANGUAGE sql;
+
+CREATE OR REPLACE FUNCTION increment_pomo_daily_sessions(p_email TEXT, p_date DATE)
+RETURNS TABLE(sessions_completed INTEGER) AS $$
+  INSERT INTO pomo_daily_sessions (email, date, sessions_completed, updated_at)
+  VALUES (p_email, p_date, 1, now())
+  ON CONFLICT (email, date)
+  DO UPDATE SET
+    sessions_completed = pomo_daily_sessions.sessions_completed + 1,
+    updated_at = now()
+  RETURNING sessions_completed;
+$$ LANGUAGE sql;
+
+GRANT EXECUTE ON FUNCTION increment_pomodoro_stats TO service_role;
+GRANT EXECUTE ON FUNCTION increment_pomo_daily_sessions TO service_role;
