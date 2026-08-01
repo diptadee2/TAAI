@@ -506,8 +506,11 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .combo-card.featured .combo-num { opacity: 0.12; }
 .combo-card.featured:hover .combo-num { opacity: 0.24; }
 
-/* Individual courses, redesigned */
-.courses-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+/* Individual courses, redesigned — 3 columns, same as .combos-grid above
+   in this same container, so 6 cards divide evenly into two full rows
+   instead of a fixed 5-wide grid leaving the 6th orphaned alone on its
+   own row. */
+.courses-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .course-card {
   border-radius: var(--radius-xl); padding: 28px 24px 24px;
   display: flex; flex-direction: column;
@@ -818,7 +821,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 
 @media (max-width: 1024px) {
   .combos-grid { grid-template-columns: 1fr; }
-  .courses-grid { grid-template-columns: repeat(3, 1fr); }
   .included-grid { grid-template-columns: repeat(2, 1fr); }
 }
 /* Mobile accordion for "every course includes" */
