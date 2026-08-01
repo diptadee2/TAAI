@@ -800,7 +800,12 @@
     // width including the sidebar — otherwise it visually floats off-center
     // from the cards it actually belongs to.
     if (state.focus) {
-      html += '<div class="focus-toggle-wrap"><button id="focus-toggle" class="focus-toggle active">✕ Exit focus</button></div>';
+      // A proper drawn SVG, not the raw "✕" glyph — matches the site's
+      // other small UI icons (calendar, chevrons) instead of a unicode
+      // character that renders inconsistently across fonts/platforms.
+      html += '<div class="focus-toggle-wrap"><button id="focus-toggle" class="focus-toggle active">' +
+        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>' +
+        ' Exit Focus</button></div>';
     }
 
     if (!state.focus) html += '<div class="page-grid"><div class="main-col">';
