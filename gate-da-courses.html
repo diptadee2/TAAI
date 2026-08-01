@@ -506,11 +506,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .combo-card.featured .combo-num { opacity: 0.12; }
 .combo-card.featured:hover .combo-num { opacity: 0.24; }
 
-/* Individual courses, redesigned — 3 columns, same as .combos-grid above
-   in this same container, so 6 cards divide evenly into two full rows
-   instead of a fixed 5-wide grid leaving the 6th orphaned alone on its
-   own row. */
-.courses-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+/* Individual courses, redesigned */
+.courses-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
 .course-card {
   border-radius: var(--radius-xl); padding: 28px 24px 24px;
   display: flex; flex-direction: column;
@@ -520,7 +517,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 .ticket-notch {
   position: relative; height: 0;
-  margin: 12px -24px; z-index: 3;
+  margin: 16px -24px; z-index: 3;
 }
 .ticket-notch::before, .ticket-notch::after {
   content: ''; position: absolute;
@@ -564,28 +561,30 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   position: relative; z-index: 1; transition: color .28s ease;
 }
 .course-card:hover .course-validity { color: rgba(255,255,255,0.45); }
-/* Always visible now, not hidden until hover — that hid real content
-   (what the course actually covers) behind an interaction most visitors
-   never discover, and left a real empty gap in the card's resting state
-   that got a lot more obvious once the grid went from 5 columns to 3
-   (same content, proportionally wider card). Was already the mobile/
-   touch fallback (see the max-width:768px block below); this just makes
-   that the only behavior instead of a fallback for one breakpoint. */
 .course-topics {
   position: relative; z-index: 1;
-  display: flex; flex-direction: column; gap: 7px; margin-bottom: 16px;
+  display: flex; flex-direction: column; gap: 7px; margin-bottom: 0;
+  max-height: 0; overflow: hidden; opacity: 0;
+  transition: max-height .32s ease, opacity .2s ease, margin-bottom .32s ease;
+}
+.course-card:hover .course-topics {
+  max-height: 120px; opacity: 1; margin-bottom: 16px;
+  transition: max-height .5s cubic-bezier(.22,1,.36,1), opacity .38s ease .08s, margin-bottom .5s cubic-bezier(.22,1,.36,1);
 }
 .course-topic {
   display: flex; align-items: center; gap: 7px;
-  font-size: 12px; color: var(--ink-dim); line-height: 1.35;
-  transition: color .28s ease;
+  font-size: 12px; color: rgba(255,255,255,0.82); line-height: 1.35;
+  transform: translateY(6px); opacity: 0;
+  transition: transform .22s ease, opacity .22s ease;
 }
-.course-card:hover .course-topic { color: rgba(255,255,255,0.82); }
-.course-topic::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--ink-soft); flex-shrink: 0; transition: background .28s ease; }
-.course-card:hover .course-topic::before { background: rgba(255,255,255,0.55); }
+.course-card:hover .course-topic {
+  transform: translateY(0); opacity: 1;
+  transition: transform .44s cubic-bezier(.22,1,.36,1) var(--td, 0ms), opacity .36s ease var(--td, 0ms);
+}
+.course-topic::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.55); flex-shrink: 0; }
 .course-price-row {
   display: flex; align-items: baseline; gap: 8px;
-  margin-top: auto; margin-bottom: 12px; position: relative; z-index: 1;
+  margin-top: auto; margin-bottom: 18px; position: relative; z-index: 1;
 }
 .course-price {
   font-family: var(--font-display); font-size: 26px; font-weight: 600;
@@ -593,8 +592,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 .course-card:hover .course-price { color: #fff; }
 .course-price-old { font-size: 13px; color: var(--ink-soft); text-decoration: line-through; transition: color .28s ease; }
-.course-price-fallback { font-size: 15px; font-weight: 500; letter-spacing: normal; color: var(--ink-dim); }
-.course-card:hover .course-price-fallback { color: rgba(255,255,255,0.7); }
 .course-card:hover .course-price-old { color: rgba(255,255,255,0.42); }
 .course-card .btn-ghost {
   position: relative; z-index: 1; overflow: hidden;
@@ -821,6 +818,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 
 @media (max-width: 1024px) {
   .combos-grid { grid-template-columns: 1fr; }
+  .courses-grid { grid-template-columns: repeat(3, 1fr); }
   .included-grid { grid-template-columns: repeat(2, 1fr); }
 }
 /* Mobile accordion for "every course includes" */
@@ -934,6 +932,9 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .course-card:active .btn-ghost { background: transparent !important; color: var(--ink) !important; border-color: var(--line) !important; }
   .course-card:hover .btn-ghost svg,
   .course-card:active .btn-ghost svg { transform: none !important; }
+  /* Topics are visible in resting state on touch */
+  .course-card:hover .course-topics,
+  .course-card:active .course-topics { max-height: 200px !important; opacity: 1 !important; }
   /* Combo includes — always visible, hover/active locked to resting */
   .combo-includes li { opacity: 1; transform: translateX(0); }
   .combo-check svg path { stroke-dashoffset: 0; }
@@ -966,7 +967,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   }
   .course-card:active,
   .course-card:hover { transform: none; }
-  .course-topics { margin-bottom: 14px !important; }
+  .course-topics { max-height: none !important; opacity: 1 !important; margin-bottom: 14px !important; overflow: visible !important; }
+  .course-topic { transform: none !important; opacity: 1 !important; color: var(--ink-dim) !important; }
 }
 
 /* YouTube link wiggle */
@@ -1436,7 +1438,7 @@ const Icon = {
 
 // ── Pricing CSV ───────────────────────────────────────────────────
 // Valid IDs — combos: full-course | maths-ml-bundle | maths-bundle
-//             individual: statistics | calculus | linear-algebra | probability | machine-learning | python-programming
+//             individual: statistics | calculus | linear-algebra | probability | machine-learning
 const PRICING_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSVYXQcKli0NtjXf93cxRwx3A15WiNcETEw26MubPYIihLyMQs2rfZjXKm85fNsOxxlUWkoyR89DKCK/pub?gid=0&single=true&output=csv';
 
 const parseCSV = text => {
@@ -1724,10 +1726,6 @@ const INDIVIDUAL = [
     icon: <Icon.Code />, grad: 'linear-gradient(145deg,#8B5CF6,#C4B0FF)', shadow: 'rgba(139,92,246,0.34)',
     href: 'https://learn.taai.live/learn/taAI-Machine-Learning-Full-Course',
     topics: ['Supervised & unsupervised', 'Model evaluation', 'Neural networks basics'] },
-  { id: 'python-programming', num: '06', title: 'Python Programming',
-    icon: <Icon.Code />, grad: 'linear-gradient(145deg,#10B981,#34D399)', shadow: 'rgba(16,185,129,0.32)',
-    href: 'https://learn.taai.live/learn/Python-Programming',
-    topics: ['Basics & syntax', 'Strings, I/O & branching', 'Loops & iteration'] },
 ];
 
 // ── DOT FIELD (Canvas2D + SVG glow, no external deps) ──────────────
@@ -2162,22 +2160,22 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
 
 const CourseCard = React.memo(function CourseCard({ c, pricing }) {
   const p        = pricing || {};
-  const price    = p.price    ? fmtPrice(p.price)    : 'Contact for price';
+  const price    = p.price    ? fmtPrice(p.price)    : '-';
   const priceOld = p.priceOld ? fmtPrice(p.priceOld) : null;
-  const validity = p.validity ? fmtValidity(p.validity) : null;
+  const validity = p.validity ? fmtValidity(p.validity) : '-';
   return (
     <div id={c.id} className="course-card card" style={{ '--course-grad': c.grad, '--course-shadow': c.shadow }}>
       <div className="course-accent" style={{ background: c.grad }} />
       <div className="course-icon" style={{ background: c.grad }}>{c.icon}</div>
       <div className="course-title">{c.title}</div>
-      {validity && <div className="course-validity mono data-fade-in">{validity}</div>}
+      <div className={`course-validity mono${p.validity ? ' data-fade-in' : ''}`}>{validity}</div>
       <div className="course-topics">
         {c.topics.map((t, i) => (
           <div key={i} className="course-topic" style={{ '--td': `${i * 55}ms` }}>{t}</div>
         ))}
       </div>
       <div className={`course-price-row${p.price ? ' price-loaded' : ''}`}>
-        <div className={`course-price${p.price ? '' : ' course-price-fallback'}`}>{price}</div>
+        <div className="course-price">{price}</div>
         {priceOld && <div className="course-price-old">{priceOld}</div>}
       </div>
       <div className="ticket-notch"><div className="ticket-notch-line" /></div>
