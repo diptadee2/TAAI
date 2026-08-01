@@ -267,35 +267,32 @@
   .focus-toggle.active { background: var(--card); color: var(--ink-dim); border: 1.5px solid rgba(139,92,246,0.25); box-shadow: none; }
   .focus-toggle.active:hover { color: var(--purple); border-color: var(--purple); box-shadow: 0 8px 20px rgba(139,92,246,0.18); }
 
-  /* Champions sits beside the streak card specifically to use the space
-     its centered content leaves empty on wide screens, instead of being
-     stuck down in .side-col below the fold. #streak-panel gets flex:1 so
-     it still claims the whole row alone whenever there's no champions
-     data to show (renderLastWeekChampions returns nothing in that case,
-     so there's no second flex child at all). */
-  .top-row { display: flex; gap: 20px; align-items: stretch; margin-bottom: 18px; }
-  .top-row #streak-panel { flex: 1; min-width: 0; }
-  /* The card's stretched height (to match champions beside it) leaves its
-     compact content — just a flame, a number, a label — sitting at the
-     top with a lot of empty space below otherwise; centering it in the
-     available height reads as intentional instead of like a bug. */
-  .top-row .streak-hero { margin-bottom: 0; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-  /* Centering alone just redistributes the empty space, it doesn't remove
-     it — this actually fills more of the card's now-larger area by making
-     the number itself the size the "primary visual of the page" framing
-     implies, instead of small text floating in a big card. */
-  .top-row .streak-flame { font-size: 56px; margin-bottom: 10px; }
-  .top-row .streak-number { font-size: 84px; }
-  .top-row .streak-label { margin-top: 10px; font-size: 13px; }
-  /* Compound selector, not just .top-champions-card — a bare single-class
-     selector here loses a CSS specificity tie to the base .leaderboard-card
-     rule's own margin-bottom (same specificity, later source position
-     wins), leaving a stray 20px margin that made this card's visible
-     bottom edge sit 20px above the streak card's despite align-items:
-     stretch. Same reason .focus-card .leaderboard-card is a compound
-     selector below, not bare .leaderboard-card. */
-  .top-row .top-champions-card { flex: 0 0 300px; max-width: none; margin-left: 0; margin-right: 0; margin-bottom: 0; }
-  @media (max-width: 1080px) { .top-champions-card { display: none; } }
+  /* One shared card for streak + champions, not two side-by-side cards —
+     same "sections separated by a divider" pattern as Focus Mode's own
+     unified card (countdown/timer/today/leaderboard). Champions is a
+     section here specifically to use the space the streak content leaves
+     empty on wide screens, instead of a second card floating beside it
+     or being stuck down in .side-col below the fold. #streak-panel gets
+     flex:1 so it still claims the whole card alone whenever there's no
+     champions data to show (renderLastWeekChampions returns nothing in
+     that case, so there's no second section at all). */
+  .streak-champions-card { display: flex; align-items: stretch; margin-bottom: 18px; border-radius: var(--radius-lg); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 10px 36px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.07); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); overflow: hidden; }
+  .streak-champions-card #streak-panel { flex: 1; min-width: 0; display: flex; }
+  /* The streak section strips its own background/border (the shared card
+     above provides that now) and centers its compact content — a flame,
+     a number, a label — in the available height instead of leaving it
+     sitting at the top with empty space below. */
+  .streak-champions-card .streak-hero { flex: 1; background: none; border: none; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; border-radius: 0; margin-bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  /* Centering alone just redistributes empty space, it doesn't remove it
+     — sizing the number itself up fills more of the section, matching
+     the "primary visual of the page" framing better than small text. */
+  .streak-champions-card .streak-flame { font-size: 56px; margin-bottom: 10px; }
+  .streak-champions-card .streak-number { font-size: 84px; }
+  .streak-champions-card .streak-label { margin-top: 10px; font-size: 13px; }
+  /* Champions section likewise strips its own card chrome and gets a
+     divider line instead of a gap, since it's part of the same card now. */
+  .streak-champions-card .champions-section { flex: 0 0 300px; background: none; border: none; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; border-radius: 0; margin: 0; max-width: none; padding: 22px 20px; border-left: 1px solid rgba(255,255,255,0.1); }
+  @media (max-width: 1080px) { .champions-section { display: none; } }
 
   /* Streak hero — the page's primary visual now, replacing the old heatmap-up-top */
   .streak-hero { position: relative; overflow: hidden; text-align: center; padding: 30px 20px 26px; border-radius: var(--radius-lg); margin-bottom: 18px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 10px 36px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.07); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); }

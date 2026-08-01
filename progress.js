@@ -604,13 +604,14 @@
     return '<div class="subject-breakdown fade-in"><div class="subject-breakdown-title">Progress by subject</div>' + rows + '</div>';
   }
 
-  // ── Last week's top 5 by focus minutes — outside Focus Mode, beside the
-  // streak card (see the top-row wrapper in renderCalendar) so it's
-  // visible immediately, not below the fold. Public/unpersonalized like
-  // the live weekly leaderboard, so this shows for guests too. Renders
-  // nothing at all if last week had no data yet (a brand new week, or
-  // nobody used the timer) rather than showing an empty-looking card —
-  // the streak card's flex:1 then naturally claims the whole row alone.
+  // ── Last week's top 5 by focus minutes — a section inside the shared
+  // streak-champions-card (see renderCalendar), not its own separate card,
+  // so it's visible immediately, not below the fold. Public/unpersonalized
+  // like the live weekly leaderboard, so this shows for guests too.
+  // Renders nothing at all if last week had no data yet (a brand new week,
+  // or nobody used the timer) rather than showing an empty-looking
+  // section — the streak section's flex:1 then naturally claims the
+  // whole card alone.
   function renderLastWeekChampions() {
     var leaders = state.lastWeekLeaders || [];
     if (!leaders.length) return '';
@@ -622,7 +623,7 @@
         '<span class="leaderboard-time">' + l.total_minutes + 'm</span>' +
         '</div>';
     }).join('');
-    return '<div class="leaderboard-card top-champions-card fade-in">' +
+    return '<div class="leaderboard-card champions-section">' +
       '<div class="leaderboard-title">🏆 Last Week’s Focus Champions</div>' +
       '<div class="leaderboard-subtitle">Top 5 by minutes logged</div>' +
       rows +
@@ -806,13 +807,14 @@
 
     if (!state.focus) {
       html += '<div class="focus-toggle-wrap"><button id="focus-toggle" class="focus-toggle">◎ Focus mode</button></div>';
-      // Champions sits beside the streak card, not below it, specifically to
-      // use the space the streak card's centered content leaves empty on
-      // wide screens — visible immediately without scrolling, instead of
-      // all the way down in .side-col. Renders nothing at all (see
+      // One shared card, not two side by side — same pattern as Focus
+      // Mode's own unified card (countdown/timer/today/leaderboard as
+      // sections with a divider, not stacked separate floating cards).
+      // Visible immediately without scrolling, instead of all the way
+      // down in .side-col. Renders nothing at all (see
       // renderLastWeekChampions) when there's no data, in which case
-      // #streak-panel's flex:1 just naturally claims the whole row alone.
-      html += '<div class="top-row">' +
+      // #streak-panel's flex:1 just naturally claims the whole card alone.
+      html += '<div class="streak-champions-card fade-in">' +
         '<div id="streak-panel">' + renderStreakHero() + '</div>' +
         renderLastWeekChampions() +
         '</div>';
