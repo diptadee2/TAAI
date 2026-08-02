@@ -792,21 +792,17 @@
 
     var html = '';
     html += '<div class="roadmap-head"><h1>MISSION IIT🎯</h1></div>';
+    // Exit Focus sits in the same row as the identity line (not floating
+    // alone in the blank space above the timer card) — .roadmap-sub is
+    // already a space-between flex row, so it lands opposite the name/
+    // rename/streak text for free.
     html += '<div class="roadmap-sub">' +
       '<div class="roadmap-sub-left">' + renderIdentityLine() + '</div>' +
-      '</div>';
-    // Rendered inside main-col below (not here) when not in Focus Mode, so it
-    // centers against the calendar column's own width, not the full page
-    // width including the sidebar — otherwise it visually floats off-center
-    // from the cards it actually belongs to.
-    if (state.focus) {
-      // A proper drawn SVG, not the raw "✕" glyph — matches the site's
-      // other small UI icons (calendar, chevrons) instead of a unicode
-      // character that renders inconsistently across fonts/platforms.
-      html += '<div class="focus-toggle-wrap"><button id="focus-toggle" class="focus-toggle active">' +
+      (state.focus ?
+        '<button id="focus-toggle" class="focus-toggle active">' +
         '<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>' +
-        ' Exit Focus</button></div>';
-    }
+        ' Exit Focus</button>' : '') +
+      '</div>';
 
     if (!state.focus) html += '<div class="page-grid"><div class="main-col">';
 
