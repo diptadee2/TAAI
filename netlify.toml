@@ -14,6 +14,38 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
+# No headers were configured at all before this, so every static asset
+# (images, vendor React bundle, favicons) inherited Netlify's default
+# `Cache-Control: public, max-age=0, must-revalidate` — the same policy
+# meant for HTML, which forces a revalidation round-trip on every single
+# load with no local disk cache, even seconds apart. That's expensive for
+# a site with a real repeat-visitor base (students reloading the progress
+# tracker daily) and was the biggest driver of Web bandwidth credits.
+# These files aren't content-hashed, so a real content change needs a
+# rename (cache-busting) to take effect immediately for cached visitors —
+# acceptable here since none of these change often, and HTML pages
+# themselves are deliberately NOT covered by this so they keep
+# revalidating on every load as normal.
+[[headers]]
+  for = "/*.webp"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, must-revalidate"
+
+[[headers]]
+  for = "/*.png"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, must-revalidate"
+
+[[headers]]
+  for = "/favicon.ico"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, must-revalidate"
+
+[[headers]]
+  for = "/vendor/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, must-revalidate"
+
 # ── Progress tracker (taai.live/gate-da-progress-tracker) ────────────────
 # Schedule data is provided directly (as PDFs/etc.) and loaded via
 # `npm run load-schedule`, not synced automatically from anywhere —
