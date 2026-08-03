@@ -159,8 +159,9 @@
     expanded: new Set(), // dates whose day-card is open, non-native accordion
     collapsedWeeks: new Set(), // week keys (Monday date) currently collapsed
     initializedWeeks: new Set(), // week keys already given their one-time default collapse state
-    // Never persisted — every fresh visit (reload or reopen) lands on the
-    // main checklist, never resumes straight into Focus Mode.
+    // Starts false on every fresh visit/navigation — a real browser reload
+    // while already in Focus Mode is the one case that restores it (see
+    // FOCUS_ACTIVE_KEY / init() below), not this initial value.
     focus: false,
     leaderboard: [], // [{ display_name, total_minutes, total_sessions }] — Focus Mode only
     renaming: false, // showing the inline rename form in place of the name + Rename/Not you? line
@@ -209,10 +210,53 @@
     }
   }
 
+  // Focus Mode is intentionally NOT restored on a fresh visit or a real
+  // navigation (typing the URL, clicking "Progress Tracker" in the nav,
+  // even to this exact same page) — those should always land on the main
+  // checklist. The one exception a student actually wants is refreshing
+  // the page while already inside Focus Mode (F5/Cmd+R) — they're
+  // mid-session, not starting fresh.
+  //
+  // history.state alone can't tell these apart: Chromium reuses/preserves
+  // the current session-history entry (and its pushState'd state) not just
+  // for an actual reload, but also for a fresh navigation to the exact
+  // same URL — confirmed empirically, not assumed. The Navigation Timing
+  // API's entry type is the one signal that's specific to the real reload
+  // action (F5/Cmd+R/the reload button) versus any other navigation cause,
+  // so that's paired with a small localStorage flag (set/cleared wherever
+  // state.focus actually changes — see enterFocus/exitFocus/popstate below)
+  // to know *whether* a reload should restore Focus Mode at all.
+  var FOCUS_ACTIVE_KEY = 'taai_focus_active';
+  function saveFocusActive(active) {
+    try {
+      if (active) localStorage.setItem(FOCUS_ACTIVE_KEY, '1');
+      else localStorage.removeItem(FOCUS_ACTIVE_KEY);
+    } catch (e) { /* localStorage unavailable — reload just won't restore Focus Mode, not critical */ }
+  }
+  function loadFocusActive() {
+    try { return localStorage.getItem(FOCUS_ACTIVE_KEY) === '1'; } catch (e) { return false; }
+  }
+  function wasHardReload() {
+    try {
+      var nav = performance.getEntriesByType('navigation')[0];
+      return !!nav && nav.type === 'reload';
+    } catch (e) { return false; }
+  }
+
   function init() {
     state.student = readCookie();
     restorePomoActiveState();
     loadMonth(state.month);
+    if (wasHardReload() && loadFocusActive()) {
+      state.focus = true;
+      // replaceState, not enterFocus()'s pushState — a correct {focus:true}
+      // entry already exists from before the reload (reload re-executes
+      // the current entry in place, it doesn't create a new one), so
+      // pushing another on top would leave a stale duplicate behind that
+      // the Back button would land on instead of truly exiting Focus Mode.
+      history.replaceState({ focus: true }, '');
+      refreshLeaderboard();
+    }
   }
 
   // ── Scroll progress + back-to-top — same pattern as blog.js ──────────
@@ -1308,6 +1352,7 @@
   // button, which triggers the same pop) is what flips state.focus back off.
   function enterFocus() {
     state.focus = true;
+    saveFocusActive(true);
     history.pushState({ focus: true }, '');
     renderCalendar();
     refreshLeaderboard();
@@ -1369,20 +1414,32 @@
       .catch(function () { /* non-critical — this session just won't count this time */ });
   }
 
+  // Whenever state.focus becomes true (enterFocus, or the reload restore
+  // in init()), it's always paired with a real {focus:true} history entry
+  // (pushState or replaceState respectively) — so there's always something
+  // valid for the Back button, or this function, to land on.
   function exitFocus() {
-    if (history.state && history.state.focus) {
-      history.back();
-    } else {
-      state.focus = false;
-      renderCalendar();
-    }
+    history.back();
   }
 
+  // Deliberately doesn't inspect e.state here (only whether we were in
+  // Focus Mode going in) — a same-URL navigation (e.g. clicking "Progress
+  // Tracker" in the nav while already on this page) can leave a *stale*
+  // {focus:true} state attached to a history entry Chromium reuses/
+  // preserves rather than replacing (confirmed empirically), so trusting
+  // e.state.focus directly can resurrect Focus Mode from an unrelated,
+  // already-exited session once the user hits Back. Since the only way
+  // state.focus is ever true is our own code setting it, and the only
+  // reason popstate fires while it's true is the user pressing Back,
+  // "exit" is the only correct interpretation regardless of what's
+  // actually attached to the entry being popped to.
   function setupFocusHistory() {
-    window.addEventListener('popstate', function (e) {
-      var wasFocus = state.focus;
-      state.focus = !!(e.state && e.state.focus);
-      if (wasFocus !== state.focus) renderCalendar();
+    window.addEventListener('popstate', function () {
+      if (state.focus) {
+        state.focus = false;
+        saveFocusActive(false);
+        renderCalendar();
+      }
     });
   }
 
