@@ -624,8 +624,8 @@
         '</div>';
     }).join('');
     return '<div class="leaderboard-card champions-section">' +
-      '<div class="leaderboard-title">🏆 Last Week’s Focus Champions</div>' +
-      '<div class="leaderboard-subtitle">Top 5 by minutes logged</div>' +
+      '<div class="leaderboard-title">Mission IIT Leaderboard</div>' +
+      '<div class="leaderboard-subtitle">Top 5 by minutes logged, last week</div>' +
       rows +
       '</div>';
   }
