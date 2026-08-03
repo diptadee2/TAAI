@@ -1114,6 +1114,17 @@
         // which would incorrectly show a paused "00:00" instead of the
         // full fresh duration waiting to begin.
         pomo.secondsLeft = pomo.totalSeconds;
+        // Real bug, confirmed in production: pomoAdvance() above already
+        // called savePomoActiveState() while pomo.running was still true,
+        // so without this, localStorage is left permanently saying
+        // "running" even though it just paused. Every future page load's
+        // restorePomoActiveState() would then see running:true, resume,
+        // find the phase already long expired (nobody clicked Start), and
+        // instantly complete+credit another phantom work+break cycle
+        // before pausing again — itself failing to persist that pause the
+        // same way, so it kept happening on every single revisit. Only a
+        // genuine Start click should ever be able to earn credit again.
+        savePomoActiveState();
       }
     }
     updatePomoDisplay();
