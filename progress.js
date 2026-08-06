@@ -84,23 +84,59 @@
   // either — a student's is already covered by loadMonth's Math.max merge,
   // but persisting it here doesn't conflict with that.
   var POMO_ACTIVE_KEY = 'taai_pomo_active';
+  // Tracks the freshness (epoch ms) of whatever's currently applied to
+  // `pomo`, whether it came from this device's own localStorage or a sync
+  // from the server (see applyPomoActiveState/loadMonth) — lets the
+  // cross-device reconciliation below tell "the server has something
+  // newer than what I already have" apart from "the server's write from
+  // my OWN last action just hasn't landed yet," without which a slightly
+  // stale response arriving right after a fresh local click could
+  // overwrite it with old data.
+  var pomoStateAsOf = 0;
   function savePomoActiveState() {
+    var payload = {
+      mode: pomo.mode,
+      running: pomo.running,
+      secondsLeft: pomo.secondsLeft,
+      totalSeconds: pomo.totalSeconds,
+      phaseEndAt: pomo.phaseEndAt,
+      completedSessions: pomo.completedSessions,
+      savedAt: Date.now(),
+    };
+    pomoStateAsOf = payload.savedAt;
     try {
-      localStorage.setItem(POMO_ACTIVE_KEY, JSON.stringify({
-        mode: pomo.mode,
-        running: pomo.running,
-        secondsLeft: pomo.secondsLeft,
-        totalSeconds: pomo.totalSeconds,
-        phaseEndAt: pomo.phaseEndAt,
-        completedSessions: pomo.completedSessions,
-      }));
+      localStorage.setItem(POMO_ACTIVE_KEY, JSON.stringify(payload));
     } catch (e) { /* localStorage unavailable — refresh just won't resume, not critical */ }
+    savePomoActiveRemote(payload);
   }
   function loadPomoActiveState() {
     try {
       var raw = localStorage.getItem(POMO_ACTIVE_KEY);
       return raw ? JSON.parse(raw) : null;
     } catch (e) { return null; }
+  }
+
+  // Cross-device counterpart to the localStorage write above — see
+  // pomo-active.js. Fire-and-forget: a lost write just means another
+  // device's view of this session goes stale until the next successful
+  // one, not that anything breaks on this device. Guests have no server
+  // identity to sync against, so this is a no-op for them, same guard
+  // used elsewhere (e.g. recordPomodoroCompletion).
+  function savePomoActiveRemote(payload) {
+    if (!state.student) return;
+    api('/pomo-active', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: state.student.email,
+        mode: payload.mode,
+        running: payload.running,
+        secondsLeft: payload.secondsLeft,
+        totalSeconds: payload.totalSeconds,
+        phaseEndAt: payload.phaseEndAt,
+        completedSessions: payload.completedSessions,
+      }),
+    }).catch(function () { /* non-critical — see comment above */ });
   }
 
   // Notifications are mandatory to use the Focus Timer at all (not just an
@@ -185,22 +221,34 @@
   // the schedule itself (schedule.js) needs no email, so anyone can view and
   // navigate the roadmap. Only actions tied to a specific student (ticking a
   // task) require signing in, prompted at the point of that action.
-  // Restores a running/paused pomodoro across a refresh (see
-  // savePomoActiveState). Deliberately restarts the interval right here —
-  // independent of whether Focus Mode happens to be open — so the timer
-  // keeps counting down, completing phases, and crediting sessions in the
-  // background exactly as if the refresh had never happened; Focus Mode
-  // just displays whatever it finds whenever it's next opened. One
-  // limitation that can't be worked around: the chime needs a fresh user
-  // gesture to unlock audio (see ensurePomoAudioCtx), which a page load
-  // doesn't provide, so a phase that completes before the next click will
+  // Applies a saved { mode, running, secondsLeft, totalSeconds, phaseEndAt,
+  // completedSessions } blob to the live pomo object and, if it was
+  // running, (re)starts the interval — shared by two callers: the
+  // synchronous localStorage restore at init() (instant, same-device,
+  // works for guests too since it needs no server round-trip) and the
+  // async cross-device reconciliation once tracker-data resolves (see
+  // loadMonth) for a session that was started on a different browser/
+  // device. Deliberately restarts the interval right here regardless of
+  // whether Focus Mode happens to be open — so the timer keeps counting
+  // down, completing phases, and crediting sessions in the background
+  // exactly as if nothing had happened; Focus Mode just displays whatever
+  // it finds whenever it's next opened. One limitation that can't be
+  // worked around: the chime needs a fresh user gesture to unlock audio
+  // (see ensurePomoAudioCtx), which neither a page load nor a background
+  // sync provides, so a phase that completes before the next click will
   // only notify, not chime — the notification is what's mandatory instead.
-  function restorePomoActiveState() {
-    var saved = loadPomoActiveState();
+  function applyPomoActiveState(saved, asOf) {
     if (!saved) return;
+    pomoStateAsOf = asOf;
+    if (pomo.timerId) clearInterval(pomo.timerId);
     pomo.mode = saved.mode;
     pomo.totalSeconds = saved.totalSeconds;
-    pomo.completedSessions = saved.completedSessions || 0;
+    // Math.max, not a straight overwrite — the cross-device reconciliation
+    // call can run after this device has already advanced further (e.g.
+    // completed another session while the sync from elsewhere was still in
+    // flight), and a lower count from that stale response shouldn't erase
+    // progress this device already knows really happened.
+    pomo.completedSessions = Math.max(pomo.completedSessions, saved.completedSessions || 0);
     if (saved.running) {
       pomo.phaseEndAt = saved.phaseEndAt;
       pomo.running = true;
@@ -210,6 +258,12 @@
       pomo.secondsLeft = saved.secondsLeft;
       pomo.running = false;
     }
+    updatePomoDisplay();
+  }
+
+  function restorePomoActiveState() {
+    var saved = loadPomoActiveState();
+    if (saved) applyPomoActiveState(saved, saved.savedAt || 0);
   }
 
   // Focus Mode is intentionally NOT restored on a fresh visit or a real
@@ -519,6 +573,20 @@
         var dailySessions = state.student ? data.pomoSessions : null;
         if (dailySessions) {
           pomo.completedSessions = Math.max(pomo.completedSessions, dailySessions.sessionsCompleted || 0);
+        }
+
+        // Cross-device pomodoro sync: if a session was started on a
+        // different browser/device, this device's own localStorage (used
+        // by the synchronous restore at init()) knows nothing about it —
+        // pomoActive is that session's server-side mirror (see
+        // pomo-active.js). Only adopt it if it's actually newer than
+        // whatever's already applied here (pomoStateAsOf), so a slightly
+        // stale response doesn't undo a fresh local action (e.g. clicking
+        // Start right as this request was in flight).
+        var remoteActive = state.student ? data.pomoActive : null;
+        if (remoteActive && remoteActive.updatedAt) {
+          var remoteAsOf = new Date(remoteActive.updatedAt).getTime();
+          if (remoteAsOf > pomoStateAsOf) applyPomoActiveState(remoteActive, remoteAsOf);
         }
 
         var completedSet = new Set(

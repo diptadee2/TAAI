@@ -27,6 +27,9 @@
 // loadMonth's outer .catch, which shows "Couldn't load your roadmap").
 // The other five degrade to the same fallback values their client-side
 // .catch()es used to supply, rather than failing the whole page.
+//
+// pomoActive was added later, for cross-device pomodoro sync — see
+// fetchPomoActive below and pomo-active.js (the write side).
 import { getSupabase, json, monthRange, todayIST, weekStartIST } from './lib/supabase.js';
 
 const DEMO_TODAY_FLOOR = '2026-08-01'; // see streak.js — same self-expiring floor
@@ -209,6 +212,29 @@ async function fetchPomoSessions(supabase, email) {
   return { date: today, sessionsCompleted: data?.sessions_completed || 0 };
 }
 
+// The cross-device counterpart to localStorage's taai_pomo_active — see
+// pomo-active.js for the write side. null (not found) just means this
+// student has never started a timer on any device, or their last session
+// already ran to a clean pause; that's the common case, not an error.
+async function fetchPomoActive(supabase, email) {
+  const { data, error } = await supabase
+    .from('pomo_active_session')
+    .select('mode, running, phase_end_at, seconds_left, total_seconds, completed_sessions, updated_at')
+    .eq('email', email)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  return {
+    mode: data.mode,
+    running: data.running,
+    phaseEndAt: data.phase_end_at,
+    secondsLeft: data.seconds_left,
+    totalSeconds: data.total_seconds,
+    completedSessions: data.completed_sessions,
+    updatedAt: data.updated_at,
+  };
+}
+
 export async function handler(event) {
   if (event.httpMethod !== 'GET') return json(405, { error: 'method not allowed' });
 
@@ -232,13 +258,14 @@ export async function handler(event) {
 
   // Everything else degrades to its old client-side .catch() fallback
   // instead of failing the whole response.
-  const [lastWeekLeaders, streak, subjectProgress, pomoSettings, pomoSessions] = await Promise.all([
+  const [lastWeekLeaders, streak, subjectProgress, pomoSettings, pomoSessions, pomoActive] = await Promise.all([
     fetchLastWeekLeaders(supabase, email).catch(() => ({ leaders: [] })),
     email ? fetchStreak(supabase, email).catch(() => ({ streak: null })) : Promise.resolve(null),
     email ? fetchSubjectProgress(supabase, email).catch(() => ({ subjects: [] })) : Promise.resolve(null),
     email ? fetchPomoSettings(supabase, email).catch(() => null) : Promise.resolve(null),
     email ? fetchPomoSessions(supabase, email).catch(() => null) : Promise.resolve(null),
+    email ? fetchPomoActive(supabase, email).catch(() => null) : Promise.resolve(null),
   ]);
 
-  return json(200, { schedule, lastWeekLeaders, progress, streak, subjectProgress, pomoSettings, pomoSessions });
+  return json(200, { schedule, lastWeekLeaders, progress, streak, subjectProgress, pomoSettings, pomoSessions, pomoActive });
 }

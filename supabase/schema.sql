@@ -82,6 +82,25 @@ CREATE TABLE IF NOT EXISTS pomo_daily_sessions (
   PRIMARY KEY (email, date)
 );
 
+-- Server-side mirror of the pomodoro timer's active/paused state, synced
+-- on every meaningful client-side change (start/pause/skip/reset/phase-
+-- advance — see savePomoActiveState in progress.js). This used to live
+-- only in localStorage, invisible across devices — a student opening the
+-- tracker on a second browser/device saw a fresh, unaware timer instead
+-- of the session already running elsewhere. One row per student
+-- (PRIMARY KEY email, not composite) since there's only ever one "current"
+-- session regardless of how many devices might be open.
+CREATE TABLE IF NOT EXISTS pomo_active_session (
+  email              TEXT PRIMARY KEY REFERENCES students(email),
+  mode               TEXT NOT NULL,          -- 'work' | 'break'
+  running            BOOLEAN NOT NULL DEFAULT false,
+  phase_end_at       BIGINT,                 -- ms epoch, matches the client's Date.now()-based deadline model; null while paused
+  seconds_left       INTEGER,                -- authoritative only while paused (running=false) — no ticking deadline to derive it from otherwise
+  total_seconds      INTEGER,
+  completed_sessions INTEGER NOT NULL DEFAULT 0,
+  updated_at         TIMESTAMP DEFAULT now()
+);
+
 -- Supports the month-range queries schedule.js / progress.js run on every page load
 CREATE INDEX IF NOT EXISTS idx_schedule_tasks_date ON schedule_tasks(date);
 CREATE INDEX IF NOT EXISTS idx_task_progress_email_date ON task_progress(email, date);
@@ -91,7 +110,7 @@ CREATE INDEX IF NOT EXISTS idx_pomodoro_stats_week_minutes ON pomodoro_stats(wee
 -- projects usually grant this by default for tables created via the SQL
 -- editor, but it's not guaranteed (and isn't set up on `supabase start`'s
 -- local Postgres image) — so grant explicitly rather than relying on it.
-GRANT SELECT, INSERT, UPDATE, DELETE ON students, schedule_days, schedule_tasks, task_progress, pomodoro_stats, pomo_daily_sessions TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON students, schedule_days, schedule_tasks, task_progress, pomodoro_stats, pomo_daily_sessions, pomo_active_session TO service_role;
 
 -- Atomic increments for pomodoro_stats and pomo_daily_sessions. A plain
 -- read-then-write from the Netlify Function (fetch the current total,
