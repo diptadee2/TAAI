@@ -93,8 +93,8 @@
   // stale response arriving right after a fresh local click could
   // overwrite it with old data.
   var pomoStateAsOf = 0;
-  function savePomoActiveState() {
-    var payload = {
+  function buildPomoActivePayload() {
+    return {
       mode: pomo.mode,
       running: pomo.running,
       secondsLeft: pomo.secondsLeft,
@@ -103,11 +103,21 @@
       completedSessions: pomo.completedSessions,
       savedAt: Date.now(),
     };
+  }
+  // Local-only half of persistence — no network call. Used by
+  // applyPomoActiveState too (see below), including for state that just
+  // arrived FROM the server, where posting it straight back would be a
+  // pointless network round-trip for data the server already has.
+  function savePomoActiveLocalOnly() {
+    var payload = buildPomoActivePayload();
     pomoStateAsOf = payload.savedAt;
     try {
       localStorage.setItem(POMO_ACTIVE_KEY, JSON.stringify(payload));
     } catch (e) { /* localStorage unavailable — refresh just won't resume, not critical */ }
-    savePomoActiveRemote(payload);
+    return payload;
+  }
+  function savePomoActiveState() {
+    savePomoActiveRemote(savePomoActiveLocalOnly());
   }
   function loadPomoActiveState() {
     try {
@@ -237,9 +247,8 @@
   // (see ensurePomoAudioCtx), which neither a page load nor a background
   // sync provides, so a phase that completes before the next click will
   // only notify, not chime — the notification is what's mandatory instead.
-  function applyPomoActiveState(saved, asOf) {
+  function applyPomoActiveState(saved) {
     if (!saved) return;
-    pomoStateAsOf = asOf;
     if (pomo.timerId) clearInterval(pomo.timerId);
     pomo.mode = saved.mode;
     pomo.totalSeconds = saved.totalSeconds;
@@ -258,12 +267,23 @@
       pomo.secondsLeft = saved.secondsLeft;
       pomo.running = false;
     }
+    // Real bug, caught before shipping: without this, adopting a session
+    // from the server (see loadMonth's reconciliation) updated the live
+    // `pomo` object and the on-screen display for this page view only —
+    // nothing actually persisted it back to localStorage, so a same-device
+    // reload right after found nothing locally and flickered back to a
+    // blank/default state until the network reconciliation ran again. This
+    // also correctly bumps pomoStateAsOf to now regardless of which
+    // caller this is — for the local-restore-from-localStorage path
+    // that's a harmless no-op re-save of identical data; for the
+    // cross-device path it's what makes this device the freshest known
+    // copy going forward.
+    savePomoActiveLocalOnly();
     updatePomoDisplay();
   }
 
   function restorePomoActiveState() {
-    var saved = loadPomoActiveState();
-    if (saved) applyPomoActiveState(saved, saved.savedAt || 0);
+    applyPomoActiveState(loadPomoActiveState());
   }
 
   // Focus Mode is intentionally NOT restored on a fresh visit or a real
@@ -586,7 +606,7 @@
         var remoteActive = state.student ? data.pomoActive : null;
         if (remoteActive && remoteActive.updatedAt) {
           var remoteAsOf = new Date(remoteActive.updatedAt).getTime();
-          if (remoteAsOf > pomoStateAsOf) applyPomoActiveState(remoteActive, remoteAsOf);
+          if (remoteAsOf > pomoStateAsOf) applyPomoActiveState(remoteActive);
         }
 
         var completedSet = new Set(
