@@ -416,11 +416,20 @@
       });
     }
     var start = null;
-    var DURATION = 2600;
+    // A flat duration doesn't account for how far a particle actually needs
+    // to fall — real bug, confirmed visually: at vy 2.5-5.5px/frame, a lot
+    // of particles were nowhere near the bottom of the screen yet at a
+    // fixed 2.6s cutoff, so they got yanked away mid-fall instead of
+    // finishing naturally. Each particle now exits (is dropped from the
+    // array) only once it's actually below the viewport; MAX_DURATION is
+    // just a safety cap in case a stray particle's vy/start position would
+    // otherwise keep this running unreasonably long.
+    var MAX_DURATION = 6000;
     function frame(ts) {
       if (!start) start = ts;
       var elapsed = ts - start;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles = particles.filter(function (p) { return p.y < canvas.height + 30; });
       particles.forEach(function (p) {
         p.x += p.vx;
         p.y += p.vy;
@@ -432,7 +441,7 @@
         ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
         ctx.restore();
       });
-      if (elapsed < DURATION) {
+      if (particles.length > 0 && elapsed < MAX_DURATION) {
         requestAnimationFrame(frame);
       } else {
         canvas.remove(); // finite burst — no lingering ticker, unlike the effects CLAUDE.md warns about
