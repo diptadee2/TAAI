@@ -164,6 +164,7 @@
     // FOCUS_ACTIVE_KEY / init() below), not this initial value.
     focus: false,
     leaderboard: [], // [{ display_name, total_minutes, total_sessions }] — Focus Mode only
+    viewerRank: null, // { rank, total_minutes, total_sessions } — set only when the viewer is logged in but didn't make the top 20
     renaming: false, // showing the inline rename form in place of the name + Rename/Not you? line
     renameError: null,
     pomoBlockedReason: null, // null | 'denied' | 'unsupported' — set when Start needed notification permission and didn't get it
@@ -1363,7 +1364,7 @@
     if (!state.leaderboard.length) {
       return '<p class="center-note" style="padding:14px 0;">No focus sessions logged yet. Be the first!</p>';
     }
-    return state.leaderboard.map(function (r, i) {
+    var rows = state.leaderboard.map(function (r, i) {
       var timeLabel = r.total_minutes + 'm';
       var rankLabel = LEADERBOARD_MEDALS[i] || (i + 1);
       // Session count isn't shown — it's not a comparable stat once session
@@ -1376,6 +1377,20 @@
         '<span class="leaderboard-time">' + timeLabel + '</span>' +
         '</div>';
     }).join('');
+    // A logged-in viewer outside the top 20 (state.leaderboard never
+    // contains their row at all — see pomodoro-leaderboard.js) otherwise
+    // has zero visibility into their own standing. Shown as a separate
+    // "gap + own row" beneath the list instead of folded into it, since
+    // their actual rank is nowhere near position 21.
+    if (state.viewerRank) {
+      rows += '<div class="leaderboard-gap">···</div>' +
+        '<div class="leaderboard-row leaderboard-row--me">' +
+        '<span class="leaderboard-rank">' + state.viewerRank.rank + '</span>' +
+        '<span class="leaderboard-name">You</span>' +
+        '<span class="leaderboard-time">' + state.viewerRank.total_minutes + 'm</span>' +
+        '</div>';
+    }
+    return rows;
   }
 
   function renderLeaderboardCard() {
@@ -1393,6 +1408,7 @@
     api('/pomodoro-leaderboard' + q)
       .then(function (r) {
         state.leaderboard = r.leaderboard || [];
+        state.viewerRank = r.viewerRank || null;
         var rows = document.getElementById('leaderboard-rows');
         if (rows) rows.innerHTML = renderLeaderboardRows();
       })
