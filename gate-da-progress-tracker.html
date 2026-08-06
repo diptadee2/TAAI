@@ -491,12 +491,12 @@
      box-shadow with border-radius on the element being animated — see the
      Chromium DOM-node-leak gotcha in CLAUDE.md — the ping ring uses a
      scaling/fading background instead of an actual box-shadow blur. */
-  .new-badge-wrap { position: relative; display: inline-block; margin-left: 6px; vertical-align: middle; }
+  .new-badge-wrap { position: relative; display: inline-block; margin-left: 10px; vertical-align: middle; }
   .new-badge-wrap::before {
-    content: ''; position: absolute; inset: -2px; border-radius: 999px;
+    content: ''; position: absolute; inset: -3px; border-radius: 999px;
     background: linear-gradient(135deg, var(--pink, #FF7FB7), var(--purple));
-    opacity: 0.55;
-    animation: newBadgePing 1.4s cubic-bezier(0,0,0.2,1) infinite;
+    opacity: 0.5;
+    animation: newBadgePing 1.8s ease-out infinite;
   }
   .new-badge {
     position: relative; display: inline-block;
@@ -504,19 +504,21 @@
     color: #fff; font-family: var(--font-nav); font-size: 9.5px; font-weight: 800;
     text-transform: uppercase; letter-spacing: .06em;
     padding: 3px 9px; border-radius: 999px;
-    animation: newBadgeShake 2.2s ease-in-out infinite;
+    animation: newBadgeWobble 1.8s ease-in-out infinite;
   }
+  /* Ping ring caps at 1.55x (was 2x) so it doesn't overflow past the
+     badge's own margin into the title text next to it, and the wobble
+     spreads evenly across the full cycle (was crammed into the first 40%
+     with a long static pause after) for a smoother, less jerky loop. */
   @keyframes newBadgePing {
-    0% { transform: scale(1); opacity: 0.55; }
-    75%, 100% { transform: scale(2); opacity: 0; }
+    0% { transform: scale(1); opacity: 0.5; }
+    100% { transform: scale(1.55); opacity: 0; }
   }
-  @keyframes newBadgeShake {
+  @keyframes newBadgeWobble {
     0%, 100% { transform: scale(1) rotate(0deg); }
-    8% { transform: scale(1.15) rotate(-6deg); }
-    16% { transform: scale(1.15) rotate(6deg); }
-    24% { transform: scale(1.1) rotate(-4deg); }
-    32% { transform: scale(1.1) rotate(4deg); }
-    40%, 100% { transform: scale(1) rotate(0deg); }
+    25% { transform: scale(1.12) rotate(-6deg); }
+    50% { transform: scale(1) rotate(0deg); }
+    75% { transform: scale(1.12) rotate(6deg); }
   }
 
   .today-card { position: relative; overflow: hidden; border: 2px solid var(--purple); border-radius: var(--radius-lg); background: rgba(255,255,255,0.055); box-shadow: 0 12px 36px rgba(139,92,246,0.28), inset 0 1px 0 rgba(255,255,255,0.08); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); padding: 18px 18px 14px; margin-bottom: 20px; }
