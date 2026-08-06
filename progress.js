@@ -469,45 +469,30 @@
     state.month = monthStr;
     app.innerHTML = '<p class="center-note">Loading your roadmap…</p>';
 
-    // Guests (no student yet) only need the public schedule — the other
-    // endpoints are all per-student and would 400 without an email.
-    // last-week-focus-leaders is public/unpersonalized like the schedule,
-    // so it's always included regardless of login state — it's re-fetched
-    // on every month nav too, which is mildly redundant (the data has
-    // nothing to do with which month is being browsed) but simple, and
-    // cheap enough not to matter.
-    var calls = [
-      api('/schedule?month=' + monthStr),
-      api('/last-week-focus-leaders').catch(function () { return { leaders: [] }; }),
-    ];
-    if (state.student) {
-      calls.push(
-        api('/progress?email=' + encodeURIComponent(state.student.email) + '&month=' + monthStr),
-        api('/streak?email=' + encodeURIComponent(state.student.email)).catch(function () { return { streak: null }; }),
-        api('/subject-progress?email=' + encodeURIComponent(state.student.email)).catch(function () { return { subjects: [] }; }),
-        // Non-critical if it fails — a fetch error here just means whatever
-        // localStorage/defaults are already loaded stay in effect for this
-        // load, not that the pomodoro timer breaks.
-        api('/pomo-settings?email=' + encodeURIComponent(state.student.email)).catch(function () { return null; }),
-        api('/pomo-sessions?email=' + encodeURIComponent(state.student.email)).catch(function () { return null; })
-      );
-    }
+    // Guests (no student yet) only need the public schedule/leaders piece —
+    // tracker-data.js omits the per-student pieces server-side when email
+    // is absent, same effective behavior as before when those endpoints
+    // were separate and simply weren't called for a guest. One request
+    // instead of up to 7 separate Netlify Functions, each of which was its
+    // own independent Lambda paying its own cold-start cost — see
+    // tracker-data.js for why that mattered.
+    var url = '/tracker-data?month=' + monthStr + (state.student ? '&email=' + encodeURIComponent(state.student.email) : '');
 
-    Promise.all(calls)
-      .then(function (results) {
-        var scheduleDays = results[0].days || [];
-        state.latestScheduledMonth = results[0].latestMonth || null;
-        state.lastWeekLeaders = results[1].leaders || [];
-        var progressRows = state.student ? (results[2].progress || []) : [];
-        state.streak = state.student ? results[3].streak : null;
-        state.subjectProgress = state.student ? (results[4].subjects || []) : [];
+    api(url)
+      .then(function (data) {
+        var scheduleDays = data.schedule.days || [];
+        state.latestScheduledMonth = data.schedule.latestMonth || null;
+        state.lastWeekLeaders = data.lastWeekLeaders.leaders || [];
+        var progressRows = state.student ? (data.progress.progress || []) : [];
+        state.streak = state.student ? data.streak.streak : null;
+        state.subjectProgress = state.student ? (data.subjectProgress.subjects || []) : [];
 
         // Only present once a student has actually saved custom durations
         // somewhere before (see applyPomoSettings) — merge in place of
         // whatever localStorage/defaults loaded at module-init time, so a
         // student's setup follows them to a new device/browser instead of
         // only living in the one that saved it.
-        var savedPomo = state.student ? results[5] : null;
+        var savedPomo = state.student ? data.pomoSettings : null;
         if (savedPomo && savedPomo.work != null) {
           pomoSettings = {
             work: savedPomo.work,
@@ -528,7 +513,7 @@
         // server count in that moment (a fresh account has no history yet)
         // shouldn't erase sessions already completed earlier in this same
         // page load.
-        var dailySessions = state.student ? results[6] : null;
+        var dailySessions = state.student ? data.pomoSessions : null;
         if (dailySessions) {
           pomo.completedSessions = Math.max(pomo.completedSessions, dailySessions.sessionsCompleted || 0);
         }
