@@ -246,6 +246,10 @@
   /* Header / stats */
   .roadmap-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 4px; }
   .roadmap-head h1 { font-family: var(--font-nav); font-size: 19px; font-weight: 700; }
+  /* Emoji glyphs render with extra bottom padding baked into their own
+     metrics, so inline with text they visually sit low against the cap
+     height rather than actually centering — nudged up to compensate. */
+  .roadmap-emoji { display: inline-block; vertical-align: middle; position: relative; top: -2px; }
   .roadmap-sub { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; font-size: 13px; color: var(--ink-soft); margin-bottom: 18px; }
   .roadmap-sub-left button { background: none; border: none; color: var(--purple); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; padding: 0; text-decoration: underline; transition: opacity .2s; }
   .roadmap-sub-left button:hover { opacity: .7; }

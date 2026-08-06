@@ -653,7 +653,7 @@
         : 'Enter your details once. We’ll remember you on this browser.';
     app.innerHTML =
       '<div class="reg-card fade-in">' +
-      '<h1>MISSION IIT🎯</h1>' +
+      '<h1>TAAI BATCH C - MISSION IIT <span class="roadmap-emoji">🎯</span></h1>' +
       '<p>' + promptText + '</p>' +
       '<form id="reg-form">' +
       '<div class="reg-field"><label for="reg-email">Your email</label>' +
@@ -1099,7 +1099,7 @@
     var missedBefore = state.days.filter(function (d) { return d.date < today && dayStatus(d) === 'missed'; });
 
     var html = '';
-    html += '<div class="roadmap-head"><h1>MISSION IIT🎯</h1></div>';
+    html += '<div class="roadmap-head"><h1>TAAI BATCH C - MISSION IIT <span class="roadmap-emoji">🎯</span></h1></div>';
     // Exit Focus sits in the same row as the identity line (not floating
     // alone in the blank space above the timer card) — .roadmap-sub is
     // already a space-between flex row, so it lands opposite the name/
