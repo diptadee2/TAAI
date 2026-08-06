@@ -153,7 +153,8 @@
     month: currentMonthStr(),
     days: [], // [{ date, tasks: [{subject, task_text, position, completed}] }]
     latestScheduledMonth: null, // 'YYYY-MM' with any schedule data at all, from schedule.js — caps month-nav's "next" arrow
-    lastWeekLeaders: [], // [{ display_name, total_minutes }] — top 5 by focus minutes last week, shown outside Focus Mode
+    lastWeekLeaders: [], // [{ display_name, total_minutes, is_me }] — top 5 by focus minutes last week, shown outside Focus Mode
+    lastWeekViewerRank: null, // { rank, total_minutes } — set only when the viewer isn't in that top 5
     streak: null,
     subjectProgress: [], // [{ subject, done, total }] — global, independent of viewed month
     expanded: new Set(), // dates whose day-card is open, non-native accordion
@@ -484,6 +485,7 @@
         var scheduleDays = data.schedule.days || [];
         state.latestScheduledMonth = data.schedule.latestMonth || null;
         state.lastWeekLeaders = data.lastWeekLeaders.leaders || [];
+        state.lastWeekViewerRank = data.lastWeekLeaders.viewerRank || null;
         var progressRows = state.student ? (data.progress.progress || []) : [];
         state.streak = state.student ? data.streak.streak : null;
         state.subjectProgress = state.student ? (data.subjectProgress.subjects || []) : [];
@@ -647,12 +649,23 @@
     if (!leaders.length) return '';
     var rows = leaders.map(function (l, i) {
       var rank = LEADERBOARD_MEDALS[i] || (i + 1);
-      return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + '">' +
+      return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (l.is_me ? ' leaderboard-row--me' : '') + '">' +
         '<span class="leaderboard-rank">' + rank + '</span>' +
-        '<span class="leaderboard-name">' + escapeHtml(l.display_name) + '</span>' +
+        '<span class="leaderboard-name">' + escapeHtml(l.display_name) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
         '<span class="leaderboard-time">' + l.total_minutes + 'm</span>' +
         '</div>';
     }).join('');
+    // Same "gap + own row" pattern as the in-Focus-Mode leaderboard (see
+    // renderLeaderboardRows) — a viewer outside last week's top 5
+    // otherwise has zero visibility into their own standing here either.
+    if (state.lastWeekViewerRank) {
+      rows += '<div class="leaderboard-gap">···</div>' +
+        '<div class="leaderboard-row leaderboard-row--me">' +
+        '<span class="leaderboard-rank">' + state.lastWeekViewerRank.rank + '</span>' +
+        '<span class="leaderboard-name">You</span>' +
+        '<span class="leaderboard-time">' + state.lastWeekViewerRank.total_minutes + 'm</span>' +
+        '</div>';
+    }
     return '<div class="leaderboard-card champions-section">' +
       '<div class="leaderboard-title">Mission IIT Leaderboard</div>' +
       '<div class="leaderboard-subtitle">Top 5 by minutes logged, last week</div>' +
@@ -1396,7 +1409,7 @@
   function renderLeaderboardCard() {
     return '<div class="leaderboard-card fade-in" id="leaderboard-card">' +
       '<div class="leaderboard-title">Mission IIT Leaderboard</div>' +
-      '<div class="leaderboard-subtitle">Resets every Monday</div>' +
+      '<div class="leaderboard-subtitle">Top 20 by minutes logged · Resets every Monday</div>' +
       '<div id="leaderboard-rows">' + renderLeaderboardRows() + '</div>' +
       '</div>';
   }

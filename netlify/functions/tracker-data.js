@@ -65,7 +65,7 @@ async function fetchSchedule(supabase, range) {
   return { days, latestMonth: latestRow ? latestRow.date.slice(0, 7) : null };
 }
 
-async function fetchLastWeekLeaders(supabase) {
+async function fetchLastWeekLeaders(supabase, email) {
   const weekStart = lastWeekStart();
   const { data: stats, error: statsError } = await supabase
     .from('pomodoro_stats')
@@ -74,7 +74,7 @@ async function fetchLastWeekLeaders(supabase) {
     .order('total_minutes', { ascending: false })
     .limit(5);
   if (statsError) throw new Error(statsError.message);
-  if (!stats.length) return { weekStart, leaders: [] };
+  if (!stats.length) return { weekStart, leaders: [], viewerRank: null };
 
   const { data: students, error: studentsError } = await supabase
     .from('students')
@@ -83,8 +83,39 @@ async function fetchLastWeekLeaders(supabase) {
   if (studentsError) throw new Error(studentsError.message);
 
   const nameByEmail = Object.fromEntries(students.map(s => [s.email, s.display_name]));
-  const leaders = stats.map(s => ({ display_name: nameByEmail[s.email] || 'Anonymous', total_minutes: s.total_minutes }));
-  return { weekStart, leaders };
+  const leaders = stats.map(s => ({
+    display_name: nameByEmail[s.email] || 'Anonymous',
+    total_minutes: s.total_minutes,
+    is_me: !!email && s.email === email,
+  }));
+
+  // Same idea as pomodoro-leaderboard.js's viewerRank — a student outside
+  // last week's top 5 otherwise has no way to see where they actually
+  // stood, since this query never fetches their row at all.
+  let viewerRank = null;
+  const viewerInTop = leaders.some(l => l.is_me);
+  if (email && !viewerInTop) {
+    const { data: viewerStats, error: viewerError } = await supabase
+      .from('pomodoro_stats')
+      .select('total_minutes')
+      .eq('email', email)
+      .eq('week_start', weekStart)
+      .maybeSingle();
+    if (viewerError) throw new Error(viewerError.message);
+
+    if (viewerStats) {
+      const { count, error: countError } = await supabase
+        .from('pomodoro_stats')
+        .select('*', { count: 'exact', head: true })
+        .eq('week_start', weekStart)
+        .gt('total_minutes', viewerStats.total_minutes);
+      if (countError) throw new Error(countError.message);
+
+      viewerRank = { rank: (count || 0) + 1, total_minutes: viewerStats.total_minutes };
+    }
+  }
+
+  return { weekStart, leaders, viewerRank };
 }
 
 async function fetchProgress(supabase, email, range) {
@@ -202,7 +233,7 @@ export async function handler(event) {
   // Everything else degrades to its old client-side .catch() fallback
   // instead of failing the whole response.
   const [lastWeekLeaders, streak, subjectProgress, pomoSettings, pomoSessions] = await Promise.all([
-    fetchLastWeekLeaders(supabase).catch(() => ({ leaders: [] })),
+    fetchLastWeekLeaders(supabase, email).catch(() => ({ leaders: [] })),
     email ? fetchStreak(supabase, email).catch(() => ({ streak: null })) : Promise.resolve(null),
     email ? fetchSubjectProgress(supabase, email).catch(() => ({ subjects: [] })) : Promise.resolve(null),
     email ? fetchPomoSettings(supabase, email).catch(() => null) : Promise.resolve(null),
