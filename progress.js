@@ -450,6 +450,19 @@
     requestAnimationFrame(frame);
   }
 
+  // threshold: 0 — fires the moment ANY part of the card is visible, not
+  // once a percentage of it is. Real bug, caught in testing: an earlier
+  // 0.4 (40%) threshold was too strict for the top-20 card, which can be
+  // quite tall (20 rows + a "You" row) — confirmed directly, right after
+  // a fresh Start->completion cycle the card was only ~3% visible at the
+  // moment it got observed (scrolling a tall element "into view" often
+  // only clears its top edge, not 40% of its full height), so
+  // isIntersecting correctly evaluated false and confetti silently never
+  // fired even though the student had just earned it and was looking at
+  // the screen. Tried matching fadeObserver's 0.05 next, but that's still
+  // uncomfortably close to the 0.03 ratio actually measured — 0 is the
+  // only threshold that can't have this same problem for an element of
+  // any height.
   var confettiObserver = new IntersectionObserver(function (entries) {
     entries.forEach(function (e) {
       if (!e.isIntersecting) return;
@@ -460,7 +473,7 @@
         markConfettiShown(key);
       }
     });
-  }, { threshold: 0.4 });
+  }, { threshold: 0 });
 
   // Arms confetti for one element if the student actually has something
   // to celebrate — never for an empty/no-placement card. weekKey scopes
