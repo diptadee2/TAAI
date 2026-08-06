@@ -373,6 +373,102 @@
     });
   }
 
+  // ── Leaderboard confetti — once per student per week, only for someone
+  // who actually placed (appears in the top list or has a viewerRank),
+  // and only once the relevant card is actually scrolled into view rather
+  // than the instant it's rendered. The top-20 card in particular is
+  // nested inside Focus Mode and often below the fold on open ("a bit
+  // scroll down away") — firing on render would frequently fire on an
+  // invisible element nobody's looking at yet. Self-contained Canvas2D,
+  // not a library — a brief, finite burst that cancels its own rAF loop
+  // and removes its canvas when done, not the continuous-ticker pattern
+  // CLAUDE.md flags as expensive (DotField's zero-dependency, no-external-
+  // ticker approach is the one already proven cheap in this codebase).
+  var CONFETTI_KEY_PREFIX = 'taai_confetti_shown_';
+  function confettiAlreadyShown(key) {
+    try { return localStorage.getItem(CONFETTI_KEY_PREFIX + key) === '1'; }
+    catch (e) { return true; } // localStorage unavailable — fail toward "don't spam", not "always fire"
+  }
+  function markConfettiShown(key) {
+    try { localStorage.setItem(CONFETTI_KEY_PREFIX + key, '1'); } catch (e) { /* non-critical */ }
+  }
+
+  function fireConfetti() {
+    var canvas = document.createElement('canvas');
+    canvas.style.cssText = 'position:fixed;inset:0;z-index:9999;pointer-events:none;';
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    document.body.appendChild(canvas);
+    var ctx = canvas.getContext('2d');
+    var colors = ['#8B5CF6', '#FF7FB7', '#4D8BFF', '#FBBF24', '#34D399'];
+    var particles = [];
+    for (var i = 0; i < 140; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: -20 - Math.random() * canvas.height * 0.3,
+        w: 6 + Math.random() * 5,
+        h: 4 + Math.random() * 4,
+        color: colors[i % colors.length],
+        vy: 2.5 + Math.random() * 3,
+        vx: (Math.random() - 0.5) * 2.5,
+        rot: Math.random() * 360,
+        vrot: (Math.random() - 0.5) * 14,
+      });
+    }
+    var start = null;
+    var DURATION = 2600;
+    function frame(ts) {
+      if (!start) start = ts;
+      var elapsed = ts - start;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(function (p) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rot += p.vrot;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rot * Math.PI) / 180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+      });
+      if (elapsed < DURATION) {
+        requestAnimationFrame(frame);
+      } else {
+        canvas.remove(); // finite burst — no lingering ticker, unlike the effects CLAUDE.md warns about
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  var confettiObserver = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      confettiObserver.unobserve(e.target);
+      var key = e.target.dataset.confettiKey;
+      if (key && !confettiAlreadyShown(key)) {
+        fireConfetti();
+        markConfettiShown(key);
+      }
+    });
+  }, { threshold: 0.4 });
+
+  // Arms confetti for one element if the student actually has something
+  // to celebrate — never for an empty/no-placement card. weekKey scopes
+  // the "already shown" flag to the current week (Monday-start, IST-
+  // equivalent via mondayOf/todayIso, same convention used everywhere
+  // else in this file) so it naturally re-arms every Monday without a
+  // separate reset mechanism.
+  function armConfetti(elementId, scope, hasPlacement) {
+    if (!hasPlacement) return;
+    var el = document.getElementById(elementId);
+    if (!el) return;
+    var key = scope + '-' + mondayOf(todayIso());
+    if (confettiAlreadyShown(key)) return;
+    el.dataset.confettiKey = key;
+    confettiObserver.observe(el);
+  }
+
   // ── Cookie helpers ──────────────────────────────────────────────────
   function b64Encode(str) { return btoa(unescape(encodeURIComponent(str))); }
   function b64Decode(str) { return decodeURIComponent(escape(atob(str))); }
@@ -754,7 +850,7 @@
         '<span class="leaderboard-time">' + state.lastWeekViewerRank.total_minutes + 'm</span>' +
         '</div>';
     }
-    return '<div class="leaderboard-card champions-section">' +
+    return '<div class="leaderboard-card champions-section" id="champions-card">' +
       '<div class="leaderboard-title">Mission IIT Leaderboard</div>' +
       '<div class="leaderboard-subtitle">Top 5 by minutes logged, last week</div>' +
       rows +
@@ -1012,6 +1108,12 @@
     app.innerHTML = html;
     bindCalendarEvents();
     observeFadeIns();
+    // state.lastWeekLeaders/lastWeekViewerRank are already fresh at this
+    // point (set earlier in loadMonth's resolve, before renderCalendar is
+    // called) — unlike the top-20 card in Focus Mode, this one doesn't
+    // need a separate post-fetch hook (see refreshLeaderboard).
+    armConfetti('champions-card', 'top5',
+      state.lastWeekLeaders.some(function (l) { return l.is_me; }) || !!state.lastWeekViewerRank);
   }
 
   function pomoDurationFor(mode) {
@@ -1512,6 +1614,13 @@
         state.viewerRank = r.viewerRank || null;
         var rows = document.getElementById('leaderboard-rows');
         if (rows) rows.innerHTML = renderLeaderboardRows();
+        // Armed here, not at the outer card's own render — #leaderboard-card
+        // deliberately isn't re-rendered on refresh (only #leaderboard-rows
+        // above is, to avoid replaying its .fade-in entrance), so checking
+        // placement at render time would see stale/empty data from before
+        // this fetch resolved. This fires with the real, current numbers.
+        armConfetti('leaderboard-card', 'top20',
+          state.leaderboard.some(function (l) { return l.is_me; }) || !!state.viewerRank);
       })
       .catch(function () { /* non-critical — leaderboard just stays stale */ });
   }
