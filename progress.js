@@ -491,6 +491,65 @@
     confettiObserver.observe(el);
   }
 
+  // ── "NEW" badge — a general "this leaderboard just refreshed" signal,
+  // unlike confetti it's for every viewer, not only students who placed
+  // (someone who didn't place this week still benefits from noticing the
+  // list changed). No placement data needed either, so unlike confetti's
+  // top-20 arming (which has to wait for refreshLeaderboard — see there)
+  // this can arm right at render time for both cards, since presence only
+  // depends on "have I seen this card this week," knowable immediately.
+  var NEW_BADGE_KEY_PREFIX = 'taai_leaderboard_seen_';
+  function leaderboardBadgeSeen(key) {
+    try { return localStorage.getItem(NEW_BADGE_KEY_PREFIX + key) === '1'; }
+    catch (e) { return true; } // fail toward "don't nag", not "always show"
+  }
+  function markLeaderboardBadgeSeen(key) {
+    try { localStorage.setItem(NEW_BADGE_KEY_PREFIX + key, '1'); } catch (e) { /* non-critical */ }
+  }
+  function newBadgeHtml(scope) {
+    var key = scope + '-' + mondayOf(todayIso());
+    if (leaderboardBadgeSeen(key)) return '';
+    return ' <span class="new-badge-wrap"><span class="new-badge">New</span></span>';
+  }
+  // threshold: 0, same reasoning as confettiObserver — these cards can be
+  // tall, so "seen" shouldn't require a large fraction actually visible.
+  //
+  // Real bug, caught in testing: dismissing on the very first
+  // isIntersecting event meant the badge vanished almost instantly for
+  // most students, since the top-5 card sits near the top of the page and
+  // is already in view on a fresh load — the whole point was to catch the
+  // eye, but it was gone before the shake animation even had time to play
+  // a single cycle. Now requires ~1.2s of continuous visibility before
+  // counting as "seen," canceling the timer if the card scrolls back out
+  // before that (e.g. a quick scroll-past shouldn't count).
+  var NEW_BADGE_DWELL_MS = 1200;
+  var newBadgeObserver = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      var key = e.target.dataset.newBadgeKey;
+      if (!key) return;
+      if (e.isIntersecting) {
+        if (e.target._newBadgeTimer) return; // already counting down
+        e.target._newBadgeTimer = setTimeout(function () {
+          newBadgeObserver.unobserve(e.target);
+          markLeaderboardBadgeSeen(key);
+          var badge = e.target.querySelector('.new-badge-wrap');
+          if (badge) badge.remove(); // stop the animation immediately rather than waiting for a re-render
+        }, NEW_BADGE_DWELL_MS);
+      } else if (e.target._newBadgeTimer) {
+        clearTimeout(e.target._newBadgeTimer);
+        e.target._newBadgeTimer = null;
+      }
+    });
+  }, { threshold: 0 });
+  function armNewBadge(elementId, scope) {
+    var el = document.getElementById(elementId);
+    if (!el) return;
+    var key = scope + '-' + mondayOf(todayIso());
+    if (leaderboardBadgeSeen(key)) return;
+    el.dataset.newBadgeKey = key;
+    newBadgeObserver.observe(el);
+  }
+
   // ── Cookie helpers ──────────────────────────────────────────────────
   function b64Encode(str) { return btoa(unescape(encodeURIComponent(str))); }
   function b64Decode(str) { return decodeURIComponent(escape(atob(str))); }
@@ -873,7 +932,7 @@
         '</div>';
     }
     return '<div class="leaderboard-card champions-section" id="champions-card">' +
-      '<div class="leaderboard-title">Mission IIT Leaderboard</div>' +
+      '<div class="leaderboard-title">Mission IIT Leaderboard' + newBadgeHtml('top5') + '</div>' +
       '<div class="leaderboard-subtitle">Top 5 by minutes logged, last week</div>' +
       rows +
       '</div>';
@@ -1136,6 +1195,13 @@
     // need a separate post-fetch hook (see refreshLeaderboard).
     armConfetti('champions-card', 'top5',
       state.lastWeekLeaders.some(function (l) { return l.is_me; }) || !!state.lastWeekViewerRank);
+    // Unlike confetti, the "NEW" badge needs no placement data, so both
+    // cards can arm right here regardless of Focus Mode state —
+    // armNewBadge no-ops harmlessly via its own getElementById check when
+    // the relevant card isn't currently rendered (e.g. #leaderboard-card
+    // outside Focus Mode).
+    armNewBadge('champions-card', 'top5');
+    armNewBadge('leaderboard-card', 'top20');
   }
 
   function pomoDurationFor(mode) {
@@ -1620,7 +1686,7 @@
 
   function renderLeaderboardCard() {
     return '<div class="leaderboard-card fade-in" id="leaderboard-card">' +
-      '<div class="leaderboard-title">Mission IIT Leaderboard</div>' +
+      '<div class="leaderboard-title">Mission IIT Leaderboard' + newBadgeHtml('top20') + '</div>' +
       '<div class="leaderboard-subtitle">Top 20 by minutes logged · Resets every Monday</div>' +
       '<div id="leaderboard-rows">' + renderLeaderboardRows() + '</div>' +
       '</div>';

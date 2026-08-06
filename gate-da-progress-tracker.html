@@ -480,6 +480,40 @@
   .leaderboard-you { display: inline-block; font-family: var(--font-nav); font-size: 9.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--purple); background: rgba(139,92,246,0.16); border-radius: 999px; padding: 1px 7px; margin-left: 4px; vertical-align: middle; }
   .leaderboard-time { font-family: var(--font-nav); font-weight: 700; font-size: 12.5px; color: var(--ink); flex-shrink: 0; }
   .leaderboard-gap { text-align: center; color: var(--ink-soft); font-size: 12px; letter-spacing: .2em; padding: 2px 0; }
+  /* "NEW" badge — deliberately more aggressive than .leaderboard-you above
+     (shake + an expanding ping ring, both continuous until dismissed),
+     since the whole point is catching the eye before the card's even been
+     read. Neither .new-badge-wrap::before nor .new-badge combines
+     box-shadow with border-radius on the element being animated — see the
+     Chromium DOM-node-leak gotcha in CLAUDE.md — the ping ring uses a
+     scaling/fading background instead of an actual box-shadow blur. */
+  .new-badge-wrap { position: relative; display: inline-block; margin-left: 6px; vertical-align: middle; }
+  .new-badge-wrap::before {
+    content: ''; position: absolute; inset: -2px; border-radius: 999px;
+    background: linear-gradient(135deg, var(--pink, #FF7FB7), var(--purple));
+    opacity: 0.55;
+    animation: newBadgePing 1.4s cubic-bezier(0,0,0.2,1) infinite;
+  }
+  .new-badge {
+    position: relative; display: inline-block;
+    background: linear-gradient(135deg, var(--pink, #FF7FB7), var(--purple));
+    color: #fff; font-family: var(--font-nav); font-size: 9.5px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .06em;
+    padding: 3px 9px; border-radius: 999px;
+    animation: newBadgeShake 2.2s ease-in-out infinite;
+  }
+  @keyframes newBadgePing {
+    0% { transform: scale(1); opacity: 0.55; }
+    75%, 100% { transform: scale(2); opacity: 0; }
+  }
+  @keyframes newBadgeShake {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    8% { transform: scale(1.15) rotate(-6deg); }
+    16% { transform: scale(1.15) rotate(6deg); }
+    24% { transform: scale(1.1) rotate(-4deg); }
+    32% { transform: scale(1.1) rotate(4deg); }
+    40%, 100% { transform: scale(1) rotate(0deg); }
+  }
 
   .today-card { position: relative; overflow: hidden; border: 2px solid var(--purple); border-radius: var(--radius-lg); background: rgba(255,255,255,0.055); box-shadow: 0 12px 36px rgba(139,92,246,0.28), inset 0 1px 0 rgba(255,255,255,0.08); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); padding: 18px 18px 14px; margin-bottom: 20px; }
   .today-card::before { content: ''; position: absolute; top: -60px; right: -40px; width: 180px; height: 180px; border-radius: 50%; background: radial-gradient(circle, rgba(139,92,246,0.3) 0%, transparent 70%); pointer-events: none; }
