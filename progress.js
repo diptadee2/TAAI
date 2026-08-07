@@ -481,11 +481,13 @@
   // equivalent via mondayOf/todayIso, same convention used everywhere
   // else in this file) so it naturally re-arms every Monday without a
   // separate reset mechanism.
-  function armConfetti(elementId, scope, hasPlacement) {
+  // key is passed in directly (not built from a scope here) so callers can
+  // choose weekly-scoped keys (leaderboards, reset every Monday) or a
+  // permanent one (the first-ever streak celebration — see below).
+  function armConfetti(elementId, key, hasPlacement) {
     if (!hasPlacement) return;
     var el = document.getElementById(elementId);
     if (!el) return;
-    var key = scope + '-' + mondayOf(todayIso());
     if (confettiAlreadyShown(key)) return;
     el.dataset.confettiKey = key;
     confettiObserver.observe(el);
@@ -598,6 +600,15 @@
       .then(function (r) {
         var changed = state.streak !== null && r.streak !== state.streak;
         state.streak = r.streak;
+        // The task-toggle path to a first-ever streak of 1 — the initial
+        // page-load arming in renderCalendar only catches the case where
+        // the student already had a streak of 1 when the page loaded, not
+        // a toggle that makes it 1 during this same session. #streak-panel
+        // itself isn't re-rendered here (only #streak-number's text is,
+        // below), so it's still the same DOM node armConfetti already
+        // knows about if this fires a second time — harmless no-op via
+        // confettiAlreadyShown once it's actually fired once.
+        armConfetti('streak-panel', 'first-streak', state.streak === 1);
         var el = document.getElementById('streak-number');
         if (!el) return;
         el.textContent = state.streak;
@@ -1163,11 +1174,17 @@
     // point (set earlier in loadMonth's resolve, before renderCalendar is
     // called) — unlike the top-20 card in Focus Mode, this one doesn't
     // need a separate post-fetch hook (see refreshLeaderboard).
-    armConfetti('champions-card', 'top5',
+    armConfetti('champions-card', 'top5-' + mondayOf(todayIso()),
       state.lastWeekLeaders.some(function (l) { return l.is_me; }) || !!state.lastWeekViewerRank);
     // The "NEW" badge itself needs no post-render arming anymore — see
     // newBadgeHtml, called directly from renderLastWeekChampions/
     // renderLeaderboardCard as part of building the HTML string.
+    // First-ever streak celebration — a true one-time thing (permanent
+    // key, not scoped to the current week like the leaderboards above),
+    // fires the first time this student's streak is ever seen at exactly
+    // 1. Armed here for the initial page-load case; refreshStreak below
+    // handles the case where a task toggle is what makes it 1.
+    armConfetti('streak-panel', 'first-streak', state.streak === 1);
   }
 
   function pomoDurationFor(mode) {
@@ -1673,7 +1690,7 @@
         // above is, to avoid replaying its .fade-in entrance), so checking
         // placement at render time would see stale/empty data from before
         // this fetch resolved. This fires with the real, current numbers.
-        armConfetti('leaderboard-card', 'top20',
+        armConfetti('leaderboard-card', 'top20-' + mondayOf(todayIso()),
           state.leaderboard.some(function (l) { return l.is_me; }) || !!state.viewerRank);
       })
       .catch(function () { /* non-critical — leaderboard just stays stale */ });
