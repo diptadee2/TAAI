@@ -1003,17 +1003,19 @@
   }
 
   // "Day X/180" badge for the main checklist page — day 1 is Aug 1, same
-  // start as the schedule itself. Same pill style as the exam countdown
-  // above, and the same reasoning for using realTodayIso() over the
+  // start as the schedule itself. A big gradient stat (same visual
+  // language as .streak-number) rather than a pill, since the whole
+  // point is for it to read as the page's headline number, not a small
+  // status chip. Same reasoning for using realTodayIso() over the
   // Aug-1-floored todayIso(): this should tick forward on every actual
   // calendar day, not sit frozen at "Day 1" for a visitor arriving before
   // the schedule technically starts.
   function renderProgramDayBadge() {
     var today = realTodayIso();
     var dayNum = Math.max(1, Math.round((new Date(today) - new Date(PROGRAM_START_DATE)) / 864e5) + 1);
-    return '<div class="exam-countdown fade-in">' +
-      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="3" stroke="currentColor" stroke-width="1.7"/><path d="M3 9.5h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>' +
-      '<span class="exam-countdown-num">' + dayNum + '</span>/' + PROGRAM_LENGTH_DAYS + ' days</div>';
+    return '<div class="program-day-badge fade-in">' +
+      '<div class="program-day-num">' + dayNum + '</div>' +
+      '<div class="program-day-label">Day of ' + PROGRAM_LENGTH_DAYS + '</div></div>';
   }
 
   // Re-fetches the global per-subject totals (a tick anywhere in the

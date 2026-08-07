@@ -314,17 +314,15 @@
   @keyframes streak-bump { 0% { transform: scale(1); } 45% { transform: scale(1.35); } 100% { transform: scale(1); } }
 
   .exam-countdown { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-nav); font-size: 12.5px; font-weight: 600; color: var(--ink-dim); background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.22); border-radius: 999px; padding: 8px 18px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 2px 12px rgba(139,92,246,0.1); align-self: center; }
-  /* Wraps the "Day X/180" badge on the main checklist page — .exam-
-     countdown's own align-self:center only works inside a flex-column
-     parent like .focus-card; the main page isn't one at this point, so
-     this centers it explicitly instead. */
-  .program-day-badge-wrap { display: flex; justify-content: center; margin-bottom: 16px; }
-  /* The base .exam-countdown styling (background/border opacity) was
-     tuned for sitting on .focus-card's lighter card background — direct
-     on the page's plain dark background here, it read as too low-
-     contrast, blending into its surroundings rather than standing out
-     as its own control. Brighter background/border/glow, same shape. */
-  .program-day-badge-wrap .exam-countdown { color: var(--ink); background: rgba(139,92,246,0.16); border-color: rgba(139,92,246,0.4); box-shadow: 0 4px 20px rgba(139,92,246,0.22); }
+  /* Wraps the "Day X/180" stat on the main checklist page — centers it
+     under the heading, above the Focus Mode button. */
+  .program-day-badge-wrap { display: flex; justify-content: center; margin-bottom: 20px; }
+  /* Deliberately not a pill — a low-key status chip like .exam-countdown
+     read as too small/easy to miss for what's meant to be a headline
+     number on the page. Same big-gradient-number-over-caption language
+     as .streak-number, so it reads as a real stat, not a control. */
+  .program-day-num { font-family: var(--font-body); font-size: 44px; font-weight: 800; line-height: 1; text-align: center; background: linear-gradient(120deg,#FF7FB7,var(--purple),#4D8BFF); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: streak-grad 6s ease infinite; }
+  .program-day-label { margin-top: 6px; font-family: var(--font-nav); font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); text-align: center; }
   .progress-track { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
   .progress-fill { height: 100%; background: linear-gradient(90deg, var(--purple), #a78bfa); border-radius: 999px; transition: width .5s cubic-bezier(.34,1.1,.64,1); }
 
