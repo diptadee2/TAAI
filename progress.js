@@ -4,6 +4,12 @@
   // Confirmed official GATE DA 2027 exam date.
   var EXAM_DATE = '2027-02-06';
 
+  // Day 1 of the 180-day program — same Aug 1 start as the schedule
+  // itself (DEMO_TODAY_FLOOR/SCHEDULE_START_MONTH below), for the "X/180
+  // days" badge on the main checklist page.
+  var PROGRAM_START_DATE = '2026-08-01';
+  var PROGRAM_LENGTH_DAYS = 180;
+
   // Launch floor — the schedule starts Aug 1, so "today" (and the default
   // opening month) is clamped up to Aug 1 for anyone visiting before then,
   // instead of showing a real "today" with nothing scheduled yet. Self-
@@ -996,6 +1002,20 @@
     return html;
   }
 
+  // "Day X/180" badge for the main checklist page — day 1 is Aug 1, same
+  // start as the schedule itself. Same pill style as the exam countdown
+  // above, and the same reasoning for using realTodayIso() over the
+  // Aug-1-floored todayIso(): this should tick forward on every actual
+  // calendar day, not sit frozen at "Day 1" for a visitor arriving before
+  // the schedule technically starts.
+  function renderProgramDayBadge() {
+    var today = realTodayIso();
+    var dayNum = Math.max(1, Math.round((new Date(today) - new Date(PROGRAM_START_DATE)) / 864e5) + 1);
+    return '<div class="exam-countdown fade-in">' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="3" stroke="currentColor" stroke-width="1.7"/><path d="M3 9.5h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>' +
+      '<span class="exam-countdown-num">' + dayNum + '</span>/' + PROGRAM_LENGTH_DAYS + ' days</div>';
+  }
+
   // Re-fetches the global per-subject totals (a tick anywhere in the
   // schedule, not just this month, can change them) and patches each
   // row's bar/percentage in place — no innerHTML replace, so the
@@ -1106,6 +1126,8 @@
         '<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>' +
         ' Exit Focus</button>' : '') +
       '</div>';
+
+    if (!state.focus) html += '<div class="program-day-badge-wrap">' + renderProgramDayBadge() + '</div>';
 
     if (!state.focus) html += '<div class="page-grid"><div class="main-col">';
 
