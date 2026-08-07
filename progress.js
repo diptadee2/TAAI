@@ -1127,11 +1127,15 @@
         ' Exit Focus</button>' : '') +
       '</div>';
 
-    if (!state.focus) html += '<div class="program-day-badge-wrap">' + renderProgramDayBadge() + '</div>';
-
     if (!state.focus) html += '<div class="page-grid"><div class="main-col">';
 
     if (!state.focus) {
+      // Was centered relative to the whole page-grid width (including
+      // .side-col's space) before this moved inside .main-col — visibly
+      // drifted right of the heading/Focus button above it, which are
+      // both constrained to .main-col's narrower width. Centering here
+      // instead actually lines it up with them.
+      html += '<div class="program-day-badge-wrap">' + renderProgramDayBadge() + '</div>';
       html += '<div class="focus-toggle-wrap"><button id="focus-toggle" class="focus-toggle">◎ Focus mode</button></div>';
       // One shared card, not two side by side — same pattern as Focus
       // Mode's own unified card (countdown/timer/today/leaderboard as

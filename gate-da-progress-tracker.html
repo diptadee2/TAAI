@@ -319,6 +319,12 @@
      parent like .focus-card; the main page isn't one at this point, so
      this centers it explicitly instead. */
   .program-day-badge-wrap { display: flex; justify-content: center; margin-bottom: 16px; }
+  /* The base .exam-countdown styling (background/border opacity) was
+     tuned for sitting on .focus-card's lighter card background — direct
+     on the page's plain dark background here, it read as too low-
+     contrast, blending into its surroundings rather than standing out
+     as its own control. Brighter background/border/glow, same shape. */
+  .program-day-badge-wrap .exam-countdown { color: var(--ink); background: rgba(139,92,246,0.16); border-color: rgba(139,92,246,0.4); box-shadow: 0 4px 20px rgba(139,92,246,0.22); }
   .progress-track { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
   .progress-fill { height: 100%; background: linear-gradient(90deg, var(--purple), #a78bfa); border-radius: 999px; transition: width .5s cubic-bezier(.34,1.1,.64,1); }
 
