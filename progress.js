@@ -912,8 +912,13 @@
         '<span class="leaderboard-time">' + state.lastWeekViewerRank.total_minutes + 'm</span>' +
         '</div>';
     }
-    return '<div class="leaderboard-card champions-section" id="champions-card">' +
-      '<div class="leaderboard-title">Mission IIT Leaderboard' + newBadgeHtml('top5') + '</div>' +
+    // Clicking anywhere on the card jumps to Focus Mode (see
+    // bindCalendarEvents) — role/tabindex so it's actually reachable and
+    // announced as a control, not just a div with a click listener nobody
+    // but a mouse user could trigger.
+    return '<div class="leaderboard-card champions-section clickable-card" id="champions-card" role="button" tabindex="0">' +
+      '<div class="leaderboard-title">Mission IIT Leaderboard</div>' +
+      newBadgeHtml('top5') +
       '<div class="leaderboard-subtitle">Top 5 by minutes logged, last week</div>' +
       rows +
       '</div>';
@@ -1632,6 +1637,21 @@
     refreshLeaderboard();
   }
 
+  // Shared by the "Focus mode" toggle button and the top-5 champions card
+  // (clicking it also jumps to Focus Mode — see bindCalendarEvents) — a
+  // guest gets the same sign-up prompt either way, rather than a silent
+  // no-op or a confusing error.
+  function goToFocusMode() {
+    if (state.focus) {
+      exitFocus();
+    } else if (!state.student) {
+      pendingFocusMode = true;
+      renderRegisterForm();
+    } else {
+      enterFocus();
+    }
+  }
+
   // ── Weekly focus leaderboard — public display names, ranked by focus
   // minutes logged since Monday (resets weekly server-side, see
   // pomodoro-leaderboard.js). Only rendered/fetched in Focus Mode.
@@ -1672,7 +1692,8 @@
 
   function renderLeaderboardCard() {
     return '<div class="leaderboard-card fade-in" id="leaderboard-card">' +
-      '<div class="leaderboard-title">Mission IIT Leaderboard' + newBadgeHtml('top20') + '</div>' +
+      '<div class="leaderboard-title">Mission IIT Leaderboard</div>' +
+      newBadgeHtml('top20') +
       '<div class="leaderboard-subtitle">Top 20 by minutes logged · Resets every Monday</div>' +
       '<div id="leaderboard-rows">' + renderLeaderboardRows() + '</div>' +
       '</div>';
@@ -1790,16 +1811,23 @@
     });
 
     var focusToggle = document.getElementById('focus-toggle');
-    if (focusToggle) focusToggle.addEventListener('click', function () {
-      if (state.focus) {
-        exitFocus();
-      } else if (!state.student) {
-        pendingFocusMode = true;
-        renderRegisterForm();
-      } else {
-        enterFocus();
-      }
-    });
+    if (focusToggle) focusToggle.addEventListener('click', goToFocusMode);
+
+    // Whole top-5 champions card is clickable, jumping to Focus Mode —
+    // only rendered outside Focus Mode to begin with, so there's no
+    // exitFocus branch to worry about firing unexpectedly here. Keyboard-
+    // reachable too (role="button" tabindex="0" on the element itself),
+    // so Enter/Space need to trigger it same as a click.
+    var championsCard = document.getElementById('champions-card');
+    if (championsCard) {
+      championsCard.addEventListener('click', goToFocusMode);
+      championsCard.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          goToFocusMode();
+        }
+      });
+    }
 
     var pomoToggle = document.getElementById('pomo-toggle');
     if (pomoToggle) pomoToggle.addEventListener('click', pomoToggleRun);
