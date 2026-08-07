@@ -510,16 +510,24 @@
   // scrolls into view) since presence only depends on two localStorage
   // reads, both knowable immediately.
   var NEW_BADGE_KEY_PREFIX = 'taai_leaderboard_first_seen_';
-  function newBadgeHtml(scope) {
+  // Split from the HTML-building step below so callers can also use the
+  // same true/false to reserve layout space for the badge on
+  // .leaderboard-title (see the has-badge class at each call site) —
+  // computed once and reused, rather than checking (and re-triggering the
+  // "mark as shown" side effect) twice for one render.
+  function newBadgeVisible(scope) {
     var key = scope + '-' + mondayOf(todayIso());
     var today = todayIso();
     var firstSeenDate = null;
     try { firstSeenDate = localStorage.getItem(NEW_BADGE_KEY_PREFIX + key); } catch (e) { /* localStorage unavailable — badge just won't show, not critical */ }
-    if (firstSeenDate && firstSeenDate !== today) return ''; // already had its day, some earlier day this week
+    if (firstSeenDate && firstSeenDate !== today) return false; // already had its day, some earlier day this week
     if (!firstSeenDate) {
       try { localStorage.setItem(NEW_BADGE_KEY_PREFIX + key, today); } catch (e) { /* non-critical */ }
     }
-    return ' <span class="new-badge-wrap"><span class="new-badge">New</span></span>';
+    return true;
+  }
+  function newBadgeHtml(visible) {
+    return visible ? ' <span class="new-badge-wrap"><span class="new-badge">New</span></span>' : '';
   }
 
   // ── Cookie helpers ──────────────────────────────────────────────────
@@ -916,9 +924,10 @@
     // bindCalendarEvents) — role/tabindex so it's actually reachable and
     // announced as a control, not just a div with a click listener nobody
     // but a mouse user could trigger.
+    var showBadge5 = newBadgeVisible('top5');
     return '<div class="leaderboard-card champions-section clickable-card" id="champions-card" role="button" tabindex="0">' +
-      '<div class="leaderboard-title">Mission IIT Leaderboard</div>' +
-      newBadgeHtml('top5') +
+      '<div class="leaderboard-title' + (showBadge5 ? ' has-badge' : '') + '">Mission IIT Leaderboard</div>' +
+      newBadgeHtml(showBadge5) +
       '<div class="leaderboard-subtitle">Top 5 by minutes logged, last week</div>' +
       rows +
       '</div>';
@@ -1691,9 +1700,10 @@
   }
 
   function renderLeaderboardCard() {
+    var showBadge20 = newBadgeVisible('top20');
     return '<div class="leaderboard-card fade-in" id="leaderboard-card">' +
-      '<div class="leaderboard-title">Mission IIT Leaderboard</div>' +
-      newBadgeHtml('top20') +
+      '<div class="leaderboard-title' + (showBadge20 ? ' has-badge' : '') + '">Mission IIT Leaderboard</div>' +
+      newBadgeHtml(showBadge20) +
       '<div class="leaderboard-subtitle">Top 20 by minutes logged · Resets every Monday</div>' +
       '<div id="leaderboard-rows">' + renderLeaderboardRows() + '</div>' +
       '</div>';
