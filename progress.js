@@ -886,38 +886,31 @@
   // streak-champions-card (see renderCalendar), not its own separate card,
   // so it's visible immediately, not below the fold. Public/unpersonalized
   // like the live weekly leaderboard, so this shows for guests too.
-  // Always renders (even with an empty-state message when last week had
-  // no data yet) rather than disappearing entirely — it used to return ''
-  // in that case, letting the streak section's flex:1 claim the whole
-  // card alone, but that made the card's presence inconsistent depending
-  // on whether anyone happened to use the timer last week. Same
-  // empty-state pattern renderLeaderboardRows already uses for the
-  // in-Focus-Mode leaderboard.
+  // Renders nothing at all if last week had no data yet (a brand new week,
+  // or nobody used the timer) rather than showing an empty-looking
+  // section — the streak section's flex:1 then naturally claims the
+  // whole card alone.
   function renderLastWeekChampions() {
     var leaders = state.lastWeekLeaders || [];
-    var rows;
-    if (!leaders.length) {
-      rows = '<p class="center-note" style="padding:14px 0;">No focus sessions logged last week.</p>';
-    } else {
-      rows = leaders.map(function (l, i) {
-        var rank = LEADERBOARD_MEDALS[i] || (i + 1);
-        return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (l.is_me ? ' leaderboard-row--me' : '') + '">' +
-          '<span class="leaderboard-rank">' + rank + '</span>' +
-          '<span class="leaderboard-name">' + escapeHtml(l.display_name) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
-          '<span class="leaderboard-time">' + l.total_minutes + 'm</span>' +
-          '</div>';
-      }).join('');
-      // Same "gap + own row" pattern as the in-Focus-Mode leaderboard (see
-      // renderLeaderboardRows) — a viewer outside last week's top 5
-      // otherwise has zero visibility into their own standing here either.
-      if (state.lastWeekViewerRank) {
-        rows += '<div class="leaderboard-gap">···</div>' +
-          '<div class="leaderboard-row leaderboard-row--me">' +
-          '<span class="leaderboard-rank">' + state.lastWeekViewerRank.rank + '</span>' +
-          '<span class="leaderboard-name">You</span>' +
-          '<span class="leaderboard-time">' + state.lastWeekViewerRank.total_minutes + 'm</span>' +
-          '</div>';
-      }
+    if (!leaders.length) return '';
+    var rows = leaders.map(function (l, i) {
+      var rank = LEADERBOARD_MEDALS[i] || (i + 1);
+      return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (l.is_me ? ' leaderboard-row--me' : '') + '">' +
+        '<span class="leaderboard-rank">' + rank + '</span>' +
+        '<span class="leaderboard-name">' + escapeHtml(l.display_name) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
+        '<span class="leaderboard-time">' + l.total_minutes + 'm</span>' +
+        '</div>';
+    }).join('');
+    // Same "gap + own row" pattern as the in-Focus-Mode leaderboard (see
+    // renderLeaderboardRows) — a viewer outside last week's top 5
+    // otherwise has zero visibility into their own standing here either.
+    if (state.lastWeekViewerRank) {
+      rows += '<div class="leaderboard-gap">···</div>' +
+        '<div class="leaderboard-row leaderboard-row--me">' +
+        '<span class="leaderboard-rank">' + state.lastWeekViewerRank.rank + '</span>' +
+        '<span class="leaderboard-name">You</span>' +
+        '<span class="leaderboard-time">' + state.lastWeekViewerRank.total_minutes + 'm</span>' +
+        '</div>';
     }
     return '<div class="leaderboard-card champions-section" id="champions-card">' +
       '<div class="leaderboard-title">Mission IIT Leaderboard' + newBadgeHtml('top5') + '</div>' +
@@ -1108,9 +1101,9 @@
       // Mode's own unified card (countdown/timer/today/leaderboard as
       // sections with a divider, not stacked separate floating cards).
       // Visible immediately without scrolling, instead of all the way
-      // down in .side-col. renderLastWeekChampions always renders
-      // something now (an empty-state message when there's no data), so
-      // the champions section is consistently present here.
+      // down in .side-col. Renders nothing at all (see
+      // renderLastWeekChampions) when there's no data, in which case
+      // #streak-panel's flex:1 just naturally claims the whole card alone.
       html += '<div class="streak-champions-card fade-in">' +
         '<div id="streak-panel">' + renderStreakHero() + '</div>' +
         renderLastWeekChampions() +
