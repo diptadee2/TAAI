@@ -1174,8 +1174,11 @@
     // point (set earlier in loadMonth's resolve, before renderCalendar is
     // called) — unlike the top-20 card in Focus Mode, this one doesn't
     // need a separate post-fetch hook (see refreshLeaderboard).
+    // Only for an actual top-5 finish, not just "logged some minutes last
+    // week" — narrower than the confetti trigger used to be (that also
+    // covered lastWeekViewerRank, i.e. any placement at all).
     armConfetti('champions-card', 'top5-' + mondayOf(todayIso()),
-      state.lastWeekLeaders.some(function (l) { return l.is_me; }) || !!state.lastWeekViewerRank);
+      state.lastWeekLeaders.some(function (l) { return l.is_me; }));
     // The "NEW" badge itself needs no post-render arming anymore — see
     // newBadgeHtml, called directly from renderLastWeekChampions/
     // renderLeaderboardCard as part of building the HTML string.
