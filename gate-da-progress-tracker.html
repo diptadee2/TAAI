@@ -479,17 +479,18 @@
   .clickable-card { cursor: pointer; transition: border-color .2s ease, background .2s ease; }
   .clickable-card:hover { border-color: rgba(139,92,246,0.35); background: rgba(139,92,246,0.06); }
   .clickable-card:focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; }
-  .leaderboard-title { font-family: var(--font-nav); font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); text-align: center; }
+  .leaderboard-title { font-family: var(--font-nav); font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); text-align: left; }
   /* Real bug, caught from a screenshot: the badge is absolutely
      positioned (see .new-badge-wrap), so it doesn't reserve any space in
-     the title's own layout — without this, the title's centered text
-     flows at full width straight through where the badge sits, visibly
-     overlapping/clipping it. Only applied when the badge is actually
-     showing (has-badge, added conditionally at each render — see
-     renderLastWeekChampions/renderLeaderboardCard), so the vastly more
-     common badge-free state keeps perfect, unpadded centering. */
+     the title's own layout — without this, a long enough title (still
+     possible even left-aligned — see text-align above) can flow straight
+     through where the badge sits, visibly overlapping/clipping it. Only
+     applied when the badge is actually showing (has-badge, added
+     conditionally at each render — see renderLastWeekChampions/
+     renderLeaderboardCard), so the vastly more common badge-free state
+     keeps the title at its natural, unpadded width. */
   .leaderboard-title.has-badge { padding-right: 48px; }
-  .leaderboard-subtitle { font-size: 11px; color: var(--ink-soft); opacity: .7; text-align: center; margin-bottom: 12px; margin-top: 2px; }
+  .leaderboard-subtitle { font-size: 11px; color: var(--ink-soft); opacity: .7; text-align: left; margin-bottom: 12px; margin-top: 2px; }
   .leaderboard-row { display: flex; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 10px; font-size: 13.5px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: left; }
   .leaderboard-row:last-child { border-bottom: none; }
   .leaderboard-row--top { padding-top: 10px; padding-bottom: 10px; }
