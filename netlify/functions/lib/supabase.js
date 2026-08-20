@@ -81,6 +81,22 @@ export function computeStreak(scheduledDatesDesc, completedDates, today) {
   return streak;
 }
 
+// Parses a Postgres `timestamp` (without time zone) column's string value
+// as the UTC instant it actually is — confirmed as a real bug, not just
+// theoretical: pomo_active_session.updated_at is written via
+// `.toISOString()` (genuinely UTC) but comes back from Postgres/PostgREST
+// without a trailing "Z" (e.g. "2026-08-20T14:29:46.871", since the
+// column type has no timezone info to include). Plain `new Date(...)`
+// parses a timezone-less string as *local time to whatever machine runs
+// the parsing* — on a dev machine set to IST that silently shifted an
+// "updated 6 minutes ago" row 5.5 hours into the past, showing "340
+// minutes ago" instead. Appending "Z" makes the UTC instant explicit
+// instead of leaving it to the runtime's ambient timezone, same
+// "never trust an implicit timezone" principle as todayIST() above.
+export function parseUtcTimestamp(pgTimestamp) {
+  return new Date(pgTimestamp.endsWith('Z') ? pgTimestamp : pgTimestamp + 'Z');
+}
+
 // Validates "YYYY-MM" and returns the [start, end) date range for a SQL query.
 export function monthRange(month) {
   if (!/^\d{4}-\d{2}$/.test(month || '')) return null;

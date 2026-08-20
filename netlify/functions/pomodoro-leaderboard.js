@@ -4,7 +4,7 @@
 // design; no email or other identity is returned in the response. The
 // optional `email` query param (the viewer's own, if logged in) is only
 // used to flag their own row with is_me, never anyone else's.
-import { getSupabase, json, weekStartIST, todayForStreak, computeStreak } from './lib/supabase.js';
+import { getSupabase, json, weekStartIST, todayForStreak, computeStreak, parseUtcTimestamp } from './lib/supabase.js';
 
 const LIMIT = 20;
 
@@ -109,7 +109,7 @@ export async function handler(event) {
       // live — someone who's never touched Pomodoro gets null (nothing
       // to show), not a misleading "last seen" for an activity they've
       // never done.
-      pomo_last_seen_at: (!live && session) ? new Date(session.updated_at).getTime() : null,
+      pomo_last_seen_at: (!live && session) ? parseUtcTimestamp(session.updated_at).getTime() : null,
     };
   }
 

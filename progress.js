@@ -564,6 +564,21 @@
 
   // ── Date helpers ────────────────────────────────────────────────────
   function pad(n) { return String(n).padStart(2, '0'); }
+  // Postgres `timestamp` (no timezone) columns — like pomo_active_
+  // session.updated_at, relayed straight through tracker-data.js as
+  // remoteActive.updatedAt below — come back with no trailing "Z" (the
+  // column has no tz info to include), even though they were written as
+  // genuine UTC (`.toISOString()` server-side). Plain `new Date(...)`
+  // treats a timezone-less string as local time to whatever device
+  // parses it — for this site's IST audience, that silently shifted a
+  // genuinely-newer cross-device session 5.5 hours into the past,
+  // making it look older than the local state and never getting
+  // adopted. Confirmed as a real, live bug (not just theoretical) while
+  // investigating a "last seen 6h ago" that should have said minutes —
+  // same fix as parseUtcTimestamp in netlify/functions/lib/supabase.js.
+  function parseUtcTimestamp(pgTimestamp) {
+    return new Date(pgTimestamp.charAt(pgTimestamp.length - 1) === 'Z' ? pgTimestamp : pgTimestamp + 'Z');
+  }
   // The actual calendar date, never floored — for anything that should
   // keep ticking every real day regardless of the schedule's Aug-1 start
   // (the exam countdown; todayIso() below is deliberately NOT this, since
@@ -779,7 +794,7 @@
         // Start right as this request was in flight).
         var remoteActive = state.student ? data.pomoActive : null;
         if (remoteActive && remoteActive.updatedAt) {
-          var remoteAsOf = new Date(remoteActive.updatedAt).getTime();
+          var remoteAsOf = parseUtcTimestamp(remoteActive.updatedAt).getTime();
           if (remoteAsOf > pomoStateAsOf) applyPomoActiveState(remoteActive);
         }
 
