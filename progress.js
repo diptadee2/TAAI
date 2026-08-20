@@ -1741,9 +1741,15 @@
   // per CLAUDE.md's Chromium DOM-node-leak gotcha: animating transform
   // directly on an element that also carries both box-shadow and
   // border-radius (.live-dot itself, for its glow) leaks detached nodes.
+  // .live-dot-slot is always rendered, live or not — omitting it
+  // entirely for non-live rows meant every name's text started at a
+  // different x depending on whether the row before it had a dot,
+  // exactly the same row-to-row misalignment already fixed once for the
+  // streak balls (see streakBallsHtml above). A fixed-width slot keeps
+  // every name starting at the same offset regardless.
   function liveDotHtml(isLive) {
-    if (!isLive) return '';
-    return '<span class="live-dot-wrap" title="In a focus session right now"><span class="live-dot"></span></span>';
+    var dot = isLive ? '<span class="live-dot-wrap" title="In a focus session right now"><span class="live-dot"></span></span>' : '';
+    return '<span class="live-dot-slot">' + dot + '</span>';
   }
 
   // Streak shown as a row of small balls between the name and minutes

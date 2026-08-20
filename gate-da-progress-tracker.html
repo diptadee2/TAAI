@@ -547,12 +547,18 @@
   .leaderboard-name { min-width: 0; font-weight: 600; color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   /* "Live now" indicator — a small pulsing green dot before the name of
      anyone currently mid-focus-session (see is_live in pomodoro-
-     leaderboard.js). .live-dot-wrap (no box-shadow/border-radius of its
-     own) is what's actually animated; .live-dot (the glow, via box-
-     shadow+border-radius together) stays static — animating transform
-     on an element carrying both is the Chromium DOM-node-leak gotcha
-     documented in CLAUDE.md. */
-  .live-dot-wrap { display: inline-block; vertical-align: middle; margin-right: 6px; margin-bottom: 1px; animation: live-pulse 1.6s ease-in-out infinite; }
+     leaderboard.js). .live-dot-slot is a fixed-width reserved space,
+     always rendered whether or not the row is actually live — leaving
+     it out entirely for non-live rows meant every name's text started
+     at a different x depending on the previous row's live state, same
+     misalignment already fixed once for the streak balls. .live-dot-
+     wrap (no box-shadow/border-radius of its own) is what's actually
+     animated; .live-dot (the glow, via box-shadow+border-radius
+     together) stays static — animating transform on an element
+     carrying both is the Chromium DOM-node-leak gotcha documented in
+     CLAUDE.md. */
+  .live-dot-slot { display: inline-block; vertical-align: middle; width: 13px; }
+  .live-dot-wrap { display: inline-block; vertical-align: middle; margin-bottom: 1px; animation: live-pulse 1.6s ease-in-out infinite; }
   .live-dot { display: block; width: 7px; height: 7px; border-radius: 50%; background: #34D399; box-shadow: 0 0 5px rgba(52,211,153,0.75); }
   @keyframes live-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .5; transform: scale(0.75); } }
   .leaderboard-you { display: inline-block; font-family: var(--font-nav); font-size: 9.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--purple); background: rgba(139,92,246,0.16); border-radius: 999px; padding: 1px 7px; margin-left: 4px; vertical-align: middle; }
