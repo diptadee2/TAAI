@@ -78,31 +78,47 @@ export async function handler(event) {
   // just been left stale. This naturally "expires" a dead session once
   // its nominal length is up, without needing a heartbeat.
   // mode ('work' | 'break', see schema.sql) is what actually drives the
-  // new Status column — is_live alone only says "in a session", not
-  // which phase they're in.
+  // Status column — is_live alone only says "in a session", not which
+  // phase they're in. updated_at (touched on every start/pause/skip/
+  // reset/phase-advance, see pomo-active.js) is what backs "last seen"
+  // for anyone with a session row who isn't currently live.
   const { data: activeSessions, error: activeError } = await supabase
     .from('pomo_active_session')
-    .select('email, running, phase_end_at, mode')
+    .select('email, running, phase_end_at, mode, updated_at')
     .in('email', streakEmails);
   if (activeError) return json(500, { error: activeError.message });
   const now = Date.now();
+  const sessionByEmail = Object.fromEntries(activeSessions.map(r => [r.email, r]));
   const liveByEmail = {};
   activeSessions.forEach(r => {
     if (r.running && r.phase_end_at && r.phase_end_at > now) liveByEmail[r.email] = r;
   });
+
+  function pomoFieldsFor(email) {
+    const session = sessionByEmail[email];
+    const live = liveByEmail[email];
+    return {
+      is_live: !!live,
+      pomo_status: live?.mode || null,
+      // ms epoch, same clock the client's own timer counts down to (see
+      // pomo.phaseEndAt in progress.js) — the frontend derives a live
+      // ticking mm:ss from this rather than a value that would already
+      // be stale by the time it's rendered, let alone a second later.
+      pomo_phase_end_at: live?.phase_end_at || null,
+      // Only set when there's a session row AND they're not currently
+      // live — someone who's never touched Pomodoro gets null (nothing
+      // to show), not a misleading "last seen" for an activity they've
+      // never done.
+      pomo_last_seen_at: (!live && session) ? new Date(session.updated_at).getTime() : null,
+    };
+  }
 
   const leaderboard = stats.map(s => ({
     display_name: nameByEmail[s.email] || 'Anonymous',
     total_minutes: s.total_minutes,
     total_sessions: s.total_sessions,
     streak: streakByEmail[s.email] || 0,
-    is_live: liveByEmail.hasOwnProperty(s.email),
-    pomo_status: liveByEmail[s.email]?.mode || null,
-    // ms epoch, same clock the client's own timer counts down to (see
-    // pomo.phaseEndAt in progress.js) — the frontend derives a live
-    // ticking mm:ss from this rather than a value that would already be
-    // stale by the time it's rendered, let alone a second later.
-    pomo_phase_end_at: liveByEmail[s.email]?.phase_end_at || null,
+    ...pomoFieldsFor(s.email),
     is_me: !!viewerEmail && s.email === viewerEmail,
   }));
 
@@ -136,9 +152,7 @@ export async function handler(event) {
         total_minutes: viewerStats.total_minutes,
         total_sessions: viewerStats.total_sessions,
         streak: streakByEmail[viewerEmail] || 0,
-        is_live: liveByEmail.hasOwnProperty(viewerEmail),
-        pomo_status: liveByEmail[viewerEmail]?.mode || null,
-        pomo_phase_end_at: liveByEmail[viewerEmail]?.phase_end_at || null,
+        ...pomoFieldsFor(viewerEmail),
       };
     }
   }

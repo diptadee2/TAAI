@@ -1778,10 +1778,33 @@
   // span (not omitted) when null: this is already its own dedicated
   // grid column, so unlike the inline live-dot-in-name case there's no
   // row-to-row alignment risk from leaving it empty.
-  function pomoStatusHtml(mode) {
-    if (!mode) return '<span class="leaderboard-status"></span>';
-    var isWork = mode === 'work';
-    return '<span class="leaderboard-status ' + (isWork ? 'pomo-work' : 'pomo-break') + '">' + (isWork ? 'Focus' : 'Break') + '</span>';
+  // "Xm ago" / "Xh ago" / "Xd ago" — coarse on purpose (rounded to the
+  // nearest unit, no seconds granularity), since this only needs to
+  // refresh whenever the leaderboard itself does (the 30s smart-poll or
+  // a load/action refresh), not tick live like the countdown does.
+  function formatLastSeen(epochMs) {
+    var diffMin = Math.max(0, Math.round((Date.now() - epochMs) / 60000));
+    if (diffMin < 1) return 'just now';
+    if (diffMin < 60) return diffMin + 'm ago';
+    var diffHr = Math.round(diffMin / 60);
+    if (diffHr < 24) return diffHr + 'h ago';
+    return Math.round(diffHr / 24) + 'd ago';
+  }
+
+  // mode set -> the Focus/Break pill. Otherwise, if there's a
+  // pomo_last_seen_at (they've used Pomodoro before, just not right
+  // now), show when instead of leaving the column blank — "not live"
+  // isn't the same as "never seen", and the latter is more useful at a
+  // glance. Genuinely null (never touched Pomodoro at all) stays blank.
+  function pomoStatusHtml(mode, lastSeenAt) {
+    if (mode) {
+      var isWork = mode === 'work';
+      return '<span class="leaderboard-status ' + (isWork ? 'pomo-work' : 'pomo-break') + '">' + (isWork ? 'Focus' : 'Break') + '</span>';
+    }
+    if (lastSeenAt) {
+      return '<span class="leaderboard-status pomo-idle" title="Last seen ' + escapeAttr(new Date(lastSeenAt).toLocaleString()) + '">' + formatLastSeen(lastSeenAt) + '</span>';
+    }
+    return '<span class="leaderboard-status"></span>';
   }
 
   // Live mm:ss countdown for a live student's current phase — computed
@@ -1869,7 +1892,7 @@
         '<span class="leaderboard-rank">' + rankLabel + '</span>' +
         '<span class="leaderboard-name">' + liveDotHtml(r.is_live) + escapeHtml(r.display_name) + (r.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
         streakBallsHtml(r.streak) +
-        pomoStatusHtml(r.pomo_status) +
+        pomoStatusHtml(r.pomo_status, r.pomo_last_seen_at) +
         pomoTimerHtml(r.pomo_phase_end_at) +
         '<span class="leaderboard-time">' + timeLabel + '</span>' +
         '</div>';
@@ -1885,7 +1908,7 @@
         '<span class="leaderboard-rank">' + state.viewerRank.rank + '</span>' +
         '<span class="leaderboard-name">' + liveDotHtml(state.viewerRank.is_live) + 'You</span>' +
         streakBallsHtml(state.viewerRank.streak) +
-        pomoStatusHtml(state.viewerRank.pomo_status) +
+        pomoStatusHtml(state.viewerRank.pomo_status, state.viewerRank.pomo_last_seen_at) +
         pomoTimerHtml(state.viewerRank.pomo_phase_end_at) +
         '<span class="leaderboard-time">' + state.viewerRank.total_minutes + 'm</span>' +
         '</div>';

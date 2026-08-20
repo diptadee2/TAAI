@@ -602,6 +602,11 @@
   .leaderboard-status { font-family: var(--font-nav); font-size: 10.5px; font-weight: 700; text-align: center; padding: 3px 0; border-radius: 999px; }
   .leaderboard-status.pomo-work { color: var(--purple); background: rgba(139,92,246,0.14); }
   .leaderboard-status.pomo-break { color: var(--green); background: var(--green-soft); }
+  /* Muted plain text, not a colored pill like Focus/Break — this is a
+     lower-emphasis "not active right now" state (see pomo_last_seen_at
+     in pomodoro-leaderboard.js), shouldn't visually compete with the
+     two states that actually mean "here right now". */
+  .leaderboard-status.pomo-idle { color: var(--ink-soft); font-weight: 600; }
   /* Live countdown for a live student's current phase — ticked client-
      side every second (see startLeaderboardTimerTick/tickLeaderboardTimers
      in progress.js) from data-phase-end (pomo_phase_end_at, ms epoch)
