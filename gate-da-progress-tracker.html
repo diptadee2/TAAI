@@ -533,7 +533,7 @@
      column a real, unconditional floor instead — name is the only column
      that can shrink toward 0 (via ellipsis), everything else is
      guaranteed its minimum no matter how tight the row gets. */
-  .leaderboard-row { display: grid; grid-template-columns: 36px minmax(0,130px) minmax(112px,1fr) 60px 48px 46px; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 10px; font-size: 13.5px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: left; }
+  .leaderboard-row { display: grid; grid-template-columns: 36px minmax(0,130px) minmax(92px,1fr) 60px 48px 46px; align-items: center; gap: 16px; padding: 9px 10px; border-radius: 10px; font-size: 13.5px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: left; }
   .leaderboard-row:last-child { border-bottom: none; }
   .leaderboard-row--top { padding-top: 10px; padding-bottom: 10px; }
   .leaderboard-row--me { background: rgba(139,92,246,0.1); border-bottom-color: transparent; }
@@ -562,12 +562,11 @@
   .live-dot { display: block; width: 7px; height: 7px; border-radius: 50%; background: #34D399; box-shadow: 0 0 5px rgba(52,211,153,0.75); }
   @keyframes live-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .5; transform: scale(0.75); } }
   .leaderboard-you { display: inline-block; font-family: var(--font-nav); font-size: 9.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--purple); background: rgba(139,92,246,0.16); border-radius: 999px; padding: 1px 7px; margin-left: 4px; vertical-align: middle; }
-  /* Streak balls, centered within their grid column (minmax(112px,1fr)
-     above — floor sized for the worst case: the 20px left padding + 5
-     balls + a "+NNN" overflow pill, see STREAK_BALLS_CAP in
-     progress.js). This is the
-     row's one column that grows into leftover space, which is what
-     actually puts it in the visual middle between name and minutes. */
+  /* Streak balls, centered within their grid column (minmax(92px,1fr)
+     above — floor sized for the worst case: 5 balls + a "+NNN" overflow
+     pill, see STREAK_BALLS_CAP in progress.js). This is the row's one
+     column that grows into leftover space, which is what actually puts
+     it in the visual middle between name and minutes. */
   /* justify-content:flex-start, not center — centering each row's ball
      cluster independently meant the first ball's x-position drifted row
      to row depending on that row's own streak length (1 ball centers
@@ -575,14 +574,14 @@
      lined up into a straight column despite the column itself being
      aligned. Left-anchored instead: every row's first ball now starts
      at the exact same x, and only the tail (more balls, then the
-     overflow pill) grows rightward from there. */
-  /* padding-left gives the balls breathing room from Name — left-
-     aligning them (rather than centering, see the comment history
-     above) fixed row-to-row uniformity but butted them right up against
-     Name with only the row's own 12px gap, which read as congested.
-     Still uniform (a fixed offset, not content-dependent), just not
-     touching Name anymore. */
-  .leaderboard-streak { display: flex; align-items: center; justify-content: flex-start; gap: 4px; min-width: 0; padding-left: 20px; }
+     overflow pill) grows rightward from there. Breathing room from Name
+     comes from .leaderboard-row's own shared 16px column gap now, not a
+     one-off padding-left here — used to have its own extra 20px on top
+     of the row's (then-12px) gap, which made this the one column pair
+     with a bigger gap than every other; a single larger shared gap
+     gives the same breathing room while keeping every column's spacing
+     consistent. */
+  .leaderboard-streak { display: flex; align-items: center; justify-content: flex-start; gap: 4px; min-width: 0; }
   /* Radial highlight (not just a flat linear gradient) for a glossy,
      gem-like ball instead of a flat dot, plus a soft outer glow and a
      faint inset shadow along the bottom edge for a bit of depth. */
@@ -617,14 +616,14 @@
   /* Column header row — identical grid-template-columns to
      .leaderboard-row above, so every label lands exactly above its
      column on every row, not just approximately near it. */
-  .leaderboard-columns { display: grid; grid-template-columns: 36px minmax(0,130px) minmax(112px,1fr) 60px 48px 46px; align-items: center; gap: 12px; padding: 0 10px 4px; font-family: var(--font-nav); font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
+  .leaderboard-columns { display: grid; grid-template-columns: 36px minmax(0,130px) minmax(92px,1fr) 60px 48px 46px; align-items: center; gap: 16px; padding: 0 10px 4px; font-family: var(--font-nav); font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
   .leaderboard-col-rank { text-align: center; min-width: 0; }
   /* padding-left matches .live-dot-slot's fixed 13px width (see the
      live-dot comment above) — every row's actual name text starts 13px
      into its column now, so the "Name" header needs the same offset or
      it reads as starting to the left of the names it's labeling. */
   .leaderboard-col-name { min-width: 0; text-align: left; padding-left: 13px; }
-  .leaderboard-col-streak { min-width: 0; text-align: left; padding-left: 20px; }
+  .leaderboard-col-streak { min-width: 0; text-align: left; }
   .leaderboard-col-status { text-align: center; min-width: 0; }
   .leaderboard-col-timer { text-align: center; min-width: 0; }
   .leaderboard-col-time { text-align: right; min-width: 0; }
