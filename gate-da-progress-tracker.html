@@ -517,17 +517,26 @@
   .leaderboard-row--top .leaderboard-rank { font-size: 18px; }
   .leaderboard-name { flex: 1; min-width: 0; font-weight: 600; color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .leaderboard-you { display: inline-block; font-family: var(--font-nav); font-size: 9.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--purple); background: rgba(139,92,246,0.16); border-radius: 999px; padding: 1px 7px; margin-left: 4px; vertical-align: middle; }
-  /* Streak, shown as a row of small balls between the name and minutes
-     columns. No fixed width needed for alignment — .leaderboard-name's
-     flex:1 already absorbs whatever space this and .leaderboard-time
-     don't use, so .leaderboard-time lands flush against the row's right
-     edge on every row regardless of how wide this is (or isn't, for a
-     zero streak). A fixed width here just clipped/overlapped the balls
-     against the minutes text on a long streak's "+N" overflow label. */
-  .leaderboard-streak { display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
+  /* Streak, shown as a row of small balls in a fixed-width, centered
+     column between the name and minutes columns — wide enough for the
+     worst case (5 balls + a "+NNN" overflow label) so it never clips,
+     and fixed (not content-hugging) so every row's balls center on the
+     exact same axis as the "Streak" header label above them. */
+  .leaderboard-streak { display: flex; align-items: center; justify-content: center; gap: 3px; flex-shrink: 0; width: 72px; }
   .streak-ball { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: linear-gradient(135deg, #FF7FB7, var(--purple)); box-shadow: 0 0 4px rgba(139,92,246,0.55); }
-  .streak-ball-overflow { font-family: var(--font-nav); font-size: 10px; font-weight: 700; color: var(--purple); margin-left: 1px; }
-  .leaderboard-time { font-family: var(--font-nav); font-weight: 700; font-size: 12.5px; color: var(--ink); flex-shrink: 0; }
+  .streak-ball-overflow { font-family: var(--font-nav); font-size: 10px; font-weight: 700; color: var(--purple); }
+  /* Fixed width + right-align (rather than content-hugging) so minutes
+     line up in a straight column too, not just drift to wherever the
+     name/streak columns happened to leave off. */
+  .leaderboard-time { font-family: var(--font-nav); font-weight: 700; font-size: 12.5px; color: var(--ink); flex-shrink: 0; width: 46px; text-align: right; }
+  /* Column header row — same rank/name/streak/time widths as
+     .leaderboard-row (see the classes above) so "Streak" lands exactly
+     centered over the balls in every row beneath it, not just close. */
+  .leaderboard-columns { display: flex; align-items: center; gap: 12px; padding: 0 10px 4px; }
+  .leaderboard-col-rank { width: 24px; flex-shrink: 0; }
+  .leaderboard-col-name { flex: 1; min-width: 0; }
+  .leaderboard-col-streak { width: 72px; flex-shrink: 0; text-align: center; font-family: var(--font-nav); font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
+  .leaderboard-col-time { width: 46px; flex-shrink: 0; }
   .leaderboard-gap { text-align: center; color: var(--ink-soft); font-size: 12px; letter-spacing: .2em; padding: 2px 0; }
   /* "NEW" badge — deliberately more aggressive than .leaderboard-you above
      (shake + an expanding ping ring, both continuous until dismissed),

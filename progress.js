@@ -1791,6 +1791,11 @@
       '<div class="leaderboard-title' + (showBadge20 ? ' has-badge' : '') + '">Mission IIT Leaderboard</div>' +
       newBadgeHtml(showBadge20) +
       '<div class="leaderboard-subtitle">Top 20 by minutes logged · Resets every Monday</div>' +
+      // Labels only the streak column (name/minutes are already
+      // self-evident from their own content) — mirrors each row's exact
+      // rank/name/streak/time widths so "Streak" sits centered directly
+      // above the balls on every row, not just approximately near them.
+      '<div class="leaderboard-columns"><span class="leaderboard-col-rank"></span><span class="leaderboard-col-name"></span><span class="leaderboard-col-streak">Streak</span><span class="leaderboard-col-time"></span></div>' +
       '<div id="leaderboard-rows">' + renderLeaderboardRows() + '</div>' +
       '</div>';
   }
