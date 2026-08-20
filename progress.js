@@ -1734,6 +1734,18 @@
   // pomodoro-leaderboard.js). Only rendered/fetched in Focus Mode.
   var LEADERBOARD_MEDALS = ['🥇', '🥈', '🥉'];
 
+  // "Live now" dot before a name — is_live comes from pomodoro-
+  // leaderboard.js (running=true and that phase's countdown hasn't
+  // finished yet, see the comment there). Wrapped in a plain
+  // (non-shadowed, non-radius) span that's what actually gets animated,
+  // per CLAUDE.md's Chromium DOM-node-leak gotcha: animating transform
+  // directly on an element that also carries both box-shadow and
+  // border-radius (.live-dot itself, for its glow) leaks detached nodes.
+  function liveDotHtml(isLive) {
+    if (!isLive) return '';
+    return '<span class="live-dot-wrap" title="In a focus session right now"><span class="live-dot"></span></span>';
+  }
+
   // Streak shown as a row of small balls between the name and minutes
   // columns, rather than the number alone — capped at STREAK_BALLS_CAP so
   // a long streak doesn't blow out the row's width; anything beyond that
@@ -1763,7 +1775,7 @@
       // actually ranks the list, so it's the only number displayed too.
       return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (r.is_me ? ' leaderboard-row--me' : '') + '">' +
         '<span class="leaderboard-rank">' + rankLabel + '</span>' +
-        '<span class="leaderboard-name">' + escapeHtml(r.display_name) + (r.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
+        '<span class="leaderboard-name">' + liveDotHtml(r.is_live) + escapeHtml(r.display_name) + (r.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
         streakBallsHtml(r.streak) +
         '<span class="leaderboard-time">' + timeLabel + '</span>' +
         '</div>';
@@ -1777,7 +1789,7 @@
       rows += '<div class="leaderboard-gap">···</div>' +
         '<div class="leaderboard-row leaderboard-row--me">' +
         '<span class="leaderboard-rank">' + state.viewerRank.rank + '</span>' +
-        '<span class="leaderboard-name">You</span>' +
+        '<span class="leaderboard-name">' + liveDotHtml(state.viewerRank.is_live) + 'You</span>' +
         streakBallsHtml(state.viewerRank.streak) +
         '<span class="leaderboard-time">' + state.viewerRank.total_minutes + 'm</span>' +
         '</div>';

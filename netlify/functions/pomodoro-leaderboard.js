@@ -67,11 +67,32 @@ export async function handler(event) {
     streakEmails.map(e => [e, computeStreak(scheduledDates, completedByEmail[e] || new Set(), today)])
   );
 
+  // "Live now" — a student is shown as currently in a focus session if
+  // their pomo_active_session row (the same cross-device sync mirror
+  // savePomoActiveState writes to, see progress.js) says running=true
+  // AND their current phase's countdown hasn't finished yet. running
+  // alone isn't enough: a browser tab closed mid-session without a final
+  // sync leaves the row stuck at running=true forever, so phase_end_at
+  // (ms epoch, only meaningful while running — see schema.sql) still
+  // being in the future is what actually confirms the session hasn't
+  // just been left stale. This naturally "expires" a dead session once
+  // its nominal length is up, without needing a heartbeat.
+  const { data: activeSessions, error: activeError } = await supabase
+    .from('pomo_active_session')
+    .select('email, running, phase_end_at')
+    .in('email', streakEmails);
+  if (activeError) return json(500, { error: activeError.message });
+  const now = Date.now();
+  const liveEmails = new Set(
+    activeSessions.filter(r => r.running && r.phase_end_at && r.phase_end_at > now).map(r => r.email)
+  );
+
   const leaderboard = stats.map(s => ({
     display_name: nameByEmail[s.email] || 'Anonymous',
     total_minutes: s.total_minutes,
     total_sessions: s.total_sessions,
     streak: streakByEmail[s.email] || 0,
+    is_live: liveEmails.has(s.email),
     is_me: !!viewerEmail && s.email === viewerEmail,
   }));
 
@@ -105,6 +126,7 @@ export async function handler(event) {
         total_minutes: viewerStats.total_minutes,
         total_sessions: viewerStats.total_sessions,
         streak: streakByEmail[viewerEmail] || 0,
+        is_live: liveEmails.has(viewerEmail),
       };
     }
   }
