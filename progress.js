@@ -339,6 +339,7 @@
       history.replaceState({ focus: true }, '');
       refreshLeaderboard();
       startLeaderboardTimerTick();
+      startLeaderboardPoll();
     }
   }
 
@@ -1714,6 +1715,7 @@
     renderCalendar();
     refreshLeaderboard();
     startLeaderboardTimerTick();
+    startLeaderboardPoll();
   }
 
   // Shared by the "Focus mode" toggle button and the top-5 champions card
@@ -1817,6 +1819,39 @@
     if (!leaderboardTimerTickId) return;
     clearInterval(leaderboardTimerTickId);
     leaderboardTimerTickId = null;
+  }
+
+  // Smart refresh for is_live/pomo_status/pomo_phase_end_at while Focus
+  // Mode is open — these can go stale between the load/action-triggered
+  // refreshes elsewhere (someone else starts, pauses, or finishes a
+  // session with nobody here doing anything to trigger a re-fetch).
+  // Deliberately reuses the existing /pomodoro-leaderboard endpoint
+  // rather than adding a new one — its response is already small
+  // (~3KB, confirmed), and a dedicated live-only endpoint would need to
+  // either send back student emails (this endpoint intentionally never
+  // does, see its own comment) or rely on rank-order position matching
+  // the full fetch, which can drift the instant anyone's minutes change
+  // mid-poll. Not worth the complexity for a payload that's already tiny.
+  //
+  // The actual bandwidth-saving lever is visibility, not payload size:
+  // polling is paused entirely (the interval is cleared, not just
+  // skipped) whenever the tab isn't in the foreground — nobody's
+  // watching a backgrounded leaderboard, so there's nothing to gain by
+  // keeping it fresh. One immediate refresh fires the moment the tab
+  // becomes visible again (rather than waiting up to the full interval)
+  // so a long-backgrounded tab catches up right away instead of showing
+  // stale live-status for up to 30s after being refocused.
+  var LEADERBOARD_POLL_MS = 30000;
+  var leaderboardPollId = null;
+  function startLeaderboardPoll() {
+    stopLeaderboardPoll();
+    if (document.hidden) return; // visibilitychange below starts it once actually visible
+    leaderboardPollId = setInterval(refreshLeaderboard, LEADERBOARD_POLL_MS);
+  }
+  function stopLeaderboardPoll() {
+    if (!leaderboardPollId) return;
+    clearInterval(leaderboardPollId);
+    leaderboardPollId = null;
   }
 
   function renderLeaderboardRows() {
@@ -1927,6 +1962,7 @@
         state.focus = false;
         saveFocusActive(false);
         stopLeaderboardTimerTick();
+        stopLeaderboardPoll();
         renderCalendar();
       }
     });
@@ -2152,9 +2188,17 @@
   // the next throttled interval tick — a background tab's timer can be
   // delayed by Chrome's intensive throttling, so without this the display
   // would sit stale (or a finished phase wouldn't advance) until whenever
-  // the browser next lets the interval fire.
+  // the browser next lets the interval fire. Same event also drives the
+  // leaderboard's smart-refresh pause/resume (see startLeaderboardPoll) —
+  // stopped while backgrounded since nobody's watching it, caught up with
+  // one immediate refresh rather than waiting up to LEADERBOARD_POLL_MS
+  // the moment it's visible again.
   document.addEventListener('visibilitychange', function () {
     if (!document.hidden && pomo.running) pomoTick();
+    if (state.focus) {
+      if (document.hidden) stopLeaderboardPoll();
+      else { refreshLeaderboard(); startLeaderboardPoll(); }
+    }
   });
 
   // Focus Mode is desktop-only (same 1080px breakpoint that hides
