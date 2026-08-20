@@ -4,7 +4,7 @@
 // design; no email or other identity is returned in the response. The
 // optional `email` query param (the viewer's own, if logged in) is only
 // used to flag their own row with is_me, never anyone else's.
-import { getSupabase, json, weekStartIST } from './lib/supabase.js';
+import { getSupabase, json, weekStartIST, todayForStreak, computeStreak } from './lib/supabase.js';
 
 const LIMIT = 20;
 
@@ -32,10 +32,46 @@ export async function handler(event) {
   if (studentsError) return json(500, { error: studentsError.message });
 
   const nameByEmail = Object.fromEntries(students.map(s => [s.email, s.display_name]));
+
+  // Streak balls shown between name and minutes in the leaderboard UI —
+  // computed the same way as the single-student /streak endpoint (see
+  // computeStreak in lib/supabase.js) so the two can't disagree, but
+  // batched: one scheduled-dates query and one task_progress query cover
+  // every row (plus the viewer's own row, if they're not already in the
+  // top 20) at once, instead of a separate /streak call per row.
+  const streakEmails = stats.map(s => s.email);
+  if (viewerEmail && !streakEmails.includes(viewerEmail)) streakEmails.push(viewerEmail);
+
+  const today = todayForStreak();
+  const { data: scheduledForStreak, error: schedError } = await supabase
+    .from('schedule_tasks')
+    .select('date')
+    .lte('date', today)
+    .order('date', { ascending: false });
+  if (schedError) return json(500, { error: schedError.message });
+  const scheduledDates = [...new Set(scheduledForStreak.map(r => r.date))];
+
+  const { data: completedForStreak, error: completedError } = await supabase
+    .from('task_progress')
+    .select('email, date')
+    .in('email', streakEmails)
+    .eq('completed', true);
+  if (completedError) return json(500, { error: completedError.message });
+
+  const completedByEmail = {};
+  completedForStreak.forEach(r => {
+    if (!completedByEmail[r.email]) completedByEmail[r.email] = new Set();
+    completedByEmail[r.email].add(r.date);
+  });
+  const streakByEmail = Object.fromEntries(
+    streakEmails.map(e => [e, computeStreak(scheduledDates, completedByEmail[e] || new Set(), today)])
+  );
+
   const leaderboard = stats.map(s => ({
     display_name: nameByEmail[s.email] || 'Anonymous',
     total_minutes: s.total_minutes,
     total_sessions: s.total_sessions,
+    streak: streakByEmail[s.email] || 0,
     is_me: !!viewerEmail && s.email === viewerEmail,
   }));
 
@@ -68,6 +104,7 @@ export async function handler(event) {
         rank: (count || 0) + 1,
         total_minutes: viewerStats.total_minutes,
         total_sessions: viewerStats.total_sessions,
+        streak: streakByEmail[viewerEmail] || 0,
       };
     }
   }

@@ -1734,6 +1734,22 @@
   // pomodoro-leaderboard.js). Only rendered/fetched in Focus Mode.
   var LEADERBOARD_MEDALS = ['🥇', '🥈', '🥉'];
 
+  // Streak shown as a row of small balls between the name and minutes
+  // columns, rather than the number alone — capped at STREAK_BALLS_CAP so
+  // a long streak doesn't blow out the row's width; anything beyond that
+  // collapses into a "+N" after the last ball. Nothing renders for a
+  // zero streak (an empty column reads more cleanly than a row of hollow
+  // balls for every non-streaking student).
+  var STREAK_BALLS_CAP = 5;
+  function streakBallsHtml(streak) {
+    if (!streak) return '<span class="leaderboard-streak"></span>';
+    var filled = Math.min(streak, STREAK_BALLS_CAP);
+    var balls = '';
+    for (var i = 0; i < filled; i++) balls += '<span class="streak-ball"></span>';
+    var overflow = streak > STREAK_BALLS_CAP ? '<span class="streak-ball-overflow">+' + (streak - STREAK_BALLS_CAP) + '</span>' : '';
+    return '<span class="leaderboard-streak" title="' + streak + ' day streak">' + balls + overflow + '</span>';
+  }
+
   function renderLeaderboardRows() {
     if (!state.leaderboard.length) {
       return '<p class="center-note" style="padding:14px 0;">No focus sessions logged yet. Be the first!</p>';
@@ -1748,6 +1764,7 @@
       return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (r.is_me ? ' leaderboard-row--me' : '') + '">' +
         '<span class="leaderboard-rank">' + rankLabel + '</span>' +
         '<span class="leaderboard-name">' + escapeHtml(r.display_name) + (r.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
+        streakBallsHtml(r.streak) +
         '<span class="leaderboard-time">' + timeLabel + '</span>' +
         '</div>';
     }).join('');
@@ -1761,6 +1778,7 @@
         '<div class="leaderboard-row leaderboard-row--me">' +
         '<span class="leaderboard-rank">' + state.viewerRank.rank + '</span>' +
         '<span class="leaderboard-name">You</span>' +
+        streakBallsHtml(state.viewerRank.streak) +
         '<span class="leaderboard-time">' + state.viewerRank.total_minutes + 'm</span>' +
         '</div>';
     }

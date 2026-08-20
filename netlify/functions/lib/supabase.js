@@ -50,6 +50,37 @@ export function weekStartIST() {
   return d.toISOString().slice(0, 10);
 }
 
+// The schedule starts Aug 1 2026, so streak math needs the same floor as
+// the frontend's clamped "today" (see DEMO_TODAY_FLOOR in progress.js) —
+// without it, a completion on the frontend's Aug 1 "today" would have
+// server-side streak logic still looking for scheduled dates <= the real
+// (pre-Aug-1) date, find nothing, and always report streak 0. Self-
+// expiring: todayIST() has been past this floor since 2026-08-01, so it's
+// already a no-op — kept only so streak.js and pomodoro-leaderboard.js
+// (both of which need this) can't drift out of sync on when to drop it.
+const DEMO_TODAY_FLOOR = '2026-08-01';
+export function todayForStreak() {
+  const real = todayIST();
+  return real > DEMO_TODAY_FLOOR ? real : DEMO_TODAY_FLOOR;
+}
+
+// Consecutive-day streak given every scheduled date (most-recent first)
+// and the set of dates a student actually completed something on. Shared
+// by streak.js (one student) and pomodoro-leaderboard.js (every row on
+// the board, batched into two queries total instead of one /streak call
+// per row) so the two can't disagree on the same student's number. A
+// "rest day" with nothing scheduled neither extends nor breaks the streak;
+// today gets a pass if nothing's ticked yet since the day isn't over.
+export function computeStreak(scheduledDatesDesc, completedDates, today) {
+  let streak = 0;
+  for (const date of scheduledDatesDesc) {
+    if (completedDates.has(date)) { streak++; continue; }
+    if (date === today) continue;
+    break;
+  }
+  return streak;
+}
+
 // Validates "YYYY-MM" and returns the [start, end) date range for a SQL query.
 export function monthRange(month) {
   if (!/^\d{4}-\d{2}$/.test(month || '')) return null;
