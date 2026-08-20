@@ -77,22 +77,27 @@ export async function handler(event) {
   // being in the future is what actually confirms the session hasn't
   // just been left stale. This naturally "expires" a dead session once
   // its nominal length is up, without needing a heartbeat.
+  // mode ('work' | 'break', see schema.sql) is what actually drives the
+  // new Status column — is_live alone only says "in a session", not
+  // which phase they're in.
   const { data: activeSessions, error: activeError } = await supabase
     .from('pomo_active_session')
-    .select('email, running, phase_end_at')
+    .select('email, running, phase_end_at, mode')
     .in('email', streakEmails);
   if (activeError) return json(500, { error: activeError.message });
   const now = Date.now();
-  const liveEmails = new Set(
-    activeSessions.filter(r => r.running && r.phase_end_at && r.phase_end_at > now).map(r => r.email)
-  );
+  const modeByLiveEmail = {};
+  activeSessions.forEach(r => {
+    if (r.running && r.phase_end_at && r.phase_end_at > now) modeByLiveEmail[r.email] = r.mode;
+  });
 
   const leaderboard = stats.map(s => ({
     display_name: nameByEmail[s.email] || 'Anonymous',
     total_minutes: s.total_minutes,
     total_sessions: s.total_sessions,
     streak: streakByEmail[s.email] || 0,
-    is_live: liveEmails.has(s.email),
+    is_live: modeByLiveEmail.hasOwnProperty(s.email),
+    pomo_status: modeByLiveEmail[s.email] || null,
     is_me: !!viewerEmail && s.email === viewerEmail,
   }));
 
@@ -126,7 +131,8 @@ export async function handler(event) {
         total_minutes: viewerStats.total_minutes,
         total_sessions: viewerStats.total_sessions,
         streak: streakByEmail[viewerEmail] || 0,
-        is_live: liveEmails.has(viewerEmail),
+        is_live: modeByLiveEmail.hasOwnProperty(viewerEmail),
+        pomo_status: modeByLiveEmail[viewerEmail] || null,
       };
     }
   }

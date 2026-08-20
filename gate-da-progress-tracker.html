@@ -533,7 +533,7 @@
      column a real, unconditional floor instead — name is the only column
      that can shrink toward 0 (via ellipsis), everything else is
      guaranteed its minimum no matter how tight the row gets. */
-  .leaderboard-row { display: grid; grid-template-columns: 36px minmax(0,130px) minmax(112px,1fr) 46px; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 10px; font-size: 13.5px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: left; }
+  .leaderboard-row { display: grid; grid-template-columns: 36px minmax(0,130px) minmax(112px,1fr) 60px 46px; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 10px; font-size: 13.5px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: left; }
   .leaderboard-row:last-child { border-bottom: none; }
   .leaderboard-row--top { padding-top: 10px; padding-bottom: 10px; }
   .leaderboard-row--me { background: rgba(139,92,246,0.1); border-bottom-color: transparent; }
@@ -591,11 +591,22 @@
      count reads as its own distinct badge rather than an afterthought
      stray number tacked onto the balls. */
   .streak-ball-overflow { font-family: var(--font-nav); font-size: 9.5px; font-weight: 700; color: var(--purple); background: rgba(139,92,246,0.14); border-radius: 999px; padding: 1px 6px; margin-left: 1px; }
+  /* Pomodoro status ("Focus"/"Break") for anyone currently live — see
+     pomo_status in pomodoro-leaderboard.js, derived from the same
+     pomo_active_session row that drives is_live/the live dot, just
+     surfacing which phase rather than only whether they're live at
+     all. Blank (not omitted) for non-live rows, same as an empty
+     .leaderboard-streak — it's already its own dedicated fixed-width
+     grid column, so there's no row-to-row alignment risk from leaving
+     it empty the way there was for the inline live-dot-in-name case. */
+  .leaderboard-status { font-family: var(--font-nav); font-size: 10.5px; font-weight: 700; text-align: center; padding: 3px 0; border-radius: 999px; }
+  .leaderboard-status.pomo-work { color: var(--purple); background: rgba(139,92,246,0.14); }
+  .leaderboard-status.pomo-break { color: var(--green); background: var(--green-soft); }
   .leaderboard-time { font-family: var(--font-nav); font-weight: 700; font-size: 12.5px; color: var(--ink); text-align: right; min-width: 0; }
   /* Column header row — identical grid-template-columns to
      .leaderboard-row above, so every label lands exactly above its
      column on every row, not just approximately near it. */
-  .leaderboard-columns { display: grid; grid-template-columns: 36px minmax(0,130px) minmax(112px,1fr) 46px; align-items: center; gap: 12px; padding: 0 10px 4px; font-family: var(--font-nav); font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
+  .leaderboard-columns { display: grid; grid-template-columns: 36px minmax(0,130px) minmax(112px,1fr) 60px 46px; align-items: center; gap: 12px; padding: 0 10px 4px; font-family: var(--font-nav); font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
   .leaderboard-col-rank { text-align: center; min-width: 0; }
   /* padding-left matches .live-dot-slot's fixed 13px width (see the
      live-dot comment above) — every row's actual name text starts 13px
@@ -603,6 +614,7 @@
      it reads as starting to the left of the names it's labeling. */
   .leaderboard-col-name { min-width: 0; text-align: left; padding-left: 13px; }
   .leaderboard-col-streak { min-width: 0; text-align: left; padding-left: 20px; }
+  .leaderboard-col-status { text-align: center; min-width: 0; }
   .leaderboard-col-time { text-align: right; min-width: 0; }
   .leaderboard-gap { text-align: center; color: var(--ink-soft); font-size: 12px; letter-spacing: .2em; padding: 2px 0; }
   /* "NEW" badge — deliberately more aggressive than .leaderboard-you above

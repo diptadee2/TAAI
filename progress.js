@@ -1768,6 +1768,18 @@
     return '<span class="leaderboard-streak" title="' + streak + ' day streak">' + balls + overflow + '</span>';
   }
 
+  // Status badge ("Focus"/"Break") for a live student's current phase —
+  // pomo_status comes straight from pomo_active_session's mode column
+  // ('work'|'break', see schema.sql), null for anyone not live. Blank
+  // span (not omitted) when null: this is already its own dedicated
+  // grid column, so unlike the inline live-dot-in-name case there's no
+  // row-to-row alignment risk from leaving it empty.
+  function pomoStatusHtml(mode) {
+    if (!mode) return '<span class="leaderboard-status"></span>';
+    var isWork = mode === 'work';
+    return '<span class="leaderboard-status ' + (isWork ? 'pomo-work' : 'pomo-break') + '">' + (isWork ? 'Focus' : 'Break') + '</span>';
+  }
+
   function renderLeaderboardRows() {
     if (!state.leaderboard.length) {
       return '<p class="center-note" style="padding:14px 0;">No focus sessions logged yet. Be the first!</p>';
@@ -1783,6 +1795,7 @@
         '<span class="leaderboard-rank">' + rankLabel + '</span>' +
         '<span class="leaderboard-name">' + liveDotHtml(r.is_live) + escapeHtml(r.display_name) + (r.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
         streakBallsHtml(r.streak) +
+        pomoStatusHtml(r.pomo_status) +
         '<span class="leaderboard-time">' + timeLabel + '</span>' +
         '</div>';
     }).join('');
@@ -1797,6 +1810,7 @@
         '<span class="leaderboard-rank">' + state.viewerRank.rank + '</span>' +
         '<span class="leaderboard-name">' + liveDotHtml(state.viewerRank.is_live) + 'You</span>' +
         streakBallsHtml(state.viewerRank.streak) +
+        pomoStatusHtml(state.viewerRank.pomo_status) +
         '<span class="leaderboard-time">' + state.viewerRank.total_minutes + 'm</span>' +
         '</div>';
     }
@@ -1810,7 +1824,7 @@
       // Mirrors each row's exact rank/name/streak/time widths so every
       // label sits directly above its column on every row, not just
       // approximately near it.
-      '<div class="leaderboard-columns"><span class="leaderboard-col-rank">Rank</span><span class="leaderboard-col-name">Name</span><span class="leaderboard-col-streak">Streak</span><span class="leaderboard-col-time">Minutes</span></div>' +
+      '<div class="leaderboard-columns"><span class="leaderboard-col-rank">Rank</span><span class="leaderboard-col-name">Name</span><span class="leaderboard-col-streak">Streak</span><span class="leaderboard-col-status">Status</span><span class="leaderboard-col-time">Minutes</span></div>' +
       '<div id="leaderboard-rows">' + renderLeaderboardRows() + '</div>' +
       '</div>';
   }
