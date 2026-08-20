@@ -515,14 +515,21 @@
   .leaderboard-row--me { background: rgba(139,92,246,0.1); border-bottom-color: transparent; }
   .leaderboard-rank { font-family: var(--font-nav); font-weight: 700; font-size: 12px; color: var(--purple); width: 24px; flex-shrink: 0; text-align: center; }
   .leaderboard-row--top .leaderboard-rank { font-size: 18px; }
-  .leaderboard-name { flex: 1; min-width: 0; font-weight: 600; color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* flex:0 1 130px (not flex:1) — name no longer stretches to fill all
+     leftover space up to the streak column, which was pushing the balls
+     over next to the minutes instead of into the row's actual visual
+     middle. Bounded to its own natural-ish width (ellipsis past that),
+     leaving .leaderboard-streak's flex:1 below as the one section that
+     actually claims the middle space. */
+  .leaderboard-name { flex: 0 1 130px; min-width: 0; font-weight: 600; color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .leaderboard-you { display: inline-block; font-family: var(--font-nav); font-size: 9.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--purple); background: rgba(139,92,246,0.16); border-radius: 999px; padding: 1px 7px; margin-left: 4px; vertical-align: middle; }
-  /* Streak, shown as a row of small balls in a fixed-width, centered
-     column between the name and minutes columns — wide enough for the
-     worst case (5 balls + a "+NNN" overflow label) so it never clips,
-     and fixed (not content-hugging) so every row's balls center on the
-     exact same axis as the "Streak" header label above them. */
-  .leaderboard-streak { display: flex; align-items: center; justify-content: center; gap: 3px; flex-shrink: 0; width: 72px; }
+  /* Streak balls — flex:1 (the row's one flexible section, now that
+     .leaderboard-name is capped above) with its content centered inside,
+     so the balls sit in the actual open middle of the row between the
+     name and minutes columns, not hugging whichever side has less to
+     fill. Content itself is capped by STREAK_BALLS_CAP (progress.js) at
+     5 balls + a "+N" overflow label so a long streak can't overflow. */
+  .leaderboard-streak { display: flex; align-items: center; justify-content: center; gap: 3px; flex: 1; min-width: 0; }
   .streak-ball { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: linear-gradient(135deg, #FF7FB7, var(--purple)); box-shadow: 0 0 4px rgba(139,92,246,0.55); }
   .streak-ball-overflow { font-family: var(--font-nav); font-size: 10px; font-weight: 700; color: var(--purple); }
   /* Fixed width + right-align (rather than content-hugging) so minutes
@@ -534,8 +541,8 @@
      centered over the balls in every row beneath it, not just close. */
   .leaderboard-columns { display: flex; align-items: center; gap: 12px; padding: 0 10px 4px; }
   .leaderboard-col-rank { width: 24px; flex-shrink: 0; }
-  .leaderboard-col-name { flex: 1; min-width: 0; }
-  .leaderboard-col-streak { width: 72px; flex-shrink: 0; text-align: center; font-family: var(--font-nav); font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
+  .leaderboard-col-name { flex: 0 1 130px; min-width: 0; }
+  .leaderboard-col-streak { flex: 1; min-width: 0; text-align: center; font-family: var(--font-nav); font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
   .leaderboard-col-time { width: 46px; flex-shrink: 0; }
   .leaderboard-gap { text-align: center; color: var(--ink-soft); font-size: 12px; letter-spacing: .2em; padding: 2px 0; }
   /* "NEW" badge — deliberately more aggressive than .leaderboard-you above
