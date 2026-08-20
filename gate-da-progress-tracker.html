@@ -504,11 +504,19 @@
      possible even left-aligned — see text-align above) can flow straight
      through where the badge sits, visibly overlapping/clipping it. Only
      applied when the badge is actually showing (has-badge, added
-     conditionally at each render — see renderLastWeekChampions/
-     renderLeaderboardCard), so the vastly more common badge-free state
-     keeps the title at its natural, unpadded width. */
+     conditionally at each render — see renderLastWeekChampions, the only
+     one of the two leaderboard cards that still has a badge), so the
+     vastly more common badge-free state keeps the title at its natural,
+     unpadded width. */
   .leaderboard-title.has-badge { padding-right: 48px; }
   .leaderboard-subtitle { font-size: 11px; color: var(--ink-soft); opacity: .7; text-align: left; margin-bottom: 12px; margin-top: 2px; }
+  /* Top-20 leaderboard specifically wants its title/subtitle centered —
+     the top-5 champions card (sharing these same classes) keeps the
+     left-alignment set earlier, so this is scoped to #leaderboard-card
+     rather than changing .leaderboard-title/.leaderboard-subtitle
+     themselves. */
+  #leaderboard-card .leaderboard-title,
+  #leaderboard-card .leaderboard-subtitle { text-align: center; }
   .leaderboard-row { display: flex; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 10px; font-size: 13.5px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: left; }
   .leaderboard-row:last-child { border-bottom: none; }
   .leaderboard-row--top { padding-top: 10px; padding-bottom: 10px; }
