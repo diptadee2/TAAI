@@ -533,7 +533,7 @@
      column a real, unconditional floor instead — name is the only column
      that can shrink toward 0 (via ellipsis), everything else is
      guaranteed its minimum no matter how tight the row gets. */
-  .leaderboard-row { display: grid; grid-template-columns: 36px minmax(0,130px) minmax(92px,1fr) 46px; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 10px; font-size: 13.5px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: left; }
+  .leaderboard-row { display: grid; grid-template-columns: 36px minmax(0,130px) minmax(112px,1fr) 46px; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 10px; font-size: 13.5px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: left; }
   .leaderboard-row:last-child { border-bottom: none; }
   .leaderboard-row--top { padding-top: 10px; padding-bottom: 10px; }
   .leaderboard-row--me { background: rgba(139,92,246,0.1); border-bottom-color: transparent; }
@@ -546,9 +546,10 @@
   .leaderboard-row--top .leaderboard-rank { font-size: 18px; }
   .leaderboard-name { min-width: 0; font-weight: 600; color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .leaderboard-you { display: inline-block; font-family: var(--font-nav); font-size: 9.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--purple); background: rgba(139,92,246,0.16); border-radius: 999px; padding: 1px 7px; margin-left: 4px; vertical-align: middle; }
-  /* Streak balls, centered within their grid column (minmax(92px,1fr)
-     above — floor sized for the worst case: 5 balls + a "+NNN" overflow
-     pill, see STREAK_BALLS_CAP in progress.js). This is the
+  /* Streak balls, centered within their grid column (minmax(112px,1fr)
+     above — floor sized for the worst case: the 20px left padding + 5
+     balls + a "+NNN" overflow pill, see STREAK_BALLS_CAP in
+     progress.js). This is the
      row's one column that grows into leftover space, which is what
      actually puts it in the visual middle between name and minutes. */
   /* justify-content:flex-start, not center — centering each row's ball
@@ -559,7 +560,13 @@
      aligned. Left-anchored instead: every row's first ball now starts
      at the exact same x, and only the tail (more balls, then the
      overflow pill) grows rightward from there. */
-  .leaderboard-streak { display: flex; align-items: center; justify-content: flex-start; gap: 4px; min-width: 0; }
+  /* padding-left gives the balls breathing room from Name — left-
+     aligning them (rather than centering, see the comment history
+     above) fixed row-to-row uniformity but butted them right up against
+     Name with only the row's own 12px gap, which read as congested.
+     Still uniform (a fixed offset, not content-dependent), just not
+     touching Name anymore. */
+  .leaderboard-streak { display: flex; align-items: center; justify-content: flex-start; gap: 4px; min-width: 0; padding-left: 20px; }
   /* Radial highlight (not just a flat linear gradient) for a glossy,
      gem-like ball instead of a flat dot, plus a soft outer glow and a
      faint inset shadow along the bottom edge for a bit of depth. */
@@ -572,10 +579,10 @@
   /* Column header row — identical grid-template-columns to
      .leaderboard-row above, so every label lands exactly above its
      column on every row, not just approximately near it. */
-  .leaderboard-columns { display: grid; grid-template-columns: 36px minmax(0,130px) minmax(92px,1fr) 46px; align-items: center; gap: 12px; padding: 0 10px 4px; font-family: var(--font-nav); font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
+  .leaderboard-columns { display: grid; grid-template-columns: 36px minmax(0,130px) minmax(112px,1fr) 46px; align-items: center; gap: 12px; padding: 0 10px 4px; font-family: var(--font-nav); font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
   .leaderboard-col-rank { text-align: center; min-width: 0; }
   .leaderboard-col-name { min-width: 0; text-align: left; }
-  .leaderboard-col-streak { min-width: 0; text-align: left; }
+  .leaderboard-col-streak { min-width: 0; text-align: left; padding-left: 20px; }
   .leaderboard-col-time { text-align: right; min-width: 0; }
   .leaderboard-gap { text-align: center; color: var(--ink-soft); font-size: 12px; letter-spacing: .2em; padding: 2px 0; }
   /* "NEW" badge — deliberately more aggressive than .leaderboard-you above
