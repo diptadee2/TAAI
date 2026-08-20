@@ -840,6 +840,42 @@
     return (day.date < today && state.student) ? 'missed' : 'upcoming';
   }
 
+  // Summarizes a whole week (excluding today, which renders separately —
+  // see renderCalendar) so a returning/catch-up student can see at a
+  // glance whether a past week still needs attention without expanding
+  // it. Same color vocabulary as dayStatus/day-status: green once every
+  // task in the week is done, amber if any day in it is genuinely missed,
+  // grey otherwise (untouched or in-progress future week).
+  function weekStatusInfo(weekDays) {
+    var today = todayIso();
+    var totalTasks = 0, doneTasks = 0, hasMissed = false;
+    weekDays.forEach(function (d) {
+      totalTasks += d.tasks.length;
+      doneTasks += d.tasks.filter(function (t) { return t.completed; }).length;
+      if (state.student && d.date < today && dayStatus(d) === 'missed') hasMissed = true;
+    });
+    if (totalTasks > 0 && doneTasks === totalTasks) return { cls: 'complete', label: '✅ Complete' };
+    if (hasMissed) return { cls: 'missed', label: '⚠️ ' + doneTasks + '/' + totalTasks + ' done' };
+    if (doneTasks === 0) return { cls: 'upcoming', label: 'Upcoming' };
+    return { cls: 'upcoming', label: doneTasks + '/' + totalTasks + ' done' };
+  }
+
+  // Same idea as patchDayStatus — a single task toggle can flip a week
+  // between "some missed" and "✅ Complete" (or change its X/Y count),
+  // and that's exactly the signal a catch-up student relies on without
+  // expanding every week to check.
+  function patchWeekStatus(date) {
+    var wk = mondayOf(date);
+    var today = todayIso();
+    var weekDays = state.days.filter(function (d) { return d.date !== today && mondayOf(d.date) === wk; });
+    if (!weekDays.length) return;
+    var el = document.querySelector('.week[data-week="' + wk + '"] .week-status');
+    if (!el) return;
+    var status = weekStatusInfo(weekDays);
+    el.className = 'week-status ' + status.cls;
+    el.textContent = status.label;
+  }
+
   // ── Streak hero ────────────────────────────────────────────────────
   function renderStreakHero() {
     var n = state.streak;
@@ -1177,25 +1213,29 @@
 
     if (!state.focus) {
       var otherDays = state.days.filter(function (d) { return d.date !== today; });
-      var lastWeekKey = null;
-      var weekNum = 0;
-      var weekOpen = true;
+      // Pre-grouped into weeks (rather than opening/closing the wrapping
+      // divs inline as each day streams past) so each week's status badge
+      // can be computed from its full day list before that week's markup
+      // is written out.
+      var weeks = [];
       otherDays.forEach(function (day) {
         var wk = mondayOf(day.date);
-        if (wk !== lastWeekKey) {
-          if (lastWeekKey !== null) html += '</div></div></div>'; // week-body-inner, week-body-wrap, week
-          weekNum++;
-          lastWeekKey = wk;
-          weekOpen = !state.collapsedWeeks.has(wk);
-          html += '<div class="week" data-week="' + wk + '">' +
-            '<div class="week-label" role="button" tabindex="0" aria-expanded="' + weekOpen + '">' +
-            '<svg class="week-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M9 6L15 12L9 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
-            '<span>Week ' + weekNum + '</span></div>' +
-            '<div class="week-body-wrap' + (weekOpen ? ' expanded' : '') + '"><div class="week-body-inner">';
-        }
-        html += renderDay(day);
+        var lastWeek = weeks[weeks.length - 1];
+        if (!lastWeek || lastWeek.key !== wk) weeks.push({ key: wk, days: [day] });
+        else lastWeek.days.push(day);
       });
-      if (lastWeekKey !== null) html += '</div></div></div>'; // week-body-inner, week-body-wrap, week
+      weeks.forEach(function (week, idx) {
+        var weekOpen = !state.collapsedWeeks.has(week.key);
+        var status = weekStatusInfo(week.days);
+        html += '<div class="week" data-week="' + week.key + '">' +
+          '<div class="week-label" role="button" tabindex="0" aria-expanded="' + weekOpen + '">' +
+          '<svg class="week-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M9 6L15 12L9 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+          '<span>Week ' + (idx + 1) + '</span>' +
+          '<span class="week-status ' + status.cls + '">' + status.label + '</span></div>' +
+          '<div class="week-body-wrap' + (weekOpen ? ' expanded' : '') + '"><div class="week-body-inner">' +
+          week.days.map(renderDay).join('') +
+          '</div></div></div>';
+      });
 
       if (!state.days.length) {
         html += '<p class="center-note">Nothing scheduled for ' + monthLabel(state.month) + ' yet.</p>';
@@ -1990,6 +2030,7 @@
         refreshSubjectProgress();
         patchHeatmapCell(date);
         patchDayStatus(date);
+        patchWeekStatus(date);
         refreshCatchupWarn();
         refreshStreak();
       })
