@@ -1786,10 +1786,8 @@
   }
 
   function renderLeaderboardCard() {
-    var showBadge20 = newBadgeVisible('top20');
     return '<div class="leaderboard-card fade-in" id="leaderboard-card">' +
-      '<div class="leaderboard-title' + (showBadge20 ? ' has-badge' : '') + '">Mission IIT Leaderboard</div>' +
-      newBadgeHtml(showBadge20) +
+      '<div class="leaderboard-title">Mission IIT Leaderboard</div>' +
       '<div class="leaderboard-subtitle">Top 20 by minutes logged · Resets every Monday</div>' +
       // Mirrors each row's exact rank/name/streak/time widths so every
       // label sits directly above its column on every row, not just

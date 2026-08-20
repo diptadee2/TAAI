@@ -513,7 +513,11 @@
   .leaderboard-row:last-child { border-bottom: none; }
   .leaderboard-row--top { padding-top: 10px; padding-bottom: 10px; }
   .leaderboard-row--me { background: rgba(139,92,246,0.1); border-bottom-color: transparent; }
-  .leaderboard-rank { font-family: var(--font-nav); font-weight: 700; font-size: 12px; color: var(--purple); width: 24px; flex-shrink: 0; text-align: center; }
+  /* Widened from 24px — the rank number/medal itself fit fine at that
+     width, but the "RANK" header label above it (see .leaderboard-col-
+     rank) didn't, spilling into the name column and making the two
+     look crowded together on every row, not just the header. */
+  .leaderboard-rank { font-family: var(--font-nav); font-weight: 700; font-size: 12px; color: var(--purple); width: 36px; flex-shrink: 0; text-align: center; }
   .leaderboard-row--top .leaderboard-rank { font-size: 18px; }
   /* flex:0 1 130px (not flex:1) — name no longer stretches to fill all
      leftover space up to the streak column, which was pushing the balls
@@ -540,7 +544,7 @@
      .leaderboard-row (see the classes above) so "Streak" lands exactly
      centered over the balls in every row beneath it, not just close. */
   .leaderboard-columns { display: flex; align-items: center; gap: 12px; padding: 0 10px 4px; font-family: var(--font-nav); font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
-  .leaderboard-col-rank { width: 24px; flex-shrink: 0; text-align: center; }
+  .leaderboard-col-rank { width: 36px; flex-shrink: 0; text-align: center; }
   .leaderboard-col-name { flex: 0 1 130px; min-width: 0; text-align: left; }
   .leaderboard-col-streak { flex: 1; min-width: 0; text-align: center; }
   .leaderboard-col-time { width: 46px; flex-shrink: 0; text-align: right; }
