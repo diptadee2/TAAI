@@ -497,7 +497,7 @@
   .clickable-card { cursor: pointer; transition: border-color .2s ease, background .2s ease; }
   .clickable-card:hover { border-color: rgba(139,92,246,0.35); background: rgba(139,92,246,0.06); }
   .clickable-card:focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; }
-  .leaderboard-title { font-family: var(--font-nav); font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); text-align: left; }
+  .leaderboard-title { font-family: var(--font-nav); font-size: 15px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--ink); text-align: left; }
   /* Real bug, caught from a screenshot: the badge is absolutely
      positioned (see .new-badge-wrap), so it doesn't reserve any space in
      the title's own layout — without this, a long enough title (still
@@ -510,13 +510,13 @@
      unpadded width. */
   .leaderboard-title.has-badge { padding-right: 48px; }
   .leaderboard-subtitle { font-size: 11px; color: var(--ink-soft); opacity: .7; text-align: left; margin-bottom: 12px; margin-top: 2px; }
-  /* Top-20 leaderboard specifically wants its title/subtitle centered —
-     the top-5 champions card (sharing these same classes) keeps the
-     left-alignment set earlier, so this is scoped to #leaderboard-card
-     rather than changing .leaderboard-title/.leaderboard-subtitle
-     themselves. */
-  #leaderboard-card .leaderboard-title,
-  #leaderboard-card .leaderboard-subtitle { text-align: center; }
+  /* Centering the title/subtitle (tried earlier) looked wrong once the
+     RANK/NAME/STREAK/MINUTES column header row shipped underneath it —
+     a centered heading floating above a left-anchored table row reads
+     as misaligned rather than intentional. Left-aligned instead, so it
+     starts at the same edge as RANK below it; sized up (15px, tighter
+     letter-spacing, brighter color) so it clearly outranks the 10px
+     column labels instead of reading as a same-size sibling to them. */
   /* CSS Grid, not flexbox — flexbox's shrink math (each item's share of
      negative space is weighted by flex-shrink*flex-basis) let the streak
      column's flex:1/basis:0% collapse to a literal 0px box whenever the
