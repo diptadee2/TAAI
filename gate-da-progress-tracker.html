@@ -551,7 +551,15 @@
      pill, see STREAK_BALLS_CAP in progress.js). This is the
      row's one column that grows into leftover space, which is what
      actually puts it in the visual middle between name and minutes. */
-  .leaderboard-streak { display: flex; align-items: center; justify-content: center; gap: 4px; min-width: 0; }
+  /* justify-content:flex-start, not center — centering each row's ball
+     cluster independently meant the first ball's x-position drifted row
+     to row depending on that row's own streak length (1 ball centers
+     very differently than 5 balls + a "+15" pill), so the balls never
+     lined up into a straight column despite the column itself being
+     aligned. Left-anchored instead: every row's first ball now starts
+     at the exact same x, and only the tail (more balls, then the
+     overflow pill) grows rightward from there. */
+  .leaderboard-streak { display: flex; align-items: center; justify-content: flex-start; gap: 4px; min-width: 0; }
   /* Radial highlight (not just a flat linear gradient) for a glossy,
      gem-like ball instead of a flat dot, plus a soft outer glow and a
      faint inset shadow along the bottom edge for a bit of depth. */
@@ -567,7 +575,7 @@
   .leaderboard-columns { display: grid; grid-template-columns: 36px minmax(0,130px) minmax(92px,1fr) 46px; align-items: center; gap: 12px; padding: 0 10px 4px; font-family: var(--font-nav); font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
   .leaderboard-col-rank { text-align: center; min-width: 0; }
   .leaderboard-col-name { min-width: 0; text-align: left; }
-  .leaderboard-col-streak { min-width: 0; text-align: center; }
+  .leaderboard-col-streak { min-width: 0; text-align: left; }
   .leaderboard-col-time { text-align: right; min-width: 0; }
   .leaderboard-gap { text-align: center; color: var(--ink-soft); font-size: 12px; letter-spacing: .2em; padding: 2px 0; }
   /* "NEW" badge — deliberately more aggressive than .leaderboard-you above
