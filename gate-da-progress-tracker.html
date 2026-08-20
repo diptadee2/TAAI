@@ -516,7 +516,15 @@
      as misaligned rather than intentional. Left-aligned instead, so it
      starts at the same edge as RANK below it; sized up (15px, tighter
      letter-spacing, brighter color) so it clearly outranks the 10px
-     column labels instead of reading as a same-size sibling to them. */
+     column labels instead of reading as a same-size sibling to them.
+     Still doesn't actually line up with RANK though — .leaderboard-
+     columns/.leaderboard-row both carry their own 10px horizontal
+     padding (see below) that the title/subtitle never had, leaving a
+     real 10px gap between the title's left edge and RANK's. Matched
+     here, scoped to #leaderboard-card only (the champions/top-5 card
+     shares these same base classes and wasn't part of this request). */
+  #leaderboard-card .leaderboard-title,
+  #leaderboard-card .leaderboard-subtitle { padding-left: 10px; }
   /* CSS Grid, not flexbox — flexbox's shrink math (each item's share of
      negative space is weighted by flex-shrink*flex-basis) let the streak
      column's flex:1/basis:0% collapse to a literal 0px box whenever the
