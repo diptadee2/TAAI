@@ -517,45 +517,39 @@
      themselves. */
   #leaderboard-card .leaderboard-title,
   #leaderboard-card .leaderboard-subtitle { text-align: center; }
-  .leaderboard-row { display: flex; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 10px; font-size: 13.5px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: left; }
+  /* CSS Grid, not flexbox — flexbox's shrink math (each item's share of
+     negative space is weighted by flex-shrink*flex-basis) let the streak
+     column's flex:1/basis:0% collapse to a literal 0px box whenever the
+     row was oversubscribed, even with real ball content inside it
+     (confirmed: reproduced at narrow widths). Grid's minmax() gives each
+     column a real, unconditional floor instead — name is the only column
+     that can shrink toward 0 (via ellipsis), everything else is
+     guaranteed its minimum no matter how tight the row gets. */
+  .leaderboard-row { display: grid; grid-template-columns: 36px minmax(0,130px) minmax(70px,1fr) 46px; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 10px; font-size: 13.5px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: left; }
   .leaderboard-row:last-child { border-bottom: none; }
   .leaderboard-row--top { padding-top: 10px; padding-bottom: 10px; }
   .leaderboard-row--me { background: rgba(139,92,246,0.1); border-bottom-color: transparent; }
-  /* Widened from 24px — the rank number/medal itself fit fine at that
-     width, but the "RANK" header label above it (see .leaderboard-col-
-     rank) didn't, spilling into the name column and making the two
-     look crowded together on every row, not just the header. */
-  .leaderboard-rank { font-family: var(--font-nav); font-weight: 700; font-size: 12px; color: var(--purple); width: 36px; flex-shrink: 0; text-align: center; }
+  .leaderboard-rank { font-family: var(--font-nav); font-weight: 700; font-size: 12px; color: var(--purple); text-align: center; }
   .leaderboard-row--top .leaderboard-rank { font-size: 18px; }
-  /* flex:0 1 130px (not flex:1) — name no longer stretches to fill all
-     leftover space up to the streak column, which was pushing the balls
-     over next to the minutes instead of into the row's actual visual
-     middle. Bounded to its own natural-ish width (ellipsis past that),
-     leaving .leaderboard-streak's flex:1 below as the one section that
-     actually claims the middle space. */
-  .leaderboard-name { flex: 0 1 130px; min-width: 0; font-weight: 600; color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .leaderboard-name { min-width: 0; font-weight: 600; color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .leaderboard-you { display: inline-block; font-family: var(--font-nav); font-size: 9.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--purple); background: rgba(139,92,246,0.16); border-radius: 999px; padding: 1px 7px; margin-left: 4px; vertical-align: middle; }
-  /* Streak balls — flex:1 (the row's one flexible section, now that
-     .leaderboard-name is capped above) with its content centered inside,
-     so the balls sit in the actual open middle of the row between the
-     name and minutes columns, not hugging whichever side has less to
-     fill. Content itself is capped by STREAK_BALLS_CAP (progress.js) at
-     5 balls + a "+N" overflow label so a long streak can't overflow. */
-  .leaderboard-streak { display: flex; align-items: center; justify-content: center; gap: 3px; flex: 1; min-width: 0; }
+  /* Streak balls, centered within their grid column (minmax(70px,1fr)
+     above — 70px floor is sized for the worst case: 5 balls + a "+NNN"
+     overflow label, see STREAK_BALLS_CAP in progress.js). This is the
+     row's one column that grows into leftover space, which is what
+     actually puts it in the visual middle between name and minutes. */
+  .leaderboard-streak { display: flex; align-items: center; justify-content: center; gap: 3px; min-width: 0; }
   .streak-ball { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: linear-gradient(135deg, #FF7FB7, var(--purple)); box-shadow: 0 0 4px rgba(139,92,246,0.55); }
   .streak-ball-overflow { font-family: var(--font-nav); font-size: 10px; font-weight: 700; color: var(--purple); }
-  /* Fixed width + right-align (rather than content-hugging) so minutes
-     line up in a straight column too, not just drift to wherever the
-     name/streak columns happened to leave off. */
-  .leaderboard-time { font-family: var(--font-nav); font-weight: 700; font-size: 12.5px; color: var(--ink); flex-shrink: 0; width: 46px; text-align: right; }
-  /* Column header row — same rank/name/streak/time widths as
-     .leaderboard-row (see the classes above) so "Streak" lands exactly
-     centered over the balls in every row beneath it, not just close. */
-  .leaderboard-columns { display: flex; align-items: center; gap: 12px; padding: 0 10px 4px; font-family: var(--font-nav); font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
-  .leaderboard-col-rank { width: 36px; flex-shrink: 0; text-align: center; }
-  .leaderboard-col-name { flex: 0 1 130px; min-width: 0; text-align: left; }
-  .leaderboard-col-streak { flex: 1; min-width: 0; text-align: center; }
-  .leaderboard-col-time { width: 46px; flex-shrink: 0; text-align: right; }
+  .leaderboard-time { font-family: var(--font-nav); font-weight: 700; font-size: 12.5px; color: var(--ink); text-align: right; }
+  /* Column header row — identical grid-template-columns to
+     .leaderboard-row above, so every label lands exactly above its
+     column on every row, not just approximately near it. */
+  .leaderboard-columns { display: grid; grid-template-columns: 36px minmax(0,130px) minmax(70px,1fr) 46px; align-items: center; gap: 12px; padding: 0 10px 4px; font-family: var(--font-nav); font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
+  .leaderboard-col-rank { text-align: center; }
+  .leaderboard-col-name { min-width: 0; text-align: left; }
+  .leaderboard-col-streak { min-width: 0; text-align: center; }
+  .leaderboard-col-time { text-align: right; }
   .leaderboard-gap { text-align: center; color: var(--ink-soft); font-size: 12px; letter-spacing: .2em; padding: 2px 0; }
   /* "NEW" badge — deliberately more aggressive than .leaderboard-you above
      (shake + an expanding ping ring, both continuous until dismissed),
