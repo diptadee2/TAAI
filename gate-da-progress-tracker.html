@@ -533,17 +533,24 @@
      column a real, unconditional floor instead — name is the only column
      that can shrink toward 0 (via ellipsis), everything else is
      guaranteed its minimum no matter how tight the row gets. */
-  .leaderboard-row { display: grid; grid-template-columns: 36px minmax(0,130px) minmax(92px,1fr) 60px 48px 46px; align-items: center; gap: 16px; padding: 9px 10px; border-radius: 10px; font-size: 13.5px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: left; }
+  /* Sized up across the board (row font/padding, rank, streak balls,
+     status pill, timer, minutes) rather than adding another metric to
+     fill the empty space in the (often-blank) Streak column for
+     non-streaking students — the columns themselves stay the same
+     layout, just heavier/more substantial content within them, per
+     explicit "make stuff bigger, don't add a column" direction. Fixed
+     column widths (rank/status/timer/time below) widened to match. */
+  .leaderboard-row { display: grid; grid-template-columns: 40px minmax(0,130px) minmax(92px,1fr) 76px 60px 58px; align-items: center; gap: 16px; padding: 12px 14px; border-radius: 10px; font-size: 15px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: left; }
   .leaderboard-row:last-child { border-bottom: none; }
-  .leaderboard-row--top { padding-top: 10px; padding-bottom: 10px; }
+  .leaderboard-row--top { padding-top: 14px; padding-bottom: 14px; }
   .leaderboard-row--me { background: rgba(139,92,246,0.1); border-bottom-color: transparent; }
   /* min-width:0 on every grid item here, not just .leaderboard-name —
      a grid item's default min-width is auto (its content's min-content
      size), which can override the track's own minmax() lower bound and
      blow the layout out in browser-dependent ways. Explicit 0 everywhere
      closes that off regardless of content length. */
-  .leaderboard-rank { font-family: var(--font-nav); font-weight: 700; font-size: 12px; color: var(--purple); text-align: center; min-width: 0; }
-  .leaderboard-row--top .leaderboard-rank { font-size: 18px; }
+  .leaderboard-rank { font-family: var(--font-nav); font-weight: 700; font-size: 14px; color: var(--purple); text-align: center; min-width: 0; }
+  .leaderboard-row--top .leaderboard-rank { font-size: 20px; }
   .leaderboard-name { min-width: 0; font-weight: 600; color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   /* "Live now" indicator — a small pulsing green dot before the name of
      anyone currently mid-focus-session (see is_live in pomodoro-
@@ -581,15 +588,15 @@
      with a bigger gap than every other; a single larger shared gap
      gives the same breathing room while keeping every column's spacing
      consistent. */
-  .leaderboard-streak { display: flex; align-items: center; justify-content: flex-start; gap: 4px; min-width: 0; }
+  .leaderboard-streak { display: flex; align-items: center; justify-content: flex-start; gap: 5px; min-width: 0; }
   /* Radial highlight (not just a flat linear gradient) for a glossy,
      gem-like ball instead of a flat dot, plus a soft outer glow and a
      faint inset shadow along the bottom edge for a bit of depth. */
-  .streak-ball { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: radial-gradient(circle at 32% 30%, #ffc2e3, #FF7FB7 45%, var(--purple) 100%); box-shadow: 0 0 5px rgba(139,92,246,0.6), inset 0 -1px 1.5px rgba(0,0,0,0.2); }
+  .streak-ball { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; background: radial-gradient(circle at 32% 30%, #ffc2e3, #FF7FB7 45%, var(--purple) 100%); box-shadow: 0 0 6px rgba(139,92,246,0.6), inset 0 -1px 1.5px rgba(0,0,0,0.2); }
   /* A small pill instead of bare text, so a long streak's overflow
      count reads as its own distinct badge rather than an afterthought
      stray number tacked onto the balls. */
-  .streak-ball-overflow { font-family: var(--font-nav); font-size: 9.5px; font-weight: 700; color: var(--purple); background: rgba(139,92,246,0.14); border-radius: 999px; padding: 1px 6px; margin-left: 1px; }
+  .streak-ball-overflow { font-family: var(--font-nav); font-size: 11px; font-weight: 700; color: var(--purple); background: rgba(139,92,246,0.14); border-radius: 999px; padding: 2px 7px; margin-left: 1px; }
   /* Pomodoro status ("Focus"/"Break") for anyone currently live — see
      pomo_status in pomodoro-leaderboard.js, derived from the same
      pomo_active_session row that drives is_live/the live dot, just
@@ -598,7 +605,7 @@
      .leaderboard-streak — it's already its own dedicated fixed-width
      grid column, so there's no row-to-row alignment risk from leaving
      it empty the way there was for the inline live-dot-in-name case. */
-  .leaderboard-status { font-family: var(--font-nav); font-size: 10.5px; font-weight: 700; text-align: center; padding: 3px 0; border-radius: 999px; }
+  .leaderboard-status { font-family: var(--font-nav); font-size: 12px; font-weight: 700; text-align: center; padding: 4px 6px; border-radius: 999px; min-width: 0; }
   .leaderboard-status.pomo-work { color: var(--purple); background: rgba(139,92,246,0.14); }
   .leaderboard-status.pomo-break { color: var(--green); background: var(--green-soft); }
   /* Muted plain text, not a colored pill like Focus/Break — this is a
@@ -611,12 +618,12 @@
      in progress.js) from data-phase-end (pomo_phase_end_at, ms epoch)
      rather than a value that's already stale the moment it's rendered.
      Tabular-nums so the mm:ss width doesn't jitter digit to digit. */
-  .leaderboard-timer { font-family: var(--font-nav); font-weight: 700; font-size: 11.5px; color: var(--ink-dim); text-align: center; font-variant-numeric: tabular-nums; }
-  .leaderboard-time { font-family: var(--font-nav); font-weight: 700; font-size: 12.5px; color: var(--ink); text-align: right; min-width: 0; }
+  .leaderboard-timer { font-family: var(--font-nav); font-weight: 700; font-size: 13px; color: var(--ink-dim); text-align: center; font-variant-numeric: tabular-nums; min-width: 0; }
+  .leaderboard-time { font-family: var(--font-nav); font-weight: 700; font-size: 14px; color: var(--ink); text-align: right; min-width: 0; }
   /* Column header row — identical grid-template-columns to
      .leaderboard-row above, so every label lands exactly above its
      column on every row, not just approximately near it. */
-  .leaderboard-columns { display: grid; grid-template-columns: 36px minmax(0,130px) minmax(92px,1fr) 60px 48px 46px; align-items: center; gap: 16px; padding: 0 10px 4px; font-family: var(--font-nav); font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
+  .leaderboard-columns { display: grid; grid-template-columns: 40px minmax(0,130px) minmax(92px,1fr) 76px 60px 58px; align-items: center; gap: 16px; padding: 0 14px 6px; font-family: var(--font-nav); font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
   .leaderboard-col-rank { text-align: center; min-width: 0; }
   /* padding-left matches .live-dot-slot's fixed 13px width (see the
      live-dot comment above) — every row's actual name text starts 13px
