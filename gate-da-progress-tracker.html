@@ -539,11 +539,11 @@
   /* Column header row — same rank/name/streak/time widths as
      .leaderboard-row (see the classes above) so "Streak" lands exactly
      centered over the balls in every row beneath it, not just close. */
-  .leaderboard-columns { display: flex; align-items: center; gap: 12px; padding: 0 10px 4px; }
-  .leaderboard-col-rank { width: 24px; flex-shrink: 0; }
-  .leaderboard-col-name { flex: 0 1 130px; min-width: 0; }
-  .leaderboard-col-streak { flex: 1; min-width: 0; text-align: center; font-family: var(--font-nav); font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
-  .leaderboard-col-time { width: 46px; flex-shrink: 0; }
+  .leaderboard-columns { display: flex; align-items: center; gap: 12px; padding: 0 10px 4px; font-family: var(--font-nav); font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
+  .leaderboard-col-rank { width: 24px; flex-shrink: 0; text-align: center; }
+  .leaderboard-col-name { flex: 0 1 130px; min-width: 0; text-align: left; }
+  .leaderboard-col-streak { flex: 1; min-width: 0; text-align: center; }
+  .leaderboard-col-time { width: 46px; flex-shrink: 0; text-align: right; }
   .leaderboard-gap { text-align: center; color: var(--ink-soft); font-size: 12px; letter-spacing: .2em; padding: 2px 0; }
   /* "NEW" badge — deliberately more aggressive than .leaderboard-you above
      (shake + an expanding ping ring, both continuous until dismissed),
