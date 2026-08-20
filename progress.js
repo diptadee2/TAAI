@@ -338,6 +338,7 @@
       // the Back button would land on instead of truly exiting Focus Mode.
       history.replaceState({ focus: true }, '');
       refreshLeaderboard();
+      startLeaderboardTimerTick();
     }
   }
 
@@ -1712,6 +1713,7 @@
     history.pushState({ focus: true }, '');
     renderCalendar();
     refreshLeaderboard();
+    startLeaderboardTimerTick();
   }
 
   // Shared by the "Focus mode" toggle button and the top-5 champions card
@@ -1780,6 +1782,43 @@
     return '<span class="leaderboard-status ' + (isWork ? 'pomo-work' : 'pomo-break') + '">' + (isWork ? 'Focus' : 'Break') + '</span>';
   }
 
+  // Live mm:ss countdown for a live student's current phase — computed
+  // fresh from data-phase-end on every tick (tickLeaderboardTimers)
+  // rather than a value baked in at render time, since that would
+  // already be stale a second later. Blank span (not omitted) when not
+  // live, same reasoning as pomoStatusHtml — its own dedicated grid
+  // column, so no row-to-row alignment risk from leaving it empty.
+  function pomoTimerHtml(phaseEndAt) {
+    if (!phaseEndAt) return '<span class="leaderboard-timer"></span>';
+    var remaining = Math.max(0, Math.round((phaseEndAt - Date.now()) / 1000));
+    return '<span class="leaderboard-timer" data-phase-end="' + phaseEndAt + '">' + formatPomoTime(remaining) + '</span>';
+  }
+
+  // Ticks every .leaderboard-timer[data-phase-end] currently in the DOM
+  // once a second — re-queried fresh each tick (not a cached element
+  // list) so it transparently picks up whatever refreshLeaderboard just
+  // rendered, no need to restart the interval on every refresh. Started
+  // on entering Focus Mode, stopped on leaving it (see enterFocus/
+  // setupFocusHistory) so it doesn't keep ticking against a torn-down
+  // leaderboard after Exit Focus.
+  var leaderboardTimerTickId = null;
+  function tickLeaderboardTimers() {
+    var now = Date.now();
+    document.querySelectorAll('.leaderboard-timer[data-phase-end]').forEach(function (el) {
+      var remaining = Math.max(0, Math.round((Number(el.dataset.phaseEnd) - now) / 1000));
+      el.textContent = formatPomoTime(remaining);
+    });
+  }
+  function startLeaderboardTimerTick() {
+    if (leaderboardTimerTickId) return;
+    leaderboardTimerTickId = setInterval(tickLeaderboardTimers, 1000);
+  }
+  function stopLeaderboardTimerTick() {
+    if (!leaderboardTimerTickId) return;
+    clearInterval(leaderboardTimerTickId);
+    leaderboardTimerTickId = null;
+  }
+
   function renderLeaderboardRows() {
     if (!state.leaderboard.length) {
       return '<p class="center-note" style="padding:14px 0;">No focus sessions logged yet. Be the first!</p>';
@@ -1796,6 +1835,7 @@
         '<span class="leaderboard-name">' + liveDotHtml(r.is_live) + escapeHtml(r.display_name) + (r.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
         streakBallsHtml(r.streak) +
         pomoStatusHtml(r.pomo_status) +
+        pomoTimerHtml(r.pomo_phase_end_at) +
         '<span class="leaderboard-time">' + timeLabel + '</span>' +
         '</div>';
     }).join('');
@@ -1811,6 +1851,7 @@
         '<span class="leaderboard-name">' + liveDotHtml(state.viewerRank.is_live) + 'You</span>' +
         streakBallsHtml(state.viewerRank.streak) +
         pomoStatusHtml(state.viewerRank.pomo_status) +
+        pomoTimerHtml(state.viewerRank.pomo_phase_end_at) +
         '<span class="leaderboard-time">' + state.viewerRank.total_minutes + 'm</span>' +
         '</div>';
     }
@@ -1824,7 +1865,7 @@
       // Mirrors each row's exact rank/name/streak/time widths so every
       // label sits directly above its column on every row, not just
       // approximately near it.
-      '<div class="leaderboard-columns"><span class="leaderboard-col-rank">Rank</span><span class="leaderboard-col-name">Name</span><span class="leaderboard-col-streak">Streak</span><span class="leaderboard-col-status">Status</span><span class="leaderboard-col-time">Minutes</span></div>' +
+      '<div class="leaderboard-columns"><span class="leaderboard-col-rank">Rank</span><span class="leaderboard-col-name">Name</span><span class="leaderboard-col-streak">Streak</span><span class="leaderboard-col-status">Status</span><span class="leaderboard-col-timer">Timer</span><span class="leaderboard-col-time">Minutes</span></div>' +
       '<div id="leaderboard-rows">' + renderLeaderboardRows() + '</div>' +
       '</div>';
   }
@@ -1885,6 +1926,7 @@
       if (state.focus) {
         state.focus = false;
         saveFocusActive(false);
+        stopLeaderboardTimerTick();
         renderCalendar();
       }
     });

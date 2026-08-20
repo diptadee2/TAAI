@@ -533,7 +533,7 @@
      column a real, unconditional floor instead — name is the only column
      that can shrink toward 0 (via ellipsis), everything else is
      guaranteed its minimum no matter how tight the row gets. */
-  .leaderboard-row { display: grid; grid-template-columns: 36px minmax(0,130px) minmax(112px,1fr) 60px 46px; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 10px; font-size: 13.5px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: left; }
+  .leaderboard-row { display: grid; grid-template-columns: 36px minmax(0,130px) minmax(112px,1fr) 60px 48px 46px; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 10px; font-size: 13.5px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: left; }
   .leaderboard-row:last-child { border-bottom: none; }
   .leaderboard-row--top { padding-top: 10px; padding-bottom: 10px; }
   .leaderboard-row--me { background: rgba(139,92,246,0.1); border-bottom-color: transparent; }
@@ -602,11 +602,17 @@
   .leaderboard-status { font-family: var(--font-nav); font-size: 10.5px; font-weight: 700; text-align: center; padding: 3px 0; border-radius: 999px; }
   .leaderboard-status.pomo-work { color: var(--purple); background: rgba(139,92,246,0.14); }
   .leaderboard-status.pomo-break { color: var(--green); background: var(--green-soft); }
+  /* Live countdown for a live student's current phase — ticked client-
+     side every second (see startLeaderboardTimerTick/tickLeaderboardTimers
+     in progress.js) from data-phase-end (pomo_phase_end_at, ms epoch)
+     rather than a value that's already stale the moment it's rendered.
+     Tabular-nums so the mm:ss width doesn't jitter digit to digit. */
+  .leaderboard-timer { font-family: var(--font-nav); font-weight: 700; font-size: 11.5px; color: var(--ink-dim); text-align: center; font-variant-numeric: tabular-nums; }
   .leaderboard-time { font-family: var(--font-nav); font-weight: 700; font-size: 12.5px; color: var(--ink); text-align: right; min-width: 0; }
   /* Column header row — identical grid-template-columns to
      .leaderboard-row above, so every label lands exactly above its
      column on every row, not just approximately near it. */
-  .leaderboard-columns { display: grid; grid-template-columns: 36px minmax(0,130px) minmax(112px,1fr) 60px 46px; align-items: center; gap: 12px; padding: 0 10px 4px; font-family: var(--font-nav); font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
+  .leaderboard-columns { display: grid; grid-template-columns: 36px minmax(0,130px) minmax(112px,1fr) 60px 48px 46px; align-items: center; gap: 12px; padding: 0 10px 4px; font-family: var(--font-nav); font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
   .leaderboard-col-rank { text-align: center; min-width: 0; }
   /* padding-left matches .live-dot-slot's fixed 13px width (see the
      live-dot comment above) — every row's actual name text starts 13px
@@ -615,6 +621,7 @@
   .leaderboard-col-name { min-width: 0; text-align: left; padding-left: 13px; }
   .leaderboard-col-streak { min-width: 0; text-align: left; padding-left: 20px; }
   .leaderboard-col-status { text-align: center; min-width: 0; }
+  .leaderboard-col-timer { text-align: center; min-width: 0; }
   .leaderboard-col-time { text-align: right; min-width: 0; }
   .leaderboard-gap { text-align: center; color: var(--ink-soft); font-size: 12px; letter-spacing: .2em; padding: 2px 0; }
   /* "NEW" badge — deliberately more aggressive than .leaderboard-you above

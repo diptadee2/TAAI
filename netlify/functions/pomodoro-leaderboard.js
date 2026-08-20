@@ -86,9 +86,9 @@ export async function handler(event) {
     .in('email', streakEmails);
   if (activeError) return json(500, { error: activeError.message });
   const now = Date.now();
-  const modeByLiveEmail = {};
+  const liveByEmail = {};
   activeSessions.forEach(r => {
-    if (r.running && r.phase_end_at && r.phase_end_at > now) modeByLiveEmail[r.email] = r.mode;
+    if (r.running && r.phase_end_at && r.phase_end_at > now) liveByEmail[r.email] = r;
   });
 
   const leaderboard = stats.map(s => ({
@@ -96,8 +96,13 @@ export async function handler(event) {
     total_minutes: s.total_minutes,
     total_sessions: s.total_sessions,
     streak: streakByEmail[s.email] || 0,
-    is_live: modeByLiveEmail.hasOwnProperty(s.email),
-    pomo_status: modeByLiveEmail[s.email] || null,
+    is_live: liveByEmail.hasOwnProperty(s.email),
+    pomo_status: liveByEmail[s.email]?.mode || null,
+    // ms epoch, same clock the client's own timer counts down to (see
+    // pomo.phaseEndAt in progress.js) — the frontend derives a live
+    // ticking mm:ss from this rather than a value that would already be
+    // stale by the time it's rendered, let alone a second later.
+    pomo_phase_end_at: liveByEmail[s.email]?.phase_end_at || null,
     is_me: !!viewerEmail && s.email === viewerEmail,
   }));
 
@@ -131,8 +136,9 @@ export async function handler(event) {
         total_minutes: viewerStats.total_minutes,
         total_sessions: viewerStats.total_sessions,
         streak: streakByEmail[viewerEmail] || 0,
-        is_live: modeByLiveEmail.hasOwnProperty(viewerEmail),
-        pomo_status: modeByLiveEmail[viewerEmail] || null,
+        is_live: liveByEmail.hasOwnProperty(viewerEmail),
+        pomo_status: liveByEmail[viewerEmail]?.mode || null,
+        pomo_phase_end_at: liveByEmail[viewerEmail]?.phase_end_at || null,
       };
     }
   }
