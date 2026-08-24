@@ -574,26 +574,23 @@
      size), which can override the track's own minmax() lower bound and
      blow the layout out in browser-dependent ways. Explicit 0 everywhere
      closes that off regardless of content length. */
-  .leaderboard-rank { font-family: var(--font-nav); font-weight: 700; font-size: 14px; color: var(--purple); text-align: center; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 2px; }
+  .leaderboard-rank { position: relative; font-family: var(--font-nav); font-weight: 700; font-size: 14px; color: var(--purple); text-align: center; min-width: 0; display: inline-flex; align-items: center; justify-content: center; }
   .leaderboard-row--top .leaderboard-rank { font-size: 20px; }
-  /* Up/down arrow next to the rank number when it changed since the
-     last refresh (see previousRankByName/rankMovementHtml in
-     progress.js) — reuses the existing green/amber vocabulary
-     (.day-status.complete / .missed) rather than introducing a new red,
-     since this is relative movement, not a pass/fail signal. Sized
-     independently of the rank number's own font-size (which jumps to
-     20px for top-3), so the arrow doesn't blow up along with medal
-     ranks. */
-  .rank-move { font-size: 11px; line-height: 1; }
-  /* flex align-items:center centers by content-box height, which lines
-     .rank-move up fine against a plain number but not against the medal
-     emoji on top-3 rows — a medal glyph's actual painted coin sits well
-     above its own box's vertical center (there's a ribbon graphic
-     hanging below the box's visual content too), so box-center
-     alignment left the arrow looking noticeably lower than the coin.
-     Nudged up to match the coin's real visual center instead, checked
-     against a zoomed screenshot rather than assumed. */
-  .leaderboard-row--top .rank-move { transform: translateY(-6px); }
+  /* Up/down arrow when the rank changed since the last refresh (see
+     previousRankByName/rankMovementHtml in progress.js) — reuses the
+     existing green/amber vocabulary (.day-status.complete / .missed)
+     rather than introducing a new red, since this is relative movement,
+     not a pass/fail signal.
+     Absolutely positioned as a fixed corner badge, deliberately NOT
+     centered inline against the rank text/medal via flex or a manual
+     transform offset — color emoji glyphs (the medal, for top-3 rows)
+     render with real, different internal metrics across engines/OSes
+     (confirmed: a pixel offset tuned against this environment's
+     rendering still looked wrong on Safari/macOS), so anything trying
+     to align to the medal's own visual baseline is inherently fragile.
+     Anchoring to the container's own box edges instead is 100%
+     deterministic regardless of what font renders the medal. */
+  .rank-move { position: absolute; right: -2px; bottom: -1px; font-size: 9px; line-height: 1; }
   .rank-up { color: var(--green); }
   .rank-down { color: var(--amber); }
   .leaderboard-name { min-width: 0; font-weight: 600; color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
