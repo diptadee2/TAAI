@@ -533,14 +533,30 @@
      column a real, unconditional floor instead — name is the only column
      that can shrink toward 0 (via ellipsis), everything else is
      guaranteed its minimum no matter how tight the row gets. */
+  /* Base rule — the 3-column shape actually rendered by the champions/
+     top-5 card (renderLastWeekChampions: rank, name, minutes only, no
+     streak/status/timer). #leaderboard-card below overrides this with
+     its own 6-column template. Real regression, caught from a
+     screenshot: both cards share .leaderboard-row, but the top-20
+     board's 6-column grid-template-columns used to apply here
+     unconditionally — with only 3 child elements, grid auto-placement
+     shoved them into the wrong tracks (name landed in a 130px column
+     squeezed down to 0 width by the champions card's narrower
+     container, minutes landed in the *streak* column instead of its
+     own, both looking blank/misplaced on the champions card specifically). */
+  .leaderboard-row { display: grid; grid-template-columns: 40px minmax(0,1fr) auto; align-items: center; gap: 16px; padding: 12px 14px; border-radius: 10px; font-size: 15px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: left; }
   /* Sized up across the board (row font/padding, rank, streak balls,
      status pill, timer, minutes) rather than adding another metric to
      fill the empty space in the (often-blank) Streak column for
      non-streaking students — the columns themselves stay the same
      layout, just heavier/more substantial content within them, per
      explicit "make stuff bigger, don't add a column" direction. Fixed
-     column widths (rank/status/timer/time below) widened to match. */
-  .leaderboard-row { display: grid; grid-template-columns: 40px minmax(0,130px) minmax(92px,1fr) 76px 60px 58px; align-items: center; gap: 16px; padding: 12px 14px; border-radius: 10px; font-size: 15px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: left; }
+     column widths (rank/status/timer/time) widened to match. Scoped to
+     #leaderboard-card (the top-20 board specifically) since the
+     champions/top-5 card — sharing .leaderboard-row's base rule above —
+     never renders streak/status/timer content and needs its own
+     simpler 3-column shape instead. */
+  #leaderboard-card .leaderboard-row { grid-template-columns: 40px minmax(0,130px) minmax(92px,1fr) 76px 60px 58px; }
   .leaderboard-row:last-child { border-bottom: none; }
   .leaderboard-row--top { padding-top: 14px; padding-bottom: 14px; }
   .leaderboard-row--me { background: rgba(139,92,246,0.1); border-bottom-color: transparent; }
