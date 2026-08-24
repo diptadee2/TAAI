@@ -967,7 +967,8 @@
       // than the previous poll — see previous_week_rank in
       // tracker-data.js's fetchLastWeekLeaders.
       return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (l.is_me ? ' leaderboard-row--me' : '') + '">' +
-        '<span class="leaderboard-rank">' + rank + rankMovementHtml(i + 1, l.previous_week_rank) + '</span>' +
+        '<span class="leaderboard-rank">' + rank + '</span>' +
+        rankMovementHtml(i + 1, l.previous_week_rank) +
         '<span class="leaderboard-name">' + escapeHtml(l.display_name) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
         '<span class="leaderboard-time">' + l.total_minutes + 'm</span>' +
         '</div>';
@@ -978,7 +979,8 @@
     if (state.lastWeekViewerRank) {
       rows += '<div class="leaderboard-gap">···</div>' +
         '<div class="leaderboard-row leaderboard-row--me">' +
-        '<span class="leaderboard-rank">' + state.lastWeekViewerRank.rank + rankMovementHtml(state.lastWeekViewerRank.rank, state.lastWeekViewerRank.previous_week_rank) + '</span>' +
+        '<span class="leaderboard-rank">' + state.lastWeekViewerRank.rank + '</span>' +
+        rankMovementHtml(state.lastWeekViewerRank.rank, state.lastWeekViewerRank.previous_week_rank) +
         '<span class="leaderboard-name">You</span>' +
         '<span class="leaderboard-time">' + state.lastWeekViewerRank.total_minutes + 'm</span>' +
         '</div>';
@@ -1757,7 +1759,8 @@
   // pomodoro-leaderboard.js). Only rendered/fetched in Focus Mode.
   var LEADERBOARD_MEDALS = ['🥇', '🥈', '🥉'];
 
-  // Small ▲/▼ next to the rank number when it differs from
+  // ▲/▼ in its own dedicated column (.rank-move-col, always rendered —
+  // see the CSS comment on it) when the rank differs from
   // previous_week_rank (pomodoro-leaderboard.js / tracker-data.js) — a
   // fixed historical reference point (rank at the end of last week)
   // computed server-side, not a client-side "since my last poll"
@@ -1765,16 +1768,19 @@
   // different moments could see different (or no) arrows for the same
   // student, and a viewer's own very first load never had anything to
   // compare against — this is the same for every viewer, always,
-  // regardless of when they look. Nothing rendered when
+  // regardless of when they look. Blank (not omitted) when
   // previous_week_rank is null (no data last week — a new student, or
   // one who didn't use Pomodoro then) or unchanged from this week's
   // rank, same "don't show noise" reasoning as the streak balls'
   // empty-state span.
   function rankMovementHtml(currentRank, prevRank) {
-    if (prevRank === undefined || prevRank === null || prevRank === currentRank) return '';
-    var up = currentRank < prevRank;
-    return '<span class="rank-move ' + (up ? 'rank-up' : 'rank-down') + '" title="' +
-      (up ? 'Up from #' : 'Down from #') + prevRank + '">' + (up ? '▲' : '▼') + '</span>';
+    var arrow = '';
+    if (prevRank !== undefined && prevRank !== null && prevRank !== currentRank) {
+      var up = currentRank < prevRank;
+      arrow = '<span class="rank-move ' + (up ? 'rank-up' : 'rank-down') + '" title="' +
+        (up ? 'Up from #' : 'Down from #') + prevRank + '">' + (up ? '▲' : '▼') + '</span>';
+    }
+    return '<span class="rank-move-col">' + arrow + '</span>';
   }
 
   // "Live now" dot before a name — is_live comes from pomodoro-
@@ -1928,7 +1934,8 @@
       // total_minutes already accounts for that correctly and is what
       // actually ranks the list, so it's the only number displayed too.
       return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (r.is_me ? ' leaderboard-row--me' : '') + '">' +
-        '<span class="leaderboard-rank">' + rankLabel + rankMovementHtml(i + 1, r.previous_week_rank) + '</span>' +
+        '<span class="leaderboard-rank">' + rankLabel + '</span>' +
+        rankMovementHtml(i + 1, r.previous_week_rank) +
         '<span class="leaderboard-name">' + liveDotHtml(r.is_live) + escapeHtml(r.display_name) + (r.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
         streakBallsHtml(r.streak) +
         pomoStatusHtml(r.pomo_status, r.pomo_last_seen_at) +
@@ -1944,7 +1951,8 @@
     if (state.viewerRank) {
       rows += '<div class="leaderboard-gap">···</div>' +
         '<div class="leaderboard-row leaderboard-row--me">' +
-        '<span class="leaderboard-rank">' + state.viewerRank.rank + rankMovementHtml(state.viewerRank.rank, state.viewerRank.previous_week_rank) + '</span>' +
+        '<span class="leaderboard-rank">' + state.viewerRank.rank + '</span>' +
+        rankMovementHtml(state.viewerRank.rank, state.viewerRank.previous_week_rank) +
         '<span class="leaderboard-name">' + liveDotHtml(state.viewerRank.is_live) + 'You</span>' +
         streakBallsHtml(state.viewerRank.streak) +
         pomoStatusHtml(state.viewerRank.pomo_status, state.viewerRank.pomo_last_seen_at) +
@@ -1962,7 +1970,7 @@
       // Mirrors each row's exact rank/name/streak/time widths so every
       // label sits directly above its column on every row, not just
       // approximately near it.
-      '<div class="leaderboard-columns"><span class="leaderboard-col-rank">Rank</span><span class="leaderboard-col-name">Name</span><span class="leaderboard-col-streak">Streak</span><span class="leaderboard-col-status">Status</span><span class="leaderboard-col-timer">Timer</span><span class="leaderboard-col-time">Minutes</span></div>' +
+      '<div class="leaderboard-columns"><span class="leaderboard-col-rank">Rank</span><span></span><span class="leaderboard-col-name">Name</span><span class="leaderboard-col-streak">Streak</span><span class="leaderboard-col-status">Status</span><span class="leaderboard-col-timer">Timer</span><span class="leaderboard-col-time">Minutes</span></div>' +
       '<div id="leaderboard-rows">' + renderLeaderboardRows() + '</div>' +
       '</div>';
   }

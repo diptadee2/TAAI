@@ -553,7 +553,17 @@
      squeezed down to 0 width by the champions card's narrower
      container, minutes landed in the *streak* column instead of its
      own, both looking blank/misplaced on the champions card specifically). */
-  .leaderboard-row { display: grid; grid-template-columns: 40px minmax(0,1fr) auto; align-items: center; gap: 16px; padding: 12px 14px; border-radius: 10px; font-size: 15px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: left; }
+  /* 16px dedicated column for the rank-movement arrow (.rank-move-col),
+     right after Rank — its own grid track, not sharing space with or
+     positioned relative to the rank number/medal at all. Earlier
+     versions tried to attach the arrow directly to the rank cell (inline
+     with a gap, then an absolutely-positioned corner badge with a
+     different anchor for medals vs digits) and kept fighting the same
+     problem: medals and digits are different sizes, so "relative to the
+     rank content" was never going to put both groups' arrows at the same
+     x. A fully independent column sidesteps that entirely — every row's
+     arrow sits in the exact same place regardless of what's in Rank. */
+  .leaderboard-row { display: grid; grid-template-columns: 40px 16px minmax(0,1fr) auto; align-items: center; gap: 16px; padding: 12px 14px; border-radius: 10px; font-size: 15px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: left; }
   /* Sized up across the board (row font/padding, rank, streak balls,
      status pill, timer, minutes) rather than adding another metric to
      fill the empty space in the (often-blank) Streak column for
@@ -564,8 +574,8 @@
      #leaderboard-card (the top-20 board specifically) since the
      champions/top-5 card — sharing .leaderboard-row's base rule above —
      never renders streak/status/timer content and needs its own
-     simpler 3-column shape instead. */
-  #leaderboard-card .leaderboard-row { grid-template-columns: 40px minmax(0,130px) minmax(92px,1fr) 76px 60px 58px; }
+     simpler shape instead. */
+  #leaderboard-card .leaderboard-row { grid-template-columns: 40px 16px minmax(0,130px) minmax(92px,1fr) 76px 60px 58px; }
   .leaderboard-row:last-child { border-bottom: none; }
   .leaderboard-row--top { padding-top: 14px; padding-bottom: 14px; }
   .leaderboard-row--me { background: rgba(139,92,246,0.1); border-bottom-color: transparent; }
@@ -574,39 +584,27 @@
      size), which can override the track's own minmax() lower bound and
      blow the layout out in browser-dependent ways. Explicit 0 everywhere
      closes that off regardless of content length. */
-  /* justify-content:center alone (no gap) — the rank number/medal is
-     centered on its own now, not as a combined "number+arrow" unit.
-     Real bug, caught from a screenshot: with the arrow inline (the
-     previous version), a 1-digit rank ("4") and a 2-digit rank ("10",
-     "11") pushed the arrow — and the number itself, since both were
-     centered together as one flex unit — to a different x position row
-     to row, so neither the numbers nor the arrows lined up into a
-     straight column. Exact same class of bug already fixed once for the
-     streak balls and the live-dot-in-name text this session. .rank-move
-     below is absolutely positioned outside this box now specifically to
-     avoid re-coupling its position to the number's own width. */
-  .leaderboard-rank { position: relative; font-family: var(--font-nav); font-weight: 700; font-size: 14px; color: var(--purple); text-align: center; min-width: 0; display: inline-flex; align-items: center; justify-content: center; }
+  .leaderboard-rank { font-family: var(--font-nav); font-weight: 700; font-size: 14px; color: var(--purple); text-align: center; min-width: 0; }
   .leaderboard-row--top .leaderboard-rank { font-size: 20px; }
   /* Up/down arrow when the rank changed since the last refresh (see
-     previousRankByName/rankMovementHtml in progress.js) — reuses the
+     previous_week_rank / rankMovementHtml in progress.js) — reuses the
      existing green/amber vocabulary (.day-status.complete / .missed)
      rather than introducing a new red, since this is relative movement,
      not a pass/fail signal.
-     Always absolutely positioned (not inline) — anchored to a fixed
-     point relative to .leaderboard-rank's own box, so its position is
-     the same on every row regardless of how wide that row's rank number
-     happens to be. Sits just outside the box's right edge (in the gap
-     toward Name), not overlapping the digit, so every row's arrow forms
-     one straight vertical line down the column. */
-  .rank-move { position: absolute; top: 50%; right: -11px; transform: translateY(-50%); font-size: 9px; line-height: 1; }
-  /* Top-3 rows specifically need their own offset, not just a bigger
-     font-size scaled from the same rule — color emoji glyphs (the medal
-     shown here) render with real, different internal metrics across
-     engines/OSes, so a vertical-center offset tuned against one
-     environment's rendering (Chromium/Linux) still looked wrong on
-     Safari/macOS. Anchored to the medal's own bottom-right corner
-     instead, which is deterministic regardless of what font renders it. */
-  .leaderboard-row--top .rank-move { top: auto; right: -3px; bottom: -1px; transform: none; }
+     Lives in its own dedicated 16px grid column now (see
+     .leaderboard-row above), always rendered (blank span when there's
+     no movement to show) so the column reserves the same space either
+     way — same pattern as the empty-state spans for streak/status/
+     timer. This replaced two earlier attempts that tried to position
+     the arrow relative to the rank number/medal itself (inline, then an
+     absolutely-positioned corner badge with a different anchor per
+     rank type) — both kept fighting the fact that a medal and a plain
+     digit are different sizes, so anything anchored to "the rank
+     content" put top-3 and rank-4+ arrows at different x positions. A
+     fully independent column has no such dependency: every row's arrow
+     sits in the exact same spot regardless of what Rank contains. */
+  .rank-move-col { display: flex; align-items: center; justify-content: center; }
+  .rank-move { font-size: 10px; line-height: 1; }
   .rank-up { color: var(--green); }
   .rank-down { color: var(--amber); }
   .leaderboard-name { min-width: 0; font-weight: 600; color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -681,7 +679,7 @@
   /* Column header row — identical grid-template-columns to
      .leaderboard-row above, so every label lands exactly above its
      column on every row, not just approximately near it. */
-  .leaderboard-columns { display: grid; grid-template-columns: 40px minmax(0,130px) minmax(92px,1fr) 76px 60px 58px; align-items: center; gap: 16px; padding: 0 14px 6px; font-family: var(--font-nav); font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
+  .leaderboard-columns { display: grid; grid-template-columns: 40px 16px minmax(0,130px) minmax(92px,1fr) 76px 60px 58px; align-items: center; gap: 16px; padding: 0 14px 6px; font-family: var(--font-nav); font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
   .leaderboard-col-rank { text-align: center; min-width: 0; }
   /* padding-left matches .live-dot-slot's fixed 13px width (see the
      live-dot comment above) — every row's actual name text starts 13px
