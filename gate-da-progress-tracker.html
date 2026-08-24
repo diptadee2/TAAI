@@ -281,7 +281,7 @@
      champions data to show (renderLastWeekChampions returns nothing in
      that case, so there's no second section at all). */
   .streak-champions-card { display: flex; align-items: stretch; margin-bottom: 18px; border-radius: var(--radius-lg); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 10px 36px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.07); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); overflow: hidden; }
-  .streak-champions-card #streak-panel { flex: 1; min-width: 0; display: flex; }
+  .streak-champions-card #streak-panel { flex: 1 1 260px; min-width: 0; display: flex; }
   /* The streak section strips its own background/border (the shared card
      above provides that now) and centers its compact content — a flame,
      a number, a label — in the available height instead of leaving it
@@ -294,8 +294,17 @@
   .streak-champions-card .streak-number { font-size: 84px; }
   .streak-champions-card .streak-label { margin-top: 10px; font-size: 13px; }
   /* Champions section likewise strips its own card chrome and gets a
-     divider line instead of a gap, since it's part of the same card now. */
-  .streak-champions-card .champions-section { flex: 0 0 300px; background: none; border: none; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; border-radius: 0; margin: 0; max-width: none; padding: 22px 20px; border-left: 1px solid rgba(255,255,255,0.1); }
+     divider line instead of a gap, since it's part of the same card now.
+     Was flex:0 0 300px (fixed) against streak-panel's flex:1 (grows into
+     everything left over) — on typical widths that made the streak
+     panel (just a flame + a big number) noticeably wider than the
+     leaderboard, which actually has 5 rows of content to show. Flipped
+     the growth ratio instead of just swapping fixed/flexible outright —
+     streak-panel still needs flex:1 so it alone fills the whole card
+     when there's no champions data (see the comment above it) — so both
+     sides now grow, just with champions claiming twice the leftover
+     share (flex-grow 2 vs 1) once real content is present. */
+  .streak-champions-card .champions-section { flex: 1.4 1 340px; background: none; border: none; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; border-radius: 0; margin: 0; max-width: none; padding: 22px 20px; border-left: 1px solid rgba(255,255,255,0.1); }
   @media (max-width: 1080px) { .champions-section { display: none; } }
 
   /* Streak hero — the page's primary visual now, replacing the old heatmap-up-top */
