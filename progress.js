@@ -1773,12 +1773,24 @@
   // one who didn't use Pomodoro then) or unchanged from this week's
   // rank, same "don't show noise" reasoning as the streak balls'
   // empty-state span.
+  // SVG triangle, not the bare Unicode ▲/▼ glyph — a plain text glyph
+  // looked flat next to the rest of the board's polish (the streak
+  // balls' radial-highlight glow, the Focus/Break pill backgrounds), and
+  // an SVG at a fixed viewBox size is also immune to the same kind of
+  // cross-font rendering variance that caused the medal-emoji alignment
+  // trouble earlier — nothing here depends on how any given system font
+  // draws a triangle character.
+  var RANK_MOVE_UP_PATH = 'M12 4L21 19H3L12 4Z';
+  var RANK_MOVE_DOWN_PATH = 'M12 20L3 5H21L12 20Z';
   function rankMovementHtml(currentRank, prevRank) {
     var arrow = '';
     if (prevRank !== undefined && prevRank !== null && prevRank !== currentRank) {
       var up = currentRank < prevRank;
+      var path = up ? RANK_MOVE_UP_PATH : RANK_MOVE_DOWN_PATH;
       arrow = '<span class="rank-move ' + (up ? 'rank-up' : 'rank-down') + '" title="' +
-        (up ? 'Up from #' : 'Down from #') + prevRank + '">' + (up ? '▲' : '▼') + '</span>';
+        (up ? 'Up from #' : 'Down from #') + prevRank + '">' +
+        '<svg width="10" height="10" viewBox="0 0 24 24"><path d="' + path + '" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>' +
+        '</span>';
     }
     return '<span class="rank-move-col">' + arrow + '</span>';
   }

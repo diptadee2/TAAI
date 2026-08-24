@@ -604,9 +604,17 @@
      fully independent column has no such dependency: every row's arrow
      sits in the exact same spot regardless of what Rank contains. */
   .rank-move-col { display: flex; align-items: center; justify-content: center; }
-  .rank-move { font-size: 10px; line-height: 1; }
-  .rank-up { color: var(--green); }
-  .rank-down { color: var(--amber); }
+  /* SVG (see rankMovementHtml in progress.js), not the bare Unicode
+     ▲/▼ glyph it replaced — a soft color-matched glow via drop-shadow
+     gives it the same glossy-highlight polish as the streak balls and
+     status pills instead of looking like flat, unstyled text next to
+     them. drop-shadow, not box-shadow, since the element is an inline
+     SVG shape (a triangle), not a box — box-shadow would just glow the
+     SVG's square bounding box instead of hugging the triangle's actual
+     outline. */
+  .rank-move { display: block; }
+  .rank-up { color: var(--green); filter: drop-shadow(0 0 3px rgba(74,222,128,0.65)); }
+  .rank-down { color: var(--amber); filter: drop-shadow(0 0 3px rgba(251,191,36,0.65)); }
   .leaderboard-name { min-width: 0; font-weight: 600; color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   /* "Live now" indicator — a small pulsing green dot before the name of
      anyone currently mid-focus-session (see is_live in pomodoro-
