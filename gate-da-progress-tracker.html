@@ -574,29 +574,39 @@
      size), which can override the track's own minmax() lower bound and
      blow the layout out in browser-dependent ways. Explicit 0 everywhere
      closes that off regardless of content length. */
-  .leaderboard-rank { position: relative; font-family: var(--font-nav); font-weight: 700; font-size: 14px; color: var(--purple); text-align: center; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 3px; }
+  /* justify-content:center alone (no gap) — the rank number/medal is
+     centered on its own now, not as a combined "number+arrow" unit.
+     Real bug, caught from a screenshot: with the arrow inline (the
+     previous version), a 1-digit rank ("4") and a 2-digit rank ("10",
+     "11") pushed the arrow — and the number itself, since both were
+     centered together as one flex unit — to a different x position row
+     to row, so neither the numbers nor the arrows lined up into a
+     straight column. Exact same class of bug already fixed once for the
+     streak balls and the live-dot-in-name text this session. .rank-move
+     below is absolutely positioned outside this box now specifically to
+     avoid re-coupling its position to the number's own width. */
+  .leaderboard-rank { position: relative; font-family: var(--font-nav); font-weight: 700; font-size: 14px; color: var(--purple); text-align: center; min-width: 0; display: inline-flex; align-items: center; justify-content: center; }
   .leaderboard-row--top .leaderboard-rank { font-size: 20px; }
   /* Up/down arrow when the rank changed since the last refresh (see
      previousRankByName/rankMovementHtml in progress.js) — reuses the
      existing green/amber vocabulary (.day-status.complete / .missed)
      rather than introducing a new red, since this is relative movement,
      not a pass/fail signal.
-     Plain inline flow by default — this is what a plain rank digit
-     (rank 4+) actually needs, and it already centers correctly against
-     ordinary text via the flex gap above. */
-  .rank-move { font-size: 11px; line-height: 1; }
-  /* Top-3 rows only: absolutely positioned as a fixed corner badge
-     instead, overriding the plain inline flow above. Color emoji glyphs
-     (the medal shown for these rows) render with real, different
-     internal metrics across engines/OSes — a manual vertical offset
-     tuned to align with the medal's visual baseline in one environment
-     (Chromium/Linux) still looked wrong on Safari/macOS, and the same
-     corner-badge treatment applied to plain digits (tried first) looked
-     cramped/overlapping since a digit's box is much smaller than a
-     medal's. Splitting the two: only the medal rows, where the glyph is
-     large enough for a corner badge to read as "attached to it" rather
-     than "on top of it", get this treatment. */
-  .leaderboard-row--top .rank-move { position: absolute; right: -3px; bottom: -1px; font-size: 9px; }
+     Always absolutely positioned (not inline) — anchored to a fixed
+     point relative to .leaderboard-rank's own box, so its position is
+     the same on every row regardless of how wide that row's rank number
+     happens to be. Sits just outside the box's right edge (in the gap
+     toward Name), not overlapping the digit, so every row's arrow forms
+     one straight vertical line down the column. */
+  .rank-move { position: absolute; top: 50%; right: -11px; transform: translateY(-50%); font-size: 9px; line-height: 1; }
+  /* Top-3 rows specifically need their own offset, not just a bigger
+     font-size scaled from the same rule — color emoji glyphs (the medal
+     shown here) render with real, different internal metrics across
+     engines/OSes, so a vertical-center offset tuned against one
+     environment's rendering (Chromium/Linux) still looked wrong on
+     Safari/macOS. Anchored to the medal's own bottom-right corner
+     instead, which is deterministic regardless of what font renders it. */
+  .leaderboard-row--top .rank-move { top: auto; right: -3px; bottom: -1px; transform: none; }
   .rank-up { color: var(--green); }
   .rank-down { color: var(--amber); }
   .leaderboard-name { min-width: 0; font-weight: 600; color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
