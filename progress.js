@@ -1782,12 +1782,20 @@
   // draws a triangle character.
   var RANK_MOVE_UP_PATH = 'M12 4L21 19H3L12 4Z';
   var RANK_MOVE_DOWN_PATH = 'M12 20L3 5H21L12 20Z';
+  // A drop of more than this many positions gets the red "big drop"
+  // treatment instead of the ordinary amber — amber alone didn't
+  // distinguish "slipped one spot" from "fell off a cliff", and the
+  // latter is worth calling out more sharply. Rises don't get an
+  // equivalent "big rise" color — climbing is never something to flag
+  // as alarming, so green covers every upward move the same way.
+  var BIG_DROP_THRESHOLD = 5;
   function rankMovementHtml(currentRank, prevRank) {
     var arrow = '';
     if (prevRank !== undefined && prevRank !== null && prevRank !== currentRank) {
       var up = currentRank < prevRank;
       var path = up ? RANK_MOVE_UP_PATH : RANK_MOVE_DOWN_PATH;
-      arrow = '<span class="rank-move ' + (up ? 'rank-up' : 'rank-down') + '" title="' +
+      var cls = up ? 'rank-up' : ((currentRank - prevRank) > BIG_DROP_THRESHOLD ? 'rank-down-big' : 'rank-down');
+      arrow = '<span class="rank-move ' + cls + '" title="' +
         (up ? 'Up from #' : 'Down from #') + prevRank + '">' +
         '<svg width="10" height="10" viewBox="0 0 24 24"><path d="' + path + '" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>' +
         '</span>';

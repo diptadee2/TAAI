@@ -25,6 +25,7 @@
     --purple: #A78BFA; --purple-soft: rgba(139,92,246,0.2);
     --green: #4ade80; --green-soft: rgba(74,222,128,0.14);
     --amber: #fbbf24; --amber-soft: rgba(251,191,36,0.14);
+    --red: #f87171; --red-soft: rgba(248,113,113,0.14);
     --radius-md: 18px; --radius-lg: 26px;
     --shadow-sm: 0 1px 0 rgba(0,0,0,0.14), 0 2px 6px rgba(0,0,0,0.14);
     --shadow-md: 0 2px 0 rgba(0,0,0,0.1), 0 12px 32px rgba(0,0,0,0.3);
@@ -620,6 +621,10 @@
   .rank-move { display: block; }
   .rank-up { color: var(--green); }
   .rank-down { color: var(--amber); }
+  /* A drop of more than BIG_DROP_THRESHOLD positions (progress.js) —
+     amber alone didn't distinguish "slipped one spot" from "fell off a
+     cliff", worth calling out more sharply than an ordinary drop. */
+  .rank-down-big { color: var(--red); }
   .leaderboard-name { min-width: 0; font-weight: 600; color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   /* "Live now" indicator — a small pulsing green dot before the name of
      anyone currently mid-focus-session (see is_live in pomodoro-
