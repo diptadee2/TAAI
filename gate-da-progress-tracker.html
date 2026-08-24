@@ -585,6 +585,15 @@
      20px for top-3), so the arrow doesn't blow up along with medal
      ranks. */
   .rank-move { font-size: 11px; line-height: 1; }
+  /* flex align-items:center centers by content-box height, which lines
+     .rank-move up fine against a plain number but not against the medal
+     emoji on top-3 rows — a medal glyph's actual painted coin sits well
+     above its own box's vertical center (there's a ribbon graphic
+     hanging below the box's visual content too), so box-center
+     alignment left the arrow looking noticeably lower than the coin.
+     Nudged up to match the coin's real visual center instead, checked
+     against a zoomed screenshot rather than assumed. */
+  .leaderboard-row--top .rank-move { transform: translateY(-6px); }
   .rank-up { color: var(--green); }
   .rank-down { color: var(--amber); }
   .leaderboard-name { min-width: 0; font-weight: 600; color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
