@@ -30,20 +30,12 @@
 //
 // pomoActive was added later, for cross-device pomodoro sync — see
 // fetchPomoActive below and pomo-active.js (the write side).
-import { getSupabase, json, monthRange, todayIST, weekStartIST } from './lib/supabase.js';
+import { getSupabase, json, monthRange, todayIST, weekStartIST, weekBefore } from './lib/supabase.js';
 
 const DEMO_TODAY_FLOOR = '2026-08-01'; // see streak.js — same self-expiring floor
 
 function lastWeekStart() {
-  const d = new Date(weekStartIST() + 'T00:00:00Z');
-  d.setUTCDate(d.getUTCDate() - 7);
-  return d.toISOString().slice(0, 10);
-}
-
-function weekBefore(weekStart) {
-  const d = new Date(weekStart + 'T00:00:00Z');
-  d.setUTCDate(d.getUTCDate() - 7);
-  return d.toISOString().slice(0, 10);
+  return weekBefore(weekStartIST());
 }
 
 async function fetchSchedule(supabase, range) {

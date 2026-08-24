@@ -4,7 +4,7 @@
 // design; no email or other identity is returned in the response. The
 // optional `email` query param (the viewer's own, if logged in) is only
 // used to flag their own row with is_me, never anyone else's.
-import { getSupabase, json, weekStartIST, todayForStreak, computeStreak, parseUtcTimestamp } from './lib/supabase.js';
+import { getSupabase, json, weekStartIST, weekBefore, todayForStreak, computeStreak, parseUtcTimestamp } from './lib/supabase.js';
 
 const LIMIT = 20;
 
@@ -32,6 +32,26 @@ export async function handler(event) {
   if (studentsError) return json(500, { error: studentsError.message });
 
   const nameByEmail = Object.fromEntries(students.map(s => [s.email, s.display_name]));
+
+  // Rank-movement arrow, compared to where each student stood at the
+  // *end of last week* — a fixed, historical reference point that's
+  // identical for every viewer regardless of when they check, unlike a
+  // client-side "since my last poll" comparison (which is what this
+  // used to be — dropped in favor of this, since two different viewers
+  // watching at different moments could see different or no arrows for
+  // the same student, and a viewer's own very first load never had
+  // anything to compare against). Full ranked snapshot of last week
+  // (every student, not just this week's top 20) since someone's
+  // standing last week can be well outside this week's top 20 — e.g. a
+  // jump from #35 to #10 should still show as a real rise.
+  const lastWeekStart = weekBefore(weekStart);
+  const { data: lastWeekStats, error: lastWeekError } = await supabase
+    .from('pomodoro_stats')
+    .select('email, total_minutes')
+    .eq('week_start', lastWeekStart)
+    .order('total_minutes', { ascending: false });
+  if (lastWeekError) return json(500, { error: lastWeekError.message });
+  const lastWeekRankByEmail = Object.fromEntries(lastWeekStats.map((s, i) => [s.email, i + 1]));
 
   // Streak balls shown between name and minutes in the leaderboard UI —
   // computed the same way as the single-student /streak endpoint (see
@@ -118,6 +138,7 @@ export async function handler(event) {
     total_minutes: s.total_minutes,
     total_sessions: s.total_sessions,
     streak: streakByEmail[s.email] || 0,
+    previous_week_rank: lastWeekRankByEmail[s.email] ?? null,
     ...pomoFieldsFor(s.email),
     is_me: !!viewerEmail && s.email === viewerEmail,
   }));
@@ -152,6 +173,7 @@ export async function handler(event) {
         total_minutes: viewerStats.total_minutes,
         total_sessions: viewerStats.total_sessions,
         streak: streakByEmail[viewerEmail] || 0,
+        previous_week_rank: lastWeekRankByEmail[viewerEmail] ?? null,
         ...pomoFieldsFor(viewerEmail),
       };
     }

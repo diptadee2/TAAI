@@ -50,6 +50,17 @@ export function weekStartIST() {
   return d.toISOString().slice(0, 10);
 }
 
+// The Monday exactly one week before a given week_start — used to look
+// up "the week before this one" for a rank comparison (pomodoro-
+// leaderboard.js's week_start_rank, tracker-data.js's
+// previous_week_rank) that's the same for every viewer regardless of
+// when they check, unlike a client-side "since my last poll" comparison.
+export function weekBefore(weekStart) {
+  const d = new Date(weekStart + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() - 7);
+  return d.toISOString().slice(0, 10);
+}
+
 // The schedule starts Aug 1 2026, so streak math needs the same floor as
 // the frontend's clamped "today" (see DEMO_TODAY_FLOOR in progress.js) —
 // without it, a completion on the frontend's Aug 1 "today" would have
