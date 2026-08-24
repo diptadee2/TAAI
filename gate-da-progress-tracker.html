@@ -565,8 +565,19 @@
      size), which can override the track's own minmax() lower bound and
      blow the layout out in browser-dependent ways. Explicit 0 everywhere
      closes that off regardless of content length. */
-  .leaderboard-rank { font-family: var(--font-nav); font-weight: 700; font-size: 14px; color: var(--purple); text-align: center; min-width: 0; }
+  .leaderboard-rank { font-family: var(--font-nav); font-weight: 700; font-size: 14px; color: var(--purple); text-align: center; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 2px; }
   .leaderboard-row--top .leaderboard-rank { font-size: 20px; }
+  /* Up/down arrow next to the rank number when it changed since the
+     last refresh (see previousRankByName/rankMovementHtml in
+     progress.js) — reuses the existing green/amber vocabulary
+     (.day-status.complete / .missed) rather than introducing a new red,
+     since this is relative movement, not a pass/fail signal. Sized
+     independently of the rank number's own font-size (which jumps to
+     20px for top-3), so the arrow doesn't blow up along with medal
+     ranks. */
+  .rank-move { font-size: 11px; line-height: 1; }
+  .rank-up { color: var(--green); }
+  .rank-down { color: var(--amber); }
   .leaderboard-name { min-width: 0; font-weight: 600; color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   /* "Live now" indicator — a small pulsing green dot before the name of
      anyone currently mid-focus-session (see is_live in pomodoro-

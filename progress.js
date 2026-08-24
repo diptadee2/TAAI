@@ -1753,6 +1753,28 @@
   // pomodoro-leaderboard.js). Only rendered/fetched in Focus Mode.
   var LEADERBOARD_MEDALS = ['🥇', '🥈', '🥉'];
 
+  // Rank-movement tracking — populated by refreshLeaderboard just before
+  // it overwrites state.leaderboard/state.viewerRank with fresh data, so
+  // renderLeaderboardRows can compare "where they are now" against
+  // "where they were a moment ago" and show an up/down arrow. Empty on
+  // the very first load (nothing to compare against yet), which is
+  // exactly right — no marker should show until at least one refresh
+  // has actually happened.
+  var previousRankByName = {};
+  var previousViewerRank = null;
+
+  // Small ▲/▼ next to the rank number when it changed since the last
+  // refresh (see previousRankByName/previousViewerRank above) — nothing
+  // rendered for a first-ever appearance (prevRank undefined/null) or an
+  // unchanged rank, same "don't show noise" reasoning as the streak
+  // balls' empty-state span.
+  function rankMovementHtml(currentRank, prevRank) {
+    if (prevRank === undefined || prevRank === null || prevRank === currentRank) return '';
+    var up = currentRank < prevRank;
+    return '<span class="rank-move ' + (up ? 'rank-up' : 'rank-down') + '" title="' +
+      (up ? 'Up from #' : 'Down from #') + prevRank + '">' + (up ? '▲' : '▼') + '</span>';
+  }
+
   // "Live now" dot before a name — is_live comes from pomodoro-
   // leaderboard.js (running=true and that phase's countdown hasn't
   // finished yet, see the comment there). Wrapped in a plain
@@ -1904,7 +1926,7 @@
       // total_minutes already accounts for that correctly and is what
       // actually ranks the list, so it's the only number displayed too.
       return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (r.is_me ? ' leaderboard-row--me' : '') + '">' +
-        '<span class="leaderboard-rank">' + rankLabel + '</span>' +
+        '<span class="leaderboard-rank">' + rankLabel + rankMovementHtml(i + 1, previousRankByName[r.display_name]) + '</span>' +
         '<span class="leaderboard-name">' + liveDotHtml(r.is_live) + escapeHtml(r.display_name) + (r.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
         streakBallsHtml(r.streak) +
         pomoStatusHtml(r.pomo_status, r.pomo_last_seen_at) +
@@ -1920,7 +1942,7 @@
     if (state.viewerRank) {
       rows += '<div class="leaderboard-gap">···</div>' +
         '<div class="leaderboard-row leaderboard-row--me">' +
-        '<span class="leaderboard-rank">' + state.viewerRank.rank + '</span>' +
+        '<span class="leaderboard-rank">' + state.viewerRank.rank + rankMovementHtml(state.viewerRank.rank, previousViewerRank) + '</span>' +
         '<span class="leaderboard-name">' + liveDotHtml(state.viewerRank.is_live) + 'You</span>' +
         streakBallsHtml(state.viewerRank.streak) +
         pomoStatusHtml(state.viewerRank.pomo_status, state.viewerRank.pomo_last_seen_at) +
@@ -1949,6 +1971,19 @@
     var q = state.student ? '?email=' + encodeURIComponent(state.student.email) : '';
     api('/pomodoro-leaderboard' + q)
       .then(function (r) {
+        // Snapshot the rank each name held right before this refresh
+        // overwrites state.leaderboard, so renderLeaderboardRows can show
+        // an up/down arrow relative to it. Matched by display_name, not
+        // email — pomodoro-leaderboard.js deliberately never sends student
+        // emails to the client (see its own top comment), and this is
+        // purely a same-viewer, same-session comparison against whatever
+        // was already on screen, not a stored identity. The viewer's own
+        // below-list row is tracked separately (by rank number, not name)
+        // since its name always literally renders as "You".
+        previousRankByName = {};
+        state.leaderboard.forEach(function (l, i) { previousRankByName[l.display_name] = i + 1; });
+        previousViewerRank = state.viewerRank ? state.viewerRank.rank : null;
+
         state.leaderboard = r.leaderboard || [];
         state.viewerRank = r.viewerRank || null;
         var rows = document.getElementById('leaderboard-rows');
