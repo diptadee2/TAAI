@@ -603,18 +603,23 @@
      content" put top-3 and rank-4+ arrows at different x positions. A
      fully independent column has no such dependency: every row's arrow
      sits in the exact same spot regardless of what Rank contains. */
-  .rank-move-col { display: flex; align-items: center; justify-content: center; }
+  /* padding-right nudges the arrow left, off dead-center in its 16px
+     column — it otherwise sat close enough to the live-dot (start of
+     the Name column right after) that the two small colored shapes
+     read as one cluttered pair rather than two distinct signals. */
+  .rank-move-col { display: flex; align-items: center; justify-content: center; padding-right: 3px; }
   /* SVG (see rankMovementHtml in progress.js), not the bare Unicode
-     ▲/▼ glyph it replaced — a soft color-matched glow via drop-shadow
-     gives it the same glossy-highlight polish as the streak balls and
-     status pills instead of looking like flat, unstyled text next to
-     them. drop-shadow, not box-shadow, since the element is an inline
-     SVG shape (a triangle), not a box — box-shadow would just glow the
-     SVG's square bounding box instead of hugging the triangle's actual
-     outline. */
+     ▲/▼ glyph it replaced — rounded corners (stroke-linejoin:round on
+     the path itself) read as more polished than a flat glyph without
+     needing anything else. A drop-shadow glow was tried here for extra
+     polish (matching the streak balls/status pills) and reverted: real
+     bug, caught from a screenshot — filter:drop-shadow() at this size
+     rendered as a visible rectangular halo around the triangle in
+     Chromium instead of hugging its actual outline, looking like a
+     stray square artifact rather than a glow. */
   .rank-move { display: block; }
-  .rank-up { color: var(--green); filter: drop-shadow(0 0 3px rgba(74,222,128,0.65)); }
-  .rank-down { color: var(--amber); filter: drop-shadow(0 0 3px rgba(251,191,36,0.65)); }
+  .rank-up { color: var(--green); }
+  .rank-down { color: var(--amber); }
   .leaderboard-name { min-width: 0; font-weight: 600; color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   /* "Live now" indicator — a small pulsing green dot before the name of
      anyone currently mid-focus-session (see is_live in pomodoro-
