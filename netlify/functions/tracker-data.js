@@ -40,6 +40,12 @@ function lastWeekStart() {
   return d.toISOString().slice(0, 10);
 }
 
+function weekBefore(weekStart) {
+  const d = new Date(weekStart + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() - 7);
+  return d.toISOString().slice(0, 10);
+}
+
 async function fetchSchedule(supabase, range) {
   const { data, error } = await supabase
     .from('schedule_tasks')
@@ -85,11 +91,31 @@ async function fetchLastWeekLeaders(supabase, email) {
     .in('email', stats.map(s => s.email));
   if (studentsError) throw new Error(studentsError.message);
 
+  // Previous-week rank, for the same up/down arrow the top-20 board
+  // shows (rankMovementHtml in progress.js, reused as-is here) — except
+  // "previous" means the week before *this* week's top-5 snapshot,
+  // rather than the last poll. A full ranked snapshot of that earlier
+  // week (not just these 5 emails' own rows), since a leader's previous
+  // rank can be well outside that week's own top 5 — someone who jumped
+  // from #12 to #3 should still show as a big rise, not "no data".
+  // Computed in JS from one query rather than a per-leader rank-count
+  // query, since this whole function only ever runs on page load / an
+  // explicit champions-card refresh, not on a poll.
+  const prevWeekStart = weekBefore(weekStart);
+  const { data: prevWeekStats, error: prevWeekError } = await supabase
+    .from('pomodoro_stats')
+    .select('email, total_minutes')
+    .eq('week_start', prevWeekStart)
+    .order('total_minutes', { ascending: false });
+  if (prevWeekError) throw new Error(prevWeekError.message);
+  const prevRankByEmail = Object.fromEntries(prevWeekStats.map((s, i) => [s.email, i + 1]));
+
   const nameByEmail = Object.fromEntries(students.map(s => [s.email, s.display_name]));
-  const leaders = stats.map(s => ({
+  const leaders = stats.map((s, i) => ({
     display_name: nameByEmail[s.email] || 'Anonymous',
     total_minutes: s.total_minutes,
     is_me: !!email && s.email === email,
+    previous_week_rank: prevRankByEmail[s.email] ?? null,
   }));
 
   // Same idea as pomodoro-leaderboard.js's viewerRank — a student outside
@@ -114,7 +140,7 @@ async function fetchLastWeekLeaders(supabase, email) {
         .gt('total_minutes', viewerStats.total_minutes);
       if (countError) throw new Error(countError.message);
 
-      viewerRank = { rank: (count || 0) + 1, total_minutes: viewerStats.total_minutes };
+      viewerRank = { rank: (count || 0) + 1, total_minutes: viewerStats.total_minutes, previous_week_rank: prevRankByEmail[email] ?? null };
     }
   }
 

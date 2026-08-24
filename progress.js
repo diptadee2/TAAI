@@ -962,8 +962,12 @@
     if (!leaders.length) return '';
     var rows = leaders.map(function (l, i) {
       var rank = LEADERBOARD_MEDALS[i] || (i + 1);
+      // Same up/down arrow as the top-20 board (rankMovementHtml), just
+      // compared against last week's rank in the week before it rather
+      // than the previous poll — see previous_week_rank in
+      // tracker-data.js's fetchLastWeekLeaders.
       return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (l.is_me ? ' leaderboard-row--me' : '') + '">' +
-        '<span class="leaderboard-rank">' + rank + '</span>' +
+        '<span class="leaderboard-rank">' + rank + rankMovementHtml(i + 1, l.previous_week_rank) + '</span>' +
         '<span class="leaderboard-name">' + escapeHtml(l.display_name) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
         '<span class="leaderboard-time">' + l.total_minutes + 'm</span>' +
         '</div>';
@@ -974,7 +978,7 @@
     if (state.lastWeekViewerRank) {
       rows += '<div class="leaderboard-gap">···</div>' +
         '<div class="leaderboard-row leaderboard-row--me">' +
-        '<span class="leaderboard-rank">' + state.lastWeekViewerRank.rank + '</span>' +
+        '<span class="leaderboard-rank">' + state.lastWeekViewerRank.rank + rankMovementHtml(state.lastWeekViewerRank.rank, state.lastWeekViewerRank.previous_week_rank) + '</span>' +
         '<span class="leaderboard-name">You</span>' +
         '<span class="leaderboard-time">' + state.lastWeekViewerRank.total_minutes + 'm</span>' +
         '</div>';
