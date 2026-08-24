@@ -444,6 +444,7 @@ function generateSitemap(posts) {
     { loc: '/gate-da-test-series', priority: '0.8', freq: 'weekly' },
     { loc: '/gate-da-toppers', priority: '0.7', freq: 'weekly' },
     { loc: '/gate-da-free-notes', priority: '0.7', freq: 'weekly' },
+    { loc: '/gate-da-progress-tracker', priority: '0.7', freq: 'daily' },
     { loc: '/blogs', priority: '0.7', freq: 'weekly' },
     { loc: '/contact', priority: '0.5', freq: 'monthly' },
   ];
