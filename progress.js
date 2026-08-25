@@ -1417,7 +1417,7 @@
     }
   }
 
-  function pomoAdvance() {
+  function pomoAdvance(fromNow) {
     // Captured before pomo.mode flips below, so playPomoChime knows which
     // phase just ended (also correct when called from pomoSkip, which
     // skips straight to this — the mode being left is still whatever
@@ -1427,19 +1427,34 @@
     if (pomo.mode === 'work') pomo.completedSessions++;
     pomo.mode = pomo.mode === 'work' ? 'break' : 'work';
     pomo.totalSeconds = pomoDurationFor(pomo.mode);
-    // Cascades from whichever is earlier: the phase that just ended's own
-    // deadline, or right now. Matters after a long gap (closed tab, OS
-    // sleep) where multiple phases' worth of time may have already
-    // elapsed — anchoring the next phase to "now" would make it look
-    // freshly started even if IT had also already elapsed during the same
-    // gap, silently skipping past a break that should have triggered the
-    // mandatory pause. Anchoring to the old deadline instead lets this
-    // next phase's own remaining time come out zero-or-negative too, so
-    // pomoTick's loop below can catch that and keep cascading. This still
-    // behaves correctly for a manual Skip, where the old deadline is still
-    // in the *future* — Math.min just picks "now" in that case, same as
-    // before.
-    pomo.phaseEndAt = Math.min(Date.now(), oldPhaseEndAt) + pomo.totalSeconds * 1000;
+    if (fromNow) {
+      // Real bug, confirmed in production: a manual Skip used to reuse the
+      // cascade math below, which anchors to the phase just left's own
+      // deadline if that's earlier than now. That's correct for the
+      // catch-up-after-a-gap case (see the else branch), but a Skip can
+      // also fire on a phase whose deadline is already stale — e.g. a
+      // break left running while the laptop slept — and the old, stale
+      // deadline then carried straight into the new phase's own deadline
+      // too. If the overrun was longer than the new phase's duration, the
+      // new deadline came out already in the past, so the very next tick
+      // (pomoTick's catch-up loop) saw secondsLeft<=0 immediately and
+      // credited a full phantom work session before any real work
+      // happened. A manual Skip means "end this phase right now, whatever
+      // its nominal timer says" — the next phase must always start fresh
+      // from the real current time, never inherit that staleness.
+      pomo.phaseEndAt = Date.now() + pomo.totalSeconds * 1000;
+    } else {
+      // Cascades from whichever is earlier: the phase that just ended's own
+      // deadline, or right now. Matters after a long gap (closed tab, OS
+      // sleep) where multiple phases' worth of time may have already
+      // elapsed — anchoring the next phase to "now" would make it look
+      // freshly started even if IT had also already elapsed during the same
+      // gap, silently skipping past a break that should have triggered the
+      // mandatory pause. Anchoring to the old deadline instead lets this
+      // next phase's own remaining time come out zero-or-negative too, so
+      // pomoTick's loop below can catch that and keep cascading.
+      pomo.phaseEndAt = Math.min(Date.now(), oldPhaseEndAt) + pomo.totalSeconds * 1000;
+    }
     pomo.secondsLeft = Math.max(0, Math.round((pomo.phaseEndAt - Date.now()) / 1000));
     playPomoChime(finishedMode);
     updatePomoDisplay();
@@ -1559,7 +1574,10 @@
   function pomoSkip() {
     ensurePomoAudioCtx(); // real click — Skip can fire a chime even if Start was never pressed
     clearInterval(pomo.timerId);
-    pomoAdvance();
+    // fromNow=true — see pomoAdvance: a Skip must always start the next
+    // phase fresh from right now, never cascade from a possibly-stale old
+    // deadline (that's what pomoTick's own catch-up loop is for).
+    pomoAdvance(true);
     if (pomo.running) pomo.timerId = setInterval(pomoTick, 1000);
   }
 
