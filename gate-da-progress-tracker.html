@@ -354,12 +354,10 @@
      of this page's two-column layout already switches on. */
   .pomo-today-row { display: flex; flex-direction: column; gap: 20px; }
   @media (min-width: 1081px) {
-    /* justify-content:center keeps the pair grouped together in the
-       middle rather than stuck to the left edge with a dead gap on the
-       right — neither card grows to fill leftover row width (see below),
-       so without this the row looked left-stuck and unbalanced instead
-       of intentional. */
-    .pomo-today-row { flex-direction: row; align-items: stretch; justify-content: center; gap: 32px; }
+    /* space-between pushes the timer to the left and the leaderboard out
+       toward the row's right edge, using the negative space on that side
+       rather than sitting close beside the timer. */
+    .pomo-today-row { flex-direction: row; align-items: stretch; justify-content: space-between; gap: 32px; }
     /* The timer is what people actually look at while a session is
        running — sized up so it visually reads as the majority of the
        row, not a small card beside a wide one. The leaderboard gets a
