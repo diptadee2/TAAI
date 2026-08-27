@@ -139,7 +139,7 @@ async function fetchLastWeekLeaders(supabase, email) {
   return { weekStart, leaders, viewerRank };
 }
 
-// Top 5 by focus minutes logged *today* (IST) — shown in Focus Mode next
+// Top 10 by focus minutes logged *today* (IST) — shown in Focus Mode next
 // to the timer. Same shape/pattern as fetchLastWeekLeaders above, just
 // keyed by pomo_daily_sessions.total_minutes for today's date instead of
 // pomodoro_stats for a week — resets by construction every midnight IST
@@ -152,7 +152,7 @@ async function fetchTodayLeaders(supabase, email) {
     .select('email, total_minutes')
     .eq('date', today)
     .order('total_minutes', { ascending: false })
-    .limit(5);
+    .limit(10);
   if (statsError) throw new Error(statsError.message);
   if (!stats.length) return { date: today, leaders: [], viewerRank: null };
 
@@ -170,7 +170,7 @@ async function fetchTodayLeaders(supabase, email) {
   }));
 
   // Same idea as fetchLastWeekLeaders' viewerRank — a student outside
-  // today's top 5 otherwise has no way to see where they actually stand.
+  // today's top 10 otherwise has no way to see where they actually stand.
   let viewerRank = null;
   const viewerInTop = leaders.some(l => l.is_me);
   if (email && !viewerInTop) {

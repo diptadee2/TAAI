@@ -251,7 +251,7 @@
     lastWeekLeaders: [], // [{ display_name, total_minutes, is_me }] — top 5 by focus minutes last week, shown outside Focus Mode
     lastWeekViewerRank: null, // { rank, total_minutes } — set only when the viewer isn't in that top 5
     todayLeaders: [], // [{ display_name, total_minutes, is_me }] — top 5 by focus minutes today, shown in Focus Mode
-    todayViewerRank: null, // { rank, total_minutes } — set only when the viewer isn't in today's top 5
+    todayViewerRank: null, // { rank, total_minutes } — set only when the viewer isn't in today's top 10
     streak: null,
     subjectProgress: [], // [{ subject, done, total }] — global, independent of viewed month
     expanded: new Set(), // dates whose day-card is open, non-native accordion
@@ -1046,7 +1046,7 @@
       '</div>';
   }
 
-  // ── Today's top 5 by focus minutes — same shape as the weekly champions
+  // ── Today's top 10 by focus minutes — same shape as the weekly champions
   // card above, but keyed to pomo_daily_sessions (see fetchTodayLeaders in
   // tracker-data.js) so it resets by construction every midnight IST
   // instead of every Monday. Shown inside Focus Mode next to the timer,
@@ -1087,7 +1087,7 @@
     }
     return '<div class="leaderboard-card fade-in" id="today-leaderboard-card">' +
       '<div class="leaderboard-title">Mission IIT Leaderboard</div>' +
-      '<div class="leaderboard-subtitle">Top 5 by hours logged · Today</div>' +
+      '<div class="leaderboard-subtitle">Top 10 by hours logged · Today</div>' +
       rows +
       '</div>';
   }
