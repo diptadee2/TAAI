@@ -374,7 +374,11 @@
        — smaller title/rows/text throughout, not only a tighter max-width,
        since a narrow column at full font size still reads as "large
        content, cramped" rather than "small on purpose". */
-    .pomo-today-row #today-leaderboard-card { flex: 0 1 300px; min-width: 0; align-self: center; padding: 16px 16px; }
+    /* flex-start (not center) — the card is much shorter than the timer's
+       full height (ring + dots + buttons + tip text), so vertically
+       centering it left it sitting noticeably lower than the ring's own
+       top edge. Top-aligning instead keeps it level with the timer. */
+    .pomo-today-row #today-leaderboard-card { flex: 0 1 300px; min-width: 0; align-self: flex-start; margin-top: 8px; padding: 16px 16px; }
     .pomo-today-row #today-leaderboard-card .leaderboard-title { font-size: 15px; }
     .pomo-today-row #today-leaderboard-card .leaderboard-subtitle { font-size: 12px; margin-bottom: 10px; }
     .pomo-today-row #today-leaderboard-card .leaderboard-row { padding: 9px 10px; gap: 10px; font-size: 15px; }
