@@ -151,12 +151,16 @@ RETURNS TABLE(total_minutes INTEGER, total_sessions INTEGER) AS $$
   RETURNING total_minutes, total_sessions;
 $$ LANGUAGE sql;
 
--- Postgres allows function overloading by parameter count, so adding
--- p_minutes below without dropping the old 2-arg signature first would
--- leave that version sitting around unused (nothing calls it any more)
--- rather than actually being replaced by CREATE OR REPLACE.
-DROP FUNCTION IF EXISTS increment_pomo_daily_sessions(TEXT, DATE);
-
+-- Deliberately does NOT drop the old 2-arg increment_pomo_daily_sessions
+-- signature here — Postgres treats different parameter counts as separate
+-- function identities (overloading), so this migration can run safely at
+-- any time relative to the deploy that switches pomodoro-complete.js over
+-- to calling the 3-arg version below. Whichever code is live at the
+-- moment (old 2-arg caller or new 3-arg caller) keeps working throughout,
+-- with zero window where a real student's completion would suddenly start
+-- failing because the function it calls no longer exists. The old 2-arg
+-- version is harmless leftover cruft once the new code is confirmed
+-- deployed — safe to drop later in a separate cleanup, not urgent.
 CREATE OR REPLACE FUNCTION increment_pomo_daily_sessions(p_email TEXT, p_date DATE, p_minutes INTEGER)
 RETURNS TABLE(sessions_completed INTEGER, total_minutes INTEGER) AS $$
   INSERT INTO pomo_daily_sessions (email, date, sessions_completed, total_minutes, updated_at)
