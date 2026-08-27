@@ -104,7 +104,7 @@ export async function handler(event) {
   if (weekError) return json(500, { error: weekError.message });
 
   const { data: dayData, error: dayError } = await supabase
-    .rpc('increment_pomo_daily_sessions', { p_email: email, p_date: todayIST() })
+    .rpc('increment_pomo_daily_sessions', { p_email: email, p_date: todayIST(), p_minutes: minutes })
     .single();
   if (dayError) return json(500, { error: dayError.message });
 

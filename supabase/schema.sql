@@ -78,6 +78,11 @@ CREATE TABLE IF NOT EXISTS pomo_daily_sessions (
   email              TEXT REFERENCES students(email),
   date               DATE NOT NULL, -- IST calendar date, see todayIST()
   sessions_completed INTEGER NOT NULL DEFAULT 0,
+  -- Added for the "highest hours today" leaderboard (tracker-data.js's
+  -- fetchTodayLeaders) — sessions_completed alone can't rank by time, since
+  -- work-phase duration is per-student customizable, so two students with
+  -- the same session count can have very different actual minutes.
+  total_minutes      INTEGER NOT NULL DEFAULT 0,
   updated_at         TIMESTAMP DEFAULT now(),
   PRIMARY KEY (email, date)
 );
@@ -146,15 +151,22 @@ RETURNS TABLE(total_minutes INTEGER, total_sessions INTEGER) AS $$
   RETURNING total_minutes, total_sessions;
 $$ LANGUAGE sql;
 
-CREATE OR REPLACE FUNCTION increment_pomo_daily_sessions(p_email TEXT, p_date DATE)
-RETURNS TABLE(sessions_completed INTEGER) AS $$
-  INSERT INTO pomo_daily_sessions (email, date, sessions_completed, updated_at)
-  VALUES (p_email, p_date, 1, now())
+-- Postgres allows function overloading by parameter count, so adding
+-- p_minutes below without dropping the old 2-arg signature first would
+-- leave that version sitting around unused (nothing calls it any more)
+-- rather than actually being replaced by CREATE OR REPLACE.
+DROP FUNCTION IF EXISTS increment_pomo_daily_sessions(TEXT, DATE);
+
+CREATE OR REPLACE FUNCTION increment_pomo_daily_sessions(p_email TEXT, p_date DATE, p_minutes INTEGER)
+RETURNS TABLE(sessions_completed INTEGER, total_minutes INTEGER) AS $$
+  INSERT INTO pomo_daily_sessions (email, date, sessions_completed, total_minutes, updated_at)
+  VALUES (p_email, p_date, 1, p_minutes, now())
   ON CONFLICT (email, date)
   DO UPDATE SET
     sessions_completed = pomo_daily_sessions.sessions_completed + 1,
+    total_minutes = pomo_daily_sessions.total_minutes + p_minutes,
     updated_at = now()
-  RETURNING sessions_completed;
+  RETURNING sessions_completed, total_minutes;
 $$ LANGUAGE sql;
 
 GRANT EXECUTE ON FUNCTION increment_pomodoro_stats TO service_role;

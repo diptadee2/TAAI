@@ -250,6 +250,8 @@
     latestScheduledMonth: null, // 'YYYY-MM' with any schedule data at all, from schedule.js — caps month-nav's "next" arrow
     lastWeekLeaders: [], // [{ display_name, total_minutes, is_me }] — top 5 by focus minutes last week, shown outside Focus Mode
     lastWeekViewerRank: null, // { rank, total_minutes } — set only when the viewer isn't in that top 5
+    todayLeaders: [], // [{ display_name, total_minutes, is_me }] — top 5 by focus minutes today, shown in Focus Mode
+    todayViewerRank: null, // { rank, total_minutes } — set only when the viewer isn't in today's top 5
     streak: null,
     subjectProgress: [], // [{ subject, done, total }] — global, independent of viewed month
     expanded: new Set(), // dates whose day-card is open, non-native accordion
@@ -793,6 +795,8 @@
         state.latestScheduledMonth = data.schedule.latestMonth || null;
         state.lastWeekLeaders = data.lastWeekLeaders.leaders || [];
         state.lastWeekViewerRank = data.lastWeekLeaders.viewerRank || null;
+        state.todayLeaders = data.todayLeaders.leaders || [];
+        state.todayViewerRank = data.todayLeaders.viewerRank || null;
         var progressRows = state.student ? (data.progress.progress || []) : [];
         state.streak = state.student ? data.streak.streak : null;
         state.subjectProgress = state.student ? (data.subjectProgress.subjects || []) : [];
@@ -1042,6 +1046,44 @@
       '</div>';
   }
 
+  // ── Today's top 5 by focus minutes — same shape as the weekly champions
+  // card above, but keyed to pomo_daily_sessions (see fetchTodayLeaders in
+  // tracker-data.js) so it resets by construction every midnight IST
+  // instead of every Monday. Shown inside Focus Mode next to the timer,
+  // not on the main checklist — unlike the weekly one, this only makes
+  // sense to a student who's actually about to start a session. No rank-
+  // movement arrow (rankMovementHtml with no previous rank just renders
+  // its empty column) — there's no "yesterday's leaderboard" concept to
+  // compare against, only real-time same-day rank. Renders nothing on a
+  // fresh day before anyone's logged time yet, same as the weekly card.
+  function renderTodayLeaders() {
+    var leaders = state.todayLeaders || [];
+    if (!leaders.length) return '';
+    var rows = leaders.map(function (l, i) {
+      var rank = LEADERBOARD_MEDALS[i] || (i + 1);
+      return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (l.is_me ? ' leaderboard-row--me' : '') + '">' +
+        '<span class="leaderboard-rank">' + rank + '</span>' +
+        rankMovementHtml(i + 1) +
+        '<span class="leaderboard-name">' + escapeHtml(l.display_name) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
+        '<span class="leaderboard-time">' + l.total_minutes + 'm</span>' +
+        '</div>';
+    }).join('');
+    if (state.todayViewerRank) {
+      rows += '<div class="leaderboard-gap">···</div>' +
+        '<div class="leaderboard-row leaderboard-row--me">' +
+        '<span class="leaderboard-rank">' + state.todayViewerRank.rank + '</span>' +
+        rankMovementHtml(state.todayViewerRank.rank) +
+        '<span class="leaderboard-name">You</span>' +
+        '<span class="leaderboard-time">' + state.todayViewerRank.total_minutes + 'm</span>' +
+        '</div>';
+    }
+    return '<div class="leaderboard-card fade-in" id="today-leaderboard-card">' +
+      '<div class="leaderboard-title">Mission IIT Leaderboard</div>' +
+      '<div class="leaderboard-subtitle">Top 5 by minutes logged · Today</div>' +
+      rows +
+      '</div>';
+  }
+
   // ── Completion heatmap for the visible month — compact, secondary,
   // placed at the bottom of the page rather than up top. ────────────
   function heatLevel(day) {
@@ -1265,6 +1307,7 @@
       html += '<div class="focus-card fade-in" id="focus-card">';
       html += buildStatsPanelHtml();
       html += renderPomodoro();
+      html += renderTodayLeaders();
       html += '<div class="focus-divider"></div>';
       if (todayDay) {
         html += renderTodayCard(todayDay, missedBefore.length);
@@ -1328,6 +1371,8 @@
     // covered lastWeekViewerRank, i.e. any placement at all).
     armConfetti('champions-card', 'top5-' + mondayOf(todayIso()),
       state.lastWeekLeaders.some(function (l) { return l.is_me; }));
+    armConfetti('today-leaderboard-card', 'today5-' + todayIso(),
+      state.todayLeaders.some(function (l) { return l.is_me; }));
     // The "NEW" badge itself needs no post-render arming anymore — see
     // newBadgeHtml, called directly from renderLastWeekChampions/
     // renderLeaderboardCard as part of building the HTML string.

@@ -139,6 +139,64 @@ async function fetchLastWeekLeaders(supabase, email) {
   return { weekStart, leaders, viewerRank };
 }
 
+// Top 5 by focus minutes logged *today* (IST) — shown in Focus Mode next
+// to the timer. Same shape/pattern as fetchLastWeekLeaders above, just
+// keyed by pomo_daily_sessions.total_minutes for today's date instead of
+// pomodoro_stats for a week — resets by construction every midnight IST
+// since a new day is just a new row starting from zero, same as that
+// table's existing sessions_completed always has.
+async function fetchTodayLeaders(supabase, email) {
+  const today = todayIST();
+  const { data: stats, error: statsError } = await supabase
+    .from('pomo_daily_sessions')
+    .select('email, total_minutes')
+    .eq('date', today)
+    .order('total_minutes', { ascending: false })
+    .limit(5);
+  if (statsError) throw new Error(statsError.message);
+  if (!stats.length) return { date: today, leaders: [], viewerRank: null };
+
+  const { data: students, error: studentsError } = await supabase
+    .from('students')
+    .select('email, display_name')
+    .in('email', stats.map(s => s.email));
+  if (studentsError) throw new Error(studentsError.message);
+
+  const nameByEmail = Object.fromEntries(students.map(s => [s.email, s.display_name]));
+  const leaders = stats.map(s => ({
+    display_name: nameByEmail[s.email] || 'Anonymous',
+    total_minutes: s.total_minutes,
+    is_me: !!email && s.email === email,
+  }));
+
+  // Same idea as fetchLastWeekLeaders' viewerRank — a student outside
+  // today's top 5 otherwise has no way to see where they actually stand.
+  let viewerRank = null;
+  const viewerInTop = leaders.some(l => l.is_me);
+  if (email && !viewerInTop) {
+    const { data: viewerStats, error: viewerError } = await supabase
+      .from('pomo_daily_sessions')
+      .select('total_minutes')
+      .eq('email', email)
+      .eq('date', today)
+      .maybeSingle();
+    if (viewerError) throw new Error(viewerError.message);
+
+    if (viewerStats) {
+      const { count, error: countError } = await supabase
+        .from('pomo_daily_sessions')
+        .select('*', { count: 'exact', head: true })
+        .eq('date', today)
+        .gt('total_minutes', viewerStats.total_minutes);
+      if (countError) throw new Error(countError.message);
+
+      viewerRank = { rank: (count || 0) + 1, total_minutes: viewerStats.total_minutes };
+    }
+  }
+
+  return { date: today, leaders, viewerRank };
+}
+
 async function fetchProgress(supabase, email, range) {
   const { data, error } = await supabase
     .from('task_progress')
@@ -276,8 +334,9 @@ export async function handler(event) {
 
   // Everything else degrades to its old client-side .catch() fallback
   // instead of failing the whole response.
-  const [lastWeekLeaders, streak, subjectProgress, pomoSettings, pomoSessions, pomoActive] = await Promise.all([
+  const [lastWeekLeaders, todayLeaders, streak, subjectProgress, pomoSettings, pomoSessions, pomoActive] = await Promise.all([
     fetchLastWeekLeaders(supabase, email).catch(() => ({ leaders: [] })),
+    fetchTodayLeaders(supabase, email).catch(() => ({ leaders: [] })),
     email ? fetchStreak(supabase, email).catch(() => ({ streak: null })) : Promise.resolve(null),
     email ? fetchSubjectProgress(supabase, email).catch(() => ({ subjects: [] })) : Promise.resolve(null),
     email ? fetchPomoSettings(supabase, email).catch(() => null) : Promise.resolve(null),
@@ -285,5 +344,5 @@ export async function handler(event) {
     email ? fetchPomoActive(supabase, email).catch(() => null) : Promise.resolve(null),
   ]);
 
-  return json(200, { schedule, lastWeekLeaders, progress, streak, subjectProgress, pomoSettings, pomoSessions, pomoActive });
+  return json(200, { schedule, lastWeekLeaders, todayLeaders, progress, streak, subjectProgress, pomoSettings, pomoSessions, pomoActive });
 }
