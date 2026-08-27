@@ -354,9 +354,22 @@
      of this page's two-column layout already switches on. */
   .pomo-today-row { display: flex; flex-direction: column; gap: 20px; }
   @media (min-width: 1081px) {
-    .pomo-today-row { flex-direction: row; align-items: stretch; }
+    /* justify-content:center keeps the pair grouped together in the
+       middle rather than stuck to the left edge with a dead gap on the
+       right — neither card grows to fill leftover row width (see below),
+       so without this the row looked left-stuck and unbalanced instead
+       of intentional. */
+    .pomo-today-row { flex-direction: row; align-items: stretch; justify-content: center; gap: 32px; }
+    /* The timer is what people actually look at while a session is
+       running — sized up so it visually reads as the majority of the
+       row, not a small card beside a wide one. The leaderboard gets a
+       max-width instead of stretching to fill all remaining space (flex:1
+       with no cap looked sparse/dominant purely from empty width, not
+       from anything actually in it). */
     .pomo-today-row .pomodoro-card { flex: 0 0 auto; }
-    .pomo-today-row #today-leaderboard-card { flex: 1 1 auto; min-width: 0; align-self: center; }
+    .pomo-today-row .pomodoro-ring-wrap { width: 240px; height: 240px; }
+    .pomo-today-row .pomodoro-time { font-size: 52px; }
+    .pomo-today-row #today-leaderboard-card { flex: 0 1 380px; min-width: 0; align-self: center; }
   }
   .progress-track { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
   .progress-fill { height: 100%; background: linear-gradient(90deg, var(--purple), #a78bfa); border-radius: 999px; transition: width .5s cubic-bezier(.34,1.1,.64,1); }
