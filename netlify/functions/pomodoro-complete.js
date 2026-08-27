@@ -24,10 +24,16 @@ import { getSupabase, json, weekStartIST, todayIST } from './lib/supabase.js';
 // exceed this, so reject anything bigger rather than trusting the caller.
 const MAX_MINUTES_PER_SESSION = 180;
 
-// Slack for request latency between the real deadline and this request
-// landing — not a cheating allowance, just avoids rejecting a genuine
-// same-instant completion over a few hundred ms of network time.
-const GRACE_MS = 3000;
+// Slack between the real start and when phase_started_at actually gets
+// stamped server-side — not a cheating allowance (someone still has to
+// wait out virtually the entire real session either way), just headroom
+// for how long the Start-time /pomo-active call can realistically take to
+// land: a Netlify Function cold start plus the read-before-write it now
+// does for new-phase detection can add real seconds, especially on a slow
+// connection, and that gap directly eats into how much "elapsed" time the
+// server sees by completion. 3s (the original value) proved too tight in
+// production — legitimate completions were being rejected.
+const GRACE_MS = 15000;
 
 export async function handler(event) {
   if (event.httpMethod !== 'POST') return json(405, { error: 'method not allowed' });
