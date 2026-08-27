@@ -367,9 +367,20 @@
        with no cap looked sparse/dominant purely from empty width, not
        from anything actually in it). */
     .pomo-today-row .pomodoro-card { flex: 0 0 auto; }
-    .pomo-today-row .pomodoro-ring-wrap { width: 240px; height: 240px; }
-    .pomo-today-row .pomodoro-time { font-size: 52px; }
-    .pomo-today-row #today-leaderboard-card { flex: 0 1 380px; min-width: 0; align-self: center; }
+    .pomo-today-row .pomodoro-ring-wrap { width: 280px; height: 280px; }
+    .pomo-today-row .pomodoro-time { font-size: 60px; }
+    .pomo-today-row .pomodoro-mode { font-size: 15px; }
+    /* Shrunk to a genuinely secondary/compact companion, not just narrower
+       — smaller title/rows/text throughout, not only a tighter max-width,
+       since a narrow column at full font size still reads as "large
+       content, cramped" rather than "small on purpose". */
+    .pomo-today-row #today-leaderboard-card { flex: 0 1 260px; min-width: 0; align-self: center; padding: 14px 14px; }
+    .pomo-today-row #today-leaderboard-card .leaderboard-title { font-size: 12px; }
+    .pomo-today-row #today-leaderboard-card .leaderboard-subtitle { font-size: 10px; margin-bottom: 8px; }
+    .pomo-today-row #today-leaderboard-card .leaderboard-row { padding: 7px 8px; gap: 8px; font-size: 12px; }
+    .pomo-today-row #today-leaderboard-card .leaderboard-rank { font-size: 11px; }
+    .pomo-today-row #today-leaderboard-card .leaderboard-row--top .leaderboard-rank { font-size: 15px; }
+    .pomo-today-row #today-leaderboard-card .leaderboard-time { font-size: 11px; }
   }
   .progress-track { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
   .progress-fill { height: 100%; background: linear-gradient(90deg, var(--purple), #a78bfa); border-radius: 999px; transition: width .5s cubic-bezier(.34,1.1,.64,1); }
