@@ -133,26 +133,37 @@
   }
 
   // Cross-device counterpart to the localStorage write above — see
-  // pomo-active.js. Fire-and-forget: a lost write just means another
-  // device's view of this session goes stale until the next successful
-  // one, not that anything breaks on this device. Guests have no server
-  // identity to sync against, so this is a no-op for them, same guard
-  // used elsewhere (e.g. recordPomodoroCompletion).
+  // pomo-active.js. Guests have no server identity to sync against, so
+  // this is a no-op for them, same guard used elsewhere (e.g.
+  // recordPomodoroCompletion). Not purely fire-and-forget any more: the
+  // server now also uses this sync to verify Pomodoro completions actually
+  // happened (see pomo-active.js's phase_started_at, pomodoro-complete.js)
+  // rather than trusting whatever a completion call claims. Since Pause/
+  // Skip/Reset are rarely used in practice, the call made when a phase
+  // first starts is usually the ONLY chance the server gets to record it
+  // before that phase's eventual completion call needs to find it — so a
+  // couple of retries here meaningfully reduces how often a dropped
+  // request could cost a real student real credit. Still doesn't block
+  // the UI either way: the local timer counts down regardless of whether
+  // or when this succeeds.
   function savePomoActiveRemote(payload) {
     if (!state.student) return;
-    api('/pomo-active', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: state.student.email,
-        mode: payload.mode,
-        running: payload.running,
-        secondsLeft: payload.secondsLeft,
-        totalSeconds: payload.totalSeconds,
-        phaseEndAt: payload.phaseEndAt,
-        completedSessions: payload.completedSessions,
-      }),
-    }).catch(function () { /* non-critical — see comment above */ });
+    var body = JSON.stringify({
+      email: state.student.email,
+      mode: payload.mode,
+      running: payload.running,
+      secondsLeft: payload.secondsLeft,
+      totalSeconds: payload.totalSeconds,
+      phaseEndAt: payload.phaseEndAt,
+      completedSessions: payload.completedSessions,
+    });
+    function attempt(retriesLeft) {
+      api('/pomo-active', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body })
+        .catch(function () {
+          if (retriesLeft > 0) setTimeout(function () { attempt(retriesLeft - 1); }, 800);
+        });
+    }
+    attempt(2);
   }
 
   // Notifications are mandatory to use the Focus Timer at all (not just an
@@ -1476,7 +1487,11 @@
       // pomoAdvance itself, since pomoSkip also calls that and shouldn't
       // award credit for a session that wasn't actually completed.
       var finishedMode = pomo.mode;
-      if (finishedMode === 'work') recordPomodoroCompletion(pomoSettings.work);
+      // pomo.phaseEndAt is still the phase that just finished — pomoAdvance
+      // (below) is what moves it forward. The server matches this against
+      // its own pomo_active_session record of the same phase rather than
+      // trusting the completion claim outright — see pomodoro-complete.js.
+      if (finishedMode === 'work') recordPomodoroCompletion(pomoSettings.work, pomo.phaseEndAt);
       // pomoAdvance first, not after — it's what increments
       // completedSessions, and the notification body wants that already
       // updated rather than showing the pre-completion count.
@@ -2034,12 +2049,15 @@
       .catch(function () { /* non-critical — leaderboard just stays stale */ });
   }
 
-  function recordPomodoroCompletion(minutes) {
+  // minutes is sent for logging only — the server derives the actually-
+  // credited amount itself from its own record of the session (see
+  // pomodoro-complete.js), keyed by phaseEndAt.
+  function recordPomodoroCompletion(minutes, phaseEndAt) {
     if (!state.student) return; // guests aren't tracked — no identity to credit
     api('/pomodoro-complete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: state.student.email, minutes: minutes }),
+      body: JSON.stringify({ email: state.student.email, minutes: minutes, phaseEndAt: phaseEndAt }),
     })
       .then(refreshLeaderboard)
       .catch(function () { /* non-critical — this session just won't count this time */ });

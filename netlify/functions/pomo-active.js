@@ -25,17 +25,45 @@ export async function handler(event) {
   if (!email) return json(400, { error: 'email is required' });
   if (body.mode !== 'work' && body.mode !== 'break') return json(400, { error: 'mode must be "work" or "break"' });
 
+  const totalSeconds = Number.isFinite(body.totalSeconds) ? body.totalSeconds : null;
+  const secondsLeft = Number.isFinite(body.secondsLeft) ? body.secondsLeft : null;
+  const running = !!body.running;
+
   const supabase = getSupabase();
+
+  // phase_started_at backs pomodoro-complete.js's server-side verification
+  // that a claimed session actually ran (see credit_pomodoro_phase in
+  // schema.sql) — it has to be this server's own clock, never anything the
+  // client sends, so a fresh Date.now() is only stamped here when this
+  // update genuinely represents a NEW phase starting: mode or duration
+  // changed from what's currently stored, or running just flipped on with
+  // a full, unconsumed duration (a real Start/Skip/Reset-then-Start, not a
+  // Pause/Resume of the same in-progress phase, which should keep
+  // accumulating from when it first began).
+  const { data: existing, error: readError } = await supabase
+    .from('pomo_active_session')
+    .select('mode, total_seconds, phase_started_at')
+    .eq('email', email)
+    .maybeSingle();
+  if (readError) return json(500, { error: readError.message });
+
+  const isNewPhase = !existing ||
+    existing.mode !== body.mode ||
+    existing.total_seconds !== totalSeconds ||
+    (running && secondsLeft === totalSeconds);
+  const phaseStartedAt = isNewPhase ? Date.now() : (existing.phase_started_at ?? Date.now());
+
   const { error } = await supabase
     .from('pomo_active_session')
     .upsert({
       email,
       mode: body.mode,
-      running: !!body.running,
+      running,
       phase_end_at: Number.isFinite(body.phaseEndAt) ? body.phaseEndAt : null,
-      seconds_left: Number.isFinite(body.secondsLeft) ? body.secondsLeft : null,
-      total_seconds: Number.isFinite(body.totalSeconds) ? body.totalSeconds : null,
+      seconds_left: secondsLeft,
+      total_seconds: totalSeconds,
       completed_sessions: Number.isFinite(body.completedSessions) ? body.completedSessions : 0,
+      phase_started_at: phaseStartedAt,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'email' });
   if (error) return json(500, { error: error.message });

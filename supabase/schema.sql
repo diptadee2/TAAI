@@ -101,6 +101,18 @@ CREATE TABLE IF NOT EXISTS pomo_active_session (
   updated_at         TIMESTAMP DEFAULT now()
 );
 
+-- phase_started_at: server-assigned (never client-supplied) the moment
+-- pomo-active.js first sees a given phase begin — see the "new phase"
+-- detection there. credited_through: the phase_end_at value (if any)
+-- pomodoro-complete.js has already credited for this student, so a repeat
+-- completion call for the same phase (two tabs mirroring one real session,
+-- or a retried request) is a no-op instead of double-crediting. Both back
+-- pomodoro-complete.js's server-side verification that a claimed session
+-- actually ran, instead of trusting whatever minutes value a request sends
+-- — see credit_pomodoro_phase below.
+ALTER TABLE pomo_active_session ADD COLUMN IF NOT EXISTS phase_started_at BIGINT;
+ALTER TABLE pomo_active_session ADD COLUMN IF NOT EXISTS credited_through BIGINT;
+
 -- Supports the month-range queries schedule.js / progress.js run on every page load
 CREATE INDEX IF NOT EXISTS idx_schedule_tasks_date ON schedule_tasks(date);
 CREATE INDEX IF NOT EXISTS idx_task_progress_email_date ON task_progress(email, date);
@@ -147,3 +159,31 @@ $$ LANGUAGE sql;
 
 GRANT EXECUTE ON FUNCTION increment_pomodoro_stats TO service_role;
 GRANT EXECUTE ON FUNCTION increment_pomo_daily_sessions TO service_role;
+
+-- Atomic "claim credit for this phase, once" check used by
+-- pomodoro-complete.js — see phase_started_at/credited_through above. The
+-- WHERE clause only lets the UPDATE (and thus the RETURNING row) go through
+-- the first time a given phase_end_at is claimed for this student; a
+-- second completion call for the same phase (two tabs mirroring one real
+-- session, a retried request) matches nothing and gets no row back, so the
+-- caller knows not to credit it again. Single UPDATE statement, so Postgres
+-- serializes concurrent calls via row-level locking the same way
+-- increment_pomodoro_stats does above — no separate read step for a second
+-- request to race against.
+-- phase_end_at = p_phase_end_at in the WHERE isn't redundant with the
+-- caller's own pre-check (see pomodoro-complete.js) — it's what stops a
+-- request from claiming an arbitrary phaseEndAt that was never actually the
+-- row's current one, since without it this would happily set
+-- credited_through to any value the caller passes in.
+CREATE OR REPLACE FUNCTION credit_pomodoro_phase(p_email TEXT, p_phase_end_at BIGINT)
+RETURNS TABLE(phase_started_at BIGINT, total_seconds INTEGER) AS $$
+  UPDATE pomo_active_session
+  SET credited_through = p_phase_end_at
+  WHERE email = p_email
+    AND phase_end_at = p_phase_end_at
+    AND phase_started_at IS NOT NULL
+    AND (credited_through IS NULL OR credited_through <> p_phase_end_at)
+  RETURNING pomo_active_session.phase_started_at, pomo_active_session.total_seconds;
+$$ LANGUAGE sql;
+
+GRANT EXECUTE ON FUNCTION credit_pomodoro_phase TO service_role;
