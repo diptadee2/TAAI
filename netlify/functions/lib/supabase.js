@@ -17,6 +17,15 @@ export function getSupabase() {
   return client;
 }
 
+// Bumped by hand whenever a client/server *contract* change ships for the
+// progress tracker (e.g. today's Pomodoro completion payload shape) — not
+// on every deploy. progress.js polls /version against this and auto-
+// reloads on a mismatch, so a tab left open across a deploy like today's
+// (old JS silently sending a request shape the new server no longer
+// accepts) doesn't stay stuck indefinitely waiting for someone to notice
+// and manually refresh.
+export const CLIENT_VERSION = '2026-08-28-1';
+
 export function json(statusCode, body) {
   return {
     statusCode,

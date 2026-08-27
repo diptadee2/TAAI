@@ -30,6 +30,38 @@
   var COOKIE_NAME = 'taai_user';
   var COOKIE_DAYS = 365;
 
+  // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
+  // — bump both together whenever a client/server contract change ships
+  // (see checkClientVersion below for why this exists).
+  var CLIENT_VERSION = '2026-08-28-1';
+  var VERSION_CHECK_MS = 120000;
+
+  // A tab left open across a deploy that changes the request shape a
+  // server endpoint expects (like today's Pomodoro completion payload)
+  // keeps running its stale in-memory JS indefinitely — nothing about a
+  // normal page makes it re-fetch its own script just because the server's
+  // copy changed, so it would otherwise silently keep failing every
+  // completion until the student happens to manually refresh. Polling a
+  // trivial version endpoint and reloading on a mismatch closes that gap
+  // automatically instead of relying on someone noticing. Safe to do
+  // silently: a real reload already correctly restores Focus Mode and the
+  // running timer (see wasHardReload/restorePomoActiveState), so nothing
+  // about the student's session is actually lost. The only guard is
+  // skipping a reload while the settings panel is open, so an in-progress
+  // (unsaved) duration edit isn't yanked away — it'll catch the mismatch
+  // on the next poll instead.
+  function checkClientVersion() {
+    api('/version')
+      .then(function (r) {
+        if (r.version && r.version !== CLIENT_VERSION) {
+          var panel = document.getElementById('pomo-settings');
+          if (panel && !panel.hidden) return;
+          location.reload();
+        }
+      })
+      .catch(function () { /* non-critical — just try again next interval */ });
+  }
+
   // Full GATE DA syllabus — shown in "Progress by subject" even before a
   // schedule for that subject has been uploaded (0% until then). "AI" is
   // deliberately separate from "AI (Logic)" — Logic is just the portion
@@ -340,6 +372,7 @@
     state.student = readCookie();
     restorePomoActiveState();
     loadMonth(state.month);
+    setInterval(checkClientVersion, VERSION_CHECK_MS);
     if (wasHardReload() && loadFocusActive()) {
       state.focus = true;
       // replaceState, not enterFocus()'s pushState — a correct {focus:true}
