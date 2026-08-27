@@ -1306,8 +1306,11 @@
     if (state.focus) {
       html += '<div class="focus-card fade-in" id="focus-card">';
       html += buildStatsPanelHtml();
-      html += renderPomodoro();
-      html += renderTodayLeaders();
+      // Side by side in the timer's own empty space at wide viewports, one
+      // above the other on narrow ones — see .pomo-today-row. Works fine
+      // with just one child too (renderTodayLeaders returns '' on a fresh
+      // day with no data yet), flex doesn't need a second item to lay out.
+      html += '<div class="pomo-today-row">' + renderPomodoro() + renderTodayLeaders() + '</div>';
       html += '<div class="focus-divider"></div>';
       if (todayDay) {
         html += renderTodayCard(todayDay, missedBefore.length);
