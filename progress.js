@@ -1056,6 +1056,14 @@
   // its empty column) — there's no "yesterday's leaderboard" concept to
   // compare against, only real-time same-day rank. Renders nothing on a
   // fresh day before anyone's logged time yet, same as the weekly card.
+  // Today's card shows hours (to 1 decimal place) rather than raw
+  // minutes — e.g. 30 -> "0.5h", 145 -> "2.4h" — since "today" totals are
+  // small enough that minutes alone don't read as meaningfully as an hour
+  // figure does; the weekly boards elsewhere keep plain minutes.
+  function formatHoursDecimal(minutes) {
+    return (minutes / 60).toFixed(1) + 'h';
+  }
+
   function renderTodayLeaders() {
     var leaders = state.todayLeaders || [];
     if (!leaders.length) return '';
@@ -1065,7 +1073,7 @@
         '<span class="leaderboard-rank">' + rank + '</span>' +
         rankMovementHtml(i + 1) +
         '<span class="leaderboard-name">' + escapeHtml(l.display_name) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
-        '<span class="leaderboard-time">' + l.total_minutes + 'm</span>' +
+        '<span class="leaderboard-time">' + formatHoursDecimal(l.total_minutes) + '</span>' +
         '</div>';
     }).join('');
     if (state.todayViewerRank) {
@@ -1074,12 +1082,12 @@
         '<span class="leaderboard-rank">' + state.todayViewerRank.rank + '</span>' +
         rankMovementHtml(state.todayViewerRank.rank) +
         '<span class="leaderboard-name">You</span>' +
-        '<span class="leaderboard-time">' + state.todayViewerRank.total_minutes + 'm</span>' +
+        '<span class="leaderboard-time">' + formatHoursDecimal(state.todayViewerRank.total_minutes) + '</span>' +
         '</div>';
     }
     return '<div class="leaderboard-card fade-in" id="today-leaderboard-card">' +
       '<div class="leaderboard-title">Mission IIT Leaderboard</div>' +
-      '<div class="leaderboard-subtitle">Top 5 by minutes logged · Today</div>' +
+      '<div class="leaderboard-subtitle">Top 5 by hours logged · Today</div>' +
       rows +
       '</div>';
   }
