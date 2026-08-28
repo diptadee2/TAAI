@@ -1018,7 +1018,7 @@
         '<span class="leaderboard-rank">' + rank + '</span>' +
         rankMovementHtml(i + 1, l.previous_week_rank) +
         '<span class="leaderboard-name">' + escapeHtml(l.display_name) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
-        '<span class="leaderboard-time">' + l.total_minutes + 'm</span>' +
+        '<span class="leaderboard-time">' + formatHoursDecimal(l.total_minutes) + '</span>' +
         '</div>';
     }).join('');
     // Same "gap + own row" pattern as the in-Focus-Mode leaderboard (see
@@ -1030,7 +1030,7 @@
         '<span class="leaderboard-rank">' + state.lastWeekViewerRank.rank + '</span>' +
         rankMovementHtml(state.lastWeekViewerRank.rank, state.lastWeekViewerRank.previous_week_rank) +
         '<span class="leaderboard-name">You</span>' +
-        '<span class="leaderboard-time">' + state.lastWeekViewerRank.total_minutes + 'm</span>' +
+        '<span class="leaderboard-time">' + formatHoursDecimal(state.lastWeekViewerRank.total_minutes) + '</span>' +
         '</div>';
     }
     // Clicking anywhere on the card jumps to Focus Mode (see
@@ -1041,7 +1041,7 @@
     return '<div class="leaderboard-card champions-section clickable-card" id="champions-card" role="button" tabindex="0">' +
       '<div class="leaderboard-title' + (showBadge5 ? ' has-badge' : '') + '">Mission IIT Leaderboard</div>' +
       newBadgeHtml(showBadge5) +
-      '<div class="leaderboard-subtitle">Top 5 by minutes logged, last week</div>' +
+      '<div class="leaderboard-subtitle">Top 5 by hours logged, last week</div>' +
       rows +
       '</div>';
   }
@@ -1056,10 +1056,11 @@
   // its empty column) — there's no "yesterday's leaderboard" concept to
   // compare against, only real-time same-day rank. Renders nothing on a
   // fresh day before anyone's logged time yet, same as the weekly card.
-  // Today's card shows hours (to 1 decimal place) rather than raw
-  // minutes — e.g. 30 -> "0.5h", 145 -> "2.4h" — since "today" totals are
-  // small enough that minutes alone don't read as meaningfully as an hour
-  // figure does; the weekly boards elsewhere keep plain minutes.
+  // Today's card and the weekly top-5 champions card both show hours (to 1
+  // decimal place) rather than raw minutes — e.g. 30 -> "0.5h", 145 ->
+  // "2.4h" — since these smaller-count boards don't read as meaningfully
+  // in bare minutes; the top-20 board (many more students, wider spread of
+  // totals) keeps plain minutes.
   function formatHoursDecimal(minutes) {
     return (minutes / 60).toFixed(1) + 'h';
   }
