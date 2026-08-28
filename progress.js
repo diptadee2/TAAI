@@ -312,8 +312,13 @@
     if (saved.running) {
       pomo.phaseEndAt = saved.phaseEndAt;
       pomo.running = true;
-      pomoTick(); // catches up immediately if time already ran out while away
-      if (pomo.running) pomo.timerId = setInterval(pomoTick, 1000);
+      // catches up immediately if time already ran out while away — pomoTick
+      // is async now (it has to await crediting before advancing, see
+      // there), so the interval can only be started once it's actually
+      // done, not right after calling it.
+      pomoTick().then(function () {
+        if (pomo.running) pomo.timerId = setInterval(pomoTick, 1000);
+      });
     } else {
       pomo.secondsLeft = saved.secondsLeft;
       pomo.running = false;
@@ -1571,26 +1576,43 @@
     savePomoActiveState();
   }
 
+  // Returns a promise, resolved once this tick (and any cascading phases —
+  // see the recursive call at the bottom) is fully settled. applyPomoActiveState
+  // relies on this to know when it's actually safe to decide whether to
+  // start the interval (see there) — it used to assume this function was
+  // synchronous, which broke once crediting needed to be awaited (below).
   function pomoTick() {
-    // A loop, not a single check — after a long gap (closed tab, OS sleep)
-    // more than one phase can have already elapsed (e.g. a whole work+break
-    // cycle), and each needs its own credit/notification/pause handling
-    // rather than silently collapsing into one. Bounded naturally: pause-
-    // after-break always halts this within at most two iterations (a work
-    // finish followed immediately by a break finish), never runaway.
-    while (pomo.running) {
-      pomo.secondsLeft = Math.max(0, Math.round((pomo.phaseEndAt - Date.now()) / 1000));
-      if (pomo.secondsLeft > 0) break;
-      // Only a genuine tick-to-zero finish counts toward the leaderboard —
-      // checked here (before pomoAdvance flips the mode), not inside
-      // pomoAdvance itself, since pomoSkip also calls that and shouldn't
-      // award credit for a session that wasn't actually completed.
-      var finishedMode = pomo.mode;
-      // pomo.phaseEndAt is still the phase that just finished — pomoAdvance
-      // (below) is what moves it forward. The server matches this against
-      // its own pomo_active_session record of the same phase rather than
-      // trusting the completion claim outright — see pomodoro-complete.js.
-      if (finishedMode === 'work') recordPomodoroCompletion(pomoSettings.work, pomo.phaseEndAt);
+    if (!pomo.running) { updatePomoDisplay(); return Promise.resolve(); }
+    pomo.secondsLeft = Math.max(0, Math.round((pomo.phaseEndAt - Date.now()) / 1000));
+    if (pomo.secondsLeft > 0) { updatePomoDisplay(); return Promise.resolve(); }
+
+    // Only a genuine tick-to-zero finish counts toward the leaderboard —
+    // checked here (before pomoAdvance flips the mode), not inside
+    // pomoAdvance itself, since pomoSkip also calls that and shouldn't
+    // award credit for a session that wasn't actually completed.
+    var finishedMode = pomo.mode;
+    // pomo.phaseEndAt is still the phase that just finished — pomoAdvance
+    // (below) is what moves it forward. The server matches this against
+    // its own pomo_active_session record of the same phase rather than
+    // trusting the completion claim outright — see pomodoro-complete.js.
+    //
+    // Real bug, confirmed in production: pomoAdvance's own remote sync
+    // (inside it, below) announces the NEXT phase to the server. If that
+    // request reached the server before this completion claim did, the
+    // server's record of THIS phase was already overwritten by the time
+    // the claim got checked, so a completely legitimate completion got
+    // rejected as unverifiable — reproduced directly against production
+    // (fire the next phase's /pomo-active, then the prior phase's
+    // /pomodoro-complete, and the server rejects it every time). Two
+    // fetch() calls fired back-to-back in the same tick have no
+    // guaranteed server-side processing order, even sent in the "right"
+    // JS order — genuinely awaiting this one before firing the next is
+    // what actually guarantees it.
+    var creditPromise = finishedMode === 'work'
+      ? recordPomodoroCompletion(pomoSettings.work, pomo.phaseEndAt)
+      : Promise.resolve();
+
+    return creditPromise.then(function () {
       // pomoAdvance first, not after — it's what increments
       // completedSessions, and the notification body wants that already
       // updated rather than showing the pre-completion count.
@@ -1623,8 +1645,14 @@
         // genuine Start click should ever be able to earn credit again.
         savePomoActiveState();
       }
-    }
-    updatePomoDisplay();
+      // Recurse rather than loop — after a long gap (closed tab, OS sleep)
+      // more than one phase can have already elapsed (e.g. a whole
+      // work+break cycle), and each needs its own credit/notification/
+      // pause handling, properly sequenced the same way, not collapsed
+      // into one. Bounded naturally the same way the old while loop was:
+      // pause-after-break always halts this within at most two recursions.
+      return pomoTick();
+    });
   }
 
   // The actual "begin counting down" logic, split out so both the
@@ -2171,9 +2199,12 @@
   // minutes is sent for logging only — the server derives the actually-
   // credited amount itself from its own record of the session (see
   // pomodoro-complete.js), keyed by phaseEndAt.
+  // Returns a promise that ALWAYS resolves (never rejects, success or
+  // failure alike) — pomoTick relies on this to know when it's safe to
+  // move on to the next phase without racing this request (see there).
   function recordPomodoroCompletion(minutes, phaseEndAt) {
-    if (!state.student) return; // guests aren't tracked — no identity to credit
-    api('/pomodoro-complete', {
+    if (!state.student) return Promise.resolve(); // guests aren't tracked — no identity to credit
+    return api('/pomodoro-complete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: state.student.email, minutes: minutes, phaseEndAt: phaseEndAt }),
