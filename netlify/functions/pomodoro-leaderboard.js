@@ -4,7 +4,7 @@
 // design; no email or other identity is returned in the response. The
 // optional `email` query param (the viewer's own, if logged in) is only
 // used to flag their own row with is_me, never anyone else's.
-import { getSupabase, json, weekStartIST, weekBefore, todayForStreak, computeStreak, parseUtcTimestamp } from './lib/supabase.js';
+import { getSupabase, json, weekStartIST, weekBefore, todayForStreak, computeStreak, parseUtcTimestamp, fetchTodayLeaders } from './lib/supabase.js';
 
 const LIMIT = 20;
 
@@ -179,5 +179,12 @@ export async function handler(event) {
     }
   }
 
-  return json(200, { leaderboard, viewerRank });
+  // Bundled into this same response (rather than its own poll) so the
+  // "Today" card in Focus Mode can auto-refresh alongside the top-20 board
+  // on the request that's already happening every 30s — no extra network
+  // round-trip, just a modest amount of extra JSON on an existing one. See
+  // refreshLeaderboard in progress.js for the client side.
+  const todayLeaders = await fetchTodayLeaders(supabase, viewerEmail);
+
+  return json(200, { leaderboard, viewerRank, todayLeaders });
 }

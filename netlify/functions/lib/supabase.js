@@ -117,6 +117,65 @@ export function parseUtcTimestamp(pgTimestamp) {
   return new Date(pgTimestamp.endsWith('Z') ? pgTimestamp : pgTimestamp + 'Z');
 }
 
+// Top 10 by focus minutes logged *today* (IST), keyed to pomo_daily_
+// sessions.total_minutes — resets by construction every midnight IST since
+// a new day is just a new row starting from zero. Shared by tracker-
+// data.js (the page-load batch) and pomodoro-leaderboard.js (its 30s
+// Focus Mode poll, so the "Today" card can auto-refresh alongside the
+// top-20 board on the same request instead of needing a poll of its own)
+// so the two can't drift out of sync on this logic.
+export async function fetchTodayLeaders(supabase, email) {
+  const today = todayIST();
+  const { data: stats, error: statsError } = await supabase
+    .from('pomo_daily_sessions')
+    .select('email, total_minutes')
+    .eq('date', today)
+    .order('total_minutes', { ascending: false })
+    .limit(10);
+  if (statsError) throw new Error(statsError.message);
+  if (!stats.length) return { date: today, leaders: [], viewerRank: null };
+
+  const { data: students, error: studentsError } = await supabase
+    .from('students')
+    .select('email, display_name')
+    .in('email', stats.map(s => s.email));
+  if (studentsError) throw new Error(studentsError.message);
+
+  const nameByEmail = Object.fromEntries(students.map(s => [s.email, s.display_name]));
+  const leaders = stats.map(s => ({
+    display_name: nameByEmail[s.email] || 'Anonymous',
+    total_minutes: s.total_minutes,
+    is_me: !!email && s.email === email,
+  }));
+
+  // A student outside today's top 10 otherwise has no way to see where
+  // they actually stand.
+  let viewerRank = null;
+  const viewerInTop = leaders.some(l => l.is_me);
+  if (email && !viewerInTop) {
+    const { data: viewerStats, error: viewerError } = await supabase
+      .from('pomo_daily_sessions')
+      .select('total_minutes')
+      .eq('email', email)
+      .eq('date', today)
+      .maybeSingle();
+    if (viewerError) throw new Error(viewerError.message);
+
+    if (viewerStats) {
+      const { count, error: countError } = await supabase
+        .from('pomo_daily_sessions')
+        .select('*', { count: 'exact', head: true })
+        .eq('date', today)
+        .gt('total_minutes', viewerStats.total_minutes);
+      if (countError) throw new Error(countError.message);
+
+      viewerRank = { rank: (count || 0) + 1, total_minutes: viewerStats.total_minutes };
+    }
+  }
+
+  return { date: today, leaders, viewerRank };
+}
+
 // Validates "YYYY-MM" and returns the [start, end) date range for a SQL query.
 export function monthRange(month) {
   if (!/^\d{4}-\d{2}$/.test(month || '')) return null;

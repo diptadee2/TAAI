@@ -1064,7 +1064,11 @@
     return (minutes / 60).toFixed(1) + 'h';
   }
 
-  function renderTodayLeaders() {
+  // Split from renderTodayLeaders (below) so refreshLeaderboard can patch
+  // just the rows on its 30s poll, same reason renderLeaderboardRows is
+  // split from renderLeaderboardCard — replacing the whole card would
+  // replay its .fade-in entrance every refresh.
+  function renderTodayLeaderboardRows() {
     var leaders = state.todayLeaders || [];
     if (!leaders.length) return '';
     var rows = leaders.map(function (l, i) {
@@ -1085,10 +1089,15 @@
         '<span class="leaderboard-time">' + formatHoursDecimal(state.todayViewerRank.total_minutes) + '</span>' +
         '</div>';
     }
+    return rows;
+  }
+
+  function renderTodayLeaders() {
+    if (!state.todayLeaders.length) return '';
     return '<div class="leaderboard-card fade-in" id="today-leaderboard-card">' +
       '<div class="leaderboard-title">Mission IIT Leaderboard</div>' +
       '<div class="leaderboard-subtitle">Top 10 by hours logged · Today</div>' +
-      rows +
+      '<div id="today-leaderboard-rows">' + renderTodayLeaderboardRows() + '</div>' +
       '</div>';
   }
 
@@ -2121,8 +2130,15 @@
       '</div>';
   }
 
-  // Patches #leaderboard-rows in place rather than the whole card, so the
-  // card's own .fade-in entrance doesn't replay every time this refreshes.
+  // Patches #leaderboard-rows (and #today-leaderboard-rows) in place rather
+  // than the whole card, so the card's own .fade-in entrance doesn't
+  // replay every time this refreshes. todayLeaders rides along on this
+  // same 30s poll instead of getting a poll of its own — see fetchTodayLeaders
+  // in pomodoro-leaderboard.js. If #today-leaderboard-rows isn't in the DOM
+  // (the card started with no data at page load, per renderTodayLeaders'
+  // own empty-state check), this just silently no-ops for it, same as the
+  // existing #leaderboard-rows guard — the card only ever appears from a
+  // fresh page load, never mid-poll.
   function refreshLeaderboard() {
     var q = state.student ? '?email=' + encodeURIComponent(state.student.email) : '';
     api('/pomodoro-leaderboard' + q)
@@ -2138,6 +2154,15 @@
         // this fetch resolved. This fires with the real, current numbers.
         armConfetti('leaderboard-card', 'top20-' + mondayOf(todayIso()),
           state.leaderboard.some(function (l) { return l.is_me; }) || !!state.viewerRank);
+
+        if (r.todayLeaders) {
+          state.todayLeaders = r.todayLeaders.leaders || [];
+          state.todayViewerRank = r.todayLeaders.viewerRank || null;
+          var todayRows = document.getElementById('today-leaderboard-rows');
+          if (todayRows) todayRows.innerHTML = renderTodayLeaderboardRows();
+          armConfetti('today-leaderboard-card', 'today10-' + todayIso(),
+            state.todayLeaders.some(function (l) { return l.is_me; }) || !!state.todayViewerRank);
+        }
       })
       .catch(function () { /* non-critical — leaderboard just stays stale */ });
   }
