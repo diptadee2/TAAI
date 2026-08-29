@@ -268,21 +268,22 @@ export async function fetchTodayLeaders(supabase, email, date) {
 // via the channel's Integrations -> Webhooks in Discord, stored as an env
 // var, same as the Supabase credentials — never hardcoded). A webhook is
 // just a URL that accepts a POST; no bot process or login needed. Used by
-// discord-daily-leader.js and discord-weekly-leaderboard.js. Throws on
-// failure — both callers are scheduled functions with nothing user-facing
-// to degrade gracefully for, so a real error should show up in the
-// function's own logs rather than fail silently.
-// `username`, if given, overrides the webhook's own configured name just
-// for this one message — lets discord-daily-leader.js and discord-weekly-
-// leaderboard.js show up as two visibly distinct posters in Discord even
-// though they share one webhook URL, rather than both looking identical.
-export async function postToDiscordWebhook(embed, username) {
+// discord-daily-leader.js and discord-weekly-leaderboard.js — both post
+// under the same DISCORD_BOT_USERNAME identity, overriding whatever name
+// the webhook itself happens to be configured with in Discord, so both
+// kinds of post look like they're coming from one consistent account.
+// Throws on failure — both callers are scheduled functions with nothing
+// user-facing to degrade gracefully for, so a real error should show up
+// in the function's own logs rather than fail silently.
+export const DISCORD_BOT_USERNAME = 'Department of Propaganda';
+
+export async function postToDiscordWebhook(embed) {
   const url = process.env.DISCORD_WEBHOOK_URL;
   if (!url) throw new Error('DISCORD_WEBHOOK_URL is not set');
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ embeds: [embed], ...(username ? { username } : {}) }),
+    body: JSON.stringify({ embeds: [embed], username: DISCORD_BOT_USERNAME }),
   });
   if (!res.ok) throw new Error(`Discord webhook post failed: ${res.status} ${await res.text()}`);
 }

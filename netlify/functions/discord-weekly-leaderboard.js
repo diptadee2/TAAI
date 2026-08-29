@@ -29,7 +29,7 @@ export async function handler() {
     description: lines.join('\n'),
     color: 0x8b5cf6, // purple, matches the site's brand accent
     footer: { text: 'Week of ' + weekStart },
-  }, 'TAAI Weekly Leaderboard');
+  });
 
   return json(200, { posted: true, weekStart, leaders: leaders.map(l => ({ name: l.display_name, minutes: l.total_minutes })) });
 }
