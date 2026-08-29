@@ -288,6 +288,14 @@ export async function postToDiscordWebhook(embed) {
   if (!res.ok) throw new Error(`Discord webhook post failed: ${res.status} ${await res.text()}`);
 }
 
+// Fills {{placeholders}} in a template string with values from `vars` — lets
+// discord-daily-leader.js and discord-weekly-leaderboard.js read their
+// wording from env vars (dashboard-editable, no deploy needed) while the
+// actual student name/hours stay driven by real data.
+export function renderTemplate(template, vars) {
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => (key in vars ? String(vars[key]) : ''));
+}
+
 // Validates "YYYY-MM" and returns the [start, end) date range for a SQL query.
 export function monthRange(month) {
   if (!/^\d{4}-\d{2}$/.test(month || '')) return null;
