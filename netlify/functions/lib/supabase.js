@@ -47,6 +47,14 @@ export function todayIST() {
   return IST_FORMATTER.format(new Date());
 }
 
+// The IST calendar date before todayIST() — used by discord-daily-leader.js
+// to report on the day that just fully ended, not the in-progress one.
+export function yesterdayIST() {
+  const d = new Date(todayIST() + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
+}
+
 // Monday of the current ISO week, based on the IST calendar date. Same
 // Monday-start-week convention progress.js's mondayOf() already uses
 // client-side for the calendar's "Week N" labels. Used to key the
@@ -117,15 +125,95 @@ export function parseUtcTimestamp(pgTimestamp) {
   return new Date(pgTimestamp.endsWith('Z') ? pgTimestamp : pgTimestamp + 'Z');
 }
 
-// Top 10 by focus minutes logged *today* (IST), keyed to pomo_daily_
-// sessions.total_minutes — resets by construction every midnight IST since
-// a new day is just a new row starting from zero. Shared by tracker-
-// data.js (the page-load batch) and pomodoro-leaderboard.js (its 30s
-// Focus Mode poll, so the "Today" card can auto-refresh alongside the
-// top-20 board on the same request instead of needing a poll of its own)
-// so the two can't drift out of sync on this logic.
-export async function fetchTodayLeaders(supabase, email) {
-  const today = todayIST();
+// Top 5 by focus minutes logged *last week* (Mon-start, IST), keyed to
+// pomodoro_stats.total_minutes for the week before this one. Shared by
+// tracker-data.js (the page-load batch, for the main-page champions card)
+// and discord-weekly-leaderboard.js (the Monday-morning Discord post) so
+// the two can't drift out of sync on this logic.
+export async function fetchLastWeekLeaders(supabase, email) {
+  const weekStart = weekBefore(weekStartIST());
+  const { data: stats, error: statsError } = await supabase
+    .from('pomodoro_stats')
+    .select('email, total_minutes')
+    .eq('week_start', weekStart)
+    .order('total_minutes', { ascending: false })
+    .limit(5);
+  if (statsError) throw new Error(statsError.message);
+  if (!stats.length) return { weekStart, leaders: [], viewerRank: null };
+
+  const { data: students, error: studentsError } = await supabase
+    .from('students')
+    .select('email, display_name')
+    .in('email', stats.map(s => s.email));
+  if (studentsError) throw new Error(studentsError.message);
+
+  // Previous-week rank, for the same up/down arrow the top-20 board
+  // shows (rankMovementHtml in progress.js, reused as-is here) — except
+  // "previous" means the week before *this* week's top-5 snapshot,
+  // rather than the last poll. A full ranked snapshot of that earlier
+  // week (not just these 5 emails' own rows), since a leader's previous
+  // rank can be well outside that week's own top 5 — someone who jumped
+  // from #12 to #3 should still show as a big rise, not "no data".
+  // Computed in JS from one query rather than a per-leader rank-count
+  // query, since this whole function only ever runs on page load / an
+  // explicit champions-card refresh, not on a poll.
+  const prevWeekStart = weekBefore(weekStart);
+  const { data: prevWeekStats, error: prevWeekError } = await supabase
+    .from('pomodoro_stats')
+    .select('email, total_minutes')
+    .eq('week_start', prevWeekStart)
+    .order('total_minutes', { ascending: false });
+  if (prevWeekError) throw new Error(prevWeekError.message);
+  const prevRankByEmail = Object.fromEntries(prevWeekStats.map((s, i) => [s.email, i + 1]));
+
+  const nameByEmail = Object.fromEntries(students.map(s => [s.email, s.display_name]));
+  const leaders = stats.map((s, i) => ({
+    display_name: nameByEmail[s.email] || 'Anonymous',
+    total_minutes: s.total_minutes,
+    is_me: !!email && s.email === email,
+    previous_week_rank: prevRankByEmail[s.email] ?? null,
+  }));
+
+  // Same idea as pomodoro-leaderboard.js's viewerRank — a student outside
+  // last week's top 5 otherwise has no way to see where they actually
+  // stood, since this query never fetches their row at all.
+  let viewerRank = null;
+  const viewerInTop = leaders.some(l => l.is_me);
+  if (email && !viewerInTop) {
+    const { data: viewerStats, error: viewerError } = await supabase
+      .from('pomodoro_stats')
+      .select('total_minutes')
+      .eq('email', email)
+      .eq('week_start', weekStart)
+      .maybeSingle();
+    if (viewerError) throw new Error(viewerError.message);
+
+    if (viewerStats) {
+      const { count, error: countError } = await supabase
+        .from('pomodoro_stats')
+        .select('*', { count: 'exact', head: true })
+        .eq('week_start', weekStart)
+        .gt('total_minutes', viewerStats.total_minutes);
+      if (countError) throw new Error(countError.message);
+
+      viewerRank = { rank: (count || 0) + 1, total_minutes: viewerStats.total_minutes, previous_week_rank: prevRankByEmail[email] ?? null };
+    }
+  }
+
+  return { weekStart, leaders, viewerRank };
+}
+
+// Top 10 by focus minutes logged on a given IST date (todayIST() by
+// default), keyed to pomo_daily_sessions.total_minutes — resets by
+// construction every midnight IST since a new day is just a new row
+// starting from zero. Shared by tracker-data.js (the page-load batch) and
+// pomodoro-leaderboard.js (its 30s Focus Mode poll, so the "Today" card
+// can auto-refresh alongside the top-20 board on the same request instead
+// of needing a poll of its own) so the two can't drift out of sync on this
+// logic — and by discord-daily-leader.js, which passes yesterdayIST()
+// explicitly to report on the day that just fully ended.
+export async function fetchTodayLeaders(supabase, email, date) {
+  const today = date || todayIST();
   const { data: stats, error: statsError } = await supabase
     .from('pomo_daily_sessions')
     .select('email, total_minutes')
@@ -174,6 +262,29 @@ export async function fetchTodayLeaders(supabase, email) {
   }
 
   return { date: today, leaders, viewerRank };
+}
+
+// Posts one embed to the Discord channel wired to DISCORD_WEBHOOK_URL (set
+// via the channel's Integrations -> Webhooks in Discord, stored as an env
+// var, same as the Supabase credentials — never hardcoded). A webhook is
+// just a URL that accepts a POST; no bot process or login needed. Used by
+// discord-daily-leader.js and discord-weekly-leaderboard.js. Throws on
+// failure — both callers are scheduled functions with nothing user-facing
+// to degrade gracefully for, so a real error should show up in the
+// function's own logs rather than fail silently.
+// `username`, if given, overrides the webhook's own configured name just
+// for this one message — lets discord-daily-leader.js and discord-weekly-
+// leaderboard.js show up as two visibly distinct posters in Discord even
+// though they share one webhook URL, rather than both looking identical.
+export async function postToDiscordWebhook(embed, username) {
+  const url = process.env.DISCORD_WEBHOOK_URL;
+  if (!url) throw new Error('DISCORD_WEBHOOK_URL is not set');
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ embeds: [embed], ...(username ? { username } : {}) }),
+  });
+  if (!res.ok) throw new Error(`Discord webhook post failed: ${res.status} ${await res.text()}`);
 }
 
 // Validates "YYYY-MM" and returns the [start, end) date range for a SQL query.

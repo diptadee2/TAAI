@@ -30,13 +30,9 @@
 //
 // pomoActive was added later, for cross-device pomodoro sync — see
 // fetchPomoActive below and pomo-active.js (the write side).
-import { getSupabase, json, monthRange, todayIST, weekStartIST, weekBefore, fetchTodayLeaders } from './lib/supabase.js';
+import { getSupabase, json, monthRange, todayIST, fetchLastWeekLeaders, fetchTodayLeaders } from './lib/supabase.js';
 
 const DEMO_TODAY_FLOOR = '2026-08-01'; // see streak.js — same self-expiring floor
-
-function lastWeekStart() {
-  return weekBefore(weekStartIST());
-}
 
 async function fetchSchedule(supabase, range) {
   const { data, error } = await supabase
@@ -64,79 +60,6 @@ async function fetchSchedule(supabase, range) {
   if (latestError) throw new Error(latestError.message);
 
   return { days, latestMonth: latestRow ? latestRow.date.slice(0, 7) : null };
-}
-
-async function fetchLastWeekLeaders(supabase, email) {
-  const weekStart = lastWeekStart();
-  const { data: stats, error: statsError } = await supabase
-    .from('pomodoro_stats')
-    .select('email, total_minutes')
-    .eq('week_start', weekStart)
-    .order('total_minutes', { ascending: false })
-    .limit(5);
-  if (statsError) throw new Error(statsError.message);
-  if (!stats.length) return { weekStart, leaders: [], viewerRank: null };
-
-  const { data: students, error: studentsError } = await supabase
-    .from('students')
-    .select('email, display_name')
-    .in('email', stats.map(s => s.email));
-  if (studentsError) throw new Error(studentsError.message);
-
-  // Previous-week rank, for the same up/down arrow the top-20 board
-  // shows (rankMovementHtml in progress.js, reused as-is here) — except
-  // "previous" means the week before *this* week's top-5 snapshot,
-  // rather than the last poll. A full ranked snapshot of that earlier
-  // week (not just these 5 emails' own rows), since a leader's previous
-  // rank can be well outside that week's own top 5 — someone who jumped
-  // from #12 to #3 should still show as a big rise, not "no data".
-  // Computed in JS from one query rather than a per-leader rank-count
-  // query, since this whole function only ever runs on page load / an
-  // explicit champions-card refresh, not on a poll.
-  const prevWeekStart = weekBefore(weekStart);
-  const { data: prevWeekStats, error: prevWeekError } = await supabase
-    .from('pomodoro_stats')
-    .select('email, total_minutes')
-    .eq('week_start', prevWeekStart)
-    .order('total_minutes', { ascending: false });
-  if (prevWeekError) throw new Error(prevWeekError.message);
-  const prevRankByEmail = Object.fromEntries(prevWeekStats.map((s, i) => [s.email, i + 1]));
-
-  const nameByEmail = Object.fromEntries(students.map(s => [s.email, s.display_name]));
-  const leaders = stats.map((s, i) => ({
-    display_name: nameByEmail[s.email] || 'Anonymous',
-    total_minutes: s.total_minutes,
-    is_me: !!email && s.email === email,
-    previous_week_rank: prevRankByEmail[s.email] ?? null,
-  }));
-
-  // Same idea as pomodoro-leaderboard.js's viewerRank — a student outside
-  // last week's top 5 otherwise has no way to see where they actually
-  // stood, since this query never fetches their row at all.
-  let viewerRank = null;
-  const viewerInTop = leaders.some(l => l.is_me);
-  if (email && !viewerInTop) {
-    const { data: viewerStats, error: viewerError } = await supabase
-      .from('pomodoro_stats')
-      .select('total_minutes')
-      .eq('email', email)
-      .eq('week_start', weekStart)
-      .maybeSingle();
-    if (viewerError) throw new Error(viewerError.message);
-
-    if (viewerStats) {
-      const { count, error: countError } = await supabase
-        .from('pomodoro_stats')
-        .select('*', { count: 'exact', head: true })
-        .eq('week_start', weekStart)
-        .gt('total_minutes', viewerStats.total_minutes);
-      if (countError) throw new Error(countError.message);
-
-      viewerRank = { rank: (count || 0) + 1, total_minutes: viewerStats.total_minutes, previous_week_rank: prevRankByEmail[email] ?? null };
-    }
-  }
-
-  return { weekStart, leaders, viewerRank };
 }
 
 async function fetchProgress(supabase, email, range) {
