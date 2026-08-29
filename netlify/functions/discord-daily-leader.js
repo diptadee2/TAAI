@@ -4,6 +4,8 @@
 // invoke a scheduled function).
 import { getSupabase, json, yesterdayIST, fetchTodayLeaders, postToDiscordWebhook } from './lib/supabase.js';
 
+const TRACKER_URL = 'https://taai.live/gate-da-progress-tracker';
+
 function formatHoursDecimal(minutes) {
   return (minutes / 60).toFixed(1) + 'h';
 }
@@ -21,6 +23,7 @@ export async function handler() {
   const top = leaders[0];
   await postToDiscordWebhook({
     title: '🏆 Yesterday\'s Top Focus Session',
+    url: TRACKER_URL,
     description: `**${top.display_name}** logged the most focus time yesterday — **${formatHoursDecimal(top.total_minutes)}**!`,
     color: 0xf59e0b, // amber, matches the site's #1 medal color
     footer: { text: date },

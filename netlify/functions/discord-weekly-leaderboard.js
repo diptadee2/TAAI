@@ -5,6 +5,7 @@
 import { getSupabase, json, fetchLastWeekLeaders, postToDiscordWebhook } from './lib/supabase.js';
 
 const MEDALS = ['🥇', '🥈', '🥉'];
+const TRACKER_URL = 'https://taai.live/gate-da-progress-tracker';
 
 function formatHoursDecimal(minutes) {
   return (minutes / 60).toFixed(1) + 'h';
@@ -26,6 +27,7 @@ export async function handler() {
 
   await postToDiscordWebhook({
     title: '📅 Weekly Top 5 Leaderboard',
+    url: TRACKER_URL,
     description: lines.join('\n'),
     color: 0x8b5cf6, // purple, matches the site's brand accent
     footer: { text: 'Week of ' + weekStart },
