@@ -24,7 +24,7 @@ export async function handler() {
   await postToDiscordWebhook({
     title: '🏆 Yesterday\'s Top Focus Session',
     url: TRACKER_URL,
-    description: `**${top.display_name}** logged the most focus time yesterday — **${formatHoursDecimal(top.total_minutes)}**!`,
+    description: `**${top.display_name}** logged the most focus time yesterday — **${formatHoursDecimal(top.total_minutes)}**!\n\n[📊 View the progress tracker](${TRACKER_URL})`,
     color: 0xf59e0b, // amber, matches the site's #1 medal color
     footer: { text: date },
   });

@@ -28,7 +28,7 @@ export async function handler() {
   await postToDiscordWebhook({
     title: '📅 Weekly Top 5 Leaderboard',
     url: TRACKER_URL,
-    description: lines.join('\n'),
+    description: lines.join('\n') + `\n\n[📊 View the progress tracker](${TRACKER_URL})`,
     color: 0x8b5cf6, // purple, matches the site's brand accent
     footer: { text: 'Week of ' + weekStart },
   });
