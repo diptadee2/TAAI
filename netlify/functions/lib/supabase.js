@@ -24,7 +24,7 @@ export function getSupabase() {
 // (old JS silently sending a request shape the new server no longer
 // accepts) doesn't stay stuck indefinitely waiting for someone to notice
 // and manually refresh.
-export const CLIENT_VERSION = '2026-08-30-1';
+export const CLIENT_VERSION = '2026-08-30-2';
 
 export function json(statusCode, body) {
   return {

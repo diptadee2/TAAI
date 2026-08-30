@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-08-30-1';
+  var CLIENT_VERSION = '2026-08-30-2';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -300,7 +300,7 @@
   // only notify, not chime — the notification is what's mandatory instead.
   function applyPomoActiveState(saved) {
     if (!saved) return;
-    if (pomo.timerId) clearInterval(pomo.timerId);
+    if (pomo.timerId) clearTimeout(pomo.timerId);
     pomo.mode = saved.mode;
     pomo.totalSeconds = saved.totalSeconds;
     // Math.max, not a straight overwrite — the cross-device reconciliation
@@ -312,13 +312,10 @@
     if (saved.running) {
       pomo.phaseEndAt = saved.phaseEndAt;
       pomo.running = true;
-      // catches up immediately if time already ran out while away — pomoTick
-      // is async now (it has to await crediting before advancing, see
-      // there), so the interval can only be started once it's actually
-      // done, not right after calling it.
-      pomoTick().then(function () {
-        if (pomo.running) pomo.timerId = setInterval(pomoTick, 1000);
-      });
+      // Catches up immediately if time already ran out while away — pomoTick
+      // is self-scheduling now (see there), so it handles queuing its own
+      // next tick internally regardless of how long the catch-up takes.
+      pomoTick();
     } else {
       pomo.secondsLeft = saved.secondsLeft;
       pomo.running = false;
@@ -1586,15 +1583,33 @@
     savePomoActiveState();
   }
 
-  // Returns a promise, resolved once this tick (and any cascading phases —
-  // see the recursive call at the bottom) is fully settled. applyPomoActiveState
-  // relies on this to know when it's actually safe to decide whether to
-  // start the interval (see there) — it used to assume this function was
-  // synchronous, which broke once crediting needed to be awaited (below).
+  // Self-scheduling (queues its own next tick via setTimeout at the bottom
+  // of every path, including this early-return one) rather than driven by
+  // a fixed setInterval — a setInterval fires strictly every 1000ms
+  // regardless of whether the PREVIOUS call's async work below has
+  // actually finished yet. Real bug, confirmed in production (reproduced
+  // on screen: a break correctly starts at 04:59, then within about a
+  // second is already showing a running work session again, session count
+  // unchanged): on a slow connection, recordPomodoroCompletion's network
+  // round-trip can still be in flight when setInterval fires the next tick
+  // anyway. That second, overlapping tick sees the same "just finished"
+  // snapshot and starts its own duplicate completion call. When THAT one
+  // resolves later — after the first tick has already advanced the phase
+  // into a break — it blindly calls pomoAdvance() again from its own
+  // stale snapshot, flipping the just-started break straight back to a
+  // running work phase. The pause-after-break safeguard below never
+  // catches this, because the second tick's own `finishedMode` (captured
+  // at ITS start, before the first tick's mutation) was 'work', not
+  // 'break'. Only ever scheduling the next tick after this one is fully
+  // resolved makes two overlapping ticks impossible.
   function pomoTick() {
     if (!pomo.running) { updatePomoDisplay(); return Promise.resolve(); }
     pomo.secondsLeft = Math.max(0, Math.round((pomo.phaseEndAt - Date.now()) / 1000));
-    if (pomo.secondsLeft > 0) { updatePomoDisplay(); return Promise.resolve(); }
+    if (pomo.secondsLeft > 0) {
+      updatePomoDisplay();
+      pomo.timerId = setTimeout(pomoTick, 1000);
+      return Promise.resolve();
+    }
 
     // Only a genuine tick-to-zero finish counts toward the leaderboard —
     // checked here (before pomoAdvance flips the mode), not inside
@@ -1634,7 +1649,8 @@
         // actually stops a forgotten-but-open tab from racking up
         // leaderboard credit indefinitely: it just sits paused after the
         // first break, earning nothing further, until someone clicks Start.
-        clearInterval(pomo.timerId);
+        // No clearTimeout needed here — the timeout that led to this call
+        // has already fired, there's nothing pending to cancel.
         pomo.running = false;
         // The work phase pomoAdvance just set up hasn't actually started
         // counting down (Start hasn't been clicked yet), so its
@@ -1672,13 +1688,13 @@
     ensurePomoAudioCtx(); // real click — unlocks audio for the chime that fires later, unattended
     pomo.phaseEndAt = Date.now() + pomo.secondsLeft * 1000;
     pomo.running = true;
-    pomo.timerId = setInterval(pomoTick, 1000);
+    pomoTick(); // self-schedules its own next tick — see pomoTick
     savePomoActiveState();
   }
 
   function pomoToggleRun() {
     if (pomo.running) {
-      clearInterval(pomo.timerId);
+      clearTimeout(pomo.timerId);
       pomo.running = false;
       updatePomoDisplay();
       savePomoActiveState();
@@ -1714,7 +1730,7 @@
   }
 
   function pomoReset() {
-    clearInterval(pomo.timerId);
+    clearTimeout(pomo.timerId);
     pomo.running = false;
     pomo.mode = 'work';
     pomo.totalSeconds = pomoDurationFor('work');
@@ -1725,12 +1741,12 @@
 
   function pomoSkip() {
     ensurePomoAudioCtx(); // real click — Skip can fire a chime even if Start was never pressed
-    clearInterval(pomo.timerId);
+    clearTimeout(pomo.timerId);
     // fromNow=true — see pomoAdvance: a Skip must always start the next
     // phase fresh from right now, never cascade from a possibly-stale old
     // deadline (that's what pomoTick's own catch-up loop is for).
     pomoAdvance(true);
-    if (pomo.running) pomo.timerId = setInterval(pomoTick, 1000);
+    if (pomo.running) pomoTick(); // self-schedules its own next tick — see pomoTick
   }
 
   // Guests have no identity to save durations against — localStorage (see
