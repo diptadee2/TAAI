@@ -7,12 +7,6 @@ import { getSupabase, json, fetchLastWeekLeaders, postToDiscordWebhook } from '.
 const MEDALS = ['🥇', '🥈', '🥉'];
 const TRACKER_URL = 'https://taai.live/gate-da-progress-tracker';
 
-// Wording is overridable via Netlify dashboard env vars (DISCORD_WEEKLY_TITLE,
-// DISCORD_WEEKLY_INTRO) so it can be edited without a code deploy. The medal
-// list itself stays code-driven since it's built from real leaderboard rows,
-// not free text — DISCORD_WEEKLY_INTRO is an optional line shown above it.
-const DEFAULT_TITLE = '📅 Weekly Top 5 Leaderboard';
-
 function formatHoursDecimal(minutes) {
   return (minutes / 60).toFixed(1) + 'h';
 }
@@ -31,12 +25,10 @@ export async function handler() {
     `${MEDALS[i] || (i + 1) + '.'} **${l.display_name}** — ${formatHoursDecimal(l.total_minutes)}`
   );
 
-  const title = process.env.DISCORD_WEEKLY_TITLE || DEFAULT_TITLE;
-  const intro = process.env.DISCORD_WEEKLY_INTRO || '';
   await postToDiscordWebhook({
-    title,
+    title: '📅 Weekly Top 5 Leaderboard',
     url: TRACKER_URL,
-    description: (intro ? intro + '\n\n' : '') + lines.join('\n') + `\n\n[📊 View the progress tracker](${TRACKER_URL})`,
+    description: lines.join('\n') + `\n\n[📊 View the progress tracker](${TRACKER_URL})`,
     color: 0x8b5cf6, // purple, matches the site's brand accent
     footer: { text: 'Week of ' + weekStart },
   });
