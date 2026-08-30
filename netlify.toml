@@ -18,12 +18,12 @@
 # cron below automatically, no separate scheduler/dependency needed. Cron
 # times are UTC regardless of the function's own logic (same "no
 # guaranteed local timezone" reality documented in lib/supabase.js's
-# todayIST()) — 8:00 AM IST = 02:30 UTC.
+# todayIST()) — 10:00 AM IST = 04:30 UTC, 10:30 AM IST = 05:00 UTC.
 [functions."discord-daily-leader"]
-  schedule = "30 2 * * *"
+  schedule = "30 4 * * *"
 
 [functions."discord-weekly-leaderboard"]
-  schedule = "30 2 * * 1"
+  schedule = "0 5 * * 1"
 
 # No headers were configured at all before this, so every static asset
 # (images, vendor React bundle, favicons) inherited Netlify's default
