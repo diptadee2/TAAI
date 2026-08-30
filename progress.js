@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-08-28-1';
+  var CLIENT_VERSION = '2026-08-30-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -813,11 +813,21 @@
         // only living in the one that saved it.
         var savedPomo = state.student ? data.pomoSettings : null;
         if (savedPomo && savedPomo.work != null) {
+          // clampMinutes, not a raw copy — a partial row (e.g. pomo_work_min
+          // set but pomo_long_break_min still null) used to assign `null`
+          // straight into pomoSettings.longBreak. null * 60 is 0, not NaN,
+          // so pomoDurationFor silently produced a genuine 0-second break:
+          // phaseEndAt landed at-or-before "now" the instant it started, and
+          // the very next tick saw it as already finished and advanced
+          // straight back to work — a break that visibly flashed for about
+          // one tick before converting to a running work session. Falls
+          // back to whatever's already loaded (localStorage or defaults),
+          // same safety net loadPomoSettings() already uses.
           pomoSettings = {
-            work: savedPomo.work,
-            shortBreak: savedPomo.shortBreak,
-            longBreak: savedPomo.longBreak,
-            cycle: savedPomo.cycle,
+            work: clampMinutes(savedPomo.work, pomoSettings.work, 1, 180),
+            shortBreak: clampMinutes(savedPomo.shortBreak, pomoSettings.shortBreak, 1, 60),
+            longBreak: clampMinutes(savedPomo.longBreak, pomoSettings.longBreak, 1, 90),
+            cycle: clampMinutes(savedPomo.cycle, pomoSettings.cycle, 1, 12),
           };
           savePomoSettings(); // cache locally too, so a later guest-mode reload isn't stuck back on defaults
           if (!pomo.running) {
