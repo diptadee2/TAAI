@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-08-30-2';
+  var CLIENT_VERSION = '2026-09-01-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1601,8 +1601,37 @@
   // catches this, because the second tick's own `finishedMode` (captured
   // at ITS start, before the first tick's mutation) was 'work', not
   // 'break'. Only ever scheduling the next tick after this one is fully
-  // resolved makes two overlapping ticks impossible.
+  // resolved makes two overlapping ticks impossible — for THIS one entry
+  // point.
+  //
+  // Real bug, confirmed in production a second time: self-scheduling alone
+  // isn't enough, because pomoTick isn't only called from its own
+  // schedule — the visibilitychange handler (below, elsewhere in this
+  // file) also calls it directly, to catch up a background tab's
+  // Chrome-throttled timer the moment it becomes visible again. That
+  // second call site has no way to know a scheduled tick might already be
+  // mid-flight, and browsers typically release a throttled tab's own
+  // delayed timer at almost the exact same moment visibility restores —
+  // so the two collide, reopening the identical overlapping-tick race
+  // above through a completely different door. Reproduced on screen
+  // again this way: an awake, foregrounded laptop, a break that had
+  // barely started, flipping to a running work session within ~5 seconds
+  // with no click. pomoTickRunning below guards the actual entry point
+  // itself, so it doesn't matter which caller invokes pomoTick() — only
+  // one logical tick can ever be in flight at a time, from any source.
+  var pomoTickRunning = false;
   function pomoTick() {
+    if (pomoTickRunning) return Promise.resolve();
+    pomoTickRunning = true;
+    return pomoTickCore().finally(function () { pomoTickRunning = false; });
+  }
+
+  // The actual tick logic — called by the guarded pomoTick() above, and
+  // recursively by itself (never by pomoTick()) to cascade through
+  // multiple already-elapsed phases after a long gap. The recursive call
+  // deliberately bypasses the guard: it's a continuation of the SAME
+  // logical tick pomoTick() already claimed, not a new overlapping one.
+  function pomoTickCore() {
     if (!pomo.running) { updatePomoDisplay(); return Promise.resolve(); }
     pomo.secondsLeft = Math.max(0, Math.round((pomo.phaseEndAt - Date.now()) / 1000));
     if (pomo.secondsLeft > 0) {
@@ -1677,7 +1706,8 @@
       // pause handling, properly sequenced the same way, not collapsed
       // into one. Bounded naturally the same way the old while loop was:
       // pause-after-break always halts this within at most two recursions.
-      return pomoTick();
+      // pomoTickCore, not pomoTick — see pomoTick's guard above.
+      return pomoTickCore();
     });
   }
 
