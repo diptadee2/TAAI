@@ -277,13 +277,26 @@ export async function fetchTodayLeaders(supabase, email, date) {
 // in the function's own logs rather than fail silently.
 export const DISCORD_BOT_USERNAME = 'Department of Propaganda';
 
-export async function postToDiscordWebhook(embed) {
+// `content`, if given, is plain text shown above the embed — the only
+// place a real @everyone/@here ping can go (Discord ignores mentions
+// written inside embed fields). Discord also silently suppresses even a
+// literal "@everyone" in a webhook's content unless the request explicitly
+// opts in via allowed_mentions, specifically to stop APIs from being able
+// to spam a whole server by accident — so that's only sent when content is
+// actually provided, not on every post. Used for the weekly and monthly
+// posts only, by explicit request — not the daily one, to avoid a ping
+// landing every single morning.
+export async function postToDiscordWebhook(embed, content) {
   const url = process.env.DISCORD_WEBHOOK_URL;
   if (!url) throw new Error('DISCORD_WEBHOOK_URL is not set');
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ embeds: [embed], username: DISCORD_BOT_USERNAME }),
+    body: JSON.stringify({
+      embeds: [embed],
+      username: DISCORD_BOT_USERNAME,
+      ...(content ? { content, allowed_mentions: { parse: ['everyone'] } } : {}),
+    }),
   });
   if (!res.ok) throw new Error(`Discord webhook post failed: ${res.status} ${await res.text()}`);
 }

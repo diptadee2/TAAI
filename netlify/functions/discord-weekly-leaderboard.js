@@ -1,5 +1,5 @@
 // Scheduled function (see netlify.toml) — posts last week's top 5 to
-// Discord every Monday at 8 AM IST. Also directly callable via GET for
+// Discord every Monday at 10:30 AM IST. Also directly callable via GET for
 // local testing (`netlify dev` doesn't need a real cron trigger to invoke
 // a scheduled function).
 import { getSupabase, json, fetchLastWeekLeaders, postToDiscordWebhook } from './lib/supabase.js';
@@ -31,7 +31,7 @@ export async function handler() {
     description: lines.join('\n') + `\n\n[📊 View the progress tracker](${TRACKER_URL})`,
     color: 0x8b5cf6, // purple, matches the site's brand accent
     footer: { text: 'Week of ' + weekStart },
-  });
+  }, '@everyone');
 
   return json(200, { posted: true, weekStart, leaders: leaders.map(l => ({ name: l.display_name, minutes: l.total_minutes })) });
 }

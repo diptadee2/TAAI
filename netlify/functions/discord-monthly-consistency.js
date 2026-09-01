@@ -48,7 +48,7 @@ export async function handler() {
     description,
     color: 0xf59e0b, // amber, matches the site's #1 medal color
     footer: { text: label },
-  });
+  }, '@everyone');
 
   return json(200, { posted: true, month, top: top.map(s => ({ name: s.display_name, medianMinutes: s.medianMinutes, totalMinutes: s.totalMinutes })) });
 }
