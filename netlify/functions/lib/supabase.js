@@ -298,3 +298,76 @@ export function monthRange(month) {
   const end = `${endYear}-${String(endMonth).padStart(2, '0')}-01`;
   return { start, end };
 }
+
+// The calendar month before todayIST()'s — used by discord-monthly-
+// consistency.js, which runs on the 1st and reports on the month that
+// just closed (e.g. an Oct 1 run reports September).
+export function previousMonthIST() {
+  const today = todayIST();
+  const [y, m] = today.slice(0, 7).split('-').map(Number);
+  const prevMonth = m === 1 ? 12 : m - 1;
+  const prevYear = m === 1 ? y - 1 : y;
+  return `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
+}
+
+// "Most consistent" for a given "YYYY-MM" month: median daily focus
+// minutes, zero-filled across every calendar day of the month (a day with
+// no session counts as a real 0, not an excluded day — every day is
+// meant to be a work day here) rather than a raw average, so one huge
+// binge day can't outrank someone who studied moderately but genuinely
+// every day. Only students who registered by the 7th of that month are
+// eligible — a 2-3 day-old account with one great day would otherwise
+// have too few data points for a median to mean anything. Ties broken by
+// total minutes (not just median) as the secondary sort.
+export async function computeMonthlyConsistency(supabase, month) {
+  const range = monthRange(month);
+  if (!range) throw new Error('invalid month');
+  const daysInMonth = (new Date(range.end) - new Date(range.start)) / 86400000;
+  const cutoff = `${month}-07T23:59:59`;
+
+  const { data: students, error: studentsError } = await supabase
+    .from('students')
+    .select('email, display_name, created_at')
+    .lte('created_at', cutoff);
+  if (studentsError) throw new Error(studentsError.message);
+  if (!students.length) return { month, top: [] };
+
+  const emails = students.map(s => s.email);
+  const { data: sessions, error: sessionsError } = await supabase
+    .from('pomo_daily_sessions')
+    .select('email, date, total_minutes')
+    .in('email', emails)
+    .gte('date', range.start)
+    .lt('date', range.end);
+  if (sessionsError) throw new Error(sessionsError.message);
+
+  const minutesByEmailDate = {};
+  for (const row of sessions) {
+    if (!minutesByEmailDate[row.email]) minutesByEmailDate[row.email] = {};
+    minutesByEmailDate[row.email][row.date] = row.total_minutes;
+  }
+
+  function median(values) {
+    const sorted = [...values].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+  }
+
+  const results = students.map(s => {
+    const byDate = minutesByEmailDate[s.email] || {};
+    const values = [];
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${month}-${String(d).padStart(2, '0')}`;
+      values.push(byDate[dateStr] || 0);
+    }
+    return {
+      email: s.email,
+      display_name: s.display_name,
+      medianMinutes: median(values),
+      totalMinutes: values.reduce((a, b) => a + b, 0),
+    };
+  });
+
+  results.sort((a, b) => b.medianMinutes - a.medianMinutes || b.totalMinutes - a.totalMinutes);
+  return { month, top: results.slice(0, 3) };
+}
