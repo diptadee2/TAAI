@@ -141,6 +141,7 @@
           '<div class="field"><label>Title (optional' + (source !== 'custom' ? ' — overrides the default' : '') + ')</label><input type="text" name="title" value="' + escapeHtml(p.title) + '"></div>' +
           bodyField +
           '<div class="checkbox-row"><input type="checkbox" id="f-everyone" name="tag_everyone"' + (p.tag_everyone ? ' checked' : '') + '><label for="f-everyone">Tag @everyone</label></div>' +
+          '<div class="field"><label>Additional mentions (optional)</label><input type="text" name="extra_mentions" placeholder="@here, or &lt;@&amp;ROLE_ID&gt; for a role, &lt;@USER_ID&gt; for a person" value="' + escapeHtml(p.extra_mentions) + '"><div class="field-hint">Type the exact Discord mention. For a role or person, right-click them in Discord (Developer Mode must be on in Discord\'s settings) and Copy ID, then use &lt;@&amp;THAT_ID&gt; for a role or &lt;@THAT_ID&gt; for a person.</div></div>' +
           '<div class="field-row">' +
             '<div class="field"><label>Frequency</label><select name="schedule_type" id="f-schedule-type">' + scheduleOptions + '</select></div>' +
             '<div class="field"><label>Time (IST)</label><input type="time" name="schedule_time" value="' + escapeHtml(p.schedule_time || '10:00') + '" required></div>' +
@@ -185,6 +186,7 @@
     return (
       '<div class="preview-box" style="border-left-color:' + colorHex + ';">' +
         '<div class="preview-username">Department of Propaganda <span class="preview-bot-tag">BOT</span></div>' +
+        (state.preview.content ? '<div class="preview-mention">' + escapeHtml(state.preview.content) + '</div>' : '') +
         (embed.title ? '<div class="preview-title">' + discordMarkdownToHtml(embed.title) + '</div>' : '') +
         (embed.description ? '<div class="preview-description">' + discordMarkdownToHtml(embed.description) + '</div>' : '') +
         (embed.footer && embed.footer.text ? '<div class="preview-footer">' + escapeHtml(embed.footer.text) + '</div>' : '') +
@@ -331,6 +333,7 @@
       title: (fd.get('title') || '').trim(),
       body: (fd.get('body') || '').trim(),
       tag_everyone: fd.get('tag_everyone') === 'on',
+      extra_mentions: (fd.get('extra_mentions') || '').trim(),
       schedule_type: fd.get('schedule_type'),
       schedule_time: fd.get('schedule_time'),
       schedule_date: fd.get('schedule_date') || null,

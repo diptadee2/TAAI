@@ -240,3 +240,9 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON scheduled_posts TO service_role;
 -- goes (that's still webhook_url). Without this, telling rows apart in
 -- the list means decoding opaque webhook URLs by eye.
 ALTER TABLE scheduled_posts ADD COLUMN IF NOT EXISTS channel_name TEXT;
+
+-- Free text for any mention beyond the tag_everyone checkbox — @here, a
+-- role ping (<@&ROLE_ID>), a specific user (<@USER_ID>). Combined with
+-- '@everyone' (if tag_everyone is also checked) into one content string
+-- when the post actually fires — see discord-dispatch.js.
+ALTER TABLE scheduled_posts ADD COLUMN IF NOT EXISTS extra_mentions TEXT;

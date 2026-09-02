@@ -14,7 +14,7 @@
 // an in-memory object built from the form's current (possibly unsaved)
 // values, so what's shown is genuinely what would post, not a
 // hand-maintained approximation that could quietly drift out of sync.
-import { getSupabase, json, requireAdmin, computeNextFireAt, resolveScheduledPostEmbed } from './lib/supabase.js';
+import { getSupabase, json, requireAdmin, computeNextFireAt, resolveScheduledPostEmbed, buildMentionContent } from './lib/supabase.js';
 
 const VALID_SOURCES = ['custom', 'daily_leader', 'daily_leaderboard', 'weekly_leaderboard', 'monthly_consistency'];
 const VALID_SCHEDULE_TYPES = ['once', 'daily', 'weekly', 'monthly'];
@@ -50,16 +50,20 @@ export async function handler(event, context) {
 
     try {
       // Not a real row — never inserted, id/webhook_url/schedule fields
-      // are irrelevant to what gets posted, only source/title/body/color
-      // actually feed into the embed.
-      const embed = await resolveScheduledPostEmbed(supabase, {
+      // are irrelevant to what gets posted, only source/title/body/color/
+      // mention fields actually feed into the preview.
+      const tempRow = {
         source: body.source,
         title: body.title || null,
         body: body.body || null,
         color: Number.isFinite(body.color) ? body.color : null,
-      });
-      if (!embed) return json(200, { embed: null, reason: 'No data yet for this source/period — nothing would post right now.' });
-      return json(200, { embed });
+        tag_everyone: !!body.tag_everyone,
+        extra_mentions: body.extra_mentions || null,
+      };
+      const embed = await resolveScheduledPostEmbed(supabase, tempRow);
+      const content = buildMentionContent(tempRow);
+      if (!embed) return json(200, { embed: null, content: content || null, reason: 'No data yet for this source/period — nothing would post right now.' });
+      return json(200, { embed, content: content || null });
     } catch (err) {
       return json(400, { error: err.message });
     }
@@ -88,6 +92,7 @@ export async function handler(event, context) {
       title: body.title || null,
       body: body.body || null,
       tag_everyone: !!body.tag_everyone,
+      extra_mentions: body.extra_mentions || null,
       color: Number.isFinite(body.color) ? body.color : null,
       schedule_type: body.schedule_type,
       schedule_time: body.schedule_time,
@@ -125,6 +130,7 @@ export async function handler(event, context) {
       title: body.title || null,
       body: body.body || null,
       tag_everyone: !!body.tag_everyone,
+      extra_mentions: body.extra_mentions || null,
       color: Number.isFinite(body.color) ? body.color : null,
       schedule_type: body.schedule_type,
       schedule_time: body.schedule_time,

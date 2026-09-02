@@ -301,14 +301,17 @@ export async function fetchTodayLeaders(supabase, email, date) {
 export const DISCORD_BOT_USERNAME = 'Department of Propaganda';
 
 // `content`, if given, is plain text shown above the embed — the only
-// place a real @everyone/@here ping can go (Discord ignores mentions
-// written inside embed fields). Discord also silently suppresses even a
-// literal "@everyone" in a webhook's content unless the request explicitly
-// opts in via allowed_mentions, specifically to stop APIs from being able
-// to spam a whole server by accident — so that's only sent when content is
-// actually provided, not on every post. Used for the weekly and monthly
-// posts only, by explicit request — not the daily one, to avoid a ping
-// landing every single morning.
+// place a real mention (@everyone, @here, a role `<@&ID>`, a user `<@ID>`)
+// can go (Discord ignores mentions written inside embed fields). Discord
+// also silently suppresses even literal mention text in a webhook's
+// content unless the request explicitly opts in via allowed_mentions,
+// specifically to stop APIs from being able to spam a whole server by
+// accident — so that's only sent when content is actually provided, not
+// on every post. `parse` covers all three mention kinds regardless of
+// which one is actually present in `content` — that's safe (Discord only
+// pings what's syntactically in the text; granting parse permission for a
+// kind that isn't present just does nothing), and simpler than inspecting
+// `content` to guess which kinds it needs.
 export async function postToDiscordWebhook(embed, content, webhookUrl) {
   const url = webhookUrl || process.env.DISCORD_WEBHOOK_URL;
   if (!url) throw new Error('DISCORD_WEBHOOK_URL is not set');
@@ -318,10 +321,23 @@ export async function postToDiscordWebhook(embed, content, webhookUrl) {
     body: JSON.stringify({
       embeds: [embed],
       username: DISCORD_BOT_USERNAME,
-      ...(content ? { content, allowed_mentions: { parse: ['everyone'] } } : {}),
+      ...(content ? { content, allowed_mentions: { parse: ['everyone', 'roles', 'users'] } } : {}),
     }),
   });
   if (!res.ok) throw new Error(`Discord webhook post failed: ${res.status} ${await res.text()}`);
+}
+
+// Combines a scheduled_posts row's tag_everyone checkbox and free-text
+// extra_mentions field into the single content string postToDiscordWebhook
+// actually sends — e.g. tag_everyone=true + extra_mentions="<@&123>" both
+// present becomes "@everyone <@&123>". Returns undefined (not '') when
+// there's nothing to mention, matching postToDiscordWebhook's own "only
+// send content/allowed_mentions when there's actually something" check.
+export function buildMentionContent(row) {
+  const parts = [];
+  if (row.tag_everyone) parts.push('@everyone');
+  if (row.extra_mentions) parts.push(row.extra_mentions.trim());
+  return parts.length ? parts.join(' ') : undefined;
 }
 
 // Validates "YYYY-MM" and returns the [start, end) date range for a SQL query.

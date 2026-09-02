@@ -10,7 +10,7 @@
 // Content resolution (resolveScheduledPostEmbed) lives in lib/supabase.js,
 // shared with team-posts.js's preview endpoint — so a preview always shows
 // exactly what a real firing would post, never a separate approximation.
-import { getSupabase, json, computeNextFireAt, resolveScheduledPostEmbed, postToDiscordWebhook } from './lib/supabase.js';
+import { getSupabase, json, computeNextFireAt, resolveScheduledPostEmbed, buildMentionContent, postToDiscordWebhook } from './lib/supabase.js';
 
 export async function handler() {
   const supabase = getSupabase();
@@ -32,7 +32,7 @@ export async function handler() {
     try {
       const embed = await resolveScheduledPostEmbed(supabase, row);
       if (embed) {
-        await postToDiscordWebhook(embed, row.tag_everyone ? '@everyone' : undefined, row.webhook_url);
+        await postToDiscordWebhook(embed, buildMentionContent(row), row.webhook_url);
       }
 
       const updates = { last_fired_at: now.toISOString() };
