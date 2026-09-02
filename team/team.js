@@ -30,6 +30,7 @@
     posts: [],
     editing: null, // the post object being edited, or {} for a new one, or null when the form is closed
     preview: null, // { loading } | { embed } | { embed: null, reason } | { error } | null (not yet previewed)
+    showReference: false,
     msg: null,
     msgType: null,
   };
@@ -224,10 +225,12 @@
         '<header>' +
           '<div><h1>Team Console</h1><div class="sub">Discord scheduled posts — signed in as ' + escapeHtml(user.email) + '</div></div>' +
           '<div style="display:flex;gap:10px;">' +
+            '<button class="btn" id="reference-toggle">' + (state.showReference ? 'Hide syntax reference' : '? Syntax reference') + '</button>' +
             (state.editing ? '' : '<button class="btn btn-primary" id="new-btn">+ New post</button>') +
             '<button class="btn" id="logout-btn">Log out</button>' +
           '</div>' +
         '</header>' +
+        (state.showReference ? renderReference() : '') +
         msgHtml +
         (state.editing ? renderForm(state.editing) : '') +
         listHtml +
@@ -236,7 +239,49 @@
     bindEvents();
   }
 
+  // A persistent, always-current reference for anyone creating a post —
+  // lives here (not a one-off doc elsewhere) specifically so it can't
+  // drift out of sync with the actual placeholder/mention logic below.
+  function renderReference() {
+    return (
+      '<div class="card reference-card">' +
+        '<h2 style="font-size:15px;margin-bottom:12px;">Syntax reference</h2>' +
+
+        '<div class="ref-section"><div class="ref-heading">Sources</div>' +
+          '<div class="ref-row"><strong>Custom message</strong> — whatever you type in Title/Body, posted as-is. No live data.</div>' +
+          '<div class="ref-row"><strong>Daily — Top Focus Student</strong> — yesterday\'s single top student. Body fully replaces the default sentence if set.</div>' +
+          '<div class="ref-row"><strong>Daily — Top 3</strong> / <strong>Weekly — Top 5 Leaderboard</strong> — a computed, freshly-ranked list every time it fires. Body (if set) is an intro line shown ABOVE the medal list — the list itself always shows regardless, you can\'t remove it.</div>' +
+          '<div class="ref-row"><strong>Monthly — Most Consistent Student</strong> — reports on the month that just closed, ranked by median daily minutes (not average). Body fully replaces the default sentence if set.</div>' +
+        '</div>' +
+
+        '<div class="ref-section"><div class="ref-heading">Body placeholders</div>' +
+          '<div class="ref-row">Single-student sources (Daily Top Focus Student, Monthly Consistency): <code>{{name}}</code> and <code>{{hours}}</code> only.</div>' +
+          '<div class="ref-row">Ranked-list sources (Daily Top 3, Weekly Top 5): <code>{{name}}</code>/<code>{{hours}}</code> = 1st place, <code>{{name2}}</code>/<code>{{hours2}}</code> = 2nd, <code>{{name3}}</code>/<code>{{hours3}}</code> = 3rd, up through <code>{{name5}}</code>/<code>{{hours5}}</code> on the weekly one. An unused one (e.g. <code>{{name4}}</code> on a top-3 post) just renders blank.</div>' +
+          '<div class="ref-row">Custom messages: no placeholders — Body is posted exactly as typed.</div>' +
+        '</div>' +
+
+        '<div class="ref-section"><div class="ref-heading">Mentions</div>' +
+          '<div class="ref-row"><strong>Tag @everyone</strong> checkbox — pings the whole server.</div>' +
+          '<div class="ref-row"><strong>Additional mentions</strong> field — free text for anything else: <code>@here</code> for online members only, <code>&lt;@&amp;ROLE_ID&gt;</code> to ping a role, <code>&lt;@USER_ID&gt;</code> to ping one person. Both fields combine (e.g. @everyone + a role ping both fire together).</div>' +
+          '<div class="ref-row">Getting an ID: in Discord, turn on Developer Mode (User Settings → Advanced), then right-click a role or person → Copy ID.</div>' +
+        '</div>' +
+
+        '<div class="ref-section"><div class="ref-heading">Other fields</div>' +
+          '<div class="ref-row"><strong>Channel name</strong> — just a label for this list, purely for telling rows apart at a glance. Doesn\'t affect where the post actually goes — that\'s the Webhook URL.</div>' +
+          '<div class="ref-row"><strong>Preview</strong> button — shows exactly what would post right now, using real live data, before you save. Doesn\'t post anything or save your changes.</div>' +
+          '<div class="ref-row"><strong>Once</strong> schedule — fires exactly one time at the date/time you set, then automatically pauses itself (doesn\'t delete, just switches to disabled).</div>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
   function bindEvents() {
+    var referenceToggle = document.getElementById('reference-toggle');
+    if (referenceToggle) referenceToggle.addEventListener('click', function () {
+      state.showReference = !state.showReference;
+      render();
+    });
+
     var newBtn = document.getElementById('new-btn');
     if (newBtn) newBtn.addEventListener('click', function () {
       state.editing = { schedule_type: 'daily', schedule_time: '10:00', enabled: true };
