@@ -58,6 +58,23 @@ async function resolveEmbed(supabase, row) {
     };
   }
 
+  if (row.source === 'daily_leaderboard') {
+    const date = yesterdayIST();
+    const { leaders } = await fetchTodayLeaders(supabase, null, date);
+    if (!leaders.length) return null;
+    const top3 = leaders.slice(0, 3);
+    const lines = top3.map((l, i) =>
+      `${MEDALS[i] || (i + 1) + '.'} **${l.display_name}** — ${formatHoursDecimal(l.total_minutes)}`
+    );
+    return {
+      title: row.title || '🏆 Yesterday\'s Top 3',
+      url: TRACKER_URL,
+      description: lines.join('\n') + `\n\n[📊 View the progress tracker](${TRACKER_URL})`,
+      color: row.color ?? 0xf59e0b,
+      footer: { text: date },
+    };
+  }
+
   if (row.source === 'weekly_leaderboard') {
     const { weekStart, leaders } = await fetchLastWeekLeaders(supabase, null);
     if (!leaders.length) return null;

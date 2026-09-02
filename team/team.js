@@ -13,9 +13,16 @@
   var SOURCE_LABELS = {
     custom: 'Custom message',
     daily_leader: 'Daily — Top Focus Student',
+    daily_leaderboard: 'Daily — Top 3',
     weekly_leaderboard: 'Weekly — Top 5 Leaderboard',
     monthly_consistency: 'Monthly — Most Consistent Student',
   };
+  // Sources whose content is a computed ranked list (medals, multiple
+  // names) rather than a single-entity sentence — the Body field doesn't
+  // apply to these (there's nothing to fill {{name}}/{{hours}} into), only
+  // Title works as an override, same as the list already worked for
+  // weekly_leaderboard before this was split out into its own set.
+  var LIST_SOURCES = ['daily_leaderboard', 'weekly_leaderboard'];
   var SCHEDULE_LABELS = { once: 'Once', daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' };
 
   var state = {
@@ -109,9 +116,13 @@
       return '<option value="' + i + '"' + (p.schedule_day_of_week === i ? ' selected' : '') + '>' + name + '</option>';
     }).join('');
 
+    var isList = LIST_SOURCES.indexOf(source) !== -1;
     var bodyHint = source === 'custom'
       ? 'The literal message text.'
       : 'Optional override. Leave blank to use the default wording. Supports {{name}} and {{hours}} placeholders.';
+    var bodyField = isList
+      ? '<div class="field"><label>Body</label><div class="field-hint">This post is a computed ranked list (names/hours pulled fresh every time it fires) — there\'s no single {{name}}/{{hours}} to fill in, so there\'s no body text to edit here. Use Title to override the heading.</div></div>'
+      : '<div class="field"><label>Body</label><textarea name="body">' + escapeHtml(p.body) + '</textarea><div class="field-hint">' + bodyHint + '</div></div>';
 
     return (
       '<div class="card">' +
@@ -122,7 +133,7 @@
             '<div class="field"><label>Webhook URL</label><input type="url" name="webhook_url" placeholder="https://discord.com/api/webhooks/..." value="' + escapeHtml(p.webhook_url) + '" required></div>' +
           '</div>' +
           '<div class="field"><label>Title (optional' + (source !== 'custom' ? ' — overrides the default' : '') + ')</label><input type="text" name="title" value="' + escapeHtml(p.title) + '"></div>' +
-          '<div class="field"><label>Body</label><textarea name="body">' + escapeHtml(p.body) + '</textarea><div class="field-hint">' + bodyHint + '</div></div>' +
+          bodyField +
           '<div class="checkbox-row"><input type="checkbox" id="f-everyone" name="tag_everyone"' + (p.tag_everyone ? ' checked' : '') + '><label for="f-everyone">Tag @everyone</label></div>' +
           '<div class="field-row">' +
             '<div class="field"><label>Frequency</label><select name="schedule_type" id="f-schedule-type">' + scheduleOptions + '</select></div>' +

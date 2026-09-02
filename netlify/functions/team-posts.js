@@ -9,7 +9,7 @@
 // dispatcher only reads and updates timing fields on them.
 import { getSupabase, json, requireAdmin, computeNextFireAt } from './lib/supabase.js';
 
-const VALID_SOURCES = ['custom', 'daily_leader', 'weekly_leaderboard', 'monthly_consistency'];
+const VALID_SOURCES = ['custom', 'daily_leader', 'daily_leaderboard', 'weekly_leaderboard', 'monthly_consistency'];
 const VALID_SCHEDULE_TYPES = ['once', 'daily', 'weekly', 'monthly'];
 
 function validateSchedule(body) {
