@@ -246,3 +246,10 @@ ALTER TABLE scheduled_posts ADD COLUMN IF NOT EXISTS channel_name TEXT;
 -- '@everyone' (if tag_everyone is also checked) into one content string
 -- when the post actually fires — see discord-dispatch.js.
 ALTER TABLE scheduled_posts ADD COLUMN IF NOT EXISTS extra_mentions TEXT;
+
+-- Remembered per-row purely as a UI convenience for /team's "Send Test"
+-- button (team-posts.js's POST ?test=1) — never read by discord-dispatch.js,
+-- which only ever posts a real firing to webhook_url. Saves having to
+-- retype your test channel's webhook every time you reopen this post to
+-- test a wording change.
+ALTER TABLE scheduled_posts ADD COLUMN IF NOT EXISTS test_webhook_url TEXT;

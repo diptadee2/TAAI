@@ -1,6 +1,7 @@
 // GET    /api/team-posts                     -> list every scheduled post
 // POST   /api/team-posts   { ... }            -> create one
 // POST   /api/team-posts?preview=1   { ... }  -> resolve (but don't save or post) what this would send to Discord
+// POST   /api/team-posts?test=1   { ..., test_webhook_url }  -> actually post this to test_webhook_url, on demand
 // PUT    /api/team-posts   { id, ... }        -> update one (recomputes next_fire_at)
 // DELETE /api/team-posts?id=...               -> remove one
 //
@@ -9,12 +10,16 @@
 // fires from. This is the only place these rows are ever written; the
 // dispatcher only reads and updates timing fields on them.
 //
-// preview reuses resolveScheduledPostEmbed — the exact same content-
-// resolution logic discord-dispatch.js uses for a real firing — against
-// an in-memory object built from the form's current (possibly unsaved)
-// values, so what's shown is genuinely what would post, not a
-// hand-maintained approximation that could quietly drift out of sync.
-import { getSupabase, json, requireAdmin, computeNextFireAt, resolveScheduledPostEmbed, buildMentionContent } from './lib/supabase.js';
+// preview and test both reuse resolveScheduledPostEmbed/buildMentionContent
+// — the exact same content-resolution logic discord-dispatch.js uses for a
+// real firing — against an in-memory object built from the form's current
+// (possibly unsaved) values, so what's shown/sent is genuinely what a real
+// firing would produce, not a hand-maintained approximation that could
+// quietly drift out of sync. The only difference between them: preview
+// never touches Discord at all, test actually posts (to test_webhook_url,
+// never the row's own saved webhook_url) so you can see the real rendered
+// message in an actual Discord client, not this page's approximation.
+import { getSupabase, json, requireAdmin, computeNextFireAt, resolveScheduledPostEmbed, buildMentionContent, postToDiscordWebhook } from './lib/supabase.js';
 
 const VALID_SOURCES = ['custom', 'daily_leader', 'daily_leaderboard', 'weekly_leaderboard', 'monthly_consistency'];
 const VALID_SCHEDULE_TYPES = ['once', 'daily', 'weekly', 'monthly'];
@@ -69,6 +74,32 @@ export async function handler(event, context) {
     }
   }
 
+  if (event.httpMethod === 'POST' && event.queryStringParameters?.test === '1') {
+    let body;
+    try { body = JSON.parse(event.body || '{}'); } catch { return json(400, { error: 'invalid JSON' }); }
+    if (!VALID_SOURCES.includes(body.source)) return json(400, { error: 'invalid source' });
+    if (!body.test_webhook_url) return json(400, { error: 'test_webhook_url is required' });
+
+    try {
+      const tempRow = {
+        source: body.source,
+        title: body.title || null,
+        body: body.body || null,
+        color: Number.isFinite(body.color) ? body.color : null,
+        tag_everyone: !!body.tag_everyone,
+        extra_mentions: body.extra_mentions || null,
+      };
+      const embed = await resolveScheduledPostEmbed(supabase, tempRow);
+      if (!embed) return json(200, { posted: false, reason: 'No data yet for this source/period — nothing to send.' });
+      // Always the test URL, never body.webhook_url — a real production
+      // post is only ever sent by discord-dispatch.js on its own schedule.
+      await postToDiscordWebhook(embed, buildMentionContent(tempRow), body.test_webhook_url);
+      return json(200, { posted: true });
+    } catch (err) {
+      return json(400, { error: err.message });
+    }
+  }
+
   if (event.httpMethod === 'POST') {
     let body;
     try { body = JSON.parse(event.body || '{}'); } catch { return json(400, { error: 'invalid JSON' }); }
@@ -89,6 +120,7 @@ export async function handler(event, context) {
       source: body.source,
       webhook_url: body.webhook_url,
       channel_name: body.channel_name || null,
+      test_webhook_url: body.test_webhook_url || null,
       title: body.title || null,
       body: body.body || null,
       tag_everyone: !!body.tag_everyone,
@@ -127,6 +159,7 @@ export async function handler(event, context) {
       source: body.source,
       webhook_url: body.webhook_url,
       channel_name: body.channel_name || null,
+      test_webhook_url: body.test_webhook_url || null,
       title: body.title || null,
       body: body.body || null,
       tag_everyone: !!body.tag_everyone,

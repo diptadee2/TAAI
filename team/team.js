@@ -30,6 +30,7 @@
     posts: [],
     editing: null, // the post object being edited, or {} for a new one, or null when the form is closed
     preview: null, // { loading } | { embed } | { embed: null, reason } | { error } | null (not yet previewed)
+    testStatus: null, // { loading } | { posted: true } | { posted: false, reason } | { error } | null
     showReference: false,
     msg: null,
     msgType: null,
@@ -139,6 +140,7 @@
             '<div class="field"><label>Channel name (for your reference)</label><input type="text" name="channel_name" placeholder="e.g. #announcements" value="' + escapeHtml(p.channel_name) + '"></div>' +
           '</div>' +
           '<div class="field"><label>Webhook URL</label><input type="url" name="webhook_url" placeholder="https://discord.com/api/webhooks/..." value="' + escapeHtml(p.webhook_url) + '" required></div>' +
+          '<div class="field"><label>Test webhook URL (optional)</label><input type="url" name="test_webhook_url" placeholder="A separate test-channel webhook, for the Send Test button below" value="' + escapeHtml(p.test_webhook_url) + '"><div class="field-hint">Never used by the real schedule — only "Send Test" below posts here, on demand. Point this at a private test channel, not the real one.</div></div>' +
           '<div class="field"><label>Title (optional' + (source !== 'custom' ? ' — overrides the default' : '') + ')</label><input type="text" name="title" value="' + escapeHtml(p.title) + '"></div>' +
           bodyField +
           '<div class="checkbox-row"><input type="checkbox" id="f-everyone" name="tag_everyone"' + (p.tag_everyone ? ' checked' : '') + '><label for="f-everyone">Tag @everyone</label></div>' +
@@ -154,8 +156,10 @@
           '</div>' +
           '<div class="checkbox-row"><input type="checkbox" id="f-enabled" name="enabled"' + (p.enabled !== false ? ' checked' : '') + '><label for="f-enabled">Enabled</label></div>' +
           renderPreviewBox() +
+          renderTestStatus() +
           '<div class="form-actions">' +
             '<button type="button" class="btn" id="f-preview">Preview</button>' +
+            '<button type="button" class="btn btn-test" id="f-send-test">Send Test</button>' +
             '<button type="button" class="btn" id="f-cancel">Cancel</button>' +
             '<button type="submit" class="btn btn-primary">' + (isNew ? 'Create' : 'Save') + '</button>' +
           '</div>' +
@@ -193,6 +197,14 @@
         (embed.footer && embed.footer.text ? '<div class="preview-footer">' + escapeHtml(embed.footer.text) + '</div>' : '') +
       '</div>'
     );
+  }
+
+  function renderTestStatus() {
+    if (!state.testStatus) return '';
+    if (state.testStatus.loading) return '<div class="msg" style="background:var(--purple-soft);color:var(--purple);">Sending test post…</div>';
+    if (state.testStatus.error) return '<div class="msg msg-error">' + escapeHtml(state.testStatus.error) + '</div>';
+    if (state.testStatus.posted === false) return '<div class="msg" style="background:var(--amber-soft);color:var(--amber);">' + escapeHtml(state.testStatus.reason || 'Nothing was sent.') + '</div>';
+    return '<div class="msg msg-ok">Test post sent — check your test channel.</div>';
   }
 
   function render() {
@@ -269,6 +281,7 @@
         '<div class="ref-section"><div class="ref-heading">Other fields</div>' +
           '<div class="ref-row"><strong>Channel name</strong> — just a label for this list, purely for telling rows apart at a glance. Doesn\'t affect where the post actually goes — that\'s the Webhook URL.</div>' +
           '<div class="ref-row"><strong>Preview</strong> button — shows exactly what would post right now, using real live data, before you save. Doesn\'t post anything or save your changes.</div>' +
+          '<div class="ref-row"><strong>Send Test</strong> button — actually posts a real message right now, to whatever\'s in the "Test webhook URL" field above it (never the real Webhook URL, and never saves your changes). Point that at a private test channel so you can see the real rendered message in an actual Discord client before trusting it with the real one.</div>' +
           '<div class="ref-row"><strong>Once</strong> schedule — fires exactly one time at the date/time you set, then automatically pauses itself (doesn\'t delete, just switches to disabled).</div>' +
         '</div>' +
       '</div>'
@@ -286,6 +299,7 @@
     if (newBtn) newBtn.addEventListener('click', function () {
       state.editing = { schedule_type: 'daily', schedule_time: '10:00', enabled: true };
       state.preview = null;
+      state.testStatus = null;
       state.msg = null;
       render();
     });
@@ -297,7 +311,7 @@
       btn.addEventListener('click', function () {
         var id = btn.getAttribute('data-id');
         var post = state.posts.filter(function (p) { return p.id === id; })[0];
-        if (post) { state.editing = Object.assign({}, post); state.preview = null; state.msg = null; render(); }
+        if (post) { state.editing = Object.assign({}, post); state.preview = null; state.testStatus = null; state.msg = null; render(); }
       });
     });
 
@@ -327,6 +341,7 @@
     if (sourceSelect) sourceSelect.addEventListener('change', function () {
       state.editing.source = sourceSelect.value;
       state.preview = null;
+      state.testStatus = null;
       render();
       document.getElementById('f-source').focus();
     });
@@ -339,7 +354,7 @@
     });
 
     var cancelBtn = document.getElementById('f-cancel');
-    if (cancelBtn) cancelBtn.addEventListener('click', function () { state.editing = null; state.preview = null; render(); });
+    if (cancelBtn) cancelBtn.addEventListener('click', function () { state.editing = null; state.preview = null; state.testStatus = null; render(); });
 
     var previewBtn = document.getElementById('f-preview');
     if (previewBtn) previewBtn.addEventListener('click', function () {
@@ -349,6 +364,22 @@
       api('/team-posts?preview=1', { method: 'POST', body: JSON.stringify(payload) })
         .then(function (data) { state.preview = data; render(); })
         .catch(function (err) { state.preview = { error: err.message }; render(); });
+    });
+
+    var sendTestBtn = document.getElementById('f-send-test');
+    if (sendTestBtn) sendTestBtn.addEventListener('click', function () {
+      var payload = readFormPayload(document.getElementById('post-form'));
+      if (!payload.test_webhook_url) {
+        state.testStatus = { error: 'Fill in "Test webhook URL" above first.' };
+        render();
+        return;
+      }
+      if (!confirm('This will actually post a real message to that webhook right now. Continue?')) return;
+      state.testStatus = { loading: true };
+      render();
+      api('/team-posts?test=1', { method: 'POST', body: JSON.stringify(payload) })
+        .then(function (data) { state.testStatus = data; render(); })
+        .catch(function (err) { state.testStatus = { error: err.message }; render(); });
     });
 
     var form = document.getElementById('post-form');
@@ -361,6 +392,7 @@
         .then(function () {
           state.editing = null;
           state.preview = null;
+          state.testStatus = null;
           state.msg = isNew ? 'Created.' : 'Saved.';
           state.msgType = 'ok';
           return loadPosts();
@@ -375,6 +407,7 @@
       source: fd.get('source'),
       channel_name: (fd.get('channel_name') || '').trim(),
       webhook_url: (fd.get('webhook_url') || '').trim(),
+      test_webhook_url: (fd.get('test_webhook_url') || '').trim(),
       title: (fd.get('title') || '').trim(),
       body: (fd.get('body') || '').trim(),
       tag_everyone: fd.get('tag_everyone') === 'on',
