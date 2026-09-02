@@ -100,16 +100,12 @@
     if (p.schedule_type === 'weekly') scheduleDesc = DAY_NAMES[p.schedule_day_of_week] + 's, ' + scheduleDesc;
     if (p.schedule_type === 'monthly') scheduleDesc = 'Day ' + p.schedule_day_of_month + ' of month, ' + scheduleDesc;
     if (p.schedule_type === 'once') scheduleDesc = p.schedule_date + ' at ' + escapeHtml(p.schedule_time) + ' IST';
-    // Falls back to a shortened webhook URL if no channel name was ever
-    // typed in, so an old/never-labeled row still shows *something*
-    // recognizable instead of nothing.
-    var channelLabel = p.channel_name || (p.webhook_url ? '(unlabeled: …' + p.webhook_url.slice(-10) + ')' : '');
 
     return (
       '<div class="post-row" data-id="' + p.id + '">' +
         '<div class="post-main">' +
           '<div class="post-title">' + tagHtml + disabledTag + ' ' + escapeHtml(title) + (p.tag_everyone ? ' 📣' : '') + '</div>' +
-          '<div class="post-meta">' + escapeHtml(channelLabel) + ' — ' + scheduleDesc + ' — next: ' + formatNextFire(p.next_fire_at) + '</div>' +
+          '<div class="post-meta">' + scheduleDesc + ' — next: ' + formatNextFire(p.next_fire_at) + '</div>' +
         '</div>' +
         '<div class="post-actions">' +
           '<button class="btn btn-small js-edit" data-id="' + p.id + '">Edit</button>' +
@@ -152,6 +148,34 @@
     );
   }
 
+  // Groups the flat post list by channel (falling back to a shortened
+  // webhook tail for an unlabeled one) so it's obvious at a glance which
+  // Discord channel each post is going to, instead of one undifferentiated
+  // list — matters once there's more than one real channel in use.
+  // Alphabetical group order, so it's stable across reloads rather than
+  // shuffling with next_fire_at.
+  function renderPostList() {
+    if (!state.posts.length) return '<div class="empty">No scheduled posts yet.</div>';
+
+    var groups = {};
+    var keys = [];
+    state.posts.forEach(function (p) {
+      var key = p.channel_name || (p.webhook_url ? '(unlabeled: …' + p.webhook_url.slice(-10) + ')' : '(no channel set)');
+      if (!groups[key]) { groups[key] = []; keys.push(key); }
+      groups[key].push(p);
+    });
+    keys.sort();
+
+    return keys.map(function (key) {
+      return (
+        '<div class="card channel-group">' +
+          '<div class="channel-group-heading">' + escapeHtml(key) + ' <span class="channel-group-count">(' + groups[key].length + ')</span></div>' +
+          groups[key].map(renderPostRow).join('') +
+        '</div>'
+      );
+    }).join('');
+  }
+
   function renderForm(p) {
     var isNew = !p.id;
     var source = p.source || 'custom';
@@ -188,27 +212,42 @@
       '<div class="card">' +
         '<h2 style="font-size:16px;margin-bottom:16px;">' + (isNew ? 'New scheduled post' : 'Edit scheduled post') + '</h2>' +
         '<form id="post-form">' +
-          '<div class="field-row">' +
-            '<div class="field"><label>Source</label><select name="source" id="f-source">' + sourceOptions + '</select></div>' +
+
+          '<div class="form-section">' +
+            '<div class="form-section-heading">Destination</div>' +
+            renderChannelSelect() +
             '<div class="field"><label>Channel name (for your reference)</label><input type="text" name="channel_name" placeholder="e.g. #announcements" value="' + escapeHtml(p.channel_name) + '"></div>' +
+            '<div class="field"><label>Webhook URL</label><input type="url" name="webhook_url" placeholder="https://discord.com/api/webhooks/..." value="' + escapeHtml(p.webhook_url) + '" required></div>' +
+            '<div class="field"><label>Test webhook URL (optional)</label><input type="url" name="test_webhook_url" placeholder="A separate test-channel webhook, for the Send Test button below" value="' + escapeHtml(p.test_webhook_url) + '"><div class="field-hint">Never used by the real schedule — only "Send Test" below posts here, on demand. Point this at a private test channel, not the real one.</div></div>' +
           '</div>' +
-          renderChannelSelect() +
-          '<div class="field"><label>Webhook URL</label><input type="url" name="webhook_url" placeholder="https://discord.com/api/webhooks/..." value="' + escapeHtml(p.webhook_url) + '" required></div>' +
-          '<div class="field"><label>Test webhook URL (optional)</label><input type="url" name="test_webhook_url" placeholder="A separate test-channel webhook, for the Send Test button below" value="' + escapeHtml(p.test_webhook_url) + '"><div class="field-hint">Never used by the real schedule — only "Send Test" below posts here, on demand. Point this at a private test channel, not the real one.</div></div>' +
-          '<div class="field"><label>Title (optional' + (source !== 'custom' ? ' — overrides the default' : '') + ')</label><input type="text" name="title" value="' + escapeHtml(p.title) + '"></div>' +
-          bodyField +
-          '<div class="checkbox-row"><input type="checkbox" id="f-everyone" name="tag_everyone"' + (p.tag_everyone ? ' checked' : '') + '><label for="f-everyone">Tag @everyone</label></div>' +
-          '<div class="field"><label>Additional mentions (optional)</label><input type="text" name="extra_mentions" placeholder="@here, or &lt;@&amp;ROLE_ID&gt; for a role, &lt;@USER_ID&gt; for a person" value="' + escapeHtml(p.extra_mentions) + '"><div class="field-hint">Type the exact Discord mention. For a role or person, right-click them in Discord (Developer Mode must be on in Discord\'s settings) and Copy ID, then use &lt;@&amp;THAT_ID&gt; for a role or &lt;@THAT_ID&gt; for a person.</div></div>' +
-          '<div class="field-row">' +
-            '<div class="field"><label>Frequency</label><select name="schedule_type" id="f-schedule-type">' + scheduleOptions + '</select></div>' +
-            '<div class="field"><label>Time (IST)</label><input type="time" name="schedule_time" value="' + escapeHtml(p.schedule_time || '10:00') + '" required></div>' +
+
+          '<div class="form-section">' +
+            '<div class="form-section-heading">Content</div>' +
+            '<div class="field"><label>Source</label><select name="source" id="f-source">' + sourceOptions + '</select></div>' +
+            '<div class="field"><label>Title (optional' + (source !== 'custom' ? ' — overrides the default' : '') + ')</label><input type="text" name="title" value="' + escapeHtml(p.title) + '"></div>' +
+            bodyField +
           '</div>' +
-          '<div id="f-schedule-extra">' +
-            (scheduleType === 'once' ? '<div class="field"><label>Date</label><input type="date" name="schedule_date" value="' + escapeHtml(p.schedule_date) + '" required></div>' : '') +
-            (scheduleType === 'weekly' ? '<div class="field"><label>Day of week</label><select name="schedule_day_of_week">' + dayOfWeekOptions + '</select></div>' : '') +
-            (scheduleType === 'monthly' ? '<div class="field"><label>Day of month</label><input type="number" name="schedule_day_of_month" min="1" max="31" value="' + (p.schedule_day_of_month || 1) + '" required></div>' : '') +
+
+          '<div class="form-section">' +
+            '<div class="form-section-heading">Mentions</div>' +
+            '<div class="checkbox-row"><input type="checkbox" id="f-everyone" name="tag_everyone"' + (p.tag_everyone ? ' checked' : '') + '><label for="f-everyone">Tag @everyone</label></div>' +
+            '<div class="field"><label>Additional mentions (optional)</label><input type="text" name="extra_mentions" placeholder="@here, or &lt;@&amp;ROLE_ID&gt; for a role, &lt;@USER_ID&gt; for a person" value="' + escapeHtml(p.extra_mentions) + '"><div class="field-hint">Type the exact Discord mention. For a role or person, right-click them in Discord (Developer Mode must be on in Discord\'s settings) and Copy ID, then use &lt;@&amp;THAT_ID&gt; for a role or &lt;@THAT_ID&gt; for a person.</div></div>' +
           '</div>' +
-          '<div class="checkbox-row"><input type="checkbox" id="f-enabled" name="enabled"' + (p.enabled !== false ? ' checked' : '') + '><label for="f-enabled">Enabled</label></div>' +
+
+          '<div class="form-section">' +
+            '<div class="form-section-heading">Schedule</div>' +
+            '<div class="field-row">' +
+              '<div class="field"><label>Frequency</label><select name="schedule_type" id="f-schedule-type">' + scheduleOptions + '</select></div>' +
+              '<div class="field"><label>Time (IST)</label><input type="time" name="schedule_time" value="' + escapeHtml(p.schedule_time || '10:00') + '" required></div>' +
+            '</div>' +
+            '<div id="f-schedule-extra">' +
+              (scheduleType === 'once' ? '<div class="field"><label>Date</label><input type="date" name="schedule_date" value="' + escapeHtml(p.schedule_date) + '" required></div>' : '') +
+              (scheduleType === 'weekly' ? '<div class="field"><label>Day of week</label><select name="schedule_day_of_week">' + dayOfWeekOptions + '</select></div>' : '') +
+              (scheduleType === 'monthly' ? '<div class="field"><label>Day of month</label><input type="number" name="schedule_day_of_month" min="1" max="31" value="' + (p.schedule_day_of_month || 1) + '" required></div>' : '') +
+            '</div>' +
+            '<div class="checkbox-row"><input type="checkbox" id="f-enabled" name="enabled"' + (p.enabled !== false ? ' checked' : '') + '><label for="f-enabled">Enabled</label></div>' +
+          '</div>' +
+
           renderPreviewBox() +
           renderTestStatus() +
           '<div class="form-actions">' +
@@ -282,9 +321,7 @@
     }
 
     var msgHtml = state.msg ? '<div class="msg msg-' + (state.msgType === 'error' ? 'error' : 'ok') + '">' + escapeHtml(state.msg) + '</div>' : '';
-    var listHtml = state.posts.length
-      ? '<div class="card">' + state.posts.map(renderPostRow).join('') + '</div>'
-      : '<div class="empty">No scheduled posts yet.</div>';
+    var listHtml = renderPostList();
 
     root.innerHTML =
       '<div class="wrap">' +
