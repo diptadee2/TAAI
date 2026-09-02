@@ -83,11 +83,14 @@ async function resolveEmbed(supabase, row) {
     const lines = top3.map((l, i) =>
       `${MEDALS[i] || (i + 1) + '.'} **${l.display_name}** — ${formatHoursDecimal(l.total_minutes)}`
     );
-    const text = row.body ? renderTemplate(row.body, rankedVars(top3, 'total_minutes')) : lines.join('\n');
+    // Body, if set, is an intro line above the medal list — never a
+    // replacement for it, same "custom text + always-shown list" shape
+    // monthly_consistency already uses below.
+    const intro = row.body ? renderTemplate(row.body, rankedVars(top3, 'total_minutes')) + '\n\n' : '';
     return {
       title: row.title || '🏆 Yesterday\'s Top 3',
       url: TRACKER_URL,
-      description: `${text}\n\n[📊 View the progress tracker](${TRACKER_URL})`,
+      description: `${intro}${lines.join('\n')}\n\n[📊 View the progress tracker](${TRACKER_URL})`,
       color: row.color ?? 0xf59e0b,
       footer: { text: date },
     };
@@ -99,11 +102,11 @@ async function resolveEmbed(supabase, row) {
     const lines = leaders.map((l, i) =>
       `${MEDALS[i] || (i + 1) + '.'} **${l.display_name}** — ${formatHoursDecimal(l.total_minutes)}`
     );
-    const text = row.body ? renderTemplate(row.body, rankedVars(leaders, 'total_minutes')) : lines.join('\n');
+    const intro = row.body ? renderTemplate(row.body, rankedVars(leaders, 'total_minutes')) + '\n\n' : '';
     return {
       title: row.title || '📅 Weekly Top 5 Leaderboard',
       url: TRACKER_URL,
-      description: `${text}\n\n[📊 View the progress tracker](${TRACKER_URL})`,
+      description: `${intro}${lines.join('\n')}\n\n[📊 View the progress tracker](${TRACKER_URL})`,
       color: row.color ?? 0x8b5cf6,
       footer: { text: 'Week of ' + weekStart },
     };

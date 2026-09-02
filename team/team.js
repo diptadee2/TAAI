@@ -120,7 +120,7 @@
     var bodyHint = source === 'custom'
       ? 'The literal message text.'
       : isList
-        ? 'Optional override. Leave blank for the default medal list. {{name}}/{{hours}} = 1st place, {{name2}}/{{hours2}} = 2nd, {{name3}}/{{hours3}} = 3rd (up to {{name5}}/{{hours5}} for the weekly top 5).'
+        ? 'Optional intro line shown above the medal list (the list itself always shows regardless). {{name}}/{{hours}} = 1st place, {{name2}}/{{hours2}} = 2nd, {{name3}}/{{hours3}} = 3rd (up to {{name5}}/{{hours5}} for the weekly top 5).'
         : 'Optional override. Leave blank to use the default wording. Supports {{name}} and {{hours}} placeholders.';
     var bodyField = '<div class="field"><label>Body</label><textarea name="body">' + escapeHtml(p.body) + '</textarea><div class="field-hint">' + bodyHint + '</div></div>';
 
