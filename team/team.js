@@ -29,6 +29,7 @@
     authorized: false,
     posts: [],
     editing: null, // the post object being edited, or {} for a new one, or null when the form is closed
+    preview: null, // { loading } | { embed } | { embed: null, reason } | { error } | null (not yet previewed)
     msg: null,
     msgType: null,
   };
@@ -83,12 +84,16 @@
     if (p.schedule_type === 'weekly') scheduleDesc = DAY_NAMES[p.schedule_day_of_week] + 's, ' + scheduleDesc;
     if (p.schedule_type === 'monthly') scheduleDesc = 'Day ' + p.schedule_day_of_month + ' of month, ' + scheduleDesc;
     if (p.schedule_type === 'once') scheduleDesc = p.schedule_date + ' at ' + escapeHtml(p.schedule_time) + ' IST';
+    // Falls back to a shortened webhook URL if no channel name was ever
+    // typed in, so an old/never-labeled row still shows *something*
+    // recognizable instead of nothing.
+    var channelLabel = p.channel_name || (p.webhook_url ? '(unlabeled: …' + p.webhook_url.slice(-10) + ')' : '');
 
     return (
       '<div class="post-row" data-id="' + p.id + '">' +
         '<div class="post-main">' +
           '<div class="post-title">' + tagHtml + disabledTag + ' ' + escapeHtml(title) + (p.tag_everyone ? ' 📣' : '') + '</div>' +
-          '<div class="post-meta">' + scheduleDesc + ' — next: ' + formatNextFire(p.next_fire_at) + '</div>' +
+          '<div class="post-meta">' + escapeHtml(channelLabel) + ' — ' + scheduleDesc + ' — next: ' + formatNextFire(p.next_fire_at) + '</div>' +
         '</div>' +
         '<div class="post-actions">' +
           '<button class="btn btn-small js-edit" data-id="' + p.id + '">Edit</button>' +
@@ -130,8 +135,9 @@
         '<form id="post-form">' +
           '<div class="field-row">' +
             '<div class="field"><label>Source</label><select name="source" id="f-source">' + sourceOptions + '</select></div>' +
-            '<div class="field"><label>Webhook URL</label><input type="url" name="webhook_url" placeholder="https://discord.com/api/webhooks/..." value="' + escapeHtml(p.webhook_url) + '" required></div>' +
+            '<div class="field"><label>Channel name (for your reference)</label><input type="text" name="channel_name" placeholder="e.g. #announcements" value="' + escapeHtml(p.channel_name) + '"></div>' +
           '</div>' +
+          '<div class="field"><label>Webhook URL</label><input type="url" name="webhook_url" placeholder="https://discord.com/api/webhooks/..." value="' + escapeHtml(p.webhook_url) + '" required></div>' +
           '<div class="field"><label>Title (optional' + (source !== 'custom' ? ' — overrides the default' : '') + ')</label><input type="text" name="title" value="' + escapeHtml(p.title) + '"></div>' +
           bodyField +
           '<div class="checkbox-row"><input type="checkbox" id="f-everyone" name="tag_everyone"' + (p.tag_everyone ? ' checked' : '') + '><label for="f-everyone">Tag @everyone</label></div>' +
@@ -145,11 +151,43 @@
             (scheduleType === 'monthly' ? '<div class="field"><label>Day of month</label><input type="number" name="schedule_day_of_month" min="1" max="31" value="' + (p.schedule_day_of_month || 1) + '" required></div>' : '') +
           '</div>' +
           '<div class="checkbox-row"><input type="checkbox" id="f-enabled" name="enabled"' + (p.enabled !== false ? ' checked' : '') + '><label for="f-enabled">Enabled</label></div>' +
+          renderPreviewBox() +
           '<div class="form-actions">' +
+            '<button type="button" class="btn" id="f-preview">Preview</button>' +
             '<button type="button" class="btn" id="f-cancel">Cancel</button>' +
             '<button type="submit" class="btn btn-primary">' + (isNew ? 'Create' : 'Save') + '</button>' +
           '</div>' +
         '</form>' +
+      '</div>'
+    );
+  }
+
+  // Lightweight Discord-markdown -> HTML for the preview only (bold,
+  // italic, [text](url) links) — not a full parser, just the handful of
+  // things these embeds actually use. escapeHtml runs first, so the
+  // markdown punctuation surviving it can't reintroduce real HTML.
+  function discordMarkdownToHtml(text) {
+    var html = escapeHtml(text);
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    return html;
+  }
+
+  function renderPreviewBox() {
+    if (!state.preview) return '';
+    if (state.preview.loading) return '<div class="preview-box"><div class="field-hint">Loading preview…</div></div>';
+    if (state.preview.error) return '<div class="preview-box"><div class="msg msg-error" style="margin:0;">' + escapeHtml(state.preview.error) + '</div></div>';
+    if (!state.preview.embed) return '<div class="preview-box"><div class="field-hint">' + escapeHtml(state.preview.reason || 'Nothing to preview.') + '</div></div>';
+
+    var embed = state.preview.embed;
+    var colorHex = '#' + (embed.color != null ? embed.color.toString(16).padStart(6, '0') : '8b5cf6');
+    return (
+      '<div class="preview-box" style="border-left-color:' + colorHex + ';">' +
+        '<div class="preview-username">Department of Propaganda <span class="preview-bot-tag">BOT</span></div>' +
+        (embed.title ? '<div class="preview-title">' + discordMarkdownToHtml(embed.title) + '</div>' : '') +
+        (embed.description ? '<div class="preview-description">' + discordMarkdownToHtml(embed.description) + '</div>' : '') +
+        (embed.footer && embed.footer.text ? '<div class="preview-footer">' + escapeHtml(embed.footer.text) + '</div>' : '') +
       '</div>'
     );
   }
@@ -200,6 +238,7 @@
     var newBtn = document.getElementById('new-btn');
     if (newBtn) newBtn.addEventListener('click', function () {
       state.editing = { schedule_type: 'daily', schedule_time: '10:00', enabled: true };
+      state.preview = null;
       state.msg = null;
       render();
     });
@@ -211,7 +250,7 @@
       btn.addEventListener('click', function () {
         var id = btn.getAttribute('data-id');
         var post = state.posts.filter(function (p) { return p.id === id; })[0];
-        if (post) { state.editing = Object.assign({}, post); state.msg = null; render(); }
+        if (post) { state.editing = Object.assign({}, post); state.preview = null; state.msg = null; render(); }
       });
     });
 
@@ -240,6 +279,7 @@
     var sourceSelect = document.getElementById('f-source');
     if (sourceSelect) sourceSelect.addEventListener('change', function () {
       state.editing.source = sourceSelect.value;
+      state.preview = null;
       render();
       document.getElementById('f-source').focus();
     });
@@ -252,36 +292,52 @@
     });
 
     var cancelBtn = document.getElementById('f-cancel');
-    if (cancelBtn) cancelBtn.addEventListener('click', function () { state.editing = null; render(); });
+    if (cancelBtn) cancelBtn.addEventListener('click', function () { state.editing = null; state.preview = null; render(); });
+
+    var previewBtn = document.getElementById('f-preview');
+    if (previewBtn) previewBtn.addEventListener('click', function () {
+      var payload = readFormPayload(document.getElementById('post-form'));
+      state.preview = { loading: true };
+      render();
+      api('/team-posts?preview=1', { method: 'POST', body: JSON.stringify(payload) })
+        .then(function (data) { state.preview = data; render(); })
+        .catch(function (err) { state.preview = { error: err.message }; render(); });
+    });
 
     var form = document.getElementById('post-form');
     if (form) form.addEventListener('submit', function (e) {
       e.preventDefault();
-      var fd = new FormData(form);
-      var payload = {
-        id: state.editing.id,
-        source: fd.get('source'),
-        webhook_url: (fd.get('webhook_url') || '').trim(),
-        title: (fd.get('title') || '').trim(),
-        body: (fd.get('body') || '').trim(),
-        tag_everyone: fd.get('tag_everyone') === 'on',
-        schedule_type: fd.get('schedule_type'),
-        schedule_time: fd.get('schedule_time'),
-        schedule_date: fd.get('schedule_date') || null,
-        schedule_day_of_week: fd.get('schedule_day_of_week') != null ? Number(fd.get('schedule_day_of_week')) : null,
-        schedule_day_of_month: fd.get('schedule_day_of_month') != null ? Number(fd.get('schedule_day_of_month')) : null,
-        enabled: fd.get('enabled') === 'on',
-      };
+      var payload = readFormPayload(form);
+      payload.id = state.editing.id;
       var isNew = !payload.id;
       api('/team-posts', { method: isNew ? 'POST' : 'PUT', body: JSON.stringify(payload) })
         .then(function () {
           state.editing = null;
+          state.preview = null;
           state.msg = isNew ? 'Created.' : 'Saved.';
           state.msgType = 'ok';
           return loadPosts();
         })
         .catch(function (err) { state.msg = err.message; state.msgType = 'error'; render(); });
     });
+  }
+
+  function readFormPayload(form) {
+    var fd = new FormData(form);
+    return {
+      source: fd.get('source'),
+      channel_name: (fd.get('channel_name') || '').trim(),
+      webhook_url: (fd.get('webhook_url') || '').trim(),
+      title: (fd.get('title') || '').trim(),
+      body: (fd.get('body') || '').trim(),
+      tag_everyone: fd.get('tag_everyone') === 'on',
+      schedule_type: fd.get('schedule_type'),
+      schedule_time: fd.get('schedule_time'),
+      schedule_date: fd.get('schedule_date') || null,
+      schedule_day_of_week: fd.get('schedule_day_of_week') != null ? Number(fd.get('schedule_day_of_week')) : null,
+      schedule_day_of_month: fd.get('schedule_day_of_month') != null ? Number(fd.get('schedule_day_of_month')) : null,
+      enabled: fd.get('enabled') === 'on',
+    };
   }
 
   function init() {

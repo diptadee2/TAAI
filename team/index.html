@@ -73,6 +73,23 @@
   .msg { padding: 10px 14px; border-radius: 10px; font-size: 13px; margin-bottom: 14px; }
   .msg-error { background: var(--red-soft); color: var(--red); }
   .msg-ok { background: var(--green-soft); color: var(--green); }
+
+  /* Discord-embed-style preview — approximates the real card look
+     (colored left rail, small BOT tag, bold title, wrapped body,
+     muted footer) closely enough to judge formatting before it posts,
+     not a pixel-perfect Discord clone. */
+  .preview-box {
+    margin-top: 4px; padding: 12px 14px; border-radius: 6px;
+    background: #2b2d31; border-left: 4px solid #8b5cf6;
+    font-family: 'gg sans', 'Segoe UI', Roboto, sans-serif; font-size: 13.5px; color: #dbdee1;
+  }
+  .preview-username { font-weight: 600; color: #f2f3f5; font-size: 13px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+  .preview-bot-tag { background: #5865f2; color: #fff; font-size: 9px; font-weight: 700; padding: 1px 4px; border-radius: 3px; letter-spacing: 0.3px; }
+  .preview-title { font-weight: 700; color: #00a8fc; margin-bottom: 4px; }
+  .preview-description { white-space: pre-wrap; line-height: 1.45; }
+  .preview-description a { color: #00a8fc; text-decoration: none; }
+  .preview-description a:hover { text-decoration: underline; }
+  .preview-footer { margin-top: 8px; color: #949ba4; font-size: 11.5px; }
 </style>
 </head>
 <body>

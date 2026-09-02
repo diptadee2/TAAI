@@ -489,3 +489,136 @@ export function computeNextFireAt(schedule, afterDate) {
   }
   throw new Error('could not compute next fire time');
 }
+
+const SCHEDULED_POST_MEDALS = ['🥇', '🥈', '🥉'];
+const SCHEDULED_POST_TRACKER_URL = 'https://taai.live/gate-da-progress-tracker';
+
+function formatHoursDecimal(minutes) {
+  return (minutes / 60).toFixed(1) + 'h';
+}
+
+function monthLabel(month) {
+  return new Date(month + '-01T00:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+}
+
+// {{name}}/{{hours}} for rank 1 (matching the single-entity sources'
+// convention), plus {{name2}}/{{hours2}} through {{nameN}}/{{hoursN}} for
+// every other rank — lets a ranked-list source's body template reference
+// each position individually (e.g. "shoutout to {{name}}, {{name2}} and
+// {{name3}}!") instead of only being able to override the title. An
+// unmatched placeholder (e.g. {{name4}} when only 3 leaders exist) just
+// renders blank, same as renderTemplate already does for any unknown key.
+function rankedVars(list, minutesKey) {
+  const vars = {};
+  list.forEach((entry, i) => {
+    const suffix = i === 0 ? '' : String(i + 1);
+    vars['name' + suffix] = entry.display_name;
+    vars['hours' + suffix] = formatHoursDecimal(entry[minutesKey]);
+  });
+  return vars;
+}
+
+// Resolves a scheduled_posts row into a Discord embed — pulling live data
+// for a built-in source (with the row's title/body used as an override
+// template, falling back to hardcoded defaults if blank) or using the
+// row's literal title/body as-is for 'custom'. Returns null when there's
+// genuinely nothing to post yet (no data for that day/week/month) — same
+// silent no-op pattern the tracker's own leaderboard cards use.
+//
+// Exported (not just used internally by discord-dispatch.js) so
+// team-posts.js's preview endpoint can call the exact same logic a real
+// firing would — a preview that used separate, similar-but-not-identical
+// code could drift from what actually posts, silently. `row` here doesn't
+// need to be a saved database row — the preview endpoint passes an
+// in-memory object built straight from the /team form's current values,
+// never persisted.
+export async function resolveScheduledPostEmbed(supabase, row) {
+  if (row.source === 'custom') {
+    return {
+      title: row.title || undefined,
+      description: row.body || '',
+      color: row.color ?? 0x8b5cf6,
+    };
+  }
+
+  if (row.source === 'daily_leader') {
+    const date = yesterdayIST();
+    const { leaders } = await fetchTodayLeaders(supabase, null, date);
+    if (!leaders.length) return null;
+    const top = leaders[0];
+    const text = renderTemplate(
+      row.body || '**{{name}}** logged the most focus time yesterday — **{{hours}}**!',
+      { name: top.display_name, hours: formatHoursDecimal(top.total_minutes) }
+    );
+    return {
+      title: row.title || '🏆 Yesterday\'s Top Focus Session',
+      url: SCHEDULED_POST_TRACKER_URL,
+      description: `${text}\n\n[📊 View the progress tracker](${SCHEDULED_POST_TRACKER_URL})`,
+      color: row.color ?? 0xf59e0b,
+      footer: { text: date },
+    };
+  }
+
+  if (row.source === 'daily_leaderboard') {
+    const date = yesterdayIST();
+    const { leaders } = await fetchTodayLeaders(supabase, null, date);
+    if (!leaders.length) return null;
+    const top3 = leaders.slice(0, 3);
+    const lines = top3.map((l, i) =>
+      `${SCHEDULED_POST_MEDALS[i] || (i + 1) + '.'} **${l.display_name}** — ${formatHoursDecimal(l.total_minutes)}`
+    );
+    const intro = row.body ? renderTemplate(row.body, rankedVars(top3, 'total_minutes')) + '\n\n' : '';
+    return {
+      title: row.title || '🏆 Yesterday\'s Top 3',
+      url: SCHEDULED_POST_TRACKER_URL,
+      description: `${intro}${lines.join('\n')}\n\n[📊 View the progress tracker](${SCHEDULED_POST_TRACKER_URL})`,
+      color: row.color ?? 0xf59e0b,
+      footer: { text: date },
+    };
+  }
+
+  if (row.source === 'weekly_leaderboard') {
+    const { weekStart, leaders } = await fetchLastWeekLeaders(supabase, null);
+    if (!leaders.length) return null;
+    const lines = leaders.map((l, i) =>
+      `${SCHEDULED_POST_MEDALS[i] || (i + 1) + '.'} **${l.display_name}** — ${formatHoursDecimal(l.total_minutes)}`
+    );
+    const intro = row.body ? renderTemplate(row.body, rankedVars(leaders, 'total_minutes')) + '\n\n' : '';
+    return {
+      title: row.title || '📅 Weekly Top 5 Leaderboard',
+      url: SCHEDULED_POST_TRACKER_URL,
+      description: `${intro}${lines.join('\n')}\n\n[📊 View the progress tracker](${SCHEDULED_POST_TRACKER_URL})`,
+      color: row.color ?? 0x8b5cf6,
+      footer: { text: 'Week of ' + weekStart },
+    };
+  }
+
+  if (row.source === 'monthly_consistency') {
+    const month = previousMonthIST();
+    const { top } = await computeMonthlyConsistency(supabase, month);
+    if (!top.length) return null;
+    const label = monthLabel(month);
+    const winner = top[0];
+    const runnersUp = top.slice(1).map((s, i) =>
+      `${SCHEDULED_POST_MEDALS[i + 1] || (i + 2) + '.'} **${s.display_name}** — ${formatHoursDecimal(s.medianMinutes)} typical day`
+    );
+    const winnerText = renderTemplate(
+      row.body || '**{{name}}** was the most consistent student this month — a **typical day of {{hours}}** of focused study, day after day, all month long.',
+      { name: winner.display_name, hours: formatHoursDecimal(winner.medianMinutes) }
+    );
+    const description =
+      `${winnerText}\n\n` +
+      '*How this is measured:* we look at every day of the month, including the quiet ones, and find your "typical" day — not your best day, not your worst, just what a normal day looked like for you. Someone who shows up a little every day beats someone who crams once and disappears for the rest of the month, even if their total hours end up about the same.' +
+      (runnersUp.length ? `\n\n${runnersUp.join('\n')}` : '') +
+      `\n\n[📊 View the progress tracker](${SCHEDULED_POST_TRACKER_URL})`;
+    return {
+      title: row.title || `🏅 Most Consistent Student — ${label}`,
+      url: SCHEDULED_POST_TRACKER_URL,
+      description,
+      color: row.color ?? 0xf59e0b,
+      footer: { text: label },
+    };
+  }
+
+  throw new Error('unknown source: ' + row.source);
+}

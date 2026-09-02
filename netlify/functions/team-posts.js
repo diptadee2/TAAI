@@ -1,13 +1,20 @@
-// GET    /api/team-posts                 -> list every scheduled post
-// POST   /api/team-posts   { ... }        -> create one
-// PUT    /api/team-posts   { id, ... }    -> update one (recomputes next_fire_at)
-// DELETE /api/team-posts?id=...           -> remove one
+// GET    /api/team-posts                     -> list every scheduled post
+// POST   /api/team-posts   { ... }            -> create one
+// POST   /api/team-posts?preview=1   { ... }  -> resolve (but don't save or post) what this would send to Discord
+// PUT    /api/team-posts   { id, ... }        -> update one (recomputes next_fire_at)
+// DELETE /api/team-posts?id=...               -> remove one
 //
 // Backs /team — role-gated (see requireAdmin in lib/supabase.js) create/
 // edit/delete for scheduled_posts, the table discord-dispatch.js actually
 // fires from. This is the only place these rows are ever written; the
 // dispatcher only reads and updates timing fields on them.
-import { getSupabase, json, requireAdmin, computeNextFireAt } from './lib/supabase.js';
+//
+// preview reuses resolveScheduledPostEmbed — the exact same content-
+// resolution logic discord-dispatch.js uses for a real firing — against
+// an in-memory object built from the form's current (possibly unsaved)
+// values, so what's shown is genuinely what would post, not a
+// hand-maintained approximation that could quietly drift out of sync.
+import { getSupabase, json, requireAdmin, computeNextFireAt, resolveScheduledPostEmbed } from './lib/supabase.js';
 
 const VALID_SOURCES = ['custom', 'daily_leader', 'daily_leaderboard', 'weekly_leaderboard', 'monthly_consistency'];
 const VALID_SCHEDULE_TYPES = ['once', 'daily', 'weekly', 'monthly'];
@@ -36,6 +43,28 @@ export async function handler(event, context) {
     return json(200, { posts: data });
   }
 
+  if (event.httpMethod === 'POST' && event.queryStringParameters?.preview === '1') {
+    let body;
+    try { body = JSON.parse(event.body || '{}'); } catch { return json(400, { error: 'invalid JSON' }); }
+    if (!VALID_SOURCES.includes(body.source)) return json(400, { error: 'invalid source' });
+
+    try {
+      // Not a real row — never inserted, id/webhook_url/schedule fields
+      // are irrelevant to what gets posted, only source/title/body/color
+      // actually feed into the embed.
+      const embed = await resolveScheduledPostEmbed(supabase, {
+        source: body.source,
+        title: body.title || null,
+        body: body.body || null,
+        color: Number.isFinite(body.color) ? body.color : null,
+      });
+      if (!embed) return json(200, { embed: null, reason: 'No data yet for this source/period — nothing would post right now.' });
+      return json(200, { embed });
+    } catch (err) {
+      return json(400, { error: err.message });
+    }
+  }
+
   if (event.httpMethod === 'POST') {
     let body;
     try { body = JSON.parse(event.body || '{}'); } catch { return json(400, { error: 'invalid JSON' }); }
@@ -55,6 +84,7 @@ export async function handler(event, context) {
     const row = {
       source: body.source,
       webhook_url: body.webhook_url,
+      channel_name: body.channel_name || null,
       title: body.title || null,
       body: body.body || null,
       tag_everyone: !!body.tag_everyone,
@@ -91,6 +121,7 @@ export async function handler(event, context) {
     const row = {
       source: body.source,
       webhook_url: body.webhook_url,
+      channel_name: body.channel_name || null,
       title: body.title || null,
       body: body.body || null,
       tag_everyone: !!body.tag_everyone,

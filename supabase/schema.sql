@@ -233,3 +233,10 @@ CREATE TABLE IF NOT EXISTS scheduled_posts (
 );
 CREATE INDEX IF NOT EXISTS idx_scheduled_posts_due ON scheduled_posts(next_fire_at) WHERE enabled;
 GRANT SELECT, INSERT, UPDATE, DELETE ON scheduled_posts TO service_role;
+
+-- A human-readable label for which real Discord channel a row's
+-- webhook_url actually points at (e.g. "#announcements") — purely for
+-- /team's own display, no functional effect on where the post actually
+-- goes (that's still webhook_url). Without this, telling rows apart in
+-- the list means decoding opaque webhook URLs by eye.
+ALTER TABLE scheduled_posts ADD COLUMN IF NOT EXISTS channel_name TEXT;
