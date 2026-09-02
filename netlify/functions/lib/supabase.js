@@ -34,6 +34,24 @@ export function json(statusCode, body) {
   };
 }
 
+// Netlify Functions auto-populate context.clientContext.user from a valid
+// Identity JWT sent in the request's Authorization header (standard
+// Netlify behavior, the same mechanism git-gateway already relies on for
+// the blog CMS at /admin) — no custom JWT verification needed here.
+// Gated on an explicit 'admin' role rather than "any logged-in Identity
+// user", since the same Identity login also covers the blog CMS, and a
+// blog writer has no reason to reach /team's student data or Discord
+// webhook controls. The role itself is assigned per-user in the Netlify
+// Identity dashboard (a one-time manual step, not something committable —
+// same category as Identity/git-gateway setup itself).
+export function requireAdmin(context) {
+  const roles = context?.clientContext?.user?.app_metadata?.roles || [];
+  if (!roles.includes('admin')) {
+    return { authorized: false, response: json(401, { error: 'unauthorized' }) };
+  }
+  return { authorized: true, user: context.clientContext.user };
+}
+
 // "Today" as a calendar date in IST (the site's audience), not the
 // function runtime's own timezone. Netlify Functions run on infrastructure
 // with no guaranteed local timezone (typically UTC) — for roughly the
@@ -47,8 +65,9 @@ export function todayIST() {
   return IST_FORMATTER.format(new Date());
 }
 
-// The IST calendar date before todayIST() — used by discord-daily-leader.js
-// to report on the day that just fully ended, not the in-progress one.
+// The IST calendar date before todayIST() — used by discord-dispatch.js's
+// 'daily_leader' source to report on the day that just fully ended, not
+// the in-progress one.
 export function yesterdayIST() {
   const d = new Date(todayIST() + 'T00:00:00Z');
   d.setUTCDate(d.getUTCDate() - 1);
@@ -128,8 +147,8 @@ export function parseUtcTimestamp(pgTimestamp) {
 // Top 5 by focus minutes logged *last week* (Mon-start, IST), keyed to
 // pomodoro_stats.total_minutes for the week before this one. Shared by
 // tracker-data.js (the page-load batch, for the main-page champions card)
-// and discord-weekly-leaderboard.js (the Monday-morning Discord post) so
-// the two can't drift out of sync on this logic.
+// and discord-dispatch.js's 'weekly_leaderboard' source (the Monday-
+// morning Discord post) so the two can't drift out of sync on this logic.
 export async function fetchLastWeekLeaders(supabase, email) {
   const weekStart = weekBefore(weekStartIST());
   const { data: stats, error: statsError } = await supabase
@@ -210,8 +229,9 @@ export async function fetchLastWeekLeaders(supabase, email) {
 // pomodoro-leaderboard.js (its 30s Focus Mode poll, so the "Today" card
 // can auto-refresh alongside the top-20 board on the same request instead
 // of needing a poll of its own) so the two can't drift out of sync on this
-// logic — and by discord-daily-leader.js, which passes yesterdayIST()
-// explicitly to report on the day that just fully ended.
+// logic — and by discord-dispatch.js's 'daily_leader' source, which
+// passes yesterdayIST() explicitly to report on the day that just fully
+// ended.
 export async function fetchTodayLeaders(supabase, email, date) {
   const today = date || todayIST();
   const { data: stats, error: statsError } = await supabase
@@ -264,17 +284,20 @@ export async function fetchTodayLeaders(supabase, email, date) {
   return { date: today, leaders, viewerRank };
 }
 
-// Posts one embed to the Discord channel wired to DISCORD_WEBHOOK_URL (set
-// via the channel's Integrations -> Webhooks in Discord, stored as an env
-// var, same as the Supabase credentials — never hardcoded). A webhook is
-// just a URL that accepts a POST; no bot process or login needed. Used by
-// discord-daily-leader.js and discord-weekly-leaderboard.js — both post
-// under the same DISCORD_BOT_USERNAME identity, overriding whatever name
-// the webhook itself happens to be configured with in Discord, so both
-// kinds of post look like they're coming from one consistent account.
-// Throws on failure — both callers are scheduled functions with nothing
-// user-facing to degrade gracefully for, so a real error should show up
-// in the function's own logs rather than fail silently.
+// Posts one embed to a Discord channel webhook — by default the one wired
+// to DISCORD_WEBHOOK_URL (set via the channel's Integrations -> Webhooks
+// in Discord, stored as an env var, same as the Supabase credentials —
+// never hardcoded), or an explicit `webhookUrl` override for a post
+// targeting a different channel (see /team, scheduled_posts.webhook_url —
+// any post can go to any channel, not just the one env-var default). A
+// webhook is just a URL that accepts a POST; no bot process or login
+// needed. Posts under the same DISCORD_BOT_USERNAME identity regardless of
+// destination, overriding whatever name the webhook itself happens to be
+// configured with in Discord, so every post looks like it's coming from
+// one consistent account. Throws on failure — every caller is either a
+// scheduled function or the dispatcher processing one row at a time, with
+// nothing user-facing to degrade gracefully for, so a real error should
+// show up in logs rather than fail silently.
 export const DISCORD_BOT_USERNAME = 'Department of Propaganda';
 
 // `content`, if given, is plain text shown above the embed — the only
@@ -286,8 +309,8 @@ export const DISCORD_BOT_USERNAME = 'Department of Propaganda';
 // actually provided, not on every post. Used for the weekly and monthly
 // posts only, by explicit request — not the daily one, to avoid a ping
 // landing every single morning.
-export async function postToDiscordWebhook(embed, content) {
-  const url = process.env.DISCORD_WEBHOOK_URL;
+export async function postToDiscordWebhook(embed, content, webhookUrl) {
+  const url = webhookUrl || process.env.DISCORD_WEBHOOK_URL;
   if (!url) throw new Error('DISCORD_WEBHOOK_URL is not set');
   const res = await fetch(url, {
     method: 'POST',
@@ -383,4 +406,86 @@ export async function computeMonthlyConsistency(supabase, month) {
 
   results.sort((a, b) => b.medianMinutes - a.medianMinutes || b.totalMinutes - a.totalMinutes);
   return { month, top: results.slice(0, 3) };
+}
+
+// Fills {{placeholders}} in a template string with values from `vars` —
+// lets a scheduled_posts row's title/body carry {{name}}/{{hours}}-style
+// placeholders for a built-in dynamic source (see discord-dispatch.js)
+// while a 'custom' post's literal text just passes through untouched
+// (no {{...}} in it to match).
+export function renderTemplate(template, vars) {
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => (key in vars ? String(vars[key]) : ''));
+}
+
+// A 'YYYY-MM-DD' IST calendar date + 'HH:MM' IST wall-clock time -> the
+// exact UTC instant it refers to. IST has no DST and a fixed +05:30
+// offset, so specifying it directly in the ISO string is both correct and
+// simpler than manual arithmetic — the Date constructor does the
+// UTC conversion itself.
+function istWallClockToUtc(dateStr, timeStr) {
+  return new Date(`${dateStr}T${timeStr}:00+05:30`);
+}
+
+// 0 (Sun) - 6 (Sat) for a 'YYYY-MM-DD' calendar date, independent of the
+// server's own timezone — parsing with an explicit "T00:00:00Z" pins the
+// day-of-week to the calendar date itself, not whatever the runtime's
+// local offset would otherwise shift it to.
+function dateStrDayOfWeek(dateStr) {
+  return new Date(dateStr + 'T00:00:00Z').getUTCDay();
+}
+
+function addDaysToDateStr(dateStr, days) {
+  const d = new Date(dateStr + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+// The real last calendar day of the IST month containing `dateStr` — day 0
+// of the *next* month is always the last day of *this* one.
+function lastDayOfIstMonth(dateStr) {
+  const [y, m] = dateStr.split('-').map(Number);
+  return new Date(Date.UTC(y, m, 0)).getUTCDate();
+}
+
+// The next UTC instant, strictly after `afterDate` (defaults to now), that
+// a scheduled_posts row's recurrence rule refers to — used both when a
+// post is saved (its initial next_fire_at) and by discord-dispatch.js
+// after every firing (to schedule the next occurrence of a recurring
+// post). 'once' just resolves schedule_date/schedule_time directly;
+// daily/weekly/monthly walk forward one IST calendar day at a time
+// (bounded to 32 days — comfortably more than any of the three actually
+// need) checking the recurrence rule against each date, since extracting
+// a day-of-week or day-of-month from an already-UTC Date object would be
+// server-timezone-dependent in a way plain date-string arithmetic isn't.
+// schedule_day_of_month is clamped to the real last day of a short month
+// (e.g. 31 in a 30-day month resolves to the 30th), never skipped.
+export function computeNextFireAt(schedule, afterDate) {
+  const after = afterDate || new Date();
+  const timeStr = schedule.schedule_time;
+
+  if (schedule.schedule_type === 'once') {
+    return istWallClockToUtc(schedule.schedule_date, timeStr);
+  }
+
+  let dateStr = todayIST();
+  for (let i = 0; i < 32; i++) {
+    let matches = false;
+    if (schedule.schedule_type === 'daily') {
+      matches = true;
+    } else if (schedule.schedule_type === 'weekly') {
+      matches = dateStrDayOfWeek(dateStr) === Number(schedule.schedule_day_of_week);
+    } else if (schedule.schedule_type === 'monthly') {
+      const day = Number(dateStr.slice(8, 10));
+      const target = Math.min(Number(schedule.schedule_day_of_month), lastDayOfIstMonth(dateStr));
+      matches = day === target;
+    } else {
+      throw new Error('invalid schedule_type');
+    }
+    if (matches) {
+      const candidate = istWallClockToUtc(dateStr, timeStr);
+      if (candidate > after) return candidate;
+    }
+    dateStr = addDaysToDateStr(dateStr, 1);
+  }
+  throw new Error('could not compute next fire time');
 }

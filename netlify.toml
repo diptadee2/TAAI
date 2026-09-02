@@ -18,16 +18,20 @@
 # cron below automatically, no separate scheduler/dependency needed. Cron
 # times are UTC regardless of the function's own logic (same "no
 # guaranteed local timezone" reality documented in lib/supabase.js's
-# todayIST()) — 10:00 AM IST = 04:30 UTC, 10:30 AM IST = 05:00 UTC,
-# 12:00 PM IST = 06:30 UTC.
-[functions."discord-daily-leader"]
-  schedule = "30 4 * * *"
-
-[functions."discord-weekly-leaderboard"]
-  schedule = "0 5 * * 1"
-
-[functions."discord-monthly-consistency"]
-  schedule = "30 6 1 * *"
+# todayIST()).
+#
+# discord-dispatch.js is the only actual cron entry for Discord posts —
+# it runs every 15 minutes and checks the scheduled_posts table (managed
+# via /team) for anything due, rather than one cron per post. The 3 posts
+# that used to be their own standalone scheduled functions here
+# (discord-daily-leader.js, discord-weekly-leaderboard.js,
+# discord-monthly-consistency.js — removed, along with their old cron
+# entries, once this was verified to reproduce them exactly) are now just
+# rows in that table with source = 'daily_leader' / 'weekly_leaderboard' /
+# 'monthly_consistency', still on the same 10:00 AM / 10:30 AM Mon /
+# 12:00 PM 1st-of-month IST timing they always had.
+[functions."discord-dispatch"]
+  schedule = "*/15 * * * *"
 
 # No headers were configured at all before this, so every static asset
 # (images, vendor React bundle, favicons) inherited Netlify's default

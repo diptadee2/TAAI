@@ -203,3 +203,33 @@ RETURNS TABLE(phase_started_at BIGINT, total_seconds INTEGER) AS $$
 $$ LANGUAGE sql;
 
 GRANT EXECUTE ON FUNCTION credit_pomodoro_phase TO service_role;
+
+-- Discord announcements the /team page can create/edit — any webhook
+-- (any channel), fully custom text or one of a few built-in dynamic
+-- sources (today's top student, last week's top 5, monthly consistency —
+-- see discord-dispatch.js), any date/time/recurrence. Netlify Scheduled
+-- Functions run on a cron baked in at deploy time, so a user-editable
+-- schedule can't map to "one cron per post" — instead discord-dispatch.js
+-- runs on one fixed, frequent cron and queries this table for whatever's
+-- actually due right now, per row, via next_fire_at.
+CREATE TABLE IF NOT EXISTS scheduled_posts (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  source                TEXT NOT NULL DEFAULT 'custom', -- 'custom' | 'daily_leader' | 'weekly_leaderboard' | 'monthly_consistency'
+  webhook_url           TEXT NOT NULL,
+  title                 TEXT, -- built-in sources fall back to their hardcoded default title if blank
+  body                  TEXT, -- 'custom': the literal message. Built-in sources: a {{name}}/{{hours}}-style template
+  tag_everyone          BOOLEAN NOT NULL DEFAULT false,
+  color                 INTEGER,
+  schedule_type         TEXT NOT NULL,     -- 'once' | 'daily' | 'weekly' | 'monthly'
+  schedule_time         TEXT NOT NULL,     -- 'HH:MM', IST
+  schedule_date         DATE,              -- for 'once'
+  schedule_day_of_week  INTEGER,           -- 0-6 (Sun-Sat), for 'weekly'
+  schedule_day_of_month INTEGER,           -- 1-31, for 'monthly' (clamped to the real last day in short months)
+  next_fire_at          TIMESTAMPTZ,       -- computed on save and after every firing — what the dispatcher queries on
+  last_fired_at         TIMESTAMPTZ,
+  enabled               BOOLEAN NOT NULL DEFAULT true,
+  created_at            TIMESTAMPTZ DEFAULT now(),
+  updated_at            TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_scheduled_posts_due ON scheduled_posts(next_fire_at) WHERE enabled;
+GRANT SELECT, INSERT, UPDATE, DELETE ON scheduled_posts TO service_role;
