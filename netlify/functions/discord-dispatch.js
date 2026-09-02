@@ -23,6 +23,23 @@ function monthLabel(month) {
   return new Date(month + '-01T00:00:00').toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }
 
+// {{name}}/{{hours}} for rank 1 (matching the single-entity sources'
+// convention), plus {{name2}}/{{hours2}} through {{nameN}}/{{hoursN}} for
+// every other rank — lets a ranked-list source's body template reference
+// each position individually (e.g. "shoutout to {{name}}, {{name2}} and
+// {{name3}}!") instead of only being able to override the title. An
+// unmatched placeholder (e.g. {{name4}} when only 3 leaders exist) just
+// renders blank, same as renderTemplate already does for any unknown key.
+function rankedVars(list, minutesKey) {
+  const vars = {};
+  list.forEach((entry, i) => {
+    const suffix = i === 0 ? '' : String(i + 1);
+    vars['name' + suffix] = entry.display_name;
+    vars['hours' + suffix] = formatHoursDecimal(entry[minutesKey]);
+  });
+  return vars;
+}
+
 // Resolves one row into a Discord embed — pulling live data for a
 // built-in source (with the row's title/body used as an override
 // template, {{name}}/{{hours}} placeholders, falling back to the
@@ -66,10 +83,11 @@ async function resolveEmbed(supabase, row) {
     const lines = top3.map((l, i) =>
       `${MEDALS[i] || (i + 1) + '.'} **${l.display_name}** — ${formatHoursDecimal(l.total_minutes)}`
     );
+    const text = row.body ? renderTemplate(row.body, rankedVars(top3, 'total_minutes')) : lines.join('\n');
     return {
       title: row.title || '🏆 Yesterday\'s Top 3',
       url: TRACKER_URL,
-      description: lines.join('\n') + `\n\n[📊 View the progress tracker](${TRACKER_URL})`,
+      description: `${text}\n\n[📊 View the progress tracker](${TRACKER_URL})`,
       color: row.color ?? 0xf59e0b,
       footer: { text: date },
     };
@@ -81,10 +99,11 @@ async function resolveEmbed(supabase, row) {
     const lines = leaders.map((l, i) =>
       `${MEDALS[i] || (i + 1) + '.'} **${l.display_name}** — ${formatHoursDecimal(l.total_minutes)}`
     );
+    const text = row.body ? renderTemplate(row.body, rankedVars(leaders, 'total_minutes')) : lines.join('\n');
     return {
       title: row.title || '📅 Weekly Top 5 Leaderboard',
       url: TRACKER_URL,
-      description: lines.join('\n') + `\n\n[📊 View the progress tracker](${TRACKER_URL})`,
+      description: `${text}\n\n[📊 View the progress tracker](${TRACKER_URL})`,
       color: row.color ?? 0x8b5cf6,
       footer: { text: 'Week of ' + weekStart },
     };

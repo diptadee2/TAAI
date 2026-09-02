@@ -119,10 +119,10 @@
     var isList = LIST_SOURCES.indexOf(source) !== -1;
     var bodyHint = source === 'custom'
       ? 'The literal message text.'
-      : 'Optional override. Leave blank to use the default wording. Supports {{name}} and {{hours}} placeholders.';
-    var bodyField = isList
-      ? '<div class="field"><label>Body</label><div class="field-hint">This post is a computed ranked list (names/hours pulled fresh every time it fires) — there\'s no single {{name}}/{{hours}} to fill in, so there\'s no body text to edit here. Use Title to override the heading.</div></div>'
-      : '<div class="field"><label>Body</label><textarea name="body">' + escapeHtml(p.body) + '</textarea><div class="field-hint">' + bodyHint + '</div></div>';
+      : isList
+        ? 'Optional override. Leave blank for the default medal list. {{name}}/{{hours}} = 1st place, {{name2}}/{{hours2}} = 2nd, {{name3}}/{{hours3}} = 3rd (up to {{name5}}/{{hours5}} for the weekly top 5).'
+        : 'Optional override. Leave blank to use the default wording. Supports {{name}} and {{hours}} placeholders.';
+    var bodyField = '<div class="field"><label>Body</label><textarea name="body">' + escapeHtml(p.body) + '</textarea><div class="field-hint">' + bodyHint + '</div></div>';
 
     return (
       '<div class="card">' +
