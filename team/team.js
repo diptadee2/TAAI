@@ -120,6 +120,38 @@
     );
   }
 
+  // Distinct webhooks already used by an existing post, newest first —
+  // powers the "Load a saved channel" dropdown so a new/edited post can
+  // reuse one without retyping/repasting the URL.
+  function getKnownChannels() {
+    var seen = {};
+    var list = [];
+    state.posts.forEach(function (post) {
+      if (!post.webhook_url || seen[post.webhook_url]) return;
+      seen[post.webhook_url] = true;
+      list.push({ webhook_url: post.webhook_url, channel_name: post.channel_name || null });
+    });
+    return list;
+  }
+
+  function channelSelectLabel(c) {
+    return c.channel_name || ('…' + c.webhook_url.slice(-10));
+  }
+
+  function renderChannelSelect() {
+    var known = getKnownChannels();
+    if (!known.length) return '';
+    var options = known.map(function (c, i) {
+      return '<option value="' + i + '">' + escapeHtml(channelSelectLabel(c)) + '</option>';
+    }).join('');
+    return (
+      '<div class="field"><label>Load a saved channel</label>' +
+        '<select id="f-channel-select"><option value="">-- Enter a new webhook below --</option>' + options + '</select>' +
+        '<div class="field-hint">Fills in the channel name and webhook URL from a post you\'ve already set up — still editable below.</div>' +
+      '</div>'
+    );
+  }
+
   function renderForm(p) {
     var isNew = !p.id;
     var source = p.source || 'custom';
@@ -160,6 +192,7 @@
             '<div class="field"><label>Source</label><select name="source" id="f-source">' + sourceOptions + '</select></div>' +
             '<div class="field"><label>Channel name (for your reference)</label><input type="text" name="channel_name" placeholder="e.g. #announcements" value="' + escapeHtml(p.channel_name) + '"></div>' +
           '</div>' +
+          renderChannelSelect() +
           '<div class="field"><label>Webhook URL</label><input type="url" name="webhook_url" placeholder="https://discord.com/api/webhooks/..." value="' + escapeHtml(p.webhook_url) + '" required></div>' +
           '<div class="field"><label>Test webhook URL (optional)</label><input type="url" name="test_webhook_url" placeholder="A separate test-channel webhook, for the Send Test button below" value="' + escapeHtml(p.test_webhook_url) + '"><div class="field-hint">Never used by the real schedule — only "Send Test" below posts here, on demand. Point this at a private test channel, not the real one.</div></div>' +
           '<div class="field"><label>Title (optional' + (source !== 'custom' ? ' — overrides the default' : '') + ')</label><input type="text" name="title" value="' + escapeHtml(p.title) + '"></div>' +
@@ -301,6 +334,7 @@
 
         '<div class="ref-section"><div class="ref-heading">Other fields</div>' +
           '<div class="ref-row"><strong>Channel name</strong> — just a label for this list, purely for telling rows apart at a glance. Doesn\'t affect where the post actually goes — that\'s the Webhook URL.</div>' +
+          '<div class="ref-row"><strong>Load a saved channel</strong> — picks from webhooks already used by an existing post and fills in the Channel name/Webhook URL fields for you. Still just a starting point — edit either field afterward if needed.</div>' +
           '<div class="ref-row"><strong>Preview</strong> button — shows exactly what would post right now, using real live data, before you save. Doesn\'t post anything or save your changes.</div>' +
           '<div class="ref-row"><strong>Send Test</strong> button — actually posts a real message right now, to whatever\'s in the "Test webhook URL" field above it (never the real Webhook URL, and never saves your changes). Point that at a private test channel so you can see the real rendered message in an actual Discord client before trusting it with the real one.</div>' +
           '<div class="ref-row"><strong>Once</strong> schedule — fires exactly one time at the date/time you set, then automatically pauses itself (doesn\'t delete, just switches to disabled).</div>' +
@@ -372,6 +406,22 @@
       state.editing.schedule_type = scheduleTypeSelect.value;
       render();
       document.getElementById('f-schedule-type').focus();
+    });
+
+    var channelSelect = document.getElementById('f-channel-select');
+    if (channelSelect) channelSelect.addEventListener('change', function () {
+      if (channelSelect.value === '') return; // "Enter a new webhook below" — leave fields as they are
+      var known = getKnownChannels()[Number(channelSelect.value)];
+      if (!known) return;
+      // Patches the two inputs directly rather than going through
+      // state.editing + render() — a full re-render rebuilds the form
+      // from state.editing alone, which doesn't have anything typed into
+      // Title/Body yet (those only sync back on submit), so re-rendering
+      // here would silently wipe out whatever else was already filled in.
+      var webhookInput = document.querySelector('#post-form [name="webhook_url"]');
+      var channelNameInput = document.querySelector('#post-form [name="channel_name"]');
+      if (webhookInput) webhookInput.value = known.webhook_url;
+      if (channelNameInput && known.channel_name) channelNameInput.value = known.channel_name;
     });
 
     var cancelBtn = document.getElementById('f-cancel');
