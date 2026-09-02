@@ -24,6 +24,20 @@
   // weekly_leaderboard before this was split out into its own set.
   var LIST_SOURCES = ['daily_leaderboard', 'weekly_leaderboard'];
   var SCHEDULE_LABELS = { once: 'Once', daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' };
+  // The exact same fallback text resolveScheduledPostEmbed() in
+  // lib/supabase.js uses when body is blank — shown pre-filled in the Body
+  // box for a new/never-edited post of these two sources, so someone
+  // editing it starts from the real current wording instead of an empty
+  // box (and has to go dig up what the default even says). Only applies
+  // to the single-entity sources — the ranked-list ones (daily_leaderboard,
+  // weekly_leaderboard) have no equivalent "default sentence" to show,
+  // blank there just means "no intro line," which is itself a valid,
+  // common choice. Keep these two strings in sync with lib/supabase.js by
+  // hand if that wording ever changes.
+  var DEFAULT_BODY_BY_SOURCE = {
+    daily_leader: '**{{name}}** logged the most focus time yesterday — **{{hours}}**!',
+    monthly_consistency: '**{{name}}** was the most consistent student this month — a **typical day of {{hours}}** of focused study, day after day, all month long.',
+  };
 
   var state = {
     authorized: false,
@@ -128,8 +142,15 @@
       ? 'The literal message text.'
       : isList
         ? 'Optional intro line shown above the medal list (the list itself always shows regardless). {{name}}/{{hours}} = 1st place, {{name2}}/{{hours2}} = 2nd, {{name3}}/{{hours3}} = 3rd (up to {{name5}}/{{hours5}} for the weekly top 5).'
-        : 'Optional override. Leave blank to use the default wording. Supports {{name}} and {{hours}} placeholders.';
-    var bodyField = '<div class="field"><label>Body</label><textarea name="body">' + escapeHtml(p.body) + '</textarea><div class="field-hint">' + bodyHint + '</div></div>';
+        : 'Pre-filled with the current default wording below — edit it directly, or clear the box entirely to fall back to this same default. Supports {{name}} and {{hours}} placeholders.';
+    // Only pre-fill when there's no real custom body saved (never overwrite
+    // one that is) and only for sources that have a default sentence at
+    // all. An empty body is treated the same as null here on purpose —
+    // for these two sources blank always means "show the hardcoded
+    // default" functionally (see resolveScheduledPostEmbed's `row.body ||
+    // DEFAULT`), there's no distinct "truly blank" state to preserve.
+    var bodyValue = (p.body != null && p.body !== '') ? p.body : (DEFAULT_BODY_BY_SOURCE[source] || '');
+    var bodyField = '<div class="field"><label>Body</label><textarea name="body">' + escapeHtml(bodyValue) + '</textarea><div class="field-hint">' + bodyHint + '</div></div>';
 
     return (
       '<div class="card">' +
