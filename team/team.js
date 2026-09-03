@@ -46,6 +46,7 @@
     preview: null, // { loading } | { embed } | { embed: null, reason } | { error } | null (not yet previewed)
     testStatus: null, // { loading } | { posted: true } | { posted: false, reason } | { error } | null
     showReference: false,
+    showBuiltIn: false, // recurring daily/weekly/monthly posts start collapsed — see renderPostList()
     tab: 'announcements', // 'announcements' | 'students' — mutually exclusive views, not stacked panels
     students: null, // null = not loaded yet; array once fetched
     studentsLoading: false,
@@ -160,12 +161,12 @@
   // list — matters once there's more than one real channel in use.
   // Alphabetical group order, so it's stable across reloads rather than
   // shuffling with next_fire_at.
-  function renderPostList() {
-    if (!state.posts.length) return '<div class="empty">No scheduled posts yet.</div>';
+  function renderPostGroups(posts) {
+    if (!posts.length) return '<div class="empty">Nothing here yet.</div>';
 
     var groups = {};
     var keys = [];
-    state.posts.forEach(function (p) {
+    posts.forEach(function (p) {
       var key = p.channel_name || (p.webhook_url ? '(unlabeled: …' + p.webhook_url.slice(-10) + ')' : '(no channel set)');
       if (!groups[key]) { groups[key] = []; keys.push(key); }
       groups[key].push(p);
@@ -180,6 +181,35 @@
         '</div>'
       );
     }).join('');
+  }
+
+  // Custom posts are the ones actually edited week to week (a schedule
+  // post, a one-off announcement); the built-in daily/weekly/monthly
+  // leaderboards are "set once, leave alone" by comparison — surfacing
+  // both with equal weight meant re-scanning past three untouched rows
+  // every time to find the one that actually needed attention. Custom
+  // posts get top billing; the recurring ones collapse into their own
+  // toggle, closed by default, same pattern as the syntax reference panel.
+  function renderPostList() {
+    if (!state.posts.length) return '<div class="empty">No scheduled posts yet.</div>';
+
+    var customPosts = state.posts.filter(function (p) { return p.source === 'custom'; });
+    var builtInPosts = state.posts.filter(function (p) { return p.source !== 'custom'; });
+
+    var customHtml =
+      '<h3 class="post-list-heading">Custom announcements</h3>' +
+      renderPostGroups(customPosts);
+
+    var builtInHtml = builtInPosts.length
+      ? (
+        '<button type="button" class="btn" id="builtin-toggle" style="margin:20px 0 12px;">' +
+          (state.showBuiltIn ? 'Hide' : 'Show') + ' recurring leaderboards (' + builtInPosts.length + ')' +
+        '</button>' +
+        (state.showBuiltIn ? renderPostGroups(builtInPosts) : '')
+      )
+      : '';
+
+    return customHtml + builtInHtml;
   }
 
   function colorToHex(color) {
@@ -596,6 +626,12 @@
     var referenceToggle = document.getElementById('reference-toggle');
     if (referenceToggle) referenceToggle.addEventListener('click', function () {
       state.showReference = !state.showReference;
+      render();
+    });
+
+    var builtinToggle = document.getElementById('builtin-toggle');
+    if (builtinToggle) builtinToggle.addEventListener('click', function () {
+      state.showBuiltIn = !state.showBuiltIn;
       render();
     });
 
