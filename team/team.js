@@ -46,7 +46,7 @@
     preview: null, // { loading } | { embed } | { embed: null, reason } | { error } | null (not yet previewed)
     testStatus: null, // { loading } | { posted: true } | { posted: false, reason } | { error } | null
     showReference: false,
-    showStudents: false,
+    tab: 'announcements', // 'announcements' | 'students' — mutually exclusive views, not stacked panels
     students: null, // null = not loaded yet; array once fetched
     studentsLoading: false,
     studentsError: null,
@@ -327,24 +327,37 @@
     }
 
     var msgHtml = state.msg ? '<div class="msg msg-' + (state.msgType === 'error' ? 'error' : 'ok') + '">' + escapeHtml(state.msg) + '</div>' : '';
-    var listHtml = renderPostList();
+
+    var isAnnouncements = state.tab === 'announcements';
+    var tabsHtml =
+      '<div class="tabs">' +
+        '<button class="tab-btn' + (isAnnouncements ? ' active' : '') + '" data-tab="announcements">📣 Announcements</button>' +
+        '<button class="tab-btn' + (!isAnnouncements ? ' active' : '') + '" data-tab="students">👥 Students</button>' +
+      '</div>';
+
+    var actionsHtml = isAnnouncements
+      ? ('<button class="btn" id="reference-toggle">' + (state.showReference ? 'Hide syntax reference' : '? Syntax reference') + '</button>' +
+         (state.editing ? '' : '<button class="btn btn-primary" id="new-btn">+ New post</button>'))
+      : '';
+
+    var bodyHtml = isAnnouncements
+      ? ((state.showReference ? renderReference() : '') +
+         msgHtml +
+         (state.editing ? renderForm(state.editing) : '') +
+         renderPostList())
+      : renderStudents();
 
     root.innerHTML =
       '<div class="wrap">' +
         '<header>' +
-          '<div><h1>Team Console</h1><div class="sub">Discord scheduled posts — signed in as ' + escapeHtml(user.email) + '</div></div>' +
+          '<div><h1>Team Console</h1><div class="sub">Signed in as ' + escapeHtml(user.email) + '</div></div>' +
           '<div style="display:flex;gap:10px;">' +
-            '<button class="btn" id="reference-toggle">' + (state.showReference ? 'Hide syntax reference' : '? Syntax reference') + '</button>' +
-            '<button class="btn" id="students-toggle">' + (state.showStudents ? 'Hide students' : '👥 Students') + '</button>' +
-            (state.editing ? '' : '<button class="btn btn-primary" id="new-btn">+ New post</button>') +
+            actionsHtml +
             '<button class="btn" id="logout-btn">Log out</button>' +
           '</div>' +
         '</header>' +
-        (state.showReference ? renderReference() : '') +
-        (state.showStudents ? renderStudents() : '') +
-        msgHtml +
-        (state.editing ? renderForm(state.editing) : '') +
-        listHtml +
+        tabsHtml +
+        bodyHtml +
       '</div>';
 
     bindEvents();
@@ -437,7 +450,7 @@
       var saveLabel = saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved' : saveState === 'error' ? 'Failed — retry' : 'Save';
       return (
         '<tr data-email="' + escapeHtml(s.email) + '">' +
-          '<td>' + escapeHtml(s.display_name) + '<div class="field-hint">' + escapeHtml(s.email) + '</div></td>' +
+          '<td>' + escapeHtml(s.display_name) + '<div class="field-hint"><a href="mailto:' + escapeHtml(s.email) + '">' + escapeHtml(s.email) + '</a></div></td>' +
           '<td>' + formatHours(s.total_minutes) + '</td>' +
           '<td>' + formatHours(s.week_minutes) + '</td>' +
           '<td>' + formatHours(s.consistency_minutes) + '/day</td>' +
@@ -484,11 +497,14 @@
       render();
     });
 
-    var studentsToggle = document.getElementById('students-toggle');
-    if (studentsToggle) studentsToggle.addEventListener('click', function () {
-      state.showStudents = !state.showStudents;
-      if (state.showStudents && state.students === null) { loadStudents(); return; }
-      render();
+    document.querySelectorAll('.tab-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var tab = btn.getAttribute('data-tab');
+        if (tab === state.tab) return;
+        state.tab = tab;
+        if (tab === 'students' && state.students === null) { loadStudents(); return; }
+        render();
+      });
     });
 
     document.querySelectorAll('.js-sort').forEach(function (th) {

@@ -42,6 +42,11 @@
 
   #gate { text-align: center; padding: 80px 20px; color: var(--ink-dim); }
 
+  .tabs { display: flex; gap: 8px; margin-bottom: 22px; border-bottom: 1px solid var(--line); }
+  .tab-btn { padding: 10px 4px; margin-right: 22px; background: transparent; color: var(--ink-soft); border: none; border-bottom: 2px solid transparent; margin-bottom: -1px; font-size: 14px; font-weight: 600; }
+  .tab-btn:hover { color: var(--ink); }
+  .tab-btn.active { color: var(--purple); border-bottom-color: var(--purple); }
+
   .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; }
 
   .post-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); }
