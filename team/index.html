@@ -57,6 +57,16 @@
 
   .empty { color: var(--ink-soft); font-size: 13.5px; text-align: center; padding: 30px 0; }
 
+  .students-table-wrap { overflow-x: auto; }
+  .students-table { width: 100%; border-collapse: collapse; font-size: 13px; white-space: nowrap; }
+  .students-table th, .students-table td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .students-table th { color: var(--ink-dim); font-weight: 600; font-size: 12px; cursor: pointer; user-select: none; }
+  .students-table th:hover { color: var(--ink); }
+  .students-table tbody tr:last-child td { border-bottom: none; }
+  .students-notes-cell { white-space: normal; min-width: 220px; }
+  .students-notes-cell textarea { width: 100%; min-height: 34px; padding: 6px 8px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--bg-soft); color: var(--ink); font-family: inherit; font-size: 12.5px; resize: vertical; margin-bottom: 5px; }
+  .students-notes-cell textarea:focus { outline: none; border-color: var(--purple); }
+
   .channel-group { margin-bottom: 16px; }
   .channel-group:last-child { margin-bottom: 0; }
   .channel-group-heading { display: flex; align-items: baseline; gap: 7px; font-weight: 700; font-size: 13px; color: var(--ink-dim); margin-bottom: 4px; padding: 0 2px; }

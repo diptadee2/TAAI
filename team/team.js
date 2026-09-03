@@ -46,6 +46,12 @@
     preview: null, // { loading } | { embed } | { embed: null, reason } | { error } | null (not yet previewed)
     testStatus: null, // { loading } | { posted: true } | { posted: false, reason } | { error } | null
     showReference: false,
+    showStudents: false,
+    students: null, // null = not loaded yet; array once fetched
+    studentsLoading: false,
+    studentsError: null,
+    studentSort: { key: 'total_minutes', dir: 'desc' },
+    noteSaving: {}, // email -> 'saving' | 'saved' | 'error', transient per-row save feedback
     msg: null,
     msgType: null,
   };
@@ -329,11 +335,13 @@
           '<div><h1>Team Console</h1><div class="sub">Discord scheduled posts — signed in as ' + escapeHtml(user.email) + '</div></div>' +
           '<div style="display:flex;gap:10px;">' +
             '<button class="btn" id="reference-toggle">' + (state.showReference ? 'Hide syntax reference' : '? Syntax reference') + '</button>' +
+            '<button class="btn" id="students-toggle">' + (state.showStudents ? 'Hide students' : '👥 Students') + '</button>' +
             (state.editing ? '' : '<button class="btn btn-primary" id="new-btn">+ New post</button>') +
             '<button class="btn" id="logout-btn">Log out</button>' +
           '</div>' +
         '</header>' +
         (state.showReference ? renderReference() : '') +
+        (state.showStudents ? renderStudents() : '') +
         msgHtml +
         (state.editing ? renderForm(state.editing) : '') +
         listHtml +
@@ -380,11 +388,133 @@
     );
   }
 
+  function formatHours(minutes) {
+    return (minutes / 60).toFixed(1) + 'h';
+  }
+
+  var STUDENT_COLUMNS = [
+    { key: 'display_name', label: 'Name' },
+    { key: 'total_minutes', label: 'All-time' },
+    { key: 'week_minutes', label: 'This week' },
+    { key: 'streak', label: 'Streak' },
+    { key: 'tasks_completed', label: 'Tasks done' },
+    { key: 'last_active', label: 'Last active' },
+  ];
+
+  function sortedStudents() {
+    var key = state.studentSort.key;
+    var dir = state.studentSort.dir === 'asc' ? 1 : -1;
+    return (state.students || []).slice().sort(function (a, b) {
+      var av = a[key], bv = b[key];
+      if (av == null) av = key === 'display_name' ? '' : -Infinity;
+      if (bv == null) bv = key === 'display_name' ? '' : -Infinity;
+      if (av < bv) return -1 * dir;
+      if (av > bv) return 1 * dir;
+      return 0;
+    });
+  }
+
+  // A dedicated Students view for spotting high performers (default sort:
+  // most all-time focus hours first) and students who've dropped off (sort
+  // by Last active to see who's gone quiet), plus a free-text Notes field
+  // per student purely for the team's own reference — see the `notes`
+  // column added to `students` in schema.sql.
+  function renderStudents() {
+    if (state.studentsLoading) return '<div class="card"><div class="field-hint">Loading students…</div></div>';
+    if (state.studentsError) return '<div class="card"><div class="msg msg-error" style="margin:0;">' + escapeHtml(state.studentsError) + '</div></div>';
+    if (!state.students || !state.students.length) return '<div class="card"><div class="empty">No students registered yet.</div></div>';
+
+    var headerHtml = STUDENT_COLUMNS.map(function (col) {
+      var active = state.studentSort.key === col.key;
+      var arrow = active ? (state.studentSort.dir === 'asc' ? ' ▲' : ' ▼') : '';
+      return '<th class="js-sort" data-key="' + col.key + '">' + escapeHtml(col.label) + arrow + '</th>';
+    }).join('') + '<th>Notes</th>';
+
+    var rowsHtml = sortedStudents().map(function (s) {
+      var saveState = state.noteSaving[s.email];
+      var saveLabel = saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved' : saveState === 'error' ? 'Failed — retry' : 'Save';
+      return (
+        '<tr data-email="' + escapeHtml(s.email) + '">' +
+          '<td>' + escapeHtml(s.display_name) + '<div class="field-hint">' + escapeHtml(s.email) + '</div></td>' +
+          '<td>' + formatHours(s.total_minutes) + '</td>' +
+          '<td>' + formatHours(s.week_minutes) + '</td>' +
+          '<td>' + s.streak + '</td>' +
+          '<td>' + s.tasks_completed + '</td>' +
+          '<td>' + (s.last_active || '—') + '</td>' +
+          '<td class="students-notes-cell">' +
+            '<textarea class="js-note-input" data-email="' + escapeHtml(s.email) + '" rows="1">' + escapeHtml(s.notes) + '</textarea>' +
+            '<button type="button" class="btn btn-small js-note-save" data-email="' + escapeHtml(s.email) + '">' + saveLabel + '</button>' +
+          '</td>' +
+        '</tr>'
+      );
+    }).join('');
+
+    return (
+      '<div class="card">' +
+        '<h2 style="font-size:16px;margin-bottom:12px;">Students (' + state.students.length + ')</h2>' +
+        '<div class="field-hint" style="margin-bottom:10px;">Sorted by All-time hours by default — click a column to re-sort (e.g. Last active, to see who\'s gone quiet).</div>' +
+        '<div class="students-table-wrap"><table class="students-table"><thead><tr>' + headerHtml + '</tr></thead><tbody>' + rowsHtml + '</tbody></table></div>' +
+      '</div>'
+    );
+  }
+
+  function loadStudents() {
+    state.studentsLoading = true;
+    state.studentsError = null;
+    render();
+    api('/team-students').then(function (data) {
+      state.students = data.students || [];
+      state.studentsLoading = false;
+      render();
+    }).catch(function (err) {
+      state.studentsError = err.message;
+      state.studentsLoading = false;
+      render();
+    });
+  }
+
   function bindEvents() {
     var referenceToggle = document.getElementById('reference-toggle');
     if (referenceToggle) referenceToggle.addEventListener('click', function () {
       state.showReference = !state.showReference;
       render();
+    });
+
+    var studentsToggle = document.getElementById('students-toggle');
+    if (studentsToggle) studentsToggle.addEventListener('click', function () {
+      state.showStudents = !state.showStudents;
+      if (state.showStudents && state.students === null) { loadStudents(); return; }
+      render();
+    });
+
+    document.querySelectorAll('.js-sort').forEach(function (th) {
+      th.addEventListener('click', function () {
+        var key = th.getAttribute('data-key');
+        if (state.studentSort.key === key) {
+          state.studentSort.dir = state.studentSort.dir === 'asc' ? 'desc' : 'asc';
+        } else {
+          state.studentSort = { key: key, dir: key === 'display_name' ? 'asc' : 'desc' };
+        }
+        render();
+      });
+    });
+
+    document.querySelectorAll('.js-note-save').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var email = btn.getAttribute('data-email');
+        var textarea = document.querySelector('.js-note-input[data-email="' + email + '"]');
+        var notes = textarea ? textarea.value : '';
+        state.noteSaving[email] = 'saving';
+        render();
+        api('/team-students', { method: 'PATCH', body: JSON.stringify({ email: email, notes: notes }) })
+          .then(function () {
+            state.noteSaving[email] = 'saved';
+            var s = (state.students || []).filter(function (x) { return x.email === email; })[0];
+            if (s) s.notes = notes;
+            render();
+          })
+          .catch(function () { state.noteSaving[email] = 'error'; render(); });
+      });
     });
 
     var newBtn = document.getElementById('new-btn');

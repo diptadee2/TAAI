@@ -253,3 +253,8 @@ ALTER TABLE scheduled_posts ADD COLUMN IF NOT EXISTS extra_mentions TEXT;
 -- retype your test channel's webhook every time you reopen this post to
 -- test a wording change.
 ALTER TABLE scheduled_posts ADD COLUMN IF NOT EXISTS test_webhook_url TEXT;
+
+-- Free-text notes an admin can attach to a student from /team's Students
+-- view (e.g. "reached out about scholarship", "flag for testimonial") —
+-- purely for the team's own reference, no effect on any tracker behavior.
+ALTER TABLE students ADD COLUMN IF NOT EXISTS notes TEXT;

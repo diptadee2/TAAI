@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-01-1';
+  var CLIENT_VERSION = '2026-09-03-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2379,7 +2379,13 @@
     var pomoSettingsToggle = document.getElementById('pomo-settings-toggle');
     if (pomoSettingsToggle) pomoSettingsToggle.addEventListener('click', function () {
       var panel = document.getElementById('pomo-settings');
-      if (panel) panel.hidden = !panel.hidden;
+      if (!panel) return;
+      panel.hidden = !panel.hidden;
+      // The panel sits at the very bottom of the card, below the ring,
+      // dots, controls, and the permanent notification tip — on a short
+      // screen it can open entirely below the fold with nothing on
+      // screen visibly changing, leaving no clue it opened at all.
+      if (!panel.hidden) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
     var pomoSettingsSave = document.getElementById('pomo-settings-save');
     if (pomoSettingsSave) pomoSettingsSave.addEventListener('click', applyPomoSettings);
