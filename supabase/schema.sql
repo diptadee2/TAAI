@@ -258,3 +258,10 @@ ALTER TABLE scheduled_posts ADD COLUMN IF NOT EXISTS test_webhook_url TEXT;
 -- view (e.g. "reached out about scholarship", "flag for testimonial") —
 -- purely for the team's own reference, no effect on any tracker behavior.
 ALTER TABLE students ADD COLUMN IF NOT EXISTS notes TEXT;
+
+-- Optional array of {title, body, color} for a 'custom' post that needs
+-- more than one embed in a single message (e.g. a weekly schedule post:
+-- one header card + a full-width card per subject) — see
+-- resolveScheduledPostEmbed() in lib/supabase.js. NULL/empty for an
+-- ordinary single-embed custom post, unused by every other source.
+ALTER TABLE scheduled_posts ADD COLUMN IF NOT EXISTS sections JSONB;

@@ -30,9 +30,9 @@ export async function handler() {
   const results = [];
   for (const row of due) {
     try {
-      const embed = await resolveScheduledPostEmbed(supabase, row);
-      if (embed) {
-        await postToDiscordWebhook(embed, buildMentionContent(row), row.webhook_url);
+      const embeds = await resolveScheduledPostEmbed(supabase, row);
+      if (embeds) {
+        await postToDiscordWebhook(embeds, buildMentionContent(row), row.webhook_url);
       }
 
       const updates = { last_fired_at: now.toISOString() };
@@ -44,7 +44,7 @@ export async function handler() {
       const { error: updateError } = await supabase.from('scheduled_posts').update(updates).eq('id', row.id);
       if (updateError) throw new Error(updateError.message);
 
-      results.push({ id: row.id, source: row.source, posted: !!embed });
+      results.push({ id: row.id, source: row.source, posted: !!embeds });
     } catch (err) {
       results.push({ id: row.id, source: row.source, error: err.message });
     }

@@ -284,7 +284,47 @@ export async function fetchTodayLeaders(supabase, email, date) {
   return { date: today, leaders, viewerRank };
 }
 
-// Posts one embed to a Discord channel webhook — by default the one wired
+// The single highest total_minutes any student has ever logged in one
+// calendar day, across all of pomo_daily_sessions — distinct from
+// fetchTodayLeaders (one day's top few), this looks across every day
+// ever recorded. Used to give the daily Discord post "how does this
+// compare to the all-time record" context, not just yesterday's ranking.
+export async function fetchAllTimeDailyRecord(supabase) {
+  const { data, error } = await supabase
+    .from('pomo_daily_sessions')
+    .select('email, date, total_minutes')
+    .order('total_minutes', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  const { data: student, error: studentError } = await supabase
+    .from('students').select('display_name').eq('email', data.email).maybeSingle();
+  if (studentError) throw new Error(studentError.message);
+  return { display_name: student?.display_name || 'Anonymous', total_minutes: data.total_minutes, date: data.date };
+}
+
+// Same idea as fetchAllTimeDailyRecord, one level up: the single highest
+// total_minutes any student has ever logged in one week, across all of
+// pomodoro_stats — for the weekly Discord post's "all-time record" line.
+export async function fetchAllTimeWeeklyRecord(supabase) {
+  const { data, error } = await supabase
+    .from('pomodoro_stats')
+    .select('email, week_start, total_minutes')
+    .order('total_minutes', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  const { data: student, error: studentError } = await supabase
+    .from('students').select('display_name').eq('email', data.email).maybeSingle();
+  if (studentError) throw new Error(studentError.message);
+  return { display_name: student?.display_name || 'Anonymous', total_minutes: data.total_minutes, week_start: data.week_start };
+}
+
+// Posts one or more embeds (Discord renders each full-width, stacked, in
+// one message — up to 10 per message, Discord's own hard limit) to a
+// Discord channel webhook — by default the one wired
 // to DISCORD_WEBHOOK_URL (set via the channel's Integrations -> Webhooks
 // in Discord, stored as an env var, same as the Supabase credentials —
 // never hardcoded), or an explicit `webhookUrl` override for a post
@@ -312,14 +352,15 @@ export const DISCORD_BOT_USERNAME = 'Department of Propaganda';
 // pings what's syntactically in the text; granting parse permission for a
 // kind that isn't present just does nothing), and simpler than inspecting
 // `content` to guess which kinds it needs.
-export async function postToDiscordWebhook(embed, content, webhookUrl) {
+export async function postToDiscordWebhook(embeds, content, webhookUrl) {
   const url = webhookUrl || process.env.DISCORD_WEBHOOK_URL;
   if (!url) throw new Error('DISCORD_WEBHOOK_URL is not set');
+  if (embeds.length > 10) throw new Error(`Discord allows at most 10 embeds per message, got ${embeds.length}`);
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      embeds: [embed],
+      embeds,
       username: DISCORD_BOT_USERNAME,
       ...(content ? { content, allowed_mentions: { parse: ['everyone', 'roles', 'users'] } } : {}),
     }),
@@ -534,12 +575,35 @@ function rankedVars(list, minutesKey) {
   return vars;
 }
 
-// Resolves a scheduled_posts row into a Discord embed — pulling live data
-// for a built-in source (with the row's title/body used as an override
-// template, falling back to hardcoded defaults if blank) or using the
-// row's literal title/body as-is for 'custom'. Returns null when there's
+// Appended to the daily/weekly Discord posts so they carry "how does this
+// compare to the all-time record" context, not just the current
+// day's/week's ranking in isolation. Returns '' (not thrown) when there's
+// no record yet, matching resolveScheduledPostEmbed's own "nothing to
+// show yet" tolerance rather than failing the whole post over it.
+async function allTimeDailyRecordLine(supabase) {
+  const record = await fetchAllTimeDailyRecord(supabase);
+  if (!record) return '';
+  return `\n\n🏅 *All-time daily record: **${record.display_name}** — ${formatHoursDecimal(record.total_minutes)}, set ${record.date}*`;
+}
+async function allTimeWeeklyRecordLine(supabase) {
+  const record = await fetchAllTimeWeeklyRecord(supabase);
+  if (!record) return '';
+  return `\n\n🏅 *All-time weekly record: **${record.display_name}** — ${formatHoursDecimal(record.total_minutes)}, week of ${record.week_start}*`;
+}
+
+// Resolves a scheduled_posts row into an ARRAY of Discord embeds (a single
+// message can carry several — Discord renders them stacked, each
+// full-width, which is what the weekly-schedule-style post needs: one
+// header card plus one full-width card per subject, not squeezed
+// side-by-side into one embed's fields) — pulling live data for a built-in
+// source (with the row's title/body used as an override template, falling
+// back to hardcoded defaults if blank) or using the row's literal
+// title/body/sections as-is for 'custom'. Returns null when there's
 // genuinely nothing to post yet (no data for that day/week/month) — same
-// silent no-op pattern the tracker's own leaderboard cards use.
+// silent no-op pattern the tracker's own leaderboard cards use. Every
+// branch returns an array (usually length 1) rather than a bare embed
+// object, even the single-embed sources, so callers never need to special-
+// case "is this one embed or many" — always spread/iterate.
 //
 // Exported (not just used internally by discord-dispatch.js) so
 // team-posts.js's preview endpoint can call the exact same logic a real
@@ -550,11 +614,23 @@ function rankedVars(list, minutesKey) {
 // never persisted.
 export async function resolveScheduledPostEmbed(supabase, row) {
   if (row.source === 'custom') {
-    return {
+    const mainEmbed = {
       title: row.title || undefined,
       description: row.body || '',
       color: row.color ?? 0x8b5cf6,
     };
+    // `sections` (added for the weekly-schedule use case — a full-width
+    // card per subject, e.g. Python / Calculus) is an optional array of
+    // {title, body, color} typed in via /team's repeatable Sections sub-
+    // form; each becomes its own additional embed appended after the
+    // main one, so a channel gets one message with several stacked cards
+    // instead of one cramped embed.
+    const extraEmbeds = (Array.isArray(row.sections) ? row.sections : []).map(s => ({
+      title: s.title || undefined,
+      description: s.body || '',
+      color: s.color ?? row.color ?? 0x8b5cf6,
+    }));
+    return [mainEmbed, ...extraEmbeds];
   }
 
   if (row.source === 'daily_leader') {
@@ -566,13 +642,13 @@ export async function resolveScheduledPostEmbed(supabase, row) {
       row.body || '**{{name}}** logged the most focus time yesterday — **{{hours}}**!',
       { name: top.display_name, hours: formatHoursDecimal(top.total_minutes) }
     );
-    return {
+    return [{
       title: row.title || '🏆 Yesterday\'s Top Focus Session',
       url: SCHEDULED_POST_TRACKER_URL,
-      description: `${text}\n\n[📊 View the progress tracker](${SCHEDULED_POST_TRACKER_URL})`,
+      description: `${text}${await allTimeDailyRecordLine(supabase)}\n\n[📊 View the progress tracker](${SCHEDULED_POST_TRACKER_URL})`,
       color: row.color ?? 0xf59e0b,
       footer: { text: date },
-    };
+    }];
   }
 
   if (row.source === 'daily_leaderboard') {
@@ -584,13 +660,13 @@ export async function resolveScheduledPostEmbed(supabase, row) {
       `${SCHEDULED_POST_MEDALS[i] || (i + 1) + '.'} **${l.display_name}** — ${formatHoursDecimal(l.total_minutes)}`
     );
     const intro = row.body ? renderTemplate(row.body, rankedVars(top3, 'total_minutes')) + '\n\n' : '';
-    return {
+    return [{
       title: row.title || '🏆 Yesterday\'s Top 3',
       url: SCHEDULED_POST_TRACKER_URL,
-      description: `${intro}${lines.join('\n')}\n\n[📊 View the progress tracker](${SCHEDULED_POST_TRACKER_URL})`,
+      description: `${intro}${lines.join('\n')}${await allTimeDailyRecordLine(supabase)}\n\n[📊 View the progress tracker](${SCHEDULED_POST_TRACKER_URL})`,
       color: row.color ?? 0xf59e0b,
       footer: { text: date },
-    };
+    }];
   }
 
   if (row.source === 'weekly_leaderboard') {
@@ -600,13 +676,13 @@ export async function resolveScheduledPostEmbed(supabase, row) {
       `${SCHEDULED_POST_MEDALS[i] || (i + 1) + '.'} **${l.display_name}** — ${formatHoursDecimal(l.total_minutes)}`
     );
     const intro = row.body ? renderTemplate(row.body, rankedVars(leaders, 'total_minutes')) + '\n\n' : '';
-    return {
+    return [{
       title: row.title || '📅 Weekly Top 5 Leaderboard',
       url: SCHEDULED_POST_TRACKER_URL,
-      description: `${intro}${lines.join('\n')}\n\n[📊 View the progress tracker](${SCHEDULED_POST_TRACKER_URL})`,
+      description: `${intro}${lines.join('\n')}${await allTimeWeeklyRecordLine(supabase)}\n\n[📊 View the progress tracker](${SCHEDULED_POST_TRACKER_URL})`,
       color: row.color ?? 0x8b5cf6,
       footer: { text: 'Week of ' + weekStart },
-    };
+    }];
   }
 
   if (row.source === 'monthly_consistency') {
@@ -627,13 +703,13 @@ export async function resolveScheduledPostEmbed(supabase, row) {
       '*How this is measured:* we look at every day of the month, including the quiet ones, and find your "typical" day — not your best day, not your worst, just what a normal day looked like for you. Someone who shows up a little every day beats someone who crams once and disappears for the rest of the month, even if their total hours end up about the same.' +
       (runnersUp.length ? `\n\n${runnersUp.join('\n')}` : '') +
       `\n\n[📊 View the progress tracker](${SCHEDULED_POST_TRACKER_URL})`;
-    return {
+    return [{
       title: row.title || `🏅 Most Consistent Student — ${label}`,
       url: SCHEDULED_POST_TRACKER_URL,
       description,
       color: row.color ?? 0xf59e0b,
       footer: { text: label },
-    };
+    }];
   }
 
   throw new Error('unknown source: ' + row.source);

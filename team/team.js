@@ -182,6 +182,41 @@
     }).join('');
   }
 
+  function colorToHex(color) {
+    return '#' + (Number.isFinite(color) ? color : 0x8b5cf6).toString(16).padStart(6, '0');
+  }
+
+  // A repeatable list of {title, body, color} mini-cards, only shown for
+  // source: 'custom' — each becomes its own additional embed appended
+  // after the main Title/Body, so one message can carry several full-
+  // width cards (e.g. a weekly schedule: one header + a card per subject)
+  // instead of squeezing everything into one embed. See `sections` in
+  // schema.sql and resolveScheduledPostEmbed() in lib/supabase.js.
+  function renderSectionsEditor(p) {
+    if (p.source !== 'custom') return '';
+    var sections = Array.isArray(p.sections) ? p.sections : [];
+    var rowsHtml = sections.map(function (s, i) {
+      return (
+        '<div class="section-row" data-index="' + i + '">' +
+          '<div class="field-row">' +
+            '<div class="field"><label>Card title</label><input type="text" class="js-section-title" value="' + escapeHtml(s.title) + '"></div>' +
+            '<div class="field"><label>Accent color</label><input type="color" class="js-section-color" value="' + colorToHex(s.color) + '"></div>' +
+          '</div>' +
+          '<div class="field"><label>Card body</label><textarea class="js-section-body">' + escapeHtml(s.body) + '</textarea></div>' +
+          '<button type="button" class="btn btn-small btn-danger js-section-remove" data-index="' + i + '">Remove card</button>' +
+        '</div>'
+      );
+    }).join('');
+    return (
+      '<div class="form-section">' +
+        '<div class="form-section-heading">Extra cards (optional)</div>' +
+        '<div class="field-hint" style="margin-bottom:10px;">Each one becomes its own full-width card stacked below the main Title/Body above — e.g. one card per subject in a weekly schedule post. Leave empty for an ordinary one-card message.</div>' +
+        '<div id="sections-list">' + rowsHtml + '</div>' +
+        '<button type="button" class="btn btn-small" id="f-add-section">+ Add card</button>' +
+      '</div>'
+    );
+  }
+
   function renderForm(p) {
     var isNew = !p.id;
     var source = p.source || 'custom';
@@ -234,6 +269,8 @@
             bodyField +
           '</div>' +
 
+          renderSectionsEditor(p) +
+
           '<div class="form-section">' +
             '<div class="form-section-heading">Mentions</div>' +
             '<div class="checkbox-row"><input type="checkbox" id="f-everyone" name="tag_everyone"' + (p.tag_everyone ? ' checked' : '') + '><label for="f-everyone">Tag @everyone</label></div>' +
@@ -279,23 +316,31 @@
     return html;
   }
 
-  function renderPreviewBox() {
-    if (!state.preview) return '';
-    if (state.preview.loading) return '<div class="preview-box"><div class="field-hint">Loading preview…</div></div>';
-    if (state.preview.error) return '<div class="preview-box"><div class="msg msg-error" style="margin:0;">' + escapeHtml(state.preview.error) + '</div></div>';
-    if (!state.preview.embed) return '<div class="preview-box"><div class="field-hint">' + escapeHtml(state.preview.reason || 'Nothing to preview.') + '</div></div>';
-
-    var embed = state.preview.embed;
+  // Renders one embed as a Discord-style card — the username/BOT tag and
+  // mention line only appear once, above the first card, same as a real
+  // Discord message with multiple stacked embeds.
+  function renderPreviewEmbed(embed, isFirst, content) {
     var colorHex = '#' + (embed.color != null ? embed.color.toString(16).padStart(6, '0') : '8b5cf6');
     return (
-      '<div class="preview-box" style="border-left-color:' + colorHex + ';">' +
-        '<div class="preview-username">Department of Propaganda <span class="preview-bot-tag">BOT</span></div>' +
-        (state.preview.content ? '<div class="preview-mention">' + escapeHtml(state.preview.content) + '</div>' : '') +
+      '<div class="preview-box" style="border-left-color:' + colorHex + ';margin-top:' + (isFirst ? '0' : '8px') + ';">' +
+        (isFirst ? '<div class="preview-username">Department of Propaganda <span class="preview-bot-tag">BOT</span></div>' : '') +
+        (isFirst && content ? '<div class="preview-mention">' + escapeHtml(content) + '</div>' : '') +
         (embed.title ? '<div class="preview-title">' + discordMarkdownToHtml(embed.title) + '</div>' : '') +
         (embed.description ? '<div class="preview-description">' + discordMarkdownToHtml(embed.description) + '</div>' : '') +
         (embed.footer && embed.footer.text ? '<div class="preview-footer">' + escapeHtml(embed.footer.text) + '</div>' : '') +
       '</div>'
     );
+  }
+
+  function renderPreviewBox() {
+    if (!state.preview) return '';
+    if (state.preview.loading) return '<div class="preview-box"><div class="field-hint">Loading preview…</div></div>';
+    if (state.preview.error) return '<div class="preview-box"><div class="msg msg-error" style="margin:0;">' + escapeHtml(state.preview.error) + '</div></div>';
+    if (!state.preview.embeds || !state.preview.embeds.length) return '<div class="preview-box"><div class="field-hint">' + escapeHtml(state.preview.reason || 'Nothing to preview.') + '</div></div>';
+
+    return state.preview.embeds.map(function (embed, i) {
+      return renderPreviewEmbed(embed, i === 0, state.preview.content);
+    }).join('');
   }
 
   function renderTestStatus() {
@@ -372,7 +417,7 @@
         '<h2 style="font-size:15px;margin-bottom:12px;">Syntax reference</h2>' +
 
         '<div class="ref-section"><div class="ref-heading">Sources</div>' +
-          '<div class="ref-row"><strong>Custom message</strong> — whatever you type in Title/Body, posted as-is. No live data.</div>' +
+          '<div class="ref-row"><strong>Custom message</strong> — whatever you type in Title/Body, posted as-is. No live data. Optionally add "Extra cards" below the Body for a multi-card message (e.g. a weekly schedule: one card per subject) — each becomes its own full-width card stacked below the main one.</div>' +
           '<div class="ref-row"><strong>Daily — Top Focus Student</strong> — yesterday\'s single top student. Body fully replaces the default sentence if set.</div>' +
           '<div class="ref-row"><strong>Daily — Top 3</strong> / <strong>Weekly — Top 5 Leaderboard</strong> — a computed, freshly-ranked list every time it fires. Body (if set) is an intro line shown ABOVE the medal list — the list itself always shows regardless, you can\'t remove it.</div>' +
           '<div class="ref-row"><strong>Monthly — Most Consistent Student</strong> — reports on the month that just closed, ranked by median daily minutes (not average). Body fully replaces the default sentence if set.</div>' +
@@ -588,6 +633,25 @@
       document.getElementById('f-source').focus();
     });
 
+    var addSectionBtn = document.getElementById('f-add-section');
+    if (addSectionBtn) addSectionBtn.addEventListener('click', function () {
+      // Reads back whatever's already been typed into existing section
+      // rows first, so adding one more card doesn't wipe out the others —
+      // state.editing.sections otherwise only syncs on submit.
+      state.editing.sections = readSectionsFromDom(document.getElementById('post-form'));
+      state.editing.sections.push({ title: '', body: '', color: 0x8b5cf6 });
+      render();
+    });
+
+    document.querySelectorAll('.js-section-remove').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var idx = Number(btn.getAttribute('data-index'));
+        state.editing.sections = readSectionsFromDom(document.getElementById('post-form'));
+        state.editing.sections.splice(idx, 1);
+        render();
+      });
+    });
+
     var scheduleTypeSelect = document.getElementById('f-schedule-type');
     if (scheduleTypeSelect) scheduleTypeSelect.addEventListener('change', function () {
       state.editing.schedule_type = scheduleTypeSelect.value;
@@ -659,6 +723,21 @@
     });
   }
 
+  // Reads the current Sections editor rows straight from the DOM — used
+  // both for form submission and to preserve in-progress edits across a
+  // re-render triggered by Add/Remove card (state.editing.sections is
+  // only otherwise updated on submit, same as every other field here).
+  function readSectionsFromDom(scope) {
+    return Array.prototype.map.call((scope || document).querySelectorAll('.section-row'), function (row) {
+      var colorHex = row.querySelector('.js-section-color').value || '#8b5cf6';
+      return {
+        title: row.querySelector('.js-section-title').value,
+        body: row.querySelector('.js-section-body').value,
+        color: parseInt(colorHex.replace('#', ''), 16),
+      };
+    });
+  }
+
   function readFormPayload(form) {
     var fd = new FormData(form);
     return {
@@ -668,6 +747,7 @@
       test_webhook_url: (fd.get('test_webhook_url') || '').trim(),
       title: (fd.get('title') || '').trim(),
       body: (fd.get('body') || '').trim(),
+      sections: readSectionsFromDom(form),
       tag_everyone: fd.get('tag_everyone') === 'on',
       extra_mentions: (fd.get('extra_mentions') || '').trim(),
       schedule_type: fd.get('schedule_type'),

@@ -24,6 +24,25 @@ import { getSupabase, json, requireAdmin, computeNextFireAt, resolveScheduledPos
 const VALID_SOURCES = ['custom', 'daily_leader', 'daily_leaderboard', 'weekly_leaderboard', 'monthly_consistency'];
 const VALID_SCHEDULE_TYPES = ['once', 'daily', 'weekly', 'monthly'];
 
+// Normalizes the optional multi-card 'sections' field (only meaningful
+// for source: 'custom' — see resolveScheduledPostEmbed) — each becomes an
+// additional embed appended after the main one. Capped at 9 (main embed +
+// 9 = Discord's 10-per-message hard limit, enforced again in
+// postToDiscordWebhook as a second backstop).
+function sanitizeSections(sections) {
+  if (!Array.isArray(sections)) return null;
+  const cleaned = sections
+    .filter(s => s && typeof s === 'object')
+    .map(s => ({
+      title: typeof s.title === 'string' ? s.title.trim() || null : null,
+      body: typeof s.body === 'string' ? s.body.trim() || null : null,
+      color: Number.isFinite(s.color) ? s.color : null,
+    }))
+    .filter(s => s.title || s.body)
+    .slice(0, 9);
+  return cleaned.length ? cleaned : null;
+}
+
 function validateSchedule(body) {
   if (!VALID_SCHEDULE_TYPES.includes(body.schedule_type)) return 'invalid schedule_type';
   if (!/^\d{2}:\d{2}$/.test(body.schedule_time || '')) return 'schedule_time must be HH:MM';
@@ -64,11 +83,12 @@ export async function handler(event, context) {
         color: Number.isFinite(body.color) ? body.color : null,
         tag_everyone: !!body.tag_everyone,
         extra_mentions: body.extra_mentions || null,
+        sections: sanitizeSections(body.sections),
       };
-      const embed = await resolveScheduledPostEmbed(supabase, tempRow);
+      const embeds = await resolveScheduledPostEmbed(supabase, tempRow);
       const content = buildMentionContent(tempRow);
-      if (!embed) return json(200, { embed: null, content: content || null, reason: 'No data yet for this source/period — nothing would post right now.' });
-      return json(200, { embed, content: content || null });
+      if (!embeds) return json(200, { embeds: null, content: content || null, reason: 'No data yet for this source/period — nothing would post right now.' });
+      return json(200, { embeds, content: content || null });
     } catch (err) {
       return json(400, { error: err.message });
     }
@@ -88,12 +108,13 @@ export async function handler(event, context) {
         color: Number.isFinite(body.color) ? body.color : null,
         tag_everyone: !!body.tag_everyone,
         extra_mentions: body.extra_mentions || null,
+        sections: sanitizeSections(body.sections),
       };
-      const embed = await resolveScheduledPostEmbed(supabase, tempRow);
-      if (!embed) return json(200, { posted: false, reason: 'No data yet for this source/period — nothing to send.' });
+      const embeds = await resolveScheduledPostEmbed(supabase, tempRow);
+      if (!embeds) return json(200, { posted: false, reason: 'No data yet for this source/period — nothing to send.' });
       // Always the test URL, never body.webhook_url — a real production
       // post is only ever sent by discord-dispatch.js on its own schedule.
-      await postToDiscordWebhook(embed, buildMentionContent(tempRow), body.test_webhook_url);
+      await postToDiscordWebhook(embeds, buildMentionContent(tempRow), body.test_webhook_url);
       return json(200, { posted: true });
     } catch (err) {
       return json(400, { error: err.message });
@@ -126,6 +147,7 @@ export async function handler(event, context) {
       tag_everyone: !!body.tag_everyone,
       extra_mentions: body.extra_mentions || null,
       color: Number.isFinite(body.color) ? body.color : null,
+      sections: sanitizeSections(body.sections),
       schedule_type: body.schedule_type,
       schedule_time: body.schedule_time,
       schedule_date: body.schedule_date || null,
@@ -165,6 +187,7 @@ export async function handler(event, context) {
       tag_everyone: !!body.tag_everyone,
       extra_mentions: body.extra_mentions || null,
       color: Number.isFinite(body.color) ? body.color : null,
+      sections: sanitizeSections(body.sections),
       schedule_type: body.schedule_type,
       schedule_time: body.schedule_time,
       schedule_date: body.schedule_date || null,
