@@ -24,7 +24,7 @@ export function getSupabase() {
 // (old JS silently sending a request shape the new server no longer
 // accepts) doesn't stay stuck indefinitely waiting for someone to notice
 // and manually refresh.
-export const CLIENT_VERSION = '2026-09-03-1';
+export const CLIENT_VERSION = '2026-09-04-1';
 
 export function json(statusCode, body) {
   return {
@@ -222,6 +222,45 @@ export async function fetchLastWeekLeaders(supabase, email) {
   return { weekStart, leaders, viewerRank };
 }
 
+// "Live now" status for a set of emails — a student counts as currently
+// in a focus session if their pomo_active_session row (the cross-device
+// sync mirror savePomoActiveState writes to, see progress.js) says
+// running=true AND their current phase's countdown hasn't finished yet.
+// running alone isn't enough: a browser tab closed mid-session without a
+// final sync leaves the row stuck at running=true forever, so
+// phase_end_at (ms epoch, only meaningful while running — see
+// schema.sql) still being in the future is what actually confirms the
+// session hasn't just been left stale — this naturally "expires" a dead
+// session once its nominal length is up, without needing a heartbeat.
+// mode ('work' | 'break') is what drives the Status column for someone
+// who IS live; updated_at backs "last seen" for anyone with a session
+// row who isn't. Shared by pomodoro-leaderboard.js's weekly top-20 board
+// and fetchTodayLeaders' daily leaders, so the two can't disagree on
+// what counts as "live".
+export async function fetchLiveStatusByEmail(supabase, emails) {
+  if (!emails.length) return {};
+  const { data: activeSessions, error } = await supabase
+    .from('pomo_active_session')
+    .select('email, running, phase_end_at, mode, updated_at')
+    .in('email', emails);
+  if (error) throw new Error(error.message);
+
+  const now = Date.now();
+  const sessionByEmail = Object.fromEntries(activeSessions.map(r => [r.email, r]));
+  const result = {};
+  for (const email of emails) {
+    const session = sessionByEmail[email];
+    const live = session && session.running && session.phase_end_at && session.phase_end_at > now ? session : null;
+    result[email] = {
+      is_live: !!live,
+      pomo_status: live?.mode || null,
+      pomo_phase_end_at: live?.phase_end_at || null,
+      pomo_last_seen_at: (!live && session) ? parseUtcTimestamp(session.updated_at).getTime() : null,
+    };
+  }
+  return result;
+}
+
 // Top 10 by focus minutes logged on a given IST date (todayIST() by
 // default), keyed to pomo_daily_sessions.total_minutes — resets by
 // construction every midnight IST since a new day is just a new row
@@ -250,10 +289,12 @@ export async function fetchTodayLeaders(supabase, email, date) {
   if (studentsError) throw new Error(studentsError.message);
 
   const nameByEmail = Object.fromEntries(students.map(s => [s.email, s.display_name]));
+  const liveStatusByEmail = await fetchLiveStatusByEmail(supabase, stats.map(s => s.email));
   const leaders = stats.map(s => ({
     display_name: nameByEmail[s.email] || 'Anonymous',
     total_minutes: s.total_minutes,
     is_me: !!email && s.email === email,
+    ...liveStatusByEmail[s.email],
   }));
 
   // A student outside today's top 10 otherwise has no way to see where
@@ -277,7 +318,8 @@ export async function fetchTodayLeaders(supabase, email, date) {
         .gt('total_minutes', viewerStats.total_minutes);
       if (countError) throw new Error(countError.message);
 
-      viewerRank = { rank: (count || 0) + 1, total_minutes: viewerStats.total_minutes };
+      const viewerLiveStatus = await fetchLiveStatusByEmail(supabase, [email]);
+      viewerRank = { rank: (count || 0) + 1, total_minutes: viewerStats.total_minutes, ...viewerLiveStatus[email] };
     }
   }
 

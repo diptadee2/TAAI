@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-03-1';
+  var CLIENT_VERSION = '2026-09-04-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1089,7 +1089,7 @@
       return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (l.is_me ? ' leaderboard-row--me' : '') + '">' +
         '<span class="leaderboard-rank">' + rank + '</span>' +
         rankMovementHtml(i + 1) +
-        '<span class="leaderboard-name">' + escapeHtml(l.display_name) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
+        '<span class="leaderboard-name">' + liveDotHtml(l.is_live) + escapeHtml(l.display_name) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
         '<span class="leaderboard-time">' + formatHoursDecimal(l.total_minutes) + '</span>' +
         '</div>';
     }).join('');
@@ -1098,7 +1098,7 @@
         '<div class="leaderboard-row leaderboard-row--me">' +
         '<span class="leaderboard-rank">' + state.todayViewerRank.rank + '</span>' +
         rankMovementHtml(state.todayViewerRank.rank) +
-        '<span class="leaderboard-name">You</span>' +
+        '<span class="leaderboard-name">' + liveDotHtml(state.todayViewerRank.is_live) + 'You</span>' +
         '<span class="leaderboard-time">' + formatHoursDecimal(state.todayViewerRank.total_minutes) + '</span>' +
         '</div>';
     }

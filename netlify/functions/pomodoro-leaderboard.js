@@ -4,7 +4,7 @@
 // design; no email or other identity is returned in the response. The
 // optional `email` query param (the viewer's own, if logged in) is only
 // used to flag their own row with is_me, never anyone else's.
-import { getSupabase, json, weekStartIST, weekBefore, todayForStreak, computeStreak, parseUtcTimestamp, fetchTodayLeaders } from './lib/supabase.js';
+import { getSupabase, json, weekStartIST, weekBefore, todayForStreak, computeStreak, fetchTodayLeaders, fetchLiveStatusByEmail } from './lib/supabase.js';
 
 const LIMIT = 20;
 
@@ -87,50 +87,17 @@ export async function handler(event) {
     streakEmails.map(e => [e, computeStreak(scheduledDates, completedByEmail[e] || new Set(), today)])
   );
 
-  // "Live now" — a student is shown as currently in a focus session if
-  // their pomo_active_session row (the same cross-device sync mirror
-  // savePomoActiveState writes to, see progress.js) says running=true
-  // AND their current phase's countdown hasn't finished yet. running
-  // alone isn't enough: a browser tab closed mid-session without a final
-  // sync leaves the row stuck at running=true forever, so phase_end_at
-  // (ms epoch, only meaningful while running — see schema.sql) still
-  // being in the future is what actually confirms the session hasn't
-  // just been left stale. This naturally "expires" a dead session once
-  // its nominal length is up, without needing a heartbeat.
-  // mode ('work' | 'break', see schema.sql) is what actually drives the
-  // Status column — is_live alone only says "in a session", not which
-  // phase they're in. updated_at (touched on every start/pause/skip/
-  // reset/phase-advance, see pomo-active.js) is what backs "last seen"
-  // for anyone with a session row who isn't currently live.
-  const { data: activeSessions, error: activeError } = await supabase
-    .from('pomo_active_session')
-    .select('email, running, phase_end_at, mode, updated_at')
-    .in('email', streakEmails);
-  if (activeError) return json(500, { error: activeError.message });
-  const now = Date.now();
-  const sessionByEmail = Object.fromEntries(activeSessions.map(r => [r.email, r]));
-  const liveByEmail = {};
-  activeSessions.forEach(r => {
-    if (r.running && r.phase_end_at && r.phase_end_at > now) liveByEmail[r.email] = r;
-  });
-
+  // "Live now" status — see fetchLiveStatusByEmail in lib/supabase.js for
+  // the exact definition (shared with fetchTodayLeaders, so the daily and
+  // weekly boards can't disagree on what counts as "live").
+  let liveStatusByEmail;
+  try {
+    liveStatusByEmail = await fetchLiveStatusByEmail(supabase, streakEmails);
+  } catch (err) {
+    return json(500, { error: err.message });
+  }
   function pomoFieldsFor(email) {
-    const session = sessionByEmail[email];
-    const live = liveByEmail[email];
-    return {
-      is_live: !!live,
-      pomo_status: live?.mode || null,
-      // ms epoch, same clock the client's own timer counts down to (see
-      // pomo.phaseEndAt in progress.js) — the frontend derives a live
-      // ticking mm:ss from this rather than a value that would already
-      // be stale by the time it's rendered, let alone a second later.
-      pomo_phase_end_at: live?.phase_end_at || null,
-      // Only set when there's a session row AND they're not currently
-      // live — someone who's never touched Pomodoro gets null (nothing
-      // to show), not a misleading "last seen" for an activity they've
-      // never done.
-      pomo_last_seen_at: (!live && session) ? parseUtcTimestamp(session.updated_at).getTime() : null,
-    };
+    return liveStatusByEmail[email] || { is_live: false, pomo_status: null, pomo_phase_end_at: null, pomo_last_seen_at: null };
   }
 
   const leaderboard = stats.map(s => ({
