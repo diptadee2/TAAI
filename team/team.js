@@ -396,7 +396,9 @@
     { key: 'display_name', label: 'Name' },
     { key: 'total_minutes', label: 'All-time' },
     { key: 'week_minutes', label: 'This week' },
+    { key: 'consistency_minutes', label: 'Consistency' },
     { key: 'streak', label: 'Streak' },
+    { key: 'progress_pct', label: 'Course progress' },
     { key: 'tasks_completed', label: 'Tasks done' },
     { key: 'last_active', label: 'Last active' },
   ];
@@ -438,7 +440,9 @@
           '<td>' + escapeHtml(s.display_name) + '<div class="field-hint">' + escapeHtml(s.email) + '</div></td>' +
           '<td>' + formatHours(s.total_minutes) + '</td>' +
           '<td>' + formatHours(s.week_minutes) + '</td>' +
+          '<td>' + formatHours(s.consistency_minutes) + '/day</td>' +
           '<td>' + s.streak + '</td>' +
+          '<td>' + s.progress_pct + '%</td>' +
           '<td>' + s.tasks_completed + '</td>' +
           '<td>' + (s.last_active || '—') + '</td>' +
           '<td class="students-notes-cell">' +
@@ -452,7 +456,7 @@
     return (
       '<div class="card">' +
         '<h2 style="font-size:16px;margin-bottom:12px;">Students (' + state.students.length + ')</h2>' +
-        '<div class="field-hint" style="margin-bottom:10px;">Sorted by All-time hours by default — click a column to re-sort (e.g. Last active, to see who\'s gone quiet).</div>' +
+        '<div class="field-hint" style="margin-bottom:10px;">Sorted by All-time hours by default — click a column to re-sort. Consistency = median daily minutes this month so far (same measure as the monthly Discord post), zero-filled on quiet days, so it rewards showing up regularly over binge days. Course progress = tasks completed out of everything scheduled so far. Try sorting by Consistency for steady-but-not-flashy students, or Last active to see who\'s gone quiet.</div>' +
         '<div class="students-table-wrap"><table class="students-table"><thead><tr>' + headerHtml + '</tr></thead><tbody>' + rowsHtml + '</tbody></table></div>' +
       '</div>'
     );
