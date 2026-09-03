@@ -683,6 +683,7 @@
 
     var sourceSelect = document.getElementById('f-source');
     if (sourceSelect) sourceSelect.addEventListener('change', function () {
+      syncEditingFromForm();
       state.editing.source = sourceSelect.value;
       state.preview = null;
       state.testStatus = null;
@@ -692,10 +693,7 @@
 
     var addSectionBtn = document.getElementById('f-add-section');
     if (addSectionBtn) addSectionBtn.addEventListener('click', function () {
-      // Reads back whatever's already been typed into existing section
-      // rows first, so adding one more card doesn't wipe out the others —
-      // state.editing.sections otherwise only syncs on submit.
-      state.editing.sections = readSectionsFromDom(document.getElementById('post-form'));
+      syncEditingFromForm();
       state.editing.sections.push({ title: '', body: '', color: 0x8b5cf6 });
       render();
     });
@@ -703,7 +701,7 @@
     document.querySelectorAll('.js-section-remove').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var idx = Number(btn.getAttribute('data-index'));
-        state.editing.sections = readSectionsFromDom(document.getElementById('post-form'));
+        syncEditingFromForm();
         state.editing.sections.splice(idx, 1);
         render();
       });
@@ -712,7 +710,7 @@
     document.querySelectorAll('.js-day-add').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var si = Number(btn.getAttribute('data-section-index'));
-        state.editing.sections = readSectionsFromDom(document.getElementById('post-form'));
+        syncEditingFromForm();
         state.editing.sections[si].rows.push({ date: '', task: '', time: '' });
         render();
       });
@@ -722,7 +720,7 @@
       btn.addEventListener('click', function () {
         var si = Number(btn.getAttribute('data-section-index'));
         var ri = Number(btn.getAttribute('data-row-index'));
-        state.editing.sections = readSectionsFromDom(document.getElementById('post-form'));
+        syncEditingFromForm();
         state.editing.sections[si].rows.splice(ri, 1);
         if (!state.editing.sections[si].rows.length) state.editing.sections[si].rows.push({ date: '', task: '', time: '' });
         render();
@@ -731,6 +729,7 @@
 
     var scheduleTypeSelect = document.getElementById('f-schedule-type');
     if (scheduleTypeSelect) scheduleTypeSelect.addEventListener('change', function () {
+      syncEditingFromForm();
       state.editing.schedule_type = scheduleTypeSelect.value;
       render();
       document.getElementById('f-schedule-type').focus();
@@ -842,6 +841,23 @@
       schedule_day_of_month: fd.get('schedule_day_of_month') != null ? Number(fd.get('schedule_day_of_month')) : null,
       enabled: fd.get('enabled') === 'on',
     };
+  }
+
+  // Merges every current field's value from the live DOM into
+  // state.editing — needed before any handler that calls render() for a
+  // reason other than form submission (changing Source/Frequency, or
+  // adding/removing a card or day row), since renderForm() rebuilds the
+  // whole form from state.editing alone. Without this, state.editing only
+  // has whatever it started with (empty, for a new post) plus whichever
+  // single field a given handler happens to set directly — so a
+  // re-render would silently blank out anything else already typed
+  // (Title, Body, webhook, other cards' content, etc.). Confirmed as a
+  // real bug this way, not just a theoretical risk: typing a header
+  // Title/Body then clicking "+ Add day" emptied them straight back out
+  // before this existed.
+  function syncEditingFromForm() {
+    var form = document.getElementById('post-form');
+    if (form) Object.assign(state.editing, readFormPayload(form));
   }
 
   function init() {
