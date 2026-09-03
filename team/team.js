@@ -186,32 +186,89 @@
     return '#' + (Number.isFinite(color) ? color : 0x8b5cf6).toString(16).padStart(6, '0');
   }
 
-  // A repeatable list of {title, body, color} mini-cards, only shown for
-  // source: 'custom' — each becomes its own additional embed appended
+  // Converts a day-rows table (what someone actually fills in) into the
+  // Discord markdown body a section's embed needs — the exact format
+  // arrived at through live testing against a real test channel (bold
+  // date + em dash + task, duration as a native blockquote line below,
+  // not inline/parenthesized — see CLAUDE.md's "/team" section for why
+  // every alternative tried was rejected). Rows with no task are skipped
+  // (an empty day contributes nothing, same as leaving it out entirely).
+  function sectionRowsToBody(rows) {
+    return rows.filter(function (r) { return r.task; }).map(function (r) {
+      var line = '**' + r.date + '** — ' + r.task;
+      if (r.time) line += '\n> ⏱ ' + r.time;
+      return line;
+    }).join('\n');
+  }
+
+  // The inverse — reconstructs day-rows from a saved section's plain-text
+  // body, so re-opening an existing post for editing shows the familiar
+  // table again instead of a raw markdown blob. Safe to be this specific
+  // about the format: sectionRowsToBody is the only thing that ever
+  // writes this text, so parsing it back is parsing our own output, not
+  // guessing at arbitrary user text.
+  function parseSectionBodyToRows(body) {
+    if (!body) return [];
+    var rows = [];
+    var lines = String(body).split('\n');
+    for (var i = 0; i < lines.length; i++) {
+      var m = lines[i].match(/^\*\*(.+?)\*\*\s*—\s*(.*)$/);
+      if (!m) continue;
+      var time = '';
+      var next = lines[i + 1];
+      var tm = next && next.match(/^>\s*⏱\s*(.*)$/);
+      if (tm) { time = tm[1]; i++; }
+      rows.push({ date: m[1], task: m[2], time: time });
+    }
+    return rows;
+  }
+
+  // A repeatable list of {title, color, day-rows} mini-cards, only shown
+  // for source: 'custom' — each becomes its own additional embed appended
   // after the main Title/Body, so one message can carry several full-
   // width cards (e.g. a weekly schedule: one header + a card per subject)
   // instead of squeezing everything into one embed. See `sections` in
-  // schema.sql and resolveScheduledPostEmbed() in lib/supabase.js.
+  // schema.sql and resolveScheduledPostEmbed() in lib/supabase.js. Each
+  // card's content is a Date/Topic/Duration table (matching how the
+  // source spreadsheet is already laid out) rather than a free-text box —
+  // someone filling this in shouldn't need to know Discord's markdown
+  // syntax to get the formatting right.
   function renderSectionsEditor(p) {
     if (p.source !== 'custom') return '';
     var sections = Array.isArray(p.sections) ? p.sections : [];
-    var rowsHtml = sections.map(function (s, i) {
+    var sectionsHtml = sections.map(function (s, si) {
+      var dayRows = Array.isArray(s.rows) ? s.rows : parseSectionBodyToRows(s.body);
+      if (!dayRows.length) dayRows = [{ date: '', task: '', time: '' }];
+      var dayRowsHtml = dayRows.map(function (r, ri) {
+        return (
+          '<tr class="day-row">' +
+            '<td><input type="text" class="js-day-date" placeholder="Jun 15" value="' + escapeHtml(r.date) + '"></td>' +
+            '<td><input type="text" class="js-day-task" placeholder="Topic"  value="' + escapeHtml(r.task) + '"></td>' +
+            '<td><input type="text" class="js-day-time" placeholder="1h25m" value="' + escapeHtml(r.time) + '"></td>' +
+            '<td><button type="button" class="btn btn-small btn-danger js-day-remove" data-section-index="' + si + '" data-row-index="' + ri + '">×</button></td>' +
+          '</tr>'
+        );
+      }).join('');
       return (
-        '<div class="section-row" data-index="' + i + '">' +
+        '<div class="section-row" data-index="' + si + '">' +
           '<div class="field-row">' +
             '<div class="field"><label>Card title</label><input type="text" class="js-section-title" value="' + escapeHtml(s.title) + '"></div>' +
             '<div class="field"><label>Accent color</label><input type="color" class="js-section-color" value="' + colorToHex(s.color) + '"></div>' +
           '</div>' +
-          '<div class="field"><label>Card body</label><textarea class="js-section-body">' + escapeHtml(s.body) + '</textarea></div>' +
-          '<button type="button" class="btn btn-small btn-danger js-section-remove" data-index="' + i + '">Remove card</button>' +
+          '<table class="day-table"><thead><tr><th>Date</th><th>Topic</th><th>Duration</th><th></th></tr></thead>' +
+          '<tbody>' + dayRowsHtml + '</tbody></table>' +
+          '<div style="display:flex;gap:8px;margin-top:8px;">' +
+            '<button type="button" class="btn btn-small js-day-add" data-section-index="' + si + '">+ Add day</button>' +
+            '<button type="button" class="btn btn-small btn-danger js-section-remove" data-index="' + si + '">Remove card</button>' +
+          '</div>' +
         '</div>'
       );
     }).join('');
     return (
       '<div class="form-section">' +
         '<div class="form-section-heading">Extra cards (optional)</div>' +
-        '<div class="field-hint" style="margin-bottom:10px;">Each one becomes its own full-width card stacked below the main Title/Body above — e.g. one card per subject in a weekly schedule post. Leave empty for an ordinary one-card message.</div>' +
-        '<div id="sections-list">' + rowsHtml + '</div>' +
+        '<div class="field-hint" style="margin-bottom:10px;">Each one becomes its own full-width card stacked below the main Title/Body above — e.g. one card per subject in a weekly schedule post. Fill in one row per day; leave Duration blank for entries like a quiz that has none.</div>' +
+        '<div id="sections-list">' + sectionsHtml + '</div>' +
         '<button type="button" class="btn btn-small" id="f-add-section">+ Add card</button>' +
       '</div>'
     );
@@ -652,6 +709,26 @@
       });
     });
 
+    document.querySelectorAll('.js-day-add').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var si = Number(btn.getAttribute('data-section-index'));
+        state.editing.sections = readSectionsFromDom(document.getElementById('post-form'));
+        state.editing.sections[si].rows.push({ date: '', task: '', time: '' });
+        render();
+      });
+    });
+
+    document.querySelectorAll('.js-day-remove').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var si = Number(btn.getAttribute('data-section-index'));
+        var ri = Number(btn.getAttribute('data-row-index'));
+        state.editing.sections = readSectionsFromDom(document.getElementById('post-form'));
+        state.editing.sections[si].rows.splice(ri, 1);
+        if (!state.editing.sections[si].rows.length) state.editing.sections[si].rows.push({ date: '', task: '', time: '' });
+        render();
+      });
+    });
+
     var scheduleTypeSelect = document.getElementById('f-schedule-type');
     if (scheduleTypeSelect) scheduleTypeSelect.addEventListener('change', function () {
       state.editing.schedule_type = scheduleTypeSelect.value;
@@ -730,9 +807,17 @@
   function readSectionsFromDom(scope) {
     return Array.prototype.map.call((scope || document).querySelectorAll('.section-row'), function (row) {
       var colorHex = row.querySelector('.js-section-color').value || '#8b5cf6';
+      var dayRows = Array.prototype.map.call(row.querySelectorAll('.day-row'), function (dr) {
+        return {
+          date: dr.querySelector('.js-day-date').value,
+          task: dr.querySelector('.js-day-task').value,
+          time: dr.querySelector('.js-day-time').value,
+        };
+      });
       return {
         title: row.querySelector('.js-section-title').value,
-        body: row.querySelector('.js-section-body').value,
+        body: sectionRowsToBody(dayRows),
+        rows: dayRows, // client-side only, for re-rendering the table faithfully; not read by the backend
         color: parseInt(colorHex.replace('#', ''), 16),
       };
     });
