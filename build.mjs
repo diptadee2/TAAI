@@ -411,7 +411,29 @@ function loadPosts() {
       const raw = fs.readFileSync(path.join(BLOG_CONTENT_DIR, f), 'utf8');
       const { data, content } = parseFrontmatter(raw);
       const slug = data.slug || f.replace(/\.md$/i, '');
-      const blocks = Array.isArray(data.blocks) ? data.blocks : [];
+      // blocks_json (a pasted-from-LLM JSON array, see admin/config.yml's
+      // "code" widget + the LLM prompt in admin/index.html's reference
+      // panel) takes priority over the manually-built `blocks` list
+      // whenever it's non-empty — this is the easier path for a
+      // non-technical writer (one paste instead of clicking "Add" and
+      // typing into dozens of fields by hand). Malformed JSON here fails
+      // the whole build loudly, with the offending post named, rather
+      // than silently shipping a page with blocks missing — this runs at
+      // build time, not in front of a live user, so failing fast here is
+      // strictly better than a quiet gap discovered later.
+      let blocks;
+      if (typeof data.blocks_json === 'string' && data.blocks_json.trim()) {
+        try {
+          blocks = JSON.parse(data.blocks_json);
+        } catch (err) {
+          throw new Error(`content/blog/${f}: blocks_json is not valid JSON — ${err.message}`);
+        }
+        if (!Array.isArray(blocks)) {
+          throw new Error(`content/blog/${f}: blocks_json must be a JSON array, got ${typeof blocks}`);
+        }
+      } else {
+        blocks = Array.isArray(data.blocks) ? data.blocks : [];
+      }
       const post = {
         slug,
         title: data.title || slug,

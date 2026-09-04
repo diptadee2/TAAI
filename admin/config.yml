@@ -54,11 +54,18 @@ collections:
           - { label: "Career", value: "career" }
           - { label: "Tips", value: "tips" }
       - { label: "Body", name: "body", widget: "markdown", hint: "The intro / regular prose. For a data-rich post (charts, tables, FAQ, diagrams), add \"Blocks\" below instead of writing HTML here." }
-      - label: "Blocks (optional)"
+      - label: "Blocks — paste from LLM (recommended)"
+        name: "blocks_json"
+        widget: "code"
+        default_language: "json"
+        output_code_only: true
+        required: false
+        hint: "The fast way to add charts/tables/diagrams: open the \"LLM prompt\" panel on the right, copy it, paste it into ChatGPT/Claude along with your article, then paste what it gives back into this box exactly as-is. If this box has anything in it, it's used instead of the \"Blocks (manual)\" list below — no need to touch that one at all."
+      - label: "Blocks (manual, optional)"
         name: "blocks"
         widget: "list"
         required: false
-        hint: "Rendered in order, after Body. Click \"Add\" and pick a block type — no HTML or CSS needed, the page builds the chart/table/diagram from what you type in."
+        hint: "Only needed if you're not using the paste-from-LLM box above (which takes priority whenever it's filled in). Click \"Add\" and pick a block type — no HTML or CSS needed, the page builds the chart/table/diagram from what you type in."
         types:
           - label: "Section heading"
             name: "section_heading"

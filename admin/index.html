@@ -20,11 +20,81 @@
     .blocks-ref .blocks-ref-fields { font-size: 12.5px; color: #374151; background: #f9fafb; border-radius: 6px; padding: 8px 10px; }
     .blocks-ref .blocks-ref-fields b { color: #111827; }
     .blocks-ref .blocks-ref-note { font-size: 12.5px; color: #6b7280; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 10px 12px; margin-top: 16px; line-height: 1.5; }
+    /* LLM-prompt panel — deliberately visually distinct (purple accent)
+       from the plain reference cards above it, since this is the thing a
+       writer should actually use first, not just read. */
+    .blocks-ref .blocks-ref-prompt { border: 1.5px solid #ddd6fe; background: #f5f3ff; border-radius: 10px; padding: 14px 16px 16px; margin-bottom: 22px; }
+    .blocks-ref .blocks-ref-prompt h2 { color: #5b21b6; }
+    .blocks-ref .blocks-ref-copy-btn { display: inline-block; font-size: 12.5px; font-weight: 600; color: #fff; background: #7c3aed; border: none; border-radius: 999px; padding: 7px 16px; cursor: pointer; margin-bottom: 10px; }
+    .blocks-ref .blocks-ref-copy-btn:hover { background: #6d28d9; }
+    .blocks-ref .blocks-ref-prompt-box { display: block; width: 100%; box-sizing: border-box; height: 130px; resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; line-height: 1.5; color: #374151; background: #fff; border: 1px solid #ddd6fe; border-radius: 8px; padding: 10px 12px; }
   </style>
 </head>
 <body>
   <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
   <script>
+    // LLM_PROMPT_TEXT — copy-pasted verbatim into ChatGPT/Claude alongside
+    // a source article, so the LLM does the actual authoring (numbers,
+    // copy, structure) and the writer's only manual step is pasting the
+    // result into the "Blocks — paste from LLM" field (blocks_json in
+    // admin/config.yml, read by loadPosts() in build.mjs). The 13 block
+    // schemas here are transcribed directly from build.mjs's renderer
+    // functions (renderBlockBarChart etc.) — field names must match
+    // exactly, since a wrong key silently reads as undefined rather than
+    // erroring. Keep this in sync by hand whenever a block type's fields
+    // change in build.mjs/admin/config.yml, same as BLOCKS_REFERENCE_HTML
+    // below already has to be.
+    var LLM_PROMPT_TEXT = 'You are helping write a blog post for a GATE DA (Data Science & AI) exam-prep website using a block-based content system. I will give you an article/content below. Convert it into a single JSON array of "blocks" that will be rendered as charts, tables, and diagrams on the page.\n\n' +
+      'OUTPUT RULES (follow exactly):\n' +
+      '- Output ONLY the JSON array. No markdown code fences (no ```), no explanation before or after, no comments.\n' +
+      '- Valid JSON only: double-quoted keys and strings, no trailing commas, numbers written as numbers (not "12" as a string) for any "value"/"values" field.\n' +
+      '- Use ONLY the block "type" values listed below. Every block must have a "type" field plus that type\'s fields.\n' +
+      '- Skip any field marked (optional) if you have nothing to put there — don\'t include it as an empty string.\n' +
+      '- Keep text concise and in the article\'s own voice — don\'t invent statistics or facts that aren\'t in the article.\n\n' +
+      'BLOCK TYPES AND THEIR EXACT FIELDS:\n\n' +
+      '1. section_heading — a small label + heading to start a new part of the post.\n' +
+      '{"type":"section_heading","eyebrow":"WHY IT MATTERS","heading":"Why this matters"}\n' +
+      '- eyebrow (optional): short label shown above the heading, usually caps.\n\n' +
+      '2. text — a regular paragraph (Markdown supported: **bold**, links, etc).\n' +
+      '{"type":"text","content":"Plain paragraph text here."}\n\n' +
+      '3. bar_chart — horizontal bars, one per row.\n' +
+      '{"type":"bar_chart","title":"Fig 1: Marks by subject","subtitle":"optional subtitle","bars":[{"label":"Linear Algebra","value":12,"trend":"rising"},{"label":"DBMS","value":8,"trend":"falling"}],"caption":"optional caption"}\n' +
+      '- trend must be exactly "rising", "falling", or "steady" — controls the bar\'s color.\n\n' +
+      '4. grouped_bar_chart — compares a few categories across the same years/series.\n' +
+      '{"type":"grouped_bar_chart","title":"Fig 2: Question types by year","series":["2024","2025","2026"],"groups":[{"label":"MCQ","values":[52,53,49]},{"label":"MSQ","values":[22,28,22]}],"caption":"optional caption"}\n' +
+      '- series: the labels for each value in a group, in order (e.g. years).\n' +
+      '- each group\'s "values" array must have exactly one number per series label, same order.\n\n' +
+      '5. line_chart — a trend over time, one line per thing tracked.\n' +
+      '{"type":"line_chart","title":"Fig 3: Trend over years","x_labels":["2024","2025","2026"],"lines":[{"label":"Machine Learning","values":[10,14,18]},{"label":"DBMS","values":[16,14,11]}],"caption":"optional caption"}\n' +
+      '- x_labels: the x-axis points, in order (needs at least 2).\n' +
+      '- each line\'s "values" array must have exactly one number per x_label, same order.\n\n' +
+      '6. data_table — a plain table. Leave "columns" as [] for a simple 2-column key/value table.\n' +
+      '{"type":"data_table","title":"optional title","columns":[],"rows":[{"cells":["Questions / marks / time","65 . 100 . 3 hours"]},{"cells":["Negative marking","MCQ only"],"highlight":false}]}\n' +
+      '- if "columns" has headers, every row\'s "cells" array must match that count.\n' +
+      '- "highlight" (optional, boolean): true for a row that should stand out (e.g. a totals row).\n\n' +
+      '7. step_diagram — things building up over steps (e.g. a revision routine).\n' +
+      '{"type":"step_diagram","title":"Fig: Rolling revision","subtitle":"optional","steps":[{"step_label":"step 1","items":[{"label":"M1","is_new":true}]},{"step_label":"step 2","items":[{"label":"M1","is_new":false},{"label":"M2","is_new":true}]}],"caption":"optional"}\n' +
+      '- each step\'s "items" list bottom-to-top; "is_new": true on whichever item should stand out that step.\n\n' +
+      '8. two_path_diagram — one thing splits into two outcomes.\n' +
+      '{"type":"two_path_diagram","root_label":"Marks lost","left":{"badge":"YOU KNEW IT","title":"Accuracy leak","description":"Wrong or unfinished on something you understand.","action":"minimise, re-solve clean"},"right":{"badge":"YOU DIDN\'T KNOW IT","title":"Knowledge gap","description":"A topic you haven\'t covered or mastered yet.","action":"study it, then re-test"}}\n' +
+      '- "badge" and "action" are both optional but recommended.\n\n' +
+      '9. comparison_rows — rows contrasting a wrong way and a right way of doing something.\n' +
+      '{"type":"comparison_rows","title":"optional","rows":[{"good":false,"description":"skim the keywords","result":"wrong Q solved"},{"good":true,"description":"read it fully","result":"right answer, first time"}]}\n' +
+      '- "good": true marks the correct/positive example (shown with a checkmark instead of an X).\n\n' +
+      '10. concept_comparison — a simple side-by-side comparison of two approaches, text only.\n' +
+      '{"type":"concept_comparison","left_label":"RESOURCE HOARDING","left_description":"Busy, shallow, no depth.","right_label":"ONE STRUCTURED PATH","right_description":"Forward, with loops back."}\n\n' +
+      '11. syllabus_grid — a grid of numbered topic cards.\n' +
+      '{"type":"syllabus_grid","title":"optional","cells":[{"number":"01","title":"Linear Algebra","description":"Vector spaces, matrices, eigenvalues.","highlight":false}]}\n' +
+      '- "number" is a short code/index shown on the card, e.g. "01" or "GA" — text, not just digits.\n' +
+      '- "highlight" (optional, boolean): true for a cell that should stand out.\n\n' +
+      '12. faq — an expandable question/answer list.\n' +
+      '{"type":"faq","items":[{"question":"What is the full form of GATE DA?","answer":"Graduate Aptitude Test in Engineering, Data Science and Artificial Intelligence."}]}\n\n' +
+      '13. resources — a stack of link cards.\n' +
+      '{"type":"resources","intro":"optional intro text","items":[{"title":"GATE DA course","subtitle":"A full, structured track","url":"https://taai.live/gate-da-courses","cta_text":"Visit"}]}\n\n' +
+      'Blocks render in the order you list them in the array. Mix section_heading/text blocks between charts so the post reads naturally, rather than putting every chart back to back.\n\n' +
+      'Now here is the article/content to convert:\n\n' +
+      '[PASTE YOUR ARTICLE OR NOTES HERE]';
+
     // A reference panel for the Blog collection's preview pane — not a
     // live preview of the rendered post (that would mean re-implementing
     // build.mjs's block renderers a second time here, in a second
@@ -38,7 +108,7 @@
     // this site.
     var BLOCKS_REFERENCE_HTML = '' +
       '<h2>Blocks reference</h2>' +
-      '<div class="blocks-ref-sub">What each block type in the Blocks field does, and what to fill in. This panel does not preview your actual post — publish (or check the live site) to see the real result.</div>' +
+      '<div class="blocks-ref-sub">What each block type does and what to fill in — mainly useful for editing what an LLM already gave you (see the paste-from-LLM box above). This panel does not preview your actual post — publish (or check the live site) to see the real result.</div>' +
 
       '<div class="blocks-ref-item"><h3>Section heading</h3><p>A small label + a heading, to start a new part of the post.</p>' +
       '<div class="blocks-ref-fields"><b>Eyebrow</b> (small label above), <b>Heading</b></div></div>' +
@@ -83,7 +153,16 @@
 
     var BlocksReferencePreview = createClass({
       render: function () {
-        return h('div', { className: 'blocks-ref', dangerouslySetInnerHTML: { __html: BLOCKS_REFERENCE_HTML } });
+        return h('div', { className: 'blocks-ref' },
+          h('div', { className: 'blocks-ref-prompt' },
+            h('h2', null, 'LLM prompt — copy this'),
+            h('div', { className: 'blocks-ref-sub' },
+              'Copy the box below, paste it into ChatGPT/Claude together with your article, then paste what it gives back into the "Blocks — paste from LLM" field on the left. That single paste replaces clicking "Add" and typing into every field by hand.'),
+            h('textarea', { readOnly: true, className: 'blocks-ref-prompt-box', value: LLM_PROMPT_TEXT,
+              onClick: function (e) { e.target.select(); } })
+          ),
+          h('div', { dangerouslySetInnerHTML: { __html: BLOCKS_REFERENCE_HTML } })
+        );
       }
     });
     CMS.registerPreviewTemplate('blog', BlocksReferencePreview);
