@@ -63,6 +63,8 @@
     testStatus: null, // { loading } | { posted: true } | { posted: false, reason } | { error } | null
     showReference: false,
     showBuiltIn: false, // recurring daily/weekly/monthly posts start collapsed — see renderPostList()
+    renamingWebhook: null, // webhook_url of the channel group currently showing a rename input, or null
+    renameStatus: null, // { webhookUrl, saving } | { webhookUrl, error } | null
     tab: 'announcements', // 'announcements' | 'students' — mutually exclusive views, not stacked panels
     students: null, // null = not loaded yet; array once fetched
     studentsLoading: false,
@@ -177,26 +179,63 @@
   // list — matters once there's more than one real channel in use.
   // Alphabetical group order, so it's stable across reloads rather than
   // shuffling with next_fire_at.
+  // Grouped by webhook_url (the actual channel identity — a post's
+  // channel_name is just a display label, and two posts can only ever be
+  // "the same channel" if they post to the same place), not by the label
+  // text itself — so renaming a channel can unambiguously mean "every
+  // post whose webhook_url matches this group", not "every post whose
+  // label happened to match the old text" (which breaks if a row was
+  // ever left unlabeled or mislabeled).
   function renderPostGroups(posts) {
     if (!posts.length) return '<div class="empty">Nothing here yet.</div>';
 
     var groups = {};
     var keys = [];
     posts.forEach(function (p) {
-      var key = p.channel_name || (p.webhook_url ? '(unlabeled: …' + p.webhook_url.slice(-10) + ')' : '(no channel set)');
+      var key = p.webhook_url || '(no webhook set)';
       if (!groups[key]) { groups[key] = []; keys.push(key); }
       groups[key].push(p);
     });
-    keys.sort();
+    keys.sort(function (a, b) {
+      return groupLabel(groups[a]).localeCompare(groupLabel(groups[b]));
+    });
 
-    return keys.map(function (key) {
+    return keys.map(function (webhookUrl) {
+      var rows = groups[webhookUrl];
+      var label = groupLabel(rows);
+      var isRenaming = state.renamingWebhook === webhookUrl;
+      var headingHtml = isRenaming
+        ? (
+          '<input type="text" id="rename-input" class="rename-input" value="' + escapeHtml(label) + '">' +
+          '<button type="button" class="btn btn-small btn-primary js-rename-save" data-webhook="' + escapeHtml(webhookUrl) + '">Save</button>' +
+          '<button type="button" class="btn btn-small js-rename-cancel">Cancel</button>'
+        )
+        : (
+          escapeHtml(label) + ' <span class="channel-group-count">(' + rows.length + ')</span>' +
+          '<button type="button" class="btn btn-small js-rename-start" data-webhook="' + escapeHtml(webhookUrl) + '" title="Rename this channel everywhere it\'s used">✎</button>'
+        );
       return (
         '<div class="card channel-group">' +
-          '<div class="channel-group-heading">' + escapeHtml(key) + ' <span class="channel-group-count">(' + groups[key].length + ')</span></div>' +
-          groups[key].map(renderPostRow).join('') +
+          '<div class="channel-group-heading">' + headingHtml + '</div>' +
+          (state.renameStatus && state.renameStatus.webhookUrl === webhookUrl ? renderRenameStatus() : '') +
+          rows.map(renderPostRow).join('') +
         '</div>'
       );
     }).join('');
+  }
+
+  function groupLabel(rows) {
+    var named = rows.filter(function (p) { return p.channel_name; })[0];
+    if (named) return named.channel_name;
+    var webhookUrl = rows[0] && rows[0].webhook_url;
+    return webhookUrl ? '(unlabeled: …' + webhookUrl.slice(-10) + ')' : '(no channel set)';
+  }
+
+  function renderRenameStatus() {
+    var s = state.renameStatus;
+    if (s.saving) return '<div class="field-hint" style="padding:0 0 8px;">Renaming across ' + s.count + ' post(s)…</div>';
+    if (s.error) return '<div class="msg msg-error" style="margin:0 0 10px;">' + escapeHtml(s.error) + '</div>';
+    return '';
   }
 
   // Custom posts are the ones actually edited week to week (a schedule
@@ -630,6 +669,46 @@
     if (builtinToggle) builtinToggle.addEventListener('click', function () {
       state.showBuiltIn = !state.showBuiltIn;
       render();
+    });
+
+    document.querySelectorAll('.js-rename-start').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        state.renamingWebhook = btn.getAttribute('data-webhook');
+        state.renameStatus = null;
+        render();
+        var input = document.getElementById('rename-input');
+        if (input) { input.focus(); input.select(); }
+      });
+    });
+
+    var renameCancelBtn = document.querySelector('.js-rename-cancel');
+    if (renameCancelBtn) renameCancelBtn.addEventListener('click', function () {
+      state.renamingWebhook = null;
+      render();
+    });
+
+    document.querySelectorAll('.js-rename-save').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var webhookUrl = btn.getAttribute('data-webhook');
+        var input = document.getElementById('rename-input');
+        var newLabel = input ? input.value.trim() : '';
+        var matching = state.posts.filter(function (p) { return p.webhook_url === webhookUrl; });
+        state.renameStatus = { webhookUrl: webhookUrl, saving: true, count: matching.length };
+        render();
+        Promise.all(matching.map(function (post) {
+          var payload = Object.assign({}, post, { channel_name: newLabel || null });
+          return api('/team-posts', { method: 'PUT', body: JSON.stringify(payload) });
+        })).then(function () {
+          state.renamingWebhook = null;
+          state.renameStatus = null;
+          state.msg = 'Renamed to "' + newLabel + '" across ' + matching.length + ' post(s).';
+          state.msgType = 'ok';
+          return loadPosts();
+        }).catch(function (err) {
+          state.renameStatus = { webhookUrl: webhookUrl, error: err.message };
+          render();
+        });
+      });
     });
 
     document.querySelectorAll('.tab-btn').forEach(function (btn) {

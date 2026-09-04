@@ -87,7 +87,11 @@
 
   .channel-group { margin-bottom: 16px; }
   .channel-group:last-child { margin-bottom: 0; }
-  .channel-group-heading { display: flex; align-items: baseline; gap: 7px; font-weight: 700; font-size: 13px; color: var(--ink-dim); margin-bottom: 4px; padding: 0 2px; }
+  .channel-group-heading { display: flex; align-items: center; gap: 7px; font-weight: 700; font-size: 13px; color: var(--ink-dim); margin-bottom: 4px; padding: 0 2px; }
+  .js-rename-start { background: transparent; border: none; color: var(--ink-soft); font-size: 13px; padding: 2px 5px; border-radius: 6px; }
+  .js-rename-start:hover { color: var(--purple); background: var(--purple-soft); }
+  .rename-input { flex: 1; max-width: 320px; padding: 6px 10px; border-radius: 8px; border: 1.5px solid var(--purple); background: var(--bg-soft); color: var(--ink); font-family: inherit; font-size: 13px; font-weight: 600; }
+  .rename-input:focus { outline: none; }
   .channel-group-count { color: var(--ink-soft); font-weight: 500; font-size: 12px; }
 
   form { display: grid; gap: 22px; }
