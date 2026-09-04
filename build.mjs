@@ -704,7 +704,7 @@ function generateBlog() {
   const indexHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
-${renderHead({ title: 'Blog | TAAI', description: 'GATE DA prep guides, syllabus breakdowns, and study tips from the TAAI team.', canonicalPath: '/blogs' })}
+${renderHead({ title: 'Blogs | TAAI', description: 'GATE DA prep guides, syllabus breakdowns, and study tips from the TAAI team.', canonicalPath: '/blogs' })}
 </head>
 <body>
 ${renderChrome(indexBody)}

@@ -4,16 +4,6 @@ slug: "gate-da-syllabus-2027"
 date: "2026-08-12"
 description: "A look at why GATE DA is worth taking, how the exam is set up, what has carried the most marks across the 2024 to 2026 papers, and how to prepare for it."
 tags:
-  - "probability"
-  - "statistics"
-  - "linear-algebra"
-  - "calculus"
-  - "machine-learning"
-  - "ai"
-  - "dbms"
-  - "python"
-  - "data-structures"
-  - "algorithms"
   - "gate-strategy"
 blocks:
   - type: section_heading
