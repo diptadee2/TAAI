@@ -14,6 +14,8 @@
   --blue: #4D8BFF;
   --blue-soft: #D6E4FF;
   --lilac: #C4B0FF;
+  --rise: #22C55E;
+  --fall: #F43F5E;
 
   --radius-md: 18px;
   --radius-lg: 26px;
@@ -259,4 +261,124 @@ a { color: inherit; }
   .blog-hero, .blog-post-hero { padding: 44px 0 28px; }
   .footer-inner { flex-direction: column; align-items: center; text-align: center; }
   .footer-socials a { width: 44px; height: 44px; }
+}
+
+/* ── Post Blocks — the fill-in-the-blanks system for data-rich posts ──
+   Rendered by renderBlocks()/BLOCK_RENDERERS in build.mjs from a post's
+   "blocks" frontmatter field (see admin/config.yml) — a non-technical
+   writer picks a block type and types in plain values, no HTML/CSS.
+   Same container width as .blog-post-content so blocks read as part of
+   the same column, not a separate design. */
+.post-blocks { max-width: 720px; margin: 0 auto; color: var(--ink-dim); }
+.block-section-heading { margin: 44px 0 16px; }
+.block-eyebrow { font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--purple); margin-bottom: 8px; }
+.block-section-heading h2 { font-family: var(--font-display); font-size: 26px; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; }
+.block-text { margin: 0 0 20px; line-height: 1.75; }
+.block-text p { margin: 0 0 20px; }
+
+.block-chart-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); padding: 22px 24px; margin: 24px 0; }
+.block-chart-title { font-family: var(--font-display); font-weight: 600; font-size: 15px; color: var(--ink); margin-bottom: 4px; }
+.block-chart-subtitle { font-family: var(--font-mono); font-size: 12px; color: var(--ink-soft); margin-bottom: 14px; }
+.block-caption { font-family: var(--font-mono); font-size: 12px; line-height: 1.55; color: var(--ink-soft); margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--line); }
+
+/* Bar chart — horizontal bars sized as a % of the data's own max, not
+   fixed pixel widths, since block data is arbitrary/unknown ahead of
+   time (unlike a hand-tuned one-off SVG chart). */
+.block-bar-chart { display: grid; gap: 12px; margin-top: 14px; }
+.block-bar-row { display: grid; grid-template-columns: minmax(90px,160px) 1fr auto; align-items: center; gap: 12px; }
+.block-bar-label { font-size: 13.5px; color: var(--ink-dim); text-align: right; }
+.block-bar-track { height: 20px; background: var(--bg-soft); border-radius: 6px; overflow: hidden; }
+.block-bar-fill { height: 100%; border-radius: 6px; transition: width .3s ease; }
+.block-bar-value { font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--ink); min-width: 34px; }
+
+.block-legend { display: flex; gap: 16px; flex-wrap: wrap; font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-soft); margin-bottom: 14px; }
+.block-legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.block-swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.block-series-0 { background: var(--purple); } .block-series-1 { background: var(--pink); } .block-series-2 { background: var(--blue); }
+.block-series-3 { background: var(--lilac); } .block-series-4 { background: var(--rise); } .block-series-5 { background: var(--fall); }
+
+/* Grouped bar chart — vertical mini-bars per series within each group,
+   height as a % of the chart's global max across every group/series. */
+.block-gbar-chart { display: flex; gap: 28px; align-items: flex-end; height: 180px; overflow-x: auto; padding-top: 20px; }
+.block-gbar-group { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; min-width: 90px; height: 100%; }
+.block-gbar-bars { display: flex; gap: 4px; align-items: flex-end; flex: 1; width: 100%; justify-content: center; }
+.block-gbar-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; width: 22px; }
+.block-gbar { width: 100%; border-radius: 3px 3px 0 0; }
+.block-gbar-val { font-family: var(--font-mono); font-size: 10px; color: var(--ink-soft); margin-bottom: 3px; }
+.block-gbar-label { font-family: var(--font-mono); font-size: 12px; color: var(--ink); }
+
+.block-linechart { display: block; width: 100%; height: auto; margin-top: 10px; }
+
+.block-table-wrap { overflow-x: auto; margin: 24px 0; }
+.block-table { width: 100%; border-collapse: collapse; font-size: 14.5px; min-width: 400px; }
+.block-table th, .block-table td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--line); }
+.block-table thead th { font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-soft); border-bottom: 1.5px solid var(--line); }
+.block-table tbody tr:last-child td { border-bottom: none; }
+.block-row-highlight td { font-weight: 600; background: var(--bg-soft); color: var(--ink); }
+
+/* Step diagram — items stack bottom-to-top per step; the "new" item in
+   each step gets the accent color, everything else already-seen fades
+   to the softer tone. */
+.block-step-diagram { display: flex; gap: 20px; align-items: flex-end; margin-top: 14px; overflow-x: auto; }
+.block-step-col { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; min-width: 80px; }
+.block-step-items { display: flex; flex-direction: column-reverse; gap: 3px; width: 100%; }
+.block-step-item { padding: 8px 0; text-align: center; border-radius: 4px; font-family: var(--font-mono); font-size: 12px; color: var(--ink); background: var(--purple-soft); }
+.block-step-item.block-step-new { background: var(--purple); color: #fff; font-weight: 600; }
+.block-step-label { font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft); }
+
+.block-path-root { font-family: var(--font-display); font-weight: 600; font-size: 14px; color: #fff; background: var(--ink); border-radius: 8px; padding: 10px 16px; display: inline-block; margin: 0 auto 20px; text-align: center; }
+.block-path-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.block-path { border-radius: var(--radius-md); padding: 16px; border: 1.5px solid var(--line); }
+.block-path-left { background: var(--pink-soft); border-color: rgba(255,127,183,0.4); }
+.block-path-right { background: var(--blue-soft); border-color: rgba(77,139,255,0.4); }
+.block-path-badge { font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-dim); margin-bottom: 6px; }
+.block-path-title { font-family: var(--font-display); font-weight: 600; font-size: 15px; color: var(--ink); margin-bottom: 6px; }
+.block-path-desc { font-size: 13.5px; color: var(--ink-dim); margin-bottom: 10px; }
+.block-path-action { font-family: var(--font-mono); font-size: 12px; color: var(--ink); font-weight: 600; }
+
+.block-comp-rows { display: grid; gap: 10px; margin-top: 8px; }
+.block-comp-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 8px; background: var(--bg-soft); }
+.block-comp-icon { font-weight: 700; width: 18px; text-align: center; }
+.block-comp-good .block-comp-icon { color: var(--rise); }
+.block-comp-bad .block-comp-icon { color: var(--fall); }
+.block-comp-desc { flex: 1; font-size: 13.5px; }
+.block-comp-arrow { color: var(--ink-soft); }
+.block-comp-result { font-family: var(--font-mono); font-size: 12.5px; font-weight: 600; }
+.block-comp-good .block-comp-result { color: var(--rise); }
+.block-comp-bad .block-comp-result { color: var(--fall); }
+
+.block-concept-pair { display: grid; grid-template-columns: 1fr auto 1fr; gap: 20px; align-items: center; margin: 24px 0; }
+.block-concept-col { text-align: center; }
+.block-concept-label { font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--purple); margin-bottom: 8px; }
+.block-concept-desc { font-size: 13.5px; color: var(--ink-dim); }
+.block-concept-divider { width: 1px; height: 60px; background: var(--line); }
+
+.block-syl-wrap { margin: 24px 0; }
+.block-syl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius-md); overflow: hidden; }
+.block-syl-cell { background: var(--card); padding: 16px 18px; }
+.block-syl-cell h4 { font-family: var(--font-display); font-weight: 600; font-size: 15px; margin-bottom: 5px; color: var(--purple); display: flex; align-items: center; gap: 9px; }
+.block-syl-cell h4 i { font-family: var(--font-mono); font-style: normal; font-size: 11px; color: var(--pink); font-weight: 600; }
+.block-syl-cell p { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--ink-soft); }
+.block-syl-cell.block-syl-highlight { grid-column: 1 / -1; background: var(--bg-soft); }
+
+.block-faq { margin: 24px 0; }
+.block-faq-item { border-bottom: 1px solid var(--line); padding: 4px 0; }
+.block-faq-item summary { font-family: var(--font-display); font-weight: 600; font-size: 16px; color: var(--ink); cursor: pointer; padding: 12px 0; list-style: none; }
+.block-faq-item summary::-webkit-details-marker { display: none; }
+.block-faq-item summary::after { content: "+"; float: right; color: var(--purple); font-weight: 600; font-size: 20px; line-height: 1; }
+.block-faq-item[open] summary::after { content: "\2212"; }
+.block-faq-item p { margin: 0 0 14px; font-size: 14.5px; }
+
+.block-resources-list { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius-md); overflow: hidden; margin-top: 12px; }
+.block-resource-row { background: var(--card); padding: 16px 18px; text-decoration: none; display: flex; justify-content: space-between; align-items: center; gap: 14px; }
+.block-resource-title { font-family: var(--font-display); font-weight: 600; font-size: 15px; color: var(--ink); }
+.block-resource-sub { font-family: var(--font-mono); font-size: 12px; color: var(--ink-soft); }
+.block-resource-cta { font-family: var(--font-mono); color: var(--purple); font-weight: 600; white-space: nowrap; }
+
+@media (max-width: 640px) {
+  .block-bar-row { grid-template-columns: 1fr; gap: 4px; }
+  .block-bar-label { text-align: left; }
+  .block-path-pair, .block-concept-pair { grid-template-columns: 1fr; }
+  .block-concept-divider { width: 60px; height: 1px; margin: 0 auto; }
+  .block-syl-grid { grid-template-columns: 1fr; }
 }

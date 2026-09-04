@@ -10,6 +10,7 @@
 import { transformSync } from '@babel/core';
 import { marked } from 'marked';
 import katex from 'katex';
+import yaml from 'js-yaml';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -197,29 +198,16 @@ function renderMarkdown(content) {
   return html;
 }
 
+// Real YAML parsing (js-yaml), not the hand-rolled flat-list regex parser
+// this used to be — needed once frontmatter could hold genuinely nested
+// structures (Blocks: a list of objects, some containing their own nested
+// lists of objects — see admin/config.yml's "blocks" field). The old
+// parser only ever understood a flat list of scalar strings under one
+// key; it would have silently mis-parsed or dropped anything nested.
 function parseFrontmatter(raw) {
   const m = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
   if (!m) return { data: {}, content: raw };
-  const data = {};
-  let currentListKey = null;
-  for (const line of m[1].split('\n')) {
-    const listItem = line.match(/^[ \t]*-[ \t]+(.+)$/);
-    if (listItem && currentListKey) {
-      data[currentListKey].push(listItem[1].trim().replace(/^["']|["']$/g, ''));
-      continue;
-    }
-    currentListKey = null;
-    const idx = line.indexOf(':');
-    if (idx === -1) continue;
-    const key = line.slice(0, idx).trim();
-    let val = line.slice(idx + 1).trim();
-    if (!val) { data[key] = []; currentListKey = key; continue; } // YAML list start
-    if (val.startsWith('[') && val.endsWith(']')) { // inline list [a, b]
-      data[key] = val.slice(1,-1).split(',').map(s => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
-    } else {
-      data[key] = val.replace(/^["']|["']$/g, '');
-    }
-  }
+  const data = yaml.load(m[1]) || {};
   return { data, content: m[2] };
 }
 
@@ -351,9 +339,271 @@ function loadPosts() {
         cover: data.cover || '',
         tags: Array.isArray(data.tags) ? data.tags : (data.tags ? [data.tags] : []),
         html: renderMarkdown(content),
+        blocksHtml: renderBlocks(Array.isArray(data.blocks) ? data.blocks : []),
       };
     })
     .sort((a, b) => new Date(b.date) - new Date(a.date));
+}
+
+// ── Blocks: the fill-in-the-blanks system for data-rich posts ──────────
+// A non-technical writer picks a block type in the CMS (admin/config.yml's
+// "blocks" list, a Decap "variable types" field) and types in plain
+// values (labels, numbers, question/answer pairs) — no HTML/CSS. Each
+// renderer here turns that structured data into real markup, styled by
+// the shared .block-* rules in blog.css, so the writer never touches
+// either. Chart bars/lines are sized as percentages computed from the
+// data's own min/max, not fixed pixel coordinates (unlike the one-off
+// hand-coded gate-da-syllabus-2027 post) — required here since block
+// data is arbitrary and unknown ahead of time, not hand-tuned per chart.
+//
+// A field coming from a Decap list with a single `field:` (not `fields:`)
+// serializes as a plain array of values (strings/numbers), not objects —
+// e.g. `series`, `x_labels`, `columns`, and any `values` list below. Lists
+// built from `fields:` (plural) serialize as arrays of objects — e.g.
+// `bars`, `steps[].items`, `faq.items`. Mixing these up silently reads
+// undefined off a plain string, so they're deliberately handled
+// differently per block below.
+
+function numOr(v, fallback = 0) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+const TREND_COLOR = { rising: 'var(--rise)', falling: 'var(--fall)', steady: 'var(--purple)' };
+
+function renderBlockSectionHeading(f) {
+  return `<div class="block-section-heading">
+    ${f.eyebrow ? `<div class="block-eyebrow">${escapeHtml(f.eyebrow)}</div>` : ''}
+    <h2>${escapeHtml(f.heading)}</h2>
+  </div>`;
+}
+
+function renderBlockText(f) {
+  return `<div class="block-text">${renderMarkdown(f.content || '')}</div>`;
+}
+
+function renderBlockBarChart(f) {
+  const bars = Array.isArray(f.bars) ? f.bars : [];
+  if (!bars.length) return '';
+  const max = Math.max(1, ...bars.map(b => numOr(b.value)));
+  const rows = bars.map(b => {
+    const pct = Math.max(2, (numOr(b.value) / max) * 100);
+    const color = TREND_COLOR[b.trend] || TREND_COLOR.steady;
+    return `<div class="block-bar-row">
+      <div class="block-bar-label">${escapeHtml(b.label)}</div>
+      <div class="block-bar-track"><div class="block-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+      <div class="block-bar-value">${escapeHtml(String(b.value))}</div>
+    </div>`;
+  }).join('');
+  return `<figure class="block-chart-card">
+    ${f.title ? `<div class="block-chart-title">${escapeHtml(f.title)}</div>` : ''}
+    ${f.subtitle ? `<div class="block-chart-subtitle">${escapeHtml(f.subtitle)}</div>` : ''}
+    <div class="block-bar-chart">${rows}</div>
+    ${f.caption ? `<figcaption class="block-caption">${escapeHtml(f.caption)}</figcaption>` : ''}
+  </figure>`;
+}
+
+function renderBlockGroupedBarChart(f) {
+  const seriesLabels = Array.isArray(f.series) ? f.series : [];
+  const groups = Array.isArray(f.groups) ? f.groups : [];
+  if (!seriesLabels.length || !groups.length) return '';
+  const allValues = groups.flatMap(g => (Array.isArray(g.values) ? g.values : []).map(v => numOr(v)));
+  const max = Math.max(1, ...allValues);
+  const legend = seriesLabels.map((s, i) =>
+    `<span class="block-legend-item"><i class="block-swatch block-series-${i % 6}"></i>${escapeHtml(s)}</span>`
+  ).join('');
+  const groupsHtml = groups.map(g => {
+    const values = Array.isArray(g.values) ? g.values : [];
+    const bars = values.map((v, i) => {
+      const pct = Math.max(3, (numOr(v) / max) * 100);
+      return `<div class="block-gbar-col"><span class="block-gbar-val">${escapeHtml(String(v))}</span><div class="block-gbar block-series-${i % 6}" style="height:${pct}%"></div></div>`;
+    }).join('');
+    return `<div class="block-gbar-group"><div class="block-gbar-bars">${bars}</div><div class="block-gbar-label">${escapeHtml(g.label)}</div></div>`;
+  }).join('');
+  return `<figure class="block-chart-card">
+    ${f.title ? `<div class="block-chart-title">${escapeHtml(f.title)}</div>` : ''}
+    ${legend ? `<div class="block-legend">${legend}</div>` : ''}
+    <div class="block-gbar-chart">${groupsHtml}</div>
+    ${f.caption ? `<figcaption class="block-caption">${escapeHtml(f.caption)}</figcaption>` : ''}
+  </figure>`;
+}
+
+function renderBlockLineChart(f) {
+  const xLabels = Array.isArray(f.x_labels) ? f.x_labels : [];
+  const lines = Array.isArray(f.lines) ? f.lines : [];
+  if (xLabels.length < 2 || !lines.length) return '';
+  const n = xLabels.length;
+  const allValues = lines.flatMap(l => (Array.isArray(l.values) ? l.values : []).map(v => numOr(v)));
+  const min = Math.min(0, ...allValues);
+  const max = Math.max(1, ...allValues);
+  const W = 620, H = 230, padL = 20, padR = 100, padT = 20, padB = 30;
+  const xStep = (W - padL - padR) / (n - 1);
+  const xFor = i => padL + xStep * i;
+  const yFor = v => padT + (H - padT - padB) * (1 - (v - min) / ((max - min) || 1));
+
+  const linesHtml = lines.map(l => {
+    const values = Array.isArray(l.values) ? l.values : [];
+    const color = TREND_COLOR[l.trend] || TREND_COLOR.steady;
+    const pts = values.map((v, i) => `${xFor(i)},${yFor(numOr(v))}`).join(' ');
+    const circles = values.map((v, i) => `<circle cx="${xFor(i)}" cy="${yFor(numOr(v))}" r="3.5" fill="${color}"/>`).join('');
+    const lastI = values.length - 1;
+    const labelHtml = lastI >= 0
+      ? `<text x="${xFor(lastI) + 10}" y="${yFor(numOr(values[lastI])) + 4}" font-size="12" fill="${color}" font-family="var(--font-mono)">${escapeHtml(l.label)} ${escapeHtml(String(values[lastI]))}</text>`
+      : '';
+    return `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.5"/>${circles}${labelHtml}`;
+  }).join('');
+  const xAxisHtml = xLabels.map((lab, i) =>
+    `<text x="${xFor(i)}" y="${H - 8}" text-anchor="middle" font-size="12" fill="var(--ink-soft)" font-family="var(--font-mono)">${escapeHtml(lab)}</text>`
+  ).join('');
+
+  return `<figure class="block-chart-card">
+    ${f.title ? `<div class="block-chart-title">${escapeHtml(f.title)}</div>` : ''}
+    <svg class="block-linechart" viewBox="0 0 ${W} ${H}" role="img">${xAxisHtml}${linesHtml}</svg>
+    ${f.caption ? `<figcaption class="block-caption">${escapeHtml(f.caption)}</figcaption>` : ''}
+  </figure>`;
+}
+
+function renderBlockDataTable(f) {
+  const columns = Array.isArray(f.columns) ? f.columns : [];
+  const rows = Array.isArray(f.rows) ? f.rows : [];
+  if (!rows.length) return '';
+  const thead = columns.length ? `<thead><tr>${columns.map(c => `<th>${escapeHtml(c)}</th>`).join('')}</tr></thead>` : '';
+  const tbody = rows.map(r => {
+    const cells = Array.isArray(r.cells) ? r.cells : [];
+    return `<tr${r.highlight ? ' class="block-row-highlight"' : ''}>${cells.map(c => `<td>${escapeHtml(c)}</td>`).join('')}</tr>`;
+  }).join('');
+  return `<div class="block-table-wrap">
+    ${f.title ? `<div class="block-chart-title">${escapeHtml(f.title)}</div>` : ''}
+    <table class="block-table">${thead}<tbody>${tbody}</tbody></table>
+  </div>`;
+}
+
+function renderBlockStepDiagram(f) {
+  const steps = Array.isArray(f.steps) ? f.steps : [];
+  if (!steps.length) return '';
+  const stepsHtml = steps.map(s => {
+    const items = Array.isArray(s.items) ? s.items : [];
+    // Stacked bottom-to-top, so the array order matches reading order —
+    // reversed here since flex-direction:column-reverse (in CSS) stacks
+    // the FIRST child at the bottom, matching "bottom to top" as labeled
+    // in the CMS field hint.
+    const itemsHtml = items.map(it =>
+      `<div class="block-step-item${it.is_new ? ' block-step-new' : ''}">${escapeHtml(it.label)}</div>`
+    ).join('');
+    return `<div class="block-step-col"><div class="block-step-items">${itemsHtml}</div><div class="block-step-label">${escapeHtml(s.step_label)}</div></div>`;
+  }).join('');
+  return `<figure class="block-chart-card">
+    ${f.title ? `<div class="block-chart-title">${escapeHtml(f.title)}</div>` : ''}
+    ${f.subtitle ? `<div class="block-chart-subtitle">${escapeHtml(f.subtitle)}</div>` : ''}
+    <div class="block-step-diagram">${stepsHtml}</div>
+    ${f.caption ? `<figcaption class="block-caption">${escapeHtml(f.caption)}</figcaption>` : ''}
+  </figure>`;
+}
+
+function renderBlockTwoPathDiagram(f) {
+  const left = f.left || {};
+  const right = f.right || {};
+  const path = (p, side) => `<div class="block-path block-path-${side}">
+    ${p.badge ? `<div class="block-path-badge">${escapeHtml(p.badge)}</div>` : ''}
+    <div class="block-path-title">${escapeHtml(p.title)}</div>
+    <div class="block-path-desc">${escapeHtml(p.description)}</div>
+    ${p.action ? `<div class="block-path-action">→ ${escapeHtml(p.action)}</div>` : ''}
+  </div>`;
+  return `<figure class="block-chart-card">
+    <div class="block-path-root">${escapeHtml(f.root_label)}</div>
+    <div class="block-path-pair">${path(left, 'left')}${path(right, 'right')}</div>
+  </figure>`;
+}
+
+function renderBlockComparisonRows(f) {
+  const rows = Array.isArray(f.rows) ? f.rows : [];
+  if (!rows.length) return '';
+  const rowsHtml = rows.map(r => `<div class="block-comp-row${r.good ? ' block-comp-good' : ' block-comp-bad'}">
+    <span class="block-comp-icon">${r.good ? '&#10003;' : '&#10007;'}</span>
+    <span class="block-comp-desc">${escapeHtml(r.description)}</span>
+    <span class="block-comp-arrow">&rarr;</span>
+    <span class="block-comp-result">${escapeHtml(r.result)}</span>
+  </div>`).join('');
+  return `<figure class="block-chart-card">
+    ${f.title ? `<div class="block-chart-title">${escapeHtml(f.title)}</div>` : ''}
+    <div class="block-comp-rows">${rowsHtml}</div>
+  </figure>`;
+}
+
+function renderBlockConceptComparison(f) {
+  return `<div class="block-concept-pair">
+    <div class="block-concept-col">
+      <div class="block-concept-label">${escapeHtml(f.left_label)}</div>
+      <div class="block-concept-desc">${escapeHtml(f.left_description)}</div>
+    </div>
+    <div class="block-concept-divider"></div>
+    <div class="block-concept-col">
+      <div class="block-concept-label">${escapeHtml(f.right_label)}</div>
+      <div class="block-concept-desc">${escapeHtml(f.right_description)}</div>
+    </div>
+  </div>`;
+}
+
+function renderBlockSyllabusGrid(f) {
+  const cells = Array.isArray(f.cells) ? f.cells : [];
+  if (!cells.length) return '';
+  const cellsHtml = cells.map(c => `<div class="block-syl-cell${c.highlight ? ' block-syl-highlight' : ''}">
+    <h4><i>${escapeHtml(c.number)}</i>${escapeHtml(c.title)}</h4>
+    <p>${escapeHtml(c.description)}</p>
+  </div>`).join('');
+  return `<div class="block-syl-wrap">
+    ${f.title ? `<div class="block-chart-title">${escapeHtml(f.title)}</div>` : ''}
+    <div class="block-syl-grid">${cellsHtml}</div>
+  </div>`;
+}
+
+function renderBlockFaq(f) {
+  const items = Array.isArray(f.items) ? f.items : [];
+  if (!items.length) return '';
+  const itemsHtml = items.map((it, i) => `<details${i === 0 ? ' open' : ''} class="block-faq-item">
+    <summary>${escapeHtml(it.question)}</summary>
+    <p>${escapeHtml(it.answer)}</p>
+  </details>`).join('');
+  return `<div class="block-faq">${itemsHtml}</div>`;
+}
+
+function renderBlockResources(f) {
+  const items = Array.isArray(f.items) ? f.items : [];
+  if (!items.length) return '';
+  const itemsHtml = items.map(it => `<a class="block-resource-row" href="${escapeHtml(it.url)}"${/^https?:\/\//.test(it.url || '') ? ' target="_blank" rel="noopener noreferrer"' : ''}>
+    <span><span class="block-resource-title">${escapeHtml(it.title)}</span><br><span class="block-resource-sub">${escapeHtml(it.subtitle)}</span></span>
+    <span class="block-resource-cta">${escapeHtml(it.cta_text || 'view')} &rarr;</span>
+  </a>`).join('');
+  return `<div class="block-resources">
+    ${f.intro ? `<p class="block-text">${escapeHtml(f.intro)}</p>` : ''}
+    <div class="block-resources-list">${itemsHtml}</div>
+  </div>`;
+}
+
+const BLOCK_RENDERERS = {
+  section_heading: renderBlockSectionHeading,
+  text: renderBlockText,
+  bar_chart: renderBlockBarChart,
+  grouped_bar_chart: renderBlockGroupedBarChart,
+  line_chart: renderBlockLineChart,
+  data_table: renderBlockDataTable,
+  step_diagram: renderBlockStepDiagram,
+  two_path_diagram: renderBlockTwoPathDiagram,
+  comparison_rows: renderBlockComparisonRows,
+  concept_comparison: renderBlockConceptComparison,
+  syllabus_grid: renderBlockSyllabusGrid,
+  faq: renderBlockFaq,
+  resources: renderBlockResources,
+};
+
+function renderBlocks(blocks) {
+  if (!blocks.length) return '';
+  const html = blocks.map(b => {
+    const renderer = BLOCK_RENDERERS[b.type];
+    if (!renderer) return '';
+    try { return renderer(b); } catch { return ''; }
+  }).join('\n');
+  return `<div class="post-blocks">${html}</div>`;
 }
 
 function generateBlog() {
@@ -422,6 +672,7 @@ ${renderChrome(indexBody)}
         <div class="blog-post-content">
           ${post.html}
         </div>
+        ${post.blocksHtml}
       </div>
     </article>`;
     const postHtml = `<!DOCTYPE html>

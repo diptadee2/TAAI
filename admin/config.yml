@@ -53,4 +53,182 @@ collections:
           - { label: "Announcement", value: "announcement" }
           - { label: "Career", value: "career" }
           - { label: "Tips", value: "tips" }
-      - { label: "Body", name: "body", widget: "markdown" }
+      - { label: "Body", name: "body", widget: "markdown", hint: "The intro / regular prose. For a data-rich post (charts, tables, FAQ, diagrams), add \"Blocks\" below instead of writing HTML here." }
+      - label: "Blocks (optional)"
+        name: "blocks"
+        widget: "list"
+        required: false
+        hint: "Rendered in order, after Body. Click \"Add\" and pick a block type — no HTML or CSS needed, the page builds the chart/table/diagram from what you type in."
+        types:
+          - label: "Section heading"
+            name: "section_heading"
+            widget: "object"
+            summary: "{{fields.heading}}"
+            fields:
+              - { label: "Eyebrow (small label above the heading)", name: "eyebrow", widget: "string" }
+              - { label: "Heading", name: "heading", widget: "string" }
+          - label: "Paragraph text"
+            name: "text"
+            widget: "object"
+            summary: "{{fields.content}}"
+            fields:
+              - { label: "Content", name: "content", widget: "markdown", minimal: true }
+          - label: "Bar chart"
+            name: "bar_chart"
+            widget: "object"
+            summary: "{{fields.title}}"
+            fields:
+              - { label: "Title", name: "title", widget: "string" }
+              - { label: "Subtitle (optional, e.g. \"100 marks total\")", name: "subtitle", widget: "string", required: false }
+              - label: "Bars"
+                name: "bars"
+                widget: "list"
+                fields:
+                  - { label: "Label", name: "label", widget: "string" }
+                  - { label: "Value", name: "value", widget: "number" }
+                  - { label: "Trend", name: "trend", widget: "select", options: ["rising", "falling", "steady"], default: "steady" }
+              - { label: "Caption (optional)", name: "caption", widget: "text", required: false }
+          - label: "Grouped bar chart (compare a few categories across years/series)"
+            name: "grouped_bar_chart"
+            widget: "object"
+            summary: "{{fields.title}}"
+            fields:
+              - { label: "Title", name: "title", widget: "string" }
+              - { label: "Series labels (e.g. 2024, 2025, 2026 — in order)", name: "series", widget: "list", field: { label: "Label", name: "label", widget: "string" } }
+              - label: "Groups (e.g. MCQ, MSQ, NAT)"
+                name: "groups"
+                widget: "list"
+                fields:
+                  - { label: "Group label", name: "label", widget: "string" }
+                  - { label: "Values (one per series, same order)", name: "values", widget: "list", field: { label: "Value", name: "value", widget: "number" } }
+              - { label: "Caption (optional)", name: "caption", widget: "text", required: false }
+          - label: "Line chart (a trend over time)"
+            name: "line_chart"
+            widget: "object"
+            summary: "{{fields.title}}"
+            fields:
+              - { label: "Title", name: "title", widget: "string" }
+              - { label: "X-axis labels (e.g. 2024, 2025, 2026 — in order)", name: "x_labels", widget: "list", field: { label: "Label", name: "label", widget: "string" } }
+              - label: "Lines"
+                name: "lines"
+                widget: "list"
+                fields:
+                  - { label: "Label", name: "label", widget: "string" }
+                  - { label: "Trend color", name: "trend", widget: "select", options: ["rising", "falling"], default: "rising" }
+                  - { label: "Values (one per x-axis label, same order)", name: "values", widget: "list", field: { label: "Value", name: "value", widget: "number" } }
+              - { label: "Caption (optional)", name: "caption", widget: "text", required: false }
+          - label: "Data table"
+            name: "data_table"
+            widget: "object"
+            summary: "{{fields.title}}"
+            fields:
+              - { label: "Title (optional caption above the table)", name: "title", widget: "string", required: false }
+              - { label: "Column headers (leave empty for a plain 2-column key/value table)", name: "columns", widget: "list", required: false, field: { label: "Header", name: "header", widget: "string" } }
+              - label: "Rows"
+                name: "rows"
+                widget: "list"
+                fields:
+                  - { label: "Cells (one per column, in order)", name: "cells", widget: "list", field: { label: "Cell", name: "cell", widget: "string" } }
+                  - { label: "Highlight this row (e.g. a total row)", name: "highlight", widget: "boolean", default: false }
+          - label: "Step diagram (things accumulating over steps)"
+            name: "step_diagram"
+            widget: "object"
+            summary: "{{fields.title}}"
+            fields:
+              - { label: "Title", name: "title", widget: "string" }
+              - { label: "Subtitle (optional)", name: "subtitle", widget: "string", required: false }
+              - label: "Steps, in order"
+                name: "steps"
+                widget: "list"
+                fields:
+                  - { label: "Step label (e.g. \"step 1\")", name: "step_label", widget: "string" }
+                  - label: "Items in this step, bottom to top"
+                    name: "items"
+                    widget: "list"
+                    fields:
+                      - { label: "Label (e.g. \"M1\")", name: "label", widget: "string" }
+                      - { label: "This is the new item in this step", name: "is_new", widget: "boolean", default: false }
+              - { label: "Caption (optional)", name: "caption", widget: "text", required: false }
+          - label: "Two-path diagram (one thing splits into two outcomes)"
+            name: "two_path_diagram"
+            widget: "object"
+            summary: "{{fields.root_label}}"
+            fields:
+              - { label: "Root label (e.g. \"Marks lost\")", name: "root_label", widget: "string" }
+              - label: "Left path"
+                name: "left"
+                widget: "object"
+                fields:
+                  - { label: "Badge (small label, e.g. \"YOU KNEW IT\")", name: "badge", widget: "string" }
+                  - { label: "Title (e.g. \"Accuracy leak\")", name: "title", widget: "string" }
+                  - { label: "Description", name: "description", widget: "text" }
+                  - { label: "Action line (e.g. \"minimise, re-solve clean\")", name: "action", widget: "string" }
+              - label: "Right path"
+                name: "right"
+                widget: "object"
+                fields:
+                  - { label: "Badge", name: "badge", widget: "string" }
+                  - { label: "Title", name: "title", widget: "string" }
+                  - { label: "Description", name: "description", widget: "text" }
+                  - { label: "Action line", name: "action", widget: "string" }
+          - label: "Comparison rows (wrong way vs right way)"
+            name: "comparison_rows"
+            widget: "object"
+            summary: "{{fields.title}}"
+            fields:
+              - { label: "Title (optional)", name: "title", widget: "string", required: false }
+              - label: "Rows"
+                name: "rows"
+                widget: "list"
+                fields:
+                  - { label: "This row is the good/correct example", name: "good", widget: "boolean", default: false }
+                  - { label: "Description (e.g. \"skim the keywords\")", name: "description", widget: "string" }
+                  - { label: "Result (e.g. \"wrong Q solved\")", name: "result", widget: "string" }
+          - label: "Two-column comparison"
+            name: "concept_comparison"
+            widget: "object"
+            summary: "{{fields.left_label}} vs {{fields.right_label}}"
+            fields:
+              - { label: "Left label", name: "left_label", widget: "string" }
+              - { label: "Left description", name: "left_description", widget: "string" }
+              - { label: "Right label", name: "right_label", widget: "string" }
+              - { label: "Right description", name: "right_description", widget: "string" }
+          - label: "Syllabus / topic grid"
+            name: "syllabus_grid"
+            widget: "object"
+            summary: "{{fields.title}}"
+            fields:
+              - { label: "Title (optional)", name: "title", widget: "string", required: false }
+              - label: "Cells"
+                name: "cells"
+                widget: "list"
+                fields:
+                  - { label: "Number/code (e.g. \"01\" or \"GA\")", name: "number", widget: "string" }
+                  - { label: "Title", name: "title", widget: "string" }
+                  - { label: "Description", name: "description", widget: "text" }
+                  - { label: "Highlight this cell (e.g. a bonus section)", name: "highlight", widget: "boolean", default: false }
+          - label: "FAQ"
+            name: "faq"
+            widget: "object"
+            summary: "FAQ ({{fields.items}} questions)"
+            fields:
+              - label: "Questions"
+                name: "items"
+                widget: "list"
+                fields:
+                  - { label: "Question", name: "question", widget: "string" }
+                  - { label: "Answer", name: "answer", widget: "text" }
+          - label: "Resource links"
+            name: "resources"
+            widget: "object"
+            summary: "Resources"
+            fields:
+              - { label: "Intro text (optional)", name: "intro", widget: "text", required: false }
+              - label: "Links"
+                name: "items"
+                widget: "list"
+                fields:
+                  - { label: "Title", name: "title", widget: "string" }
+                  - { label: "Subtitle", name: "subtitle", widget: "string" }
+                  - { label: "URL", name: "url", widget: "string" }
+                  - { label: "Button text (e.g. \"visit\", \"watch\", \"get it\")", name: "cta_text", widget: "string", default: "view" }
