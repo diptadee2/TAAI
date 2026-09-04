@@ -740,6 +740,23 @@
      Tabular-nums so the mm:ss width doesn't jitter digit to digit. */
   .leaderboard-timer { font-family: var(--font-nav); font-weight: 700; font-size: 13px; color: var(--ink-dim); text-align: center; font-variant-numeric: tabular-nums; min-width: 0; }
   .leaderboard-time { font-family: var(--font-nav); font-weight: 700; font-size: 14px; color: var(--ink); text-align: right; min-width: 0; }
+  /* Greyed-out non-live rows so a student mid-focus-session actually
+     stands out from everyone else on the board, instead of every name/
+     minutes reading in the same bright ink regardless of who's actually
+     here right now. Scoped to the two live-status-aware boards
+     specifically (#leaderboard-card / #today-leaderboard-card) — the
+     champions/last-week card shares .leaderboard-row's base styles but
+     has no concept of "live" at all (fetchLastWeekLeaders never returns
+     is_live), so it must stay untouched by this rule or every one of its
+     rows would read as permanently dimmed. */
+  #leaderboard-card .leaderboard-row:not(.leaderboard-row--live) .leaderboard-name,
+  #today-leaderboard-card .leaderboard-row:not(.leaderboard-row--live) .leaderboard-name { color: var(--ink-soft); }
+  #leaderboard-card .leaderboard-row:not(.leaderboard-row--live) .leaderboard-time,
+  #today-leaderboard-card .leaderboard-row:not(.leaderboard-row--live) .leaderboard-time { color: var(--ink-dim); }
+  #leaderboard-card .leaderboard-row--live .leaderboard-name,
+  #today-leaderboard-card .leaderboard-row--live .leaderboard-name,
+  #leaderboard-card .leaderboard-row--live .leaderboard-time,
+  #today-leaderboard-card .leaderboard-row--live .leaderboard-time { color: var(--ink); }
   /* Column header row — identical grid-template-columns to
      .leaderboard-row above, so every label lands exactly above its
      column on every row, not just approximately near it. */

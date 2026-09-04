@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-04-3';
+  var CLIENT_VERSION = '2026-09-04-4';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1117,7 +1117,7 @@
     if (!leaders.length) return '';
     var rows = leaders.map(function (l, i) {
       var rank = LEADERBOARD_MEDALS[i] || (i + 1);
-      return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (l.is_me ? ' leaderboard-row--me' : '') + '">' +
+      return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (l.is_me ? ' leaderboard-row--me' : '') + (l.is_live ? ' leaderboard-row--live' : '') + '">' +
         '<span class="leaderboard-rank">' + rank + '</span>' +
         rankMovementHtml(i + 1) +
         '<span class="leaderboard-name">' + liveDotHtml(l.is_live) + escapeHtml(l.display_name) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
@@ -1126,7 +1126,7 @@
     }).join('');
     if (state.todayViewerRank) {
       rows += '<div class="leaderboard-gap">···</div>' +
-        '<div class="leaderboard-row leaderboard-row--me">' +
+        '<div class="leaderboard-row leaderboard-row--me' + (state.todayViewerRank.is_live ? ' leaderboard-row--live' : '') + '">' +
         '<span class="leaderboard-rank">' + state.todayViewerRank.rank + '</span>' +
         rankMovementHtml(state.todayViewerRank.rank) +
         '<span class="leaderboard-name">' + liveDotHtml(state.todayViewerRank.is_live) + 'You</span>' +
@@ -2213,7 +2213,7 @@
       // length is customizable per student (pomoSettings.work, 1-180min);
       // total_minutes already accounts for that correctly and is what
       // actually ranks the list, so it's the only number displayed too.
-      return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (r.is_me ? ' leaderboard-row--me' : '') + '">' +
+      return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (r.is_me ? ' leaderboard-row--me' : '') + (r.is_live ? ' leaderboard-row--live' : '') + '">' +
         '<span class="leaderboard-rank">' + rankLabel + '</span>' +
         rankMovementHtml(i + 1, r.previous_week_rank) +
         '<span class="leaderboard-name">' + liveDotHtml(r.is_live) + escapeHtml(r.display_name) + (r.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
@@ -2230,7 +2230,7 @@
     // their actual rank is nowhere near position 21.
     if (state.viewerRank) {
       rows += '<div class="leaderboard-gap">···</div>' +
-        '<div class="leaderboard-row leaderboard-row--me">' +
+        '<div class="leaderboard-row leaderboard-row--me' + (state.viewerRank.is_live ? ' leaderboard-row--live' : '') + '">' +
         '<span class="leaderboard-rank">' + state.viewerRank.rank + '</span>' +
         rankMovementHtml(state.viewerRank.rank, state.viewerRank.previous_week_rank) +
         '<span class="leaderboard-name">' + liveDotHtml(state.viewerRank.is_live) + 'You</span>' +
