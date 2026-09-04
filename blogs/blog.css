@@ -415,4 +415,26 @@ a { color: inherit; }
   .block-path-pair, .block-concept-pair { grid-template-columns: 1fr; }
   .block-concept-divider { width: 60px; height: 1px; margin: 0 auto; }
   .block-syl-grid { grid-template-columns: 1fr; }
+  /* block-chart-card/block-narrative-card's desktop padding (22px 24px)
+     eats real width on a narrow phone; tightened here so charts have more
+     room to actually fit instead of needing to scroll for it. */
+  .block-chart-card, .block-narrative-card { padding: 16px 14px; }
+  /* A 3-group x 3-series grid (the common shape — e.g. MCQ/MSQ/NAT by
+     year) technically fit inside .block-gbar-chart's overflow-x:auto
+     already, so nothing was silently lost — but on a real phone width
+     the third group sat past the fold with no visible scroll affordance,
+     making a real screenshot look like the chart was just cut off.
+     Tightened sizing here instead of relying on scroll discoverability:
+     confirmed via testing this now fits 3 groups without needing to
+     scroll on a 390px-wide viewport. */
+  .block-gbar-chart { gap: 14px; }
+  .block-gbar-group { min-width: 68px; }
+  .block-gbar-col { width: 18px; }
+  /* block-table's 400px min-width (kept for a real multi-column table on
+     desktop) forced a simple 2-column key/value table wider than a
+     mobile viewport too, wrapped in an overflow-x:auto container with no
+     visible scroll affordance — a static view showed cell text cut off
+     mid-word ("... (1- an" / "mark)") that actually continues off-screen.
+     Dropped for mobile so cells wrap their own text naturally instead. */
+  .block-table { min-width: 0; }
 }

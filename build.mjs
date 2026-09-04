@@ -124,11 +124,25 @@ function generateNotesData() {
 // Reads Markdown posts from content/blog/, written via Decap CMS (/admin),
 // and renders them as static pages matching the rest of the site's design.
 
+// Dropdown contents mirror index.html's COURSE_DROPDOWN / TESTIMONIALS_DROPDOWN
+// / RESOURCES_DROPDOWN exactly — keep in sync by hand if those ever change,
+// same "no bundler to share a JS module between plain-HTML pages and this
+// build script" constraint as everything else duplicated across pages here.
 const BLOG_NAV_LINKS = [
-  { label: 'Courses', href: '/gate-da-courses' },
+  { label: 'Courses', href: '/gate-da-courses', dropdown: [
+      { label: 'Bundled Courses', href: '/gate-da-courses#combos' },
+      { label: 'Individual Courses', href: '/gate-da-courses#individual', dividerBefore: true },
+      { label: 'Interview Prep', href: '/gate-da-courses#interview', dividerBefore: true },
+    ] },
   { label: 'Test Series', href: '/gate-da-test-series' },
-  { label: 'Testimonials', href: '/gate-da-toppers' },
-  { label: 'Resources', href: '/gate-da-free-notes' }, // renders as dropdown — see renderNav()
+  { label: 'Testimonials', href: '/gate-da-toppers', dropdown: [
+      { label: 'Batch of 2026', href: '/gate-da-toppers#batch-2026' },
+      { label: 'Batch of 2025', href: '/gate-da-toppers#batch-2025', dividerBefore: true },
+    ] },
+  { label: 'Resources', href: '/gate-da-free-notes', dropdown: [
+      { label: 'Free Notes & Lectures', href: '/gate-da-free-notes' },
+      { label: 'Blogs', href: '/blogs', dividerBefore: true, blogActive: true },
+    ] },
   { label: 'Progress Tracker', href: '/gate-da-progress-tracker' },
 ];
 
@@ -216,6 +230,16 @@ function parseFrontmatter(raw) {
 function renderHead({ title, description, canonicalPath, ogImage }) {
   const url = `${SITE_URL}${canonicalPath}`;
   const img = ogImage || `${SITE_URL}/og-banner.webp`;
+  // Dimensions only for the fallback site banner (a known, fixed
+  // 1200x630 asset) — a per-post cover comes from Cloudinary at whatever
+  // size the writer uploaded, unknown at build time, so guessing wrong
+  // dimensions here would be worse than omitting them (some crawlers,
+  // notably WhatsApp/Facebook's, use these to decide whether to render a
+  // large-image preview at all — matches the width/height tags index.html
+  // already sends for the same banner).
+  const imgDims = ogImage ? '' : `
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">`;
   return `<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#6d28d9">
@@ -233,7 +257,7 @@ function renderHead({ title, description, canonicalPath, ogImage }) {
 <meta property="og:title" content="${escapeHtml(title)}">
 <meta property="og:description" content="${escapeHtml(description)}">
 <meta property="og:url" content="${url}">
-<meta property="og:image" content="${img}">
+<meta property="og:image" content="${img}">${imgDims}
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${escapeHtml(title)}">
 <meta name="twitter:description" content="${escapeHtml(description)}">
@@ -246,13 +270,24 @@ function renderHead({ title, description, canonicalPath, ogImage }) {
 }
 
 function renderNav() {
-  const links = BLOG_NAV_LINKS.map(l => l.href === '/gate-da-free-notes'
+  // Every link with a dropdown gets the same hover-dropdown wrap — matches
+  // index.html's NAV_LINKS.map() structure exactly (trigger is a real,
+  // clickable <a>, not a dead label, since none of NAV_LINKS' entries set
+  // noClick either). Only relevant on desktop: hover doesn't exist on
+  // mobile, so the mobile menu below deliberately does NOT expand these
+  // (a tap just goes straight to the trigger's own href, same as the real
+  // site's mobile menu) — except Resources, which still gets its own
+  // special-cased expansion since /blogs has no other way to be reached
+  // from a mobile menu at all (unlike Courses/Testimonials' dropdown
+  // items, which are just same-page anchors already reachable by visiting
+  // and scrolling).
+  const links = BLOG_NAV_LINKS.map(l => l.dropdown
     ? `<div class="nav-dropdown-wrap">
-            <span class="nav-resources-label">Resources</span>
+            <a href="${l.href}" class="${l.active ? 'active' : ''}">${l.label}</a>
             <div class="nav-dropdown">
-              <a href="/gate-da-free-notes" class="nav-dd-item">Free Notes &amp; Lectures</a>
-              <div class="nav-dd-divider"></div>
-              <a href="/blogs" class="nav-dd-item active">Blogs</a>
+              ${l.dropdown.map(d => (d.dividerBefore ? '<div class="nav-dd-divider"></div>' : '') +
+                `<a href="${d.href}" class="nav-dd-item${d.blogActive ? ' active' : ''}">${d.label}</a>`
+              ).join('\n              ')}
             </div>
           </div>`
     : `<a href="${l.href}" class="${l.active ? 'active' : ''}">${l.label}</a>`
