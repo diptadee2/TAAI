@@ -238,7 +238,7 @@ function renderHead({ title, description, canonicalPath, ogImage }) {
 <meta name="twitter:image" content="${img}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/blogs/blog.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">`;
 }
@@ -733,7 +733,7 @@ ${renderChrome(indexBody)}
     const postBody = `<article class="blog-post">
       <div class="blog-post-hero">
         <div class="container">
-          <a href="/blogs" class="blog-post-back">← Back to blog</a>
+          <a href="/blogs" class="blog-post-back">← Back to blogs</a>
           <div class="blog-post-date fade-in">${formatDate(post.date)}</div>
           ${post.tags.length ? `<div class="fade-in">${renderTags(post.tags)}</div>` : ''}
           <h1 class="fade-in">${escapeHtml(post.title)}</h1>

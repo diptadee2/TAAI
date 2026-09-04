@@ -27,6 +27,10 @@
 
   --font-display: 'Poppins', ui-sans-serif, system-ui, sans-serif;
   --font-body: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  /* Long-form reading text only (post intro + Paragraph blocks) — every
+     other element (nav, buttons, headings, card titles, chart/table
+     labels) stays on --font-display/--font-nav, untouched. */
+  --font-serif: 'Newsreader', Georgia, serif;
   --font-mono: 'DM Mono', ui-monospace, monospace;
   --font-nav: 'Inter', ui-sans-serif, system-ui, sans-serif;
 
@@ -238,7 +242,7 @@ a { color: inherit; }
 
 .blog-post-cover { width: 100%; max-width: 860px; height: auto; max-height: 420px; object-fit: cover; display: block; margin: 8px auto 0; border-radius: var(--radius-lg); box-shadow: var(--shadow-md); }
 
-.blog-post-content { max-width: 720px; margin: 40px auto 0; font-size: 17px; line-height: 1.75; color: var(--ink-dim); }
+.blog-post-content { max-width: 720px; margin: 40px auto 0; font-family: var(--font-serif); font-size: 19px; line-height: 1.7; color: var(--ink-dim); }
 .blog-post-content h2 { font-family: var(--font-display); font-size: 26px; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; margin: 40px 0 16px; }
 .blog-post-content h3 { font-family: var(--font-display); font-size: 21px; font-weight: 600; color: var(--ink); margin: 32px 0 14px; }
 .blog-post-content p { margin: 0 0 20px; }
@@ -273,8 +277,12 @@ a { color: inherit; }
 .block-section-heading { margin: 44px 0 16px; }
 .block-eyebrow { font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--purple); margin-bottom: 8px; }
 .block-section-heading h2 { font-family: var(--font-display); font-size: 26px; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; }
-.block-text { margin: 0 0 20px; line-height: 1.75; }
+.block-text { margin: 0 0 20px; font-family: var(--font-serif); font-size: 19px; line-height: 1.7; }
 .block-text p { margin: 0 0 20px; }
+.block-text h2 { font-family: var(--font-display); font-size: 26px; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; margin: 32px 0 16px; }
+.block-text h3 { font-family: var(--font-display); font-size: 21px; font-weight: 600; color: var(--ink); margin: 32px 0 14px; }
+.block-text strong { color: var(--ink); font-weight: 600; }
+.block-text blockquote { border-left: 3px solid var(--purple); padding-left: 18px; margin: 0 0 20px; color: var(--ink-soft); font-style: italic; }
 
 .block-chart-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); padding: 22px 24px; margin: 24px 0; }
 .block-chart-title { font-family: var(--font-display); font-weight: 600; font-size: 15px; color: var(--ink); margin-bottom: 4px; }
