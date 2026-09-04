@@ -253,16 +253,18 @@
     return rows;
   }
 
-  // A repeatable list of {title, color, day-rows} mini-cards, only shown
-  // for source: 'custom' — each becomes its own additional embed appended
-  // after the main Title/Body, so one message can carry several full-
-  // width cards (e.g. a weekly schedule: one header + a card per subject)
-  // instead of squeezing everything into one embed. See `sections` in
-  // schema.sql and resolveScheduledPostEmbed() in lib/supabase.js. Each
-  // card's content is a Date/Topic/Duration table (matching how the
-  // source spreadsheet is already laid out) rather than a free-text box —
-  // someone filling this in shouldn't need to know Discord's markdown
-  // syntax to get the formatting right.
+  // A repeatable list of {title, day-rows} sections, only shown for
+  // source: 'custom' — each renders as a bold heading + its own
+  // Date/Topic/Duration list stacked inside the ONE embed this post
+  // sends (see resolveScheduledPostEmbed() in lib/supabase.js), not as
+  // separate embeds — that was tried first and explicitly rejected
+  // ("the subjects are divided into different cards"), since everything
+  // for one post needs to read as a single card. No per-section color:
+  // only one embed exists now, so only the post's own color (set once,
+  // above) applies. Each section's content is a Date/Topic/Duration
+  // table (matching how the source spreadsheet is already laid out)
+  // rather than a free-text box — someone filling this in shouldn't need
+  // to know Discord's markdown syntax to get the formatting right.
   function renderSectionsEditor(p) {
     if (p.source !== 'custom') return '';
     var sections = Array.isArray(p.sections) ? p.sections : [];
@@ -281,25 +283,22 @@
       }).join('');
       return (
         '<div class="section-row" data-index="' + si + '">' +
-          '<div class="field-row">' +
-            '<div class="field"><label>Card title</label><input type="text" class="js-section-title" value="' + escapeHtml(s.title) + '"></div>' +
-            '<div class="field"><label>Accent color</label><input type="color" class="js-section-color" value="' + colorToHex(s.color) + '"></div>' +
-          '</div>' +
+          '<div class="field"><label>Section heading</label><input type="text" class="js-section-title" value="' + escapeHtml(s.title) + '" placeholder="e.g. 🐍 Python — Module 2"></div>' +
           '<table class="day-table"><thead><tr><th>Date</th><th>Topic</th><th>Duration</th><th></th></tr></thead>' +
           '<tbody>' + dayRowsHtml + '</tbody></table>' +
           '<div style="display:flex;gap:8px;margin-top:8px;">' +
             '<button type="button" class="btn btn-small js-day-add" data-section-index="' + si + '">+ Add day</button>' +
-            '<button type="button" class="btn btn-small btn-danger js-section-remove" data-index="' + si + '">Remove card</button>' +
+            '<button type="button" class="btn btn-small btn-danger js-section-remove" data-index="' + si + '">Remove section</button>' +
           '</div>' +
         '</div>'
       );
     }).join('');
     return (
       '<div class="form-section">' +
-        '<div class="form-section-heading">Extra cards (optional)</div>' +
-        '<div class="field-hint" style="margin-bottom:10px;">Each one becomes its own full-width card stacked below the main Title/Body above — e.g. one card per subject in a weekly schedule post. Fill in one row per day; leave Duration blank for entries like a quiz that has none.</div>' +
+        '<div class="form-section-heading">Extra sections (optional)</div>' +
+        '<div class="field-hint" style="margin-bottom:10px;">Each one adds a heading + day list below the main Title/Body above, all within the same card — e.g. one section per subject in a weekly schedule post. Fill in one row per day; leave Duration blank for entries like a quiz that has none.</div>' +
         '<div id="sections-list">' + sectionsHtml + '</div>' +
-        '<button type="button" class="btn btn-small" id="f-add-section">+ Add card</button>' +
+        '<button type="button" class="btn btn-small" id="f-add-section">+ Add section</button>' +
       '</div>'
     );
   }
@@ -354,6 +353,7 @@
             '<div class="field"><label>Source</label><select name="source" id="f-source">' + sourceOptions + '</select></div>' +
             '<div class="field"><label>Title (optional' + (source !== 'custom' ? ' — overrides the default' : '') + ')</label><input type="text" name="title" value="' + escapeHtml(p.title) + '"></div>' +
             bodyField +
+            '<div class="field"><label>Card color</label><input type="color" name="color" value="' + colorToHex(p.color) + '"></div>' +
           '</div>' +
 
           renderSectionsEditor(p) +
@@ -504,7 +504,7 @@
         '<h2 style="font-size:15px;margin-bottom:12px;">Syntax reference</h2>' +
 
         '<div class="ref-section"><div class="ref-heading">Sources</div>' +
-          '<div class="ref-row"><strong>Custom message</strong> — whatever you type in Title/Body, posted as-is. No live data. Optionally add "Extra cards" below the Body for a multi-card message (e.g. a weekly schedule: one card per subject) — each becomes its own full-width card stacked below the main one.</div>' +
+          '<div class="ref-row"><strong>Custom message</strong> — whatever you type in Title/Body, posted as-is. No live data. Optionally add "Extra sections" below the Body for a multi-part message (e.g. a weekly schedule: one section per subject, filled in as a Date/Topic/Duration table) — everything still posts as a single card.</div>' +
           '<div class="ref-row"><strong>Daily — Top Focus Student</strong> — yesterday\'s single top student. Body fully replaces the default sentence if set.</div>' +
           '<div class="ref-row"><strong>Daily — Top 3</strong> / <strong>Weekly — Top 5 Leaderboard</strong> — a computed, freshly-ranked list every time it fires. Body (if set) is an intro line shown ABOVE the medal list — the list itself always shows regardless, you can\'t remove it.</div>' +
           '<div class="ref-row"><strong>Monthly — Most Consistent Student</strong> — reports on the month that just closed, ranked by median daily minutes (not average). Body fully replaces the default sentence if set.</div>' +
@@ -730,7 +730,7 @@
     var addSectionBtn = document.getElementById('f-add-section');
     if (addSectionBtn) addSectionBtn.addEventListener('click', function () {
       syncEditingFromForm();
-      state.editing.sections.push({ title: '', body: '', color: 0x8b5cf6 });
+      state.editing.sections.push({ title: '', body: '', rows: [{ date: '', task: '', time: '' }] });
       render();
     });
 
@@ -841,7 +841,6 @@
   // only otherwise updated on submit, same as every other field here).
   function readSectionsFromDom(scope) {
     return Array.prototype.map.call((scope || document).querySelectorAll('.section-row'), function (row) {
-      var colorHex = row.querySelector('.js-section-color').value || '#8b5cf6';
       var dayRows = Array.prototype.map.call(row.querySelectorAll('.day-row'), function (dr) {
         return {
           date: dr.querySelector('.js-day-date').value,
@@ -853,7 +852,6 @@
         title: row.querySelector('.js-section-title').value,
         body: sectionRowsToBody(dayRows),
         rows: dayRows, // client-side only, for re-rendering the table faithfully; not read by the backend
-        color: parseInt(colorHex.replace('#', ''), 16),
       };
     });
   }
@@ -867,6 +865,7 @@
       test_webhook_url: (fd.get('test_webhook_url') || '').trim(),
       title: (fd.get('title') || '').trim(),
       body: (fd.get('body') || '').trim(),
+      color: parseInt((fd.get('color') || '#8b5cf6').replace('#', ''), 16),
       sections: readSectionsFromDom(form),
       tag_everyone: fd.get('tag_everyone') === 'on',
       extra_mentions: (fd.get('extra_mentions') || '').trim(),

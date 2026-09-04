@@ -656,23 +656,24 @@ async function allTimeWeeklyRecordLine(supabase) {
 // never persisted.
 export async function resolveScheduledPostEmbed(supabase, row) {
   if (row.source === 'custom') {
-    const mainEmbed = {
+    // `sections` (added for the weekly-schedule use case — one entry per
+    // subject, e.g. Python / Calculus, each typed in via /team's
+    // repeatable Date/Topic/Duration table) render as bold-headed text
+    // sections stacked inside this ONE embed's description, not as
+    // separate embeds — tried as separate stacked cards first, but that
+    // was explicitly rejected ("the subjects are divided into different
+    // cards" — everything for one batch/post needs to read as a single
+    // card, not several).
+    const sectionsText = (Array.isArray(row.sections) ? row.sections : [])
+      .filter(s => s.title || s.body)
+      .map(s => (s.title ? `**${s.title}**\n` : '') + (s.body || ''))
+      .join('\n\n');
+    const description = [row.body || '', sectionsText].filter(Boolean).join('\n\n');
+    return [{
       title: row.title || undefined,
-      description: row.body || '',
+      description,
       color: row.color ?? 0x8b5cf6,
-    };
-    // `sections` (added for the weekly-schedule use case — a full-width
-    // card per subject, e.g. Python / Calculus) is an optional array of
-    // {title, body, color} typed in via /team's repeatable Sections sub-
-    // form; each becomes its own additional embed appended after the
-    // main one, so a channel gets one message with several stacked cards
-    // instead of one cramped embed.
-    const extraEmbeds = (Array.isArray(row.sections) ? row.sections : []).map(s => ({
-      title: s.title || undefined,
-      description: s.body || '',
-      color: s.color ?? row.color ?? 0x8b5cf6,
-    }));
-    return [mainEmbed, ...extraEmbeds];
+    }];
   }
 
   if (row.source === 'daily_leader') {
