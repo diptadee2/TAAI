@@ -28,6 +28,22 @@
     .blocks-ref .blocks-ref-copy-btn { display: inline-block; font-size: 12.5px; font-weight: 600; color: #fff; background: #7c3aed; border: none; border-radius: 999px; padding: 7px 16px; cursor: pointer; margin-bottom: 10px; }
     .blocks-ref .blocks-ref-copy-btn:hover { background: #6d28d9; }
     .blocks-ref .blocks-ref-prompt-box { display: block; width: 100%; box-sizing: border-box; height: 130px; resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; line-height: 1.5; color: #374151; background: #fff; border: 1px solid #ddd6fe; border-radius: 8px; padding: 10px 12px; }
+    /* Actual live preview of what's being written (title/description/
+       cover/body) — restores what registering a custom preview template
+       otherwise silently removes (Decap's default preview), since a
+       writer needs to see their own text, not just a reference panel. */
+    .blocks-ref .post-preview { border-bottom: 2px solid #e5e7eb; padding-bottom: 18px; margin-bottom: 22px; }
+    .blocks-ref .post-preview-title { font-size: 24px; font-weight: 700; margin: 0 0 8px; color: #111827; }
+    .blocks-ref .post-preview-desc { font-size: 14px; color: #6b7280; margin-bottom: 10px; }
+    .blocks-ref .post-preview-cover img { max-width: 100%; border-radius: 8px; margin-bottom: 12px; display: block; }
+    .blocks-ref .post-preview-body { font-size: 14.5px; line-height: 1.6; color: #1f2937; }
+    .blocks-ref .post-preview-body p { margin: 0 0 12px; }
+    .blocks-status { margin-top: 14px; border-radius: 8px; padding: 10px 14px; font-size: 13px; }
+    .blocks-status-ok { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+    .blocks-status-ok ol { margin: 6px 0 0; padding-left: 20px; }
+    .blocks-status-ok li { margin-bottom: 2px; color: #14532d; }
+    .blocks-status-error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+    .blocks-status-error .blocks-status-msg { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; margin-top: 4px; }
   </style>
 </head>
 <body>
@@ -151,9 +167,73 @@
 
       '<div class="blocks-ref-note">Blocks render in the order you add them, after the Body field. You can mix Paragraph text and Section heading blocks in between charts to keep the post readable — you don\'t have to put every chart back to back.</div>';
 
+    // One-line human-readable summary for a single parsed block object —
+    // best-effort generic (title/heading/question/etc, plus array-length
+    // hints like "3 bars") rather than a full re-render, so this stays
+    // simple and never needs updating when a block renderer's visual
+    // design changes, only when its field names do (same as the reference
+    // cards below already require).
+    function blockLabelHint(b) {
+      b = b || {};
+      var hint = b.title || b.heading || b.question ||
+        (b.left_label && b.right_label ? (b.left_label + ' vs ' + b.right_label) : '') ||
+        (b.content ? String(b.content).slice(0, 50) : '') || '';
+      var countBits = [];
+      ['bars', 'groups', 'lines', 'rows', 'steps', 'cells', 'items'].forEach(function (k) {
+        if (Array.isArray(b[k])) countBits.push(b[k].length + ' ' + k);
+      });
+      return (b.type || 'unknown') + (hint ? ' — "' + hint + '"' : '') + (countBits.length ? ' (' + countBits.join(', ') + ')' : '');
+    }
+
+    // Validates blocks_json exactly the way build.mjs's loadPosts() will
+    // at build time (JSON.parse + Array.isArray) — surfacing the same
+    // failure here, live, while writing, is the whole point: a broken
+    // paste otherwise isn't caught until a build the writer never sees
+    // (Netlify's, after publish). Falls back to summarizing the manual
+    // Blocks list when blocks_json is empty, so either path shows
+    // something.
+    function renderBlocksStatus(entry) {
+      var jsonRaw = entry.getIn(['data', 'blocks_json']);
+      if (jsonRaw && String(jsonRaw).trim()) {
+        var parsed;
+        try {
+          parsed = JSON.parse(jsonRaw);
+        } catch (e) {
+          return h('div', { className: 'blocks-status blocks-status-error' },
+            h('strong', null, '✗ blocks_json is not valid JSON — this post will fail to build until fixed.'),
+            h('div', { className: 'blocks-status-msg' }, e.message)
+          );
+        }
+        if (!Array.isArray(parsed)) {
+          return h('div', { className: 'blocks-status blocks-status-error' },
+            '✗ blocks_json must be a JSON array (got ' + typeof parsed + ').');
+        }
+        return h('div', { className: 'blocks-status blocks-status-ok' },
+          h('strong', null, '✓ ' + parsed.length + ' block' + (parsed.length === 1 ? '' : 's') + ' parsed from blocks_json:'),
+          h('ol', null, parsed.map(function (b, i) { return h('li', { key: i }, blockLabelHint(b)); }))
+        );
+      }
+      var manual = entry.getIn(['data', 'blocks']);
+      var manualArr = (manual && manual.toJS) ? manual.toJS() : [];
+      if (!manualArr.length) return null;
+      return h('div', { className: 'blocks-status blocks-status-ok' },
+        h('strong', null, manualArr.length + ' block' + (manualArr.length === 1 ? '' : 's') + ' (manual list):'),
+        h('ol', null, manualArr.map(function (b, i) { return h('li', { key: i }, blockLabelHint(b)); }))
+      );
+    }
+
     var BlocksReferencePreview = createClass({
       render: function () {
+        var entry = this.props.entry;
+        var widgetFor = this.props.widgetFor;
         return h('div', { className: 'blocks-ref' },
+          h('div', { className: 'post-preview' },
+            h('div', { className: 'post-preview-title' }, widgetFor('title')),
+            h('div', { className: 'post-preview-desc' }, widgetFor('description')),
+            h('div', { className: 'post-preview-cover' }, widgetFor('cover')),
+            h('div', { className: 'post-preview-body' }, widgetFor('body')),
+            renderBlocksStatus(entry)
+          ),
           h('div', { className: 'blocks-ref-prompt' },
             h('h2', null, 'LLM prompt — copy this'),
             h('div', { className: 'blocks-ref-sub' },
