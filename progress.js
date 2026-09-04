@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-04-2';
+  var CLIENT_VERSION = '2026-09-04-3';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -201,6 +201,32 @@
         });
     }
     attempt(2);
+  }
+
+  // Fired on a real tab close/navigate-away (pagehide fires for that, not
+  // just backgrounding — unlike visibilitychange). Without this, closing
+  // mid-session leaves pomo_active_session exactly as it was at the last
+  // normal savePomoActiveState() call (session start/pause/skip), so
+  // is_live (see fetchLiveStatusByEmail) stays true off a now-stale
+  // phase_end_at until that phase's original end time arrives — then
+  // flips to "last seen" at that same stale updated_at, which can already
+  // be tens of minutes in the past the instant it flips. sendBeacon (not
+  // fetch) is required here: it's the one API actually guaranteed to
+  // deliver during page teardown. Best-effort only — a crash, force-quit,
+  // or lost network still can't be caught this way, only a genuine
+  // close/navigate.
+  function sendPomoStoppedBeacon() {
+    if (!state.student || !pomo.running || typeof navigator.sendBeacon !== 'function') return;
+    var body = JSON.stringify({
+      email: state.student.email,
+      mode: pomo.mode,
+      running: false,
+      secondsLeft: pomo.secondsLeft,
+      totalSeconds: pomo.totalSeconds,
+      phaseEndAt: pomo.phaseEndAt,
+      completedSessions: pomo.completedSessions,
+    });
+    navigator.sendBeacon('/api/pomo-active', new Blob([body], { type: 'application/json' }));
   }
 
   // Notifications are mandatory to use the Focus Timer at all (not just an
@@ -2554,6 +2580,12 @@
       else { refreshLeaderboard(); startLeaderboardPoll(); }
     }
   });
+
+  // See sendPomoStoppedBeacon above — tells the server a running Pomodoro
+  // actually stopped the moment the tab closes, instead of leaving other
+  // students' leaderboard view showing this student as live/recently-seen
+  // off a stale timestamp until the original phase would have ended.
+  window.addEventListener('pagehide', sendPomoStoppedBeacon);
 
   // Focus Mode is desktop-only (same 1080px breakpoint that hides
   // .focus-toggle-wrap in CSS) — the button being hidden stops someone from
