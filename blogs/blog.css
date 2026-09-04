@@ -288,14 +288,13 @@ a { color: inherit; }
    card for all of them — a long post stacking several charts/diagrams
    back to back otherwise reads as a wall of identical white boxes.
    block-chart-card (bar/grouped-bar/line charts) = "data": white,
-   bordered, the same gradient top-strip motif the listing cards already
-   use. block-narrative-card (step/two-path/comparison-rows diagrams) =
-   "illustrative": a soft tinted fill instead, no border/shadow/strip, so
-   it reads as conceptual rather than a chart — the two are meant to look
-   different from across the room, not just contain different content. */
-.block-chart-card { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); padding: 26px 24px 22px; margin: 24px 0; overflow: hidden; }
-.block-chart-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--pink), var(--purple), var(--blue)); }
-.block-narrative-card { background: var(--bg-soft); border: none; border-radius: var(--radius-md); box-shadow: none; padding: 26px 24px 22px; margin: 28px 0; }
+   bordered, a plain flat card. block-narrative-card (step/two-path/
+   comparison-rows diagrams) = "illustrative": a soft tinted fill
+   instead, no border/shadow, so it reads as conceptual rather than a
+   chart — the two are meant to look different from across the room,
+   not just contain different content. */
+.block-chart-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); padding: 22px 24px; margin: 24px 0; }
+.block-narrative-card { background: var(--bg-soft); border: none; border-radius: var(--radius-md); box-shadow: none; padding: 22px 24px; margin: 28px 0; }
 .block-chart-title { font-family: var(--font-display); font-weight: 600; font-size: 15px; color: var(--ink); margin-bottom: 4px; }
 .block-chart-subtitle { font-family: var(--font-mono); font-size: 12px; color: var(--ink-soft); margin-bottom: 14px; }
 .block-caption { font-family: var(--font-mono); font-size: 12px; line-height: 1.55; color: var(--ink-soft); margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--line); }
@@ -407,7 +406,8 @@ a { color: inherit; }
 .block-resource-row { background: var(--card); padding: 16px 18px; text-decoration: none; display: flex; justify-content: space-between; align-items: center; gap: 14px; }
 .block-resource-title { font-family: var(--font-display); font-weight: 600; font-size: 15px; color: var(--ink); }
 .block-resource-sub { font-family: var(--font-mono); font-size: 12px; color: var(--ink-soft); }
-.block-resource-cta { font-family: var(--font-mono); color: var(--purple); font-weight: 600; white-space: nowrap; }
+.block-resource-cta { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-display); font-size: 13px; font-weight: 600; text-transform: capitalize; color: var(--purple); background: var(--purple-soft); padding: 8px 16px; border-radius: 999px; white-space: nowrap; transition: background .15s ease, color .15s ease, transform .15s ease; }
+.block-resource-row:hover .block-resource-cta { background: var(--purple); color: #fff; transform: translateX(2px); }
 
 @media (max-width: 640px) {
   .block-bar-row { grid-template-columns: 1fr; gap: 4px; }
