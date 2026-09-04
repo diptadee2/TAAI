@@ -74,6 +74,14 @@ export function yesterdayIST() {
   return d.toISOString().slice(0, 10);
 }
 
+// First day of the current IST calendar month — used to scope the
+// Discord posts' "record" line to this month only, resetting naturally
+// on the 1st with no separate reset job needed (just a >= filter that
+// moves forward every time todayIST() rolls into a new month).
+export function monthStartIST() {
+  return todayIST().slice(0, 7) + '-01';
+}
+
 // Monday of the current ISO week, based on the IST calendar date. Same
 // Monday-start-week convention progress.js's mondayOf() already uses
 // client-side for the calendar's "Week N" labels. Used to key the
@@ -364,6 +372,46 @@ export async function fetchAllTimeWeeklyRecord(supabase) {
   return { display_name: student?.display_name || 'Anonymous', total_minutes: data.total_minutes, week_start: data.week_start };
 }
 
+// Same as fetchAllTimeDailyRecord, scoped to the current IST calendar
+// month only (monthStartIST()) — a second, shorter-lived record line
+// requested directly for the daily/weekly Discord posts, alongside (not
+// instead of) the all-time one. Resets automatically on the 1st since
+// it's just a >= filter against the current month's start, no separate
+// reset job.
+export async function fetchMonthlyDailyRecord(supabase) {
+  const { data, error } = await supabase
+    .from('pomo_daily_sessions')
+    .select('email, date, total_minutes')
+    .gte('date', monthStartIST())
+    .order('total_minutes', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  const { data: student, error: studentError } = await supabase
+    .from('students').select('display_name').eq('email', data.email).maybeSingle();
+  if (studentError) throw new Error(studentError.message);
+  return { display_name: student?.display_name || 'Anonymous', total_minutes: data.total_minutes, date: data.date };
+}
+
+// Same as fetchAllTimeWeeklyRecord, scoped to weeks whose week_start
+// falls within the current IST calendar month.
+export async function fetchMonthlyWeeklyRecord(supabase) {
+  const { data, error } = await supabase
+    .from('pomodoro_stats')
+    .select('email, week_start, total_minutes')
+    .gte('week_start', monthStartIST())
+    .order('total_minutes', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  const { data: student, error: studentError } = await supabase
+    .from('students').select('display_name').eq('email', data.email).maybeSingle();
+  if (studentError) throw new Error(studentError.message);
+  return { display_name: student?.display_name || 'Anonymous', total_minutes: data.total_minutes, week_start: data.week_start };
+}
+
 // Posts one or more embeds (Discord renders each full-width, stacked, in
 // one message — up to 10 per message, Discord's own hard limit) to a
 // Discord channel webhook — by default the one wired
@@ -633,6 +681,26 @@ async function allTimeWeeklyRecordLine(supabase) {
   return `\n\n🏅 *All-time weekly record: **${record.display_name}** — ${formatHoursDecimal(record.total_minutes)}, week of ${record.week_start}*`;
 }
 
+// Second, shorter-lived record line appended alongside the all-time one —
+// requested directly for all the daily/weekly Discord posts. Resets
+// automatically every month (see monthStartIST()), no separate job.
+// Skipped when it would just repeat the all-time record verbatim (the
+// all-time best happens to also fall within this month) — showing the
+// same name/value/date twice back to back read as a mistake, not two
+// distinct pieces of context.
+async function monthlyDailyRecordLine(supabase) {
+  const [monthly, allTime] = await Promise.all([fetchMonthlyDailyRecord(supabase), fetchAllTimeDailyRecord(supabase)]);
+  if (!monthly) return '';
+  if (allTime && allTime.date === monthly.date && allTime.display_name === monthly.display_name) return '';
+  return `\n\n🗓️ *This month's daily record: **${monthly.display_name}** — ${formatHoursDecimal(monthly.total_minutes)}, set ${monthly.date}*`;
+}
+async function monthlyWeeklyRecordLine(supabase) {
+  const [monthly, allTime] = await Promise.all([fetchMonthlyWeeklyRecord(supabase), fetchAllTimeWeeklyRecord(supabase)]);
+  if (!monthly) return '';
+  if (allTime && allTime.week_start === monthly.week_start && allTime.display_name === monthly.display_name) return '';
+  return `\n\n🗓️ *This month's weekly record: **${monthly.display_name}** — ${formatHoursDecimal(monthly.total_minutes)}, week of ${monthly.week_start}*`;
+}
+
 // "Mon, Jun 15" for a 'YYYY-MM-DD' calendar date — used to head each date
 // group in a 'custom' post's merged sections (see resolveScheduledPostEmbed
 // below). Parsed with an explicit UTC midnight, same reasoning as
@@ -724,7 +792,7 @@ export async function resolveScheduledPostEmbed(supabase, row) {
     return [{
       title: row.title || '🏆 Yesterday\'s Top Focus Session',
       url: SCHEDULED_POST_TRACKER_URL,
-      description: `${text}${await allTimeDailyRecordLine(supabase)}\n\n[📊 View the progress tracker](${SCHEDULED_POST_TRACKER_URL})`,
+      description: `${text}${await monthlyDailyRecordLine(supabase)}${await allTimeDailyRecordLine(supabase)}\n\n[📊 View the progress tracker](${SCHEDULED_POST_TRACKER_URL})`,
       color: row.color ?? 0xf59e0b,
       footer: { text: date },
     }];
@@ -742,7 +810,7 @@ export async function resolveScheduledPostEmbed(supabase, row) {
     return [{
       title: row.title || '🏆 Yesterday\'s Top 3',
       url: SCHEDULED_POST_TRACKER_URL,
-      description: `${intro}${lines.join('\n')}${await allTimeDailyRecordLine(supabase)}\n\n[📊 View the progress tracker](${SCHEDULED_POST_TRACKER_URL})`,
+      description: `${intro}${lines.join('\n')}${await monthlyDailyRecordLine(supabase)}${await allTimeDailyRecordLine(supabase)}\n\n[📊 View the progress tracker](${SCHEDULED_POST_TRACKER_URL})`,
       color: row.color ?? 0xf59e0b,
       footer: { text: date },
     }];
@@ -758,7 +826,7 @@ export async function resolveScheduledPostEmbed(supabase, row) {
     return [{
       title: row.title || '📅 Weekly Top 5 Leaderboard',
       url: SCHEDULED_POST_TRACKER_URL,
-      description: `${intro}${lines.join('\n')}${await allTimeWeeklyRecordLine(supabase)}\n\n[📊 View the progress tracker](${SCHEDULED_POST_TRACKER_URL})`,
+      description: `${intro}${lines.join('\n')}${await monthlyWeeklyRecordLine(supabase)}${await allTimeWeeklyRecordLine(supabase)}\n\n[📊 View the progress tracker](${SCHEDULED_POST_TRACKER_URL})`,
       color: row.color ?? 0x8b5cf6,
       footer: { text: 'Week of ' + weekStart },
     }];
