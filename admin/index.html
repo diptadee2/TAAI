@@ -9,10 +9,85 @@
   <link rel="icon" href="/favicon.ico?v=6">
   <link href="/admin/config.yml" type="text/yaml">
   <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <style>
+    /* Scoped to .blocks-ref only — never touches Decap's own UI chrome. */
+    .blocks-ref { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px 26px; max-width: 720px; }
+    .blocks-ref h2 { font-size: 18px; margin: 0 0 4px; }
+    .blocks-ref .blocks-ref-sub { color: #6b7280; font-size: 13px; margin-bottom: 20px; }
+    .blocks-ref .blocks-ref-item { border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+    .blocks-ref .blocks-ref-item h3 { font-size: 14.5px; margin: 0 0 4px; color: #111827; }
+    .blocks-ref .blocks-ref-item p { font-size: 13px; color: #4b5563; margin: 0 0 8px; line-height: 1.5; }
+    .blocks-ref .blocks-ref-fields { font-size: 12.5px; color: #374151; background: #f9fafb; border-radius: 6px; padding: 8px 10px; }
+    .blocks-ref .blocks-ref-fields b { color: #111827; }
+    .blocks-ref .blocks-ref-note { font-size: 12.5px; color: #6b7280; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 10px 12px; margin-top: 16px; line-height: 1.5; }
+  </style>
 </head>
 <body>
   <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
   <script>
+    // A reference panel for the Blog collection's preview pane — not a
+    // live preview of the rendered post (that would mean re-implementing
+    // build.mjs's block renderers a second time here, in a second
+    // language/runtime, which would drift out of sync with the real
+    // thing). Just a persistent, always-visible cheat sheet of what each
+    // Blocks type is for and what to fill in, since a non-technical
+    // writer using the Blocks field (see admin/config.yml) has no other
+    // way to see this while actually writing a post. createClass/h are
+    // globals Decap's bundle exposes specifically for this no-build-step
+    // customization pattern — same "no bundler" approach as the rest of
+    // this site.
+    var BLOCKS_REFERENCE_HTML = '' +
+      '<h2>Blocks reference</h2>' +
+      '<div class="blocks-ref-sub">What each block type in the Blocks field does, and what to fill in. This panel does not preview your actual post — publish (or check the live site) to see the real result.</div>' +
+
+      '<div class="blocks-ref-item"><h3>Section heading</h3><p>A small label + a heading, to start a new part of the post.</p>' +
+      '<div class="blocks-ref-fields"><b>Eyebrow</b> (small label above), <b>Heading</b></div></div>' +
+
+      '<div class="blocks-ref-item"><h3>Paragraph text</h3><p>Regular prose, same as the Body field above — use this to add more text between charts/tables.</p>' +
+      '<div class="blocks-ref-fields"><b>Content</b></div></div>' +
+
+      '<div class="blocks-ref-item"><h3>Bar chart</h3><p>Horizontal bars, one per row — e.g. marks per subject. Trend controls the bar\'s color: rising = green, falling = red, steady = purple.</p>' +
+      '<div class="blocks-ref-fields"><b>Title</b>, <b>Subtitle</b> (optional), <b>Bars</b>: each with Label + Value + Trend, <b>Caption</b> (optional)</div></div>' +
+
+      '<div class="blocks-ref-item"><h3>Grouped bar chart</h3><p>Compares a few categories across the same years/series — e.g. question types across 2024/2025/2026.</p>' +
+      '<div class="blocks-ref-fields"><b>Title</b>, <b>Series labels</b> (e.g. 2024, 2025, 2026 — in order), <b>Groups</b>: each with a Label + one Value per series (same order as Series labels), <b>Caption</b> (optional)</div></div>' +
+
+      '<div class="blocks-ref-item"><h3>Line chart</h3><p>A trend over time, one line per thing you\'re tracking.</p>' +
+      '<div class="blocks-ref-fields"><b>Title</b>, <b>X-axis labels</b> (e.g. 2024, 2025, 2026 — in order), <b>Lines</b>: each with a Label + Trend (rising/falling, for color) + one Value per x-axis label, <b>Caption</b> (optional)</div></div>' +
+
+      '<div class="blocks-ref-item"><h3>Data table</h3><p>A plain table. Leave Column headers empty for a simple 2-column key/value table (like an exam-pattern summary).</p>' +
+      '<div class="blocks-ref-fields"><b>Title</b> (optional), <b>Column headers</b> (optional), <b>Rows</b>: each a list of Cells (one per column, in order) + optional Highlight (e.g. for a totals row)</div></div>' +
+
+      '<div class="blocks-ref-item"><h3>Step diagram</h3><p>Shows things building up over steps — e.g. "revise everything before you start something new". Each step lists its items bottom to top; tick "is the new item" for whichever one should stand out that step.</p>' +
+      '<div class="blocks-ref-fields"><b>Title</b>, <b>Subtitle</b> (optional), <b>Steps</b>: each with a Step label + Items (Label + "this is the new item"), <b>Caption</b> (optional)</div></div>' +
+
+      '<div class="blocks-ref-item"><h3>Two-path diagram</h3><p>One thing splits into two outcomes — e.g. "marks lost" splitting into "accuracy leak" vs "knowledge gap".</p>' +
+      '<div class="blocks-ref-fields"><b>Root label</b>, <b>Left path</b> &amp; <b>Right path</b>: each with a Badge, Title, Description, Action line</div></div>' +
+
+      '<div class="blocks-ref-item"><h3>Comparison rows</h3><p>Rows contrasting a wrong way and a right way of doing something.</p>' +
+      '<div class="blocks-ref-fields"><b>Title</b> (optional), <b>Rows</b>: each with "this row is the good example", Description, Result</div></div>' +
+
+      '<div class="blocks-ref-item"><h3>Two-column comparison</h3><p>A simple side-by-side comparison of two approaches/ideas — text only, no chart.</p>' +
+      '<div class="blocks-ref-fields"><b>Left label</b> + <b>Left description</b>, <b>Right label</b> + <b>Right description</b></div></div>' +
+
+      '<div class="blocks-ref-item"><h3>Syllabus / topic grid</h3><p>A grid of numbered topic cards — e.g. the seven core sections of a syllabus.</p>' +
+      '<div class="blocks-ref-fields"><b>Title</b> (optional), <b>Cells</b>: each with a Number/code (e.g. "01" or "GA"), Title, Description, optional Highlight (spans the full row)</div></div>' +
+
+      '<div class="blocks-ref-item"><h3>FAQ</h3><p>An expandable question/answer list.</p>' +
+      '<div class="blocks-ref-fields"><b>Questions</b>: each with a Question + Answer</div></div>' +
+
+      '<div class="blocks-ref-item"><h3>Resource links</h3><p>A stack of link cards, e.g. pointing to your course, notes, or test series.</p>' +
+      '<div class="blocks-ref-fields"><b>Intro text</b> (optional), <b>Links</b>: each with Title, Subtitle, URL, Button text (e.g. "visit", "watch", "get it")</div></div>' +
+
+      '<div class="blocks-ref-note">Blocks render in the order you add them, after the Body field. You can mix Paragraph text and Section heading blocks in between charts to keep the post readable — you don\'t have to put every chart back to back.</div>';
+
+    var BlocksReferencePreview = createClass({
+      render: function () {
+        return h('div', { className: 'blocks-ref', dangerouslySetInnerHTML: { __html: BLOCKS_REFERENCE_HTML } });
+      }
+    });
+    CMS.registerPreviewTemplate('blog', BlocksReferencePreview);
+
     if (window.netlifyIdentity) {
       window.netlifyIdentity.on('init', user => {
         if (!user) {
