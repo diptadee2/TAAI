@@ -139,11 +139,14 @@ const BLOG_MENU_ICONS = {
   '/blogs': '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 20h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" /></svg>',
 };
 
+// Keep in sync with admin/config.yml's tags options (and, for the
+// academic ones, /gate-da-subjects.js — see CLAUDE.md).
 const TAG_LABELS = {
   'linear-algebra': 'Linear Algebra', 'probability': 'Probability',
   'statistics': 'Statistics', 'calculus': 'Calculus',
   'machine-learning': 'Machine Learning', 'ai': 'AI', 'dbms': 'DBMS',
-  'python-dsa': 'Python & DSA', 'gate-strategy': 'GATE Strategy',
+  'python': 'Python', 'data-structures': 'Data Structures', 'algorithms': 'Algorithms',
+  'gate-strategy': 'GATE Strategy',
   'announcement': 'Announcement', 'career': 'Career', 'tips': 'Tips',
 };
 
