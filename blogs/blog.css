@@ -296,6 +296,21 @@ a { color: inherit; }
 .block-swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
 .block-series-0 { background: var(--purple); } .block-series-1 { background: var(--pink); } .block-series-2 { background: var(--blue); }
 .block-series-3 { background: var(--lilac); } .block-series-4 { background: var(--rise); } .block-series-5 { background: var(--fall); }
+/* Same 6-color rotation as the swatches above, as SVG stroke/fill instead
+   of background — line charts use these on <polyline>/<circle>, which
+   don't respond to `background`. Split by element on purpose: a <polyline>
+   with `fill` set (even to "none" as an attribute) still gets filled by
+   this CSS unless fill is only ever set here on the points, not the line
+   itself — real bug, caught visually: the line series were rendering as
+   solid triangular blobs (closing back to the first point) instead of
+   open lines, since one shared rule set `fill` on both selectors. */
+.block-lineseries { fill: none; }
+.block-lineseries.block-series-0 { stroke: var(--purple); } .block-linept.block-series-0 { fill: var(--purple); }
+.block-lineseries.block-series-1 { stroke: var(--pink); } .block-linept.block-series-1 { fill: var(--pink); }
+.block-lineseries.block-series-2 { stroke: var(--blue); } .block-linept.block-series-2 { fill: var(--blue); }
+.block-lineseries.block-series-3 { stroke: var(--lilac); } .block-linept.block-series-3 { fill: var(--lilac); }
+.block-lineseries.block-series-4 { stroke: var(--rise); } .block-linept.block-series-4 { fill: var(--rise); }
+.block-lineseries.block-series-5 { stroke: var(--fall); } .block-linept.block-series-5 { fill: var(--fall); }
 
 /* Grouped bar chart — vertical mini-bars per series within each group,
    height as a % of the chart's global max across every group/series. */

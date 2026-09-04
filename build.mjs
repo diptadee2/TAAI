@@ -474,6 +474,16 @@ function renderBlockGroupedBarChart(f) {
   </figure>`;
 }
 
+// Each line gets its own color from the same rotating palette
+// grouped_bar_chart uses (block-series-0..5), not a 2-way rising/falling
+// split — a real bug, reported directly: with more than 2 lines (common —
+// e.g. 2 rising + 2 falling), sharing just those 2 colors made lines
+// genuinely indistinguishable on the chart itself. Labels moved out of
+// the plot into a legend below, for the same real bug this fixes: inline
+// end-of-line text has no reliable amount of room to its right — it
+// looked fine with 2 short labels (tested), then ran straight off the
+// card's edge with more/longer ones (a real post: "Programming & DSA").
+// A legend has no such width constraint regardless of label count/length.
 function renderBlockLineChart(f) {
   const xLabels = Array.isArray(f.x_labels) ? f.x_labels : [];
   const lines = Array.isArray(f.lines) ? f.lines : [];
@@ -482,21 +492,22 @@ function renderBlockLineChart(f) {
   const allValues = lines.flatMap(l => (Array.isArray(l.values) ? l.values : []).map(v => numOr(v)));
   const min = Math.min(0, ...allValues);
   const max = Math.max(1, ...allValues);
-  const W = 620, H = 230, padL = 20, padR = 100, padT = 20, padB = 30;
+  const W = 620, H = 220, padL = 20, padR = 20, padT = 16, padB = 30;
   const xStep = (W - padL - padR) / (n - 1);
   const xFor = i => padL + xStep * i;
   const yFor = v => padT + (H - padT - padB) * (1 - (v - min) / ((max - min) || 1));
 
-  const linesHtml = lines.map(l => {
+  const legend = lines.map((l, i) => {
     const values = Array.isArray(l.values) ? l.values : [];
-    const color = TREND_COLOR[l.trend] || TREND_COLOR.steady;
-    const pts = values.map((v, i) => `${xFor(i)},${yFor(numOr(v))}`).join(' ');
-    const circles = values.map((v, i) => `<circle cx="${xFor(i)}" cy="${yFor(numOr(v))}" r="3.5" fill="${color}"/>`).join('');
-    const lastI = values.length - 1;
-    const labelHtml = lastI >= 0
-      ? `<text x="${xFor(lastI) + 10}" y="${yFor(numOr(values[lastI])) + 4}" font-size="12" fill="${color}" font-family="var(--font-mono)">${escapeHtml(l.label)} ${escapeHtml(String(values[lastI]))}</text>`
-      : '';
-    return `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.5"/>${circles}${labelHtml}`;
+    const lastVal = values.length ? values[values.length - 1] : '';
+    return `<span class="block-legend-item"><i class="block-swatch block-series-${i % 6}"></i>${escapeHtml(l.label)} — ${escapeHtml(String(lastVal))}</span>`;
+  }).join('');
+  const linesHtml = lines.map((l, i) => {
+    const values = Array.isArray(l.values) ? l.values : [];
+    const seriesClass = `block-series-${i % 6}`;
+    const pts = values.map((v, idx) => `${xFor(idx)},${yFor(numOr(v))}`).join(' ');
+    const circles = values.map((v, idx) => `<circle cx="${xFor(idx)}" cy="${yFor(numOr(v))}" r="3.5" class="block-linept ${seriesClass}"/>`).join('');
+    return `<polyline points="${pts}" fill="none" stroke-width="2.5" class="block-lineseries ${seriesClass}"/>${circles}`;
   }).join('');
   const xAxisHtml = xLabels.map((lab, i) =>
     `<text x="${xFor(i)}" y="${H - 8}" text-anchor="middle" font-size="12" fill="var(--ink-soft)" font-family="var(--font-mono)">${escapeHtml(lab)}</text>`
@@ -504,6 +515,7 @@ function renderBlockLineChart(f) {
 
   return `<figure class="block-chart-card">
     ${f.title ? `<div class="block-chart-title">${escapeHtml(f.title)}</div>` : ''}
+    ${legend ? `<div class="block-legend">${legend}</div>` : ''}
     <svg class="block-linechart" viewBox="0 0 ${W} ${H}" role="img">${xAxisHtml}${linesHtml}</svg>
     ${f.caption ? `<figcaption class="block-caption">${escapeHtml(f.caption)}</figcaption>` : ''}
   </figure>`;

@@ -114,7 +114,6 @@ collections:
                 widget: "list"
                 fields:
                   - { label: "Label", name: "label", widget: "string" }
-                  - { label: "Trend color", name: "trend", widget: "select", options: ["rising", "falling"], default: "rising" }
                   - { label: "Values (one per x-axis label, same order)", name: "values", widget: "list", field: { label: "Value", name: "value", widget: "number" } }
               - { label: "Caption (optional)", name: "caption", widget: "text", required: false }
           - label: "Data table"

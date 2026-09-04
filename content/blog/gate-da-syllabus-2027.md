@@ -92,10 +92,10 @@ blocks:
     title: "Fig 5: The movers, 2024 to 2026"
     x_labels: ["2024", "2025", "2026"]
     lines:
-      - { label: "DBMS", trend: "rising", values: [6, 11, 18] }
-      - { label: "Probability", trend: "rising", values: [15, 19, 21] }
-      - { label: "Programming & DSA", trend: "falling", values: [20, 14, 14] }
-      - { label: "Calculus", trend: "falling", values: [8, 9, 2] }
+      - { label: "DBMS", values: [6, 11, 18] }
+      - { label: "Probability", values: [15, 19, 21] }
+      - { label: "Programming & DSA", values: [20, 14, 14] }
+      - { label: "Calculus", values: [8, 9, 2] }
     caption: "Probability & Statistics kept climbing every year. Programming & DSA dropped once and then held flat."
   - type: data_table
     title: "Full weightage, marks by year"
