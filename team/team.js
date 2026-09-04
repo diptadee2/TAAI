@@ -217,64 +217,31 @@
   }
 
   // Converts a day-rows table (what someone actually fills in) into the
-  // Discord markdown body a section's embed needs — the exact format
-  // arrived at through live testing against a real test channel (bold
-  // date + em dash + task, duration as a native blockquote line below,
-  // not inline/parenthesized — see CLAUDE.md's "/team" section for why
-  // every alternative tried was rejected). Rows with no task are skipped
-  // (an empty day contributes nothing, same as leaving it out entirely).
-  function sectionRowsToBody(rows) {
-    return rows.filter(function (r) { return r.task; }).map(function (r) {
-      var line = '**' + r.date + '** — ' + r.task;
-      if (r.time) line += '\n> ⏱ ' + r.time;
-      return line;
-    }).join('\n');
-  }
-
-  // The inverse — reconstructs day-rows from a saved section's plain-text
-  // body, so re-opening an existing post for editing shows the familiar
-  // table again instead of a raw markdown blob. Safe to be this specific
-  // about the format: sectionRowsToBody is the only thing that ever
-  // writes this text, so parsing it back is parsing our own output, not
-  // guessing at arbitrary user text.
-  function parseSectionBodyToRows(body) {
-    if (!body) return [];
-    var rows = [];
-    var lines = String(body).split('\n');
-    for (var i = 0; i < lines.length; i++) {
-      var m = lines[i].match(/^\*\*(.+?)\*\*\s*—\s*(.*)$/);
-      if (!m) continue;
-      var time = '';
-      var next = lines[i + 1];
-      var tm = next && next.match(/^>\s*⏱\s*(.*)$/);
-      if (tm) { time = tm[1]; i++; }
-      rows.push({ date: m[1], task: m[2], time: time });
-    }
-    return rows;
-  }
-
   // A repeatable list of {title, day-rows} sections, only shown for
-  // source: 'custom' — each renders as a bold heading + its own
-  // Date/Topic/Duration list stacked inside the ONE embed this post
-  // sends (see resolveScheduledPostEmbed() in lib/supabase.js), not as
-  // separate embeds — that was tried first and explicitly rejected
-  // ("the subjects are divided into different cards"), since everything
-  // for one post needs to read as a single card. No per-section color:
-  // only one embed exists now, so only the post's own color (set once,
-  // above) applies. Each section's content is a Date/Topic/Duration
-  // table (matching how the source spreadsheet is already laid out)
-  // rather than a free-text box — someone filling this in shouldn't need
-  // to know Discord's markdown syntax to get the formatting right.
+  // source: 'custom'. Unlike the first version of this feature, rows are
+  // now the actual persisted data (real `<input type="date">` values, not
+  // free text) — needed so the final post can be sorted chronologically
+  // and show each date's weekday, which isn't reliably possible from an
+  // arbitrary typed string like "Jun 15" (could be "15th June", "6/15",
+  // anything). resolveScheduledPostEmbed() in lib/supabase.js merges
+  // every section's rows into one date-grouped list (see its comment for
+  // why — subjects are labels on each day's line, not separate headings
+  // anymore: "the order of mention of everything should be date wise").
+  // Each section's content is a Date/Topic/Duration table (matching how
+  // the source spreadsheet is already laid out) rather than a free-text
+  // box, so someone filling this in doesn't need to know Discord markdown
+  // syntax. Keep the "Subject" label short — it repeats on every one of
+  // that subject's lines in the final date-grouped post now, not shown
+  // once as a heading.
   function renderSectionsEditor(p) {
     if (p.source !== 'custom') return '';
     var sections = Array.isArray(p.sections) ? p.sections : [];
     var sectionsHtml = sections.map(function (s, si) {
-      var dayRows = Array.isArray(s.rows) ? s.rows : parseSectionBodyToRows(s.body);
-      if (!dayRows.length) dayRows = [{ date: '', task: '', time: '' }];
+      var dayRows = Array.isArray(s.rows) && s.rows.length ? s.rows : [{ date: '', task: '', time: '' }];
       var dayRowsHtml = dayRows.map(function (r, ri) {
         return (
           '<tr class="day-row">' +
-            '<td><input type="text" class="js-day-date" placeholder="Jun 15" value="' + escapeHtml(r.date) + '"></td>' +
+            '<td><input type="date" class="js-day-date" value="' + escapeHtml(r.date) + '"></td>' +
             '<td><input type="text" class="js-day-task" placeholder="Topic"  value="' + escapeHtml(r.task) + '"></td>' +
             '<td><input type="text" class="js-day-time" placeholder="1h25m" value="' + escapeHtml(r.time) + '"></td>' +
             '<td><button type="button" class="btn btn-small btn-danger js-day-remove" data-section-index="' + si + '" data-row-index="' + ri + '">×</button></td>' +
@@ -283,7 +250,7 @@
       }).join('');
       return (
         '<div class="section-row" data-index="' + si + '">' +
-          '<div class="field"><label>Section heading</label><input type="text" class="js-section-title" value="' + escapeHtml(s.title) + '" placeholder="e.g. 🐍 Python — Module 2"></div>' +
+          '<div class="field"><label>Subject</label><input type="text" class="js-section-title" value="' + escapeHtml(s.title) + '" placeholder="e.g. 🐍 Python"></div>' +
           '<table class="day-table"><thead><tr><th>Date</th><th>Topic</th><th>Duration</th><th></th></tr></thead>' +
           '<tbody>' + dayRowsHtml + '</tbody></table>' +
           '<div style="display:flex;gap:8px;margin-top:8px;">' +
@@ -504,7 +471,7 @@
         '<h2 style="font-size:15px;margin-bottom:12px;">Syntax reference</h2>' +
 
         '<div class="ref-section"><div class="ref-heading">Sources</div>' +
-          '<div class="ref-row"><strong>Custom message</strong> — whatever you type in Title/Body, posted as-is. No live data. Optionally add "Extra sections" below the Body for a multi-part message (e.g. a weekly schedule: one section per subject, filled in as a Date/Topic/Duration table) — everything still posts as a single card.</div>' +
+          '<div class="ref-row"><strong>Custom message</strong> — whatever you type in Title/Body, posted as-is. No live data. Optionally add "Extra sections" below the Body — one per subject, each a Date/Topic/Duration table. All subjects\' rows merge into one date-ordered list in the final post (grouped by day, with the weekday shown), not shown subject-by-subject — everything still posts as a single card.</div>' +
           '<div class="ref-row"><strong>Daily — Top Focus Student</strong> — yesterday\'s single top student. Body fully replaces the default sentence if set.</div>' +
           '<div class="ref-row"><strong>Daily — Top 3</strong> / <strong>Weekly — Top 5 Leaderboard</strong> — a computed, freshly-ranked list every time it fires. Body (if set) is an intro line shown ABOVE the medal list — the list itself always shows regardless, you can\'t remove it.</div>' +
           '<div class="ref-row"><strong>Monthly — Most Consistent Student</strong> — reports on the month that just closed, ranked by median daily minutes (not average). Body fully replaces the default sentence if set.</div>' +
@@ -730,7 +697,7 @@
     var addSectionBtn = document.getElementById('f-add-section');
     if (addSectionBtn) addSectionBtn.addEventListener('click', function () {
       syncEditingFromForm();
-      state.editing.sections.push({ title: '', body: '', rows: [{ date: '', task: '', time: '' }] });
+      state.editing.sections.push({ title: '', rows: [{ date: '', task: '', time: '' }] });
       render();
     });
 
@@ -839,6 +806,10 @@
   // both for form submission and to preserve in-progress edits across a
   // re-render triggered by Add/Remove card (state.editing.sections is
   // only otherwise updated on submit, same as every other field here).
+  // rows (real date values + task + time) are the only thing persisted —
+  // resolveScheduledPostEmbed() does the date-grouping/formatting from
+  // this raw data server-side, so there's no derived markdown text to
+  // keep in sync here.
   function readSectionsFromDom(scope) {
     return Array.prototype.map.call((scope || document).querySelectorAll('.section-row'), function (row) {
       var dayRows = Array.prototype.map.call(row.querySelectorAll('.day-row'), function (dr) {
@@ -850,8 +821,7 @@
       });
       return {
         title: row.querySelector('.js-section-title').value,
-        body: sectionRowsToBody(dayRows),
-        rows: dayRows, // client-side only, for re-rendering the table faithfully; not read by the backend
+        rows: dayRows,
       };
     });
   }

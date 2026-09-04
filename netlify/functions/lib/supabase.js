@@ -633,6 +633,16 @@ async function allTimeWeeklyRecordLine(supabase) {
   return `\n\n🏅 *All-time weekly record: **${record.display_name}** — ${formatHoursDecimal(record.total_minutes)}, week of ${record.week_start}*`;
 }
 
+// "Mon, Jun 15" for a 'YYYY-MM-DD' calendar date — used to head each date
+// group in a 'custom' post's merged sections (see resolveScheduledPostEmbed
+// below). Parsed with an explicit UTC midnight, same reasoning as
+// dateStrDayOfWeek above: pins the formatted weekday to the calendar date
+// itself, not whatever the runtime's local offset would otherwise shift it to.
+const DATE_HEADING_FORMATTER = new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
+function formatDateHeading(dateStr) {
+  return DATE_HEADING_FORMATTER.format(new Date(dateStr + 'T00:00:00Z'));
+}
+
 // Resolves a scheduled_posts row into an ARRAY of Discord embeds (a single
 // message can carry several — Discord renders them stacked, each
 // full-width, which is what the weekly-schedule-style post needs: one
@@ -656,18 +666,44 @@ async function allTimeWeeklyRecordLine(supabase) {
 // never persisted.
 export async function resolveScheduledPostEmbed(supabase, row) {
   if (row.source === 'custom') {
-    // `sections` (added for the weekly-schedule use case — one entry per
-    // subject, e.g. Python / Calculus, each typed in via /team's
-    // repeatable Date/Topic/Duration table) render as bold-headed text
-    // sections stacked inside this ONE embed's description, not as
-    // separate embeds — tried as separate stacked cards first, but that
-    // was explicitly rejected ("the subjects are divided into different
-    // cards" — everything for one batch/post needs to read as a single
-    // card, not several).
-    const sectionsText = (Array.isArray(row.sections) ? row.sections : [])
-      .filter(s => s.title || s.body)
-      .map(s => (s.title ? `**${s.title}**\n` : '') + (s.body || ''))
-      .join('\n\n');
+    // `sections` (added for the weekly-schedule use case) is one entry
+    // per subject — a label plus real day-rows (date/task/time) typed in
+    // via /team's repeatable Date/Topic/Duration table. Rendered as ONE
+    // date-grouped list inside this single embed's description — every
+    // section's rows merged together, sorted chronologically, one bold
+    // "Weekday, Mon DD" heading per calendar date, with that date's tasks
+    // listed underneath (subject-prefixed, since a date can span several
+    // subjects). Two earlier layouts were tried and rejected before this:
+    // subjects side-by-side in embed fields ("too congested"), then each
+    // subject as its own stacked embed ("the subjects are divided into
+    // different cards" — everything needs to read as one card); this one
+    // was requested directly ("the order of mention of everything should
+    // be date wise and also mention weekday"). Rows sort correctly as
+    // plain strings since dates are real 'YYYY-MM-DD' values (a
+    // `<input type="date">` on the /team form, not free text — needed
+    // for exactly this: reliable chronological sort + weekday lookup,
+    // neither of which is safely derivable from an arbitrary typed date
+    // string like "15th June" or "6/15").
+    const entries = [];
+    for (const s of (Array.isArray(row.sections) ? row.sections : [])) {
+      for (const r of (Array.isArray(s.rows) ? s.rows : [])) {
+        if (r.date && r.task) entries.push({ date: r.date, subject: s.title || '', task: r.task, time: r.time || '' });
+      }
+    }
+    entries.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+
+    const groups = [];
+    for (const entry of entries) {
+      const lastGroup = groups[groups.length - 1];
+      if (!lastGroup || lastGroup.date !== entry.date) groups.push({ date: entry.date, entries: [entry] });
+      else lastGroup.entries.push(entry);
+    }
+
+    const sectionsText = groups.map(g => {
+      const lines = g.entries.map(e => (e.subject ? `${e.subject} — ` : '') + e.task + (e.time ? ` \`${e.time}\`` : ''));
+      return `**${formatDateHeading(g.date)}**\n${lines.join('\n')}`;
+    }).join('\n\n');
+
     const description = [row.body || '', sectionsText].filter(Boolean).join('\n\n');
     return [{
       title: row.title || undefined,

@@ -24,22 +24,35 @@ import { getSupabase, json, requireAdmin, computeNextFireAt, resolveScheduledPos
 const VALID_SOURCES = ['custom', 'daily_leader', 'daily_leaderboard', 'weekly_leaderboard', 'monthly_consistency'];
 const VALID_SCHEDULE_TYPES = ['once', 'daily', 'weekly', 'monthly'];
 
-// Normalizes the optional multi-card 'sections' field (only meaningful
-// for source: 'custom' — see resolveScheduledPostEmbed) — each becomes an
-// additional embed appended after the main one. Capped at 9 (main embed +
-// 9 = Discord's 10-per-message hard limit, enforced again in
-// postToDiscordWebhook as a second backstop).
+// Normalizes the optional 'sections' field (only meaningful for
+// source: 'custom' — see resolveScheduledPostEmbed) — a subject label
+// plus real day-rows (date/task/time), merged with every other section's
+// rows into one date-grouped list when the post is actually resolved.
+// Not tied to Discord's 10-embeds-per-message limit anymore (everything
+// renders into the one main embed now, not one embed per section) —
+// the cap here is just basic sanity, not a hard platform constraint.
+function sanitizeRows(rows) {
+  if (!Array.isArray(rows)) return [];
+  return rows
+    .filter(r => r && typeof r === 'object')
+    .map(r => ({
+      date: typeof r.date === 'string' ? r.date.trim() : '',
+      task: typeof r.task === 'string' ? r.task.trim() : '',
+      time: typeof r.time === 'string' ? r.time.trim() : '',
+    }))
+    .filter(r => r.date && r.task)
+    .slice(0, 60);
+}
 function sanitizeSections(sections) {
   if (!Array.isArray(sections)) return null;
   const cleaned = sections
     .filter(s => s && typeof s === 'object')
     .map(s => ({
       title: typeof s.title === 'string' ? s.title.trim() || null : null,
-      body: typeof s.body === 'string' ? s.body.trim() || null : null,
-      color: Number.isFinite(s.color) ? s.color : null,
+      rows: sanitizeRows(s.rows),
     }))
-    .filter(s => s.title || s.body)
-    .slice(0, 9);
+    .filter(s => s.title || s.rows.length)
+    .slice(0, 20);
   return cleaned.length ? cleaned : null;
 }
 
