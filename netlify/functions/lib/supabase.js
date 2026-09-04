@@ -717,7 +717,7 @@ export async function resolveScheduledPostEmbed(supabase, row) {
     }
 
     const sectionsText = groups.map(g => {
-      const lines = g.entries.map(e => (e.subject ? `${e.subject} — ` : '') + e.task + (e.time ? ` \`${e.time}\`` : ''));
+      const lines = g.entries.map(e => (e.subject ? `${e.subject} — ` : '') + `*${e.task}*` + (e.time ? ` \`${e.time}\`` : ''));
       return `**${formatDateHeading(g.date)}**\n${lines.join('\n')}`;
     }).join('\n\n');
 
