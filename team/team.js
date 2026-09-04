@@ -26,19 +26,17 @@
   // Names come from gate-da-subjects.js (window.GATE_DA_SUBJECTS, loaded
   // before this script — see team/index.html), the single source of truth
   // also used by progress.js's CANONICAL_SUBJECTS, so this dropdown can't
-  // drift in spelling from the tracker's own subject list. The emoji per
-  // subject is purely this page's own presentation choice for the Discord
-  // post (not part of the shared list — a subject's canonical identity is
-  // just its name) — matched by array position, so keep this array the
-  // same length/order as GATE_DA_SUBJECTS.
-  var SUBJECT_EMOJI = ['🔢', '🎲', '📊', '📐', '🤖', '🧠', '🗄️', '🐍', '🧱', '🔁'];
+  // drift in spelling from the tracker's own subject list. Per-subject
+  // emoji (SUBJECT_EMOJI) used to be prefixed onto this value, since a
+  // section's chosen subject IS what gets posted verbatim as each task
+  // line's prefix on Discord — removed at explicit request ("remove the
+  // emojis from the weekly schedule posts"), so SUBJECT_OPTIONS is now
+  // just the plain subject names, unchanged from the canonical list.
   var GATE_DA_SUBJECT_NAMES = window.GATE_DA_SUBJECTS || [
     'Linear Algebra', 'Probability', 'Statistics', 'Calculus',
     'Machine Learning', 'AI', 'DBMS', 'Python', 'Data Structures', 'Algorithms',
   ];
-  var SUBJECT_OPTIONS = GATE_DA_SUBJECT_NAMES.map(function (name, i) {
-    return (SUBJECT_EMOJI[i] ? SUBJECT_EMOJI[i] + ' ' : '') + name;
-  });
+  var SUBJECT_OPTIONS = GATE_DA_SUBJECT_NAMES.slice();
   var SCHEDULE_LABELS = { once: 'Once', daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' };
   // The exact same fallback text resolveScheduledPostEmbed() in
   // lib/supabase.js uses when body is blank — shown pre-filled in the Body
