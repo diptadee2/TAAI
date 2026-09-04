@@ -33,6 +33,11 @@ collections:
         multiple: true
         required: false
         hint: "Select all that apply. Academic tags describe the subject; non-academic tags describe the post type."
+        # The first 10 (through "Algorithms") must match GATE_DA_SUBJECTS
+        # in /gate-da-subjects.js, the site's single source of truth for
+        # the GATE DA subject list — this file is YAML consumed by Decap
+        # CMS, not JS, so it can't load that file directly; keep these in
+        # sync by hand if the canonical list ever changes.
         options:
           - { label: "Linear Algebra", value: "linear-algebra" }
           - { label: "Probability", value: "probability" }

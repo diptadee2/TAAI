@@ -23,17 +23,22 @@
   // Title works as an override, same as the list already worked for
   // weekly_leaderboard before this was split out into its own set.
   var LIST_SOURCES = ['daily_leaderboard', 'weekly_leaderboard'];
-  // The same 10 GATE DA subjects as CANONICAL_SUBJECTS in progress.js
-  // (the tracker's "Progress by subject" list) — kept as a dropdown here
-  // rather than free text so a weekly-schedule section's Subject can't
-  // drift in spelling from what the tracker itself uses. Keep this list
-  // in sync with progress.js's CANONICAL_SUBJECTS by hand if it ever
-  // changes there.
-  var SUBJECT_OPTIONS = [
-    '🔢 Linear Algebra', '🎲 Probability', '📊 Statistics', '📐 Calculus',
-    '🤖 Machine Learning', '🧠 AI', '🗄️ DBMS', '🐍 Python',
-    '🧱 Data Structures', '🔁 Algorithms',
+  // Names come from gate-da-subjects.js (window.GATE_DA_SUBJECTS, loaded
+  // before this script — see team/index.html), the single source of truth
+  // also used by progress.js's CANONICAL_SUBJECTS, so this dropdown can't
+  // drift in spelling from the tracker's own subject list. The emoji per
+  // subject is purely this page's own presentation choice for the Discord
+  // post (not part of the shared list — a subject's canonical identity is
+  // just its name) — matched by array position, so keep this array the
+  // same length/order as GATE_DA_SUBJECTS.
+  var SUBJECT_EMOJI = ['🔢', '🎲', '📊', '📐', '🤖', '🧠', '🗄️', '🐍', '🧱', '🔁'];
+  var GATE_DA_SUBJECT_NAMES = window.GATE_DA_SUBJECTS || [
+    'Linear Algebra', 'Probability', 'Statistics', 'Calculus',
+    'Machine Learning', 'AI', 'DBMS', 'Python', 'Data Structures', 'Algorithms',
   ];
+  var SUBJECT_OPTIONS = GATE_DA_SUBJECT_NAMES.map(function (name, i) {
+    return (SUBJECT_EMOJI[i] ? SUBJECT_EMOJI[i] + ' ' : '') + name;
+  });
   var SCHEDULE_LABELS = { once: 'Once', daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' };
   // The exact same fallback text resolveScheduledPostEmbed() in
   // lib/supabase.js uses when body is blank — shown pre-filled in the Body

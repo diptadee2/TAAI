@@ -71,7 +71,12 @@
   // they merge into one row instead of duplicating; the rest are
   // best-guess names — if a future month's sheet uses a different header
   // for one of these, it'll show up as an extra row until the names match.
-  var CANONICAL_SUBJECTS = [
+  // Single source of truth: gate-da-subjects.js (loaded before this
+  // script — see gate-da-progress-tracker.html), window.GATE_DA_SUBJECTS.
+  // Fallback here only in case that script somehow failed to load, so
+  // subject-progress rows still work with the tracker's own long-standing
+  // list rather than silently showing zero canonical subjects.
+  var CANONICAL_SUBJECTS = window.GATE_DA_SUBJECTS || [
     'Linear Algebra', 'Probability', 'Statistics', 'Calculus',
     'Machine Learning', 'AI', 'DBMS', 'Python', 'Data Structures', 'Algorithms',
   ];
