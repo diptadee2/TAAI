@@ -60,8 +60,8 @@ collections:
         default_language: "json"
         output_code_only: true
         required: false
-        hint: "The fast way to add charts/tables/diagrams: open the \"LLM prompt\" panel on the right, copy it, paste it into ChatGPT/Claude along with your article, then paste what it gives back into this box exactly as-is. If this box has anything in it, it's used instead of the \"Blocks (manual)\" list below — no need to touch that one at all."
-      - label: "Blocks (manual, optional)"
+        hint: "The fast way to add charts/tables/diagrams: open the \"LLM prompt\" panel on the right, copy it, paste it into ChatGPT/Claude along with your article, then paste what it gives back into this box exactly as-is. If this box has anything in it, it's used instead of the \"Blocks (manual)\" list below — no need to touch that one at all. Check the preview pane on the right after pasting — it shows your actual blocks, or a clear error if the paste didn't work."
+      - label: "Blocks (manual)"
         name: "blocks"
         widget: "list"
         required: false

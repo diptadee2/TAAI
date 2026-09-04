@@ -44,6 +44,26 @@
     .blocks-status-ok li { margin-bottom: 2px; color: #14532d; }
     .blocks-status-error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
     .blocks-status-error .blocks-status-msg { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; margin-top: 4px; }
+    /* Real per-block content preview (renderBlockPreview) — one plain
+       bordered card per block, a small uppercase type chip, then the
+       writer's actual text/numbers underneath. Not styled to look like
+       the live site (no charts/SVG) — just legible enough to confirm
+       "is this the content I meant to write." */
+    .bp-block { border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 14px; margin-top: 10px; font-size: 13.5px; color: #1f2937; }
+    .bp-type { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #7c3aed; margin-bottom: 6px; }
+    .bp-title { font-weight: 700; margin-bottom: 2px; }
+    .bp-subtitle, .bp-caption, .bp-dim { color: #6b7280; font-size: 12.5px; }
+    .bp-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #7c3aed; margin-bottom: 2px; }
+    .bp-heading { font-size: 17px; font-weight: 700; }
+    .bp-text { white-space: pre-wrap; }
+    .bp-table { border-collapse: collapse; width: 100%; margin: 6px 0; font-size: 13px; }
+    .bp-table th, .bp-table td { border: 1px solid #e5e7eb; padding: 4px 8px; text-align: left; }
+    .bp-table th { background: #f9fafb; font-size: 11px; text-transform: uppercase; color: #6b7280; }
+    .bp-table tr.bp-highlight td { background: #fef9c3; font-weight: 700; }
+    .bp-step { margin-bottom: 3px; }
+    .bp-path { border-left: 3px solid #ddd6fe; padding-left: 10px; margin: 8px 0; }
+    .bp-faq-item { margin-bottom: 10px; }
+    .bp-raw { font-size: 11px; background: #f9fafb; padding: 8px; border-radius: 6px; overflow-x: auto; }
   </style>
 </head>
 <body>
@@ -167,31 +187,126 @@
 
       '<div class="blocks-ref-note">Blocks render in the order you add them, after the Body field. You can mix Paragraph text and Section heading blocks in between charts to keep the post readable — you don\'t have to put every chart back to back.</div>';
 
-    // One-line human-readable summary for a single parsed block object —
-    // best-effort generic (title/heading/question/etc, plus array-length
-    // hints like "3 bars") rather than a full re-render, so this stays
-    // simple and never needs updating when a block renderer's visual
-    // design changes, only when its field names do (same as the reference
-    // cards below already require).
-    function blockLabelHint(b) {
+    // Real per-block preview — the writer's actual content, in full, not
+    // a truncated summary line. Deliberately plain (a real <table> of
+    // numbers instead of a styled chart, no chart math/SVG) rather than
+    // re-implementing build.mjs's renderers pixel-for-pixel — that
+    // duplication was the thing avoided when this panel was first built
+    // (see the comment on BLOCKS_REFERENCE_HTML), and it isn't needed
+    // here either: the point is to let a writer confirm THEIR data/text
+    // is right, not to preview the final visual design (publish, or
+    // check the live site, for that). Falls through to a raw JSON dump
+    // for an unrecognized type, so a typo'd "type" still shows something
+    // instead of silently rendering blank.
+    function bp(v) { return v == null ? '' : String(v); }
+    function renderBlockPreview(b) {
       b = b || {};
-      var hint = b.title || b.heading || b.question ||
-        (b.left_label && b.right_label ? (b.left_label + ' vs ' + b.right_label) : '') ||
-        (b.content ? String(b.content).slice(0, 50) : '') || '';
-      var countBits = [];
-      ['bars', 'groups', 'lines', 'rows', 'steps', 'cells', 'items'].forEach(function (k) {
-        if (Array.isArray(b[k])) countBits.push(b[k].length + ' ' + k);
-      });
-      return (b.type || 'unknown') + (hint ? ' — "' + hint + '"' : '') + (countBits.length ? ' (' + countBits.join(', ') + ')' : '');
+      var type = b.type || 'unknown';
+      switch (type) {
+        case 'section_heading':
+          return h('div', null,
+            b.eyebrow ? h('div', { className: 'bp-eyebrow' }, bp(b.eyebrow)) : null,
+            h('div', { className: 'bp-heading' }, bp(b.heading)));
+        case 'text':
+          return h('div', { className: 'bp-text' }, bp(b.content));
+        case 'bar_chart':
+          return h('div', null,
+            b.title ? h('div', { className: 'bp-title' }, bp(b.title)) : null,
+            b.subtitle ? h('div', { className: 'bp-subtitle' }, bp(b.subtitle)) : null,
+            h('table', { className: 'bp-table' },
+              h('tbody', null, (b.bars || []).map(function (row, i) {
+                return h('tr', { key: i }, h('td', null, bp(row.label)), h('td', null, bp(row.value)), h('td', { className: 'bp-dim' }, bp(row.trend)));
+              }))),
+            b.caption ? h('div', { className: 'bp-caption' }, bp(b.caption)) : null);
+        case 'grouped_bar_chart':
+          return h('div', null,
+            b.title ? h('div', { className: 'bp-title' }, bp(b.title)) : null,
+            h('table', { className: 'bp-table' },
+              h('thead', null, h('tr', null, h('th', null, ''), (b.series || []).map(function (s, i) { return h('th', { key: i }, bp(s)); }))),
+              h('tbody', null, (b.groups || []).map(function (g, i) {
+                return h('tr', { key: i }, h('td', null, bp(g.label)), (g.values || []).map(function (v, j) { return h('td', { key: j }, bp(v)); }));
+              }))),
+            b.caption ? h('div', { className: 'bp-caption' }, bp(b.caption)) : null);
+        case 'line_chart':
+          return h('div', null,
+            b.title ? h('div', { className: 'bp-title' }, bp(b.title)) : null,
+            h('table', { className: 'bp-table' },
+              h('thead', null, h('tr', null, h('th', null, ''), (b.x_labels || []).map(function (x, i) { return h('th', { key: i }, bp(x)); }))),
+              h('tbody', null, (b.lines || []).map(function (l, i) {
+                return h('tr', { key: i }, h('td', null, bp(l.label)), (l.values || []).map(function (v, j) { return h('td', { key: j }, bp(v)); }));
+              }))),
+            b.caption ? h('div', { className: 'bp-caption' }, bp(b.caption)) : null);
+        case 'data_table':
+          var cols = b.columns || [];
+          return h('div', null,
+            b.title ? h('div', { className: 'bp-title' }, bp(b.title)) : null,
+            h('table', { className: 'bp-table' },
+              cols.length ? h('thead', null, h('tr', null, cols.map(function (c, i) { return h('th', { key: i }, bp(c)); }))) : null,
+              h('tbody', null, (b.rows || []).map(function (r, i) {
+                return h('tr', { key: i, className: r.highlight ? 'bp-highlight' : '' }, (r.cells || []).map(function (c, j) { return h('td', { key: j }, bp(c)); }));
+              }))));
+        case 'step_diagram':
+          return h('div', null,
+            b.title ? h('div', { className: 'bp-title' }, bp(b.title)) : null,
+            b.subtitle ? h('div', { className: 'bp-subtitle' }, bp(b.subtitle)) : null,
+            (b.steps || []).map(function (s, i) {
+              return h('div', { key: i, className: 'bp-step' },
+                h('span', { className: 'bp-dim' }, bp(s.step_label) + ': '),
+                (s.items || []).map(function (it) { return it.is_new ? '[' + bp(it.label) + ']' : bp(it.label); }).join(', '));
+            }),
+            b.caption ? h('div', { className: 'bp-caption' }, bp(b.caption)) : null);
+        case 'two_path_diagram':
+          var pathBlock = function (p, label) {
+            p = p || {};
+            return h('div', { className: 'bp-path' },
+              h('div', { className: 'bp-dim' }, label + (p.badge ? ' — ' + bp(p.badge) : '')),
+              h('div', { className: 'bp-title' }, bp(p.title)),
+              h('div', null, bp(p.description)),
+              p.action ? h('div', { className: 'bp-dim' }, '→ ' + bp(p.action)) : null);
+          };
+          return h('div', null,
+            h('div', { className: 'bp-title' }, bp(b.root_label)),
+            pathBlock(b.left, 'Left'), pathBlock(b.right, 'Right'));
+        case 'comparison_rows':
+          return h('div', null,
+            b.title ? h('div', { className: 'bp-title' }, bp(b.title)) : null,
+            (b.rows || []).map(function (r, i) {
+              return h('div', { key: i }, (r.good ? '✓ ' : '✗ ') + bp(r.description) + ' → ' + bp(r.result));
+            }));
+        case 'concept_comparison':
+          return h('div', null,
+            h('div', null, h('strong', null, bp(b.left_label)), ' — ', bp(b.left_description)),
+            h('div', null, h('strong', null, bp(b.right_label)), ' — ', bp(b.right_description)));
+        case 'syllabus_grid':
+          return h('div', null,
+            b.title ? h('div', { className: 'bp-title' }, bp(b.title)) : null,
+            (b.cells || []).map(function (c, i) {
+              return h('div', { key: i }, h('strong', null, bp(c.number) + ' ' + bp(c.title)), ' — ', bp(c.description));
+            }));
+        case 'faq':
+          return (b.items || []).map(function (it, i) {
+            return h('div', { key: i, className: 'bp-faq-item' },
+              h('div', { className: 'bp-title' }, bp(it.question)), h('div', null, bp(it.answer)));
+          });
+        case 'resources':
+          return h('div', null,
+            b.intro ? h('div', { className: 'bp-text' }, bp(b.intro)) : null,
+            (b.items || []).map(function (it, i) {
+              return h('div', { key: i },
+                h('strong', null, bp(it.title)), ' — ', bp(it.subtitle), ' ',
+                h('a', { href: it.url, target: '_blank', rel: 'noopener noreferrer' }, bp(it.cta_text || 'view') + ' → ' + bp(it.url)));
+            }));
+        default:
+          return h('pre', { className: 'bp-raw' }, JSON.stringify(b, null, 2));
+      }
     }
 
     // Validates blocks_json exactly the way build.mjs's loadPosts() will
     // at build time (JSON.parse + Array.isArray) — surfacing the same
     // failure here, live, while writing, is the whole point: a broken
     // paste otherwise isn't caught until a build the writer never sees
-    // (Netlify's, after publish). Falls back to summarizing the manual
-    // Blocks list when blocks_json is empty, so either path shows
-    // something.
+    // (Netlify's, after publish). Falls back to the manual Blocks list
+    // when blocks_json is empty, so either path shows something real.
     function renderBlocksStatus(entry) {
       var jsonRaw = entry.getIn(['data', 'blocks_json']);
       if (jsonRaw && String(jsonRaw).trim()) {
@@ -208,17 +323,25 @@
           return h('div', { className: 'blocks-status blocks-status-error' },
             '✗ blocks_json must be a JSON array (got ' + typeof parsed + ').');
         }
-        return h('div', { className: 'blocks-status blocks-status-ok' },
-          h('strong', null, '✓ ' + parsed.length + ' block' + (parsed.length === 1 ? '' : 's') + ' parsed from blocks_json:'),
-          h('ol', null, parsed.map(function (b, i) { return h('li', { key: i }, blockLabelHint(b)); }))
+        return h('div', null,
+          h('div', { className: 'blocks-status blocks-status-ok' }, '✓ ' + parsed.length + ' block' + (parsed.length === 1 ? '' : 's') + ' parsed from blocks_json'),
+          parsed.map(function (b, i) {
+            return h('div', { key: i, className: 'bp-block' },
+              h('div', { className: 'bp-type' }, (b && b.type) || 'unknown'),
+              renderBlockPreview(b));
+          })
         );
       }
       var manual = entry.getIn(['data', 'blocks']);
       var manualArr = (manual && manual.toJS) ? manual.toJS() : [];
       if (!manualArr.length) return null;
-      return h('div', { className: 'blocks-status blocks-status-ok' },
-        h('strong', null, manualArr.length + ' block' + (manualArr.length === 1 ? '' : 's') + ' (manual list):'),
-        h('ol', null, manualArr.map(function (b, i) { return h('li', { key: i }, blockLabelHint(b)); }))
+      return h('div', null,
+        h('div', { className: 'blocks-status blocks-status-ok' }, manualArr.length + ' block' + (manualArr.length === 1 ? '' : 's') + ' (manual list)'),
+        manualArr.map(function (b, i) {
+          return h('div', { key: i, className: 'bp-block' },
+            h('div', { className: 'bp-type' }, (b && b.type) || 'unknown'),
+            renderBlockPreview(b));
+        })
       );
     }
 
