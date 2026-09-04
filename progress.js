@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-04-1';
+  var CLIENT_VERSION = '2026-09-04-2';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1404,8 +1404,17 @@
     // covered lastWeekViewerRank, i.e. any placement at all).
     armConfetti('champions-card', 'top5-' + mondayOf(todayIso()),
       state.lastWeekLeaders.some(function (l) { return l.is_me; }));
-    armConfetti('today-leaderboard-card', 'today5-' + todayIso(),
-      state.todayLeaders.some(function (l) { return l.is_me; }));
+    // Same key + condition as refreshLeaderboard's arming call below — a
+    // real bug, confirmed by testing: these used to be two different keys
+    // ('today5-'/'today10-') for what's the same card/event, so a student
+    // ranked today got confetti twice in quick succession (once here on
+    // Focus Mode entry, once moments later when the leaderboard's own
+    // refresh call fired). state.todayViewerRank is already fresh at this
+    // point too (set earlier in loadMonth's resolve, same as
+    // state.todayLeaders — see the comment above), so it's safe to check
+    // here as well, not just in the refresh path.
+    armConfetti('today-leaderboard-card', 'today-' + todayIso(),
+      state.todayLeaders.some(function (l) { return l.is_me; }) || !!state.todayViewerRank);
     // The "NEW" badge itself needs no post-render arming anymore — see
     // newBadgeHtml, called directly from renderLastWeekChampions/
     // renderLeaderboardCard as part of building the HTML string.
@@ -2245,7 +2254,9 @@
           state.todayViewerRank = r.todayLeaders.viewerRank || null;
           var todayRows = document.getElementById('today-leaderboard-rows');
           if (todayRows) todayRows.innerHTML = renderTodayLeaderboardRows();
-          armConfetti('today-leaderboard-card', 'today10-' + todayIso(),
+          // Same key as the initial-render arming call above (renderCalendar)
+          // — see its comment for why these must not be two different keys.
+          armConfetti('today-leaderboard-card', 'today-' + todayIso(),
             state.todayLeaders.some(function (l) { return l.is_me; }) || !!state.todayViewerRank);
         }
       })
