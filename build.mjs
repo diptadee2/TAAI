@@ -323,6 +323,49 @@ function renderChrome(bodyHtml) {
     <script src="/blogs/blog.js"></script>`;
 }
 
+// Article + BreadcrumbList (+ FAQPage, when the post has an faq block)
+// structured data, generated automatically for every post — a writer
+// using Blocks never hand-writes JSON-LD (that would be exactly the kind
+// of hand-coded-HTML the Blocks system exists to avoid). FAQPage mines
+// its Q&A straight from the post's own faq block, if any, so there's
+// nothing to duplicate/keep in sync by hand either.
+function generateJsonLd(post, blocks) {
+  const url = `${SITE_URL}/blogs/${post.slug}`;
+  const graph = [
+    {
+      '@type': 'Article',
+      headline: post.title,
+      description: post.description,
+      author: { '@type': 'Organization', name: 'TAAI', url: `${SITE_URL}/` },
+      publisher: { '@type': 'Organization', name: 'TAAI', url: `${SITE_URL}/`, logo: { '@type': 'ImageObject', url: `${SITE_URL}/logo.webp` } },
+      datePublished: post.date,
+      dateModified: post.date,
+      mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+      image: post.cover ? `${SITE_URL}${post.cover}` : `${SITE_URL}/og-banner.webp`,
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
+        { '@type': 'ListItem', position: 2, name: 'Blog', item: `${SITE_URL}/blogs` },
+        { '@type': 'ListItem', position: 3, name: post.title, item: url },
+      ],
+    },
+  ];
+  const faqBlock = blocks.find(b => b.type === 'faq' && Array.isArray(b.items) && b.items.length);
+  if (faqBlock) {
+    graph.push({
+      '@type': 'FAQPage',
+      mainEntity: faqBlock.items.map(it => ({
+        '@type': 'Question',
+        name: it.question,
+        acceptedAnswer: { '@type': 'Answer', text: it.answer },
+      })),
+    });
+  }
+  return `<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', '@graph': graph })}</script>`;
+}
+
 function loadPosts() {
   if (!fs.existsSync(BLOG_CONTENT_DIR)) return [];
   return fs.readdirSync(BLOG_CONTENT_DIR)
@@ -331,7 +374,8 @@ function loadPosts() {
       const raw = fs.readFileSync(path.join(BLOG_CONTENT_DIR, f), 'utf8');
       const { data, content } = parseFrontmatter(raw);
       const slug = data.slug || f.replace(/\.md$/i, '');
-      return {
+      const blocks = Array.isArray(data.blocks) ? data.blocks : [];
+      const post = {
         slug,
         title: data.title || slug,
         date: data.date || '',
@@ -339,8 +383,10 @@ function loadPosts() {
         cover: data.cover || '',
         tags: Array.isArray(data.tags) ? data.tags : (data.tags ? [data.tags] : []),
         html: renderMarkdown(content),
-        blocksHtml: renderBlocks(Array.isArray(data.blocks) ? data.blocks : []),
+        blocksHtml: renderBlocks(blocks),
       };
+      post.jsonLd = generateJsonLd(post, blocks);
+      return post;
     })
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 }
@@ -679,6 +725,7 @@ ${renderChrome(indexBody)}
 <html lang="en">
 <head>
 ${renderHead({ title: `${post.title} | TAAI Blogs`, description: post.description, canonicalPath: `/blogs/${post.slug}`, ogImage: post.cover ? `${SITE_URL}${post.cover}` : undefined })}
+${post.jsonLd}
 </head>
 <body>
 ${renderChrome(postBody)}
