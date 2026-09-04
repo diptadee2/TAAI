@@ -104,21 +104,53 @@ export async function handler(event, context) {
 
   const weekMinutesByEmail = new Map(weekStats.map(r => [r.email, r.total_minutes]));
 
-  const rows = students.map(s => ({
-    email: s.email,
-    display_name: s.display_name,
-    notes: s.notes || '',
-    created_at: s.created_at,
-    total_minutes: minutesByEmail.get(s.email) || 0,
-    week_minutes: weekMinutesByEmail.get(s.email) || 0,
-    streak: computeStreak(scheduledDates, completedByEmail.get(s.email) || new Set(), today),
-    tasks_completed: taskCountByEmail.get(s.email) || 0,
-    progress_pct: totalTaskCount > 0 ? Math.round(((taskCountByEmail.get(s.email) || 0) / totalTaskCount) * 100) : 0,
-    consistency_minutes: consistencyFor(s.email),
-    last_active: lastActiveByEmail.get(s.email) || null,
-  }));
+  // Days between last_active and today — computed server-side (against
+  // todayForStreak(), the same IST-anchored "today" every other date
+  // calculation here uses) rather than left to the browser's local clock,
+  // same reasoning as todayIST() elsewhere: a client-side Date() diff
+  // would be off by however far the viewer's own timezone/clock drifts,
+  // and silently wrong for a few hours around midnight IST either way.
+  // null (not a number) for a student with no session at all, distinct
+  // from 0 (active today) — both render differently in the table.
+  const todayMs = Date.parse(today + 'T00:00:00Z');
+  function daysInactiveFor(lastActive) {
+    if (!lastActive) return null;
+    return Math.round((todayMs - Date.parse(lastActive + 'T00:00:00Z')) / 86400000);
+  }
+
+  const rows = students.map(s => {
+    const lastActive = lastActiveByEmail.get(s.email) || null;
+    return {
+      email: s.email,
+      display_name: s.display_name,
+      notes: s.notes || '',
+      created_at: s.created_at,
+      total_minutes: minutesByEmail.get(s.email) || 0,
+      week_minutes: weekMinutesByEmail.get(s.email) || 0,
+      streak: computeStreak(scheduledDates, completedByEmail.get(s.email) || new Set(), today),
+      tasks_completed: taskCountByEmail.get(s.email) || 0,
+      progress_pct: totalTaskCount > 0 ? Math.round(((taskCountByEmail.get(s.email) || 0) / totalTaskCount) * 100) : 0,
+      consistency_minutes: consistencyFor(s.email),
+      last_active: lastActive,
+      days_inactive: daysInactiveFor(lastActive),
+    };
+  });
 
   rows.sort((a, b) => b.total_minutes - a.total_minutes);
 
-  return json(200, { students: rows });
+  // Summary stats for the view's top-of-page cards — computed once here
+  // (over every student, not just whatever the client happens to have
+  // filtered to) rather than in the browser, so "how many are inactive
+  // 7+ days" etc. always reflects the true full roster regardless of
+  // the current filter/search state.
+  const summary = {
+    total_students: rows.length,
+    active_this_week: rows.filter(r => r.week_minutes > 0).length,
+    inactive_7d: rows.filter(r => r.days_inactive != null && r.days_inactive >= 7).length,
+    never_active: rows.filter(r => r.days_inactive == null).length,
+    avg_progress_pct: rows.length ? Math.round(rows.reduce((sum, r) => sum + r.progress_pct, 0) / rows.length) : 0,
+    avg_consistency_minutes: rows.length ? Math.round(rows.reduce((sum, r) => sum + r.consistency_minutes, 0) / rows.length) : 0,
+  };
+
+  return json(200, { students: rows, summary });
 }

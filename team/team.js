@@ -11,7 +11,7 @@
   var API_BASE = '/api';
   var DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   var SOURCE_LABELS = {
-    custom: 'Custom message',
+    custom: 'Custom message (also used for weekly batch schedules)',
     daily_leader: 'Daily — Top Focus Student',
     daily_leaderboard: 'Daily — Top 3',
     weekly_leaderboard: 'Weekly — Top 5 Leaderboard',
@@ -68,6 +68,8 @@
     studentsLoading: false,
     studentsError: null,
     studentSort: { key: 'total_minutes', dir: 'desc' },
+    studentSummary: null,
+    studentFilters: { search: '', inactive: '', minStreak: '' }, // inactive: '' | '3' | '7' | '14' | '30' | 'never'
     noteSaving: {}, // email -> 'saving' | 'saved' | 'error', transient per-row save feedback
     msg: null,
     msgType: null,
@@ -249,9 +251,25 @@
     var customPosts = state.posts.filter(function (p) { return p.source === 'custom'; });
     var builtInPosts = state.posts.filter(function (p) { return p.source !== 'custom'; });
 
+    // A weekly batch schedule IS a custom post (source: 'custom') with its
+    // "Extra sections" table filled in — there's no separate "schedule"
+    // concept anywhere in the data model. Reported directly as hard to
+    // find: with zero custom posts saved, this section used to render as
+    // a bare heading + "Nothing here yet.", no hint that this is where a
+    // next-week schedule actually gets created, or that the single global
+    // "+ New post" button (elsewhere on the page) is what to click. This
+    // button is a second, section-local entry point to the exact same
+    // flow (see startNewPost), always visible here regardless of whether
+    // state.editing is already open, specifically so it's discoverable
+    // from this heading without having to already know to scroll up.
     var customHtml =
-      '<h3 class="post-list-heading">Custom announcements</h3>' +
-      renderPostGroups(customPosts);
+      '<div class="post-list-heading-row">' +
+        '<h3 class="post-list-heading">Custom announcements</h3>' +
+        '<button type="button" class="btn btn-small" id="new-custom-btn">+ New announcement / schedule</button>' +
+      '</div>' +
+      '<div class="field-hint" style="margin-bottom:10px;">A weekly batch schedule is a Custom message with its "Extra sections" filled in below — pick a Subject and fill in one Date/Topic/Duration row per class.</div>' +
+      (customPosts.length ? renderPostGroups(customPosts)
+        : '<div class="empty">No announcements or schedules yet — click "+ New announcement / schedule" above to add next week\'s.</div>');
 
     var builtInHtml = builtInPosts.length
       ? (
@@ -582,10 +600,32 @@
     { key: 'last_active', label: 'Last active' },
   ];
 
+  // Search matches name or email (case-insensitive substring). "Inactive"
+  // is a days_inactive threshold computed server-side (team-students.js,
+  // against the same IST "today" every other date calc here uses) rather
+  // than redone client-side — 'never' is its own bucket (days_inactive
+  // null, distinct from a real large number) for a student who
+  // registered but never logged a session at all. Filters narrow the
+  // table only; the summary cards above it always reflect the full
+  // roster (see renderStudents) so filtering never hides the big-picture
+  // numbers.
+  function filteredStudents() {
+    var f = state.studentFilters;
+    var search = f.search.trim().toLowerCase();
+    var minStreak = f.minStreak !== '' ? Number(f.minStreak) : null;
+    return (state.students || []).filter(function (s) {
+      if (search && s.display_name.toLowerCase().indexOf(search) === -1 && s.email.toLowerCase().indexOf(search) === -1) return false;
+      if (minStreak != null && s.streak < minStreak) return false;
+      if (f.inactive === 'never') return s.days_inactive == null;
+      if (f.inactive) return s.days_inactive != null && s.days_inactive >= Number(f.inactive);
+      return true;
+    });
+  }
+
   function sortedStudents() {
     var key = state.studentSort.key;
     var dir = state.studentSort.dir === 'asc' ? 1 : -1;
-    return (state.students || []).slice().sort(function (a, b) {
+    return filteredStudents().slice().sort(function (a, b) {
       var av = a[key], bv = b[key];
       if (av == null) av = key === 'display_name' ? '' : -Infinity;
       if (bv == null) bv = key === 'display_name' ? '' : -Infinity;
@@ -595,11 +635,64 @@
     });
   }
 
+  // Green/amber/red purely by recency, same three-bucket vocabulary as
+  // the tracker's own day-status pill (complete/pending/missed) —
+  // familiar rather than inventing a fourth color scheme.
+  function inactivityClass(daysInactive) {
+    if (daysInactive == null) return 'inactivity-never';
+    if (daysInactive <= 2) return 'inactivity-fresh';
+    if (daysInactive <= 6) return 'inactivity-warm';
+    return 'inactivity-cold';
+  }
+  function lastActiveLabel(s) {
+    if (s.days_inactive == null) return 'Never';
+    if (s.days_inactive === 0) return 'Today';
+    if (s.days_inactive === 1) return 'Yesterday';
+    return s.days_inactive + 'd ago';
+  }
+
   // A dedicated Students view for spotting high performers (default sort:
   // most all-time focus hours first) and students who've dropped off (sort
   // by Last active to see who's gone quiet), plus a free-text Notes field
   // per student purely for the team's own reference — see the `notes`
   // column added to `students` in schema.sql.
+  // Summary cards use state.studentSummary (computed server-side over the
+  // FULL roster) rather than deriving from state.students client-side, so
+  // these numbers stay stable as the true "state of the class" regardless
+  // of whatever search/filter is currently narrowing the table below.
+  function renderStudentSummary() {
+    var sum = state.studentSummary;
+    if (!sum) return '';
+    var cards = [
+      { label: 'Students', value: sum.total_students },
+      { label: 'Active this week', value: sum.active_this_week + ' / ' + sum.total_students },
+      { label: 'Inactive 7+ days', value: sum.inactive_7d, warn: sum.inactive_7d > 0 },
+      { label: 'Never logged in', value: sum.never_active, warn: sum.never_active > 0 },
+      { label: 'Avg. course progress', value: sum.avg_progress_pct + '%' },
+      { label: 'Avg. consistency', value: formatHours(sum.avg_consistency_minutes) + '/day' },
+    ];
+    return '<div class="students-summary">' + cards.map(function (c) {
+      return '<div class="students-summary-card' + (c.warn ? ' warn' : '') + '"><div class="students-summary-value">' + c.value + '</div><div class="students-summary-label">' + escapeHtml(c.label) + '</div></div>';
+    }).join('') + '</div>';
+  }
+
+  function renderStudentFilters() {
+    var f = state.studentFilters;
+    var inactiveOptions = [
+      ['', 'Any'], ['3', '3+ days'], ['7', '7+ days'], ['14', '14+ days'], ['30', '30+ days'], ['never', 'Never active'],
+    ].map(function (o) {
+      return '<option value="' + o[0] + '"' + (f.inactive === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
+    }).join('');
+    return (
+      '<div class="students-filters">' +
+        '<input type="text" id="student-search" placeholder="Search name or email…" value="' + escapeHtml(f.search) + '">' +
+        '<label>Inactive for <select id="student-inactive-filter">' + inactiveOptions + '</select></label>' +
+        '<label>Min streak <input type="number" min="0" id="student-min-streak" placeholder="0" value="' + escapeHtml(f.minStreak) + '" style="width:64px;"></label>' +
+        ((f.search || f.inactive || f.minStreak !== '') ? '<button type="button" class="btn btn-small" id="student-filter-clear">Clear filters</button>' : '') +
+      '</div>'
+    );
+  }
+
   function renderStudents() {
     if (state.studentsLoading) return '<div class="card"><div class="field-hint">Loading students…</div></div>';
     if (state.studentsError) return '<div class="card"><div class="msg msg-error" style="margin:0;">' + escapeHtml(state.studentsError) + '</div></div>';
@@ -611,7 +704,8 @@
       return '<th class="js-sort" data-key="' + col.key + '">' + escapeHtml(col.label) + arrow + '</th>';
     }).join('') + '<th>Notes</th>';
 
-    var rowsHtml = sortedStudents().map(function (s) {
+    var visible = sortedStudents();
+    var rowsHtml = visible.map(function (s) {
       var saveState = state.noteSaving[s.email];
       var saveLabel = saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved' : saveState === 'error' ? 'Failed — retry' : 'Save';
       return (
@@ -623,7 +717,7 @@
           '<td>' + s.streak + '</td>' +
           '<td>' + s.progress_pct + '%</td>' +
           '<td>' + s.tasks_completed + '</td>' +
-          '<td>' + (s.last_active || '—') + '</td>' +
+          '<td><span class="inactivity-dot ' + inactivityClass(s.days_inactive) + '"></span>' + lastActiveLabel(s) + '</td>' +
           '<td class="students-notes-cell">' +
             '<textarea class="js-note-input" data-email="' + escapeHtml(s.email) + '" rows="1">' + escapeHtml(s.notes) + '</textarea>' +
             '<button type="button" class="btn btn-small js-note-save" data-email="' + escapeHtml(s.email) + '">' + saveLabel + '</button>' +
@@ -632,11 +726,18 @@
       );
     }).join('');
 
+    var countLabel = visible.length === state.students.length
+      ? 'Students (' + state.students.length + ')'
+      : 'Students (' + visible.length + ' of ' + state.students.length + ')';
+
     return (
       '<div class="card">' +
-        '<h2 style="font-size:16px;margin-bottom:12px;">Students (' + state.students.length + ')</h2>' +
-        '<div class="field-hint" style="margin-bottom:10px;">Sorted by All-time hours by default — click a column to re-sort. Consistency = median daily minutes this month so far (same measure as the monthly Discord post), zero-filled on quiet days, so it rewards showing up regularly over binge days. Course progress = tasks completed out of everything scheduled so far. Try sorting by Consistency for steady-but-not-flashy students, or Last active to see who\'s gone quiet.</div>' +
-        '<div class="students-table-wrap"><table class="students-table"><thead><tr>' + headerHtml + '</tr></thead><tbody>' + rowsHtml + '</tbody></table></div>' +
+        renderStudentSummary() +
+        '<h2 style="font-size:16px;margin-bottom:12px;">' + countLabel + '</h2>' +
+        renderStudentFilters() +
+        '<div class="field-hint" style="margin:10px 0;">Sorted by All-time hours by default — click a column to re-sort. Consistency = median daily minutes this month so far (same measure as the monthly Discord post), zero-filled on quiet days, so it rewards showing up regularly over binge days. Course progress = tasks completed out of everything scheduled so far. Try sorting by Consistency for steady-but-not-flashy students, or filtering by Inactive days to see who\'s gone quiet.</div>' +
+        (visible.length ? '<div class="students-table-wrap"><table class="students-table"><thead><tr>' + headerHtml + '</tr></thead><tbody>' + rowsHtml + '</tbody></table></div>'
+          : '<div class="empty">No students match the current filters.</div>') +
       '</div>'
     );
   }
@@ -647,6 +748,7 @@
     render();
     api('/team-students').then(function (data) {
       state.students = data.students || [];
+      state.studentSummary = data.summary || null;
       state.studentsLoading = false;
       render();
     }).catch(function (err) {
@@ -731,6 +833,41 @@
       });
     });
 
+    // render() replaces #root's whole innerHTML (see above), which would
+    // normally drop focus/cursor position out from under someone mid-
+    // keystroke in the search box — re-focus + restore the cursor after
+    // each re-render specifically for the two free-typing filter inputs
+    // (search, min streak); the <select> doesn't need this, a dropdown
+    // has no mid-interaction cursor state to lose.
+    function refocusFilterInput(id, cursorPos) {
+      var el = document.getElementById(id);
+      if (el) { el.focus(); if (typeof cursorPos === 'number') el.setSelectionRange(cursorPos, cursorPos); }
+    }
+    var searchInput = document.getElementById('student-search');
+    if (searchInput) searchInput.addEventListener('input', function () {
+      var pos = searchInput.selectionStart;
+      state.studentFilters.search = searchInput.value;
+      render();
+      refocusFilterInput('student-search', pos);
+    });
+    var inactiveFilter = document.getElementById('student-inactive-filter');
+    if (inactiveFilter) inactiveFilter.addEventListener('change', function () {
+      state.studentFilters.inactive = inactiveFilter.value;
+      render();
+    });
+    var minStreakInput = document.getElementById('student-min-streak');
+    if (minStreakInput) minStreakInput.addEventListener('input', function () {
+      var pos = minStreakInput.selectionStart;
+      state.studentFilters.minStreak = minStreakInput.value;
+      render();
+      refocusFilterInput('student-min-streak', pos);
+    });
+    var filterClearBtn = document.getElementById('student-filter-clear');
+    if (filterClearBtn) filterClearBtn.addEventListener('click', function () {
+      state.studentFilters = { search: '', inactive: '', minStreak: '' };
+      render();
+    });
+
     document.querySelectorAll('.js-note-save').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var email = btn.getAttribute('data-email');
@@ -749,13 +886,22 @@
       });
     });
 
-    var newBtn = document.getElementById('new-btn');
-    if (newBtn) newBtn.addEventListener('click', function () {
-      state.editing = { schedule_type: 'daily', schedule_time: '10:00', enabled: true };
+    function startNewPost(overrides) {
+      state.editing = Object.assign({ schedule_type: 'daily', schedule_time: '10:00', enabled: true }, overrides);
       state.preview = null;
       state.testStatus = null;
       state.msg = null;
       render();
+    }
+    var newBtn = document.getElementById('new-btn');
+    if (newBtn) newBtn.addEventListener('click', function () { startNewPost(); });
+    var newCustomBtn = document.getElementById('new-custom-btn');
+    if (newCustomBtn) newCustomBtn.addEventListener('click', function () {
+      // Explicit source + one blank section pre-added (rather than
+      // leaving the writer to also click "+ Add section" first) — this
+      // button's whole purpose is "start a schedule," so get them
+      // straight to a fillable Date/Topic/Duration row.
+      startNewPost({ source: 'custom', sections: [{ title: '', rows: [{ date: '', task: '', time: '' }] }] });
     });
 
     var logoutBtn = document.getElementById('logout-btn');
