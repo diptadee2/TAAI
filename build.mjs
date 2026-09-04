@@ -126,9 +126,10 @@ function generateNotesData() {
 
 const BLOG_NAV_LINKS = [
   { label: 'Courses', href: '/gate-da-courses' },
-  { label: 'Test Series 2027', href: '/gate-da-test-series' },
+  { label: 'Test Series', href: '/gate-da-test-series' },
   { label: 'Testimonials', href: '/gate-da-toppers' },
   { label: 'Resources', href: '/gate-da-free-notes' }, // renders as dropdown — see renderNav()
+  { label: 'Progress Tracker', href: '/gate-da-progress-tracker' },
 ];
 
 const BLOG_MENU_ICONS = {
@@ -138,6 +139,7 @@ const BLOG_MENU_ICONS = {
   '/gate-da-toppers': '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="8" cy="9" r="3" stroke="currentColor" stroke-width="1.7" /><circle cx="16" cy="9" r="3" stroke="currentColor" stroke-width="1.7" /><path d="M3 19C3 16 5 14 8 14C11 14 13 16 13 19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /><path d="M13 19C13 16 15 14 18 14C19 14 20 14.3 21 15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /></svg>',
   '/gate-da-free-notes': '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M14 2H6C5.4 2 5 2.4 5 3V21C5 21.6 5.4 22 6 22H18C18.6 22 19 21.6 19 21V7L14 2Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" /><path d="M14 2V7H19" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" /><path d="M9 13H15M9 17H13" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /></svg>',
   '/blogs': '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 20h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" /></svg>',
+  '/gate-da-progress-tracker': '<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M9 12L11 14L15 9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /><path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C13.4106 3 14.7461 3.32229 15.9376 3.89746" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /></svg>',
 };
 
 // Keep in sync with admin/config.yml's tags options (and, for the
@@ -250,7 +252,7 @@ function renderNav() {
             <div class="nav-dropdown">
               <a href="/gate-da-free-notes" class="nav-dd-item">Free Notes &amp; Lectures</a>
               <div class="nav-dd-divider"></div>
-              <a href="/blogs" class="nav-dd-item active">Blog</a>
+              <a href="/blogs" class="nav-dd-item active">Blogs</a>
             </div>
           </div>`
     : `<a href="${l.href}" class="${l.active ? 'active' : ''}">${l.label}</a>`
