@@ -334,50 +334,16 @@ export async function fetchTodayLeaders(supabase, email, date) {
   return { date: today, leaders, viewerRank };
 }
 
-// The single highest total_minutes any student has ever logged in one
-// calendar day, across all of pomo_daily_sessions — distinct from
-// fetchTodayLeaders (one day's top few), this looks across every day
-// ever recorded. Used to give the daily Discord post "how does this
-// compare to the all-time record" context, not just yesterday's ranking.
-export async function fetchAllTimeDailyRecord(supabase) {
-  const { data, error } = await supabase
-    .from('pomo_daily_sessions')
-    .select('email, date, total_minutes')
-    .order('total_minutes', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data) return null;
-  const { data: student, error: studentError } = await supabase
-    .from('students').select('display_name').eq('email', data.email).maybeSingle();
-  if (studentError) throw new Error(studentError.message);
-  return { display_name: student?.display_name || 'Anonymous', total_minutes: data.total_minutes, date: data.date };
-}
-
-// Same idea as fetchAllTimeDailyRecord, one level up: the single highest
-// total_minutes any student has ever logged in one week, across all of
-// pomodoro_stats — for the weekly Discord post's "all-time record" line.
-export async function fetchAllTimeWeeklyRecord(supabase) {
-  const { data, error } = await supabase
-    .from('pomodoro_stats')
-    .select('email, week_start, total_minutes')
-    .order('total_minutes', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data) return null;
-  const { data: student, error: studentError } = await supabase
-    .from('students').select('display_name').eq('email', data.email).maybeSingle();
-  if (studentError) throw new Error(studentError.message);
-  return { display_name: student?.display_name || 'Anonymous', total_minutes: data.total_minutes, week_start: data.week_start };
-}
-
-// Same as fetchAllTimeDailyRecord, scoped to the current IST calendar
-// month only (monthStartIST()) — a second, shorter-lived record line
-// requested directly for the daily/weekly Discord posts, alongside (not
-// instead of) the all-time one. Resets automatically on the 1st since
-// it's just a >= filter against the current month's start, no separate
-// reset job.
+// The single highest total_minutes any student has logged in one
+// calendar day *this month* (monthStartIST()) — distinct from
+// fetchTodayLeaders (one day's top few), this looks across every day so
+// far this month. Used to give the daily Discord post "how does this
+// compare to this month's best" context, not just yesterday's ranking.
+// Originally an all-time record with no reset; replaced 2026-09-05 at
+// explicit request ("remove the all time lines... just include this
+// month's") rather than kept as a second line alongside it — resets
+// automatically on the 1st since it's just a >= filter against the
+// current month's start, no separate reset job.
 export async function fetchMonthlyDailyRecord(supabase) {
   const { data, error } = await supabase
     .from('pomo_daily_sessions')
@@ -394,8 +360,9 @@ export async function fetchMonthlyDailyRecord(supabase) {
   return { display_name: student?.display_name || 'Anonymous', total_minutes: data.total_minutes, date: data.date };
 }
 
-// Same as fetchAllTimeWeeklyRecord, scoped to weeks whose week_start
-// falls within the current IST calendar month.
+// Same idea, one level up: the single highest total_minutes any student
+// has logged in one week whose week_start falls within the current IST
+// calendar month — for the weekly Discord post's record line.
 export async function fetchMonthlyWeeklyRecord(supabase) {
   const { data, error } = await supabase
     .from('pomodoro_stats')
@@ -666,39 +633,21 @@ function rankedVars(list, minutesKey) {
 }
 
 // Appended to the daily/weekly Discord posts so they carry "how does this
-// compare to the all-time record" context, not just the current
+// compare to this month's best" context, not just the current
 // day's/week's ranking in isolation. Returns '' (not thrown) when there's
 // no record yet, matching resolveScheduledPostEmbed's own "nothing to
-// show yet" tolerance rather than failing the whole post over it.
-async function allTimeDailyRecordLine(supabase) {
-  const record = await fetchAllTimeDailyRecord(supabase);
-  if (!record) return '';
-  return `\n\n🏅 *All-time daily record: **${record.display_name}** — ${formatHoursDecimal(record.total_minutes)}, set ${record.date}*`;
-}
-async function allTimeWeeklyRecordLine(supabase) {
-  const record = await fetchAllTimeWeeklyRecord(supabase);
-  if (!record) return '';
-  return `\n\n🏅 *All-time weekly record: **${record.display_name}** — ${formatHoursDecimal(record.total_minutes)}, week of ${record.week_start}*`;
-}
-
-// Second, shorter-lived record line appended alongside the all-time one —
-// requested directly for all the daily/weekly Discord posts. Resets
-// automatically every month (see monthStartIST()), no separate job.
-// Skipped when it would just repeat the all-time record verbatim (the
-// all-time best happens to also fall within this month) — showing the
-// same name/value/date twice back to back read as a mistake, not two
-// distinct pieces of context.
+// show yet" tolerance rather than failing the whole post over it. Used to
+// be an all-time record with no reset, shown alongside a second monthly
+// line; replaced by this alone 2026-09-05 at explicit request.
 async function monthlyDailyRecordLine(supabase) {
-  const [monthly, allTime] = await Promise.all([fetchMonthlyDailyRecord(supabase), fetchAllTimeDailyRecord(supabase)]);
-  if (!monthly) return '';
-  if (allTime && allTime.date === monthly.date && allTime.display_name === monthly.display_name) return '';
-  return `\n\n🗓️ *This month's daily record: **${monthly.display_name}** — ${formatHoursDecimal(monthly.total_minutes)}, set ${monthly.date}*`;
+  const record = await fetchMonthlyDailyRecord(supabase);
+  if (!record) return '';
+  return `\n\n🗓️ *This month's daily record: **${record.display_name}** — ${formatHoursDecimal(record.total_minutes)}, set ${record.date}*`;
 }
 async function monthlyWeeklyRecordLine(supabase) {
-  const [monthly, allTime] = await Promise.all([fetchMonthlyWeeklyRecord(supabase), fetchAllTimeWeeklyRecord(supabase)]);
-  if (!monthly) return '';
-  if (allTime && allTime.week_start === monthly.week_start && allTime.display_name === monthly.display_name) return '';
-  return `\n\n🗓️ *This month's weekly record: **${monthly.display_name}** — ${formatHoursDecimal(monthly.total_minutes)}, week of ${monthly.week_start}*`;
+  const record = await fetchMonthlyWeeklyRecord(supabase);
+  if (!record) return '';
+  return `\n\n🗓️ *This month's weekly record: **${record.display_name}** — ${formatHoursDecimal(record.total_minutes)}, week of ${record.week_start}*`;
 }
 
 // "Mon, Jun 15" for a 'YYYY-MM-DD' calendar date — used to head each date
@@ -792,7 +741,7 @@ export async function resolveScheduledPostEmbed(supabase, row) {
     return [{
       title: row.title || '🏆 Yesterday\'s Top Focus Session',
       url: SCHEDULED_POST_TRACKER_URL,
-      description: `${text}${await monthlyDailyRecordLine(supabase)}${await allTimeDailyRecordLine(supabase)}\n\n[📊 View the progress tracker](${SCHEDULED_POST_TRACKER_URL})`,
+      description: `${text}${await monthlyDailyRecordLine(supabase)}\n\n[📊 View the progress tracker](${SCHEDULED_POST_TRACKER_URL})`,
       color: row.color ?? 0xf59e0b,
       footer: { text: date },
     }];
@@ -810,7 +759,7 @@ export async function resolveScheduledPostEmbed(supabase, row) {
     return [{
       title: row.title || '🏆 Yesterday\'s Top 3',
       url: SCHEDULED_POST_TRACKER_URL,
-      description: `${intro}${lines.join('\n')}${await monthlyDailyRecordLine(supabase)}${await allTimeDailyRecordLine(supabase)}\n\n[📊 View the progress tracker](${SCHEDULED_POST_TRACKER_URL})`,
+      description: `${intro}${lines.join('\n')}${await monthlyDailyRecordLine(supabase)}\n\n[📊 View the progress tracker](${SCHEDULED_POST_TRACKER_URL})`,
       color: row.color ?? 0xf59e0b,
       footer: { text: date },
     }];
@@ -826,7 +775,7 @@ export async function resolveScheduledPostEmbed(supabase, row) {
     return [{
       title: row.title || '📅 Weekly Top 5 Leaderboard',
       url: SCHEDULED_POST_TRACKER_URL,
-      description: `${intro}${lines.join('\n')}${await monthlyWeeklyRecordLine(supabase)}${await allTimeWeeklyRecordLine(supabase)}\n\n[📊 View the progress tracker](${SCHEDULED_POST_TRACKER_URL})`,
+      description: `${intro}${lines.join('\n')}${await monthlyWeeklyRecordLine(supabase)}\n\n[📊 View the progress tracker](${SCHEDULED_POST_TRACKER_URL})`,
       color: row.color ?? 0x8b5cf6,
       footer: { text: 'Week of ' + weekStart },
     }];
