@@ -14,24 +14,27 @@ export async function handler(event) {
   const viewerEmail = String(event.queryStringParameters?.email || '').trim().toLowerCase();
   const supabase = getSupabase();
   const weekStart = weekStartIST();
+  const lastWeekStart = weekBefore(weekStart);
+  const today = todayForStreak();
 
-  const { data: stats, error: statsError } = await supabase
-    .from('pomodoro_stats')
-    .select('email, total_minutes, total_sessions')
-    .eq('week_start', weekStart)
-    .order('total_minutes', { ascending: false })
-    .limit(LIMIT);
+  // This function is polled every 30s during Focus Mode, so its
+  // wall-clock duration (and therefore Functions compute) scales
+  // directly with how many Supabase round-trips run one after another.
+  // These four queries don't depend on each other's results — the
+  // week's stats, last week's stats, the streak's scheduled-dates list,
+  // and today's leaders are all independent — so they run concurrently
+  // instead of sequentially.
+  const [statsResult, lastWeekResult, scheduledResult, todayLeaders] = await Promise.all([
+    supabase.from('pomodoro_stats').select('email, total_minutes, total_sessions').eq('week_start', weekStart).order('total_minutes', { ascending: false }).limit(LIMIT),
+    supabase.from('pomodoro_stats').select('email, total_minutes').eq('week_start', lastWeekStart).order('total_minutes', { ascending: false }),
+    supabase.from('schedule_tasks').select('date').lte('date', today).order('date', { ascending: false }),
+    fetchTodayLeaders(supabase, viewerEmail),
+  ]);
+
+  const { data: stats, error: statsError } = statsResult;
   if (statsError) return json(500, { error: statsError.message });
 
-  if (!stats.length) return json(200, { leaderboard: [], viewerRank: null });
-
-  const { data: students, error: studentsError } = await supabase
-    .from('students')
-    .select('email, display_name')
-    .in('email', stats.map(s => s.email));
-  if (studentsError) return json(500, { error: studentsError.message });
-
-  const nameByEmail = Object.fromEntries(students.map(s => [s.email, s.display_name]));
+  if (!stats.length) return json(200, { leaderboard: [], viewerRank: null, todayLeaders });
 
   // Rank-movement arrow, compared to where each student stood at the
   // *end of last week* — a fixed, historical reference point that's
@@ -44,12 +47,7 @@ export async function handler(event) {
   // (every student, not just this week's top 20) since someone's
   // standing last week can be well outside this week's top 20 — e.g. a
   // jump from #35 to #10 should still show as a real rise.
-  const lastWeekStart = weekBefore(weekStart);
-  const { data: lastWeekStats, error: lastWeekError } = await supabase
-    .from('pomodoro_stats')
-    .select('email, total_minutes')
-    .eq('week_start', lastWeekStart)
-    .order('total_minutes', { ascending: false });
+  const { data: lastWeekStats, error: lastWeekError } = lastWeekResult;
   if (lastWeekError) return json(500, { error: lastWeekError.message });
   const lastWeekRankByEmail = Object.fromEntries(lastWeekStats.map((s, i) => [s.email, i + 1]));
 
@@ -59,23 +57,32 @@ export async function handler(event) {
   // batched: one scheduled-dates query and one task_progress query cover
   // every row (plus the viewer's own row, if they're not already in the
   // top 20) at once, instead of a separate /streak call per row.
-  const streakEmails = stats.map(s => s.email);
-  if (viewerEmail && !streakEmails.includes(viewerEmail)) streakEmails.push(viewerEmail);
-
-  const today = todayForStreak();
-  const { data: scheduledForStreak, error: schedError } = await supabase
-    .from('schedule_tasks')
-    .select('date')
-    .lte('date', today)
-    .order('date', { ascending: false });
+  const { data: scheduledForStreak, error: schedError } = scheduledResult;
   if (schedError) return json(500, { error: schedError.message });
   const scheduledDates = [...new Set(scheduledForStreak.map(r => r.date))];
 
-  const { data: completedForStreak, error: completedError } = await supabase
-    .from('task_progress')
-    .select('email, date')
-    .in('email', streakEmails)
-    .eq('completed', true);
+  const streakEmails = stats.map(s => s.email);
+  if (viewerEmail && !streakEmails.includes(viewerEmail)) streakEmails.push(viewerEmail);
+
+  // Same independence reasoning as above: the display-name lookup, the
+  // completed-tasks lookup, and the "live now" lookup only need
+  // streakEmails, not each other's results.
+  let studentsResult, completedResult, liveStatusByEmail;
+  try {
+    [studentsResult, completedResult, liveStatusByEmail] = await Promise.all([
+      supabase.from('students').select('email, display_name').in('email', stats.map(s => s.email)),
+      supabase.from('task_progress').select('email, date').in('email', streakEmails).eq('completed', true),
+      fetchLiveStatusByEmail(supabase, streakEmails),
+    ]);
+  } catch (err) {
+    return json(500, { error: err.message });
+  }
+
+  const { data: students, error: studentsError } = studentsResult;
+  if (studentsError) return json(500, { error: studentsError.message });
+  const nameByEmail = Object.fromEntries(students.map(s => [s.email, s.display_name]));
+
+  const { data: completedForStreak, error: completedError } = completedResult;
   if (completedError) return json(500, { error: completedError.message });
 
   const completedByEmail = {};
@@ -90,12 +97,6 @@ export async function handler(event) {
   // "Live now" status — see fetchLiveStatusByEmail in lib/supabase.js for
   // the exact definition (shared with fetchTodayLeaders, so the daily and
   // weekly boards can't disagree on what counts as "live").
-  let liveStatusByEmail;
-  try {
-    liveStatusByEmail = await fetchLiveStatusByEmail(supabase, streakEmails);
-  } catch (err) {
-    return json(500, { error: err.message });
-  }
   function pomoFieldsFor(email) {
     return liveStatusByEmail[email] || { is_live: false, pomo_status: null, pomo_phase_end_at: null, pomo_last_seen_at: null };
   }
@@ -146,12 +147,11 @@ export async function handler(event) {
     }
   }
 
-  // Bundled into this same response (rather than its own poll) so the
-  // "Today" card in Focus Mode can auto-refresh alongside the top-20 board
-  // on the request that's already happening every 30s — no extra network
-  // round-trip, just a modest amount of extra JSON on an existing one. See
-  // refreshLeaderboard in progress.js for the client side.
-  const todayLeaders = await fetchTodayLeaders(supabase, viewerEmail);
-
+  // todayLeaders was fetched up front, in parallel with the weekly-stats
+  // queries above, so the "Today" card in Focus Mode can auto-refresh
+  // alongside the top-20 board on the request that's already happening
+  // every 30s — no extra network round-trip, just a modest amount of
+  // extra JSON on an existing one. See refreshLeaderboard in progress.js
+  // for the client side.
   return json(200, { leaderboard, viewerRank, todayLeaders });
 }
