@@ -656,10 +656,24 @@ const BLOCK_RENDERERS = {
 
 function renderBlocks(blocks) {
   if (!blocks.length) return '';
-  const html = blocks.map(b => {
+  // Each block gets the same .fade-in reveal-on-scroll treatment as
+  // everything else on the site (blog.js's IntersectionObserver already
+  // handles any .fade-in element site-wide — no new JS needed here).
+  // Previously blocks had no reveal animation at all, unlike the hero and
+  // the listing cards, which read as visibly inconsistent/unfinished on
+  // a long, chart-heavy post. Delay is small and capped (not a growing
+  // per-block stagger like the listing cards use) since each block only
+  // starts animating once it's actually scrolled into view, not all at
+  // once on page load — a large cumulative delay would just make later
+  // blocks feel laggy to reveal after they're already on screen.
+  const html = blocks.map((b, i) => {
     const renderer = BLOCK_RENDERERS[b.type];
     if (!renderer) return '';
-    try { return renderer(b); } catch { return ''; }
+    let rendered;
+    try { rendered = renderer(b); } catch { rendered = ''; }
+    if (!rendered) return '';
+    const delay = (i % 3) * 90;
+    return `<div class="fade-in" style="--delay:${delay}ms">${rendered}</div>`;
   }).join('\n');
   return `<div class="post-blocks">${html}</div>`;
 }
@@ -726,8 +740,8 @@ ${renderChrome(indexBody)}
         </div>
       </div>
       <div class="container">
-        ${post.cover ? `<img class="blog-post-cover" src="${escapeHtml(post.cover)}" alt="">` : ''}
-        <div class="blog-post-content">
+        ${post.cover ? `<img class="blog-post-cover fade-in" src="${escapeHtml(post.cover)}" alt="">` : ''}
+        <div class="blog-post-content fade-in">
           ${post.html}
         </div>
         ${post.blocksHtml}
