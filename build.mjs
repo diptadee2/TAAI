@@ -733,7 +733,7 @@ ${renderChrome(indexBody)}
     const postBody = `<article class="blog-post">
       <div class="blog-post-hero">
         <div class="container">
-          <a href="/blogs" class="blog-post-back">← Back to blogs</a>
+          <a href="/blogs" class="blog-post-back">← All blogs</a>
           <div class="blog-post-date fade-in">${formatDate(post.date)}</div>
           ${post.tags.length ? `<div class="fade-in">${renderTags(post.tags)}</div>` : ''}
           <h1 class="fade-in">${escapeHtml(post.title)}</h1>
