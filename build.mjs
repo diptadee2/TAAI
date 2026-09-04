@@ -550,7 +550,7 @@ function renderBlockStepDiagram(f) {
     ).join('');
     return `<div class="block-step-col"><div class="block-step-items">${itemsHtml}</div><div class="block-step-label">${escapeHtml(s.step_label)}</div></div>`;
   }).join('');
-  return `<figure class="block-chart-card">
+  return `<figure class="block-narrative-card">
     ${f.title ? `<div class="block-chart-title">${escapeHtml(f.title)}</div>` : ''}
     ${f.subtitle ? `<div class="block-chart-subtitle">${escapeHtml(f.subtitle)}</div>` : ''}
     <div class="block-step-diagram">${stepsHtml}</div>
@@ -567,7 +567,7 @@ function renderBlockTwoPathDiagram(f) {
     <div class="block-path-desc">${escapeHtml(p.description)}</div>
     ${p.action ? `<div class="block-path-action">→ ${escapeHtml(p.action)}</div>` : ''}
   </div>`;
-  return `<figure class="block-chart-card">
+  return `<figure class="block-narrative-card">
     <div class="block-path-root">${escapeHtml(f.root_label)}</div>
     <div class="block-path-pair">${path(left, 'left')}${path(right, 'right')}</div>
   </figure>`;
@@ -582,7 +582,7 @@ function renderBlockComparisonRows(f) {
     <span class="block-comp-arrow">&rarr;</span>
     <span class="block-comp-result">${escapeHtml(r.result)}</span>
   </div>`).join('');
-  return `<figure class="block-chart-card">
+  return `<figure class="block-narrative-card">
     ${f.title ? `<div class="block-chart-title">${escapeHtml(f.title)}</div>` : ''}
     <div class="block-comp-rows">${rowsHtml}</div>
   </figure>`;
