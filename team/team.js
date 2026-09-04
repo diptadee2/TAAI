@@ -23,6 +23,17 @@
   // Title works as an override, same as the list already worked for
   // weekly_leaderboard before this was split out into its own set.
   var LIST_SOURCES = ['daily_leaderboard', 'weekly_leaderboard'];
+  // The same 10 GATE DA subjects as CANONICAL_SUBJECTS in progress.js
+  // (the tracker's "Progress by subject" list) — kept as a dropdown here
+  // rather than free text so a weekly-schedule section's Subject can't
+  // drift in spelling from what the tracker itself uses. Keep this list
+  // in sync with progress.js's CANONICAL_SUBJECTS by hand if it ever
+  // changes there.
+  var SUBJECT_OPTIONS = [
+    '🔢 Linear Algebra', '🎲 Probability', '📊 Statistics', '📐 Calculus',
+    '🤖 Machine Learning', '🧠 AI', '🗄️ DBMS', '🐍 Python',
+    '🧱 Data Structures', '🔁 Algorithms',
+  ];
   var SCHEDULE_LABELS = { once: 'Once', daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' };
   // The exact same fallback text resolveScheduledPostEmbed() in
   // lib/supabase.js uses when body is blank — shown pre-filled in the Body
@@ -233,6 +244,20 @@
   // syntax. Keep the "Subject" label short — it repeats on every one of
   // that subject's lines in the final date-grouped post now, not shown
   // once as a heading.
+  // Builds the Subject <select>'s options, always including the current
+  // value even if it isn't one of SUBJECT_OPTIONS (a blank first row, or
+  // free text saved before this became a dropdown) — so opening an
+  // existing post never silently swaps its subject to something else on
+  // save.
+  function subjectOptionsHtml(current) {
+    var options = SUBJECT_OPTIONS.slice();
+    if (current && options.indexOf(current) === -1) options.unshift(current);
+    var placeholder = '<option value=""' + (current ? '' : ' selected') + '>-- choose a subject --</option>';
+    return placeholder + options.map(function (name) {
+      return '<option value="' + escapeHtml(name) + '"' + (name === current ? ' selected' : '') + '>' + escapeHtml(name) + '</option>';
+    }).join('');
+  }
+
   function renderSectionsEditor(p) {
     if (p.source !== 'custom') return '';
     var sections = Array.isArray(p.sections) ? p.sections : [];
@@ -250,7 +275,7 @@
       }).join('');
       return (
         '<div class="section-row" data-index="' + si + '">' +
-          '<div class="field"><label>Subject</label><input type="text" class="js-section-title" value="' + escapeHtml(s.title) + '" placeholder="e.g. 🐍 Python"></div>' +
+          '<div class="field"><label>Subject</label><select class="js-section-title">' + subjectOptionsHtml(s.title) + '</select></div>' +
           '<table class="day-table"><thead><tr><th>Date</th><th>Topic</th><th>Duration</th><th></th></tr></thead>' +
           '<tbody>' + dayRowsHtml + '</tbody></table>' +
           '<div style="display:flex;gap:8px;margin-top:8px;">' +
@@ -263,7 +288,7 @@
     return (
       '<div class="form-section">' +
         '<div class="form-section-heading">Extra sections (optional)</div>' +
-        '<div class="field-hint" style="margin-bottom:10px;">Each one adds a heading + day list below the main Title/Body above, all within the same card — e.g. one section per subject in a weekly schedule post. Fill in one row per day; leave Duration blank for entries like a quiz that has none.</div>' +
+        '<div class="field-hint" style="margin-bottom:10px;">Pick a Subject from the dropdown, then fill in one row per day; leave Duration blank for entries like a quiz that has none. All sections merge into one date-ordered list in the final post, not shown subject-by-subject.</div>' +
         '<div id="sections-list">' + sectionsHtml + '</div>' +
         '<button type="button" class="btn btn-small" id="f-add-section">+ Add section</button>' +
       '</div>'

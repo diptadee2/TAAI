@@ -41,7 +41,9 @@ collections:
           - { label: "Machine Learning", value: "machine-learning" }
           - { label: "AI", value: "ai" }
           - { label: "DBMS", value: "dbms" }
-          - { label: "Python & DSA", value: "python-dsa" }
+          - { label: "Python", value: "python" }
+          - { label: "Data Structures", value: "data-structures" }
+          - { label: "Algorithms", value: "algorithms" }
           - { label: "GATE Strategy", value: "gate-strategy" }
           - { label: "Announcement", value: "announcement" }
           - { label: "Career", value: "career" }
