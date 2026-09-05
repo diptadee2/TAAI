@@ -265,3 +265,24 @@ ALTER TABLE students ADD COLUMN IF NOT EXISTS notes TEXT;
 -- resolveScheduledPostEmbed() in lib/supabase.js. NULL/empty for an
 -- ordinary single-embed custom post, unused by every other source.
 ALTER TABLE scheduled_posts ADD COLUMN IF NOT EXISTS sections JSONB;
+
+-- Telegram support, added ahead of an actual bot existing — built so a
+-- row is "fully functional" the moment a real bot token + chat id are
+-- typed into /team, no further engineering needed. A row's platform
+-- decides how discord-dispatch.js posts it (still one shared dispatcher,
+-- not a second cron — see that file's own comment on why); every other
+-- column (source, title, body, sections, schedule_*) means exactly the
+-- same thing regardless of platform, since resolveScheduledPostText()
+-- reuses the exact same data-fetchers as the Discord embed path.
+--
+-- webhook_url/test_webhook_url are reused for Telegram rows too, holding
+-- the bot's API base with its token embedded
+-- (https://api.telegram.org/bot<TOKEN>) rather than a Discord webhook —
+-- same "the endpoint/credential to POST to" role either way, so no new
+-- column was needed for the credential itself. Telegram still needs a
+-- destination *within* that bot's reach, which a URL alone doesn't
+-- encode (unlike a Discord webhook, which is already channel-specific) —
+-- that's what these two new columns are for.
+ALTER TABLE scheduled_posts ADD COLUMN IF NOT EXISTS platform TEXT NOT NULL DEFAULT 'discord';
+ALTER TABLE scheduled_posts ADD COLUMN IF NOT EXISTS telegram_chat_id TEXT;
+ALTER TABLE scheduled_posts ADD COLUMN IF NOT EXISTS telegram_test_chat_id TEXT;

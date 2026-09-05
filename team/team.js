@@ -144,19 +144,30 @@
   // Distinct webhooks already used by an existing post, newest first —
   // powers the "Load a saved channel" dropdown so a new/edited post can
   // reuse one without retyping/repasting the URL.
+  // A Telegram row's webhook_url actually holds its bot's API token, which
+  // can be shared across several different chats — unlike a Discord
+  // webhook URL, which is already channel-specific by itself. So "the
+  // same channel" for grouping/dedup purposes means webhook_url alone for
+  // Discord, but webhook_url + telegram_chat_id together for Telegram.
+  function channelKey(post) {
+    return post.platform === 'telegram' ? 'telegram|' + post.webhook_url + '|' + post.telegram_chat_id : (post.webhook_url || '');
+  }
+
   function getKnownChannels() {
     var seen = {};
     var list = [];
     state.posts.forEach(function (post) {
-      if (!post.webhook_url || seen[post.webhook_url]) return;
-      seen[post.webhook_url] = true;
-      list.push({ webhook_url: post.webhook_url, channel_name: post.channel_name || null });
+      var key = channelKey(post);
+      if (!key || seen[key]) return;
+      seen[key] = true;
+      list.push({ key: key, webhook_url: post.webhook_url, channel_name: post.channel_name || null, platform: post.platform || 'discord', telegram_chat_id: post.telegram_chat_id || null });
     });
     return list;
   }
 
   function channelSelectLabel(c) {
-    return c.channel_name || ('…' + c.webhook_url.slice(-10));
+    var tail = c.channel_name || ('…' + c.webhook_url.slice(-10));
+    return c.platform === 'telegram' ? '📨 ' + tail : tail;
   }
 
   function renderChannelSelect() {
@@ -192,7 +203,7 @@
     var groups = {};
     var keys = [];
     posts.forEach(function (p) {
-      var key = p.webhook_url || '(no webhook set)';
+      var key = channelKey(p) || '(no destination set)';
       if (!groups[key]) { groups[key] = []; keys.push(key); }
       groups[key].push(p);
     });
@@ -200,24 +211,25 @@
       return groupLabel(groups[a]).localeCompare(groupLabel(groups[b]));
     });
 
-    return keys.map(function (webhookUrl) {
-      var rows = groups[webhookUrl];
+    return keys.map(function (key) {
+      var rows = groups[key];
       var label = groupLabel(rows);
-      var isRenaming = state.renamingWebhook === webhookUrl;
+      var isTelegram = rows[0].platform === 'telegram';
+      var isRenaming = state.renamingWebhook === key;
       var headingHtml = isRenaming
         ? (
           '<input type="text" id="rename-input" class="rename-input" value="' + escapeHtml(label) + '">' +
-          '<button type="button" class="btn btn-small btn-primary js-rename-save" data-webhook="' + escapeHtml(webhookUrl) + '">Save</button>' +
+          '<button type="button" class="btn btn-small btn-primary js-rename-save" data-webhook="' + escapeHtml(key) + '">Save</button>' +
           '<button type="button" class="btn btn-small js-rename-cancel">Cancel</button>'
         )
         : (
-          escapeHtml(label) + ' <span class="channel-group-count">(' + rows.length + ')</span>' +
-          '<button type="button" class="btn btn-small js-rename-start" data-webhook="' + escapeHtml(webhookUrl) + '" title="Rename this channel everywhere it\'s used">✎</button>'
+          (isTelegram ? '📨 ' : '') + escapeHtml(label) + ' <span class="channel-group-count">(' + rows.length + ')</span>' +
+          '<button type="button" class="btn btn-small js-rename-start" data-webhook="' + escapeHtml(key) + '" title="Rename this channel everywhere it\'s used">✎</button>'
         );
       return (
         '<div class="card channel-group">' +
           '<div class="channel-group-heading">' + headingHtml + '</div>' +
-          (state.renameStatus && state.renameStatus.webhookUrl === webhookUrl ? renderRenameStatus() : '') +
+          (state.renameStatus && state.renameStatus.webhookUrl === key ? renderRenameStatus() : '') +
           rows.map(renderPostRow).join('') +
         '</div>'
       );
@@ -227,8 +239,13 @@
   function groupLabel(rows) {
     var named = rows.filter(function (p) { return p.channel_name; })[0];
     if (named) return named.channel_name;
-    var webhookUrl = rows[0] && rows[0].webhook_url;
-    return webhookUrl ? '(unlabeled: …' + webhookUrl.slice(-10) + ')' : '(no channel set)';
+    var first = rows[0] || {};
+    // A Telegram row's webhook_url is its bot's token, not a meaningful
+    // per-channel identifier the way a Discord webhook URL's tail is —
+    // telegram_chat_id is the actual destination, so that's what an
+    // unlabeled Telegram group falls back to showing instead.
+    if (first.platform === 'telegram') return first.telegram_chat_id ? '(unlabeled: ' + first.telegram_chat_id + ')' : '(no chat id set)';
+    return first.webhook_url ? '(unlabeled: …' + first.webhook_url.slice(-10) + ')' : '(no channel set)';
   }
 
   function renderRenameStatus() {
@@ -387,6 +404,32 @@
     var bodyValue = (p.body != null && p.body !== '') ? p.body : (DEFAULT_BODY_BY_SOURCE[source] || '');
     var bodyField = '<div class="field"><label>Body</label><textarea name="body">' + escapeHtml(bodyValue) + '</textarea><div class="field-hint">' + bodyHint + '</div></div>';
 
+    var platform = p.platform === 'telegram' ? 'telegram' : 'discord';
+    var platformOptions =
+      '<option value="discord"' + (platform === 'discord' ? ' selected' : '') + '>Discord</option>' +
+      '<option value="telegram"' + (platform === 'telegram' ? ' selected' : '') + '>Telegram</option>';
+
+    // Telegram's Bot API needs two separate things a Discord webhook URL
+    // already bundles into one: the bot's own credential (its token,
+    // embedded in the API base URL — see postToTelegram/
+    // resolveScheduledPostText in lib/supabase.js) and the destination
+    // *within* that bot's reach (a chat id/@username it's been added to
+    // as admin). "Test" mirrors that: a separate bot-API-URL field for a
+    // wholly different test bot if wanted, plus a required separate test
+    // chat id — same "never the row's real destination" discipline
+    // Discord's Send Test already has.
+    var destinationHtml = platform === 'telegram'
+      ? (
+        '<div class="field"><label>Telegram Bot API URL</label><input type="url" name="webhook_url" placeholder="https://api.telegram.org/bot&lt;YOUR_BOT_TOKEN&gt;" value="' + escapeHtml(p.webhook_url) + '" required><div class="field-hint">From @BotFather: create a bot, copy its token, and use it here as https://api.telegram.org/bot&lt;TOKEN&gt; (with the word "bot" directly before the token, no space). The bot must be added as an admin of the target channel.</div></div>' +
+        '<div class="field"><label>Chat ID</label><input type="text" name="telegram_chat_id" placeholder="@your_channel_username or a numeric chat id" value="' + escapeHtml(p.telegram_chat_id) + '" required><div class="field-hint">A public channel\'s @username works directly. A private channel needs its numeric chat id instead (forward a message from it to @userinfobot, or check the bot API\'s getUpdates response, to find it).</div></div>' +
+        '<div class="field"><label>Test bot API URL (optional)</label><input type="url" name="test_webhook_url" placeholder="A different bot\'s API URL, only if you want a separate test bot" value="' + escapeHtml(p.test_webhook_url) + '"><div class="field-hint">Leave blank to reuse the same bot above for testing — only the Test Chat ID below needs to actually differ.</div></div>' +
+        '<div class="field"><label>Test Chat ID</label><input type="text" name="telegram_test_chat_id" placeholder="A private test channel/chat this bot is also admin of" value="' + escapeHtml(p.telegram_test_chat_id) + '"><div class="field-hint">Never used by the real schedule — only "Send Test" below posts here, on demand. Point this at a private test chat, not the real channel.</div></div>'
+      )
+      : (
+        '<div class="field"><label>Webhook URL</label><input type="url" name="webhook_url" placeholder="https://discord.com/api/webhooks/..." value="' + escapeHtml(p.webhook_url) + '" required></div>' +
+        '<div class="field"><label>Test webhook URL (optional)</label><input type="url" name="test_webhook_url" placeholder="A separate test-channel webhook, for the Send Test button below" value="' + escapeHtml(p.test_webhook_url) + '"><div class="field-hint">Never used by the real schedule — only "Send Test" below posts here, on demand. Point this at a private test channel, not the real one.</div></div>'
+      );
+
     return (
       '<div class="card">' +
         '<h2 style="font-size:16px;margin-bottom:16px;">' + (isNew ? 'New scheduled post' : 'Edit scheduled post') + '</h2>' +
@@ -394,10 +437,10 @@
 
           '<div class="form-section">' +
             '<div class="form-section-heading">Destination</div>' +
+            '<div class="field"><label>Platform</label><select name="platform" id="f-platform">' + platformOptions + '</select></div>' +
             renderChannelSelect() +
             '<div class="field"><label>Channel name (for your reference)</label><input type="text" name="channel_name" placeholder="e.g. #announcements" value="' + escapeHtml(p.channel_name) + '"></div>' +
-            '<div class="field"><label>Webhook URL</label><input type="url" name="webhook_url" placeholder="https://discord.com/api/webhooks/..." value="' + escapeHtml(p.webhook_url) + '" required></div>' +
-            '<div class="field"><label>Test webhook URL (optional)</label><input type="url" name="test_webhook_url" placeholder="A separate test-channel webhook, for the Send Test button below" value="' + escapeHtml(p.test_webhook_url) + '"><div class="field-hint">Never used by the real schedule — only "Send Test" below posts here, on demand. Point this at a private test channel, not the real one.</div></div>' +
+            destinationHtml +
           '</div>' +
 
           '<div class="form-section">' +
@@ -405,16 +448,17 @@
             '<div class="field"><label>Source</label><select name="source" id="f-source">' + sourceOptions + '</select></div>' +
             '<div class="field"><label>Title (optional' + (source !== 'custom' ? ' — overrides the default' : '') + ')</label><input type="text" name="title" value="' + escapeHtml(p.title) + '"></div>' +
             bodyField +
-            '<div class="field"><label>Card color</label><input type="color" name="color" value="' + colorToHex(p.color) + '"></div>' +
+            (platform === 'telegram' ? '' : '<div class="field"><label>Card color</label><input type="color" name="color" value="' + colorToHex(p.color) + '"></div>') +
           '</div>' +
 
           renderSectionsEditor(p) +
 
+          (platform === 'telegram' ? '' :
           '<div class="form-section">' +
             '<div class="form-section-heading">Mentions</div>' +
             '<div class="checkbox-row"><input type="checkbox" id="f-everyone" name="tag_everyone"' + (p.tag_everyone ? ' checked' : '') + '><label for="f-everyone">Tag @everyone</label></div>' +
             '<div class="field"><label>Additional mentions (optional)</label><input type="text" name="extra_mentions" placeholder="@here, or &lt;@&amp;ROLE_ID&gt; for a role, &lt;@USER_ID&gt; for a person" value="' + escapeHtml(p.extra_mentions) + '"><div class="field-hint">Type the exact Discord mention. For a role or person, right-click them in Discord (Developer Mode must be on in Discord\'s settings) and Copy ID, then use &lt;@&amp;THAT_ID&gt; for a role or &lt;@THAT_ID&gt; for a person.</div></div>' +
-          '</div>' +
+          '</div>') +
 
           '<div class="form-section">' +
             '<div class="form-section-heading">Schedule</div>' +
@@ -471,10 +515,29 @@
     );
   }
 
+  // Telegram's response (resolveScheduledPostText) is already the exact
+  // HTML sent as parse_mode: 'HTML' — safe to drop straight into the page
+  // as-is (it only ever contains the handful of tags
+  // discordMarkdownToTelegramHtml introduces, over already-escaped text),
+  // so this is a genuinely accurate preview, not a second approximation
+  // of Telegram's own rendering.
+  function renderTelegramPreview(text) {
+    return '<div class="preview-box telegram-preview">' +
+      '<div class="preview-username">📨 Telegram bot</div>' +
+      '<div class="preview-description">' + text + '</div>' +
+    '</div>';
+  }
+
   function renderPreviewBox() {
     if (!state.preview) return '';
     if (state.preview.loading) return '<div class="preview-box"><div class="field-hint">Loading preview…</div></div>';
     if (state.preview.error) return '<div class="preview-box"><div class="msg msg-error" style="margin:0;">' + escapeHtml(state.preview.error) + '</div></div>';
+
+    if (state.preview.platform === 'telegram') {
+      if (!state.preview.text) return '<div class="preview-box"><div class="field-hint">' + escapeHtml(state.preview.reason || 'Nothing to preview.') + '</div></div>';
+      return renderTelegramPreview(state.preview.text);
+    }
+
     if (!state.preview.embeds || !state.preview.embeds.length) return '<div class="preview-box"><div class="field-hint">' + escapeHtml(state.preview.reason || 'Nothing to preview.') + '</div></div>';
 
     return state.preview.embeds.map(function (embed, i) {
@@ -792,7 +855,7 @@
         var webhookUrl = btn.getAttribute('data-webhook');
         var input = document.getElementById('rename-input');
         var newLabel = input ? input.value.trim() : '';
-        var matching = state.posts.filter(function (p) { return p.webhook_url === webhookUrl; });
+        var matching = state.posts.filter(function (p) { return channelKey(p) === webhookUrl; });
         state.renameStatus = { webhookUrl: webhookUrl, saving: true, count: matching.length };
         render();
         Promise.all(matching.map(function (post) {
@@ -991,20 +1054,48 @@
       document.getElementById('f-schedule-type').focus();
     });
 
+    var platformSelect = document.getElementById('f-platform');
+    if (platformSelect) platformSelect.addEventListener('change', function () {
+      syncEditingFromForm();
+      state.editing.platform = platformSelect.value;
+      state.preview = null;
+      render();
+      document.getElementById('f-platform').focus();
+    });
+
     var channelSelect = document.getElementById('f-channel-select');
     if (channelSelect) channelSelect.addEventListener('change', function () {
       if (channelSelect.value === '') return; // "Enter a new webhook below" — leave fields as they are
       var known = getKnownChannels()[Number(channelSelect.value)];
       if (!known) return;
-      // Patches the two inputs directly rather than going through
-      // state.editing + render() — a full re-render rebuilds the form
-      // from state.editing alone, which doesn't have anything typed into
-      // Title/Body yet (those only sync back on submit), so re-rendering
-      // here would silently wipe out whatever else was already filled in.
+      var currentPlatform = (document.querySelector('#post-form [name="platform"]') || {}).value || 'discord';
+      if (known.platform !== currentPlatform) {
+        // Switching platform changes which fields even exist in the DOM
+        // (Telegram's Chat ID field isn't rendered at all under Discord),
+        // so this one case needs a real re-render — sync first (same as
+        // the schedule-type/platform handlers above) so Title/Body/
+        // whatever else was already typed survives it.
+        syncEditingFromForm();
+        state.editing.platform = known.platform;
+        state.editing.webhook_url = known.webhook_url;
+        state.editing.channel_name = known.channel_name || state.editing.channel_name;
+        state.editing.telegram_chat_id = known.telegram_chat_id || '';
+        state.preview = null;
+        render();
+        return;
+      }
+      // Same platform as already selected — patch the inputs directly
+      // rather than going through state.editing + render(), since a full
+      // re-render rebuilds the form from state.editing alone, which
+      // doesn't have anything typed into Title/Body yet (those only sync
+      // back on submit) — re-rendering here would silently wipe out
+      // whatever else was already filled in.
       var webhookInput = document.querySelector('#post-form [name="webhook_url"]');
       var channelNameInput = document.querySelector('#post-form [name="channel_name"]');
+      var chatIdInput = document.querySelector('#post-form [name="telegram_chat_id"]');
       if (webhookInput) webhookInput.value = known.webhook_url;
       if (channelNameInput && known.channel_name) channelNameInput.value = known.channel_name;
+      if (chatIdInput && known.telegram_chat_id) chatIdInput.value = known.telegram_chat_id;
     });
 
     var cancelBtn = document.getElementById('f-cancel');
@@ -1023,12 +1114,23 @@
     var sendTestBtn = document.getElementById('f-send-test');
     if (sendTestBtn) sendTestBtn.addEventListener('click', function () {
       var payload = readFormPayload(document.getElementById('post-form'));
-      if (!payload.test_webhook_url) {
+      if (payload.platform === 'telegram') {
+        if (!payload.test_webhook_url && !payload.webhook_url) {
+          state.testStatus = { error: 'Fill in "Telegram Bot API URL" (or a separate "Test bot API URL") above first.' };
+          render();
+          return;
+        }
+        if (!payload.telegram_test_chat_id) {
+          state.testStatus = { error: 'Fill in "Test Chat ID" above first.' };
+          render();
+          return;
+        }
+      } else if (!payload.test_webhook_url) {
         state.testStatus = { error: 'Fill in "Test webhook URL" above first.' };
         render();
         return;
       }
-      if (!confirm('This will actually post a real message to that webhook right now. Continue?')) return;
+      if (!confirm('This will actually post a real message right now. Continue?')) return;
       state.testStatus = { loading: true };
       render();
       api('/team-posts?test=1', { method: 'POST', body: JSON.stringify(payload) })
@@ -1083,9 +1185,12 @@
     var fd = new FormData(form);
     return {
       source: fd.get('source'),
+      platform: fd.get('platform') === 'telegram' ? 'telegram' : 'discord',
       channel_name: (fd.get('channel_name') || '').trim(),
       webhook_url: (fd.get('webhook_url') || '').trim(),
       test_webhook_url: (fd.get('test_webhook_url') || '').trim(),
+      telegram_chat_id: (fd.get('telegram_chat_id') || '').trim(),
+      telegram_test_chat_id: (fd.get('telegram_test_chat_id') || '').trim(),
       title: (fd.get('title') || '').trim(),
       body: (fd.get('body') || '').trim(),
       color: parseInt((fd.get('color') || '#8b5cf6').replace('#', ''), 16),

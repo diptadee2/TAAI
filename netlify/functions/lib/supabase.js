@@ -425,6 +425,76 @@ export async function postToDiscordWebhook(embeds, content, webhookUrl) {
   if (!res.ok) throw new Error(`Discord webhook post failed: ${res.status} ${await res.text()}`);
 }
 
+// Posts one message to a Telegram channel/chat via the Bot API. botApiBase
+// is the bot's API root with its token embedded
+// (https://api.telegram.org/bot<TOKEN>) — a scheduled_posts row's
+// webhook_url/test_webhook_url double as this for platform: 'telegram'
+// rows, same "the endpoint/credential to POST to" role a Discord webhook
+// URL already plays, so no separate credential column was needed. chatId
+// is the destination *within* that bot's reach (telegram_chat_id /
+// telegram_test_chat_id) — unlike a Discord webhook, a bot's API base
+// alone doesn't encode which chat to post to. parse_mode: 'HTML' (not
+// MarkdownV2) specifically to avoid MarkdownV2's mandatory escaping of a
+// long list of punctuation characters anywhere they appear outside real
+// markdown syntax — a real footgun for arbitrary student display names,
+// which can contain periods/hyphens/parens/etc. HTML mode only needs
+// &/</> themselves escaped, which discordMarkdownToTelegramHtml already
+// does before introducing its own tags.
+export async function postToTelegram(text, chatId, botApiBase) {
+  if (!botApiBase) throw new Error('Telegram bot API URL is not set');
+  if (!chatId) throw new Error('Telegram chat id is not set');
+  const res = await fetch(`${botApiBase.replace(/\/+$/, '')}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true }),
+  });
+  if (!res.ok) throw new Error(`Telegram sendMessage failed: ${res.status} ${await res.text()}`);
+}
+
+// Converts the specific, small subset of Discord markdown that
+// resolveScheduledPostEmbed's descriptions actually use (**bold**,
+// *italic*, `code`, [text](url), plain \n\n paragraph breaks) into
+// Telegram's HTML parse_mode equivalent — order matters: escape raw
+// HTML-significant characters first (so a display name with a literal <
+// or & can't be misread as a tag), links next, then bold before italic
+// (bold's ** would otherwise leave stray single *s for the italic regex
+// to chew on if italic ran first).
+function discordMarkdownToTelegramHtml(text) {
+  return text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2">$1</a>')
+    .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+    .replace(/\*([^*\n]+)\*/g, '<i>$1</i>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>');
+}
+
+// The Telegram equivalent of resolveScheduledPostEmbed — deliberately
+// NOT a parallel reimplementation of all 5 sources' branches. It calls
+// resolveScheduledPostEmbed itself and converts the resulting Discord
+// embed(s) into one HTML-formatted Telegram message (title becomes a
+// bold first line, linked via the embed's own `url` if it has one;
+// footer becomes a trailing italic line; color is dropped, Telegram has
+// no equivalent). This means every source's data/wording lives in
+// exactly one place — a wording or data change to any of the 5 sources
+// automatically applies to both platforms, with no way for them to drift
+// out of sync the way two independently-written branches eventually
+// would. Multiple embeds (not currently produced by any source, but the
+// return type allows for it) are joined with a plain divider.
+export async function resolveScheduledPostText(supabase, row) {
+  const embeds = await resolveScheduledPostEmbed(supabase, row);
+  if (!embeds) return null;
+  return embeds.map(e => {
+    const parts = [];
+    if (e.title) {
+      const titleHtml = discordMarkdownToTelegramHtml(e.title);
+      parts.push(`<b>${e.url ? `<a href="${e.url}">${titleHtml}</a>` : titleHtml}</b>`);
+    }
+    if (e.description) parts.push(discordMarkdownToTelegramHtml(e.description));
+    if (e.footer && e.footer.text) parts.push(`<i>${discordMarkdownToTelegramHtml(e.footer.text)}</i>`);
+    return parts.join('\n\n');
+  }).join('\n\n———\n\n');
+}
+
 // Combines a scheduled_posts row's tag_everyone checkbox and free-text
 // extra_mentions field into the single content string postToDiscordWebhook
 // actually sends — e.g. tag_everyone=true + extra_mentions="<@&123>" both

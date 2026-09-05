@@ -148,6 +148,13 @@
   .preview-description a { color: #00a8fc; text-decoration: none; }
   .preview-description a:hover { text-decoration: underline; }
   .preview-footer { margin-top: 8px; color: #949ba4; font-size: 11.5px; }
+  /* Telegram's own blue instead of Discord's purple rail/BOT-tag styling
+     above, so the two previews read as visibly different platforms, not
+     one design pretending to be both. */
+  .telegram-preview { border-left-color: #229ED9; background: #17212b; }
+  .telegram-preview .preview-username { color: #229ED9; }
+  .telegram-preview .preview-description b { color: #f2f3f5; }
+  .telegram-preview .preview-description a { color: #6cb2eb; }
 
   .reference-card { font-size: 13px; }
   .ref-section { margin-bottom: 16px; }
