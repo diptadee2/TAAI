@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-06-1';
+  var CLIENT_VERSION = '2026-09-06-2';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -93,13 +93,36 @@
     return Math.round(n);
   }
 
+  // Max Focus-session length, lowered from 180 to 120 on 2026-09-06. Set
+  // once, the first time a >120 value is actually seen (loadPomoSettings,
+  // the cross-device sync in loadMonth, or the settings-panel Save), so
+  // maybeShowPomoMaxNotice (see pomoActuallyStart) can tell a genuinely-
+  // affected student what changed for them specifically.
+  var POMO_WORK_MAX_MINUTES = 120;
+  var pomoWorkClampedFrom = null;
+  // clampMinutes' own semantics are "validate within range, else fall back
+  // to the default" (NOT "clamp to the nearest boundary") — passing 120 as
+  // its own max would silently turn an old 180 into the default 25, not
+  // the requested 120. So the 1-180 validation (unchanged — that range is
+  // "was this ever a value the old UI could have produced at all") runs
+  // first, and only a value that passes it gets capped down to the new
+  // ceiling as a separate step.
+  function clampPomoWork(rawValue, fallback) {
+    var work = clampMinutes(rawValue, fallback, 1, 180);
+    if (work > POMO_WORK_MAX_MINUTES) {
+      pomoWorkClampedFrom = work;
+      work = POMO_WORK_MAX_MINUTES;
+    }
+    return work;
+  }
+
   function loadPomoSettings() {
     try {
       var raw = localStorage.getItem(POMO_SETTINGS_KEY);
       if (!raw) return Object.assign({}, DEFAULT_POMO_SETTINGS);
       var parsed = JSON.parse(raw);
       return {
-        work: clampMinutes(parsed.work, DEFAULT_POMO_SETTINGS.work, 1, 180),
+        work: clampPomoWork(parsed.work, DEFAULT_POMO_SETTINGS.work),
         shortBreak: clampMinutes(parsed.shortBreak, DEFAULT_POMO_SETTINGS.shortBreak, 1, 60),
         longBreak: clampMinutes(parsed.longBreak, DEFAULT_POMO_SETTINGS.longBreak, 1, 90),
         cycle: clampMinutes(parsed.cycle, DEFAULT_POMO_SETTINGS.cycle, 1, 12),
@@ -852,7 +875,7 @@
           // back to whatever's already loaded (localStorage or defaults),
           // same safety net loadPomoSettings() already uses.
           pomoSettings = {
-            work: clampMinutes(savedPomo.work, pomoSettings.work, 1, 180),
+            work: clampPomoWork(savedPomo.work, pomoSettings.work),
             shortBreak: clampMinutes(savedPomo.shortBreak, pomoSettings.shortBreak, 1, 60),
             longBreak: clampMinutes(savedPomo.longBreak, pomoSettings.longBreak, 1, 90),
             cycle: clampMinutes(savedPomo.cycle, pomoSettings.cycle, 1, 12),
@@ -1751,6 +1774,47 @@
     });
   }
 
+  // One-time, friendly heads-up about the 120-minute cap (see
+  // POMO_WORK_MAX_MINUTES) — shown the first time anyone actually tries to
+  // start a session after this shipped, never again after that (tracked in
+  // localStorage, not tied to whether THIS student's own setting needed
+  // adjusting). Deliberately NOT shown at page load or baked into the
+  // clamp itself — an active, already-running session's own totalSeconds/
+  // phaseEndAt are untouched by any of this (see clampPomoWork and
+  // applyPomoActiveState), and the server independently recomputes
+  // credited minutes from its own stored session record rather than
+  // trusting whatever pomoSettings.work says at completion time (see
+  // pomodoro-complete.js) — so a session already running at 180 minutes
+  // when this deployed keeps counting down and gets credited in full,
+  // regardless of when this notice fires or what gets clamped in the
+  // meantime. Inserted directly into the DOM (not via a full re-render)
+  // so it doesn't replay the pomodoro-card's own .fade-in entrance —
+  // same "patch in place" discipline this file already uses elsewhere for
+  // exactly that reason.
+  var POMO_MAX_NOTICE_SEEN_KEY = 'taai_pomo_max_notice_seen_v1';
+  function maybeShowPomoMaxNotice() {
+    try {
+      if (localStorage.getItem(POMO_MAX_NOTICE_SEEN_KEY)) return;
+    } catch (e) { return; } // localStorage unavailable — skip rather than risk showing it every single time
+    var card = document.getElementById('pomo-card');
+    if (!card || document.getElementById('pomo-max-notice')) return;
+    var message = pomoWorkClampedFrom
+      ? 'Hey! We’ve trimmed the max Focus session from 3 hours down to 2, so we’ve gently nudged your setting from ' + pomoWorkClampedFrom + ' minutes to 120. You can always fine-tune it from the ⚙️ next to the timer.'
+      : 'Hey! We’ve trimmed the max Focus session length from 3 hours down to 2, just to help keep sessions sustainable. Nothing you need to do, just wanted you to know!';
+    card.insertAdjacentHTML('afterbegin',
+      '<div class="pomo-max-notice" id="pomo-max-notice">' +
+      '<p>👋 ' + message + '</p>' +
+      '<button class="pomo-btn pomo-btn-secondary" id="pomo-max-notice-dismiss" type="button">Got it</button>' +
+      '</div>'
+    );
+    var dismissBtn = document.getElementById('pomo-max-notice-dismiss');
+    if (dismissBtn) dismissBtn.addEventListener('click', function () {
+      var el = document.getElementById('pomo-max-notice');
+      if (el) el.remove();
+    });
+    try { localStorage.setItem(POMO_MAX_NOTICE_SEEN_KEY, '1'); } catch (e) { /* best effort */ }
+  }
+
   // The actual "begin counting down" logic, split out so both the
   // synchronous (already granted) and asynchronous (just granted via the
   // prompt below) paths in pomoToggleRun share it instead of duplicating it.
@@ -1760,6 +1824,7 @@
     pomo.running = true;
     pomoTick(); // self-schedules its own next tick — see pomoTick
     savePomoActiveState();
+    maybeShowPomoMaxNotice();
   }
 
   function pomoToggleRun() {
@@ -1839,7 +1904,7 @@
   // duration; new settings take effect starting next phase, so changing
   // "Focus minutes" mid-focus-session can't yank time out from under you.
   function applyPomoSettings() {
-    var work = clampMinutes(document.getElementById('pomo-set-work').value, pomoSettings.work, 1, 180);
+    var work = clampPomoWork(document.getElementById('pomo-set-work').value, pomoSettings.work);
     var shortBreak = clampMinutes(document.getElementById('pomo-set-short').value, pomoSettings.shortBreak, 1, 60);
     var longBreak = clampMinutes(document.getElementById('pomo-set-long').value, pomoSettings.longBreak, 1, 90);
     var cycle = clampMinutes(document.getElementById('pomo-set-cycle').value, pomoSettings.cycle, 1, 12);
@@ -1928,7 +1993,7 @@
       '<p class="pomo-notify-permanent-tip">🔔 Notifications need your computer’s permission too, not just this site’s — check your OS’s own notification settings for this browser if they don’t show up.</p>' +
       renderPomoNotifyNotice() +
       '<div class="pomo-settings" id="pomo-settings" hidden>' +
-      '<div class="pomo-setting-row"><label for="pomo-set-work">Focus</label><input type="number" id="pomo-set-work" min="1" max="180" value="' + pomoSettings.work + '"><span>min</span></div>' +
+      '<div class="pomo-setting-row"><label for="pomo-set-work">Focus</label><input type="number" id="pomo-set-work" min="1" max="' + POMO_WORK_MAX_MINUTES + '" value="' + pomoSettings.work + '"><span>min</span></div>' +
       '<div class="pomo-setting-row"><label for="pomo-set-short">Short break</label><input type="number" id="pomo-set-short" min="1" max="60" value="' + pomoSettings.shortBreak + '"><span>min</span></div>' +
       '<div class="pomo-setting-row"><label for="pomo-set-long">Long break</label><input type="number" id="pomo-set-long" min="1" max="90" value="' + pomoSettings.longBreak + '"><span>min</span></div>' +
       '<div class="pomo-setting-row"><label for="pomo-set-cycle">Sessions / long break</label><input type="number" id="pomo-set-cycle" min="1" max="12" value="' + pomoSettings.cycle + '"><span></span></div>' +
@@ -2216,7 +2281,7 @@
       var timeLabel = r.total_minutes + 'm';
       var rankLabel = LEADERBOARD_MEDALS[i] || (i + 1);
       // Session count isn't shown — it's not a comparable stat once session
-      // length is customizable per student (pomoSettings.work, 1-180min);
+      // length is customizable per student (pomoSettings.work, 1-120min);
       // total_minutes already accounts for that correctly and is what
       // actually ranks the list, so it's the only number displayed too.
       return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (r.is_me ? ' leaderboard-row--me' : '') + (r.is_live ? ' leaderboard-row--live' : '') + '">' +
