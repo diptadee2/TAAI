@@ -367,7 +367,7 @@
        with no cap looked sparse/dominant purely from empty width, not
        from anything actually in it). */
     .pomo-today-row .pomodoro-card { flex: 0 0 auto; }
-    .pomo-today-row .pomodoro-ring-wrap { width: 280px; height: 280px; }
+    .pomo-today-row .pomodoro-ring-wrap { width: 280px; height: 224px; }
     .pomo-today-row .pomodoro-time { font-size: 60px; }
     .pomo-today-row .pomodoro-mode { font-size: 15px; }
     /* Shrunk to a genuinely secondary/compact companion, not just narrower
@@ -489,8 +489,17 @@
   .pomo-settings-toggle:hover { color: var(--purple); background: rgba(139,92,246,0.14); border-color: rgba(139,92,246,0.4); transform: rotate(55deg) scale(1.08); box-shadow: 0 4px 14px rgba(139,92,246,0.25); }
   .pomo-settings-toggle:active { transform: rotate(55deg) scale(0.92); }
 
-  .pomodoro-ring-wrap { position: relative; width: 190px; height: 190px; margin: 4px auto 14px; }
-  .pomodoro-ring { width: 100%; height: 100%; transform: rotate(-90deg); }
+  /* 5:4 aspect ratio (200x160), matching the semi-circle gauge's SVG
+     viewBox — shorter than the old 190x190 square, since a half-circle
+     doesn't need to reserve height for a bottom half that's no longer
+     drawn. */
+  .pomodoro-ring-wrap { position: relative; width: 220px; height: 176px; margin: 4px auto 14px; }
+  /* No rotation here, unlike the old full-circle version — that -90deg
+     transform existed only to make a <circle>'s naturally-3-o'clock start
+     point read as 12 o'clock. The new arc <path> is authored left-to-right
+     through the top already (see renderPomodoro), so it's correctly
+     oriented as drawn. */
+  .pomodoro-ring { width: 100%; height: 100%; }
   .pomo-ring-track { fill: none; stroke: rgba(255,255,255,0.07); stroke-width: 10; }
   /* Gradient strokes (defs live inline in the SVG markup — see
      renderPomodoro in progress.js) instead of the old flat var(--purple)/
@@ -498,7 +507,10 @@
      the focal point rather than a flat colored line. */
   .pomo-ring-progress { fill: none; stroke: url(#pomo-ring-gradient-work); stroke-width: 10; stroke-linecap: round; filter: drop-shadow(0 0 6px rgba(167,139,250,0.5)); transition: stroke-dashoffset 1s linear, filter .4s ease; }
   .pomodoro-card.on-break .pomo-ring-progress { stroke: url(#pomo-ring-gradient-break); filter: drop-shadow(0 0 6px rgba(74,222,128,0.5)); }
-  .pomodoro-ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  /* Sits in the open lower portion under the arc now, not vertically
+     centered across the whole box — the arc itself only occupies roughly
+     the top 60% of the viewBox (see the "M 25 95 A 75 75" path). */
+  .pomodoro-ring-center { position: absolute; top: 58%; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
   .pomodoro-mode { font-family: var(--font-nav); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--purple); margin-bottom: 6px; transition: color .3s ease; }
   .pomodoro-card.on-break .pomodoro-mode { color: var(--green); }
   /* Same slow-drifting animated gradient .streak-number/.program-day-num

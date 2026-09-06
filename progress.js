@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-06-5';
+  var CLIENT_VERSION = '2026-09-06-6';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -84,8 +84,20 @@
   // ── Pomodoro timer (Focus Mode only) ──────────────────────────────
   var POMO_SETTINGS_KEY = 'taai_pomo_settings';
   var DEFAULT_POMO_SETTINGS = { work: 25, shortBreak: 5, longBreak: 15, cycle: 4 };
-  var POMO_RING_R = 90;
-  var POMO_RING_CIRCUMFERENCE = 2 * Math.PI * POMO_RING_R;
+  // Semi-circle gauge (a speedometer-style dial), not a full circle — a
+  // deliberate shape change from the original full ring, at direct
+  // request ("something more appealing"). The arc is a real SVG <path>
+  // (an "A 75 75 0 0 1" 180-degree sweep, see renderPomodoro), not a
+  // <circle> with half its stroke hidden — that's what lets the mode/time
+  // readout sit in the genuinely open space below the arc rather than
+  // overlapping a drawn-but-invisible bottom half. POMO_RING_CIRCUMFERENCE
+  // is this arc's actual path length (half a circle's circumference, πr,
+  // not the full 2πr) — the same stroke-dasharray/dashoffset technique
+  // that animated the old full ring works identically here, since SVG
+  // measures dash length along the path itself, not around some implied
+  // full circle.
+  var POMO_RING_R = 75;
+  var POMO_RING_CIRCUMFERENCE = Math.PI * POMO_RING_R;
 
   function clampMinutes(val, fallback, min, max) {
     var n = Number(val);
@@ -1929,7 +1941,12 @@
       '<button class="pomo-settings-toggle" id="pomo-settings-toggle" aria-label="Timer settings" type="button">' +
       '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 0 1 0 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 0 1 0-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281Z"/><path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>' +
       '</button>' +
-      '<svg class="pomodoro-ring" viewBox="0 0 200 200">' +
+      // Semi-circle gauge — a real 180-degree arc <path> (M <left> A r r 0 0 1
+      // <right>), not a full <circle>. viewBox is 200x160 (shorter than the
+      // old 200x200 square) since there's no bottom half of a circle to
+      // reserve space for any more; the mode/time readout below sits in
+      // that now-genuinely-open lower area (see .pomodoro-ring-center).
+      '<svg class="pomodoro-ring" viewBox="0 0 200 160">' +
       // Gradient strokes, not the old flat var(--purple)/var(--green) —
       // reuses the site's own established brand gradient recipe (see
       // .btn-primary/.focus-toggle: pink -> purple -> blue) rather than
@@ -1944,9 +1961,9 @@
       '<stop offset="0%" stop-color="#4ade80"/><stop offset="100%" stop-color="#22d3ee"/>' +
       '</linearGradient>' +
       '</defs>' +
-      '<circle class="pomo-ring-track" cx="100" cy="100" r="' + POMO_RING_R + '"></circle>' +
-      '<circle class="pomo-ring-progress" id="pomo-ring-progress" cx="100" cy="100" r="' + POMO_RING_R + '" ' +
-      'stroke-dasharray="' + POMO_RING_CIRCUMFERENCE + '" stroke-dashoffset="' + offset + '"></circle>' +
+      '<path class="pomo-ring-track" d="M 25 95 A ' + POMO_RING_R + ' ' + POMO_RING_R + ' 0 0 1 175 95"></path>' +
+      '<path class="pomo-ring-progress" id="pomo-ring-progress" d="M 25 95 A ' + POMO_RING_R + ' ' + POMO_RING_R + ' 0 0 1 175 95" ' +
+      'stroke-dasharray="' + POMO_RING_CIRCUMFERENCE + '" stroke-dashoffset="' + offset + '"></path>' +
       '</svg>' +
       '<div class="pomodoro-ring-center">' +
       '<div class="pomodoro-mode" id="pomo-mode">' + (pomo.mode === 'work' ? 'Focus' : 'Break') + '</div>' +
