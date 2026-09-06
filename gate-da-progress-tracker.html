@@ -367,9 +367,9 @@
        with no cap looked sparse/dominant purely from empty width, not
        from anything actually in it). */
     .pomo-today-row .pomodoro-card { flex: 0 0 auto; }
-    .pomo-today-row .pomodoro-ring-wrap { width: 280px; height: 224px; }
-    .pomo-today-row .pomodoro-time { font-size: 60px; }
-    .pomo-today-row .pomodoro-mode { font-size: 15px; }
+    .pomo-today-row .pomodoro-ring-wrap { width: 340px; height: 272px; }
+    .pomo-today-row .pomodoro-time { font-size: 62px; }
+    .pomo-today-row .pomodoro-mode { font-size: 16px; }
     /* Shrunk to a genuinely secondary/compact companion, not just narrower
        — smaller title/rows/text throughout, not only a tighter max-width,
        since a narrow column at full font size still reads as "large
@@ -492,8 +492,13 @@
   /* 5:4 aspect ratio (200x160), matching the semi-circle gauge's SVG
      viewBox — shorter than the old 190x190 square, since a half-circle
      doesn't need to reserve height for a bottom half that's no longer
-     drawn. */
-  .pomodoro-ring-wrap { position: relative; width: 220px; height: 176px; margin: 4px auto 14px; }
+     drawn. Sized up from an initial 220x176 (plus .pomodoro-time bumped
+     40px -> 44px) after a real screenshot showed the time text clipping
+     past the arc's left edge — the SVG dome scales with this box, but the
+     text's font-size doesn't, so growing the box faster than the font
+     (280/220 = +27% vs 44/40 = +10%) is what actually buys back real
+     clearance, not just making the whole thing bigger for its own sake. */
+  .pomodoro-ring-wrap { position: relative; width: 280px; height: 224px; margin: 4px auto 14px; }
   /* No rotation here, unlike the old full-circle version — that -90deg
      transform existed only to make a <circle>'s naturally-3-o'clock start
      point read as 12 o'clock. The new arc <path> is authored left-to-right
@@ -516,14 +521,14 @@
      the arc, using the bottom of the dome where it's widest, rather than
      below the arc where there's nothing enclosing it at all. */
   .pomodoro-ring-center { position: absolute; top: 0; left: 0; right: 0; bottom: 41%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 4px; }
-  .pomodoro-mode { font-family: var(--font-nav); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--purple); margin-bottom: 6px; transition: color .3s ease; }
+  .pomodoro-mode { font-family: var(--font-nav); font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--purple); margin-bottom: 6px; transition: color .3s ease; }
   .pomodoro-card.on-break .pomodoro-mode { color: var(--green); }
   /* Same slow-drifting animated gradient .streak-number/.program-day-num
      already use elsewhere on this page (shared @keyframes streak-grad) —
      reused here rather than a new animation, so the whole timer (ring +
      number) reads as one deliberately "premium" gradient treatment, not
      the old flat purple text next to a flat purple ring. */
-  .pomodoro-time { font-family: var(--font-body); font-size: 40px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; background: linear-gradient(120deg,#FF7FB7,var(--purple),#4D8BFF); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: streak-grad 6s ease infinite; }
+  .pomodoro-time { font-family: var(--font-body); font-size: 44px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; background: linear-gradient(120deg,#FF7FB7,var(--purple),#4D8BFF); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: streak-grad 6s ease infinite; }
   .pomodoro-card.on-break .pomodoro-time { background: linear-gradient(120deg,#4ade80,#22d3ee); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; }
 
   .pomodoro-dots { position: relative; font-size: 19px; letter-spacing: 7px; margin-bottom: 4px; opacity: .95; }
