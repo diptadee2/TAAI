@@ -492,12 +492,22 @@
   .pomodoro-ring-wrap { position: relative; width: 190px; height: 190px; margin: 4px auto 14px; }
   .pomodoro-ring { width: 100%; height: 100%; transform: rotate(-90deg); }
   .pomo-ring-track { fill: none; stroke: rgba(255,255,255,0.07); stroke-width: 10; }
-  .pomo-ring-progress { fill: none; stroke: var(--purple); stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 1s linear, stroke .4s ease; }
-  .pomodoro-card.on-break .pomo-ring-progress { stroke: var(--green); }
+  /* Gradient strokes (defs live inline in the SVG markup — see
+     renderPomodoro in progress.js) instead of the old flat var(--purple)/
+     var(--green), plus a soft matching glow so the ring itself reads as
+     the focal point rather than a flat colored line. */
+  .pomo-ring-progress { fill: none; stroke: url(#pomo-ring-gradient-work); stroke-width: 10; stroke-linecap: round; filter: drop-shadow(0 0 6px rgba(167,139,250,0.5)); transition: stroke-dashoffset 1s linear, filter .4s ease; }
+  .pomodoro-card.on-break .pomo-ring-progress { stroke: url(#pomo-ring-gradient-break); filter: drop-shadow(0 0 6px rgba(74,222,128,0.5)); }
   .pomodoro-ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
   .pomodoro-mode { font-family: var(--font-nav); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--purple); margin-bottom: 6px; transition: color .3s ease; }
   .pomodoro-card.on-break .pomodoro-mode { color: var(--green); }
-  .pomodoro-time { font-family: var(--font-body); font-size: 40px; font-weight: 700; line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums; }
+  /* Same slow-drifting animated gradient .streak-number/.program-day-num
+     already use elsewhere on this page (shared @keyframes streak-grad) —
+     reused here rather than a new animation, so the whole timer (ring +
+     number) reads as one deliberately "premium" gradient treatment, not
+     the old flat purple text next to a flat purple ring. */
+  .pomodoro-time { font-family: var(--font-body); font-size: 40px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; background: linear-gradient(120deg,#FF7FB7,var(--purple),#4D8BFF); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: streak-grad 6s ease infinite; }
+  .pomodoro-card.on-break .pomodoro-time { background: linear-gradient(120deg,#4ade80,#22d3ee); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; }
 
   .pomodoro-dots { position: relative; font-size: 19px; letter-spacing: 7px; margin-bottom: 4px; opacity: .95; }
   .pomodoro-session-label { font-family: var(--font-nav); font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 20px; }

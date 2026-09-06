@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-06-2';
+  var CLIENT_VERSION = '2026-09-06-3';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1975,6 +1975,20 @@
       '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 0 1 0 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 0 1 0-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281Z"/><path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>' +
       '</button>' +
       '<svg class="pomodoro-ring" viewBox="0 0 200 200">' +
+      // Gradient strokes, not the old flat var(--purple)/var(--green) —
+      // reuses the site's own established brand gradient recipe (see
+      // .btn-primary/.focus-toggle: pink -> purple -> blue) rather than
+      // inventing a new palette. Defined once here since renderPomodoro()
+      // itself only ever renders once per page (the #pomo-ring-gradient-*
+      // ids would collide if it didn't).
+      '<defs>' +
+      '<linearGradient id="pomo-ring-gradient-work" x1="0%" y1="0%" x2="100%" y2="100%">' +
+      '<stop offset="0%" stop-color="#FF7FB7"/><stop offset="55%" stop-color="#A78BFA"/><stop offset="100%" stop-color="#4D8BFF"/>' +
+      '</linearGradient>' +
+      '<linearGradient id="pomo-ring-gradient-break" x1="0%" y1="0%" x2="100%" y2="100%">' +
+      '<stop offset="0%" stop-color="#4ade80"/><stop offset="100%" stop-color="#22d3ee"/>' +
+      '</linearGradient>' +
+      '</defs>' +
       '<circle class="pomo-ring-track" cx="100" cy="100" r="' + POMO_RING_R + '"></circle>' +
       '<circle class="pomo-ring-progress" id="pomo-ring-progress" cx="100" cy="100" r="' + POMO_RING_R + '" ' +
       'stroke-dasharray="' + POMO_RING_CIRCUMFERENCE + '" stroke-dashoffset="' + offset + '"></circle>' +
