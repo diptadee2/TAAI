@@ -20,13 +20,13 @@ export async function handler(event) {
   // This function is polled every 30s during Focus Mode, so its
   // wall-clock duration (and therefore Functions compute) scales
   // directly with how many Supabase round-trips run one after another.
-  // These four queries don't depend on each other's results — the
-  // week's stats, last week's stats, the streak's scheduled-dates list,
-  // and today's leaders are all independent — so they run concurrently
-  // instead of sequentially.
-  const [statsResult, lastWeekResult, scheduledResult, todayLeaders] = await Promise.all([
+  // These three queries don't depend on each other's results — the
+  // week's stats, the streak's scheduled-dates list, and today's leaders
+  // are all independent — so they run concurrently instead of
+  // sequentially. Last week's ranks moved to the second batch below
+  // (see final_rank) since it now depends on streakEmails.
+  const [statsResult, scheduledResult, todayLeaders] = await Promise.all([
     supabase.from('pomodoro_stats').select('email, total_minutes, total_sessions').eq('week_start', weekStart).order('total_minutes', { ascending: false }).limit(LIMIT),
-    supabase.from('pomodoro_stats').select('email, total_minutes').eq('week_start', lastWeekStart).order('total_minutes', { ascending: false }),
     supabase.from('schedule_tasks').select('date').lte('date', today).order('date', { ascending: false }),
     fetchTodayLeaders(supabase, viewerEmail),
   ]);
@@ -35,21 +35,6 @@ export async function handler(event) {
   if (statsError) return json(500, { error: statsError.message });
 
   if (!stats.length) return json(200, { leaderboard: [], viewerRank: null, todayLeaders });
-
-  // Rank-movement arrow, compared to where each student stood at the
-  // *end of last week* — a fixed, historical reference point that's
-  // identical for every viewer regardless of when they check, unlike a
-  // client-side "since my last poll" comparison (which is what this
-  // used to be — dropped in favor of this, since two different viewers
-  // watching at different moments could see different or no arrows for
-  // the same student, and a viewer's own very first load never had
-  // anything to compare against). Full ranked snapshot of last week
-  // (every student, not just this week's top 20) since someone's
-  // standing last week can be well outside this week's top 20 — e.g. a
-  // jump from #35 to #10 should still show as a real rise.
-  const { data: lastWeekStats, error: lastWeekError } = lastWeekResult;
-  if (lastWeekError) return json(500, { error: lastWeekError.message });
-  const lastWeekRankByEmail = Object.fromEntries(lastWeekStats.map((s, i) => [s.email, i + 1]));
 
   // Streak balls shown between name and minutes in the leaderboard UI —
   // computed the same way as the single-student /streak endpoint (see
@@ -65,14 +50,29 @@ export async function handler(event) {
   if (viewerEmail && !streakEmails.includes(viewerEmail)) streakEmails.push(viewerEmail);
 
   // Same independence reasoning as above: the display-name lookup, the
-  // completed-tasks lookup, and the "live now" lookup only need
-  // streakEmails, not each other's results.
-  let studentsResult, completedResult, liveStatusByEmail;
+  // completed-tasks lookup, the "live now" lookup, and last week's ranks
+  // only need streakEmails, not each other's results.
+  let studentsResult, completedResult, liveStatusByEmail, lastWeekRankResult;
   try {
-    [studentsResult, completedResult, liveStatusByEmail] = await Promise.all([
+    [studentsResult, completedResult, liveStatusByEmail, lastWeekRankResult] = await Promise.all([
       supabase.from('students').select('email, display_name').in('email', stats.map(s => s.email)),
       supabase.from('task_progress').select('email, date').in('email', streakEmails).eq('completed', true),
       fetchLiveStatusByEmail(supabase, streakEmails),
+      // Rank-movement arrow, compared to where each student stood at the
+      // *end of last week* — a fixed, historical reference point that's
+      // identical for every viewer regardless of when they check.
+      // final_rank is precomputed once, the first time
+      // weekly-rank-snapshot.js runs after that week closes (see
+      // schema.sql) — reading it here is a targeted, indexed lookup for
+      // just the ~20 emails this poll actually needs, instead of the
+      // unbounded "fetch every active student's whole previous week and
+      // rank it in JS" query this replaced. Can be null for the small
+      // window between a week closing and the next daily snapshot run
+      // (up to ~1 hour, see that function's own comment on why it's a
+      // daily check rather than a precisely-timed one) — handled the
+      // same as "no previous rank at all" (a brand-new student), no
+      // arrow shown, not an error.
+      supabase.from('pomodoro_stats').select('email, final_rank').eq('week_start', lastWeekStart).in('email', streakEmails),
     ]);
   } catch (err) {
     return json(500, { error: err.message });
@@ -81,6 +81,10 @@ export async function handler(event) {
   const { data: students, error: studentsError } = studentsResult;
   if (studentsError) return json(500, { error: studentsError.message });
   const nameByEmail = Object.fromEntries(students.map(s => [s.email, s.display_name]));
+
+  const { data: lastWeekRanks, error: lastWeekRankError } = lastWeekRankResult;
+  if (lastWeekRankError) return json(500, { error: lastWeekRankError.message });
+  const lastWeekRankByEmail = Object.fromEntries(lastWeekRanks.filter(r => r.final_rank != null).map(r => [r.email, r.final_rank]));
 
   const { data: completedForStreak, error: completedError } = completedResult;
   if (completedError) return json(500, { error: completedError.message });

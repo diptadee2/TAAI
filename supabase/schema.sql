@@ -297,18 +297,33 @@ ALTER TABLE scheduled_posts ADD COLUMN IF NOT EXISTS telegram_test_chat_id TEXT;
 -- that scheduled function runs after the week closes.
 ALTER TABLE pomodoro_stats ADD COLUMN IF NOT EXISTS final_rank INTEGER;
 
--- Bulk-ranks one closed week in a single statement (RANK() OVER, not a
--- per-row loop from the calling function) — matches this schema's
+-- Bulk-ranks one closed week in a single statement (a window function,
+-- not a per-row loop from the calling function) — matches this schema's
 -- existing precedent of pushing set-based work into a Postgres function
 -- rather than doing it row-by-row from JS (see increment_pomodoro_stats
 -- above). Safe to call repeatedly for the same week; it just recomputes
 -- and overwrites the same ranks each time (idempotent).
+--
+-- ROW_NUMBER(), not RANK() — a real bug, caught by comparing this
+-- function's output against the old live-computed ranking before
+-- switching pomodoro-leaderboard.js's read path over: the previous
+-- behavior (a plain JS array index over `.order('total_minutes', {
+-- ascending: false })`) assigns strictly sequential 1,2,3,4... with no
+-- tie-awareness — students tied at the same total_minutes just got
+-- whatever consecutive numbers Postgres happened to return them in.
+-- RANK() instead gives every tied student the SAME rank and skips the
+-- following numbers (competition-style: two people tied for 47th both
+-- get 47, the next distinct value jumps to 51) — arguably more "correct"
+-- for a real ranking, but a genuine behavior change from what's shipping
+-- today, confirmed directly: four students tied at 120 minutes diverged
+-- from the old output by exactly that skip. ROW_NUMBER() reproduces the
+-- old sequential-numbering behavior instead.
 CREATE OR REPLACE FUNCTION compute_weekly_final_ranks(p_week_start DATE)
 RETURNS void AS $$
   UPDATE pomodoro_stats
   SET final_rank = ranked.rnk
   FROM (
-    SELECT email, RANK() OVER (ORDER BY total_minutes DESC) AS rnk
+    SELECT email, ROW_NUMBER() OVER (ORDER BY total_minutes DESC) AS rnk
     FROM pomodoro_stats
     WHERE week_start = p_week_start
   ) ranked
