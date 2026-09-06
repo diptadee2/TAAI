@@ -7,10 +7,13 @@
 //
 // Role-gated the same as team-posts.js. Computes everything from full
 // history in a small, fixed number of batch queries (one per table, not
-// one per student) rather than looping computeStreak-style per-student
-// queries — the same batching principle pomodoro-leaderboard.js already
-// uses for streak, just extended to every student instead of one board's
-// worth of rows.
+// one per student) rather than looping per-student queries.
+//
+// Streak reads the cached students.current_streak column directly (see
+// complete-task.js and daily-streak-snapshot.js for how it's kept up to
+// date) instead of recomputing it from schedule_tasks + task_progress —
+// the query for that scheduled-dates list has been removed entirely, it
+// had no other consumer in this file.
 //
 // task_progress and pomo_daily_sessions specifically go through
 // fetchAllRows, not a plain .select() — a real, already-shipped bug,
@@ -18,11 +21,11 @@
 // regardless of how many actually match, and both tables already exceed
 // that (2,595 completed task_progress rows, 1,112 pomo_daily_sessions
 // rows, as of 2026-09-06). A plain unbounded query here was silently
-// returning only the first page and building every student's streak,
-// all-time hours, last-active date, and consistency figure from an
-// incomplete slice of the real data, with no error — it just looked like
-// a normal response.
-import { getSupabase, json, requireAdmin, todayForStreak, computeStreak, weekStartIST, fetchAllRows } from './lib/supabase.js';
+// returning only the first page and building every student's all-time
+// hours, last-active date, and consistency figure from an incomplete
+// slice of the real data, with no error — it just looked like a normal
+// response.
+import { getSupabase, json, requireAdmin, todayForStreak, weekStartIST, fetchAllRows } from './lib/supabase.js';
 
 function median(values) {
   const sorted = [...values].sort((a, b) => a - b);
@@ -51,11 +54,10 @@ export async function handler(event, context) {
 
   const today = todayForStreak();
 
-  let studentsResult, scheduledResult, completed, sessions, weekStatsResult, totalTaskResult;
+  let studentsResult, completed, sessions, weekStatsResult, totalTaskResult;
   try {
-    [studentsResult, scheduledResult, completed, sessions, weekStatsResult, totalTaskResult] = await Promise.all([
-      supabase.from('students').select('email, display_name, notes, created_at'),
-      supabase.from('schedule_tasks').select('date').lte('date', today).order('date', { ascending: false }),
+    [studentsResult, completed, sessions, weekStatsResult, totalTaskResult] = await Promise.all([
+      supabase.from('students').select('email, display_name, notes, created_at, current_streak'),
       fetchAllRows(() => supabase.from('task_progress').select('email, date').eq('completed', true).lte('date', today)),
       fetchAllRows(() => supabase.from('pomo_daily_sessions').select('email, date, total_minutes')),
       supabase.from('pomodoro_stats').select('email, total_minutes').eq('week_start', weekStartIST()),
@@ -74,13 +76,10 @@ export async function handler(event, context) {
     return json(500, { error: err.message });
   }
   const { data: students, error: studentsErr } = studentsResult;
-  const { data: scheduled, error: schedErr } = scheduledResult;
   const { data: weekStats, error: weekErr } = weekStatsResult;
   const { count: totalTaskCount, error: totalErr } = totalTaskResult;
-  const err = studentsErr || schedErr || weekErr || totalErr;
+  const err = studentsErr || weekErr || totalErr;
   if (err) return json(500, { error: err.message });
-
-  const scheduledDates = [...new Set(scheduled.map(r => r.date))];
 
   const completedByEmail = new Map(); // email -> Set(date), for streak
   const taskCountByEmail = new Map(); // email -> completed task count
@@ -149,7 +148,7 @@ export async function handler(event, context) {
       created_at: s.created_at,
       total_minutes: minutesByEmail.get(s.email) || 0,
       week_minutes: weekMinutesByEmail.get(s.email) || 0,
-      streak: computeStreak(scheduledDates, completedByEmail.get(s.email) || new Set(), today),
+      streak: s.current_streak || 0,
       tasks_completed: taskCountByEmail.get(s.email) || 0,
       progress_pct: totalTaskCount > 0 ? Math.round(((taskCountByEmail.get(s.email) || 0) / totalTaskCount) * 100) : 0,
       consistency_minutes: consistencyFor(s.email),

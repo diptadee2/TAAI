@@ -4,7 +4,7 @@
 // design; no email or other identity is returned in the response. The
 // optional `email` query param (the viewer's own, if logged in) is only
 // used to flag their own row with is_me, never anyone else's.
-import { getSupabase, json, weekStartIST, weekBefore, todayForStreak, computeStreak, fetchTodayLeaders, fetchLiveStatusByEmail } from './lib/supabase.js';
+import { getSupabase, json, weekStartIST, weekBefore, fetchTodayLeaders, fetchLiveStatusByEmail } from './lib/supabase.js';
 
 const LIMIT = 20;
 
@@ -15,19 +15,16 @@ export async function handler(event) {
   const supabase = getSupabase();
   const weekStart = weekStartIST();
   const lastWeekStart = weekBefore(weekStart);
-  const today = todayForStreak();
 
   // This function is polled every 30s during Focus Mode, so its
   // wall-clock duration (and therefore Functions compute) scales
   // directly with how many Supabase round-trips run one after another.
-  // These three queries don't depend on each other's results — the
-  // week's stats, the streak's scheduled-dates list, and today's leaders
-  // are all independent — so they run concurrently instead of
-  // sequentially. Last week's ranks moved to the second batch below
-  // (see final_rank) since it now depends on streakEmails.
-  const [statsResult, scheduledResult, todayLeaders] = await Promise.all([
+  // These two queries don't depend on each other's results — the week's
+  // stats and today's leaders — so they run concurrently instead of
+  // sequentially. Last week's ranks moved to the second batch below (see
+  // final_rank) since it now depends on streakEmails.
+  const [statsResult, todayLeaders] = await Promise.all([
     supabase.from('pomodoro_stats').select('email, total_minutes, total_sessions').eq('week_start', weekStart).order('total_minutes', { ascending: false }).limit(LIMIT),
-    supabase.from('schedule_tasks').select('date').lte('date', today).order('date', { ascending: false }),
     fetchTodayLeaders(supabase, viewerEmail),
   ]);
 
@@ -36,27 +33,21 @@ export async function handler(event) {
 
   if (!stats.length) return json(200, { leaderboard: [], viewerRank: null, todayLeaders });
 
-  // Streak balls shown between name and minutes in the leaderboard UI —
-  // computed the same way as the single-student /streak endpoint (see
-  // computeStreak in lib/supabase.js) so the two can't disagree, but
-  // batched: one scheduled-dates query and one task_progress query cover
-  // every row (plus the viewer's own row, if they're not already in the
-  // top 20) at once, instead of a separate /streak call per row.
-  const { data: scheduledForStreak, error: schedError } = scheduledResult;
-  if (schedError) return json(500, { error: schedError.message });
-  const scheduledDates = [...new Set(scheduledForStreak.map(r => r.date))];
-
   const streakEmails = stats.map(s => s.email);
   if (viewerEmail && !streakEmails.includes(viewerEmail)) streakEmails.push(viewerEmail);
 
-  // Same independence reasoning as above: the display-name lookup, the
-  // completed-tasks lookup, the "live now" lookup, and last week's ranks
-  // only need streakEmails, not each other's results.
-  let studentsResult, completedResult, liveStatusByEmail, lastWeekRankResult;
+  // Same independence reasoning as above: the display-name+streak lookup,
+  // the "live now" lookup, and last week's ranks only need streakEmails,
+  // not each other's results. Streak balls shown between name and minutes
+  // in the leaderboard UI read the cached students.current_streak column
+  // directly now (kept correct by complete-task.js's same-day write and
+  // daily-streak-snapshot.js's daily sweep — see CLAUDE.md) instead of
+  // recomputing it from schedule_tasks + task_progress on every single
+  // 30s poll.
+  let studentsResult, liveStatusByEmail, lastWeekRankResult;
   try {
-    [studentsResult, completedResult, liveStatusByEmail, lastWeekRankResult] = await Promise.all([
-      supabase.from('students').select('email, display_name').in('email', stats.map(s => s.email)),
-      supabase.from('task_progress').select('email, date').in('email', streakEmails).eq('completed', true),
+    [studentsResult, liveStatusByEmail, lastWeekRankResult] = await Promise.all([
+      supabase.from('students').select('email, display_name, current_streak').in('email', streakEmails),
       fetchLiveStatusByEmail(supabase, streakEmails),
       // Rank-movement arrow, compared to where each student stood at the
       // *end of last week* — a fixed, historical reference point that's
@@ -81,22 +72,11 @@ export async function handler(event) {
   const { data: students, error: studentsError } = studentsResult;
   if (studentsError) return json(500, { error: studentsError.message });
   const nameByEmail = Object.fromEntries(students.map(s => [s.email, s.display_name]));
+  const streakByEmail = Object.fromEntries(students.map(s => [s.email, s.current_streak || 0]));
 
   const { data: lastWeekRanks, error: lastWeekRankError } = lastWeekRankResult;
   if (lastWeekRankError) return json(500, { error: lastWeekRankError.message });
   const lastWeekRankByEmail = Object.fromEntries(lastWeekRanks.filter(r => r.final_rank != null).map(r => [r.email, r.final_rank]));
-
-  const { data: completedForStreak, error: completedError } = completedResult;
-  if (completedError) return json(500, { error: completedError.message });
-
-  const completedByEmail = {};
-  completedForStreak.forEach(r => {
-    if (!completedByEmail[r.email]) completedByEmail[r.email] = new Set();
-    completedByEmail[r.email].add(r.date);
-  });
-  const streakByEmail = Object.fromEntries(
-    streakEmails.map(e => [e, computeStreak(scheduledDates, completedByEmail[e] || new Set(), today)])
-  );
 
   // "Live now" status — see fetchLiveStatusByEmail in lib/supabase.js for
   // the exact definition (shared with fetchTodayLeaders, so the daily and

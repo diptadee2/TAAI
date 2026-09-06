@@ -1,11 +1,13 @@
 // GET /api/streak?email=...
-// Consecutive-day streak, computed from full history (not just the visible
-// month) so it doesn't reset when the student flips to a different month.
-// A "day" only counts toward or against the streak if something was
-// actually scheduled that day — rest days with nothing assigned neither
-// extend nor break it. Today gets a pass if nothing's ticked yet, since
-// the day isn't over.
-import { getSupabase, json, todayForStreak, computeStreak } from './lib/supabase.js';
+// Consecutive-day streak. Reads the cached students.current_streak column
+// instead of recomputing from schedule_tasks + task_progress on every call
+// — kept correct by complete-task.js's same-day write (awaited before that
+// endpoint responds, so a refreshStreak() call right after a task toggle in
+// progress.js always sees the fresh value) and daily-streak-snapshot.js's
+// daily sweep for streaks that should break from a day passing with no
+// action. See CLAUDE.md's streak-caching write-up for the full design and
+// computeStreak() in lib/supabase.js for the semantics this cache mirrors.
+import { getSupabase, json } from './lib/supabase.js';
 
 export async function handler(event) {
   if (event.httpMethod !== 'GET') return json(405, { error: 'method not allowed' });
@@ -14,26 +16,13 @@ export async function handler(event) {
   if (!email) return json(400, { error: 'email is required' });
 
   const supabase = getSupabase();
-  const today = todayForStreak();
 
-  const { data: scheduled, error: schedErr } = await supabase
-    .from('schedule_tasks')
-    .select('date')
-    .lte('date', today)
-    .order('date', { ascending: false });
-  if (schedErr) return json(500, { error: schedErr.message });
-
-  const scheduledDates = [...new Set(scheduled.map(r => r.date))];
-
-  const { data: completed, error: progErr } = await supabase
-    .from('task_progress')
-    .select('date')
+  const { data: student, error } = await supabase
+    .from('students')
+    .select('current_streak')
     .eq('email', email)
-    .eq('completed', true);
-  if (progErr) return json(500, { error: progErr.message });
+    .maybeSingle();
+  if (error) return json(500, { error: error.message });
 
-  const completedDates = new Set(completed.map(r => r.date));
-  const streak = computeStreak(scheduledDates, completedDates, today);
-
-  return json(200, { streak });
+  return json(200, { streak: student ? student.current_streak || 0 : 0 });
 }
