@@ -50,7 +50,7 @@ export async function fetchAllRows(buildQuery, pageSize = 1000) {
 // (old JS silently sending a request shape the new server no longer
 // accepts) doesn't stay stuck indefinitely waiting for someone to notice
 // and manually refresh.
-export const CLIENT_VERSION = '2026-09-04-4';
+export const CLIENT_VERSION = '2026-09-06-1';
 
 export function json(statusCode, body) {
   return {
@@ -299,7 +299,7 @@ export async function fetchLiveStatusByEmail(supabase, emails) {
 // default), keyed to pomo_daily_sessions.total_minutes — resets by
 // construction every midnight IST since a new day is just a new row
 // starting from zero. Shared by tracker-data.js (the page-load batch) and
-// pomodoro-leaderboard.js (its 30s Focus Mode poll, so the "Today" card
+// pomodoro-leaderboard.js (its Focus Mode poll, so the "Today" card
 // can auto-refresh alongside the top-20 board on the same request instead
 // of needing a poll of its own) so the two can't drift out of sync on this
 // logic — and by discord-dispatch.js's 'daily_leader' source, which

@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-04-4';
+  var CLIENT_VERSION = '2026-09-06-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1109,7 +1109,7 @@
   }
 
   // Split from renderTodayLeaders (below) so refreshLeaderboard can patch
-  // just the rows on its 30s poll, same reason renderLeaderboardRows is
+  // just the rows on its smart-poll (see LEADERBOARD_POLL_MS), same reason renderLeaderboardRows is
   // split from renderLeaderboardCard — replacing the whole card would
   // replay its .fade-in entrance every refresh.
   function renderTodayLeaderboardRows() {
@@ -2105,8 +2105,8 @@
   // row-to-row alignment risk from leaving it empty.
   // "Xm ago" / "Xh ago" / "Xd ago" — coarse on purpose (rounded to the
   // nearest unit, no seconds granularity), since this only needs to
-  // refresh whenever the leaderboard itself does (the 30s smart-poll or
-  // a load/action refresh), not tick live like the countdown does.
+  // refresh whenever the leaderboard itself does (the smart-poll, see
+  // LEADERBOARD_POLL_MS, or a load/action refresh), not tick live like the countdown does.
   function formatLastSeen(epochMs) {
     var diffMin = Math.max(0, Math.round((Date.now() - epochMs) / 60000));
     if (diffMin < 1) return 'just now';
@@ -2188,8 +2188,14 @@
   // keeping it fresh. One immediate refresh fires the moment the tab
   // becomes visible again (rather than waiting up to the full interval)
   // so a long-backgrounded tab catches up right away instead of showing
-  // stale live-status for up to 30s after being refocused.
-  var LEADERBOARD_POLL_MS = 30000;
+  // stale live-status for up to a full interval after being refocused.
+  // Widened from 30s to 60s 2026-09-06 (see CLAUDE.md's cost-reduction
+  // plan) — halves both this endpoint's Netlify compute and its Supabase
+  // egress, the single biggest driver of both per the measured breakdown
+  // there. Per-second countdown timers in the Pomodoro ring are
+  // unaffected, since those already tick client-side from data already
+  // fetched, independent of this poll.
+  var LEADERBOARD_POLL_MS = 60000;
   var leaderboardPollId = null;
   function startLeaderboardPoll() {
     stopLeaderboardPoll();
@@ -2258,7 +2264,7 @@
   // Patches #leaderboard-rows (and #today-leaderboard-rows) in place rather
   // than the whole card, so the card's own .fade-in entrance doesn't
   // replay every time this refreshes. todayLeaders rides along on this
-  // same 30s poll instead of getting a poll of its own — see fetchTodayLeaders
+  // same smart-poll instead of getting a poll of its own — see fetchTodayLeaders
   // in pomodoro-leaderboard.js. If #today-leaderboard-rows isn't in the DOM
   // (the card started with no data at page load, per renderTodayLeaders'
   // own empty-state check), this just silently no-ops for it, same as the

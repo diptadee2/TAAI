@@ -16,7 +16,8 @@ export async function handler(event) {
   const weekStart = weekStartIST();
   const lastWeekStart = weekBefore(weekStart);
 
-  // This function is polled every 30s during Focus Mode, so its
+  // This function is polled every 60s during Focus Mode (see LEADERBOARD_POLL_MS in
+  // progress.js), so its
   // wall-clock duration (and therefore Functions compute) scales
   // directly with how many Supabase round-trips run one after another.
   // These two queries don't depend on each other's results — the week's
@@ -43,7 +44,7 @@ export async function handler(event) {
   // directly now (kept correct by complete-task.js's same-day write and
   // daily-streak-snapshot.js's daily sweep — see CLAUDE.md) instead of
   // recomputing it from schedule_tasks + task_progress on every single
-  // 30s poll.
+  // 60s poll.
   let studentsResult, liveStatusByEmail, lastWeekRankResult;
   try {
     [studentsResult, liveStatusByEmail, lastWeekRankResult] = await Promise.all([
@@ -134,7 +135,7 @@ export async function handler(event) {
   // todayLeaders was fetched up front, in parallel with the weekly-stats
   // queries above, so the "Today" card in Focus Mode can auto-refresh
   // alongside the top-20 board on the request that's already happening
-  // every 30s — no extra network round-trip, just a modest amount of
+  // every 60s — no extra network round-trip, just a modest amount of
   // extra JSON on an existing one. See refreshLeaderboard in progress.js
   // for the client side.
   return json(200, { leaderboard, viewerRank, todayLeaders });
