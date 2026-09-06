@@ -536,8 +536,14 @@
   /* Real-time feedback while typing into the Focus field (see the
      pomo-set-work 'input' listener) — appears the instant a value over
      POMO_WORK_MAX_MINUTES is typed, auto-hides itself a couple seconds
-     later so it doesn't linger as stale UI once the student's moved on. */
-  .pomo-work-max-alert { margin: -4px 0 10px; font-size: 12px; color: var(--amber); text-align: left; animation: pomoMaxNoticeIn .3s cubic-bezier(.34,1.1,.64,1); }
+     later so it doesn't linger as stale UI once the student's moved on.
+     Toggled via the .visible class, not the `hidden` attribute — `hidden`
+     forces display:none instantly with nothing to transition, which is
+     exactly why the fade-out used to look abrupt. opacity/max-height are
+     both real transitions here, so showing AND hiding animate the same way
+     instead of only the entrance being smooth. */
+  .pomo-work-max-alert { font-size: 12px; color: var(--amber); text-align: left; margin: 0; max-height: 0; opacity: 0; overflow: hidden; transition: opacity .35s ease, max-height .35s ease, margin .35s ease; }
+  .pomo-work-max-alert.visible { margin: -4px 0 10px; max-height: 32px; opacity: 1; }
   .pomo-test-sound { display: block; margin: 6px auto 0; padding: 7px 16px; font-size: 12px; font-family: var(--font-body); border-radius: 999px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: var(--ink-dim); cursor: pointer; transition: background .2s, color .2s, border-color .2s; }
   .pomo-test-sound:hover { background: rgba(139,92,246,0.14); border-color: rgba(139,92,246,0.4); color: var(--ink); }
   .pomo-notify-tip { font-size: 11.5px; color: var(--ink-soft); text-align: center; line-height: 1.5; max-width: 280px; margin: 8px auto 0; }
@@ -553,18 +559,6 @@
   .pomo-gate-steps li { margin-bottom: 6px; }
   .pomo-gate-steps strong { color: var(--ink); }
   .pomo-notify-notice .pomo-btn { min-width: auto; padding: 9px 20px; }
-  /* One-time "we lowered the max session length" notice — see
-     maybeShowPomoMaxNotice in progress.js. Inserted directly into
-     #pomo-card via insertAdjacentHTML (not the normal string-render path),
-     so it needs its own entrance animation rather than the site's usual
-     .fade-in (that relies on an IntersectionObserver re-observing after
-     each full render, which this deliberately bypasses). Purple/friendly,
-     not the amber "something's wrong" tone .pomo-notify-notice uses above —
-     this is a heads-up, not a problem to fix. */
-  .pomo-max-notice { margin-bottom: 18px; padding: 14px 16px; border-radius: 14px; background: var(--purple-soft); border: 1px solid rgba(167,139,250,0.35); text-align: left; animation: pomoMaxNoticeIn .4s cubic-bezier(.34,1.1,.64,1); }
-  .pomo-max-notice p { font-size: 13px; color: var(--ink-dim); line-height: 1.55; margin: 0 0 10px; }
-  .pomo-max-notice .pomo-btn { min-width: auto; padding: 8px 18px; }
-  @keyframes pomoMaxNoticeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
   /* Always visible, not conditional on any permission state — most people
      never open the settings panel where this used to be the only place
      explaining that a browser's own "allow notifications" isn't the same

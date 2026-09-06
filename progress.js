@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-06-4';
+  var CLIENT_VERSION = '2026-09-06-5';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -93,13 +93,8 @@
     return Math.round(n);
   }
 
-  // Max Focus-session length, lowered from 180 to 120 on 2026-09-06. Set
-  // once, the first time a >120 value is actually seen (loadPomoSettings,
-  // the cross-device sync in loadMonth, or the settings-panel Save), so
-  // maybeShowPomoMaxNotice (see pomoActuallyStart) can tell a genuinely-
-  // affected student what changed for them specifically.
+  // Max Focus-session length, lowered from 180 to 120 on 2026-09-06.
   var POMO_WORK_MAX_MINUTES = 120;
-  var pomoWorkClampedFrom = null;
   // clampMinutes' own semantics are "validate within range, else fall back
   // to the default" (NOT "clamp to the nearest boundary") — passing 120 as
   // its own max would silently turn an old 180 into the default 25, not
@@ -109,11 +104,7 @@
   // ceiling as a separate step.
   function clampPomoWork(rawValue, fallback) {
     var work = clampMinutes(rawValue, fallback, 1, 180);
-    if (work > POMO_WORK_MAX_MINUTES) {
-      pomoWorkClampedFrom = work;
-      work = POMO_WORK_MAX_MINUTES;
-    }
-    return work;
+    return work > POMO_WORK_MAX_MINUTES ? POMO_WORK_MAX_MINUTES : work;
   }
 
   function loadPomoSettings() {
@@ -1774,47 +1765,6 @@
     });
   }
 
-  // One-time, friendly heads-up about the 120-minute cap (see
-  // POMO_WORK_MAX_MINUTES) — shown the first time anyone actually tries to
-  // start a session after this shipped, never again after that (tracked in
-  // localStorage, not tied to whether THIS student's own setting needed
-  // adjusting). Deliberately NOT shown at page load or baked into the
-  // clamp itself — an active, already-running session's own totalSeconds/
-  // phaseEndAt are untouched by any of this (see clampPomoWork and
-  // applyPomoActiveState), and the server independently recomputes
-  // credited minutes from its own stored session record rather than
-  // trusting whatever pomoSettings.work says at completion time (see
-  // pomodoro-complete.js) — so a session already running at 180 minutes
-  // when this deployed keeps counting down and gets credited in full,
-  // regardless of when this notice fires or what gets clamped in the
-  // meantime. Inserted directly into the DOM (not via a full re-render)
-  // so it doesn't replay the pomodoro-card's own .fade-in entrance —
-  // same "patch in place" discipline this file already uses elsewhere for
-  // exactly that reason.
-  var POMO_MAX_NOTICE_SEEN_KEY = 'taai_pomo_max_notice_seen_v1';
-  function maybeShowPomoMaxNotice() {
-    try {
-      if (localStorage.getItem(POMO_MAX_NOTICE_SEEN_KEY)) return;
-    } catch (e) { return; } // localStorage unavailable — skip rather than risk showing it every single time
-    var card = document.getElementById('pomo-card');
-    if (!card || document.getElementById('pomo-max-notice')) return;
-    var message = pomoWorkClampedFrom
-      ? 'Hey! We’ve trimmed the max Focus session from 3 hours down to 2, so we’ve gently nudged your setting from ' + pomoWorkClampedFrom + ' minutes to 120. You can always fine-tune it from the ⚙️ next to the timer.'
-      : 'Hey! We’ve trimmed the max Focus session length from 3 hours down to 2, just to help keep sessions sustainable. Nothing you need to do, just wanted you to know!';
-    card.insertAdjacentHTML('afterbegin',
-      '<div class="pomo-max-notice" id="pomo-max-notice">' +
-      '<p>👋 ' + message + '</p>' +
-      '<button class="pomo-btn pomo-btn-secondary" id="pomo-max-notice-dismiss" type="button">Got it</button>' +
-      '</div>'
-    );
-    var dismissBtn = document.getElementById('pomo-max-notice-dismiss');
-    if (dismissBtn) dismissBtn.addEventListener('click', function () {
-      var el = document.getElementById('pomo-max-notice');
-      if (el) el.remove();
-    });
-    try { localStorage.setItem(POMO_MAX_NOTICE_SEEN_KEY, '1'); } catch (e) { /* best effort */ }
-  }
-
   // The actual "begin counting down" logic, split out so both the
   // synchronous (already granted) and asynchronous (just granted via the
   // prompt below) paths in pomoToggleRun share it instead of duplicating it.
@@ -1824,7 +1774,6 @@
     pomo.running = true;
     pomoTick(); // self-schedules its own next tick — see pomoTick
     savePomoActiveState();
-    maybeShowPomoMaxNotice();
   }
 
   function pomoToggleRun() {
@@ -1856,21 +1805,11 @@
     // here, this is what actually presses "Start" on their behalf.
     Notification.requestPermission().then(function (perm) {
       if (perm === 'granted') {
-        // Real bug, caught after shipping the 120-minute-cap notice: this
-        // used to call renderCalendar() unconditionally below, same as the
-        // 'denied' branch. renderCalendar() rebuilds #pomo-card's whole
-        // innerHTML from the renderPomodoro() template, which doesn't know
-        // about maybeShowPomoMaxNotice's directly-inserted #pomo-max-notice
-        // element at all — so it silently wiped the notice out an instant
-        // after pomoActuallyStart() had just inserted it. This is the path
-        // almost every genuinely first-time student takes (notification
-        // permission starts 'default' for anyone who's never used Focus
-        // Mode before), so the notice was effectively never seen by new
-        // students, only by returning ones who'd already granted
-        // permission in an earlier session (the synchronous branch above,
-        // which only calls updatePomoDisplay() and was never affected).
-        // Matching that branch's own updatePomoDisplay()-only pattern here
-        // fixes it the same way.
+        // Same updatePomoDisplay()-only pattern as the already-granted
+        // branch above, not a full renderCalendar() — the card (ring,
+        // Start button, everything) is already on screen at this point,
+        // so a full re-render here would just replay its .fade-in
+        // entrance for no reason.
         pomoActuallyStart();
         updatePomoDisplay();
       } else {
@@ -2024,7 +1963,7 @@
       renderPomoNotifyNotice() +
       '<div class="pomo-settings" id="pomo-settings" hidden>' +
       '<div class="pomo-setting-row"><label for="pomo-set-work">Focus</label><input type="number" id="pomo-set-work" min="1" max="' + POMO_WORK_MAX_MINUTES + '" value="' + pomoSettings.work + '"><span>min</span></div>' +
-      '<p class="pomo-work-max-alert" id="pomo-work-max-alert" hidden>⏱️ Max session limit is 120 minutes.</p>' +
+      '<p class="pomo-work-max-alert" id="pomo-work-max-alert">⏱️ Max session limit is 120 minutes.</p>' +
       '<div class="pomo-setting-row"><label for="pomo-set-short">Short break</label><input type="number" id="pomo-set-short" min="1" max="60" value="' + pomoSettings.shortBreak + '"><span>min</span></div>' +
       '<div class="pomo-setting-row"><label for="pomo-set-long">Long break</label><input type="number" id="pomo-set-long" min="1" max="90" value="' + pomoSettings.longBreak + '"><span>min</span></div>' +
       '<div class="pomo-setting-row"><label for="pomo-set-cycle">Sessions / long break</label><input type="number" id="pomo-set-cycle" min="1" max="12" value="' + pomoSettings.cycle + '"><span></span></div>' +
@@ -2550,9 +2489,9 @@
       pomoWorkInput.value = POMO_WORK_MAX_MINUTES;
       var alertEl = document.getElementById('pomo-work-max-alert');
       if (!alertEl) return;
-      alertEl.hidden = false;
+      alertEl.classList.add('visible');
       clearTimeout(pomoWorkMaxAlertTimer);
-      pomoWorkMaxAlertTimer = setTimeout(function () { alertEl.hidden = true; }, 2500);
+      pomoWorkMaxAlertTimer = setTimeout(function () { alertEl.classList.remove('visible'); }, 2500);
     });
 
     var pomoTestSound = document.getElementById('pomo-test-sound');
