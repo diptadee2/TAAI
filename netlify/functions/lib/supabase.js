@@ -746,6 +746,56 @@ async function monthlyWeeklyRecordLine(supabase) {
   return `\n\n🗓️ *This month's weekly record: **${record.display_name}** — ${formatHoursDecimal(record.total_minutes)}, week of ${record.week_start}*`;
 }
 
+function median(values) {
+  if (!values.length) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+// Median (not mean — one binge-hours student shouldn't swing a whole-batch
+// read the way it would an average, same reasoning already used for the
+// "consistency" figures elsewhere in this file) of every active student's
+// total_minutes for a given week — "active" meaning they have a
+// pomodoro_stats row at all, not zero-filled across the full roster.
+// Zero-filling here would reintroduce the exact degenerate-result problem
+// the monthly consistency post hit for August: most of the 308-student
+// roster is inactive in any given week, so zero-filling against the whole
+// roster would crater the median to 0 almost every week regardless of how
+// the actually-active cohort performed.
+async function fetchBatchMedianMinutes(supabase, weekStart) {
+  const { data, error } = await supabase.from('pomodoro_stats').select('total_minutes').eq('week_start', weekStart);
+  if (error) throw new Error(error.message);
+  return median(data.map(r => r.total_minutes));
+}
+
+// Appended to the weekly Discord/Telegram post — whether the whole active
+// cohort's typical (median) focus time rose or fell compared to the week
+// before, not just the individual top-5 ranking. `weekStart` is always the
+// week the post is actually reporting on (fetchLastWeekLeaders' own
+// weekBefore(weekStartIST()) result), so "last week" here means whatever
+// full 7-day period preceded THAT week — this falls back correctly across
+// a month boundary with no special-casing needed, since a week is just a
+// plain date range and doesn't care where a calendar month happens to
+// start or end.
+async function batchWeeklyTrendLine(supabase, weekStart) {
+  const [thisWeek, lastWeek] = await Promise.all([
+    fetchBatchMedianMinutes(supabase, weekStart),
+    fetchBatchMedianMinutes(supabase, weekBefore(weekStart)),
+  ]);
+  if (thisWeek == null) return '';
+  if (lastWeek == null) {
+    return `\n\n📊 *Batch median focus time this week: **${formatHoursDecimal(thisWeek)}** (no data for the week before to compare)*`;
+  }
+  const diff = thisWeek - lastWeek;
+  const arrow = diff > 0 ? '▲' : diff < 0 ? '▼' : '→';
+  const pct = lastWeek > 0 ? Math.round((Math.abs(diff) / lastWeek) * 100) : null;
+  const changeText = pct != null
+    ? `${arrow} ${pct}% vs last week's ${formatHoursDecimal(lastWeek)}`
+    : `${arrow} ${formatHoursDecimal(Math.abs(diff))} vs last week's ${formatHoursDecimal(lastWeek)}`;
+  return `\n\n📊 *Batch median focus time this week: **${formatHoursDecimal(thisWeek)}** (${changeText})*`;
+}
+
 // "Mon, Jun 15" for a 'YYYY-MM-DD' calendar date — used to head each date
 // group in a 'custom' post's merged sections (see resolveScheduledPostEmbed
 // below). Parsed with an explicit UTC midnight, same reasoning as
@@ -871,7 +921,7 @@ export async function resolveScheduledPostEmbed(supabase, row) {
     return [{
       title: row.title || '📅 Weekly Top 5 Leaderboard',
       url: SCHEDULED_POST_TRACKER_URL,
-      description: `${intro}${lines.join('\n')}${await monthlyWeeklyRecordLine(supabase)}\n\n[📊 View the progress tracker](${SCHEDULED_POST_TRACKER_URL})`,
+      description: `${intro}${lines.join('\n')}${await batchWeeklyTrendLine(supabase, weekStart)}${await monthlyWeeklyRecordLine(supabase)}\n\n[📊 View the progress tracker](${SCHEDULED_POST_TRACKER_URL})`,
       color: row.color ?? 0x8b5cf6,
       footer: { text: 'Week of ' + weekStart },
     }];
