@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-06-3';
+  var CLIENT_VERSION = '2026-09-06-4';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1856,11 +1856,27 @@
     // here, this is what actually presses "Start" on their behalf.
     Notification.requestPermission().then(function (perm) {
       if (perm === 'granted') {
+        // Real bug, caught after shipping the 120-minute-cap notice: this
+        // used to call renderCalendar() unconditionally below, same as the
+        // 'denied' branch. renderCalendar() rebuilds #pomo-card's whole
+        // innerHTML from the renderPomodoro() template, which doesn't know
+        // about maybeShowPomoMaxNotice's directly-inserted #pomo-max-notice
+        // element at all — so it silently wiped the notice out an instant
+        // after pomoActuallyStart() had just inserted it. This is the path
+        // almost every genuinely first-time student takes (notification
+        // permission starts 'default' for anyone who's never used Focus
+        // Mode before), so the notice was effectively never seen by new
+        // students, only by returning ones who'd already granted
+        // permission in an earlier session (the synchronous branch above,
+        // which only calls updatePomoDisplay() and was never affected).
+        // Matching that branch's own updatePomoDisplay()-only pattern here
+        // fixes it the same way.
         pomoActuallyStart();
+        updatePomoDisplay();
       } else {
         state.pomoBlockedReason = 'denied';
+        renderCalendar();
       }
-      renderCalendar();
     });
   }
 
@@ -2008,6 +2024,7 @@
       renderPomoNotifyNotice() +
       '<div class="pomo-settings" id="pomo-settings" hidden>' +
       '<div class="pomo-setting-row"><label for="pomo-set-work">Focus</label><input type="number" id="pomo-set-work" min="1" max="' + POMO_WORK_MAX_MINUTES + '" value="' + pomoSettings.work + '"><span>min</span></div>' +
+      '<p class="pomo-work-max-alert" id="pomo-work-max-alert" hidden>⏱️ Max session limit is 120 minutes.</p>' +
       '<div class="pomo-setting-row"><label for="pomo-set-short">Short break</label><input type="number" id="pomo-set-short" min="1" max="60" value="' + pomoSettings.shortBreak + '"><span>min</span></div>' +
       '<div class="pomo-setting-row"><label for="pomo-set-long">Long break</label><input type="number" id="pomo-set-long" min="1" max="90" value="' + pomoSettings.longBreak + '"><span>min</span></div>' +
       '<div class="pomo-setting-row"><label for="pomo-set-cycle">Sessions / long break</label><input type="number" id="pomo-set-cycle" min="1" max="12" value="' + pomoSettings.cycle + '"><span></span></div>' +
@@ -2516,6 +2533,27 @@
     });
     var pomoSettingsSave = document.getElementById('pomo-settings-save');
     if (pomoSettingsSave) pomoSettingsSave.addEventListener('click', applyPomoSettings);
+
+    // Real-time feedback while typing, not just a silent clamp on Save —
+    // requested directly after the Save-time-only clamp (applyPomoSettings)
+    // turned out to be easy to miss, since nothing visibly happens until
+    // you click Save. Fires on every keystroke/spinner click; snaps the
+    // field back to 120 immediately (matching what Save would have done
+    // anyway) and shows the message for a couple seconds rather than
+    // leaving it up indefinitely, so it doesn't linger as stale-looking UI
+    // if the student moves on to another field.
+    var pomoWorkInput = document.getElementById('pomo-set-work');
+    var pomoWorkMaxAlertTimer = null;
+    if (pomoWorkInput) pomoWorkInput.addEventListener('input', function () {
+      var typed = Number(pomoWorkInput.value);
+      if (!isFinite(typed) || typed <= POMO_WORK_MAX_MINUTES) return;
+      pomoWorkInput.value = POMO_WORK_MAX_MINUTES;
+      var alertEl = document.getElementById('pomo-work-max-alert');
+      if (!alertEl) return;
+      alertEl.hidden = false;
+      clearTimeout(pomoWorkMaxAlertTimer);
+      pomoWorkMaxAlertTimer = setTimeout(function () { alertEl.hidden = true; }, 2500);
+    });
 
     var pomoTestSound = document.getElementById('pomo-test-sound');
     if (pomoTestSound) pomoTestSound.addEventListener('click', function () {

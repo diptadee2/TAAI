@@ -533,6 +533,11 @@
   .pomo-setting-row input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
   .pomo-setting-row input[type="number"]:focus { outline: none; border-color: var(--purple); }
   .pomo-setting-row span { font-size: 12px; color: var(--ink-soft); width: 26px; }
+  /* Real-time feedback while typing into the Focus field (see the
+     pomo-set-work 'input' listener) — appears the instant a value over
+     POMO_WORK_MAX_MINUTES is typed, auto-hides itself a couple seconds
+     later so it doesn't linger as stale UI once the student's moved on. */
+  .pomo-work-max-alert { margin: -4px 0 10px; font-size: 12px; color: var(--amber); text-align: left; animation: pomoMaxNoticeIn .3s cubic-bezier(.34,1.1,.64,1); }
   .pomo-test-sound { display: block; margin: 6px auto 0; padding: 7px 16px; font-size: 12px; font-family: var(--font-body); border-radius: 999px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: var(--ink-dim); cursor: pointer; transition: background .2s, color .2s, border-color .2s; }
   .pomo-test-sound:hover { background: rgba(139,92,246,0.14); border-color: rgba(139,92,246,0.4); color: var(--ink); }
   .pomo-notify-tip { font-size: 11.5px; color: var(--ink-soft); text-align: center; line-height: 1.5; max-width: 280px; margin: 8px auto 0; }
