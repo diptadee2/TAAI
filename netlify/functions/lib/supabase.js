@@ -17,6 +17,32 @@ export function getSupabase() {
   return client;
 }
 
+// PostgREST caps a single response at a fixed row limit (this project's
+// Supabase instance: 1000) regardless of how many rows actually match —
+// a real bug, confirmed directly, not a theoretical one: task_progress
+// alone already has 2,595 completed rows as of 2026-09, so any unbounded
+// `.select()` over it (team-students.js's and daily-streak-snapshot.js's
+// bulk streak/task-count queries both did this) was silently returning
+// only the first 1,000 and building its per-student maps from an
+// incomplete slice of the real data, with no error or warning — it just
+// looked like a normal, successful response. `buildQuery` must be a
+// function returning a *fresh* unexecuted query builder each call (not
+// an already-built one), since `.range()` has to be chained onto a new
+// invocation each page — reusing one builder object across iterations
+// doesn't correctly re-scope the range.
+export async function fetchAllRows(buildQuery, pageSize = 1000) {
+  let allRows = [];
+  let from = 0;
+  for (;;) {
+    const { data, error } = await buildQuery().range(from, from + pageSize - 1);
+    if (error) throw new Error(error.message);
+    allRows = allRows.concat(data);
+    if (data.length < pageSize) break;
+    from += pageSize;
+  }
+  return allRows;
+}
+
 // Bumped by hand whenever a client/server *contract* change ships for the
 // progress tracker (e.g. today's Pomodoro completion payload shape) — not
 // on every deploy. progress.js polls /version against this and auto-

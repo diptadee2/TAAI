@@ -11,7 +11,18 @@
 // queries — the same batching principle pomodoro-leaderboard.js already
 // uses for streak, just extended to every student instead of one board's
 // worth of rows.
-import { getSupabase, json, requireAdmin, todayForStreak, computeStreak, weekStartIST } from './lib/supabase.js';
+//
+// task_progress and pomo_daily_sessions specifically go through
+// fetchAllRows, not a plain .select() — a real, already-shipped bug,
+// confirmed directly: PostgREST caps a single response at 1,000 rows
+// regardless of how many actually match, and both tables already exceed
+// that (2,595 completed task_progress rows, 1,112 pomo_daily_sessions
+// rows, as of 2026-09-06). A plain unbounded query here was silently
+// returning only the first page and building every student's streak,
+// all-time hours, last-active date, and consistency figure from an
+// incomplete slice of the real data, with no error — it just looked like
+// a normal response.
+import { getSupabase, json, requireAdmin, todayForStreak, computeStreak, weekStartIST, fetchAllRows } from './lib/supabase.js';
 
 function median(values) {
   const sorted = [...values].sort((a, b) => a - b);
@@ -40,22 +51,33 @@ export async function handler(event, context) {
 
   const today = todayForStreak();
 
-  const [{ data: students, error: studentsErr }, { data: scheduled, error: schedErr }, { data: completed, error: progErr }, { data: sessions, error: sessErr }, { data: weekStats, error: weekErr }, { count: totalTaskCount, error: totalErr }] = await Promise.all([
-    supabase.from('students').select('email, display_name, notes, created_at'),
-    supabase.from('schedule_tasks').select('date').lte('date', today).order('date', { ascending: false }),
-    supabase.from('task_progress').select('email, date').eq('completed', true).lte('date', today),
-    supabase.from('pomo_daily_sessions').select('email, date, total_minutes'),
-    supabase.from('pomodoro_stats').select('email, total_minutes').eq('week_start', weekStartIST()),
-    // Whole-schedule task count (not date-limited), the same denominator
-    // subject-progress.js uses for its per-subject done/total — here
-    // rolled into one overall "how much of the course" percentage instead
-    // of a per-subject breakdown, which wouldn't fit a table with 300
-    // rows. schedule_tasks only ever holds months already loaded (see
-    // "Schedule data flow" in CLAUDE.md), so this is naturally "tasks
-    // assigned so far", not some far-future total.
-    supabase.from('schedule_tasks').select('*', { count: 'exact', head: true }),
-  ]);
-  const err = studentsErr || schedErr || progErr || sessErr || weekErr || totalErr;
+  let studentsResult, scheduledResult, completed, sessions, weekStatsResult, totalTaskResult;
+  try {
+    [studentsResult, scheduledResult, completed, sessions, weekStatsResult, totalTaskResult] = await Promise.all([
+      supabase.from('students').select('email, display_name, notes, created_at'),
+      supabase.from('schedule_tasks').select('date').lte('date', today).order('date', { ascending: false }),
+      fetchAllRows(() => supabase.from('task_progress').select('email, date').eq('completed', true).lte('date', today)),
+      fetchAllRows(() => supabase.from('pomo_daily_sessions').select('email, date, total_minutes')),
+      supabase.from('pomodoro_stats').select('email, total_minutes').eq('week_start', weekStartIST()),
+      // Whole-schedule task count (not date-limited), the same denominator
+      // subject-progress.js uses for its per-subject done/total — here
+      // rolled into one overall "how much of the course" percentage instead
+      // of a per-subject breakdown, which wouldn't fit a table with 300
+      // rows. schedule_tasks only ever holds months already loaded (see
+      // "Schedule data flow" in CLAUDE.md), so this is naturally "tasks
+      // assigned so far", not some far-future total. A count-only HEAD
+      // request, not a real row fetch, so it isn't subject to the same
+      // 1,000-row response cap the two fetchAllRows queries above are.
+      supabase.from('schedule_tasks').select('*', { count: 'exact', head: true }),
+    ]);
+  } catch (err) {
+    return json(500, { error: err.message });
+  }
+  const { data: students, error: studentsErr } = studentsResult;
+  const { data: scheduled, error: schedErr } = scheduledResult;
+  const { data: weekStats, error: weekErr } = weekStatsResult;
+  const { count: totalTaskCount, error: totalErr } = totalTaskResult;
+  const err = studentsErr || schedErr || weekErr || totalErr;
   if (err) return json(500, { error: err.message });
 
   const scheduledDates = [...new Set(scheduled.map(r => r.date))];

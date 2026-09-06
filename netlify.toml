@@ -42,6 +42,14 @@
 [functions."weekly-rank-snapshot"]
   schedule = "30 19 * * *"
 
+# Runs once a day at 18:45 UTC (00:15 IST — early enough that any
+# same-day completions from the day that just ended are already
+# reflected via complete-task.js's own update, this run just catches
+# streaks that should now show as broken from a day passing with no
+# action). See daily-streak-snapshot.js's own comment.
+[functions."daily-streak-snapshot"]
+  schedule = "45 18 * * *"
+
 # No headers were configured at all before this, so every static asset
 # (images, vendor React bundle, favicons) inherited Netlify's default
 # `Cache-Control: public, max-age=0, must-revalidate` — the same policy

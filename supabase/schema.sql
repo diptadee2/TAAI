@@ -331,3 +331,44 @@ RETURNS void AS $$
 $$ LANGUAGE sql;
 
 GRANT EXECUTE ON FUNCTION compute_weekly_final_ranks TO service_role;
+
+-- Cached streak, added 2026-09-06, second step of the same cost-reduction
+-- pass — computeStreak() (lib/supabase.js) used to be redone from full
+-- history independently by THREE call sites (pomodoro-leaderboard.js on
+-- every 30s poll, streak.js on every task toggle, team-students.js for
+-- all 302 students on every admin page load), each re-fetching every
+-- completed task ever for the students it cares about. Updated two
+-- different ways, not one, since a streak can change without any write
+-- happening: complete-task.js recomputes the ONE student's streak the
+-- moment they actually tick something (same-day accuracy — a checkbox
+-- click should reflect immediately, not tomorrow); daily-streak-
+-- snapshot.js recomputes EVERYONE once a day (catches a streak breaking
+-- purely from a day passing with no action — no write event exists to
+-- hook for that case at all). Default 0, not null, since "no streak yet"
+-- and "streak of zero" are the same displayable thing here, unlike
+-- final_rank above (where null specifically means "not computed yet,"
+-- distinct from a real rank).
+ALTER TABLE students ADD COLUMN IF NOT EXISTS current_streak INTEGER NOT NULL DEFAULT 0;
+
+-- Bulk-updates current_streak for many students in one statement, given
+-- two parallel arrays (unnest() zips them back into rows). NOT a plain
+-- supabase-js .upsert([{email, current_streak}, ...]) — tried that first
+-- and it failed outright: Postgres validates an INSERT ... ON CONFLICT's
+-- *proposed insert row* against NOT NULL constraints (students.display_name
+-- has one, with no default) before it even evaluates whether a conflict
+-- exists, so a partial-column upsert fails hard even when every row
+-- already exists and should only ever hit the UPDATE branch. A real
+-- UPDATE has no such problem — it only touches the columns actually
+-- listed in SET, never constructs a full candidate row, so it can't trip
+-- a NOT NULL constraint on a column it isn't touching. Confirmed this
+-- exact failure mode directly, on a disposable test student, before it
+-- could reach any real one.
+CREATE OR REPLACE FUNCTION update_student_streaks(p_emails TEXT[], p_streaks INTEGER[])
+RETURNS void AS $$
+  UPDATE students
+  SET current_streak = v.streak
+  FROM (SELECT unnest(p_emails) AS email, unnest(p_streaks) AS streak) v
+  WHERE students.email = v.email;
+$$ LANGUAGE sql;
+
+GRANT EXECUTE ON FUNCTION update_student_streaks TO service_role;
