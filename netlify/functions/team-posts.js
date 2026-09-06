@@ -23,7 +23,7 @@
 // client, not this page's approximation.
 import { getSupabase, json, requireAdmin, computeNextFireAt, resolveScheduledPostEmbed, resolveScheduledPostText, buildMentionContent, postToDiscordWebhook, postToTelegram } from './lib/supabase.js';
 
-const VALID_SOURCES = ['custom', 'daily_leader', 'daily_leaderboard', 'weekly_leaderboard', 'monthly_consistency'];
+const VALID_SOURCES = ['custom', 'daily_leader', 'daily_leaderboard', 'weekly_leaderboard', 'weekly_batch_trend', 'monthly_consistency'];
 const VALID_SCHEDULE_TYPES = ['once', 'daily', 'weekly', 'monthly'];
 const VALID_PLATFORMS = ['discord', 'telegram'];
 

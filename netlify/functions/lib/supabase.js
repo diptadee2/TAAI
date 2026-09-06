@@ -769,23 +769,27 @@ async function fetchBatchMedianMinutes(supabase, weekStart) {
   return median(data.map(r => r.total_minutes));
 }
 
-// Appended to the weekly Discord/Telegram post — whether the whole active
-// cohort's typical (median) focus time rose or fell compared to the week
-// before, not just the individual top-5 ranking. `weekStart` is always the
-// week the post is actually reporting on (fetchLastWeekLeaders' own
-// weekBefore(weekStartIST()) result), so "last week" here means whatever
-// full 7-day period preceded THAT week — this falls back correctly across
-// a month boundary with no special-casing needed, since a week is just a
-// plain date range and doesn't care where a calendar month happens to
-// start or end.
-async function batchWeeklyTrendLine(supabase, weekStart) {
+// Core sentence for the standalone 'weekly_batch_trend' source (its own
+// post, scheduled to fire right after weekly_leaderboard — see
+// resolveScheduledPostEmbed below) — whether the whole active cohort's
+// typical (median) focus time rose or fell compared to the week before,
+// not any one individual's ranking. `weekStart` is always the week the
+// post is actually reporting on (fetchLastWeekLeaders' own
+// weekBefore(weekStartIST()) result, reused here so both posts report on
+// the identical week), so "last week" here means whatever full 7-day
+// period preceded THAT week — this falls back correctly across a month
+// boundary with no special-casing needed, since a week is just a plain
+// date range and doesn't care where a calendar month happens to start or
+// end. Returns null (not a thrown error) when there's nothing to report
+// yet, same "nothing to show" tolerance every other source here uses.
+async function weeklyBatchTrendText(supabase, weekStart) {
   const [thisWeek, lastWeek] = await Promise.all([
     fetchBatchMedianMinutes(supabase, weekStart),
     fetchBatchMedianMinutes(supabase, weekBefore(weekStart)),
   ]);
-  if (thisWeek == null) return '';
+  if (thisWeek == null) return null;
   if (lastWeek == null) {
-    return `\n\n📊 *Batch median focus time this week: **${formatHoursDecimal(thisWeek)}** (no data for the week before to compare)*`;
+    return `📊 Batch median focus time this week: **${formatHoursDecimal(thisWeek)}** (no data for the week before to compare)`;
   }
   const diff = thisWeek - lastWeek;
   const arrow = diff > 0 ? '▲' : diff < 0 ? '▼' : '→';
@@ -793,7 +797,7 @@ async function batchWeeklyTrendLine(supabase, weekStart) {
   const changeText = pct != null
     ? `${arrow} ${pct}% vs last week's ${formatHoursDecimal(lastWeek)}`
     : `${arrow} ${formatHoursDecimal(Math.abs(diff))} vs last week's ${formatHoursDecimal(lastWeek)}`;
-  return `\n\n📊 *Batch median focus time this week: **${formatHoursDecimal(thisWeek)}** (${changeText})*`;
+  return `📊 Batch median focus time this week: **${formatHoursDecimal(thisWeek)}** (${changeText})`;
 }
 
 // "Mon, Jun 15" for a 'YYYY-MM-DD' calendar date — used to head each date
@@ -921,8 +925,30 @@ export async function resolveScheduledPostEmbed(supabase, row) {
     return [{
       title: row.title || '📅 Weekly Top 5 Leaderboard',
       url: SCHEDULED_POST_TRACKER_URL,
-      description: `${intro}${lines.join('\n')}${await batchWeeklyTrendLine(supabase, weekStart)}${await monthlyWeeklyRecordLine(supabase)}\n\n[📊 View the progress tracker](${SCHEDULED_POST_TRACKER_URL})`,
+      description: `${intro}${lines.join('\n')}${await monthlyWeeklyRecordLine(supabase)}\n\n[📊 View the progress tracker](${SCHEDULED_POST_TRACKER_URL})`,
       color: row.color ?? 0x8b5cf6,
+      footer: { text: 'Week of ' + weekStart },
+    }];
+  }
+
+  // Its own post, deliberately split out of weekly_leaderboard (which used
+  // to append this as an extra line) — scheduled a few minutes after it
+  // (see /team, same weekday, schedule_time a few minutes later) so it
+  // reads as a follow-up message right after the top-5 ranking rather than
+  // one more line competing for attention inside that embed. weekStart
+  // uses the exact same "last week" resolution fetchLastWeekLeaders uses,
+  // so both posts always report on the identical week even though they're
+  // two separate scheduled_posts rows that could in principle drift.
+  if (row.source === 'weekly_batch_trend') {
+    const weekStart = weekBefore(weekStartIST());
+    const text = await weeklyBatchTrendText(supabase, weekStart);
+    if (!text) return null;
+    const intro = row.body ? row.body + '\n\n' : '';
+    return [{
+      title: row.title || '📊 Weekly Batch Trend',
+      url: SCHEDULED_POST_TRACKER_URL,
+      description: `${intro}${text}\n\n[📊 View the progress tracker](${SCHEDULED_POST_TRACKER_URL})`,
+      color: row.color ?? 0x3b82f6,
       footer: { text: 'Week of ' + weekStart },
     }];
   }

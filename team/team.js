@@ -15,8 +15,15 @@
     daily_leader: 'Daily — Top Focus Student',
     daily_leaderboard: 'Daily — Top 3',
     weekly_leaderboard: 'Weekly — Top 5 Leaderboard',
+    weekly_batch_trend: 'Weekly — Batch Median Trend',
     monthly_consistency: 'Monthly — Most Consistent Student',
   };
+  // Sources whose Body is a plain optional intro line with no
+  // placeholders at all — unlike LIST_SOURCES (an intro above a computed
+  // medal list) or DEFAULT_BODY_BY_SOURCE (a full template sentence with
+  // {{name}}/{{hours}}), this source has no per-entry data to interpolate,
+  // just one computed number, so Body is either blank or a plain sentence.
+  var PLAIN_INTRO_SOURCES = ['weekly_batch_trend'];
   // Sources whose content is a computed ranked list (medals, multiple
   // names) rather than a single-entity sentence — the Body field doesn't
   // apply to these (there's nothing to fill {{name}}/{{hours}} into), only
@@ -390,11 +397,14 @@
     }).join('');
 
     var isList = LIST_SOURCES.indexOf(source) !== -1;
+    var isPlainIntro = PLAIN_INTRO_SOURCES.indexOf(source) !== -1;
     var bodyHint = source === 'custom'
       ? 'The literal message text.'
       : isList
         ? 'Optional intro line shown above the medal list (the list itself always shows regardless). {{name}}/{{hours}} = 1st place, {{name2}}/{{hours2}} = 2nd, {{name3}}/{{hours3}} = 3rd (up to {{name5}}/{{hours5}} for the weekly top 5).'
-        : 'Pre-filled with the current default wording below — edit it directly, or clear the box entirely to fall back to this same default. Supports {{name}} and {{hours}} placeholders.';
+        : isPlainIntro
+          ? 'Optional intro line shown above the trend number (the number itself always shows regardless). No placeholders — plain text only, or leave blank for no intro line.'
+          : 'Pre-filled with the current default wording below — edit it directly, or clear the box entirely to fall back to this same default. Supports {{name}} and {{hours}} placeholders.';
     // Only pre-fill when there's no real custom body saved (never overwrite
     // one that is) and only for sources that have a default sentence at
     // all. An empty body is treated the same as null here on purpose —
@@ -622,12 +632,14 @@
           '<div class="ref-row"><strong>Custom message</strong> — whatever you type in Title/Body, posted as-is. No live data. Optionally add "Extra sections" below the Body — one per subject, each a Date/Topic/Duration table. All subjects\' rows merge into one date-ordered list in the final post (grouped by day, with the weekday shown), not shown subject-by-subject — everything still posts as a single card.</div>' +
           '<div class="ref-row"><strong>Daily — Top Focus Student</strong> — yesterday\'s single top student. Body fully replaces the default sentence if set.</div>' +
           '<div class="ref-row"><strong>Daily — Top 3</strong> / <strong>Weekly — Top 5 Leaderboard</strong> — a computed, freshly-ranked list every time it fires. Body (if set) is an intro line shown ABOVE the medal list — the list itself always shows regardless, you can\'t remove it.</div>' +
+          '<div class="ref-row"><strong>Weekly — Batch Median Trend</strong> — a separate post from the Top 5 leaderboard (schedule it a few minutes after that one so it lands as a follow-up message). Reports whether the whole active cohort\'s median focus time rose or fell vs. the week before — one computed number, no ranked list.</div>' +
           '<div class="ref-row"><strong>Monthly — Most Consistent Student</strong> — reports on the month that just closed, ranked by median daily minutes (not average). Body fully replaces the default sentence if set.</div>' +
         '</div>' +
 
         '<div class="ref-section"><div class="ref-heading">Body placeholders</div>' +
           '<div class="ref-row">Single-student sources (Daily Top Focus Student, Monthly Consistency): <code>{{name}}</code> and <code>{{hours}}</code> only.</div>' +
           '<div class="ref-row">Ranked-list sources (Daily Top 3, Weekly Top 5): <code>{{name}}</code>/<code>{{hours}}</code> = 1st place, <code>{{name2}}</code>/<code>{{hours2}}</code> = 2nd, <code>{{name3}}</code>/<code>{{hours3}}</code> = 3rd, up through <code>{{name5}}</code>/<code>{{hours5}}</code> on the weekly one. An unused one (e.g. <code>{{name4}}</code> on a top-3 post) just renders blank.</div>' +
+          '<div class="ref-row">Weekly — Batch Median Trend: no placeholders — Body, if set, is just a plain intro line shown above the number.</div>' +
           '<div class="ref-row">Custom messages: no placeholders — Body is posted exactly as typed.</div>' +
         '</div>' +
 
