@@ -286,3 +286,33 @@ ALTER TABLE scheduled_posts ADD COLUMN IF NOT EXISTS sections JSONB;
 ALTER TABLE scheduled_posts ADD COLUMN IF NOT EXISTS platform TEXT NOT NULL DEFAULT 'discord';
 ALTER TABLE scheduled_posts ADD COLUMN IF NOT EXISTS telegram_chat_id TEXT;
 ALTER TABLE scheduled_posts ADD COLUMN IF NOT EXISTS telegram_test_chat_id TEXT;
+
+-- Cached final rank for a closed week, added 2026-09-06 as part of a cost
+-- reduction pass — pomodoro-leaderboard.js's rank-movement-arrow feature
+-- used to re-fetch EVERY active student's entire previous week on every
+-- 30-second poll, all week, just to recompute a ranking that can never
+-- change once that week is over. NULL for the current, still-open week
+-- (nothing to rank yet) and for any week not yet processed by
+-- weekly-rank-snapshot.js; populated once, permanently, the first time
+-- that scheduled function runs after the week closes.
+ALTER TABLE pomodoro_stats ADD COLUMN IF NOT EXISTS final_rank INTEGER;
+
+-- Bulk-ranks one closed week in a single statement (RANK() OVER, not a
+-- per-row loop from the calling function) — matches this schema's
+-- existing precedent of pushing set-based work into a Postgres function
+-- rather than doing it row-by-row from JS (see increment_pomodoro_stats
+-- above). Safe to call repeatedly for the same week; it just recomputes
+-- and overwrites the same ranks each time (idempotent).
+CREATE OR REPLACE FUNCTION compute_weekly_final_ranks(p_week_start DATE)
+RETURNS void AS $$
+  UPDATE pomodoro_stats
+  SET final_rank = ranked.rnk
+  FROM (
+    SELECT email, RANK() OVER (ORDER BY total_minutes DESC) AS rnk
+    FROM pomodoro_stats
+    WHERE week_start = p_week_start
+  ) ranked
+  WHERE pomodoro_stats.email = ranked.email AND pomodoro_stats.week_start = p_week_start;
+$$ LANGUAGE sql;
+
+GRANT EXECUTE ON FUNCTION compute_weekly_final_ranks TO service_role;

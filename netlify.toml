@@ -33,6 +33,15 @@
 [functions."discord-dispatch"]
   schedule = "*/15 * * * *"
 
+# Runs once a day at 19:30 UTC (01:00 IST — comfortably after midnight, so
+# the previous week has definitely closed) and, if last week's
+# pomodoro_stats rows don't have final_rank set yet, computes and stores
+# it. Deliberately a daily check rather than a single once-a-week firing
+# — self-healing if a run fails, and idempotent either way. See
+# weekly-rank-snapshot.js's own comment for why.
+[functions."weekly-rank-snapshot"]
+  schedule = "30 19 * * *"
+
 # No headers were configured at all before this, so every static asset
 # (images, vendor React bundle, favicons) inherited Netlify's default
 # `Cache-Control: public, max-age=0, must-revalidate` — the same policy
