@@ -226,6 +226,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .page-hero h1               { animation: pageHeroIn .70s cubic-bezier(.34,1.12,.64,1) .18s both; }
 .page-hero .hero-sub        { animation: pageHeroIn .60s cubic-bezier(.34,1.12,.64,1) .30s both; }
 .page-hero .ph-cta          { animation: pageHeroIn .58s cubic-bezier(.34,1.12,.64,1) .42s both; }
+.hero-guide-link { display: inline-block; margin-top: 18px; font-size: 14.5px; font-weight: 500; color: var(--purple); text-decoration: none; }
+.hero-guide-link:hover { text-decoration: underline; }
 .page-hero .hero-proof-row  { animation: pageHeroIn .65s cubic-bezier(.34,1.12,.64,1) .54s both; }
 .page-hero .hero-proof-link { animation: pageHeroIn .58s cubic-bezier(.34,1.12,.64,1) .72s both; }
 @keyframes proof-float1 {
@@ -2490,6 +2492,7 @@ function App() {
               <a href="#combos" className="btn btn-primary btn-lg">Bundled courses</a>
               <a href="#individual" className="btn btn-ghost btn-lg btn-stories"><span>Individual courses</span></a>
             </div>
+            <a href="/blogs/gate-da-syllabus-2027" className="hero-guide-link">📘 New: Free GATE DA Syllabus 2027 guide →</a>
           </div>
           <div className="page-hero-right">
             <div className="hero-proof-row">

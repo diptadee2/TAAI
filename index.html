@@ -335,6 +335,9 @@ body {
 .hero-check:hover .hero-check-icon { transform: scale(1.12); }
 [data-hero="centered"] .hero-sub { margin-left: auto; margin-right: auto; }
 .hero-cta { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 32px; }
+.hero-guide-link { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.7); text-decoration: none; margin: -18px 0 28px; transition: color .2s, gap .2s; }
+.hero-guide-link:hover { color: #fff; gap: 10px; }
+[data-hero="centered"] .hero-guide-link { margin-left: auto; margin-right: auto; }
 .hero-meta { display: flex; gap: 32px; align-items: center; font-size: 16px; color: rgba(255,255,255,0.62); flex-wrap: wrap; }
 .hero-meta-item { display: flex; align-items: center; gap: 8px; }
 .hero-avatars { display: flex; }
@@ -1778,6 +1781,7 @@ function Hero() {
               <span className="swap-hover">Machine Learning</span>
             </a>
           </div>
+          <a href="/blogs/gate-da-syllabus-2027" className="hero-guide-link">📘 New: Free GATE DA Syllabus 2027 guide <Icon.ArrowRight size={13} /></a>
           <div className="hero-meta">
             <div className="hero-meta-item">
               <div className="hero-avatars">
