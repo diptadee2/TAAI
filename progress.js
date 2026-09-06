@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-06-8';
+  var CLIENT_VERSION = '2026-09-06-9';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1944,8 +1944,9 @@
       // Semi-circle gauge — a real 180-degree arc <path> (M <left> A r r 0 0 1
       // <right>), not a full <circle>. viewBox is 200x160 (shorter than the
       // old 200x200 square) since there's no bottom half of a circle to
-      // reserve space for any more; the mode/time readout below sits in
-      // that now-genuinely-open lower area (see .pomodoro-ring-center).
+      // reserve space for any more; the mode label sits inside the dome
+      // this leaves, the countdown itself below it (see
+      // .pomodoro-mode-wrap/.pomodoro-time-wrap).
       '<svg class="pomodoro-ring" viewBox="0 0 200 160">' +
       // Gradient strokes, not the old flat var(--purple)/var(--green) —
       // reuses the site's own established brand gradient recipe (see
@@ -1965,10 +1966,18 @@
       '<path class="pomo-ring-progress" id="pomo-ring-progress" d="M 25 95 A ' + POMO_RING_R + ' ' + POMO_RING_R + ' 0 0 1 175 95" ' +
       'stroke-dasharray="' + POMO_RING_CIRCUMFERENCE + '" stroke-dashoffset="' + offset + '"></path>' +
       '</svg>' +
-      '<div class="pomodoro-ring-center">' +
+      // Split into two separately-positioned pieces rather than one shared
+      // flex column — the mode label sits inside the dome (the space the
+      // arc actually encloses), the countdown itself sits below the arc's
+      // flat diameter line, in the wide-open area with no dome-narrowing
+      // width constraint at all (see .pomodoro-mode-wrap/.pomodoro-time-wrap).
+      '<div class="pomodoro-mode-wrap">' +
       '<div class="pomodoro-mode" id="pomo-mode">' + (pomo.mode === 'work' ? 'Focus' : 'Break') + '</div>' +
+      '</div>' +
+      '<div class="pomodoro-time-wrap">' +
       '<div class="pomodoro-time" id="pomo-time">' + formatPomoTime(pomo.secondsLeft) + '</div>' +
-      '</div></div>' +
+      '</div>' +
+      '</div>' +
       '<div class="pomodoro-dots" id="pomo-dots">' + pomoDotsText() + '</div>' +
       '<div class="pomodoro-session-label" id="pomo-session-label">' + pomoSessionLabel() + '</div>' +
       '<div class="pomodoro-controls">' +

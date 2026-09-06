@@ -512,16 +512,18 @@
      the focal point rather than a flat colored line. */
   .pomo-ring-progress { fill: none; stroke: url(#pomo-ring-gradient-work); stroke-width: 10; stroke-linecap: round; filter: drop-shadow(0 0 6px rgba(167,139,250,0.5)); transition: stroke-dashoffset 1s linear, filter .4s ease; }
   .pomodoro-card.on-break .pomo-ring-progress { stroke: url(#pomo-ring-gradient-break); filter: drop-shadow(0 0 6px rgba(74,222,128,0.5)); }
-  /* Anchored to the BOTTOM of the dome (~41% up from the wrapper's own
-     bottom edge — matches the arc's flat diameter line at y=95 of the
-     160-tall viewBox, see the "M 25 95 A 75 75" path in renderPomodoro),
-     with content packed toward that anchor via flex-end. First shipped
-     centered in the space below the arc entirely, which left the whole
-     dome empty — moving it here instead puts the text genuinely inside
-     the arc, using the bottom of the dome where it's widest, rather than
-     below the arc where there's nothing enclosing it at all. */
-  .pomodoro-ring-center { position: absolute; top: 0; left: 0; right: 0; bottom: 41%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 4px; }
-  .pomodoro-mode { font-family: var(--font-nav); font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--purple); margin-bottom: 6px; transition: color .3s ease; }
+  /* Split at direct request into two separately-positioned pieces, rather
+     than one shared block stacking both — FOCUS/BREAK sits genuinely
+     inside the dome (the space the arc encloses), the countdown itself
+     sits below the arc's flat diameter line entirely, where the full
+     wrapper width is available with no dome-narrowing constraint at all
+     (the actual root cause of the earlier clipping, now sidestepped
+     rather than just given more room to clip less). 41%/59% is the
+     diameter line — matches y=95 of the "M 25 95 A 75 75" path's 160-tall
+     viewBox (95/160 ≈ 59%) in renderPomodoro. */
+  .pomodoro-mode-wrap { position: absolute; top: 0; left: 0; right: 0; bottom: 41%; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px; }
+  .pomodoro-time-wrap { position: absolute; top: 59%; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; }
+  .pomodoro-mode { font-family: var(--font-nav); font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--purple); transition: color .3s ease; }
   .pomodoro-card.on-break .pomodoro-mode { color: var(--green); }
   /* Same slow-drifting animated gradient .streak-number/.program-day-num
      already use elsewhere on this page (shared @keyframes streak-grad) —
