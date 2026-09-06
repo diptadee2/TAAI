@@ -507,10 +507,15 @@
      the focal point rather than a flat colored line. */
   .pomo-ring-progress { fill: none; stroke: url(#pomo-ring-gradient-work); stroke-width: 10; stroke-linecap: round; filter: drop-shadow(0 0 6px rgba(167,139,250,0.5)); transition: stroke-dashoffset 1s linear, filter .4s ease; }
   .pomodoro-card.on-break .pomo-ring-progress { stroke: url(#pomo-ring-gradient-break); filter: drop-shadow(0 0 6px rgba(74,222,128,0.5)); }
-  /* Sits in the open lower portion under the arc now, not vertically
-     centered across the whole box — the arc itself only occupies roughly
-     the top 60% of the viewBox (see the "M 25 95 A 75 75" path). */
-  .pomodoro-ring-center { position: absolute; top: 58%; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  /* Anchored to the BOTTOM of the dome (~41% up from the wrapper's own
+     bottom edge — matches the arc's flat diameter line at y=95 of the
+     160-tall viewBox, see the "M 25 95 A 75 75" path in renderPomodoro),
+     with content packed toward that anchor via flex-end. First shipped
+     centered in the space below the arc entirely, which left the whole
+     dome empty — moving it here instead puts the text genuinely inside
+     the arc, using the bottom of the dome where it's widest, rather than
+     below the arc where there's nothing enclosing it at all. */
+  .pomodoro-ring-center { position: absolute; top: 0; left: 0; right: 0; bottom: 41%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 4px; }
   .pomodoro-mode { font-family: var(--font-nav); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--purple); margin-bottom: 6px; transition: color .3s ease; }
   .pomodoro-card.on-break .pomodoro-mode { color: var(--green); }
   /* Same slow-drifting animated gradient .streak-number/.program-day-num
