@@ -27,11 +27,18 @@ export async function handler() {
   const supabase = getSupabase();
   const now = new Date();
 
+  // Ordered by created_at so two rows sharing the exact same next_fire_at
+  // (e.g. weekly_leaderboard and weekly_batch_trend, both set to fire at
+  // the same time at explicit request) still process in a deterministic,
+  // predictable order — the row created first posts first — rather than
+  // whatever order Postgres happens to return an otherwise-unordered
+  // query in.
   const { data: due, error: dueError } = await supabase
     .from('scheduled_posts')
     .select('*')
     .eq('enabled', true)
-    .lte('next_fire_at', now.toISOString());
+    .lte('next_fire_at', now.toISOString())
+    .order('created_at', { ascending: true });
   if (dueError) return json(500, { error: dueError.message });
 
   // Each row is processed independently — one row's failure (a bad
