@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-07-3';
+  var CLIENT_VERSION = '2026-09-07-4';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -468,6 +468,10 @@
       startLeaderboardTimerTick();
       startLeaderboardPoll();
     }
+    // Unconditional — self-gates on state.focus/document.hidden internally,
+    // so this correctly stays off when the block above just restored Focus
+    // Mode, and correctly starts for the normal fresh-load-onto-checklist case.
+    startLastWeekPoll();
   }
 
   // ── Scroll progress + back-to-top — same pattern as blog.js ──────────
@@ -1096,9 +1100,11 @@
   // or nobody used the timer) rather than showing an empty-looking
   // section — the streak section's flex:1 then naturally claims the
   // whole card alone.
-  function renderLastWeekChampions() {
+  // Split out so refreshLastWeekChampions (its own smart-poll, see
+  // LAST_WEEK_POLL_MS) can patch just #champions-rows in place — same
+  // reason renderLeaderboardRows is split from renderLeaderboardCard.
+  function renderLastWeekChampionRows() {
     var leaders = state.lastWeekLeaders || [];
-    if (!leaders.length) return '';
     var rows = leaders.map(function (l, i) {
       var rank = LEADERBOARD_MEDALS[i] || (i + 1);
       // Same up/down arrow as the top-20 board (rankMovementHtml), just
@@ -1124,6 +1130,12 @@
         '<span class="leaderboard-time">' + formatHoursDecimal(state.lastWeekViewerRank.total_minutes) + '</span>' +
         '</div>';
     }
+    return rows;
+  }
+
+  function renderLastWeekChampions() {
+    var leaders = state.lastWeekLeaders || [];
+    if (!leaders.length) return '';
     // Clicking anywhere on the card jumps to Focus Mode (see
     // bindCalendarEvents) — role/tabindex so it's actually reachable and
     // announced as a control, not just a div with a click listener nobody
@@ -1133,7 +1145,7 @@
       '<div class="leaderboard-title' + (showBadge5 ? ' has-badge' : '') + '">Mission IIT Leaderboard</div>' +
       newBadgeHtml(showBadge5) +
       '<div class="leaderboard-subtitle">Top 5 by hours logged, last week</div>' +
-      rows +
+      '<div id="champions-rows">' + renderLastWeekChampionRows() + '</div>' +
       '</div>';
   }
 
@@ -2085,6 +2097,7 @@
     refreshLeaderboard();
     startLeaderboardTimerTick();
     startLeaderboardPoll();
+    stopLastWeekPoll(); // champions card isn't rendered in Focus Mode — nothing to poll for
   }
 
   // Shared by the "Focus mode" toggle button and the top-5 champions card
@@ -2296,6 +2309,52 @@
     leaderboardPollId = null;
   }
 
+  // Separate poll for the last-week champions card, which only ever shows
+  // on the main checklist (outside Focus Mode) — LEADERBOARD_POLL_MS above
+  // only runs while state.focus is true, so without this the card's live
+  // dots were a one-time snapshot from whenever the page loaded, never
+  // refreshing while someone actually sits on the checklist. Same 60s
+  // interval and hidden-tab gating as the Focus Mode poll, but active
+  // exactly when that one isn't (see the visibilitychange listener below).
+  var LAST_WEEK_POLL_MS = 60000;
+  var lastWeekPollId = null;
+  function startLastWeekPoll() {
+    stopLastWeekPoll();
+    if (document.hidden || state.focus) return;
+    lastWeekPollId = setInterval(refreshLastWeekChampions, LAST_WEEK_POLL_MS);
+  }
+  function stopLastWeekPoll() {
+    if (!lastWeekPollId) return;
+    clearInterval(lastWeekPollId);
+    lastWeekPollId = null;
+  }
+  // Standalone endpoint (last-week-leaders.js), not the big tracker-data.js
+  // batch — same "small independently-pollable endpoint" pattern already
+  // used for streak.js/subject-progress.js/pomo-settings.js, since this is
+  // the only piece of page-load data that needs refetching on its own
+  // schedule outside the initial load. If #champions-rows isn't in the DOM
+  // (the card started with no data at page load — renderLastWeekChampions
+  // renders nothing at all in that case), this silently no-ops, same as
+  // refreshLeaderboard's #today-leaderboard-rows guard below.
+  function refreshLastWeekChampions() {
+    var rows = document.getElementById('champions-rows');
+    if (!rows) return;
+    var q = state.student ? '?email=' + encodeURIComponent(state.student.email) : '';
+    api('/last-week-leaders' + q)
+      .then(function (r) {
+        state.lastWeekLeaders = r.leaders || [];
+        state.lastWeekViewerRank = r.viewerRank || null;
+        var rowsEl = document.getElementById('champions-rows');
+        if (rowsEl) rowsEl.innerHTML = renderLastWeekChampionRows();
+        // Same key + narrower condition as the initial-render arming call
+        // (renderCalendar) — only an actual top-5 finish, not just any
+        // placement at all (see that call's own comment).
+        armConfetti('champions-card', 'top5-' + mondayOf(todayIso()),
+          state.lastWeekLeaders.some(function (l) { return l.is_me; }));
+      })
+      .catch(function () { /* non-critical — champions card just stays stale */ });
+  }
+
   function renderLeaderboardRows() {
     if (!state.leaderboard.length) {
       return '<p class="center-note" style="padding:14px 0;">No focus sessions logged yet. Be the first!</p>';
@@ -2432,6 +2491,7 @@
         stopLeaderboardTimerTick();
         stopLeaderboardPoll();
         renderCalendar();
+        startLastWeekPoll(); // champions card is back on screen — resume its own poll
       }
     });
   }
@@ -2693,6 +2753,9 @@
     if (state.focus) {
       if (document.hidden) stopLeaderboardPoll();
       else { refreshLeaderboard(); startLeaderboardPoll(); }
+    } else {
+      if (document.hidden) stopLastWeekPoll();
+      else { refreshLastWeekChampions(); startLastWeekPoll(); }
     }
   });
 
