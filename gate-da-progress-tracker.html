@@ -179,19 +179,27 @@
   .mobile-menu-contact:hover { color: var(--purple); background: rgba(139,92,246,0.06); }
   @media (max-width: 1024px) { .nav-hamburger { display: flex; } .nav-cta { display: none; } .nav-links { display: none; } .btn-nav-contact { display: none; } .nav-inner { height: 64px; padding: 0 14px; position: relative; justify-content: flex-end; } .mobile-menu { top: 64px; } .nav-spacer { height: 64px; } .nav-logo { position: absolute; left: 50%; transform: translateX(-50%); } .nav-logo:hover { transform: translateX(-50%) translateY(-2px); } .nav-logo:active { transform: translateX(-50%) translateY(1px); } .nav-logo svg, .nav-logo img { width: 150px; height: auto; filter: drop-shadow(0 0 14px rgba(255,255,255,0.22)) drop-shadow(0 0 36px rgba(255,255,255,0.12)) drop-shadow(0 0 72px rgba(255,255,255,0.07)); } .nav-hamburger span { background: var(--purple); } }
 
-  /* Pared back 2026-09-08 ("too vibe coded") — was a repeating dot-grid plus
-     3 saturated, fast-bouncing orbs, the exact "AI-template" look that was
-     the complaint. Down to one orb, opacity cut by more than half, and a
-     much slower/smaller drift so it reads as ambient light shifting in the
-     room, not a decorative blob animating. No dot-grid at all now — the
-     flat --bg-soft base is quiet enough on its own once the orb is this subtle. */
+  /* Pared back 2026-09-08 ("too vibe coded" — dot-grid + 3 saturated,
+     fast-bouncing orbs), then re-upped the same day ("too boring" — the
+     1-orb/near-zero-opacity version above overcorrected). Landed on 2 orbs
+     (dropped the smallest/pink one only), opacity restored to close to the
+     original, motion slowed from the original's 22-32s/~140px bounce to a
+     calmer 34-40s/~80px drift — still visibly alive, not the fast synced
+     bounce that read as templated, and no dot-grid. Diagonal placement
+     (top-right + bottom-left) gives the page real depth at a glance instead
+     of being flat until an orb happens to drift past. */
   body { position: relative; overflow-x: hidden; }
   .bg-orbs { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
   .orb { position: absolute; border-radius: 50%; will-change: transform; }
-  .orb-1 { top: -160px; right: -120px; width: 520px; height: 520px; background: radial-gradient(circle, rgba(139,92,246,0.06) 0%, transparent 68%); animation: orb-fly-1 52s ease-in-out infinite; }
+  .orb-1 { top: -160px; right: -120px; width: 520px; height: 520px; background: radial-gradient(circle, rgba(139,92,246,0.13) 0%, transparent 68%); animation: orb-fly-1 34s ease-in-out infinite; }
+  .orb-2 { bottom: -160px; left: -120px; width: 460px; height: 460px; background: radial-gradient(circle, rgba(77,139,255,0.10) 0%, transparent 68%); animation: orb-fly-2 40s ease-in-out infinite; }
   @keyframes orb-fly-1 {
     0%, 100% { transform: translate(0, 0) scale(1); }
-    50%      { transform: translate(-30px, 50px) scale(1.05); }
+    50%      { transform: translate(-45px, 80px) scale(1.08); }
+  }
+  @keyframes orb-fly-2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50%      { transform: translate(50px, -70px) scale(1.06); }
   }
   @media (prefers-reduced-motion: reduce) { .orb { animation: none; } }
   .wrap, .scroll-progress { position: relative; z-index: 1; }
@@ -877,6 +885,7 @@
 
 <div class="bg-orbs" aria-hidden="true">
   <span class="orb orb-1"></span>
+  <span class="orb orb-2"></span>
 </div>
 
 <div class="scroll-progress" id="scroll-progress-bar"></div>
