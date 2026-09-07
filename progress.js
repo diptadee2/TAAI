@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-07-2';
+  var CLIENT_VERSION = '2026-09-07-3';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1105,10 +1105,10 @@
       // compared against last week's rank in the week before it rather
       // than the previous poll — see previous_week_rank in
       // tracker-data.js's fetchLastWeekLeaders.
-      return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (l.is_me ? ' leaderboard-row--me' : '') + '">' +
+      return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (l.is_me ? ' leaderboard-row--me' : '') + (l.is_live ? ' leaderboard-row--live' : '') + '">' +
         '<span class="leaderboard-rank">' + rank + '</span>' +
         rankMovementHtml(i + 1, l.previous_week_rank) +
-        '<span class="leaderboard-name">' + escapeHtml(l.display_name) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
+        '<span class="leaderboard-name">' + liveDotHtml(l.is_live) + escapeHtml(l.display_name) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
         '<span class="leaderboard-time">' + formatHoursDecimal(l.total_minutes) + '</span>' +
         '</div>';
     }).join('');
@@ -1117,10 +1117,10 @@
     // otherwise has zero visibility into their own standing here either.
     if (state.lastWeekViewerRank) {
       rows += '<div class="leaderboard-gap">···</div>' +
-        '<div class="leaderboard-row leaderboard-row--me">' +
+        '<div class="leaderboard-row leaderboard-row--me' + (state.lastWeekViewerRank.is_live ? ' leaderboard-row--live' : '') + '">' +
         '<span class="leaderboard-rank">' + state.lastWeekViewerRank.rank + '</span>' +
         rankMovementHtml(state.lastWeekViewerRank.rank, state.lastWeekViewerRank.previous_week_rank) +
-        '<span class="leaderboard-name">You</span>' +
+        '<span class="leaderboard-name">' + liveDotHtml(state.lastWeekViewerRank.is_live) + 'You</span>' +
         '<span class="leaderboard-time">' + formatHoursDecimal(state.lastWeekViewerRank.total_minutes) + '</span>' +
         '</div>';
     }

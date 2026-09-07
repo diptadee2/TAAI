@@ -50,7 +50,7 @@ export async function fetchAllRows(buildQuery, pageSize = 1000) {
 // (old JS silently sending a request shape the new server no longer
 // accepts) doesn't stay stuck indefinitely waiting for someone to notice
 // and manually refresh.
-export const CLIENT_VERSION = '2026-09-07-2';
+export const CLIENT_VERSION = '2026-09-07-3';
 
 export function json(statusCode, body) {
   return {
@@ -183,6 +183,10 @@ export function parseUtcTimestamp(pgTimestamp) {
 // tracker-data.js (the page-load batch, for the main-page champions card)
 // and discord-dispatch.js's 'weekly_leaderboard' source (the Monday-
 // morning Discord post) so the two can't drift out of sync on this logic.
+// Live status is fetched unconditionally, same as fetchTodayLeaders below
+// — the Discord caller just doesn't render it (a static embed has no
+// pulsing dot to show), so the extra query there is harmless, same
+// tradeoff already accepted for the daily post's fetchTodayLeaders call.
 export async function fetchLastWeekLeaders(supabase, email) {
   const weekStart = weekBefore(weekStartIST());
   const { data: stats, error: statsError } = await supabase
@@ -220,11 +224,13 @@ export async function fetchLastWeekLeaders(supabase, email) {
   const prevRankByEmail = Object.fromEntries(prevWeekStats.map((s, i) => [s.email, i + 1]));
 
   const nameByEmail = Object.fromEntries(students.map(s => [s.email, s.display_name]));
+  const liveStatusByEmail = await fetchLiveStatusByEmail(supabase, stats.map(s => s.email));
   const leaders = stats.map((s, i) => ({
     display_name: nameByEmail[s.email] || 'Anonymous',
     total_minutes: s.total_minutes,
     is_me: !!email && s.email === email,
     previous_week_rank: prevRankByEmail[s.email] ?? null,
+    ...liveStatusByEmail[s.email],
   }));
 
   // Same idea as pomodoro-leaderboard.js's viewerRank — a student outside
@@ -249,7 +255,8 @@ export async function fetchLastWeekLeaders(supabase, email) {
         .gt('total_minutes', viewerStats.total_minutes);
       if (countError) throw new Error(countError.message);
 
-      viewerRank = { rank: (count || 0) + 1, total_minutes: viewerStats.total_minutes, previous_week_rank: prevRankByEmail[email] ?? null };
+      const viewerLiveStatus = await fetchLiveStatusByEmail(supabase, [email]);
+      viewerRank = { rank: (count || 0) + 1, total_minutes: viewerStats.total_minutes, previous_week_rank: prevRankByEmail[email] ?? null, ...viewerLiveStatus[email] };
     }
   }
 

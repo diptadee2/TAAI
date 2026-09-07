@@ -799,20 +799,26 @@
   /* Greyed-out non-live rows so a student mid-focus-session actually
      stands out from everyone else on the board, instead of every name/
      minutes reading in the same bright ink regardless of who's actually
-     here right now. Scoped to the two live-status-aware boards
-     specifically (#leaderboard-card / #today-leaderboard-card) — the
-     champions/last-week card shares .leaderboard-row's base styles but
-     has no concept of "live" at all (fetchLastWeekLeaders never returns
-     is_live), so it must stay untouched by this rule or every one of its
-     rows would read as permanently dimmed. */
+     here right now. Scoped to the three live-status-aware boards
+     (#leaderboard-card / #today-leaderboard-card / #champions-card) —
+     the champions/last-week card used to have no concept of "live" at
+     all (fetchLastWeekLeaders never returned is_live) and was
+     deliberately excluded from this rule for exactly that reason; now
+     that it does, excluding it would leave every one of its rows
+     permanently dimmed instead (:not(.leaderboard-row--live) always
+     matching, since no row would ever carry that class). */
   #leaderboard-card .leaderboard-row:not(.leaderboard-row--live) .leaderboard-name,
-  #today-leaderboard-card .leaderboard-row:not(.leaderboard-row--live) .leaderboard-name { color: var(--ink-soft); }
+  #today-leaderboard-card .leaderboard-row:not(.leaderboard-row--live) .leaderboard-name,
+  #champions-card .leaderboard-row:not(.leaderboard-row--live) .leaderboard-name { color: var(--ink-soft); }
   #leaderboard-card .leaderboard-row:not(.leaderboard-row--live) .leaderboard-time,
-  #today-leaderboard-card .leaderboard-row:not(.leaderboard-row--live) .leaderboard-time { color: var(--ink-dim); }
+  #today-leaderboard-card .leaderboard-row:not(.leaderboard-row--live) .leaderboard-time,
+  #champions-card .leaderboard-row:not(.leaderboard-row--live) .leaderboard-time { color: var(--ink-dim); }
   #leaderboard-card .leaderboard-row--live .leaderboard-name,
   #today-leaderboard-card .leaderboard-row--live .leaderboard-name,
+  #champions-card .leaderboard-row--live .leaderboard-name,
   #leaderboard-card .leaderboard-row--live .leaderboard-time,
-  #today-leaderboard-card .leaderboard-row--live .leaderboard-time { color: var(--ink); }
+  #today-leaderboard-card .leaderboard-row--live .leaderboard-time,
+  #champions-card .leaderboard-row--live .leaderboard-time { color: var(--ink); }
   /* Column header row — identical grid-template-columns to
      .leaderboard-row above, so every label lands exactly above its
      column on every row, not just approximately near it. */
