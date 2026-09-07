@@ -781,42 +781,62 @@ function median(values) {
 
 // Median (not mean — one binge-hours student shouldn't swing a whole-batch
 // read the way it would an average, same reasoning already used for the
-// "consistency" figures elsewhere in this file) of every active student's
-// total_minutes for a given week — "active" meaning they have a
-// pomodoro_stats row at all, not zero-filled across the full roster.
-// Zero-filling here would reintroduce the exact degenerate-result problem
-// the monthly consistency post hit for August: most of the 308-student
-// roster is inactive in any given week, so zero-filling against the whole
-// roster would crater the median to 0 almost every week regardless of how
-// the actually-active cohort performed.
-async function fetchBatchMedianMinutes(supabase, weekStart) {
-  const { data, error } = await supabase.from('pomodoro_stats').select('total_minutes').eq('week_start', weekStart);
-  if (error) throw new Error(error.message);
-  return median(data.map(r => r.total_minutes));
+// "consistency" figures elsewhere in this file) of total_minutes, computed
+// over the INTERSECTION of students active in both weeks being compared —
+// deliberately not each week's own independently-varying full active
+// population.
+//
+// Real bug, caught by direct report ("I don't believe the numbers" on a
+// posted ▲71% swing): the original version computed each week's median
+// separately over whoever was active THAT week, so the comparison was
+// contaminated by population churn — students new this week, or who
+// dropped off last week — not just genuine change in how hard the same
+// people worked. Confirmed directly against production, for the exact
+// week that prompted the report: the full-population comparison showed
+// 8.3h -> 14.3h (+71%), but restricting to the 47 students who were
+// active in BOTH weeks showed 17.3h -> 19.8h (+14%) — a real, modest
+// increase, nothing like the dramatic swing the full-population number
+// implied. 15 students who dropped off dragged the prior week's full
+// median down; 14 students new that week dragged the reported week's
+// full median down too (independently) — neither swing has anything to
+// do with "the same people doing more," which is what this line is
+// supposed to describe.
+async function fetchCommonCohortMedians(supabase, weekStart, lastWeekStart) {
+  const [thisWeekResult, lastWeekResult] = await Promise.all([
+    supabase.from('pomodoro_stats').select('email, total_minutes').eq('week_start', weekStart),
+    supabase.from('pomodoro_stats').select('email, total_minutes').eq('week_start', lastWeekStart),
+  ]);
+  if (thisWeekResult.error) throw new Error(thisWeekResult.error.message);
+  if (lastWeekResult.error) throw new Error(lastWeekResult.error.message);
+  const thisMap = new Map(thisWeekResult.data.map(r => [r.email, r.total_minutes]));
+  const lastMap = new Map(lastWeekResult.data.map(r => [r.email, r.total_minutes]));
+  const commonEmails = [...thisMap.keys()].filter((e) => lastMap.has(e));
+  if (!commonEmails.length) return { thisWeek: null, lastWeek: null };
+  return {
+    thisWeek: median(commonEmails.map((e) => thisMap.get(e))),
+    lastWeek: median(commonEmails.map((e) => lastMap.get(e))),
+  };
 }
 
 // Core sentence for the standalone 'weekly_batch_trend' source (its own
 // post, scheduled to fire right after weekly_leaderboard — see
-// resolveScheduledPostEmbed below) — whether the whole active cohort's
-// typical (median) focus time rose or fell compared to the week before,
-// not any one individual's ranking. `weekStart` is always the week the
-// post is actually reporting on (fetchLastWeekLeaders' own
-// weekBefore(weekStartIST()) result, reused here so both posts report on
+// resolveScheduledPostEmbed below) — whether the batch's typical (median)
+// focus time rose or fell compared to the week before, among students who
+// were around for both weeks, not any one individual's ranking. `weekStart`
+// is always the week the post is actually reporting on (fetchLastWeekLeaders'
+// own weekBefore(weekStartIST()) result, reused here so both posts report on
 // the identical week), so "last week" here means whatever full 7-day
 // period preceded THAT week — this falls back correctly across a month
 // boundary with no special-casing needed, since a week is just a plain
 // date range and doesn't care where a calendar month happens to start or
 // end. Returns null (not a thrown error) when there's nothing to report
-// yet, same "nothing to show" tolerance every other source here uses.
+// yet — either nobody logged anything this week, or there's no overlap at
+// all with last week's roster (only realistic very early in the tracker's
+// life, or after a near-total population turnover) — same "nothing to
+// show" tolerance every other source here uses.
 async function weeklyBatchTrendText(supabase, weekStart) {
-  const [thisWeek, lastWeek] = await Promise.all([
-    fetchBatchMedianMinutes(supabase, weekStart),
-    fetchBatchMedianMinutes(supabase, weekBefore(weekStart)),
-  ]);
-  if (thisWeek == null) return null;
-  if (lastWeek == null) {
-    return `📊 Batch median focus time this week: **${formatHoursDecimal(thisWeek)}** (no data for the week before to compare)`;
-  }
+  const { thisWeek, lastWeek } = await fetchCommonCohortMedians(supabase, weekStart, weekBefore(weekStart));
+  if (thisWeek == null || lastWeek == null) return null;
   const diff = thisWeek - lastWeek;
   const arrow = diff > 0 ? '▲' : diff < 0 ? '▼' : '→';
   const pct = lastWeek > 0 ? Math.round((Math.abs(diff) / lastWeek) * 100) : null;
