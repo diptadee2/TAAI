@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-06-9';
+  var CLIENT_VERSION = '2026-09-07-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -355,6 +355,26 @@
   // (see ensurePomoAudioCtx), which neither a page load nor a background
   // sync provides, so a phase that completes before the next click will
   // only notify, not chime — the notification is what's mandatory instead.
+  // Real bug, reported directly (session dots still showing yesterday's
+  // count after midnight): `saved` here can be either a localStorage blob
+  // (savedAt, an epoch-ms number) or a cross-device sync object from the
+  // server (updatedAt, an ISO string) — neither timestamp was ever
+  // checked before folding saved.completedSessions into the Math.max
+  // below, so a session tally saved right before midnight kept winning
+  // the merge forever afterward, since Math.max can only ratchet a number
+  // up, never back down to 0 for a genuinely new day. Only
+  // completedSessions is date-scoped this way — mode/running/phaseEndAt
+  // deliberately are NOT, since an actual active phase can legitimately
+  // span midnight (a late-night session shouldn't get killed just because
+  // the calendar date ticked over) and restores correctly regardless of
+  // which day it started on.
+  function pomoSavedIsFromToday(saved) {
+    var ms = saved.savedAt != null ? saved.savedAt : (saved.updatedAt ? parseUtcTimestamp(saved.updatedAt).getTime() : null);
+    if (ms == null) return true; // no timestamp on this blob — preserve prior (pre-fix) behavior rather than guess
+    var d = new Date(ms);
+    return (d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate())) === todayIso();
+  }
+
   function applyPomoActiveState(saved) {
     if (!saved) return;
     if (pomo.timerId) clearTimeout(pomo.timerId);
@@ -364,8 +384,10 @@
     // call can run after this device has already advanced further (e.g.
     // completed another session while the sync from elsewhere was still in
     // flight), and a lower count from that stale response shouldn't erase
-    // progress this device already knows really happened.
-    pomo.completedSessions = Math.max(pomo.completedSessions, saved.completedSessions || 0);
+    // progress this device already knows really happened. But only when
+    // `saved` is genuinely from today — see pomoSavedIsFromToday above.
+    var savedCompletedSessions = pomoSavedIsFromToday(saved) ? (saved.completedSessions || 0) : 0;
+    pomo.completedSessions = Math.max(pomo.completedSessions, savedCompletedSessions);
     if (saved.running) {
       pomo.phaseEndAt = saved.phaseEndAt;
       pomo.running = true;
