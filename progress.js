@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-07-1';
+  var CLIENT_VERSION = '2026-09-07-2';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1611,7 +1611,12 @@
     if (!card) return;
     card.classList.toggle('on-break', pomo.mode === 'break');
     var modeEl = document.getElementById('pomo-mode');
-    if (modeEl) modeEl.textContent = pomo.mode === 'work' ? 'Focus' : 'Break';
+    if (modeEl) {
+      modeEl.textContent = pomo.mode === 'work' ? 'Focus' : 'Break';
+      // Pulses only while a phase is actively counting down — paused or
+      // idle, it's just the plain (bigger) label with no animation.
+      modeEl.classList.toggle('pomo-active', pomo.running);
+    }
     var timeEl = document.getElementById('pomo-time');
     if (timeEl) timeEl.textContent = formatPomoTime(pomo.secondsLeft);
     var dotsEl = document.getElementById('pomo-dots');
@@ -1994,7 +1999,7 @@
       // flat diameter line, in the wide-open area with no dome-narrowing
       // width constraint at all (see .pomodoro-mode-wrap/.pomodoro-time-wrap).
       '<div class="pomodoro-mode-wrap">' +
-      '<div class="pomodoro-mode" id="pomo-mode">' + (pomo.mode === 'work' ? 'Focus' : 'Break') + '</div>' +
+      '<div class="pomodoro-mode' + (pomo.running ? ' pomo-active' : '') + '" id="pomo-mode">' + (pomo.mode === 'work' ? 'Focus' : 'Break') + '</div>' +
       '</div>' +
       '<div class="pomodoro-time-wrap">' +
       '<div class="pomodoro-time" id="pomo-time">' + formatPomoTime(pomo.secondsLeft) + '</div>' +

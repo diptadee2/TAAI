@@ -369,7 +369,7 @@
     .pomo-today-row .pomodoro-card { flex: 0 0 auto; }
     .pomo-today-row .pomodoro-ring-wrap { width: 340px; height: 272px; }
     .pomo-today-row .pomodoro-time { font-size: 62px; }
-    .pomo-today-row .pomodoro-mode { font-size: 16px; }
+    .pomo-today-row .pomodoro-mode { font-size: 18px; }
     /* Shrunk to a genuinely secondary/compact companion, not just narrower
        — smaller title/rows/text throughout, not only a tighter max-width,
        since a narrow column at full font size still reads as "large
@@ -523,8 +523,19 @@
      viewBox (95/160 ≈ 59%) in renderPomodoro. */
   .pomodoro-mode-wrap { position: absolute; top: 0; left: 0; right: 0; bottom: 41%; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 10px; }
   .pomodoro-time-wrap { position: absolute; top: 59%; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; }
-  .pomodoro-mode { font-family: var(--font-nav); font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--purple); transition: color .3s ease; }
+  /* Bigger than before (12px -> 14px) plus a slow breathing pulse — the
+     word is short (FOCUS/BREAK), nowhere near the width the countdown
+     digits needed all this clearance for in the first place, so there's
+     plenty of room in the dome for both changes without reintroducing
+     the clipping problem documented above. The pulse itself only runs
+     while .pomo-active is present — added/removed by updatePomoDisplay()
+     based on pomo.running, so it's a "focus session actively happening"
+     cue, not a constant idle animation running whether or not anyone's
+     actually mid-session. */
+  .pomodoro-mode { font-family: var(--font-nav); font-size: 14px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--purple); transition: color .3s ease; }
+  .pomodoro-mode.pomo-active { animation: pomoModePulse 2.2s ease-in-out infinite; }
   .pomodoro-card.on-break .pomodoro-mode { color: var(--green); }
+  @keyframes pomoModePulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.65; transform: scale(1.08); } }
   /* Same slow-drifting animated gradient .streak-number/.program-day-num
      already use elsewhere on this page (shared @keyframes streak-grad) —
      reused here rather than a new animation, so the whole timer (ring +
