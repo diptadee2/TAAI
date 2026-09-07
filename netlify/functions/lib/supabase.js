@@ -387,13 +387,39 @@ export async function fetchMonthlyDailyRecord(supabase) {
 }
 
 // Same idea, one level up: the single highest total_minutes any student
-// has logged in one week whose week_start falls within the current IST
-// calendar month — for the weekly Discord post's record line.
+// has logged in one CLOSED week that overlaps the current IST calendar
+// month — for the weekly Discord post's record line.
+//
+// Real bug, caught by direct report (a real posted message showing "This
+// month's weekly record: Dev — 4.0h" directly under a leaderboard of
+// 70+ hour students): the original query filtered by `week_start >=
+// monthStartIST()` — i.e. a week only counted if its OWN start date fell
+// in the new month. A week starting up to 6 days before month-start can
+// still have nearly all its days IN the new month (e.g. week_start
+// 2026-08-31 covers Aug 31 - Sep 6, five sixths of it September) but was
+// being excluded entirely on a technicality, while the brand-new week
+// that had JUST started (mere hours of data) was the only eligible row
+// and won by default — a tiny, still-accumulating total presented as "the
+// record." Confirmed directly against production: all 24 eligible rows
+// were from the week that started that same day.
+//
+// Fixed two ways: (1) the lower bound is monthStart minus 6 days, not
+// monthStart itself, so a week has to merely OVERLAP the month, not start
+// inside it — 6 days is always exactly the right margin regardless of
+// which weekday a month happens to start on, since a 7-day week can start
+// at most 6 days before its own last day. (2) the still-in-progress
+// current week is explicitly excluded (`< weekStartIST()`) — comparing a
+// few hours of an ongoing week against fully-closed prior weeks was never
+// a fair "record" contest to begin with, independent of the month-
+// boundary issue.
 export async function fetchMonthlyWeeklyRecord(supabase) {
+  const monthOverlapStart = addDaysToDateStr(monthStartIST(), -6);
+  const currentWeekStart = weekStartIST();
   const { data, error } = await supabase
     .from('pomodoro_stats')
     .select('email, week_start, total_minutes')
-    .gte('week_start', monthStartIST())
+    .gte('week_start', monthOverlapStart)
+    .lt('week_start', currentWeekStart)
     .order('total_minutes', { ascending: false })
     .limit(1)
     .maybeSingle();
