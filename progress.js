@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-08-8';
+  var CLIENT_VERSION = '2026-09-08-9';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1181,13 +1181,14 @@
   // just the rows on its smart-poll (see LEADERBOARD_POLL_MS), same reason renderLeaderboardRows is
   // split from renderLeaderboardCard — replacing the whole card would
   // replay its .fade-in entrance every refresh.
-  // animate: staggers each row in with a subtle fade+rise on genuine page
-  // load/visit (see renderTodayLeaders) — deliberately NOT passed by
-  // refreshLeaderboard's poll-driven patch, same "don't replay an entrance
-  // effect on a routine background update" discipline already used for
-  // .fade-in elsewhere on this page (see CLAUDE.md's known-gotchas list),
-  // just applied per-row here instead of to a whole card.
-  function todayLeaderboardRowEnterAttrs(animate, index) {
+  // animate: staggers each row in with a fade+rise+bounce on genuine page
+  // load/visit (see renderTodayLeaders/renderLeaderboardCard) — shared by
+  // both the daily top-10 and weekly top-20 boards. Deliberately NOT
+  // passed by refreshLeaderboard's poll-driven patch, same "don't replay
+  // an entrance effect on a routine background update" discipline already
+  // used for .fade-in elsewhere on this page (see CLAUDE.md's known-
+  // gotchas list), just applied per-row here instead of to a whole card.
+  function leaderboardRowEnterAttrs(animate, index) {
     if (!animate) return '';
     return ' leaderboard-row--enter" style="animation-delay:' + (index * 45) + 'ms';
   }
@@ -1197,7 +1198,7 @@
     if (!leaders.length) return '';
     var rows = leaders.map(function (l, i) {
       var rank = LEADERBOARD_MEDALS[i] || (i + 1);
-      return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (l.is_me ? ' leaderboard-row--me' : '') + (l.is_live ? ' leaderboard-row--live' : '') + todayLeaderboardRowEnterAttrs(animate, i) + '">' +
+      return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (l.is_me ? ' leaderboard-row--me' : '') + (l.is_live ? ' leaderboard-row--live' : '') + leaderboardRowEnterAttrs(animate, i) + '">' +
         '<span class="leaderboard-rank">' + rank + '</span>' +
         rankMovementHtml(i + 1) +
         '<span class="leaderboard-name">' + liveDotHtml(l.is_live) + escapeHtml(l.display_name) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
@@ -1206,7 +1207,7 @@
     }).join('');
     if (state.todayViewerRank) {
       rows += '<div class="leaderboard-gap">···</div>' +
-        '<div class="leaderboard-row leaderboard-row--me' + (state.todayViewerRank.is_live ? ' leaderboard-row--live' : '') + todayLeaderboardRowEnterAttrs(animate, leaders.length) + '">' +
+        '<div class="leaderboard-row leaderboard-row--me' + (state.todayViewerRank.is_live ? ' leaderboard-row--live' : '') + leaderboardRowEnterAttrs(animate, leaders.length) + '">' +
         '<span class="leaderboard-rank">' + state.todayViewerRank.rank + '</span>' +
         rankMovementHtml(state.todayViewerRank.rank) +
         '<span class="leaderboard-name">' + liveDotHtml(state.todayViewerRank.is_live) + 'You</span>' +
@@ -2468,7 +2469,7 @@
       .catch(function () { /* non-critical — champions card just stays stale */ });
   }
 
-  function renderLeaderboardRows() {
+  function renderLeaderboardRows(animate) {
     if (!state.leaderboard.length) {
       return '<p class="center-note" style="padding:14px 0;">No focus sessions logged yet. Be the first!</p>';
     }
@@ -2479,7 +2480,7 @@
       // length is customizable per student (pomoSettings.work, 1-120min);
       // total_minutes already accounts for that correctly and is what
       // actually ranks the list, so it's the only number displayed too.
-      return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (r.is_me ? ' leaderboard-row--me' : '') + (r.is_live ? ' leaderboard-row--live' : '') + '">' +
+      return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (r.is_me ? ' leaderboard-row--me' : '') + (r.is_live ? ' leaderboard-row--live' : '') + leaderboardRowEnterAttrs(animate, i) + '">' +
         '<span class="leaderboard-rank">' + rankLabel + '</span>' +
         rankMovementHtml(i + 1, r.previous_week_rank) +
         '<span class="leaderboard-name">' + liveDotHtml(r.is_live) + escapeHtml(r.display_name) + (r.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
@@ -2496,7 +2497,7 @@
     // their actual rank is nowhere near position 21.
     if (state.viewerRank) {
       rows += '<div class="leaderboard-gap">···</div>' +
-        '<div class="leaderboard-row leaderboard-row--me' + (state.viewerRank.is_live ? ' leaderboard-row--live' : '') + '">' +
+        '<div class="leaderboard-row leaderboard-row--me' + (state.viewerRank.is_live ? ' leaderboard-row--live' : '') + leaderboardRowEnterAttrs(animate, state.leaderboard.length) + '">' +
         '<span class="leaderboard-rank">' + state.viewerRank.rank + '</span>' +
         rankMovementHtml(state.viewerRank.rank, state.viewerRank.previous_week_rank) +
         '<span class="leaderboard-name">' + liveDotHtml(state.viewerRank.is_live) + 'You</span>' +
@@ -2509,7 +2510,26 @@
     return rows;
   }
 
+  // Tracks whether the top-20 board's rows have already played their entry
+  // animation for the current Focus Mode visit — unlike the daily top-10
+  // board (whose data is already in hand from the initial tracker-data
+  // batch, so its first real render IS the synchronous one), state.leaderboard
+  // is only ever populated by refreshLeaderboard()'s async fetch, which
+  // enterFocus() kicks off right after rendering the card. So the card's own
+  // synchronous first render normally has no data yet (renderLeaderboardRows
+  // falls back to its empty-state message) — this flag lets refreshLeaderboard's
+  // first resolve (whichever one actually delivers real rows) be the one that
+  // animates, while every resolve after that (the routine 30-60s poll) doesn't.
+  var leaderboardRowsAnimatedThisVisit = false;
+
   function renderLeaderboardCard() {
+    // Only true here if state.leaderboard already had data BEFORE this
+    // render (e.g. re-entering Focus Mode later in the same page visit,
+    // after an earlier refreshLeaderboard() already populated it) — marking
+    // the flag now stops the refreshLeaderboard() call enterFocus() is about
+    // to fire right after this from animating a second time in a row.
+    var animateNow = state.leaderboard.length > 0;
+    leaderboardRowsAnimatedThisVisit = animateNow;
     return '<div class="leaderboard-card fade-in" id="leaderboard-card">' +
       '<div class="leaderboard-title">Mission IIT Leaderboard</div>' +
       '<div class="leaderboard-subtitle">Top 20 by minutes logged · Resets every Monday</div>' +
@@ -2517,7 +2537,7 @@
       // label sits directly above its column on every row, not just
       // approximately near it.
       '<div class="leaderboard-columns"><span class="leaderboard-col-rank">Rank</span><span></span><span class="leaderboard-col-name">Name</span><span class="leaderboard-col-streak">Streak</span><span class="leaderboard-col-status">Status</span><span class="leaderboard-col-timer">Timer</span><span class="leaderboard-col-time">Minutes</span></div>' +
-      '<div id="leaderboard-rows">' + renderLeaderboardRows() + '</div>' +
+      '<div id="leaderboard-rows">' + renderLeaderboardRows(animateNow) + '</div>' +
       '</div>';
   }
 
@@ -2537,7 +2557,13 @@
         state.leaderboard = r.leaderboard || [];
         state.viewerRank = r.viewerRank || null;
         var rows = document.getElementById('leaderboard-rows');
-        if (rows) rows.innerHTML = renderLeaderboardRows();
+        // See leaderboardRowsAnimatedThisVisit's own comment — this is what
+        // actually catches the top-20 board's *first* real population,
+        // since renderLeaderboardCard's own sync render almost always still
+        // has empty data at that point.
+        var shouldAnimateTop20 = !leaderboardRowsAnimatedThisVisit && state.leaderboard.length > 0;
+        if (rows) rows.innerHTML = renderLeaderboardRows(shouldAnimateTop20);
+        if (shouldAnimateTop20) leaderboardRowsAnimatedThisVisit = true;
         // Armed here, not at the outer card's own render — #leaderboard-card
         // deliberately isn't re-rendered on refresh (only #leaderboard-rows
         // above is, to avoid replaying its .fade-in entrance), so checking
