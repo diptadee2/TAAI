@@ -578,7 +578,7 @@
      renderPomodoro in progress.js) instead of the old flat var(--purple)/
      var(--green), plus a soft matching glow so the ring itself reads as
      the focal point rather than a flat colored line. */
-  .pomo-ring-progress { fill: none; stroke: url(#pomo-ring-gradient-work); stroke-width: 10; stroke-linecap: round; filter: drop-shadow(0 0 6px rgba(167,139,250,0.5)); transition: stroke-dashoffset 1s linear, filter .4s ease; }
+  .pomo-ring-progress { fill: none; stroke: url(#pomo-ring-gradient-work); stroke-width: 10; stroke-linecap: round; filter: drop-shadow(0 0 6px var(--pomo-glow, rgba(167,139,250,0.5))); transition: stroke-dashoffset 1s linear, filter .4s ease; }
   .pomodoro-card.on-break .pomo-ring-progress { stroke: url(#pomo-ring-gradient-break); filter: drop-shadow(0 0 6px rgba(74,222,128,0.5)); }
   /* Split at direct request into two separately-positioned pieces, rather
      than one shared block stacking both — FOCUS/BREAK sits genuinely
@@ -609,7 +609,7 @@
      reused here rather than a new animation, so the whole timer (ring +
      number) reads as one deliberately "premium" gradient treatment, not
      the old flat purple text next to a flat purple ring. */
-  .pomodoro-time { font-family: var(--font-body); font-size: 44px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; background: linear-gradient(120deg,#FF7FB7,var(--purple),#4D8BFF); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: streak-grad 6s ease infinite; }
+  .pomodoro-time { font-family: var(--font-body); font-size: 44px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; background: linear-gradient(120deg,var(--pomo-g1,#FF7FB7),var(--pomo-g2,var(--purple)),var(--pomo-g3,#4D8BFF)); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: streak-grad 6s ease infinite; }
   .pomodoro-card.on-break .pomodoro-time { background: linear-gradient(120deg,#4ade80,#22d3ee); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; }
 
   .pomodoro-dots { position: relative; font-size: 19px; letter-spacing: 7px; margin-bottom: 4px; opacity: .95; }
@@ -688,6 +688,19 @@
      instead of only the entrance being smooth. */
   .pomo-work-max-alert { font-size: 12px; color: var(--amber); text-align: left; margin: 0; max-height: 0; opacity: 0; overflow: hidden; transition: opacity .35s ease, max-height .35s ease, margin .35s ease; }
   .pomo-work-max-alert.visible { margin: -4px 0 10px; max-height: 32px; opacity: 1; }
+  /* Ring color picker ("give people option within the settings pane to
+     choose the gradient of their pomodoro, keep five gradients") — plain
+     circular swatches, each just a solid preview of that preset's own
+     gradient (inline style, set at render time — see
+     pomoGradientSwatchesHtml), no separate color logic duplicated in CSS.
+     .selected gets a ring rather than relying on the swatch's own color
+     changing, since a border-color swap wouldn't read consistently across
+     5 very different hues. */
+  .pomo-gradient-row { align-items: center; }
+  .pomo-gradient-swatches { display: flex; gap: 8px; }
+  .pomo-gradient-swatch { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; padding: 0; cursor: pointer; transition: transform .2s cubic-bezier(.34,1.1,.64,1), border-color .2s; }
+  .pomo-gradient-swatch:hover { transform: scale(1.12); }
+  .pomo-gradient-swatch.selected { border-color: var(--ink); box-shadow: 0 0 0 2px var(--card); }
   .pomo-test-row { display: flex; gap: 8px; margin-top: 8px; }
   .pomo-test-sound { flex: 1; padding: 8px 10px; font-size: 12px; font-family: var(--font-body); border-radius: 10px; border: 1px solid rgba(255,255,255,0.12); background: var(--card); color: var(--ink-dim); cursor: pointer; transition: background .2s, color .2s, border-color .2s; }
   .pomo-test-sound:hover { background: rgba(139,92,246,0.14); border-color: rgba(139,92,246,0.4); color: var(--ink); }

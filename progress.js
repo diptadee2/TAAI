@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-08-14';
+  var CLIENT_VERSION = '2026-09-08-15';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -83,7 +83,34 @@
 
   // ── Pomodoro timer (Focus Mode only) ──────────────────────────────
   var POMO_SETTINGS_KEY = 'taai_pomo_settings';
-  var DEFAULT_POMO_SETTINGS = { work: 25, shortBreak: 5, longBreak: 15, cycle: 4 };
+  var DEFAULT_POMO_SETTINGS = { work: 25, shortBreak: 5, longBreak: 15, cycle: 4, gradient: 0 };
+  // Selectable ring/time-text color presets ("give people option within
+  // the settings pane to choose the gradient of their pomodoro, keep five
+  // gradients") — index 0 is the site's own pre-existing brand gradient
+  // (pink -> purple -> blue), so an already-saved settings blob with no
+  // gradient field yet (from before this existed) defaults to the exact
+  // look everyone already had, not a silent change. Break's own gradient
+  // (green/cyan, see .pomodoro-card.on-break .pomodoro-time and
+  // pomo-ring-gradient-break) is untouched regardless of pick — always
+  // stays visually distinct from whatever's chosen here, so a break phase
+  // never gets mistaken for a work phase just because its color happens
+  // to match.
+  // glow is the ring's own drop-shadow color (see .pomo-ring-progress) —
+  // a fitting tint per preset rather than a computed one, so a picked
+  // gradient's glow reads as intentional (e.g. an amber glow around
+  // Citrus) instead of every preset keeping the original purple glow
+  // regardless of what colors are actually in the ring.
+  var POMO_GRADIENTS = [
+    { name: 'Sunset', colors: ['#FF7FB7', '#A78BFA', '#4D8BFF'], glow: 'rgba(167,139,250,0.5)' },
+    { name: 'Ocean', colors: ['#22D3EE', '#3B82F6', '#6366F1'], glow: 'rgba(59,130,246,0.5)' },
+    { name: 'Citrus', colors: ['#FBBF24', '#FB923C', '#F87171'], glow: 'rgba(251,146,60,0.5)' },
+    { name: 'Mint', colors: ['#4ADE80', '#2DD4BF', '#38BDF8'], glow: 'rgba(45,212,191,0.5)' },
+    { name: 'Berry', colors: ['#FB7185', '#D946EF', '#8B5CF6'], glow: 'rgba(217,70,239,0.5)' },
+  ];
+  function clampPomoGradient(val) {
+    var n = Math.round(Number(val));
+    return (isFinite(n) && n >= 0 && n < POMO_GRADIENTS.length) ? n : 0;
+  }
   // Semi-circle gauge (a speedometer-style dial), not a full circle — a
   // deliberate shape change from the original full ring, at direct
   // request ("something more appealing"). The arc is a real SVG <path>
@@ -167,12 +194,32 @@
         shortBreak: clampMinutes(parsed.shortBreak, DEFAULT_POMO_SETTINGS.shortBreak, 1, 60),
         longBreak: clampMinutes(parsed.longBreak, DEFAULT_POMO_SETTINGS.longBreak, 1, 90),
         cycle: clampMinutes(parsed.cycle, DEFAULT_POMO_SETTINGS.cycle, 1, 12),
+        gradient: clampPomoGradient(parsed.gradient),
       };
     } catch (e) { return Object.assign({}, DEFAULT_POMO_SETTINGS); }
   }
 
   function savePomoSettings() {
     localStorage.setItem(POMO_SETTINGS_KEY, JSON.stringify(pomoSettings));
+  }
+
+  // Sets --pomo-g1/2/3 (read by .pomodoro-time's CSS and, via an inline
+  // style="stop-color:var(...)" on each <stop>, the ring's own SVG
+  // gradient — see renderPomodoro) directly on #pomo-card, live, no
+  // re-render needed — so picking a new swatch mid-session doesn't touch
+  // pomo.running/secondsLeft/anything else about an in-progress phase.
+  // Safe to call even when #pomo-card doesn't exist yet (outside Focus
+  // Mode) — becomes a no-op, and the CSS vars still get set correctly the
+  // next time renderPomodoro() actually runs anyway (see its own inline
+  // style using the same POMO_GRADIENTS lookup).
+  function applyPomoGradient() {
+    var card = document.getElementById('pomo-card');
+    if (!card) return;
+    var preset = POMO_GRADIENTS[pomoSettings.gradient] || POMO_GRADIENTS[0];
+    card.style.setProperty('--pomo-g1', preset.colors[0]);
+    card.style.setProperty('--pomo-g2', preset.colors[1]);
+    card.style.setProperty('--pomo-g3', preset.colors[2]);
+    card.style.setProperty('--pomo-glow', preset.glow);
   }
 
   var pomoSettings = loadPomoSettings();
@@ -2103,11 +2150,32 @@
       '</div><span>' + unit + '</span></div>';
   }
 
+  // 5 small clickable swatches, one per POMO_GRADIENTS preset — clicking
+  // one updates pomoSettings.gradient, saves it, and calls
+  // applyPomoGradient() for an immediate live update (see that function's
+  // own comment on why this doesn't need a re-render).
+  function pomoGradientSwatchesHtml() {
+    var html = '<div class="pomo-setting-row pomo-gradient-row"><label>Ring color</label><div class="pomo-gradient-swatches">';
+    POMO_GRADIENTS.forEach(function (g, i) {
+      var selected = i === pomoSettings.gradient;
+      html += '<button type="button" class="pomo-gradient-swatch' + (selected ? ' selected' : '') + '" data-gradient-index="' + i + '" aria-label="' + g.name + '" aria-pressed="' + selected + '" style="background:linear-gradient(135deg,' + g.colors[0] + ',' + g.colors[1] + ',' + g.colors[2] + ')"></button>';
+    });
+    html += '</div></div>';
+    return html;
+  }
+
   function renderPomodoro() {
     var frac = pomo.totalSeconds > 0 ? pomo.secondsLeft / pomo.totalSeconds : 1;
     var offset = POMO_RING_CIRCUMFERENCE * (1 - frac);
+    // Sets the initial --pomo-g1/2/3 values inline (applyPomoGradient
+    // updates them live afterward, e.g. when a swatch is picked, without
+    // needing a re-render) — read by .pomodoro-time's CSS and, via each
+    // <stop>'s own inline style below, the ring's SVG gradient too, so
+    // both always agree on the same selected preset.
+    var pomoGradPreset = POMO_GRADIENTS[pomoSettings.gradient] || POMO_GRADIENTS[0];
+    var pomoGradStyle = '--pomo-g1:' + pomoGradPreset.colors[0] + ';--pomo-g2:' + pomoGradPreset.colors[1] + ';--pomo-g3:' + pomoGradPreset.colors[2] + ';--pomo-glow:' + pomoGradPreset.glow + ';';
 
-    return '<div class="pomodoro-card fade-in' + (pomo.mode === 'break' ? ' on-break' : '') + '" id="pomo-card">' +
+    return '<div class="pomodoro-card fade-in' + (pomo.mode === 'break' ? ' on-break' : '') + '" id="pomo-card" style="' + pomoGradStyle + '">' +
       '<div class="pomodoro-ring-wrap">' +
       // Anchored to the ring itself (a child of ring-wrap, not the card) —
       // sitting on the ring's own top-right edge reads as "settings for
@@ -2131,7 +2199,7 @@
       // ids would collide if it didn't).
       '<defs>' +
       '<linearGradient id="pomo-ring-gradient-work" x1="0%" y1="0%" x2="100%" y2="100%">' +
-      '<stop offset="0%" stop-color="#FF7FB7"/><stop offset="55%" stop-color="#A78BFA"/><stop offset="100%" stop-color="#4D8BFF"/>' +
+      '<stop offset="0%" style="stop-color:var(--pomo-g1)"/><stop offset="55%" style="stop-color:var(--pomo-g2)"/><stop offset="100%" style="stop-color:var(--pomo-g3)"/>' +
       '</linearGradient>' +
       '<linearGradient id="pomo-ring-gradient-break" x1="0%" y1="0%" x2="100%" y2="100%">' +
       '<stop offset="0%" stop-color="#4ade80"/><stop offset="100%" stop-color="#22d3ee"/>' +
@@ -2174,6 +2242,7 @@
       pomoStepperRowHtml('Short break', 'pomo-set-short', 1, 60, pomoSettings.shortBreak, 'min') +
       pomoStepperRowHtml('Long break', 'pomo-set-long', 1, 90, pomoSettings.longBreak, 'min') +
       pomoStepperRowHtml('Sessions / long break', 'pomo-set-cycle', 1, 12, pomoSettings.cycle, '') +
+      pomoGradientSwatchesHtml() +
       '<div class="pomo-test-row">' +
       '<button class="pomo-test-sound" id="pomo-test-sound" type="button">🔊 Test sound</button>' +
       '<button class="pomo-test-sound" id="pomo-test-notify" type="button">🔔 Test notification</button>' +
@@ -2793,6 +2862,24 @@
         if (!isNaN(max)) next = Math.min(max, next);
         input.value = next;
         input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    });
+
+    // Ring color swatches — takes effect immediately (applyPomoGradient,
+    // no re-render, so an in-progress phase is untouched) and saves right
+    // away rather than waiting for the settings panel's own Save button,
+    // since a color pick has no "in-flight" value to validate the way the
+    // duration fields do.
+    Array.prototype.forEach.call(document.querySelectorAll('.pomo-gradient-swatch'), function (btn) {
+      btn.addEventListener('click', function () {
+        pomoSettings.gradient = clampPomoGradient(btn.getAttribute('data-gradient-index'));
+        savePomoSettings();
+        applyPomoGradient();
+        Array.prototype.forEach.call(document.querySelectorAll('.pomo-gradient-swatch'), function (other) {
+          var isSelected = other === btn;
+          other.classList.toggle('selected', isSelected);
+          other.setAttribute('aria-pressed', isSelected);
+        });
       });
     });
 
