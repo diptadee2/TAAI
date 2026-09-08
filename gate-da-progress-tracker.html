@@ -604,22 +604,29 @@
   .pomodoro-dots { position: relative; font-size: 19px; letter-spacing: 7px; margin-bottom: 4px; opacity: .95; }
   .pomodoro-session-label { font-family: var(--font-nav); font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 20px; }
   .pomodoro-controls { position: relative; display: flex; gap: 10px; justify-content: center; }
-  /* Icons + a bouncier press added 2026-09-08 ("make the ... button
-     animations and look better") — was plain text pills with a fairly flat
-     scale(0.96) press and no icons at all. Buttons are now inline-flex to
-     hold an icon (.pomo-btn-icon) beside the label (.pomo-btn-label); the
-     press itself now releases on the site's own signature overshoot curve
-     (cubic-bezier(.34,1.56,.64,1), the same one .focus-toggle/.nav-dd-item
-     already use for a "settle with a little bounce" feel) instead of the
-     plain ease every other transform on this element used before. */
-  .pomo-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 10px 24px; border-radius: 999px; border: none; font-family: var(--font-nav); font-weight: 700; font-size: 13px; cursor: pointer; transition: transform .3s cubic-bezier(.34,1.56,.64,1), box-shadow .2s, background .2s; }
+  /* Icons added 2026-09-08 ("make the ... button animations and look
+     better"). First pass also gave hover a combined translateY+scale on
+     an overshoot bezier (cubic-bezier(.34,1.56,.64,1)) — direct feedback
+     ("the logos beside start reset and skip still have an uncanny
+     motion", after the separate per-tick icon-pop bug above was already
+     fixed) traced this to the hover transform itself: a small ~13px icon
+     resizing by even 2% (scale(1.02)) while riding an oscillating
+     overshoot curve reads as a visible wobble/shimmer at that size, far
+     more noticeable than the same relative motion on the button's own
+     text label. Hover is back to a plain translateY(-2px) — no scale, no
+     overshoot, matching every other non-jittery hover-lift button on this
+     page (.focus-toggle, .month-nav button, etc.) — while the overshoot
+     bounce is kept, but only on :active (a discrete, momentary press, not
+     a continuously-reevaluated hover state, so the same wobble risk
+     doesn't apply there). */
+  .pomo-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 10px 24px; border-radius: 999px; border: none; font-family: var(--font-nav); font-weight: 700; font-size: 13px; cursor: pointer; transition: transform .22s ease-out, box-shadow .2s, background .2s; }
   .pomo-btn-icon { display: inline-flex; }
   .pomo-btn-primary { background: linear-gradient(135deg,#FF7FB7,var(--purple),#4D8BFF); color: #fff; box-shadow: 0 8px 24px rgba(139,92,246,0.35); min-width: 84px; }
-  .pomo-btn-primary:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 12px 30px rgba(139,92,246,0.5); }
-  .pomo-btn-primary:active { transform: scale(0.93); }
+  .pomo-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(139,92,246,0.5); }
+  .pomo-btn-primary:active { transform: scale(0.93); transition: transform .18s cubic-bezier(.34,1.56,.64,1); }
   .pomo-btn-secondary { background: rgba(255,255,255,0.06); color: var(--ink-dim); border: 1px solid rgba(255,255,255,0.1); }
-  .pomo-btn-secondary:hover { background: rgba(255,255,255,0.11); color: var(--ink); transform: translateY(-2px) scale(1.02); }
-  .pomo-btn-secondary:active { transform: scale(0.93); }
+  .pomo-btn-secondary:hover { background: rgba(255,255,255,0.11); color: var(--ink); transform: translateY(-2px); }
+  .pomo-btn-secondary:active { transform: scale(0.93); transition: transform .18s cubic-bezier(.34,1.56,.64,1); }
   /* Fires once whenever Start/Pause actually toggles (see
      updatePomoDisplay) — a small overshoot bounce on just the icon (not
      the whole button, which already has its own press animation) so
