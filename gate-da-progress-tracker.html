@@ -390,7 +390,7 @@
      .pomodoro-time (pink -> purple -> blue, shared @keyframes streak-grad)
      instead of flat --ink, so this reads as one more "real stat" number
      in the same visual language as the page's other headline figures. */
-  .exam-countdown-num { display: inline-block; font-family: var(--font-body); font-weight: 800; font-size: 23px; line-height: 1; font-variant-numeric: tabular-nums; min-width: 3ch; text-align: right; background: linear-gradient(120deg,#FF7FB7,var(--purple),#4D8BFF); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: streak-grad 6s ease infinite; }
+  .exam-countdown-num { display: inline-block; font-family: var(--font-body); font-weight: 800; font-size: 23px; line-height: 1; font-variant-numeric: tabular-nums; min-width: 3ch; text-align: right; background: linear-gradient(120deg,var(--pomo-g1,#FF7FB7),var(--pomo-g2,var(--purple)),var(--pomo-g3,#4D8BFF)); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: streak-grad 6s ease infinite; }
   /* Plays once, right as the JS count-up (animateExamCountdown) lands on
      the final value — same signature overshoot-and-settle bezier
      (cubic-bezier(.34,1.56,.64,1)) already used for .streak-number-style
@@ -593,7 +593,7 @@
      var(--green), plus a soft matching glow so the ring itself reads as
      the focal point rather than a flat colored line. */
   .pomo-ring-progress { fill: none; stroke: url(#pomo-ring-gradient-work); stroke-width: 10; stroke-linecap: round; filter: drop-shadow(0 0 6px var(--pomo-glow, rgba(167,139,250,0.5))); transition: stroke-dashoffset 1s linear, filter .4s ease; }
-  .pomodoro-card.on-break .pomo-ring-progress { stroke: url(#pomo-ring-gradient-break); filter: drop-shadow(0 0 6px rgba(74,222,128,0.5)); }
+  .pomodoro-card.on-break .pomo-ring-progress { stroke: url(#pomo-ring-gradient-break); filter: drop-shadow(0 0 6px var(--pomo-break-glow, rgba(74,222,128,0.5))); }
   /* Split at direct request into two separately-positioned pieces, rather
      than one shared block stacking both — FOCUS/BREAK sits genuinely
      inside the dome (the space the arc encloses), the countdown itself
@@ -614,9 +614,9 @@
      based on pomo.running, so it's a "focus session actively happening"
      cue, not a constant idle animation running whether or not anyone's
      actually mid-session. */
-  .pomodoro-mode { font-family: var(--font-nav); font-size: 14px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--purple); transition: color .3s ease; }
+  .pomodoro-mode { font-family: var(--font-nav); font-size: 14px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--pomo-g2, var(--purple)); transition: color .3s ease; }
   .pomodoro-mode.pomo-active { animation: pomoModePulse 2.2s ease-in-out infinite; }
-  .pomodoro-card.on-break .pomodoro-mode { color: var(--green); }
+  .pomodoro-card.on-break .pomodoro-mode { color: var(--pomo-break-g1, var(--green)); }
   @keyframes pomoModePulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.65; transform: scale(1.08); } }
   /* Same slow-drifting animated gradient .streak-number/.program-day-num
      already use elsewhere on this page (shared @keyframes streak-grad) —
@@ -624,7 +624,7 @@
      number) reads as one deliberately "premium" gradient treatment, not
      the old flat purple text next to a flat purple ring. */
   .pomodoro-time { font-family: var(--font-body); font-size: 44px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; background: linear-gradient(120deg,var(--pomo-g1,#FF7FB7),var(--pomo-g2,var(--purple)),var(--pomo-g3,#4D8BFF)); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: streak-grad 6s ease infinite; }
-  .pomodoro-card.on-break .pomodoro-time { background: linear-gradient(120deg,#4ade80,#22d3ee); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; }
+  .pomodoro-card.on-break .pomodoro-time { background: linear-gradient(120deg,var(--pomo-break-g1,#4ade80),var(--pomo-break-g2,#22d3ee)); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; }
 
   .pomodoro-dots { position: relative; font-size: 19px; letter-spacing: 7px; margin-bottom: 4px; opacity: .95; }
   .pomodoro-session-label { font-family: var(--font-nav); font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 20px; }

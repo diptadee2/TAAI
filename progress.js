@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-08-16';
+  var CLIENT_VERSION = '2026-09-08-17';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -89,23 +89,36 @@
   // gradients") — index 0 is the site's own pre-existing brand gradient
   // (pink -> purple -> blue), so an already-saved settings blob with no
   // gradient field yet (from before this existed) defaults to the exact
-  // look everyone already had, not a silent change. Break's own gradient
-  // (green/cyan, see .pomodoro-card.on-break .pomodoro-time and
-  // pomo-ring-gradient-break) is untouched regardless of pick — always
-  // stays visually distinct from whatever's chosen here, so a break phase
-  // never gets mistaken for a work phase just because its color happens
-  // to match.
+  // look everyone already had, not a silent change. Each preset also
+  // carries its own break-phase pairing (breakColors/breakGlow, see
+  // .pomodoro-card.on-break .pomodoro-time and pomo-ring-gradient-break)
+  // rather than one fixed green/cyan for every preset — a preset whose
+  // own work colors are already cool (Ocean, Mint) gets a warm break
+  // pairing instead, so Focus->Break always reads as a real color shift
+  // regardless of which work preset is picked, never two cool-toned
+  // gradients sitting too close on the color wheel to tell apart.
   // glow is the ring's own drop-shadow color (see .pomo-ring-progress) —
   // a fitting tint per preset rather than a computed one, so a picked
   // gradient's glow reads as intentional (e.g. an amber glow around
   // Citrus) instead of every preset keeping the original purple glow
   // regardless of what colors are actually in the ring.
+  // breakColors/breakGlow: the break-phase ring/text pairing for each
+  // preset — deliberately NOT the same fixed green/cyan for all five.
+  // Sunset/Citrus/Berry's own work colors are warm or purple, so the
+  // original cool green->cyan break already reads as a clear "you've
+  // switched" signal and is kept as-is; Ocean and Mint's *work* colors
+  // are themselves cool blues/greens, so the same green/cyan break would
+  // sit right next to its own work gradient on the color wheel and be
+  // hard to tell apart at a glance — those two get a warm break pairing
+  // instead (amber/rose for Ocean, orange/pink for Mint) so Focus->Break
+  // always reads as a real color shift regardless of which work preset
+  // is picked.
   var POMO_GRADIENTS = [
-    { name: 'Sunset', colors: ['#FF7FB7', '#A78BFA', '#4D8BFF'], glow: 'rgba(167,139,250,0.5)' },
-    { name: 'Ocean', colors: ['#22D3EE', '#3B82F6', '#6366F1'], glow: 'rgba(59,130,246,0.5)' },
-    { name: 'Citrus', colors: ['#FBBF24', '#FB923C', '#F87171'], glow: 'rgba(251,146,60,0.5)' },
-    { name: 'Mint', colors: ['#4ADE80', '#2DD4BF', '#38BDF8'], glow: 'rgba(45,212,191,0.5)' },
-    { name: 'Berry', colors: ['#FB7185', '#D946EF', '#8B5CF6'], glow: 'rgba(217,70,239,0.5)' },
+    { name: 'Sunset', colors: ['#FF7FB7', '#A78BFA', '#4D8BFF'], glow: 'rgba(167,139,250,0.5)', breakColors: ['#4ADE80', '#22D3EE'], breakGlow: 'rgba(74,222,128,0.5)' },
+    { name: 'Ocean', colors: ['#22D3EE', '#3B82F6', '#6366F1'], glow: 'rgba(59,130,246,0.5)', breakColors: ['#FBBF24', '#FB7185'], breakGlow: 'rgba(251,191,36,0.5)' },
+    { name: 'Citrus', colors: ['#FBBF24', '#FB923C', '#F87171'], glow: 'rgba(251,146,60,0.5)', breakColors: ['#4ADE80', '#22D3EE'], breakGlow: 'rgba(74,222,128,0.5)' },
+    { name: 'Mint', colors: ['#4ADE80', '#2DD4BF', '#38BDF8'], glow: 'rgba(45,212,191,0.5)', breakColors: ['#FB923C', '#F472B6'], breakGlow: 'rgba(251,146,60,0.5)' },
+    { name: 'Berry', colors: ['#FB7185', '#D946EF', '#8B5CF6'], glow: 'rgba(217,70,239,0.5)', breakColors: ['#4ADE80', '#22D3EE'], breakGlow: 'rgba(74,222,128,0.5)' },
   ];
   function clampPomoGradient(val) {
     var n = Math.round(Number(val));
@@ -203,23 +216,39 @@
     localStorage.setItem(POMO_SETTINGS_KEY, JSON.stringify(pomoSettings));
   }
 
-  // Sets --pomo-g1/2/3 (read by .pomodoro-time's CSS and, via an inline
+  // Sets --pomo-g1/2/3/glow and --pomo-break-g1/2/glow (read by
+  // .pomodoro-time's CSS, .pomodoro-mode, the Start/Save/Reset/Skip
+  // buttons, the exam-countdown chip's number+icon, and, via an inline
   // style="stop-color:var(...)" on each <stop>, the ring's own SVG
-  // gradient — see renderPomodoro) directly on #pomo-card, live, no
-  // re-render needed — so picking a new swatch mid-session doesn't touch
-  // pomo.running/secondsLeft/anything else about an in-progress phase.
-  // Safe to call even when #pomo-card doesn't exist yet (outside Focus
-  // Mode) — becomes a no-op, and the CSS vars still get set correctly the
-  // next time renderPomodoro() actually runs anyway (see its own inline
-  // style using the same POMO_GRADIENTS lookup).
+  // gradient — see renderPomodoro) live, no re-render needed — so picking
+  // a new swatch mid-session doesn't touch pomo.running/secondsLeft/
+  // anything else about an in-progress phase. Written to BOTH #app (the
+  // shared ancestor of the countdown chip and .pomodoro-card, which are
+  // rendered as siblings — see renderCalendar's state.focus branch) AND
+  // #pomo-card itself — #pomo-card carries its own local copy from
+  // renderPomodoro()'s inline style (for the very first paint, before
+  // this function has run even once), and a descendant's own local custom
+  // property always wins over an ancestor's, so leaving #pomo-card's
+  // stale from-render-time value in place would silently block every live
+  // update to anything inside it (the ring, buttons, time text) after the
+  // very first pick — a real regression caught by testing an Ocean pick's
+  // Save-changes button screenshot still showing Sunset's pink/blue.
+  // Safe to call even when #app/#pomo-card don't exist yet — becomes a
+  // no-op for whichever is missing, and the CSS vars still get set
+  // correctly the next time renderCalendar()/renderPomodoro() actually
+  // run anyway.
   function applyPomoGradient() {
-    var card = document.getElementById('pomo-card');
-    if (!card) return;
     var preset = POMO_GRADIENTS[pomoSettings.gradient] || POMO_GRADIENTS[0];
-    card.style.setProperty('--pomo-g1', preset.colors[0]);
-    card.style.setProperty('--pomo-g2', preset.colors[1]);
-    card.style.setProperty('--pomo-g3', preset.colors[2]);
-    card.style.setProperty('--pomo-glow', preset.glow);
+    [document.getElementById('app'), document.getElementById('pomo-card')].forEach(function (el) {
+      if (!el) return;
+      el.style.setProperty('--pomo-g1', preset.colors[0]);
+      el.style.setProperty('--pomo-g2', preset.colors[1]);
+      el.style.setProperty('--pomo-g3', preset.colors[2]);
+      el.style.setProperty('--pomo-glow', preset.glow);
+      el.style.setProperty('--pomo-break-g1', preset.breakColors[0]);
+      el.style.setProperty('--pomo-break-g2', preset.breakColors[1]);
+      el.style.setProperty('--pomo-break-glow', preset.breakGlow);
+    });
   }
 
   var pomoSettings = loadPomoSettings();
@@ -1359,7 +1388,12 @@
       var daysLeft = Math.max(0, Math.ceil((new Date(EXAM_DATE) - new Date(today)) / 864e5));
       html += '<div class="exam-countdown-wrap">' +
         '<div class="exam-countdown fade-in">' +
-        '<span class="exam-countdown-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><defs><linearGradient id="exam-icon-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF7FB7"/><stop offset="55%" stop-color="#A78BFA"/><stop offset="100%" stop-color="#4D8BFF"/></linearGradient></defs><rect x="3" y="5" width="18" height="16" rx="3" stroke="url(#exam-icon-grad)" stroke-width="1.7"/><path d="M3 9.5h18M8 3v4M16 3v4" stroke="url(#exam-icon-grad)" stroke-width="1.7" stroke-linecap="round"/></svg></span>' +
+        // Stops read the same --pomo-g1/g2/g3 vars as the Pomodoro ring
+        // (set on #app, an ancestor of this element — see
+        // applyPomoGradient), with the original Sunset hex values as the
+        // var() fallback, so this matches .exam-countdown-num's own
+        // gradient exactly and re-themes live with the same swatch pick.
+        '<span class="exam-countdown-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><defs><linearGradient id="exam-icon-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:var(--pomo-g1,#FF7FB7)"/><stop offset="55%" style="stop-color:var(--pomo-g2,#A78BFA)"/><stop offset="100%" style="stop-color:var(--pomo-g3,#4D8BFF)"/></linearGradient></defs><rect x="3" y="5" width="18" height="16" rx="3" stroke="url(#exam-icon-grad)" stroke-width="1.7"/><path d="M3 9.5h18M8 3v4M16 3v4" stroke="url(#exam-icon-grad)" stroke-width="1.7" stroke-linecap="round"/></svg></span>' +
         '<span class="exam-countdown-body"><span class="exam-countdown-num" id="exam-countdown-num" data-days="' + daysLeft + '">0</span> days till GATE</span></div>' +
         '</div>';
     }
@@ -1631,6 +1665,12 @@
     bindCalendarEvents();
     observeFadeIns();
     animateExamCountdown();
+    // Ancestor-level fallback for the very first paint of a saved
+    // non-default preset — #pomo-card's own inline style (see
+    // renderPomodoro) already gets this right on its own, but the
+    // countdown chip sits outside .focus-card as a sibling, so it needs
+    // #app itself carrying the vars too (see applyPomoGradient's comment).
+    if (state.focus) applyPomoGradient();
     // state.lastWeekLeaders/lastWeekViewerRank are already fresh at this
     // point (set earlier in loadMonth's resolve, before renderCalendar is
     // called) — unlike the top-20 card in Focus Mode, this one doesn't
@@ -2173,7 +2213,8 @@
     // <stop>'s own inline style below, the ring's SVG gradient too, so
     // both always agree on the same selected preset.
     var pomoGradPreset = POMO_GRADIENTS[pomoSettings.gradient] || POMO_GRADIENTS[0];
-    var pomoGradStyle = '--pomo-g1:' + pomoGradPreset.colors[0] + ';--pomo-g2:' + pomoGradPreset.colors[1] + ';--pomo-g3:' + pomoGradPreset.colors[2] + ';--pomo-glow:' + pomoGradPreset.glow + ';';
+    var pomoGradStyle = '--pomo-g1:' + pomoGradPreset.colors[0] + ';--pomo-g2:' + pomoGradPreset.colors[1] + ';--pomo-g3:' + pomoGradPreset.colors[2] + ';--pomo-glow:' + pomoGradPreset.glow + ';' +
+      '--pomo-break-g1:' + pomoGradPreset.breakColors[0] + ';--pomo-break-g2:' + pomoGradPreset.breakColors[1] + ';--pomo-break-glow:' + pomoGradPreset.breakGlow + ';';
 
     return '<div class="pomodoro-card fade-in' + (pomo.mode === 'break' ? ' on-break' : '') + '" id="pomo-card" style="' + pomoGradStyle + '">' +
       '<div class="pomodoro-ring-wrap">' +
@@ -2202,7 +2243,7 @@
       '<stop offset="0%" style="stop-color:var(--pomo-g1)"/><stop offset="55%" style="stop-color:var(--pomo-g2)"/><stop offset="100%" style="stop-color:var(--pomo-g3)"/>' +
       '</linearGradient>' +
       '<linearGradient id="pomo-ring-gradient-break" x1="0%" y1="0%" x2="100%" y2="100%">' +
-      '<stop offset="0%" stop-color="#4ade80"/><stop offset="100%" stop-color="#22d3ee"/>' +
+      '<stop offset="0%" style="stop-color:var(--pomo-break-g1)"/><stop offset="100%" style="stop-color:var(--pomo-break-g2)"/>' +
       '</linearGradient>' +
       '</defs>' +
       pomoTickMarksHtml() +
