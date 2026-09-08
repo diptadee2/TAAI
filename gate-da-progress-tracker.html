@@ -323,7 +323,14 @@
   @keyframes streak-grad { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
   @keyframes streak-bump { 0% { transform: scale(1); } 45% { transform: scale(1.35); } 100% { transform: scale(1); } }
 
-  .exam-countdown { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-nav); font-size: 12.5px; font-weight: 600; color: var(--ink-dim); background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.22); border-radius: 999px; padding: 8px 18px; align-self: center; }
+  /* Redesigned from a pill 2026-09-08 ("not in the form of a pill") — a
+     small rounded-rect stat chip instead, matching the flat card language
+     (var(--card)/var(--line)) the rest of the page just moved to, with a
+     distinct icon badge rather than a bare inline icon so it reads as a
+     small stat card, not a button. */
+  .exam-countdown { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-nav); font-size: 12.5px; font-weight: 600; color: var(--ink-dim); background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 9px 16px 9px 9px; align-self: center; }
+  .exam-countdown-icon { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: rgba(139,92,246,0.14); color: var(--purple); flex-shrink: 0; }
+  .exam-countdown-num { font-family: var(--font-body); font-weight: 800; font-size: 15px; color: var(--ink); }
   /* Wraps the "Day X/180" stat on the main checklist page — centers it
      under the heading, above the Focus Mode button. */
   .program-day-badge-wrap { display: flex; justify-content: center; margin-bottom: 20px; }
