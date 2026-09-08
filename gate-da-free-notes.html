@@ -56,9 +56,17 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .nav-spacer { height: 86px; }
 .nav.menu-open { background: rgba(248,246,255,0.82); }
 .nav-inner { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 28px; height: 86px; padding: 0 32px 0 20px; overflow: visible; }
-.nav-logo { display: flex; align-items: center; text-decoration: none; transition: transform .22s ease-out, opacity .22s ease; }
-.nav-logo img { width: 180px; height: auto; }
-.nav-logo:hover { transform: translateY(-2px); opacity: 0.82; }
+/* transform lives on the inner img, not .nav-logo itself (2026-09-08 fix,
+   "the logos move jitterily on hover") — putting it directly on the
+   hovered element meant the hover box moved out from under a cursor
+   resting near its edge, flickering hover on/off rapidly. Hover
+   detection now stays on the never-moving .nav-logo anchor; only the
+   inner logo visually lifts. Same fix applied to every page sharing this
+   ported-verbatim nav component, not just this one. */
+.nav-logo { display: flex; align-items: center; text-decoration: none; transition: opacity .22s ease; }
+.nav-logo img { width: 180px; height: auto; transition: transform .22s ease-out; }
+.nav-logo:hover { opacity: 0.82; }
+.nav-logo:hover img { transform: translateY(-2px); }
 .nav-links { display: flex; gap: 36px; font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; font-family: var(--font-nav); position: relative; }
 .nav-links a, .nav-dropdown-wrap > span { color: var(--ink-dim); text-decoration: none; transition: color .2s, transform .3s cubic-bezier(.34,1.1,.64,1); position: relative; z-index: 1; cursor: pointer; display: inline-block; white-space: nowrap; }
 .nav-links a:hover, .nav-links a.active { color: var(--purple); transform: scale(1.08) translateY(-1px); }
@@ -481,8 +489,6 @@ body.buttons-visible .mcb-call:hover, body.buttons-visible .mcb-wa:hover { trans
   .nav-cta, .nav-links, .btn-nav-contact { display: none; }
   .nav-inner { height: 64px; padding: 0 14px; justify-content: flex-end; }
   .nav-logo { position: absolute; left: 50%; transform: translateX(-50%); }
-  .nav-logo:hover { transform: translateX(-50%) translateY(-2px); }
-  .nav-logo:active { transform: translateX(-50%) translateY(1px); }
   .nav-logo img { width: 150px; }
   .nav-spacer { height: 64px; }
   .mobile-menu { top: 64px; }

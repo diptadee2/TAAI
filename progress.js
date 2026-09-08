@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-08-5';
+  var CLIENT_VERSION = '2026-09-08-6';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -98,6 +98,15 @@
   // full circle.
   var POMO_RING_R = 75;
   var POMO_RING_CIRCUMFERENCE = Math.PI * POMO_RING_R;
+
+  // Start/Pause/Reset/Skip button icons — shared constants (not inlined
+  // per-button like renderPomodoro's other one-off SVGs) since the
+  // Start/Pause one also needs to be swapped live by updatePomoDisplay()
+  // whenever pomo.running flips, not just at initial render.
+  var POMO_ICON_PLAY = '<svg width="13" height="13" viewBox="0 0 24 24"><path d="M7 4v16l14-8L7 4z" fill="currentColor"/></svg>';
+  var POMO_ICON_PAUSE = '<svg width="13" height="13" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1" fill="currentColor"/><rect x="14" y="4" width="4" height="16" rx="1" fill="currentColor"/></svg>';
+  var POMO_ICON_RESET = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>';
+  var POMO_ICON_SKIP = '<svg width="13" height="13" viewBox="0 0 24 24"><path d="M5 4l9 8-9 8V4z" fill="currentColor"/><rect x="16" y="4" width="2.5" height="16" rx="1" fill="currentColor"/></svg>';
 
   function clampMinutes(val, fallback, min, max) {
     var n = Number(val);
@@ -1684,7 +1693,20 @@
     var sessionLabelEl = document.getElementById('pomo-session-label');
     if (sessionLabelEl) sessionLabelEl.textContent = pomoSessionLabel();
     var toggleBtn = document.getElementById('pomo-toggle');
-    if (toggleBtn) toggleBtn.textContent = pomo.running ? 'Pause' : 'Start';
+    if (toggleBtn) {
+      var toggleLabel = toggleBtn.querySelector('.pomo-btn-label');
+      if (toggleLabel) toggleLabel.textContent = pomo.running ? 'Pause' : 'Start';
+      var toggleIcon = document.getElementById('pomo-toggle-icon');
+      if (toggleIcon) {
+        toggleIcon.innerHTML = pomo.running ? POMO_ICON_PAUSE : POMO_ICON_PLAY;
+        // Restart the pop keyframe every toggle — removing then re-adding
+        // the class in the same tick wouldn't retrigger it (the browser
+        // just sees the class already present), so force a reflow first.
+        toggleIcon.classList.remove('pomo-btn-icon-pop');
+        void toggleIcon.offsetWidth;
+        toggleIcon.classList.add('pomo-btn-icon-pop');
+      }
+    }
     var ring = document.getElementById('pomo-ring-progress');
     if (ring) {
       var frac = pomo.totalSeconds > 0 ? pomo.secondsLeft / pomo.totalSeconds : 0;
@@ -2081,9 +2103,13 @@
       '<div class="pomodoro-dots" id="pomo-dots">' + pomoDotsText() + '</div>' +
       '<div class="pomodoro-session-label" id="pomo-session-label">' + pomoSessionLabel() + '</div>' +
       '<div class="pomodoro-controls">' +
-      '<button id="pomo-toggle" class="pomo-btn pomo-btn-primary">' + (pomo.running ? 'Pause' : 'Start') + '</button>' +
-      '<button id="pomo-reset" class="pomo-btn pomo-btn-secondary">Reset</button>' +
-      '<button id="pomo-skip" class="pomo-btn pomo-btn-secondary">Skip</button>' +
+      '<button id="pomo-toggle" class="pomo-btn pomo-btn-primary">' +
+      '<span class="pomo-btn-icon" id="pomo-toggle-icon">' + (pomo.running ? POMO_ICON_PAUSE : POMO_ICON_PLAY) + '</span>' +
+      '<span class="pomo-btn-label">' + (pomo.running ? 'Pause' : 'Start') + '</span></button>' +
+      '<button id="pomo-reset" class="pomo-btn pomo-btn-secondary">' +
+      '<span class="pomo-btn-icon">' + POMO_ICON_RESET + '</span><span class="pomo-btn-label">Reset</span></button>' +
+      '<button id="pomo-skip" class="pomo-btn pomo-btn-secondary">' +
+      '<span class="pomo-btn-icon">' + POMO_ICON_SKIP + '</span><span class="pomo-btn-label">Skip</span></button>' +
       '</div>' +
       '<p class="pomo-notify-permanent-tip">🔔 Notifications need your computer’s permission too, not just this site’s — check your OS’s own notification settings for this browser if they don’t show up.</p>' +
       renderPomoNotifyNotice() +

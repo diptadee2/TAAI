@@ -75,10 +75,19 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .nav-spacer { height: 86px; }
 .nav.menu-open { background: rgba(248,246,255,0.82); }
 .nav-inner { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 28px; height: 86px; padding: 0 32px 0 20px; overflow: visible; }
-.nav-logo { display: flex; align-items: center; text-decoration: none; transition: transform .22s ease-out, opacity .22s ease; }
-.nav-logo svg, .nav-logo img { width: 180px; height: auto; filter: drop-shadow(0 0 10px rgba(255,255,255,0.4)) drop-shadow(0 0 28px rgba(255,255,255,0.18)) drop-shadow(0 0 60px rgba(255,255,255,0.09)); }
-.nav-logo:hover { transform: translateY(-2px); opacity: 0.82; }
-.nav-logo:active { transform: translateY(1px); opacity: 1; transition-duration: .08s; }
+/* transform lives on the inner svg/img, not .nav-logo itself (2026-09-08
+   fix, "the logos move jitterily on hover") — putting it directly on the
+   hovered element meant the hover box moved out from under a cursor
+   resting near its edge, flickering hover on/off rapidly. Hover
+   detection now stays on the never-moving .nav-logo anchor; only the
+   inner logo visually lifts. Same fix applied to every page sharing this
+   ported-verbatim nav component, not just this one. */
+.nav-logo { display: flex; align-items: center; text-decoration: none; transition: opacity .22s ease; }
+.nav-logo svg, .nav-logo img { width: 180px; height: auto; filter: drop-shadow(0 0 10px rgba(255,255,255,0.4)) drop-shadow(0 0 28px rgba(255,255,255,0.18)) drop-shadow(0 0 60px rgba(255,255,255,0.09)); transition: transform .22s ease-out; }
+.nav-logo:hover { opacity: 0.82; }
+.nav-logo:hover svg, .nav-logo:hover img { transform: translateY(-2px); }
+.nav-logo:active { opacity: 1; }
+.nav-logo:active svg, .nav-logo:active img { transform: translateY(1px); transition-duration: .08s; }
 @media (hover: hover) {
   .nav-logo { position: relative; }
   .nav-logo::after { content: 'Home'; position: absolute; bottom: -34px; left: 50%; transform: translateX(-50%) translateY(8px) scale(0.88); font-size: 11.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--purple); background: linear-gradient(135deg, rgba(249,247,255,0.97), rgba(241,237,255,0.97)); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(139,92,246,0.22); border-radius: 20px; padding: 4px 13px; opacity: 0; pointer-events: none; transition: opacity .18s ease, transform .24s cubic-bezier(.34,1.15,.64,1); white-space: nowrap; box-shadow: 0 4px 18px rgba(139,92,246,0.13), 0 1px 4px rgba(0,0,0,0.05); }
@@ -548,7 +557,7 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   .offer-card:hover::after { opacity: 0; transform: none; }
   .offer-card:active { transform: scale(0.97) !important; transition-duration: .12s; }
 }
-@media (max-width: 1024px) { .nav-hamburger { display: flex; } .nav-cta { display: none; } .nav-links { display: none; } .btn-nav-contact { display: none; } .nav-inner { height: 64px; padding: 0 14px; position: relative; justify-content: flex-end; } .mobile-menu { top: 64px; } .nav-spacer { height: 64px; } .nav-logo { position: absolute; left: 50%; transform: translateX(-50%); } .nav-logo:hover { transform: translateX(-50%) translateY(-2px); } .nav-logo:active { transform: translateX(-50%) translateY(1px); } .nav-logo svg, .nav-logo img { width: 150px; height: auto; filter: drop-shadow(0 0 14px rgba(255,255,255,0.22)) drop-shadow(0 0 36px rgba(255,255,255,0.12)) drop-shadow(0 0 72px rgba(255,255,255,0.07)); } .nav-hamburger span { background: var(--purple); } }
+@media (max-width: 1024px) { .nav-hamburger { display: flex; } .nav-cta { display: none; } .nav-links { display: none; } .btn-nav-contact { display: none; } .nav-inner { height: 64px; padding: 0 14px; position: relative; justify-content: flex-end; } .mobile-menu { top: 64px; } .nav-spacer { height: 64px; } .nav-logo { position: absolute; left: 50%; transform: translateX(-50%); } .nav-logo svg, .nav-logo img { width: 150px; height: auto; filter: drop-shadow(0 0 14px rgba(255,255,255,0.22)) drop-shadow(0 0 36px rgba(255,255,255,0.12)) drop-shadow(0 0 72px rgba(255,255,255,0.07)); } .nav-hamburger span { background: var(--purple); } }
 @media (min-width: 768px) and (max-width: 1024px) {
 }
 
