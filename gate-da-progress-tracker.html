@@ -346,7 +346,16 @@
      1/2/3 digits; this was silently not working until this pass despite
      looking fine in an earlier check, because that check only ever
      sampled two already-3-digit frames. */
-  .exam-countdown { display: inline-flex; align-items: center; gap: 12px; font-family: var(--font-nav); font-size: 14px; font-weight: 600; color: var(--ink-dim); background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 18px 10px 10px; align-self: center; }
+  /* Genuinely its own box now, not the first item inside .focus-card —
+     several attempts at separating it from the ring/leaderboard section
+     with an internal divider or glow were all rejected as looking bad, so
+     this makes them two actually-separate cards with real background
+     showing between them, instead of one continuous card with an internal
+     seam. .exam-countdown-wrap centers it and provides the gap to
+     .focus-card below (a plain margin now, not a flex gap, since this no
+     longer shares a flex container with the card). */
+  .exam-countdown-wrap { display: flex; justify-content: center; margin-bottom: 18px; }
+  .exam-countdown { display: inline-flex; align-items: center; gap: 12px; font-family: var(--font-nav); font-size: 14px; font-weight: 600; color: var(--ink-dim); background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 18px 10px 10px; }
   /* Two lighting attempts here (a blurred radial "light pool", then a
      glowing gradient line) were both rejected as looking bad. Pulled the
      glow entirely rather than guess a third time — separation now comes

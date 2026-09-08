@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-08-4';
+  var CLIENT_VERSION = '2026-09-08-5';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1260,9 +1260,11 @@
       // expired yet; it should tick down every actual calendar day.
       var today = realTodayIso();
       var daysLeft = Math.max(0, Math.ceil((new Date(EXAM_DATE) - new Date(today)) / 864e5));
-      html += '<div class="exam-countdown fade-in">' +
+      html += '<div class="exam-countdown-wrap">' +
+        '<div class="exam-countdown fade-in">' +
         '<span class="exam-countdown-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="3" stroke="currentColor" stroke-width="1.7"/><path d="M3 9.5h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>' +
-        '<span class="exam-countdown-body"><span class="exam-countdown-num" id="exam-countdown-num" data-days="' + daysLeft + '">0</span> days till GATE</span></div>';
+        '<span class="exam-countdown-body"><span class="exam-countdown-num" id="exam-countdown-num" data-days="' + daysLeft + '">0</span> days till GATE</span></div>' +
+        '</div>';
     }
 
     return html;
@@ -1464,8 +1466,14 @@
     }
 
     if (state.focus) {
-      html += '<div class="focus-card fade-in" id="focus-card">';
+      // Rendered as its own standalone element, outside .focus-card — see
+      // .exam-countdown-wrap. Used to live as the card's first flex child,
+      // sharing its border/background with the ring/leaderboard section
+      // below; several attempts at separating the two with an internal
+      // divider/glow were all rejected, so this makes them genuinely two
+      // separate boxes instead of one continuous card with an internal seam.
       html += buildStatsPanelHtml();
+      html += '<div class="focus-card fade-in" id="focus-card">';
       // Side by side in the timer's own empty space at wide viewports, one
       // above the other on narrow ones — see .pomo-today-row. Works fine
       // with just one child too (renderTodayLeaders returns '' on a fresh
