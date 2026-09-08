@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-08-9';
+  var CLIENT_VERSION = '2026-09-08-10';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -98,6 +98,35 @@
   // full circle.
   var POMO_RING_R = 75;
   var POMO_RING_CIRCUMFERENCE = Math.PI * POMO_RING_R;
+
+  // Speedometer-style tick marks inside the gauge's dome ("can we have mock
+  // lines that of a car's speedometer?") — short radial lines evenly spaced
+  // across the same 180-degree sweep as the arc itself, alternating longer
+  // "major" and shorter "minor" ticks the way a real gauge dial does.
+  // Centered on the same (100, 95)/r=75 the arc uses (see POMO_RING_R above)
+  // so they sit concentric with it; radii are chosen to stay entirely
+  // inside the arc's own stroke band (r=75, stroke-width 10, so the arc
+  // visually spans r=70 to r=80) — ticks never overlap or get hidden under
+  // the colored progress stroke. Purely structural/neutral in color
+  // regardless of work/break mode (unlike the arc/time text, which both
+  // switch gradients) — these read as fixed dial markings, not
+  // mode-specific data. Computed once, called only from renderPomodoro()
+  // (which itself only ever renders once per page).
+  function pomoTickMarksHtml() {
+    var cx = 100, cy = 95, rOuter = 66, rMajorInner = 52, rMinorInner = 60, count = 11, html = '';
+    for (var i = 0; i < count; i++) {
+      var deg = 180 - (180 / (count - 1)) * i;
+      var rad = deg * Math.PI / 180;
+      var isMajor = i % 2 === 0;
+      var rInner = isMajor ? rMajorInner : rMinorInner;
+      var x1 = (cx + rOuter * Math.cos(rad)).toFixed(2);
+      var y1 = (cy - rOuter * Math.sin(rad)).toFixed(2);
+      var x2 = (cx + rInner * Math.cos(rad)).toFixed(2);
+      var y2 = (cy - rInner * Math.sin(rad)).toFixed(2);
+      html += '<line class="pomo-tick' + (isMajor ? ' pomo-tick--major' : '') + '" x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '"/>';
+    }
+    return html;
+  }
 
   // Start/Pause/Reset/Skip button icons — shared constants (not inlined
   // per-button like renderPomodoro's other one-off SVGs) since the
@@ -2108,6 +2137,7 @@
       '<stop offset="0%" stop-color="#4ade80"/><stop offset="100%" stop-color="#22d3ee"/>' +
       '</linearGradient>' +
       '</defs>' +
+      pomoTickMarksHtml() +
       '<path class="pomo-ring-track" d="M 25 95 A ' + POMO_RING_R + ' ' + POMO_RING_R + ' 0 0 1 175 95"></path>' +
       '<path class="pomo-ring-progress" id="pomo-ring-progress" d="M 25 95 A ' + POMO_RING_R + ' ' + POMO_RING_R + ' 0 0 1 175 95" ' +
       'stroke-dasharray="' + POMO_RING_CIRCUMFERENCE + '" stroke-dashoffset="' + offset + '"></path>' +

@@ -563,6 +563,13 @@
      oriented as drawn. */
   .pomodoro-ring { width: 100%; height: 100%; }
   .pomo-ring-track { fill: none; stroke: rgba(255,255,255,0.07); stroke-width: 10; }
+  /* Speedometer-style dial ticks inside the dome (see pomoTickMarksHtml in
+     progress.js) — neutral/subtle regardless of work-break mode, same
+     spirit as .pomo-ring-track's own flat neutral color, so they read as
+     fixed gauge markings rather than another mode-colored element
+     competing with the gradient arc/time text. */
+  .pomo-tick { stroke: rgba(255,255,255,0.14); stroke-width: 1.5; stroke-linecap: round; }
+  .pomo-tick--major { stroke: rgba(255,255,255,0.24); stroke-width: 2; }
   /* Gradient strokes (defs live inline in the SVG markup — see
      renderPomodoro in progress.js) instead of the old flat var(--purple)/
      var(--green), plus a soft matching glow so the ring itself reads as
