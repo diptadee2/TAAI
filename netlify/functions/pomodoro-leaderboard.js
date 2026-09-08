@@ -83,7 +83,7 @@ export async function handler(event) {
   // the exact definition (shared with fetchTodayLeaders, so the daily and
   // weekly boards can't disagree on what counts as "live").
   function pomoFieldsFor(email) {
-    return liveStatusByEmail[email] || { is_live: false, pomo_status: null, pomo_phase_end_at: null, pomo_last_seen_at: null };
+    return liveStatusByEmail[email] || { is_live: false, pomo_status: null, pomo_phase_end_at: null, pomo_phase_total_seconds: null, pomo_last_seen_at: null };
   }
 
   const leaderboard = stats.map(s => ({

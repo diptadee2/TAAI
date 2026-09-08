@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-08-13';
+  var CLIENT_VERSION = '2026-09-08-14';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2383,10 +2383,25 @@
   // already be stale a second later. Blank span (not omitted) when not
   // live, same reasoning as pomoStatusHtml — its own dedicated grid
   // column, so no row-to-row alignment risk from leaving it empty.
-  function pomoTimerHtml(phaseEndAt) {
+  // Renders a small depleting progress bar instead of MM:SS digits — same
+  // per-second update cost either way (see tickLeaderboardTimers' own
+  // comment), just a CSS width write instead of a textContent write, both
+  // negligible for the ~20 rows this ever touches. totalSeconds (the
+  // student's own customizable phase length, 1-120min for work — needed
+  // because phase_end_at alone can't tell you the *fraction* elapsed, only
+  // a countdown) comes from pomo_active_session.total_seconds via
+  // fetchLiveStatusByEmail (see pomo_phase_total_seconds there) — falls
+  // back to remaining if it's ever missing, so the bar still renders
+  // (just starts full) rather than breaking. mode colors the fill to
+  // match the ring's own work/break gradient language elsewhere on this
+  // page, reusing pomo_status the row already carries.
+  function pomoTimerHtml(phaseEndAt, totalSeconds, mode) {
     if (!phaseEndAt) return '<span class="leaderboard-timer"></span>';
     var remaining = Math.max(0, Math.round((phaseEndAt - Date.now()) / 1000));
-    return '<span class="leaderboard-timer" data-phase-end="' + phaseEndAt + '">' + formatPomoTime(remaining) + '</span>';
+    var total = totalSeconds > 0 ? totalSeconds : remaining;
+    var pct = total > 0 ? Math.max(0, Math.min(100, (remaining / total) * 100)) : 0;
+    return '<span class="leaderboard-timer' + (mode === 'break' ? ' leaderboard-timer--break' : '') + '" data-phase-end="' + phaseEndAt + '" data-total="' + total + '" title="' + formatPomoTime(remaining) + ' left">' +
+      '<span class="leaderboard-timer-fill" style="width:' + pct.toFixed(1) + '%"></span></span>';
   }
 
   // Ticks every .leaderboard-timer[data-phase-end] currently in the DOM
@@ -2400,8 +2415,12 @@
   function tickLeaderboardTimers() {
     var now = Date.now();
     document.querySelectorAll('.leaderboard-timer[data-phase-end]').forEach(function (el) {
+      var total = Number(el.dataset.total);
       var remaining = Math.max(0, Math.round((Number(el.dataset.phaseEnd) - now) / 1000));
-      el.textContent = formatPomoTime(remaining);
+      var pct = total > 0 ? Math.max(0, Math.min(100, (remaining / total) * 100)) : 0;
+      var fill = el.querySelector('.leaderboard-timer-fill');
+      if (fill) fill.style.width = pct.toFixed(1) + '%';
+      el.title = formatPomoTime(remaining) + ' left';
     });
   }
   function startLeaderboardTimerTick() {
@@ -2516,7 +2535,7 @@
         '<span class="leaderboard-name">' + liveDotHtml(r.is_live) + escapeHtml(r.display_name) + (r.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
         streakBallsHtml(r.streak) +
         pomoStatusHtml(r.pomo_status, r.pomo_last_seen_at) +
-        pomoTimerHtml(r.pomo_phase_end_at) +
+        pomoTimerHtml(r.pomo_phase_end_at, r.pomo_phase_total_seconds, r.pomo_status) +
         '<span class="leaderboard-time">' + timeLabel + '</span>' +
         '</div>';
     }).join('');
@@ -2533,7 +2552,7 @@
         '<span class="leaderboard-name">' + liveDotHtml(state.viewerRank.is_live) + 'You</span>' +
         streakBallsHtml(state.viewerRank.streak) +
         pomoStatusHtml(state.viewerRank.pomo_status, state.viewerRank.pomo_last_seen_at) +
-        pomoTimerHtml(state.viewerRank.pomo_phase_end_at) +
+        pomoTimerHtml(state.viewerRank.pomo_phase_end_at, state.viewerRank.pomo_phase_total_seconds, state.viewerRank.pomo_status) +
         '<span class="leaderboard-time">' + state.viewerRank.total_minutes + 'm</span>' +
         '</div>';
     }

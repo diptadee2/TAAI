@@ -50,7 +50,7 @@ export async function fetchAllRows(buildQuery, pageSize = 1000) {
 // (old JS silently sending a request shape the new server no longer
 // accepts) doesn't stay stuck indefinitely waiting for someone to notice
 // and manually refresh.
-export const CLIENT_VERSION = '2026-09-08-13';
+export const CLIENT_VERSION = '2026-09-08-14';
 
 export function json(statusCode, body) {
   return {
@@ -282,7 +282,7 @@ export async function fetchLiveStatusByEmail(supabase, emails) {
   if (!emails.length) return {};
   const { data: activeSessions, error } = await supabase
     .from('pomo_active_session')
-    .select('email, running, phase_end_at, mode, updated_at')
+    .select('email, running, phase_end_at, mode, total_seconds, updated_at')
     .in('email', emails);
   if (error) throw new Error(error.message);
 
@@ -296,6 +296,13 @@ export async function fetchLiveStatusByEmail(supabase, emails) {
       is_live: !!live,
       pomo_status: live?.mode || null,
       pomo_phase_end_at: live?.phase_end_at || null,
+      // Total phase length (customizable per student, 1-120min for work —
+      // see POMO_WORK_MAX_MINUTES — plus break lengths) alongside the
+      // deadline itself, so a viewer-side progress bar (see pomoTimerHtml
+      // in progress.js) can show fraction-remaining, not just a countdown
+      // number — phase_end_at alone isn't enough for that, since two
+      // students' sessions can be different lengths.
+      pomo_phase_total_seconds: live?.total_seconds || null,
       pomo_last_seen_at: (!live && session) ? parseUtcTimestamp(session.updated_at).getTime() : null,
     };
   }

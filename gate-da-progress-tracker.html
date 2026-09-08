@@ -920,12 +920,26 @@
      in pomodoro-leaderboard.js), shouldn't visually compete with the
      two states that actually mean "here right now". */
   .leaderboard-status.pomo-idle { color: var(--ink-soft); font-weight: 600; }
-  /* Live countdown for a live student's current phase — ticked client-
-     side every second (see startLeaderboardTimerTick/tickLeaderboardTimers
-     in progress.js) from data-phase-end (pomo_phase_end_at, ms epoch)
-     rather than a value that's already stale the moment it's rendered.
-     Tabular-nums so the mm:ss width doesn't jitter digit to digit. */
-  .leaderboard-timer { font-family: var(--font-nav); font-weight: 700; font-size: 13px; color: var(--ink-dim); text-align: center; font-variant-numeric: tabular-nums; min-width: 0; }
+  /* Depleting progress bar (not MM:SS digits) for a live student's
+     current phase — ticked client-side every second (see
+     startLeaderboardTimerTick/tickLeaderboardTimers in progress.js),
+     shrinking .leaderboard-timer-fill's width from data-phase-end/
+     data-total (pomo_phase_end_at/pomo_phase_total_seconds) rather than
+     a value that's already stale the moment it's rendered. The exact
+     remaining time is still available as a title tooltip, kept in sync
+     the same way. Work uses the same pink/purple/blue brand gradient as
+     the ring itself; break switches to the ring's own green/cyan pair —
+     .leaderboard-timer--break flips which gradient the fill's
+     background-image resolves to. */
+  .leaderboard-timer { display: inline-flex; align-items: center; width: 46px; height: 6px; border-radius: 999px; overflow: hidden; min-width: 0; }
+  /* Track background only for a row that actually has a phase to show —
+     pomoTimerHtml() renders an empty (attribute-less) span for anyone
+     with no active/recent session, same "blank in this column" behavior
+     the plain-text version had, rather than every row showing a track
+     with nothing in it. */
+  .leaderboard-timer[data-phase-end] { background: rgba(255,255,255,0.08); }
+  .leaderboard-timer-fill { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#FF7FB7,var(--purple),#4D8BFF); transition: width 1s linear; }
+  .leaderboard-timer--break .leaderboard-timer-fill { background: linear-gradient(90deg,#4ade80,#22d3ee); }
   .leaderboard-time { font-family: var(--font-nav); font-weight: 700; font-size: 14px; color: var(--ink); text-align: right; min-width: 0; }
   /* Greyed-out non-live rows so a student mid-focus-session actually
      stands out from everyone else on the board, instead of every name/
