@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-08-6';
+  var CLIENT_VERSION = '2026-09-08-7';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1698,13 +1698,25 @@
       if (toggleLabel) toggleLabel.textContent = pomo.running ? 'Pause' : 'Start';
       var toggleIcon = document.getElementById('pomo-toggle-icon');
       if (toggleIcon) {
-        toggleIcon.innerHTML = pomo.running ? POMO_ICON_PAUSE : POMO_ICON_PLAY;
-        // Restart the pop keyframe every toggle — removing then re-adding
-        // the class in the same tick wouldn't retrigger it (the browser
-        // just sees the class already present), so force a reflow first.
-        toggleIcon.classList.remove('pomo-btn-icon-pop');
-        void toggleIcon.offsetWidth;
-        toggleIcon.classList.add('pomo-btn-icon-pop');
+        // updatePomoDisplay() runs every second while the timer ticks (see
+        // pomoTickCore), not just when Start/Pause is actually clicked — a
+        // real bug caught by direct report ("the logos beside the texts"
+        // jittering): swapping the icon and retriggering its pop animation
+        // unconditionally on every call meant it bounced once per second
+        // for the entire session, not once per actual toggle. Guarded on
+        // a data-state attribute so this only fires when pomo.running has
+        // genuinely changed since the last call.
+        var desiredIconState = pomo.running ? 'pause' : 'play';
+        if (toggleIcon.getAttribute('data-state') !== desiredIconState) {
+          toggleIcon.setAttribute('data-state', desiredIconState);
+          toggleIcon.innerHTML = pomo.running ? POMO_ICON_PAUSE : POMO_ICON_PLAY;
+          // Restart the pop keyframe — removing then re-adding the class in
+          // the same tick wouldn't retrigger it (the browser just sees the
+          // class already present), so force a reflow first.
+          toggleIcon.classList.remove('pomo-btn-icon-pop');
+          void toggleIcon.offsetWidth;
+          toggleIcon.classList.add('pomo-btn-icon-pop');
+        }
       }
     }
     var ring = document.getElementById('pomo-ring-progress');
@@ -2104,7 +2116,7 @@
       '<div class="pomodoro-session-label" id="pomo-session-label">' + pomoSessionLabel() + '</div>' +
       '<div class="pomodoro-controls">' +
       '<button id="pomo-toggle" class="pomo-btn pomo-btn-primary">' +
-      '<span class="pomo-btn-icon" id="pomo-toggle-icon">' + (pomo.running ? POMO_ICON_PAUSE : POMO_ICON_PLAY) + '</span>' +
+      '<span class="pomo-btn-icon" id="pomo-toggle-icon" data-state="' + (pomo.running ? 'pause' : 'play') + '">' + (pomo.running ? POMO_ICON_PAUSE : POMO_ICON_PLAY) + '</span>' +
       '<span class="pomo-btn-label">' + (pomo.running ? 'Pause' : 'Start') + '</span></button>' +
       '<button id="pomo-reset" class="pomo-btn pomo-btn-secondary">' +
       '<span class="pomo-btn-icon">' + POMO_ICON_RESET + '</span><span class="pomo-btn-label">Reset</span></button>' +
