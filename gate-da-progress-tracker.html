@@ -417,7 +417,18 @@
      it's not the row's only/full-width child); stacked on narrow ones,
      where there's no spare width to use. Same 1081px breakpoint the rest
      of this page's two-column layout already switches on. */
-  .pomo-today-row { display: flex; flex-direction: column; gap: 20px; }
+  .pomo-today-row { position: relative; display: flex; flex-direction: column; gap: 20px; }
+  /* Canvas dot-field (see startPomoDotField in progress.js) sits behind the
+     ring/leaderboard cards, not as a flex item itself — absolutely
+     positioned to fill .pomo-today-row's own box, z-index:0 so it paints
+     under the two cards (both need position:relative of their own for
+     z-index to apply — .pomodoro-card already has position:relative from
+     its own rules; #today-leaderboard-card gets it here specifically for
+     this stacking). pointer-events:none so it never intercepts clicks
+     meant for the Start/Reset/Skip buttons or leaderboard rows above it. */
+  .pomo-dotfield { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .pomo-dotfield canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .pomo-today-row > .pomodoro-card, .pomo-today-row > #today-leaderboard-card { position: relative; z-index: 1; }
   @media (min-width: 1081px) {
     /* justify-content:center keeps the pair centered as a group — with
        the ring itself sized up to 280px (below), the timer's own bulk

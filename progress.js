@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-08-10';
+  var CLIENT_VERSION = '2026-09-08-11';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1465,6 +1465,11 @@
   }
 
   function renderCalendar() {
+    // Unconditional and first — app.innerHTML below is about to destroy
+    // any existing #pomo-dotfield-canvas, so its running loop (if any)
+    // must be torn down before that happens, not after (see
+    // stopPomoDotField's own comment).
+    stopPomoDotField();
     var today = todayIso();
     var todayDay = state.days.find(function (d) { return d.date === today; });
     // dayStatus() itself already only ever returns 'missed' for a
@@ -1528,7 +1533,11 @@
       // above the other on narrow ones — see .pomo-today-row. Works fine
       // with just one child too (renderTodayLeaders returns '' on a fresh
       // day with no data yet), flex doesn't need a second item to lay out.
-      html += '<div class="pomo-today-row">' + renderPomodoro() + renderTodayLeaders() + '</div>';
+      // Canvas dot-field behind just this row (not the whole tall
+      // .focus-card, which also holds the checklist) — see
+      // startPomoDotField/stopPomoDotField. aria-hidden since it's purely
+      // decorative and never carries focusable/readable content.
+      html += '<div class="pomo-today-row"><div class="pomo-dotfield" aria-hidden="true"><canvas id="pomo-dotfield-canvas"></canvas></div>' + renderPomodoro() + renderTodayLeaders() + '</div>';
       html += '<div class="focus-divider"></div>';
       if (todayDay) {
         html += renderTodayCard(todayDay, missedBefore.length);
@@ -1584,6 +1593,7 @@
     bindCalendarEvents();
     observeFadeIns();
     animateExamCountdown();
+    if (state.focus) startPomoDotField();
     // state.lastWeekLeaders/lastWeekViewerRank are already fresh at this
     // point (set earlier in loadMonth's resolve, before renderCalendar is
     // called) — unlike the top-20 card in Focus Mode, this one doesn't
@@ -2101,6 +2111,162 @@
       '<input type="number" id="' + id + '" min="' + min + '" max="' + max + '" value="' + value + '">' +
       '<button class="pomo-stepper-btn" data-target="' + id + '" data-dir="1" type="button" aria-label="Increase ' + label + '">+</button>' +
       '</div><span>' + unit + '</span></div>';
+  }
+
+  // ── Canvas dot-field behind the Pomodoro/leaderboard row ────────────
+  // "the dotted background we have behind the bundled courses card" turned
+  // out to mean the *animated* mouse-reactive DotField canvas component
+  // gate-da-courses.html layers behind #combos (see that file), not the
+  // flat static CSS dot-grid/noise texture added first — that texture is
+  // real (verified, still on .focus-card) but was never what was actually
+  // being asked for ("i see nothing" / "those were not static dots").
+  // Ported to plain JS since this page's tracker portion isn't React (the
+  // component itself is a React.memo using hooks) — same physics/constants
+  // as the site's own actual combos-dotfield usage (dotRadius=3.5,
+  // dotSpacing=14, bulgeStrength=67, same two gradient colors), not the
+  // component's own richer defaults (sparkle/wave/a visible cursor glow —
+  // all explicitly off in that real usage too, so left out here rather
+  // than porting unused code paths).
+  //
+  // Scoped to #pomo-dotfield-canvas / .pomo-today-row specifically, not
+  // the whole (much taller) .focus-card, which also holds the checklist —
+  // dots bulging under real checkbox/task text would hurt readability for
+  // no benefit, and "the pomodoro cards" (this request's own wording)
+  // reads as the timer/leaderboard row, not the day's task list.
+  //
+  // Lifecycle: renderCalendar() fully replaces app.innerHTML on every
+  // call, destroying any existing canvas — stopPomoDotField() (called
+  // unconditionally at the top of renderCalendar(), before that
+  // replacement) cancels the running rAF loop/interval/listeners first, so
+  // nothing is ever leaked pointing at a detached canvas; startPomoDotField()
+  // (called after the new markup lands, only when state.focus) sets up a
+  // fresh one against the new canvas element.
+  var pomoDotField = null;
+
+  function stopPomoDotField() {
+    if (!pomoDotField) return;
+    cancelAnimationFrame(pomoDotField.rafId);
+    clearInterval(pomoDotField.speedInterval);
+    clearTimeout(pomoDotField.resizeTimer);
+    window.removeEventListener('resize', pomoDotField.onResize);
+    window.removeEventListener('mousemove', pomoDotField.onMouseMove);
+    pomoDotField = null;
+  }
+
+  function startPomoDotField() {
+    stopPomoDotField(); // guards against ever doubling up a running loop
+    var canvas = document.getElementById('pomo-dotfield-canvas');
+    if (!canvas || !window.requestAnimationFrame) return;
+    var ctx = canvas.getContext('2d', { alpha: true });
+    if (!ctx) return;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var dotRadius = 3.5, dotSpacing = 14, cursorRadius = 500, bulgeStrength = 67;
+    var gradientFrom = 'rgba(139,92,246,0.22)', gradientTo = 'rgba(255,127,183,0.14)';
+    var size = { w: 0, h: 0, offsetX: 0, offsetY: 0 };
+    var dots = [];
+    var mouse = { x: -9999, y: -9999, prevX: -9999, prevY: -9999, speed: 0 };
+    var engagement = 0;
+    var resizeTimer = null;
+    var field = { rafId: null, speedInterval: null, resizeTimer: null, onMouseMove: null, onResize: null };
+
+    function buildDots(w, h) {
+      var step = dotRadius + dotSpacing;
+      var cols = Math.floor(w / step);
+      var rows = Math.floor(h / step);
+      var padX = (w % step) / 2;
+      var padY = (h % step) / 2;
+      var next = [];
+      for (var row = 0; row < rows; row++) {
+        for (var col = 0; col < cols; col++) {
+          var ax = padX + col * step + step / 2;
+          var ay = padY + row * step + step / 2;
+          next.push({ ax: ax, ay: ay, sx: ax, sy: ay });
+        }
+      }
+      dots = next;
+    }
+
+    function doResize() {
+      var rect = canvas.parentElement.getBoundingClientRect();
+      var w = rect.width, h = rect.height;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      size = { w: w, h: h, offsetX: rect.left + window.scrollX, offsetY: rect.top + window.scrollY };
+      buildDots(w, h);
+    }
+
+    function onResize() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(doResize, 100);
+      field.resizeTimer = resizeTimer;
+    }
+
+    function onMouseMove(e) {
+      mouse.x = e.pageX - size.offsetX;
+      mouse.y = e.pageY - size.offsetY;
+    }
+
+    function updateMouseSpeed() {
+      var dx = mouse.prevX - mouse.x;
+      var dy = mouse.prevY - mouse.y;
+      var dist = Math.sqrt(dx * dx + dy * dy);
+      mouse.speed += (dist - mouse.speed) * 0.5;
+      if (mouse.speed < 0.001) mouse.speed = 0;
+      mouse.prevX = mouse.x;
+      mouse.prevY = mouse.y;
+    }
+
+    function tick() {
+      var w = size.w, h = size.h, len = dots.length;
+      var targetEngagement = Math.min(mouse.speed / 5, 1);
+      engagement += (targetEngagement - engagement) * 0.06;
+      if (engagement < 0.001) engagement = 0;
+
+      ctx.clearRect(0, 0, w, h);
+      var grad = ctx.createLinearGradient(0, 0, w, h);
+      grad.addColorStop(0, gradientFrom);
+      grad.addColorStop(1, gradientTo);
+      ctx.fillStyle = grad;
+
+      var crSq = cursorRadius * cursorRadius;
+      var rad = dotRadius / 2;
+
+      ctx.beginPath();
+      for (var i = 0; i < len; i++) {
+        var d = dots[i];
+        var dx = mouse.x - d.ax;
+        var dy = mouse.y - d.ay;
+        var distSq = dx * dx + dy * dy;
+        if (distSq < crSq && engagement > 0.01) {
+          var dist = Math.sqrt(distSq);
+          var t = 1 - dist / cursorRadius;
+          var push = t * t * bulgeStrength * engagement;
+          var angle = Math.atan2(dy, dx);
+          d.sx += (d.ax - Math.cos(angle) * push - d.sx) * 0.15;
+          d.sy += (d.ay - Math.sin(angle) * push - d.sy) * 0.15;
+        } else {
+          d.sx += (d.ax - d.sx) * 0.1;
+          d.sy += (d.ay - d.sy) * 0.1;
+        }
+        ctx.moveTo(d.sx + rad, d.sy);
+        ctx.arc(d.sx, d.sy, rad, 0, Math.PI * 2);
+      }
+      ctx.fill();
+
+      field.rafId = requestAnimationFrame(tick);
+    }
+
+    doResize();
+    window.addEventListener('resize', onResize);
+    window.addEventListener('mousemove', onMouseMove, { passive: true });
+    field.speedInterval = setInterval(updateMouseSpeed, 20);
+    field.onMouseMove = onMouseMove;
+    field.onResize = onResize;
+    field.rafId = requestAnimationFrame(tick);
+    pomoDotField = field;
   }
 
   function renderPomodoro() {
