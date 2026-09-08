@@ -372,7 +372,11 @@
      spacing every other section boundary on this page already uses. */
   .exam-countdown-icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: rgba(139,92,246,0.14); color: var(--purple); flex-shrink: 0; }
   .exam-countdown-body { display: inline-flex; align-items: baseline; gap: 7px; }
-  .exam-countdown-num { display: inline-block; font-family: var(--font-body); font-weight: 800; font-size: 23px; line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums; min-width: 3ch; text-align: right; }
+  /* Same animated brand gradient as .streak-number/.program-day-num/
+     .pomodoro-time (pink -> purple -> blue, shared @keyframes streak-grad)
+     instead of flat --ink, so this reads as one more "real stat" number
+     in the same visual language as the page's other headline figures. */
+  .exam-countdown-num { display: inline-block; font-family: var(--font-body); font-weight: 800; font-size: 23px; line-height: 1; font-variant-numeric: tabular-nums; min-width: 3ch; text-align: right; background: linear-gradient(120deg,#FF7FB7,var(--purple),#4D8BFF); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: streak-grad 6s ease infinite; }
   /* Plays once, right as the JS count-up (animateExamCountdown) lands on
      the final value — same signature overshoot-and-settle bezier
      (cubic-bezier(.34,1.56,.64,1)) already used for .streak-number-style
@@ -568,8 +572,8 @@
      spirit as .pomo-ring-track's own flat neutral color, so they read as
      fixed gauge markings rather than another mode-colored element
      competing with the gradient arc/time text. */
-  .pomo-tick { stroke: rgba(255,255,255,0.14); stroke-width: 1.5; stroke-linecap: round; }
-  .pomo-tick--major { stroke: rgba(255,255,255,0.24); stroke-width: 2; }
+  .pomo-tick { stroke: rgba(255,255,255,0.14); stroke-width: 1; stroke-linecap: round; }
+  .pomo-tick--major { stroke: rgba(255,255,255,0.24); stroke-width: 1.5; }
   /* Gradient strokes (defs live inline in the SVG markup — see
      renderPomodoro in progress.js) instead of the old flat var(--purple)/
      var(--green), plus a soft matching glow so the ring itself reads as

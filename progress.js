@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-08-12';
+  var CLIENT_VERSION = '2026-09-08-13';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -113,7 +113,7 @@
   // mode-specific data. Computed once, called only from renderPomodoro()
   // (which itself only ever renders once per page).
   function pomoTickMarksHtml() {
-    var cx = 100, cy = 95, rOuter = 66, rMajorInner = 52, rMinorInner = 60, count = 11, html = '';
+    var cx = 100, cy = 95, rOuter = 66, rMajorInner = 58, rMinorInner = 62, count = 11, html = '';
     for (var i = 0; i < count; i++) {
       var deg = 180 - (180 / (count - 1)) * i;
       var rad = deg * Math.PI / 180;
