@@ -327,10 +327,36 @@
      small rounded-rect stat chip instead, matching the flat card language
      (var(--card)/var(--line)) the rest of the page just moved to, with a
      distinct icon badge rather than a bare inline icon so it reads as a
-     small stat card, not a button. */
-  .exam-countdown { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-nav); font-size: 12.5px; font-weight: 600; color: var(--ink-dim); background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 9px 16px 9px 9px; align-self: center; }
-  .exam-countdown-icon { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: rgba(139,92,246,0.14); color: var(--purple); flex-shrink: 0; }
-  .exam-countdown-num { font-family: var(--font-body); font-weight: 800; font-size: 15px; color: var(--ink); }
+     small stat card, not a button. Number enlarged + given a JS count-up
+     (see animateExamCountdown in progress.js) the same day ("make the
+     number bigger and have a count up animation"), then rebalanced once
+     more the same day ("the proportions of text and numbers are not
+     correct") — the first pass (28px number against a 12.5px caption, a
+     ~2.2x jump) was too dramatic for text read inline as one phrase
+     ("151 days till GATE"), unlike .streak-number's much bigger ratio
+     against .streak-label, which gets away with it because that pairing is
+     stacked (hero number, caption below), not read as a continuous
+     sentence. Settled on 23px/14px (~1.6x) — the number still reads
+     clearly bigger/bolder/brighter than before, but close enough to the
+     caption's size that the two halves still read as one phrase.
+     .exam-countdown-num needs display: inline-block (a plain inline span
+     ignores min-width/text-align entirely per spec) for its min-width: 3ch
+     reservation — sized for the real max, GATE is at most ~365 days out —
+     to actually hold "days till GATE" in place as the count-up runs through
+     1/2/3 digits; this was silently not working until this pass despite
+     looking fine in an earlier check, because that check only ever
+     sampled two already-3-digit frames. */
+  .exam-countdown { display: inline-flex; align-items: center; gap: 12px; font-family: var(--font-nav); font-size: 14px; font-weight: 600; color: var(--ink-dim); background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 18px 10px 10px; align-self: center; }
+  .exam-countdown-icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: rgba(139,92,246,0.14); color: var(--purple); flex-shrink: 0; }
+  .exam-countdown-body { display: inline-flex; align-items: baseline; gap: 7px; }
+  .exam-countdown-num { display: inline-block; font-family: var(--font-body); font-weight: 800; font-size: 23px; line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums; min-width: 3ch; text-align: right; }
+  /* Plays once, right as the JS count-up (animateExamCountdown) lands on
+     the final value — same signature overshoot-and-settle bezier
+     (cubic-bezier(.34,1.56,.64,1)) already used for .streak-number-style
+     bumps elsewhere on this page, so the "landing" reads as an intentional
+     flourish rather than a plain instant stop. */
+  .exam-countdown-num.pop { animation: exam-countdown-pop .5s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes exam-countdown-pop { 0% { transform: scale(1); } 45% { transform: scale(1.18); } 100% { transform: scale(1); } }
   /* Wraps the "Day X/180" stat on the main checklist page — centers it
      under the heading, above the Focus Mode button. */
   .program-day-badge-wrap { display: flex; justify-content: center; margin-bottom: 20px; }

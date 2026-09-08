@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-08-1';
+  var CLIENT_VERSION = '2026-09-08-3';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1262,10 +1262,49 @@
       var daysLeft = Math.max(0, Math.ceil((new Date(EXAM_DATE) - new Date(today)) / 864e5));
       html += '<div class="exam-countdown fade-in">' +
         '<span class="exam-countdown-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="3" stroke="currentColor" stroke-width="1.7"/><path d="M3 9.5h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>' +
-        '<span><span class="exam-countdown-num">' + daysLeft + '</span> days till GATE</span></div>';
+        '<span class="exam-countdown-body"><span class="exam-countdown-num" id="exam-countdown-num" data-days="' + daysLeft + '">0</span> days till GATE</span></div>';
     }
 
     return html;
+  }
+
+  // Counts #exam-countdown-num up from 0 to its real value on every
+  // Focus Mode render (buildStatsPanelHtml only runs inside renderCalendar's
+  // state.focus branch, so this fires whenever Focus Mode is actually
+  // (re)entered, not on every unrelated re-render — same reasoning that
+  // already lets other .fade-in entrances replay there without looking
+  // spammy). Skips straight to the final value under prefers-reduced-motion.
+  function animateExamCountdown() {
+    var el = document.getElementById('exam-countdown-num');
+    if (!el) return;
+    var target = parseInt(el.getAttribute('data-days'), 10);
+    if (isNaN(target)) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      el.textContent = target;
+      return;
+    }
+    // 1.15s exponential ease-out — decelerates much harder into the landing
+    // than a plain cubic would (most of the climb happens in the first
+    // third, then it visibly settles into the last few numbers rather than
+    // arriving at a constant clip), which reads as a more deliberate,
+    // premium count rather than a linear-ish digit flip. The .pop class
+    // fires exactly on arrival for a small overshoot-and-settle bounce —
+    // see its own comment in the CSS.
+    var duration = 1150;
+    var start = null;
+    function tick(ts) {
+      if (start === null) start = ts;
+      var progress = Math.min(1, (ts - start) / duration);
+      var eased = progress >= 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+      el.textContent = Math.round(eased * target);
+      if (progress < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        el.textContent = target;
+        el.classList.add('pop');
+      }
+    }
+    requestAnimationFrame(tick);
   }
 
   // "Day X/180" badge for the main checklist page — day 1 is Aug 1, same
@@ -1486,6 +1525,7 @@
     app.innerHTML = html;
     bindCalendarEvents();
     observeFadeIns();
+    animateExamCountdown();
     // state.lastWeekLeaders/lastWeekViewerRank are already fresh at this
     // point (set earlier in loadMonth's resolve, before renderCalendar is
     // called) — unlike the top-20 card in Focus Mode, this one doesn't
