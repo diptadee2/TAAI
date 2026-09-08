@@ -766,6 +766,27 @@
      x. A fully independent column sidesteps that entirely — every row's
      arrow sits in the exact same place regardless of what's in Rank. */
   .leaderboard-row { display: grid; grid-template-columns: 40px 16px minmax(0,1fr) auto; align-items: center; gap: 16px; padding: 12px 14px; border-radius: 10px; font-size: 15px; border-bottom: 1px solid rgba(255,255,255,0.06); text-align: left; }
+  /* Staggered entrance for the daily top-10 board on a genuine page
+     load/visit ("can i have subtle animation as the daily top 10 loads")
+     — see renderTodayLeaderboardRows' animate param in progress.js, which
+     deliberately only passes this on the initial render, not on the
+     background poll's periodic patch (same "don't replay an entrance
+     effect on a routine update" reasoning as every .fade-in element on
+     this page). First pass (plain fade + 8px rise on a gentle ease) was
+     rejected as too flat ("make a better animation") — re-done with a
+     bigger rise (16px), a touch of scale (0.96→1, safe here unlike the
+     Pomodoro-button icon incident above since this animates a large
+     ~300px-wide row once on load, not a ~13px icon on continuous hover),
+     and the site's own signature overshoot-and-settle bezier
+     (cubic-bezier(.34,1.56,.64,1), already used for bump/pop moments
+     elsewhere on this page) instead of a plain ease, so each row arrives
+     with a small deliberate bounce rather than just fading up flatly.
+     `both` fill-mode holds the from-keyframe (invisible) during each
+     row's animation-delay, so staggered rows don't flash visible-then-
+     hide before their own delay elapses. */
+  .leaderboard-row--enter { animation: leaderboard-row-in .55s cubic-bezier(.34,1.56,.64,1) both; }
+  @keyframes leaderboard-row-in { from { opacity: 0; transform: translateY(16px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  @media (prefers-reduced-motion: reduce) { .leaderboard-row--enter { animation: none; } }
   /* Sized up across the board (row font/padding, rank, streak balls,
      status pill, timer, minutes) rather than adding another metric to
      fill the empty space in the (often-blank) Streak column for

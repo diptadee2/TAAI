@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-08-7';
+  var CLIENT_VERSION = '2026-09-08-8';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1181,12 +1181,23 @@
   // just the rows on its smart-poll (see LEADERBOARD_POLL_MS), same reason renderLeaderboardRows is
   // split from renderLeaderboardCard — replacing the whole card would
   // replay its .fade-in entrance every refresh.
-  function renderTodayLeaderboardRows() {
+  // animate: staggers each row in with a subtle fade+rise on genuine page
+  // load/visit (see renderTodayLeaders) — deliberately NOT passed by
+  // refreshLeaderboard's poll-driven patch, same "don't replay an entrance
+  // effect on a routine background update" discipline already used for
+  // .fade-in elsewhere on this page (see CLAUDE.md's known-gotchas list),
+  // just applied per-row here instead of to a whole card.
+  function todayLeaderboardRowEnterAttrs(animate, index) {
+    if (!animate) return '';
+    return ' leaderboard-row--enter" style="animation-delay:' + (index * 45) + 'ms';
+  }
+
+  function renderTodayLeaderboardRows(animate) {
     var leaders = state.todayLeaders || [];
     if (!leaders.length) return '';
     var rows = leaders.map(function (l, i) {
       var rank = LEADERBOARD_MEDALS[i] || (i + 1);
-      return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (l.is_me ? ' leaderboard-row--me' : '') + (l.is_live ? ' leaderboard-row--live' : '') + '">' +
+      return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (l.is_me ? ' leaderboard-row--me' : '') + (l.is_live ? ' leaderboard-row--live' : '') + todayLeaderboardRowEnterAttrs(animate, i) + '">' +
         '<span class="leaderboard-rank">' + rank + '</span>' +
         rankMovementHtml(i + 1) +
         '<span class="leaderboard-name">' + liveDotHtml(l.is_live) + escapeHtml(l.display_name) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
@@ -1195,7 +1206,7 @@
     }).join('');
     if (state.todayViewerRank) {
       rows += '<div class="leaderboard-gap">···</div>' +
-        '<div class="leaderboard-row leaderboard-row--me' + (state.todayViewerRank.is_live ? ' leaderboard-row--live' : '') + '">' +
+        '<div class="leaderboard-row leaderboard-row--me' + (state.todayViewerRank.is_live ? ' leaderboard-row--live' : '') + todayLeaderboardRowEnterAttrs(animate, leaders.length) + '">' +
         '<span class="leaderboard-rank">' + state.todayViewerRank.rank + '</span>' +
         rankMovementHtml(state.todayViewerRank.rank) +
         '<span class="leaderboard-name">' + liveDotHtml(state.todayViewerRank.is_live) + 'You</span>' +
@@ -1210,7 +1221,7 @@
     return '<div class="leaderboard-card fade-in" id="today-leaderboard-card">' +
       '<div class="leaderboard-title">Mission IIT Leaderboard</div>' +
       '<div class="leaderboard-subtitle">Top 10 by hours logged · Today</div>' +
-      '<div id="today-leaderboard-rows">' + renderTodayLeaderboardRows() + '</div>' +
+      '<div id="today-leaderboard-rows">' + renderTodayLeaderboardRows(true) + '</div>' +
       '</div>';
   }
 
