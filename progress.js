@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-08-3';
+  var CLIENT_VERSION = '2026-09-08-4';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2007,6 +2007,19 @@
     return html;
   }
 
+  // One row of the settings panel's stepper controls — label, then a
+  // −/+ pair either side of the number field (see .pomo-stepper). Factored
+  // out since all four rows (Focus/Short break/Long break/Sessions) are
+  // otherwise identical markup differing only in id/min/max/value/unit.
+  function pomoStepperRowHtml(label, id, min, max, value, unit) {
+    return '<div class="pomo-setting-row"><label for="' + id + '">' + label + '</label>' +
+      '<div class="pomo-stepper">' +
+      '<button class="pomo-stepper-btn" data-target="' + id + '" data-dir="-1" type="button" aria-label="Decrease ' + label + '">−</button>' +
+      '<input type="number" id="' + id + '" min="' + min + '" max="' + max + '" value="' + value + '">' +
+      '<button class="pomo-stepper-btn" data-target="' + id + '" data-dir="1" type="button" aria-label="Increase ' + label + '">+</button>' +
+      '</div><span>' + unit + '</span></div>';
+  }
+
   function renderPomodoro() {
     var frac = pomo.totalSeconds > 0 ? pomo.secondsLeft / pomo.totalSeconds : 1;
     var offset = POMO_RING_CIRCUMFERENCE * (1 - frac);
@@ -2067,15 +2080,18 @@
       '<p class="pomo-notify-permanent-tip">🔔 Notifications need your computer’s permission too, not just this site’s — check your OS’s own notification settings for this browser if they don’t show up.</p>' +
       renderPomoNotifyNotice() +
       '<div class="pomo-settings" id="pomo-settings" hidden>' +
-      '<div class="pomo-setting-row"><label for="pomo-set-work">Focus</label><input type="number" id="pomo-set-work" min="1" max="' + POMO_WORK_MAX_MINUTES + '" value="' + pomoSettings.work + '"><span>min</span></div>' +
+      '<div class="pomo-settings-header">⚙️ Timer settings</div>' +
+      pomoStepperRowHtml('Focus', 'pomo-set-work', 1, POMO_WORK_MAX_MINUTES, pomoSettings.work, 'min') +
       '<p class="pomo-work-max-alert" id="pomo-work-max-alert">⏱️ Max session limit is 120 minutes.</p>' +
-      '<div class="pomo-setting-row"><label for="pomo-set-short">Short break</label><input type="number" id="pomo-set-short" min="1" max="60" value="' + pomoSettings.shortBreak + '"><span>min</span></div>' +
-      '<div class="pomo-setting-row"><label for="pomo-set-long">Long break</label><input type="number" id="pomo-set-long" min="1" max="90" value="' + pomoSettings.longBreak + '"><span>min</span></div>' +
-      '<div class="pomo-setting-row"><label for="pomo-set-cycle">Sessions / long break</label><input type="number" id="pomo-set-cycle" min="1" max="12" value="' + pomoSettings.cycle + '"><span></span></div>' +
+      pomoStepperRowHtml('Short break', 'pomo-set-short', 1, 60, pomoSettings.shortBreak, 'min') +
+      pomoStepperRowHtml('Long break', 'pomo-set-long', 1, 90, pomoSettings.longBreak, 'min') +
+      pomoStepperRowHtml('Sessions / long break', 'pomo-set-cycle', 1, 12, pomoSettings.cycle, '') +
+      '<div class="pomo-test-row">' +
       '<button class="pomo-test-sound" id="pomo-test-sound" type="button">🔊 Test sound</button>' +
       '<button class="pomo-test-sound" id="pomo-test-notify" type="button">🔔 Test notification</button>' +
+      '</div>' +
       '<p class="pomo-notify-tip">Nothing showed up? The site allowing notifications isn’t the same as your computer allowing them for this browser — check your OS’s own notification settings for it too.</p>' +
-      '<button class="pomo-btn pomo-btn-primary pomo-settings-save" id="pomo-settings-save" type="button">Save</button>' +
+      '<button class="pomo-btn pomo-btn-primary pomo-settings-save" id="pomo-settings-save" type="button">Save changes</button>' +
       '</div>' +
       '</div>';
   }
@@ -2625,6 +2641,28 @@
     });
     var pomoSettingsSave = document.getElementById('pomo-settings-save');
     if (pomoSettingsSave) pomoSettingsSave.addEventListener('click', applyPomoSettings);
+
+    // Stepper buttons either side of each settings number field (see
+    // .pomo-stepper) — clamps to the field's own min/max attributes, then
+    // dispatches a real 'input' event rather than just setting .value
+    // directly, so the Focus field's real-time 120-minute alert (below)
+    // fires the same way it would from typing or the keyboard arrows,
+    // not just from Save.
+    Array.prototype.forEach.call(document.querySelectorAll('.pomo-stepper-btn'), function (btn) {
+      btn.addEventListener('click', function () {
+        var input = document.getElementById(btn.getAttribute('data-target'));
+        if (!input) return;
+        var dir = Number(btn.getAttribute('data-dir'));
+        var min = Number(input.min);
+        var max = Number(input.max);
+        var current = Number(input.value) || 0;
+        var next = current + dir;
+        if (!isNaN(min)) next = Math.max(min, next);
+        if (!isNaN(max)) next = Math.min(max, next);
+        input.value = next;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    });
 
     // Real-time feedback while typing, not just a silent clamp on Save —
     // requested directly after the Save-time-only clamp (applyPomoSettings)
