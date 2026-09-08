@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-08-15';
+  var CLIENT_VERSION = '2026-09-08-16';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1359,7 +1359,7 @@
       var daysLeft = Math.max(0, Math.ceil((new Date(EXAM_DATE) - new Date(today)) / 864e5));
       html += '<div class="exam-countdown-wrap">' +
         '<div class="exam-countdown fade-in">' +
-        '<span class="exam-countdown-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="3" stroke="currentColor" stroke-width="1.7"/><path d="M3 9.5h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>' +
+        '<span class="exam-countdown-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><defs><linearGradient id="exam-icon-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#FF7FB7"/><stop offset="55%" stop-color="#A78BFA"/><stop offset="100%" stop-color="#4D8BFF"/></linearGradient></defs><rect x="3" y="5" width="18" height="16" rx="3" stroke="url(#exam-icon-grad)" stroke-width="1.7"/><path d="M3 9.5h18M8 3v4M16 3v4" stroke="url(#exam-icon-grad)" stroke-width="1.7" stroke-linecap="round"/></svg></span>' +
         '<span class="exam-countdown-body"><span class="exam-countdown-num" id="exam-countdown-num" data-days="' + daysLeft + '">0</span> days till GATE</span></div>' +
         '</div>';
     }

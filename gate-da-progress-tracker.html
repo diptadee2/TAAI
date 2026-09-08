@@ -370,7 +370,21 @@
      glow entirely rather than guess a third time — separation now comes
      from the existing 22px flex gap (.focus-card) alone, same plain
      spacing every other section boundary on this page already uses. */
-  .exam-countdown-icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: rgba(139,92,246,0.14); color: var(--purple); flex-shrink: 0; }
+  /* Sized up from 32px and given the same pink->purple->blue brand
+     gradient as .exam-countdown-num (via an SVG <linearGradient>, since
+     stroke color can't use background-clip:text the way the number's
+     fill does) instead of a flat --purple tint, so the icon reads as
+     part of the same themed treatment as the number next to it. The
+     inner <svg> (not this badge box) gets the looping wiggle below —
+     animating the badge itself would distort its rounded-square shape. */
+  .exam-countdown-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 11px; background: linear-gradient(135deg,rgba(255,127,183,0.16),rgba(139,92,246,0.16),rgba(77,139,255,0.16)); flex-shrink: 0; }
+  .exam-countdown-icon svg { animation: exam-icon-wiggle 2.6s ease-in-out infinite; transform-origin: 50% 55%; }
+  @keyframes exam-icon-wiggle {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    20% { transform: rotate(-10deg) scale(1.05); }
+    50% { transform: rotate(8deg) scale(1.08); }
+    80% { transform: rotate(-4deg) scale(1.03); }
+  }
   .exam-countdown-body { display: inline-flex; align-items: baseline; gap: 7px; }
   /* Same animated brand gradient as .streak-number/.program-day-num/
      .pomodoro-time (pink -> purple -> blue, shared @keyframes streak-grad)
@@ -636,12 +650,24 @@
      does. */
   .pomo-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 10px 24px; border-radius: 999px; border: none; font-family: var(--font-nav); font-weight: 700; font-size: 13px; cursor: pointer; transition: transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .2s, background .2s; }
   .pomo-btn-icon { display: inline-flex; }
-  .pomo-btn-primary { background: linear-gradient(135deg,#FF7FB7,var(--purple),#4D8BFF); color: #fff; box-shadow: 0 8px 24px rgba(139,92,246,0.35); min-width: 84px; }
-  .pomo-btn-primary:hover { box-shadow: 0 12px 30px rgba(139,92,246,0.5); }
+  /* Reads the same --pomo-g1/g2/g3/--pomo-glow custom properties the ring
+     uses (set on #pomo-card by applyPomoGradient — see the ring-color
+     picker below), with fallbacks equal to the original hardcoded
+     Sunset-matching values, so Start/Save changes stay byte-identical to
+     today's look at the default preset and only actually shift color once
+     a different swatch is picked. Covers Save changes too, since it
+     shares this same class. */
+  .pomo-btn-primary { background: linear-gradient(135deg,var(--pomo-g1,#FF7FB7),var(--pomo-g2,var(--purple)),var(--pomo-g3,#4D8BFF)); color: #fff; box-shadow: 0 8px 24px var(--pomo-glow,rgba(139,92,246,0.35)); min-width: 84px; }
+  .pomo-btn-primary:hover { box-shadow: 0 12px 30px var(--pomo-glow,rgba(139,92,246,0.5)); }
   .pomo-btn-primary:active { transform: scale(0.93); }
+  /* Background/border stay the original neutral look regardless of
+     preset — only the icon glyph picks up the theme color, a lighter
+     touch than a full recolor for a "secondary" action. */
   .pomo-btn-secondary { background: rgba(255,255,255,0.06); color: var(--ink-dim); border: 1px solid rgba(255,255,255,0.1); }
   .pomo-btn-secondary:hover { background: rgba(255,255,255,0.11); color: var(--ink); }
   .pomo-btn-secondary:active { transform: scale(0.93); }
+  .pomo-btn-secondary .pomo-btn-icon { color: var(--pomo-g2, var(--ink-dim)); }
+  .pomo-btn-secondary:hover .pomo-btn-icon { color: var(--pomo-g1, var(--ink)); }
   /* Fires once whenever Start/Pause actually toggles (see
      updatePomoDisplay) — a small overshoot bounce on just the icon (not
      the whole button, which already has its own press animation) so
@@ -698,7 +724,14 @@
      5 very different hues. */
   .pomo-gradient-row { align-items: center; }
   .pomo-gradient-swatches { display: flex; gap: 8px; }
-  .pomo-gradient-swatch { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; padding: 0; cursor: pointer; transition: transform .2s cubic-bezier(.34,1.1,.64,1), border-color .2s; }
+  /* appearance:none is required here, not cosmetic — a plain <button>
+     keeps native chrome (a faint rectangular highlight/shadow) under
+     Chrome/Safari's default button styling even once border-radius:50%
+     clips its outer edge to a circle, so the swatch read as "a square
+     rendered inside a circle" rather than a clean flat disc. Confirmed
+     by removing it: the square artifact is gone, each swatch is a true
+     flat circle of its own gradient. */
+  .pomo-gradient-swatch { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; padding: 0; cursor: pointer; appearance: none; -webkit-appearance: none; -moz-appearance: none; outline: none; transition: transform .2s cubic-bezier(.34,1.1,.64,1), border-color .2s; }
   .pomo-gradient-swatch:hover { transform: scale(1.12); }
   .pomo-gradient-swatch.selected { border-color: var(--ink); box-shadow: 0 0 0 2px var(--card); }
   .pomo-test-row { display: flex; gap: 8px; margin-top: 8px; }
