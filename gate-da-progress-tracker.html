@@ -736,8 +736,22 @@
      rows' "min" unit label) would otherwise win the cascade against a
      single-class selector and silently resize/recolor these — a real
      collision introduced by switching to a <span>, not present before. */
-  .pomo-gradient-swatches .pomo-gradient-swatch { display: inline-block; width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; padding: 0; cursor: pointer; transition: transform .2s cubic-bezier(.34,1.1,.64,1), border-color .2s; }
+  .pomo-gradient-swatches .pomo-gradient-swatch { display: inline-block; width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; padding: 0; cursor: pointer; outline: none; transition: transform .2s cubic-bezier(.34,1.1,.64,1), border-color .2s; }
   .pomo-gradient-swatches .pomo-gradient-swatch:hover { transform: scale(1.12); }
+  /* Safari focuses an element on a plain mouse click (Chrome doesn't),
+     and its native focus ring is a known quirk for small round elements
+     — it doesn't shrink/curve to match a tight border-radius, so it can
+     render as a squarish halo around a circle. The previous swatch CSS
+     had a blanket outline:none covering this by accident; rebuilding the
+     swatch as a role="button" span (see the comment above) added real
+     keyboard focus, and the :focus-visible-only replacement left plain
+     :focus - exactly what a mouse click produces in Safari - with no
+     override at all, so Safari's own squarish ring showed straight
+     through. This is what "still square" turned out to actually be,
+     confirmed by process of elimination once the swatch element itself
+     measured as a true 22x22 circle with getBoundingClientRect(). Base
+     rule suppresses the native ring outright; :focus-visible below
+     restores a deliberate one for real keyboard nav. */
   .pomo-gradient-swatches .pomo-gradient-swatch:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
   .pomo-gradient-swatches .pomo-gradient-swatch.selected { border-color: var(--ink); box-shadow: 0 0 0 2px var(--card); }
   .pomo-test-row { display: flex; gap: 8px; margin-top: 8px; }
