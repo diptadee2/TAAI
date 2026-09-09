@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-08-19';
+  var CLIENT_VERSION = '2026-09-09-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -276,6 +276,17 @@
   // stale response arriving right after a fresh local click could
   // overwrite it with old data.
   var pomoStateAsOf = 0;
+  // Guards sendPomoStoppedBeacon (below) against firing before `pomo` has
+  // ever actually been populated with real data — set true only inside
+  // applyPomoActiveState, the one function that ever writes real local-
+  // or-server state into `pomo`. Without this, a fresh device with no
+  // local Pomodoro history of its own, navigated away from in the narrow
+  // window before loadMonth's cross-device reconciliation has resolved,
+  // would send a beacon claiming "not running, full duration" built from
+  // `pomo`'s untouched module-load defaults — silently clobbering a
+  // genuinely running session on a DIFFERENT device the moment this one's
+  // reconciliation would otherwise have adopted it.
+  var pomoStateKnown = false;
   function buildPomoActivePayload() {
     return {
       mode: pomo.mode,
@@ -294,6 +305,13 @@
   function savePomoActiveLocalOnly() {
     var payload = buildPomoActivePayload();
     pomoStateAsOf = payload.savedAt;
+    // Every real local mutation (Start/Pause/Reset/Skip/advance) and the
+    // restore/cross-device-reconcile path (applyPomoActiveState always
+    // calls this at its own tail) both funnel through here — the one
+    // choke point where `pomo` is known to hold real, deliberate state
+    // rather than its untouched module-load defaults. See pomoStateKnown's
+    // own comment for what this guards against.
+    pomoStateKnown = true;
     try {
       localStorage.setItem(POMO_ACTIVE_KEY, JSON.stringify(payload));
     } catch (e) { /* localStorage unavailable — refresh just won't resume, not critical */ }
@@ -343,20 +361,42 @@
     attempt(2);
   }
 
-  // Fired on a real tab close/navigate-away (pagehide fires for that, not
-  // just backgrounding — unlike visibilitychange). Without this, closing
-  // mid-session leaves pomo_active_session exactly as it was at the last
-  // normal savePomoActiveState() call (session start/pause/skip), so
-  // is_live (see fetchLiveStatusByEmail) stays true off a now-stale
-  // phase_end_at until that phase's original end time arrives — then
-  // flips to "last seen" at that same stale updated_at, which can already
-  // be tens of minutes in the past the instant it flips. sendBeacon (not
+  // Fired on a real tab close/navigate-away, INCLUDING a plain page reload
+  // (pagehide fires for all of these, not just backgrounding — unlike
+  // visibilitychange). Originally only guarded a still-`pomo.running`
+  // session (closing mid-session used to leave pomo_active_session exactly
+  // as it was at the last normal savePomoActiveState() call, so is_live —
+  // see fetchLiveStatusByEmail — stayed true off a now-stale phase_end_at
+  // until that phase's original end time arrived), but that same gap
+  // turned out to apply just as easily to a session that had *just been
+  // paused*: pomoToggleRun's Pause branch calls savePomoActiveState(),
+  // whose remote half is a plain fetch() with no keepalive — a refresh a
+  // few seconds later can cancel that in-flight request before it ever
+  // reaches the server, so the server's last-known row silently stays
+  // whatever it was before the pause (e.g. still running, from Start).
+  // The next page load's cross-device reconciliation (loadMonth) then has
+  // nothing wrong to protect against on its own terms — it correctly
+  // prefers a genuinely newer local timestamp, but "newer" doesn't help
+  // when the server was simply never told about the pause at all, only
+  // ever saw the running row from before it. So this beacon isn't gated
+  // to only-while-running any more — it fires on every teardown and
+  // always forces running:false (real state already IS false once
+  // paused; while genuinely running, this is the same deliberate
+  // "treat an abandoned tab as no longer live" override as before,
+  // hence hardcoded rather than reading pomo.running). sendBeacon (not
   // fetch) is required here: it's the one API actually guaranteed to
-  // deliver during page teardown. Best-effort only — a crash, force-quit,
-  // or lost network still can't be caught this way, only a genuine
-  // close/navigate.
+  // deliver during page teardown, immune to the exact race that can
+  // silently drop a plain fetch(). Best-effort only — a crash, force-
+  // quit, or lost network still can't be caught this way, only a
+  // genuine close/navigate. Still gated on pomoStateKnown, not just
+  // state.student — see that flag's own comment: without it, a device
+  // that's never touched the Pomodoro widget locally (so `pomo` still
+  // holds its untouched module-load defaults) navigated away from before
+  // loadMonth's cross-device reconciliation resolves would send a beacon
+  // built from those defaults, wrongly overwriting a real session that's
+  // actually running on a different device.
   function sendPomoStoppedBeacon() {
-    if (!state.student || !pomo.running || typeof navigator.sendBeacon !== 'function') return;
+    if (!state.student || !pomoStateKnown || typeof navigator.sendBeacon !== 'function') return;
     var body = JSON.stringify({
       email: state.student.email,
       mode: pomo.mode,
