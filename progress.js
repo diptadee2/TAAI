@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-09-4';
+  var CLIENT_VERSION = '2026-09-09-5';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -104,7 +104,7 @@
   // regardless of what colors are actually in the ring.
   // breakColors/breakGlow: the break-phase ring/text pairing for each
   // preset — deliberately NOT the same fixed green/cyan for all five.
-  // Sunset/Citrus/Berry's own work colors are warm or purple, so the
+  // Citrus/Berry's own work colors are warm or purple enough that the
   // original cool green->cyan break already reads as a clear "you've
   // switched" signal and is kept as-is; Ocean and Mint's *work* colors
   // are themselves cool blues/greens, so the same green/cyan break would
@@ -112,9 +112,20 @@
   // hard to tell apart at a glance — those two get a warm break pairing
   // instead (amber/rose for Ocean, orange/pink for Mint) so Focus->Break
   // always reads as a real color shift regardless of which work preset
-  // is picked.
+  // is picked. Sunset ALSO needed a change here, caught by actually
+  // computing hue distance (a direct "does every preset contrast" check)
+  // rather than eyeballing it: its own blue endpoint (#4D8BFF, hue~219°)
+  // sits only ~31° from the original break cyan (#22D3EE, hue~188°) —
+  // nearly the same hue, the weakest link of any preset by a wide margin
+  // (every other preset's worst case is 70°+). Gold->green (~77° from
+  // Sunset's nearest work hue) fixes it while keeping the same green
+  // family the other unchanged presets use, and reads as a fitting
+  // "sunset glow fading into green" pairing rather than an arbitrary
+  // swap — a deliberate change from the site's original historical
+  // green/cyan break color, made only after confirming (and being asked)
+  // that the contrast gap was real, not assumed.
   var POMO_GRADIENTS = [
-    { name: 'Sunset', colors: ['#FF7FB7', '#A78BFA', '#4D8BFF'], glow: 'rgba(167,139,250,0.5)', breakColors: ['#4ADE80', '#22D3EE'], breakGlow: 'rgba(74,222,128,0.5)' },
+    { name: 'Sunset', colors: ['#FF7FB7', '#A78BFA', '#4D8BFF'], glow: 'rgba(167,139,250,0.5)', breakColors: ['#FDE047', '#4ADE80'], breakGlow: 'rgba(253,224,71,0.5)' },
     { name: 'Ocean', colors: ['#22D3EE', '#3B82F6', '#6366F1'], glow: 'rgba(59,130,246,0.5)', breakColors: ['#FBBF24', '#FB7185'], breakGlow: 'rgba(251,191,36,0.5)' },
     { name: 'Citrus', colors: ['#FBBF24', '#FB923C', '#F87171'], glow: 'rgba(251,146,60,0.5)', breakColors: ['#4ADE80', '#22D3EE'], breakGlow: 'rgba(74,222,128,0.5)' },
     { name: 'Mint', colors: ['#4ADE80', '#2DD4BF', '#38BDF8'], glow: 'rgba(45,212,191,0.5)', breakColors: ['#FB923C', '#F472B6'], breakGlow: 'rgba(251,146,60,0.5)' },
