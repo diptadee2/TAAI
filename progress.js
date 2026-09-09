@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-09-3';
+  var CLIENT_VERSION = '2026-09-09-4';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1073,7 +1073,22 @@
             gradient: pomoSettings.gradient,
           };
           savePomoSettings(); // cache locally too, so a later guest-mode reload isn't stuck back on defaults
-          if (!pomo.running) {
+          // Real bug, caught by a full end-to-end verification pass before
+          // shipping: this block runs on EVERY loadMonth() call (i.e. every
+          // page load) for any signed-in student who has ever saved
+          // duration settings from any device — completely unconditional
+          // on whether the timer is actually idle. restorePomoActiveState()
+          // (called earlier in init(), before loadMonth ever fires) already
+          // correctly restores a genuinely paused mid-session countdown's
+          // real secondsLeft — this block then ran anyway and blew it away
+          // back to a fresh full duration, on literally every reload, not
+          // just an unlucky race. `secondsLeft === totalSeconds` is the
+          // right guard: a paused session that's actually consumed any
+          // time always has secondsLeft < totalSeconds, so this only ever
+          // recomputes for a timer that's genuinely idle/fresh (nothing to
+          // lose either way) or has just been Reset, never one mid-way
+          // through a real paused countdown.
+          if (!pomo.running && pomo.secondsLeft === pomo.totalSeconds) {
             pomo.totalSeconds = pomoDurationFor(pomo.mode);
             pomo.secondsLeft = pomo.totalSeconds;
           }
@@ -2168,6 +2183,14 @@
   // current phase. A running timer keeps counting down on the old
   // duration; new settings take effect starting next phase, so changing
   // "Focus minutes" mid-focus-session can't yank time out from under you.
+  // The same protection has to cover a PAUSED mid-session timer too, not
+  // just a running one — `!pomo.running` alone doesn't distinguish
+  // "genuinely idle, safe to recompute" from "paused 5 minutes into a real
+  // 25-minute session," so clicking Save (even to change an unrelated
+  // field like Short break) used to silently snap a paused Focus countdown
+  // right back to its full duration. `secondsLeft === totalSeconds` is
+  // the real test — a paused session that's actually consumed any time
+  // never has those equal.
   function applyPomoSettings() {
     var work = clampPomoWork(document.getElementById('pomo-set-work').value, pomoSettings.work);
     var shortBreak = clampMinutes(document.getElementById('pomo-set-short').value, pomoSettings.shortBreak, 1, 60);
@@ -2187,7 +2210,7 @@
     document.getElementById('pomo-set-long').value = longBreak;
     document.getElementById('pomo-set-cycle').value = cycle;
 
-    if (!pomo.running) {
+    if (!pomo.running && pomo.secondsLeft === pomo.totalSeconds) {
       pomo.totalSeconds = pomoDurationFor(pomo.mode);
       pomo.secondsLeft = pomo.totalSeconds;
     }
