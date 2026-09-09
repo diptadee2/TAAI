@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-09-6';
+  var CLIENT_VERSION = '2026-09-09-7';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -495,10 +495,15 @@
   // silently dropped once they're signed in.
   var pendingTask = null;
 
-  // Same idea, for a guest clicking "Focus mode" — captured so registration
-  // can drop them straight into Focus Mode afterward instead of just back
-  // on the main checklist.
-  var pendingFocusMode = false;
+  // Same idea, for a guest clicking Start inside Focus Mode — captured so
+  // registration can drop them straight into a running session afterward
+  // instead of leaving them back at an idle timer they have to click
+  // Start on a second time. Guests can freely enter Focus Mode and look
+  // around now (see goToFocusMode) — this only gates the one action that
+  // actually needs an identity: starting a real, creditable session (see
+  // pomoToggleRun). Used to gate entering Focus Mode at all (hence the
+  // name) before that changed.
+  var pendingPomoStart = false;
 
   // No cookie just means browsing as a guest, not "show the login screen" —
   // the schedule itself (schedule.js) needs no email, so anyone can view and
@@ -953,11 +958,11 @@
 
   // ── Registration ────────────────────────────────────────────────────
   function renderRegisterForm(errorMsg) {
-    var hasPending = pendingTask || pendingFocusMode;
+    var hasPending = pendingTask || pendingPomoStart;
     var promptText = pendingTask
       ? 'Sign up to save your progress. It only takes a few seconds.'
-      : pendingFocusMode
-        ? 'Sign up to use Focus Mode. It only takes a few seconds.'
+      : pendingPomoStart
+        ? 'Sign up to start your Focus session. It only takes a few seconds.'
         : 'Enter your details once. We’ll remember you on this browser.';
     app.innerHTML =
       '<div class="reg-card fade-in">' +
@@ -990,8 +995,7 @@
           state.student = student;
           var task = pendingTask;
           pendingTask = null;
-          var wantsFocus = pendingFocusMode;
-          pendingFocusMode = false;
+          pendingPomoStart = false;
           if (task) {
             api('/complete-task', {
               method: 'POST',
@@ -1003,12 +1007,26 @@
           } else {
             loadMonth(state.month);
           }
-          // Renders immediately using whatever schedule data is already
-          // loaded from browsing as a guest — loadMonth's own renderCalendar
-          // (once its fetch resolves) will refresh it again with the
-          // now-available streak/settings, still in focus mode since
-          // state.focus is already true by then.
-          if (wantsFocus) enterFocus();
+          // pendingPomoStart can only ever be set from inside Focus Mode
+          // (the Start button that set it only exists there — see
+          // pomoToggleRun), so state.focus is already true at this point;
+          // renderCalendar() rebuilds the Focus Mode DOM the register
+          // form's own app.innerHTML overwrite just replaced (not
+          // enterFocus(), which would push a second, unwanted history
+          // entry on top of the one already there). Deliberately does
+          // NOT auto-replay the Start click itself, unlike the task-
+          // completion replay above — Notification.requestPermission()
+          // (inside pomoToggleRun, for a first-time guest whose
+          // permission is still 'default') needs a genuine synchronous
+          // user gesture to reliably show the browser's real prompt, and
+          // this .then() callback runs after a real network round-trip,
+          // not guaranteed to still count as one. Silently failing to
+          // prompt would leave a first-time guest stuck with no visible
+          // feedback. Landing them back on a now-logged-in, idle Focus
+          // Mode screen and letting them click Start once more — a real
+          // gesture — is one extra click, but the permission flow works
+          // correctly every time instead of intermittently.
+          if (state.focus) renderCalendar();
         })
         .catch(function (err) {
           renderRegisterForm(err.message);
@@ -1018,7 +1036,7 @@
     var cancelBtn = document.getElementById('reg-cancel');
     if (cancelBtn) cancelBtn.addEventListener('click', function () {
       pendingTask = null;
-      pendingFocusMode = false;
+      pendingPomoStart = false;
       renderCalendar();
     });
 
@@ -2121,6 +2139,19 @@
       return;
     }
 
+    // Guests can freely browse into Focus Mode and look at the timer/
+    // leaderboards (see goToFocusMode) — this is the one action inside it
+    // that actually needs a real identity, since an uncredited session
+    // (see recordPomodoroCompletion's own guest no-op) would just be
+    // wasted effort. Only gates *starting* — Reset/Skip stay available to
+    // a guest, same as browsing the rest of the page, since neither
+    // creates anything worth losing.
+    if (!state.student) {
+      pendingPomoStart = true;
+      renderRegisterForm();
+      return;
+    }
+
     var notifyState = pomoNotifyState();
     if (notifyState === 'granted') {
       pomoActuallyStart();
@@ -2469,15 +2500,15 @@
   }
 
   // Shared by the "Focus mode" toggle button and the top-5 champions card
-  // (clicking it also jumps to Focus Mode — see bindCalendarEvents) — a
-  // guest gets the same sign-up prompt either way, rather than a silent
-  // no-op or a confusing error.
+  // (clicking it also jumps to Focus Mode — see bindCalendarEvents). A
+  // guest can freely enter and look around Focus Mode now — the timer,
+  // settings, both leaderboards — no sign-up gate here at all; only
+  // clicking Start itself asks for one (see pomoToggleRun/pendingPomoStart),
+  // the same "let them look, ask only when they act" pattern already used
+  // for ticking a task off as a guest (see onTaskToggle).
   function goToFocusMode() {
     if (state.focus) {
       exitFocus();
-    } else if (!state.student) {
-      pendingFocusMode = true;
-      renderRegisterForm();
     } else {
       enterFocus();
     }
