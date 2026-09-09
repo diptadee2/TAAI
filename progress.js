@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-09-5';
+  var CLIENT_VERSION = '2026-09-09-6';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1331,7 +1331,7 @@
     // but a mouse user could trigger.
     var showBadge5 = newBadgeVisible('top5');
     return '<div class="leaderboard-card champions-section clickable-card" id="champions-card" role="button" tabindex="0">' +
-      '<div class="leaderboard-title' + (showBadge5 ? ' has-badge' : '') + '">Mission IIT Leaderboard</div>' +
+      '<div class="leaderboard-title' + (showBadge5 ? ' has-badge' : '') + '">Last Week’s Champions</div>' +
       newBadgeHtml(showBadge5) +
       '<div class="leaderboard-subtitle">Top 5 by hours logged, last week</div>' +
       '<div id="champions-rows">' + renderLastWeekChampionRows() + '</div>' +
@@ -1400,7 +1400,7 @@
   function renderTodayLeaders() {
     if (!state.todayLeaders.length) return '';
     return '<div class="leaderboard-card fade-in" id="today-leaderboard-card">' +
-      '<div class="leaderboard-title">Mission IIT Leaderboard</div>' +
+      '<div class="leaderboard-title">Today’s Leaders</div>' +
       '<div class="leaderboard-subtitle">Top 10 by hours logged · Today</div>' +
       '<div id="today-leaderboard-rows">' + renderTodayLeaderboardRows(true) + '</div>' +
       '</div>';
@@ -2804,7 +2804,7 @@
     var animateNow = state.leaderboard.length > 0;
     leaderboardRowsAnimatedThisVisit = animateNow;
     return '<div class="leaderboard-card fade-in" id="leaderboard-card">' +
-      '<div class="leaderboard-title">Mission IIT Leaderboard</div>' +
+      '<div class="leaderboard-title">Weekly Leaderboard</div>' +
       '<div class="leaderboard-subtitle">Top 20 by minutes logged · Resets every Monday</div>' +
       // Mirrors each row's exact rank/name/streak/time widths so every
       // label sits directly above its column on every row, not just
