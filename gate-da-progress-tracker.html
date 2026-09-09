@@ -724,16 +724,22 @@
      5 very different hues. */
   .pomo-gradient-row { align-items: center; }
   .pomo-gradient-swatches { display: flex; gap: 8px; }
-  /* appearance:none is required here, not cosmetic — a plain <button>
-     keeps native chrome (a faint rectangular highlight/shadow) under
-     Chrome/Safari's default button styling even once border-radius:50%
-     clips its outer edge to a circle, so the swatch read as "a square
-     rendered inside a circle" rather than a clean flat disc. Confirmed
-     by removing it: the square artifact is gone, each swatch is a true
-     flat circle of its own gradient. */
-  .pomo-gradient-swatch { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; padding: 0; cursor: pointer; appearance: none; -webkit-appearance: none; -moz-appearance: none; outline: none; transition: transform .2s cubic-bezier(.34,1.1,.64,1), border-color .2s; }
-  .pomo-gradient-swatch:hover { transform: scale(1.12); }
-  .pomo-gradient-swatch.selected { border-color: var(--ink); box-shadow: 0 0 0 2px var(--card); }
+  /* A role="button" <span>, not a real <button> (see
+     pomoGradientSwatchesHtml's own comment) — Chrome's native button
+     chrome (appearance:none fixed that) and then a separate, harder-to-
+     pin Safari-specific native-control quirk both kept leaving a square
+     artifact inside the circular clip even after that fix, so this
+     sidesteps native control rendering entirely rather than chasing a
+     second per-engine override. Scoped as .pomo-gradient-swatches
+     .pomo-gradient-swatch (not just .pomo-gradient-swatch alone) because
+     plain-tag selector .pomo-setting-row span (used for the stepper
+     rows' "min" unit label) would otherwise win the cascade against a
+     single-class selector and silently resize/recolor these — a real
+     collision introduced by switching to a <span>, not present before. */
+  .pomo-gradient-swatches .pomo-gradient-swatch { display: inline-block; width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; padding: 0; cursor: pointer; transition: transform .2s cubic-bezier(.34,1.1,.64,1), border-color .2s; }
+  .pomo-gradient-swatches .pomo-gradient-swatch:hover { transform: scale(1.12); }
+  .pomo-gradient-swatches .pomo-gradient-swatch:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .pomo-gradient-swatches .pomo-gradient-swatch.selected { border-color: var(--ink); box-shadow: 0 0 0 2px var(--card); }
   .pomo-test-row { display: flex; gap: 8px; margin-top: 8px; }
   .pomo-test-sound { flex: 1; padding: 8px 10px; font-size: 12px; font-family: var(--font-body); border-radius: 10px; border: 1px solid rgba(255,255,255,0.12); background: var(--card); color: var(--ink-dim); cursor: pointer; transition: background .2s, color .2s, border-color .2s; }
   .pomo-test-sound:hover { background: rgba(139,92,246,0.14); border-color: rgba(139,92,246,0.4); color: var(--ink); }

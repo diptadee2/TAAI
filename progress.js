@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-08-17';
+  var CLIENT_VERSION = '2026-09-08-18';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1022,6 +1022,15 @@
             shortBreak: clampMinutes(savedPomo.shortBreak, pomoSettings.shortBreak, 1, 60),
             longBreak: clampMinutes(savedPomo.longBreak, pomoSettings.longBreak, 1, 90),
             cycle: clampMinutes(savedPomo.cycle, pomoSettings.cycle, 1, 12),
+            // gradient never syncs remotely (see saveRemotePomoSettings —
+            // deliberately per-device only), so it's not in savedPomo at
+            // all — carried over from whatever loadPomoSettings() already
+            // read out of localStorage, same fix as applyPomoSettings'
+            // identical rebuild-drops-gradient bug just above. Without
+            // this, a signed-in student's picked ring color got silently
+            // reset to the default on every single page load, not just
+            // after clicking Save.
+            gradient: pomoSettings.gradient,
           };
           savePomoSettings(); // cache locally too, so a later guest-mode reload isn't stuck back on defaults
           if (!pomo.running) {
@@ -2124,7 +2133,12 @@
     var shortBreak = clampMinutes(document.getElementById('pomo-set-short').value, pomoSettings.shortBreak, 1, 60);
     var longBreak = clampMinutes(document.getElementById('pomo-set-long').value, pomoSettings.longBreak, 1, 90);
     var cycle = clampMinutes(document.getElementById('pomo-set-cycle').value, pomoSettings.cycle, 1, 12);
-    pomoSettings = { work: work, shortBreak: shortBreak, longBreak: longBreak, cycle: cycle };
+    // gradient carried over explicitly — it's not one of this form's own
+    // fields (the swatch click handler owns pomoSettings.gradient
+    // directly), but this rebuild used to silently drop it, so clicking
+    // Save changes reset the ring color back to the default on the very
+    // next page load even though nothing here touched it.
+    pomoSettings = { work: work, shortBreak: shortBreak, longBreak: longBreak, cycle: cycle, gradient: pomoSettings.gradient };
     savePomoSettings();
     saveRemotePomoSettings();
 
@@ -2194,11 +2208,24 @@
   // one updates pomoSettings.gradient, saves it, and calls
   // applyPomoGradient() for an immediate live update (see that function's
   // own comment on why this doesn't need a re-render).
+  // A plain element with role="button", not a real <button> — the
+  // appearance:none fix for the earlier "square inside a circle" report
+  // (native button chrome surviving under the circular clip) measured
+  // clean in headless Chrome, but the same complaint kept recurring in
+  // real Safari, which has its own separate, harder-to-pin native-control
+  // rendering quirks for round <button>s (no way to automate real Safari
+  // in this environment to chase the exact cause — JavaScript-from-
+  // AppleScript is off, and flipping that is a Safari settings change,
+  // not something to do unprompted). Sidestepping native control
+  // rendering entirely — rather than fighting a second, WebKit-specific
+  // version of the same bug — needs role="button"/tabindex/a keydown
+  // handler to stay keyboard-accessible (see the swatch click-handler
+  // block in bindCalendarEvents for the matching Enter/Space handling).
   function pomoGradientSwatchesHtml() {
     var html = '<div class="pomo-setting-row pomo-gradient-row"><label>Ring color</label><div class="pomo-gradient-swatches">';
     POMO_GRADIENTS.forEach(function (g, i) {
       var selected = i === pomoSettings.gradient;
-      html += '<button type="button" class="pomo-gradient-swatch' + (selected ? ' selected' : '') + '" data-gradient-index="' + i + '" aria-label="' + g.name + '" aria-pressed="' + selected + '" style="background:linear-gradient(135deg,' + g.colors[0] + ',' + g.colors[1] + ',' + g.colors[2] + ')"></button>';
+      html += '<span class="pomo-gradient-swatch' + (selected ? ' selected' : '') + '" role="button" tabindex="0" data-gradient-index="' + i + '" aria-label="' + g.name + '" aria-pressed="' + selected + '" style="background:linear-gradient(135deg,' + g.colors[0] + ',' + g.colors[1] + ',' + g.colors[2] + ')"></span>';
     });
     html += '</div></div>';
     return html;
@@ -2910,17 +2937,27 @@
     // no re-render, so an in-progress phase is untouched) and saves right
     // away rather than waiting for the settings panel's own Save button,
     // since a color pick has no "in-flight" value to validate the way the
-    // duration fields do.
+    // duration fields do. Swatches are role="button" spans, not real
+    // <button>s (see pomoGradientSwatchesHtml's own comment on why), so
+    // Enter/Space needs its own handler here — a real <button> would get
+    // that for free from the browser.
+    function selectPomoGradientSwatch(btn) {
+      pomoSettings.gradient = clampPomoGradient(btn.getAttribute('data-gradient-index'));
+      savePomoSettings();
+      applyPomoGradient();
+      Array.prototype.forEach.call(document.querySelectorAll('.pomo-gradient-swatch'), function (other) {
+        var isSelected = other === btn;
+        other.classList.toggle('selected', isSelected);
+        other.setAttribute('aria-pressed', isSelected);
+      });
+    }
     Array.prototype.forEach.call(document.querySelectorAll('.pomo-gradient-swatch'), function (btn) {
-      btn.addEventListener('click', function () {
-        pomoSettings.gradient = clampPomoGradient(btn.getAttribute('data-gradient-index'));
-        savePomoSettings();
-        applyPomoGradient();
-        Array.prototype.forEach.call(document.querySelectorAll('.pomo-gradient-swatch'), function (other) {
-          var isSelected = other === btn;
-          other.classList.toggle('selected', isSelected);
-          other.setAttribute('aria-pressed', isSelected);
-        });
+      btn.addEventListener('click', function () { selectPomoGradientSwatch(btn); });
+      btn.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+          e.preventDefault();
+          selectPomoGradientSwatch(btn);
+        }
       });
     });
 
