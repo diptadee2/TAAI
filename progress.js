@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-09-1';
+  var CLIENT_VERSION = '2026-09-09-2';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2261,11 +2261,24 @@
   // version of the same bug — needs role="button"/tabindex/a keydown
   // handler to stay keyboard-accessible (see the swatch click-handler
   // block in bindCalendarEvents for the matching Enter/Space handling).
+  // "still squares inside circles" turned out, after three rounds chasing
+  // native-control-rendering bugs, to not be a rendering bug at all — the
+  // actual ask ("the colours should be just whole colour balls... no
+  // colour shape inside") is that a 135deg 3-stop LINEAR gradient on a
+  // 22px circle shows a visible diagonal seam/band, which at this size
+  // reads as a distinct shape sitting inside the ball rather than a
+  // smooth blend. A radial gradient centered near the top-left instead
+  // (mimicking a light source) is rotationally smooth with no seam at
+  // all — reads as a glossy solid orb, still previewing the same 3
+  // preset colors, just arranged center-to-edge instead of corner-to-
+  // corner. Scoped to just this swatch preview; the ring/buttons/text
+  // elsewhere keep their own linear gradient, which was never part of
+  // this complaint.
   function pomoGradientSwatchesHtml() {
     var html = '<div class="pomo-setting-row pomo-gradient-row"><label>Ring color</label><div class="pomo-gradient-swatches">';
     POMO_GRADIENTS.forEach(function (g, i) {
       var selected = i === pomoSettings.gradient;
-      html += '<span class="pomo-gradient-swatch' + (selected ? ' selected' : '') + '" role="button" tabindex="0" data-gradient-index="' + i + '" aria-label="' + g.name + '" aria-pressed="' + selected + '" style="background:linear-gradient(135deg,' + g.colors[0] + ',' + g.colors[1] + ',' + g.colors[2] + ')"></span>';
+      html += '<span class="pomo-gradient-swatch' + (selected ? ' selected' : '') + '" role="button" tabindex="0" data-gradient-index="' + i + '" aria-label="' + g.name + '" aria-pressed="' + selected + '" style="background:radial-gradient(circle at 35% 30%,' + g.colors[0] + ',' + g.colors[1] + ',' + g.colors[2] + ')"></span>';
     });
     html += '</div></div>';
     return html;
