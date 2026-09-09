@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-08-18';
+  var CLIENT_VERSION = '2026-09-08-19';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2305,12 +2305,12 @@
       renderPomoNotifyNotice() +
       '<div class="pomo-settings" id="pomo-settings" hidden>' +
       '<div class="pomo-settings-header">⚙️ Timer settings</div>' +
+      pomoGradientSwatchesHtml() +
       pomoStepperRowHtml('Focus', 'pomo-set-work', 1, POMO_WORK_MAX_MINUTES, pomoSettings.work, 'min') +
       '<p class="pomo-work-max-alert" id="pomo-work-max-alert">⏱️ Max session limit is 120 minutes.</p>' +
       pomoStepperRowHtml('Short break', 'pomo-set-short', 1, 60, pomoSettings.shortBreak, 'min') +
       pomoStepperRowHtml('Long break', 'pomo-set-long', 1, 90, pomoSettings.longBreak, 'min') +
       pomoStepperRowHtml('Sessions / long break', 'pomo-set-cycle', 1, 12, pomoSettings.cycle, '') +
-      pomoGradientSwatchesHtml() +
       '<div class="pomo-test-row">' +
       '<button class="pomo-test-sound" id="pomo-test-sound" type="button">🔊 Test sound</button>' +
       '<button class="pomo-test-sound" id="pomo-test-notify" type="button">🔔 Test notification</button>' +
