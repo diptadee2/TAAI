@@ -557,7 +557,8 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   .offer-card:hover::after { opacity: 0; transform: none; }
   .offer-card:active { transform: scale(0.97) !important; transition-duration: .12s; }
 }
-@media (max-width: 1024px) { .nav-hamburger { display: flex; } .nav-cta { display: none; } .nav-links { display: none; } .btn-nav-contact { display: none; } .nav-inner { height: 64px; padding: 0 14px; position: relative; justify-content: flex-end; } .mobile-menu { top: 64px; } .nav-spacer { height: 64px; } .nav-logo { position: absolute; left: 50%; transform: translateX(-50%); } .nav-logo svg, .nav-logo img { width: 150px; height: auto; filter: drop-shadow(0 0 14px rgba(255,255,255,0.22)) drop-shadow(0 0 36px rgba(255,255,255,0.12)) drop-shadow(0 0 72px rgba(255,255,255,0.07)); } .nav-hamburger span { background: var(--purple); } }
+/* 1300px, not 1024px — iPad Air/Pro 11" landscape (1180-1194px) exceed 1024px but the desktop nav (links + Sign In/Up + Contact Us) does not actually fit until ~1290px, cutting off Contact Us — see gate-da-progress-tracker.html for the full measurement. Shared nav component, fixed identically on all 7 pages. */
+@media (max-width: 1300px) { .nav-hamburger { display: flex; } .nav-cta { display: none; } .nav-links { display: none; } .btn-nav-contact { display: none; } .nav-inner { height: 64px; padding: 0 14px; position: relative; justify-content: flex-end; } .mobile-menu { top: 64px; } .nav-spacer { height: 64px; } .nav-logo { position: absolute; left: 50%; transform: translateX(-50%); } .nav-logo svg, .nav-logo img { width: 150px; height: auto; filter: drop-shadow(0 0 14px rgba(255,255,255,0.22)) drop-shadow(0 0 36px rgba(255,255,255,0.12)) drop-shadow(0 0 72px rgba(255,255,255,0.07)); } .nav-hamburger span { background: var(--purple); } }
 @media (min-width: 768px) and (max-width: 1024px) {
 }
 

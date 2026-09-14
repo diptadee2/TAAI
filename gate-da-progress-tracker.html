@@ -186,7 +186,16 @@
   .mobile-menu-actions .btn-nav-signin:active .mobile-btn-arrow, .mobile-menu-actions .btn-nav-signup:active .mobile-btn-arrow { transform: translateX(6px); }
   .mobile-menu-contact { display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 10px; padding: 13px 16px; font-size: 13px; font-weight: 600; color: var(--ink-dim); text-decoration: none; border-radius: 10px; transition: color .18s, background .18s; letter-spacing: .04em; text-transform: uppercase; }
   .mobile-menu-contact:hover { color: var(--purple); background: rgba(139,92,246,0.06); }
-  @media (max-width: 1024px) { .nav-hamburger { display: flex; } .nav-cta { display: none; } .nav-links { display: none; } .btn-nav-contact { display: none; } .nav-inner { height: 64px; padding: 0 14px; position: relative; justify-content: flex-end; } .mobile-menu { top: 64px; } .nav-spacer { height: 64px; } .nav-logo { position: absolute; left: 50%; transform: translateX(-50%); } .nav-logo svg, .nav-logo img { width: 150px; height: auto; filter: drop-shadow(0 0 14px rgba(255,255,255,0.22)) drop-shadow(0 0 36px rgba(255,255,255,0.12)) drop-shadow(0 0 72px rgba(255,255,255,0.07)); } .nav-hamburger span { background: var(--purple); } }
+  /* 1300px, not 1024px — iPad Air (1180px landscape) and iPad Pro 11"
+     (1194px landscape) both exceed 1024px, so they used to get the full
+     desktop nav (links + Sign In/Up + Contact Us) instead of the
+     hamburger menu, but the desktop nav's actual content doesn't fit
+     until ~1290px wide — Contact Us rendered ~85-100px past the right
+     edge, cut off almost entirely. Measured directly (a real viewport
+     sweep, not guessed): the nav's rightmost edge stops overflowing at
+     1290px, so 1300px gives a small safety margin. Only the iPad Pro
+     12.9" (1366px landscape) is wide enough to keep the desktop nav. */
+  @media (max-width: 1300px) { .nav-hamburger { display: flex; } .nav-cta { display: none; } .nav-links { display: none; } .btn-nav-contact { display: none; } .nav-inner { height: 64px; padding: 0 14px; position: relative; justify-content: flex-end; } .mobile-menu { top: 64px; } .nav-spacer { height: 64px; } .nav-logo { position: absolute; left: 50%; transform: translateX(-50%); } .nav-logo svg, .nav-logo img { width: 150px; height: auto; filter: drop-shadow(0 0 14px rgba(255,255,255,0.22)) drop-shadow(0 0 36px rgba(255,255,255,0.12)) drop-shadow(0 0 72px rgba(255,255,255,0.07)); } .nav-hamburger span { background: var(--purple); } }
 
   /* Pared back 2026-09-08 ("too vibe coded" — dot-grid + 3 saturated,
      fast-bouncing orbs), re-upped the same day ("too boring" — the
