@@ -591,6 +591,24 @@
      (280/220 = +27% vs 44/40 = +10%) is what actually buys back real
      clearance, not just making the whole thing bigger for its own sake. */
   .pomodoro-ring-wrap { position: relative; width: 280px; height: 224px; margin: 4px auto 14px; }
+  /* A bigger, harder-to-miss confirmation that a session genuinely just
+     started — the existing icon-pop on the Start/Pause button is real
+     feedback but small enough (~13px icon) to go unnoticed, which is
+     what invited a second, misclick-y press when someone wasn't sure the
+     first one registered. This animates the whole ring+text group
+     together (a single scale pulse on the wrapper, everything inside
+     rides along), plus its own glow flash below — safe to scale here,
+     unlike the small Pomodoro button icons documented elsewhere in this
+     file, since 280px+ has no pixel-snapping risk at this scale delta. */
+  .pomo-ring-start-flash { animation: pomo-ring-start-pulse .6s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes pomo-ring-start-pulse { 0% { transform: scale(1); } 40% { transform: scale(1.045); } 100% { transform: scale(1); } }
+  .pomo-ring-start-flash .pomo-ring-progress { animation: pomo-ring-start-glow .6s ease-out; }
+  @keyframes pomo-ring-start-glow {
+    0% { filter: drop-shadow(0 0 6px var(--pomo-glow, rgba(167,139,250,0.5))); }
+    35% { filter: drop-shadow(0 0 26px var(--pomo-glow, rgba(167,139,250,0.95))); }
+    100% { filter: drop-shadow(0 0 6px var(--pomo-glow, rgba(167,139,250,0.5))); }
+  }
+  @media (prefers-reduced-motion: reduce) { .pomo-ring-start-flash, .pomo-ring-start-flash .pomo-ring-progress { animation: none; } }
   /* No rotation here, unlike the old full-circle version — that -90deg
      transform existed only to make a <circle>'s naturally-3-o'clock start
      point read as 12 o'clock. The new arc <path> is authored left-to-right

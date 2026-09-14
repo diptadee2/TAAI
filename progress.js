@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-14-2';
+  var CLIENT_VERSION = '2026-09-14-3';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1974,6 +1974,24 @@
           toggleIcon.classList.remove('pomo-btn-icon-pop');
           void toggleIcon.offsetWidth;
           toggleIcon.classList.add('pomo-btn-icon-pop');
+          // The icon-pop above is real feedback but small (~13px) and easy
+          // to miss, which is exactly what made a genuine Start click read
+          // as "did that work?" and invite a second, misclick-y press —
+          // direct report ("bigger feedback on the clock... so there is a
+          // lesser frequency of misclicks"). Only on the transition INTO
+          // running (a genuine Start or Resume), never on Pause — the ring
+          // is large enough (280px+) that a transform-based pulse is safe
+          // here in a way it wasn't for the small button icon (see that
+          // saga elsewhere in this file); same remove/reflow/re-add
+          // restart trick as the icon-pop above.
+          if (desiredIconState === 'pause') {
+            var ringWrap = card.querySelector('.pomodoro-ring-wrap');
+            if (ringWrap) {
+              ringWrap.classList.remove('pomo-ring-start-flash');
+              void ringWrap.offsetWidth;
+              ringWrap.classList.add('pomo-ring-start-flash');
+            }
+          }
         }
       }
     }
