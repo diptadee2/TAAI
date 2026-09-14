@@ -1014,7 +1014,14 @@
      the ring itself; break switches to the ring's own green/cyan pair —
      .leaderboard-timer--break flips which gradient the fill's
      background-image resolves to. */
-  .leaderboard-timer { display: inline-flex; align-items: center; width: 46px; height: 6px; border-radius: 999px; overflow: hidden; min-width: 0; }
+  /* justify-self:center — .leaderboard-timer is a direct grid item inside
+     .leaderboard-row (the Timer column has no wrapping cell of its own,
+     just this span positioned by the row's grid-template-columns), and a
+     fixed-width inline-flex item defaults to sitting at its column's
+     start edge rather than centering, unlike the header's plain text
+     (which centers via text-align). Left the bar flush-left under a
+     centered "TIMER" label — added to actually line the two up. */
+  .leaderboard-timer { display: inline-flex; align-items: center; justify-self: center; width: 46px; height: 6px; border-radius: 999px; overflow: hidden; min-width: 0; }
   /* Track background only for a row that actually has a phase to show —
      pomoTimerHtml() renders an empty (attribute-less) span for anyone
      with no active/recent session, same "blank in this column" behavior
