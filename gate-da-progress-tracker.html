@@ -1030,6 +1030,18 @@
   .leaderboard-timer[data-phase-end] { background: rgba(255,255,255,0.08); }
   .leaderboard-timer-fill { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#FF7FB7,var(--purple),#4D8BFF); transition: width 1s linear; }
   .leaderboard-timer--break .leaderboard-timer-fill { background: linear-gradient(90deg,#4ade80,#22d3ee); }
+  /* Below LEADERBOARD_TIMER_URGENT_PCT (see progress.js), a bar switches
+     to a warm amber->red fill regardless of work/break mode — "about to
+     finish" reads as more useful information at a glance than which
+     phase it is, at that point — plus a slow pulse so it's noticeable
+     without staring at the column. Comes after the --break rule above so
+     it correctly wins for an urgent row that's also on break (same
+     specificity, later source order). Opacity-only, no transform/scale —
+     see pomoTimerHtml's own comment on why, given this bar is as small
+     as the Pomodoro buttons whose icon-jitter saga is documented above. */
+  .leaderboard-timer--urgent .leaderboard-timer-fill { background: linear-gradient(90deg,#FBBF24,#EF4444); animation: leaderboard-timer-urgent-pulse 1.4s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) { .leaderboard-timer--urgent .leaderboard-timer-fill { animation: none; } }
+  @keyframes leaderboard-timer-urgent-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
   .leaderboard-time { font-family: var(--font-nav); font-weight: 700; font-size: 14px; color: var(--ink); text-align: right; min-width: 0; }
   /* Greyed-out non-live rows so a student mid-focus-session actually
      stands out from everyone else on the board, instead of every name/
