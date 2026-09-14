@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-14-3';
+  var CLIENT_VERSION = '2026-09-14-4';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2705,24 +2705,26 @@
   // (just starts full) rather than breaking. mode colors the fill to
   // match the ring's own work/break gradient language elsewhere on this
   // page, reusing pomo_status the row already carries.
-  // A bar at 8% and a bar at 92% used to look identical hue-wise (the
+  // A work bar at 8% and one at 92% used to look identical hue-wise (the
   // fill only ever colored by work/break mode) — no way to tell "about
   // to finish" from "just started" without hovering for the tooltip.
-  // Below this threshold the fill switches to a warm amber->red gradient
-  // regardless of mode (urgency is more useful signal than work/break at
-  // that point) and gets a slow pulse — opacity-only, no transform/scale,
-  // deliberately, per the earlier lesson on this exact page (see the
-  // Pomodoro Start/Reset/Skip jitter saga above): animating a small
-  // element's size/position is what caused a real pixel-snapping bug
-  // there, and this bar is similarly tiny (46x6px) — opacity has no
-  // geometry to snap between.
+  // Below this threshold, a WORK bar's fill switches to a warm
+  // amber->red gradient and gets a slow pulse — opacity-only, no
+  // transform/scale, deliberately, per the earlier lesson on this exact
+  // page (see the Pomodoro Start/Reset/Skip jitter saga above): animating
+  // a small element's size/position is what caused a real pixel-snapping
+  // bug there, and this bar is similarly tiny (46x6px) — opacity has no
+  // geometry to snap between. **Deliberately excludes break** — a
+  // "hurry up" cue makes sense for a focus session about to end, not for
+  // a break, which doesn't need urgency pressure at all (direct request:
+  // "we don't need urgency for break").
   var LEADERBOARD_TIMER_URGENT_PCT = 10;
   function pomoTimerHtml(phaseEndAt, totalSeconds, mode) {
     if (!phaseEndAt) return '<span class="leaderboard-timer"></span>';
     var remaining = Math.max(0, Math.round((phaseEndAt - Date.now()) / 1000));
     var total = totalSeconds > 0 ? totalSeconds : remaining;
     var pct = total > 0 ? Math.max(0, Math.min(100, (remaining / total) * 100)) : 0;
-    var urgent = pct <= LEADERBOARD_TIMER_URGENT_PCT;
+    var urgent = mode !== 'break' && pct <= LEADERBOARD_TIMER_URGENT_PCT;
     return '<span class="leaderboard-timer' + (mode === 'break' ? ' leaderboard-timer--break' : '') + (urgent ? ' leaderboard-timer--urgent' : '') + '" data-phase-end="' + phaseEndAt + '" data-total="' + total + '" title="' + formatPomoTime(remaining) + ' left">' +
       '<span class="leaderboard-timer-fill" style="width:' + pct.toFixed(1) + '%"></span></span>';
   }
@@ -2748,8 +2750,13 @@
       // gain this class once it ticks down past the threshold while
       // already on screen — pomoTimerHtml() only sets it correctly at
       // the moment of render, which for a row that's been live the whole
-      // time this poll cycle is running could be minutes ago.
-      el.classList.toggle('leaderboard-timer--urgent', pct <= LEADERBOARD_TIMER_URGENT_PCT);
+      // time this poll cycle is running could be minutes ago. Break rows
+      // never get marked urgent (see pomoTimerHtml's own comment) —
+      // .leaderboard-timer--break is only ever touched by a full row
+      // re-render (refreshLeaderboard), not this per-second tick, so
+      // it's a reliable enough signal of current mode for this check.
+      var isBreak = el.classList.contains('leaderboard-timer--break');
+      el.classList.toggle('leaderboard-timer--urgent', !isBreak && pct <= LEADERBOARD_TIMER_URGENT_PCT);
     });
   }
   function startLeaderboardTimerTick() {
