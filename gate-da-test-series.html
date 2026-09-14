@@ -78,7 +78,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: rgba(255,255,255,0.55); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px); border-bottom: 1px solid var(--line); overflow: visible; }
 .nav-spacer { height: 86px; }
 .nav.menu-open { background: rgba(248,246,255,0.82); }
-.nav-inner { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 28px; height: 86px; padding: 0 32px 0 20px; overflow: visible; }
+.nav-inner { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: clamp(14px, 1.6vw, 28px); height: 86px; padding: 0 32px 0 20px; overflow: visible; }
 /* transform lives on the inner svg/img, not .nav-logo itself (2026-09-08
    fix, "the logos move jitterily on hover") — putting it directly on the
    hovered element meant the hover box moved out from under a cursor
@@ -100,7 +100,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .nav-logo::after { content: 'Home'; position: absolute; bottom: -34px; left: 50%; transform: translateX(-50%) translateY(8px) scale(0.88); font-size: 11.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--purple); background: linear-gradient(135deg, rgba(249,247,255,0.97), rgba(241,237,255,0.97)); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(139,92,246,0.22); border-radius: 20px; padding: 4px 13px; opacity: 0; pointer-events: none; transition: opacity .18s ease, transform .24s cubic-bezier(.34,1.15,.64,1); white-space: nowrap; box-shadow: 0 4px 18px rgba(139,92,246,0.13), 0 1px 4px rgba(0,0,0,0.05); }
   .nav-logo:hover::after { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
 }
-.nav-links { display: flex; gap: 36px; font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; font-family: var(--font-nav); position: relative;}
+.nav-links { display: flex; gap: clamp(18px, 2.2vw, 36px); font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; font-family: var(--font-nav); position: relative;}
 .nav-links a, .nav-dropdown-wrap > span { color: var(--ink-dim); text-decoration: none; transition: color .2s, transform .3s cubic-bezier(.34,1.1,.64,1); position: relative; z-index: 1; cursor: pointer; display: inline-block; white-space: nowrap; }
 .nav-links a::after { content: ''; position: absolute; inset: -14px -10px; z-index: 0; }
 .nav-links a:hover, .nav-links a.active { color: var(--purple); transform: scale(1.08) translateY(-1px); }
