@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-09-7';
+  var CLIENT_VERSION = '2026-09-14-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -60,6 +60,42 @@
         }
       })
       .catch(function () { /* non-critical — just try again next interval */ });
+  }
+
+  // Refreshes the whole page once a day at local midnight, so every
+  // date-derived display — the exam countdown chip, the Day X/180
+  // program-day tracker, anything else computed from "today" (see
+  // todayIso/realTodayIso) — picks up the new day automatically for a
+  // tab left open overnight ("students use this page 12-14 hours daily"),
+  // instead of staying frozen on yesterday's numbers until something else
+  // happens to trigger a re-render. One page-wide reload covers every
+  // such element at once, rather than needing a separate targeted-patch
+  // mechanism per date-dependent piece of UI (and quietly missing
+  // whichever one wasn't thought of). Reuses the exact same
+  // location.reload() + settings-panel-open guard checkClientVersion()
+  // already uses just above — a scheduled reload is exactly as safe as
+  // that one: Focus Mode and an active/paused Pomodoro session both
+  // already restore correctly across a real reload (see
+  // wasHardReload/restorePomoActiveState), so this needs no new restore
+  // logic of its own, just the trigger.
+  function scheduleMidnightReload() {
+    var now = new Date();
+    // +5s past midnight, not exactly 0, as a small buffer against firing
+    // a hair early due to timer-resolution/rounding and reloading onto a
+    // page that still computes "today" as yesterday.
+    var nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 5, 0);
+    setTimeout(function fire() {
+      var panel = document.getElementById('pomo-settings');
+      if (panel && !panel.hidden) {
+        // Same reasoning as checkClientVersion's own guard — don't yank
+        // an unsaved duration edit out from under someone. Retry soon
+        // rather than waiting a full extra day for the next scheduled
+        // fire, so the date doesn't stay stale for long either way.
+        setTimeout(fire, 60000);
+        return;
+      }
+      location.reload();
+    }, nextMidnight - now);
   }
 
   // Full GATE DA syllabus — shown in "Progress by subject" even before a
@@ -626,6 +662,7 @@
     restorePomoActiveState();
     loadMonth(state.month);
     setInterval(checkClientVersion, VERSION_CHECK_MS);
+    scheduleMidnightReload();
     if (wasHardReload() && loadFocusActive()) {
       state.focus = true;
       // replaceState, not enterFocus()'s pushState — a correct {focus:true}
