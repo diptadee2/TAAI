@@ -19,10 +19,20 @@
 // still accepted/logged but likewise not what's credited — see below.
 import { getSupabase, json, weekStartIST, todayIST } from './lib/supabase.js';
 
-// Matches the Focus settings panel's own max (progress.js's pomo-set-work
-// input has max="180") — a single real session can never legitimately
-// exceed this, so reject anything bigger rather than trusting the caller.
-const MAX_MINUTES_PER_SESSION = 180;
+// Matches the Focus settings panel's own max (progress.js's
+// POMO_WORK_MAX_MINUTES, pomo-settings.js's own POST clamp) — a single
+// real session can never legitimately exceed this, so cap credited
+// minutes at it rather than trusting whatever total_seconds happens to
+// hold. Was 180 (the pre-2026-09-06 max) until both of those other two
+// places were tightened to 120 the same day this changed — left at 180
+// until then specifically so an already-in-flight 180-minute session
+// wouldn't have its real, legitimate credit clipped by this cap the
+// moment the client-side max dropped. Nothing that old can still be
+// running 10 days later, so nothing legitimate is affected by tightening
+// this now — it only ever mattered as a ceiling against total_seconds
+// being wrong (corrupted data, a bypass of the other two checks), never
+// as the normal path for a real session.
+const MAX_MINUTES_PER_SESSION = 120;
 
 // Slack between the real start and when phase_started_at actually gets
 // stamped server-side — not a cheating allowance (someone still has to
