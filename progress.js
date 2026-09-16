@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-16-4';
+  var CLIENT_VERSION = '2026-09-17-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2700,16 +2700,21 @@
   // further into a streak than the program itself has run), which is
   // exactly why a top performer's streak didn't feel rewarding: nothing
   // visually distinguished "just started" from "maximum possible right
-  // now." Bronze/Silver are reachable early (a week, a month); Gold at
-  // the program's own halfway point (90) is a real milestone, not a
-  // round number picked in isolation; Diamond at 180 is deliberately
-  // exactly the full program length — finishing it without ever
-  // breaking streak, the actual hardest achievement this product can
-  // recognize, not an arbitrarily-chosen "high" number.
+  // now." Bronze/Gold are reachable early (a week, a month) — Gold sits
+  // at 30 rather than the program's halfway point specifically because
+  // that's the range real top performers are actually in right now (47
+  // days, the current max this early in the program), so the tier
+  // that's actually being seen today reads as a real achievement rather
+  // than a placeholder color; Silver moved to the halfway point (90,
+  // `PROGRAM_LENGTH_DAYS / 2`) instead — swapped at direct request
+  // ("replace the silver criteria for gold and vice versa"). Diamond at
+  // 180 is deliberately exactly the full program length — finishing it
+  // without ever breaking streak, the actual hardest achievement this
+  // product can recognize, not an arbitrarily-chosen "high" number.
   var STREAK_TIERS = [
     { min: 180, name: 'diamond' },
-    { min: PROGRAM_LENGTH_DAYS / 2, name: 'gold' }, // 90
-    { min: 30, name: 'silver' },
+    { min: PROGRAM_LENGTH_DAYS / 2, name: 'silver' }, // 90
+    { min: 30, name: 'gold' },
     { min: 7, name: 'bronze' },
     { min: 0, name: 'base' },
   ];
