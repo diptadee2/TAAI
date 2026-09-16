@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-16-1';
+  var CLIENT_VERSION = '2026-09-16-2';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -50,13 +50,47 @@
   // skipping a reload while the settings panel is open, so an in-progress
   // (unsaved) duration edit isn't yanked away — it'll catch the mismatch
   // on the next poll instead.
+  // A reload fired while this tab is backgrounded only ever half-executes:
+  // pagehide (and therefore sendPomoStoppedBeacon's "session stopped"
+  // signal) fires immediately even in the background, but the actual
+  // reload — which is what would normally re-establish running:true
+  // again within moments — doesn't finish executing until the tab is
+  // foregrounded, since browsers suspend/throttle JS in background tabs.
+  // A student genuinely still running a Pomodoro in a backgrounded tab
+  // (very common — "majority of people keep the pomodoro in the
+  // background while studying in other tabs") ends up with their session
+  // parked at stopped server-side for as long as the tab stays
+  // backgrounded, having done nothing wrong at all. Confirmed directly
+  // against real production data: a CLIENT_VERSION bump left several
+  // genuinely-mid-session students' pomo_active_session rows stuck at
+  // running:false for 5+ minutes with zero further sync activity,
+  // clustered right after the deploy. Deferring the reload until the tab
+  // is actually visible again closes this — no reload while hidden means
+  // no beacon, so a backgrounded session is never touched; the update
+  // simply lands the next time the student glances back at the tab (even
+  // briefly), rather than silently killing an untouched session.
+  var reloadPendingOnVisible = false;
+  function reloadNowOrWhenVisible() {
+    if (!document.hidden) {
+      location.reload();
+      return;
+    }
+    if (reloadPendingOnVisible) return; // already waiting — don't stack listeners across repeated polls
+    reloadPendingOnVisible = true;
+    document.addEventListener('visibilitychange', function onVisible() {
+      if (document.hidden) return;
+      document.removeEventListener('visibilitychange', onVisible);
+      location.reload();
+    });
+  }
+
   function checkClientVersion() {
     api('/version')
       .then(function (r) {
         if (r.version && r.version !== CLIENT_VERSION) {
           var panel = document.getElementById('pomo-settings');
           if (panel && !panel.hidden) return;
-          location.reload();
+          reloadNowOrWhenVisible();
         }
       })
       .catch(function () { /* non-critical — just try again next interval */ });
@@ -94,7 +128,7 @@
         setTimeout(fire, 60000);
         return;
       }
-      location.reload();
+      reloadNowOrWhenVisible();
     }, nextMidnight - now);
   }
 
