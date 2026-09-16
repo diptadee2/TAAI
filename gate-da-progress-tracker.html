@@ -1040,11 +1040,22 @@
      them") — the tier color alone still does the actual job (distinct
      from the old flat gray "+N") without an icon nobody asked for. */
   .streak-flame-badge { display: inline-flex; align-items: center; font-family: var(--font-nav); font-size: 11px; font-weight: 700; border-radius: 999px; padding: 2px 7px; margin-left: 1px; }
-  .streak-flame-badge--base { color: var(--purple); background: rgba(139,92,246,0.14); }
-  .streak-flame-badge--bronze { color: #d97706; background: rgba(217,119,6,0.14); }
-  .streak-flame-badge--silver { color: #e2e8f0; background: rgba(100,116,139,0.32); }
-  .streak-flame-badge--gold { color: #FBBF24; background: rgba(251,191,36,0.16); }
-  .streak-flame-badge--diamond { color: #c4b5fd; background: rgba(167,139,250,0.18); }
+  /* Backgrounds bumped to a much higher, near-opaque alpha than a first
+     pass (0.14-0.32) — a low-alpha background blends with whatever sits
+     behind the badge, and this pill can land on genuinely different
+     row backgrounds (a highlighted "this is you"/top-3 row vs. a plain
+     transparent one), so the exact same tier was rendering as visibly
+     different shades depending only on which row it happened to be in.
+     Caught by direct report ("why are there different shades of gold")
+     and confirmed by reading getComputedStyle on two real gold badges —
+     byte-identical CSS values, genuinely different rendered pixels,
+     purely from row-background bleed-through. High alpha makes the
+     badge's own color dominate regardless of context. */
+  .streak-flame-badge--base { color: #f3e8ff; background: rgba(139,92,246,0.55); }
+  .streak-flame-badge--bronze { color: #ffe3bf; background: rgba(146,64,14,0.75); }
+  .streak-flame-badge--silver { color: #f1f5f9; background: rgba(71,85,105,0.7); }
+  .streak-flame-badge--gold { color: #451a03; background: rgba(251,191,36,0.85); }
+  .streak-flame-badge--diamond { color: #f3e8ff; background: rgba(109,40,217,0.65); }
   /* Pomodoro status ("Focus"/"Break") for anyone currently live — see
      pomo_status in pomodoro-leaderboard.js, derived from the same
      pomo_active_session row that drives is_live/the live dot, just
@@ -1132,7 +1143,22 @@
      into its column now, so the "Name" header needs the same offset or
      it reads as starting to the left of the names it's labeling. */
   .leaderboard-col-name { min-width: 0; text-align: left; padding-left: 13px; }
-  .leaderboard-col-streak { min-width: 0; text-align: left; }
+  /* position:relative so the popover (position:absolute) anchors to
+     this header cell specifically, not the whole grid row. */
+  .leaderboard-col-streak { min-width: 0; text-align: left; position: relative; }
+  /* Small "?" toggle — costs nothing in the header's own layout until
+     clicked (the popover it opens is position:absolute, out of flow),
+     "smart use of negative space" per the direct request, rather than a
+     permanently-visible legend block competing with the leaderboard
+     rows for vertical room. */
+  .streak-legend-toggle { display: inline-flex; align-items: center; justify-content: center; width: 13px; height: 13px; margin-left: 4px; border: 1px solid var(--line); border-radius: 50%; background: rgba(255,255,255,0.06); color: var(--ink-soft); font-size: 9px; font-weight: 700; line-height: 1; cursor: pointer; vertical-align: middle; text-transform: none; letter-spacing: normal; }
+  .streak-legend-toggle:hover { background: rgba(139,92,246,0.18); border-color: var(--purple); color: var(--ink); }
+  .streak-legend-popover { position: absolute; top: calc(100% + 8px); left: 0; z-index: 20; width: 168px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 10px 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); text-transform: none; letter-spacing: normal; }
+  .streak-legend-title { font-size: 11px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+  .streak-legend-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
+  .streak-legend-row .streak-ball { flex-shrink: 0; }
+  .streak-legend-name { font-size: 11.5px; font-weight: 700; color: var(--ink); flex: 1; }
+  .streak-legend-range { font-size: 10.5px; font-weight: 600; color: var(--ink-soft); }
   .leaderboard-col-status { text-align: center; min-width: 0; }
   .leaderboard-col-timer { text-align: center; min-width: 0; }
   .leaderboard-col-time { text-align: right; min-width: 0; }

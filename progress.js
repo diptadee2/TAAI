@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-17-1';
+  var CLIENT_VERSION = '2026-09-17-2';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2724,6 +2724,30 @@
     }
     return 'base';
   }
+  var STREAK_TIER_LABELS = { base: 'Starting out', bronze: 'Bronze', gold: 'Gold', silver: 'Silver', diamond: 'Diamond' };
+  // Built straight from STREAK_TIERS itself — no separately-maintained
+  // list of day ranges to drift out of sync with the actual thresholds
+  // if those ever change again (see the tier-swap entry in CLAUDE.md for
+  // exactly that happening once already). "?" toggle lives right next
+  // to the Streak column header, where the actual confusion was
+  // reported ("where is the silver"), rather than a permanently-visible
+  // block that would compete with the leaderboard for space on every
+  // row — a collapsed popover costs nothing until someone actually
+  // wants it.
+  function streakLegendHtml() {
+    var ascending = STREAK_TIERS.slice().reverse();
+    var rows = '';
+    for (var i = 0; i < ascending.length; i++) {
+      var tier = ascending[i];
+      var next = ascending[i + 1];
+      var range = next ? (tier.min + '–' + (next.min - 1) + ' days') : (tier.min + '+ days');
+      rows += '<div class="streak-legend-row"><span class="streak-ball streak-ball--' + tier.name + '"></span>' +
+        '<span class="streak-legend-name">' + STREAK_TIER_LABELS[tier.name] + '</span>' +
+        '<span class="streak-legend-range">' + range + '</span></div>';
+    }
+    return '<div class="streak-legend-popover" id="streak-legend-popover" hidden>' +
+      '<div class="streak-legend-title">Streak tiers</div>' + rows + '</div>';
+  }
   function streakBallsHtml(streak) {
     if (!streak) return '<span class="leaderboard-streak"></span>';
     var tier = streakTierFor(streak);
@@ -3011,7 +3035,9 @@
       // Mirrors each row's exact rank/name/streak/time widths so every
       // label sits directly above its column on every row, not just
       // approximately near it.
-      '<div class="leaderboard-columns"><span class="leaderboard-col-rank">Rank</span><span></span><span class="leaderboard-col-name">Name</span><span class="leaderboard-col-streak">Streak</span><span class="leaderboard-col-status">Status</span><span class="leaderboard-col-timer">Timer</span><span class="leaderboard-col-time">Minutes</span></div>' +
+      '<div class="leaderboard-columns"><span class="leaderboard-col-rank">Rank</span><span></span><span class="leaderboard-col-name">Name</span>' +
+      '<span class="leaderboard-col-streak">Streak<button type="button" class="streak-legend-toggle" id="streak-legend-toggle" aria-label="What do the streak colors mean?">?</button>' + streakLegendHtml() + '</span>' +
+      '<span class="leaderboard-col-status">Status</span><span class="leaderboard-col-timer">Timer</span><span class="leaderboard-col-time">Minutes</span></div>' +
       '<div id="leaderboard-rows">' + renderLeaderboardRows(animateNow) + '</div>' +
       '</div>';
   }
@@ -3199,6 +3225,20 @@
     });
     var pomoSettingsSave = document.getElementById('pomo-settings-save');
     if (pomoSettingsSave) pomoSettingsSave.addEventListener('click', applyPomoSettings);
+
+    var streakLegendToggle = document.getElementById('streak-legend-toggle');
+    var streakLegendPopover = document.getElementById('streak-legend-popover');
+    if (streakLegendToggle && streakLegendPopover) {
+      streakLegendToggle.addEventListener('click', function (e) {
+        e.stopPropagation(); // don't let the immediately-added document listener below close it on the same click that opened it
+        streakLegendPopover.hidden = !streakLegendPopover.hidden;
+      });
+      document.addEventListener('click', function (e) {
+        if (!streakLegendPopover.hidden && !streakLegendPopover.contains(e.target) && e.target !== streakLegendToggle) {
+          streakLegendPopover.hidden = true;
+        }
+      });
+    }
 
     // Stepper buttons either side of each settings number field (see
     // .pomo-stepper) — clamps to the field's own min/max attributes, then
