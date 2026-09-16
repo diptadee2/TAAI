@@ -162,6 +162,34 @@ export function computeStreak(scheduledDatesDesc, completedDates, today) {
   return streak;
 }
 
+// A schedule reload (see scripts/load-schedule.mjs, "full replace for
+// every date the CSV covers") can remove an already-past date's tasks
+// entirely — e.g. a re-supplied schedule that genuinely has nothing for
+// a given day. computeStreak() only ever counts a date that appears in
+// its scheduledDatesDesc input, so a date vanishing from schedule_tasks
+// silently erases any streak credit a student had already earned for
+// it, even though they did real, completed work that day (caught
+// directly 2026-09-16: every high-streak student dropped by exactly 2
+// the moment two already-completed days were removed from a reloaded
+// schedule). The correct fix isn't to keep stale task content in
+// schedule_tasks just to protect the streak number — that would leave
+// the checklist UI showing tasks that don't match the real, current
+// schedule. Instead: union in this ONE student's own completed dates,
+// per student, not a global change to what counts as "scheduled" for
+// everyone. This is always safe to do — a task_progress row can only
+// ever exist for a task that was genuinely shown to this student on the
+// checklist at some point (there's no other way to create one), so
+// "I completed something on this date" is itself sufficient proof the
+// date was a real checkpoint for THEM, independent of whatever
+// schedule_tasks says about it now. A student who never touched a given
+// date isn't affected at all — nothing is added to their walk.
+export function streakScheduledDatesFor(globalScheduledDatesDesc, personalCompletedDates) {
+  if (!personalCompletedDates.size) return globalScheduledDatesDesc;
+  const merged = new Set(globalScheduledDatesDesc);
+  for (const date of personalCompletedDates) merged.add(date);
+  return [...merged].sort().reverse();
+}
+
 // Parses a Postgres `timestamp` (without time zone) column's string value
 // as the UTC instant it actually is — confirmed as a real bug, not just
 // theoretical: pomo_active_session.updated_at is written via

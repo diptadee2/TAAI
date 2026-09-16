@@ -3,7 +3,7 @@
 // per the schema, so if a sheet edit changes a cell's text after a student
 // has ticked it, that tick is orphaned by design — the sheet is the source
 // of truth, not the old wording.
-import { getSupabase, json, todayForStreak, computeStreak, fetchAllRows } from './lib/supabase.js';
+import { getSupabase, json, todayForStreak, computeStreak, fetchAllRows, streakScheduledDatesFor } from './lib/supabase.js';
 
 export async function handler(event) {
   if (event.httpMethod !== 'POST') return json(405, { error: 'method not allowed' });
@@ -59,7 +59,7 @@ export async function handler(event) {
     if (!schedErr) {
       const scheduledDates = [...new Set(scheduled.map(r => r.date))];
       const completedDates = new Set(completedRows.map(r => r.date));
-      const streak = computeStreak(scheduledDates, completedDates, today);
+      const streak = computeStreak(streakScheduledDatesFor(scheduledDates, completedDates), completedDates, today);
       await supabase.from('students').update({ current_streak: streak }).eq('email', email);
     }
   } catch (streakErr) {

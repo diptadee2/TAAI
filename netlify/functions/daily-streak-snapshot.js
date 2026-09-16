@@ -24,7 +24,7 @@
 // identical unbounded query (already live) has been silently building
 // its streak/task-count numbers from an incomplete slice of real data
 // the whole time. Fixed there too, same commit.
-import { getSupabase, json, todayForStreak, computeStreak, fetchAllRows } from './lib/supabase.js';
+import { getSupabase, json, todayForStreak, computeStreak, fetchAllRows, streakScheduledDatesFor } from './lib/supabase.js';
 
 export async function handler() {
   const supabase = getSupabase();
@@ -54,7 +54,18 @@ export async function handler() {
   }
 
   const emails = students.map(s => s.email);
-  const streaks = students.map(s => computeStreak(scheduledDates, completedByEmail.get(s.email) || new Set(), today));
+  // Union each student's OWN completed dates into their own scheduledDates
+  // walk, not just the global schedule_tasks-derived list — see
+  // streakScheduledDatesFor()'s own comment for why this matters (a
+  // schedule content edit that removes an already-past, already-
+  // completed date must never silently erase real, already-earned
+  // streak days, without needing schedule_tasks to carry stale content
+  // just to keep the checklist UI in sync).
+  const streaks = students.map(s => {
+    const personal = completedByEmail.get(s.email) || new Set();
+    const merged = streakScheduledDatesFor(scheduledDates, personal);
+    return computeStreak(merged, personal, today);
+  });
 
   // A real UPDATE via update_student_streaks (see schema.sql), not
   // .upsert() — a partial-column upsert here fails outright, since
