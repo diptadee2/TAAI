@@ -42,7 +42,16 @@ export async function handler(event) {
     const email = String(body.email || '').trim().toLowerCase();
     if (!email) return json(400, { error: 'email is required' });
 
-    const work = clampMinutes(body.work, 1, 180);
+    // 120, not 180 — must match POMO_WORK_MAX_MINUTES in progress.js. Used
+    // to be 180 here even after the client lowered its own cap to 120
+    // (2026-09-06), so this endpoint kept silently accepting anything up
+    // to the old max from any caller that sent it directly — found via 3
+    // students whose stored value was above 120 despite never having run
+    // a session that long before the cap shipped, meaning it was written
+    // here, after the cap already existed. No shared constant to import
+    // (browser vs. Node runtimes) — keep this in sync by hand if
+    // POMO_WORK_MAX_MINUTES ever changes.
+    const work = clampMinutes(body.work, 1, 120);
     const shortBreak = clampMinutes(body.shortBreak, 1, 60);
     const longBreak = clampMinutes(body.longBreak, 1, 90);
     const cycle = clampMinutes(body.cycle, 1, 12);
