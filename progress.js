@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-17-2';
+  var CLIENT_VERSION = '2026-09-17-3';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2024,24 +2024,6 @@
           toggleIcon.classList.remove('pomo-btn-icon-pop');
           void toggleIcon.offsetWidth;
           toggleIcon.classList.add('pomo-btn-icon-pop');
-          // The icon-pop above is real feedback but small (~13px) and easy
-          // to miss, which is exactly what made a genuine Start click read
-          // as "did that work?" and invite a second, misclick-y press —
-          // direct report ("bigger feedback on the clock... so there is a
-          // lesser frequency of misclicks"). Only on the transition INTO
-          // running (a genuine Start or Resume), never on Pause — the ring
-          // is large enough (280px+) that a transform-based pulse is safe
-          // here in a way it wasn't for the small button icon (see that
-          // saga elsewhere in this file); same remove/reflow/re-add
-          // restart trick as the icon-pop above.
-          if (desiredIconState === 'pause') {
-            var ringWrap = card.querySelector('.pomodoro-ring-wrap');
-            if (ringWrap) {
-              ringWrap.classList.remove('pomo-ring-start-flash');
-              void ringWrap.offsetWidth;
-              ringWrap.classList.add('pomo-ring-start-flash');
-            }
-          }
         }
       }
     }
@@ -2224,6 +2206,27 @@
     });
   }
 
+  // Bigger visual confirmation on the ring itself, beyond the small
+  // ~13px button-icon pop — originally scoped to Start/Resume only
+  // ("bigger feedback on the clock... so there is a lesser frequency of
+  // misclicks"), widened to fire on every real action (Pause/Reset/Skip
+  // too) at direct follow-up request, since the same "did that actually
+  // register?" uncertainty applies to any of them, not just starting.
+  // Called explicitly from each action's own handler rather than
+  // inferred from an icon-state transition (the previous approach,
+  // which only fired for entering "running" and needed a coincidental
+  // icon change to trigger at all — Reset and Skip often don't change
+  // the Start/Pause icon at all, so that approach could never have
+  // covered them reliably). Safe to call from anywhere: self-contained
+  // lookup, not dependent on a card/wrap element already being in scope.
+  function flashPomoRing() {
+    var ringWrap = document.querySelector('#pomo-card .pomodoro-ring-wrap');
+    if (!ringWrap) return;
+    ringWrap.classList.remove('pomo-ring-start-flash');
+    void ringWrap.offsetWidth; // force reflow so the class re-add below actually restarts the animation
+    ringWrap.classList.add('pomo-ring-start-flash');
+  }
+
   // The actual "begin counting down" logic, split out so both the
   // synchronous (already granted) and asynchronous (just granted via the
   // prompt below) paths in pomoToggleRun share it instead of duplicating it.
@@ -2231,6 +2234,7 @@
     ensurePomoAudioCtx(); // real click — unlocks audio for the chime that fires later, unattended
     pomo.phaseEndAt = Date.now() + pomo.secondsLeft * 1000;
     pomo.running = true;
+    flashPomoRing();
     pomoTick(); // self-schedules its own next tick — see pomoTick
     savePomoActiveState();
   }
@@ -2239,6 +2243,7 @@
     if (pomo.running) {
       clearTimeout(pomo.timerId);
       pomo.running = false;
+      flashPomoRing();
       updatePomoDisplay();
       savePomoActiveState();
       return;
@@ -2297,6 +2302,7 @@
     pomo.mode = 'work';
     pomo.totalSeconds = pomoDurationFor('work');
     pomo.secondsLeft = pomo.totalSeconds;
+    flashPomoRing();
     updatePomoDisplay();
     savePomoActiveState();
   }
@@ -2304,6 +2310,7 @@
   function pomoSkip() {
     ensurePomoAudioCtx(); // real click — Skip can fire a chime even if Start was never pressed
     clearTimeout(pomo.timerId);
+    flashPomoRing();
     // fromNow=true — see pomoAdvance: a Skip must always start the next
     // phase fresh from right now, never cascade from a possibly-stale old
     // deadline (that's what pomoTick's own catch-up loop is for).
@@ -2700,21 +2707,27 @@
   // further into a streak than the program itself has run), which is
   // exactly why a top performer's streak didn't feel rewarding: nothing
   // visually distinguished "just started" from "maximum possible right
-  // now." Bronze/Gold are reachable early (a week, a month) — Gold sits
-  // at 30 rather than the program's halfway point specifically because
-  // that's the range real top performers are actually in right now (47
-  // days, the current max this early in the program), so the tier
-  // that's actually being seen today reads as a real achievement rather
-  // than a placeholder color; Silver moved to the halfway point (90,
-  // `PROGRAM_LENGTH_DAYS / 2`) instead — swapped at direct request
-  // ("replace the silver criteria for gold and vice versa"). Diamond at
-  // 180 is deliberately exactly the full program length — finishing it
-  // without ever breaking streak, the actual hardest achievement this
-  // product can recognize, not an arbitrarily-chosen "high" number.
+  // now." Bronze(7)/Silver(30) are reachable early; Gold sits at the
+  // program's own halfway point (90, `PROGRAM_LENGTH_DAYS / 2`) — a real
+  // milestone, not a round number picked in isolation. **Gold and
+  // Silver were briefly swapped the same day** (making the 30d tier
+  // gold, since that's where real top performers actually were) **then
+  // reverted right after, at direct follow-up request** ("gold should
+  // be at a higher day count than silver") — gold sitting at a *lower*
+  // threshold than silver breaks the universally-understood Bronze <
+  // Silver < Gold ordering, which matters more than which specific tier
+  // happens to be reachable today. The original complaint that prompted
+  // the swap (silver looking "bleak") was really about the *color
+  // quality*, already fixed separately (see the richer silver gradient
+  // a few entries up) — reverting the ordering doesn't undo that fix.
+  // Diamond at 180 is deliberately exactly the full program length —
+  // finishing it without ever breaking streak, the actual hardest
+  // achievement this product can recognize, not an arbitrary "high"
+  // number.
   var STREAK_TIERS = [
     { min: 180, name: 'diamond' },
-    { min: PROGRAM_LENGTH_DAYS / 2, name: 'silver' }, // 90
-    { min: 30, name: 'gold' },
+    { min: PROGRAM_LENGTH_DAYS / 2, name: 'gold' }, // 90
+    { min: 30, name: 'silver' },
     { min: 7, name: 'bronze' },
     { min: 0, name: 'base' },
   ];

@@ -1151,8 +1151,13 @@
      "smart use of negative space" per the direct request, rather than a
      permanently-visible legend block competing with the leaderboard
      rows for vertical room. */
-  .streak-legend-toggle { display: inline-flex; align-items: center; justify-content: center; width: 13px; height: 13px; margin-left: 4px; border: 1px solid var(--line); border-radius: 50%; background: rgba(255,255,255,0.06); color: var(--ink-soft); font-size: 9px; font-weight: 700; line-height: 1; cursor: pointer; vertical-align: middle; text-transform: none; letter-spacing: normal; }
-  .streak-legend-toggle:hover { background: rgba(139,92,246,0.18); border-color: var(--purple); color: var(--ink); }
+  /* A first pass (13px, near-transparent background) was reported as
+     "not visible much" — sized up and given a real filled background
+     instead of a barely-there outline, so it reads as a genuine tappable
+     control sitting next to the header text rather than blending into
+     it. */
+  .streak-legend-toggle { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; margin-left: 5px; border: none; border-radius: 50%; background: rgba(139,92,246,0.45); color: #f3e8ff; font-size: 10.5px; font-weight: 800; line-height: 1; cursor: pointer; vertical-align: middle; text-transform: none; letter-spacing: normal; box-shadow: 0 0 4px rgba(139,92,246,0.4); }
+  .streak-legend-toggle:hover { background: rgba(139,92,246,0.7); color: #fff; }
   .streak-legend-popover { position: absolute; top: calc(100% + 8px); left: 0; z-index: 20; width: 168px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 10px 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); text-transform: none; letter-spacing: normal; }
   .streak-legend-title { font-size: 11px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
   .streak-legend-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
