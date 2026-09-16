@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-16-2';
+  var CLIENT_VERSION = '2026-09-16-3';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2689,16 +2689,52 @@
   // Streak shown as a row of small balls between the name and minutes
   // columns, rather than the number alone — capped at STREAK_BALLS_CAP so
   // a long streak doesn't blow out the row's width; anything beyond that
-  // collapses into a "+N" after the last ball. Nothing renders for a
+  // collapses into a badge after the last ball. Nothing renders for a
   // zero streak (an empty column reads more cleanly than a row of hollow
   // balls for every non-streaking student).
   var STREAK_BALLS_CAP = 5;
+  // Tiers scaled to the program's own real length (PROGRAM_LENGTH_DAYS =
+  // 180, started Aug 1) rather than arbitrary habit-app numbers — every
+  // ball/badge for a given streak was reading identically whether someone
+  // was 3 days in or 47 (the real current max, since nobody can be
+  // further into a streak than the program itself has run), which is
+  // exactly why a top performer's streak didn't feel rewarding: nothing
+  // visually distinguished "just started" from "maximum possible right
+  // now." Bronze/Silver are reachable early (a week, a month); Gold at
+  // the program's own halfway point (90) is a real milestone, not a
+  // round number picked in isolation; Diamond at 180 is deliberately
+  // exactly the full program length — finishing it without ever
+  // breaking streak, the actual hardest achievement this product can
+  // recognize, not an arbitrarily-chosen "high" number.
+  var STREAK_TIERS = [
+    { min: 180, name: 'diamond' },
+    { min: PROGRAM_LENGTH_DAYS / 2, name: 'gold' }, // 90
+    { min: 30, name: 'silver' },
+    { min: 7, name: 'bronze' },
+    { min: 0, name: 'base' },
+  ];
+  function streakTierFor(streak) {
+    for (var i = 0; i < STREAK_TIERS.length; i++) {
+      if (streak >= STREAK_TIERS[i].min) return STREAK_TIERS[i].name;
+    }
+    return 'base';
+  }
+  // Flame glyph for the overflow badge — reframes "too many to show as
+  // balls" as a status symbol (the Duolingo/Snapchat streak-flame
+  // pattern) instead of the flat "+N" truncation pill this replaced,
+  // which read as an afterthought for exactly the streaks that most
+  // deserved to stand out.
+  var STREAK_FLAME_SVG = '<svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true">' +
+    '<path d="M12 2c1 3-2 4-2 7a3 3 0 006 0c1.5 1.5 2 3.5 2 5a6 6 0 11-12 0c0-4 3-6 3-9 0-1.2.5-2.3 1-3.2C10.2 2.3 11 2.1 12 2z"/></svg>';
   function streakBallsHtml(streak) {
     if (!streak) return '<span class="leaderboard-streak"></span>';
+    var tier = streakTierFor(streak);
     var filled = Math.min(streak, STREAK_BALLS_CAP);
     var balls = '';
-    for (var i = 0; i < filled; i++) balls += '<span class="streak-ball"></span>';
-    var overflow = streak > STREAK_BALLS_CAP ? '<span class="streak-ball-overflow">+' + (streak - STREAK_BALLS_CAP) + '</span>' : '';
+    for (var i = 0; i < filled; i++) balls += '<span class="streak-ball streak-ball--' + tier + '"></span>';
+    var overflow = streak > STREAK_BALLS_CAP
+      ? '<span class="streak-flame-badge streak-flame-badge--' + tier + '">' + STREAK_FLAME_SVG + (streak - STREAK_BALLS_CAP) + '</span>'
+      : '';
     return '<span class="leaderboard-streak" title="' + streak + ' day streak">' + balls + overflow + '</span>';
   }
 

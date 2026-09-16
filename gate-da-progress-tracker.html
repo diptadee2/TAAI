@@ -999,12 +999,48 @@
   .leaderboard-streak { display: flex; align-items: center; justify-content: flex-start; gap: 5px; min-width: 0; }
   /* Radial highlight (not just a flat linear gradient) for a glossy,
      gem-like ball instead of a flat dot, plus a soft outer glow and a
-     faint inset shadow along the bottom edge for a bit of depth. */
-  .streak-ball { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; background: radial-gradient(circle at 32% 30%, #ffc2e3, #FF7FB7 45%, var(--purple) 100%); box-shadow: 0 0 6px rgba(139,92,246,0.6), inset 0 -1px 1.5px rgba(0,0,0,0.2); }
+     faint inset shadow along the bottom edge for a bit of depth.
+     Tiered by streak length ("do 1 and 2 knowing the program is 180
+     days, started Aug 1") — a 3-day and a 47-day streak used to render
+     as literally identical balls, which is exactly why a long streak
+     didn't feel rewarding: nothing distinguished "just started" from
+     "the real current maximum, since nobody can be further into a
+     streak than the program itself has run." --base is the original
+     pink-purple gradient byte-for-byte, so an early streak (days 1-6,
+     before any tier applies) looks exactly as it always has. */
+  .streak-ball { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 6px rgba(139,92,246,0.6), inset 0 -1px 1.5px rgba(0,0,0,0.2); }
+  .streak-ball--base { background: radial-gradient(circle at 32% 30%, #ffc2e3, #FF7FB7 45%, var(--purple) 100%); }
+  .streak-ball--bronze { background: radial-gradient(circle at 32% 30%, #ffd9b3, #d97706 45%, #92400e 100%); box-shadow: 0 0 6px rgba(217,119,6,0.55), inset 0 -1px 1.5px rgba(0,0,0,0.2); }
+  .streak-ball--silver { background: radial-gradient(circle at 32% 30%, #f8fafc, #cbd5e1 45%, #64748b 100%); box-shadow: 0 0 6px rgba(148,163,184,0.6), inset 0 -1px 1.5px rgba(0,0,0,0.2); }
+  .streak-ball--gold { background: radial-gradient(circle at 32% 30%, #fef3c7, #FBBF24 45%, #b45309 100%); box-shadow: 0 0 7px rgba(251,191,36,0.65), inset 0 -1px 1.5px rgba(0,0,0,0.2); }
+  /* Diamond (180+, the full program length) gets a genuinely different
+     treatment, not just another flat color — a slow shimmer across the
+     site's own brand gradient (pink->purple->blue), since finishing the
+     entire program without ever breaking streak is the single hardest
+     thing this product can recognize. Animates background-position on
+     an oversized gradient, not transform/box-shadow directly on this
+     shadow+radius element — the Chromium DOM-node-leak gotcha this file
+     already knows about (animating transform/box-shadow on an element
+     that also has both box-shadow and border-radius) applies to exactly
+     this shape of element, so background-position sidesteps it entirely
+     rather than re-learning that the hard way. */
+  .streak-ball--diamond { background: linear-gradient(120deg, #FF7FB7, var(--purple), #4D8BFF, var(--purple), #FF7FB7); background-size: 300% 300%; box-shadow: 0 0 8px rgba(167,139,250,0.8), inset 0 -1px 1.5px rgba(0,0,0,0.2); animation: streak-ball-diamond-shimmer 3.5s ease-in-out infinite; }
+  @keyframes streak-ball-diamond-shimmer { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+  @media (prefers-reduced-motion: reduce) { .streak-ball--diamond { animation: none; background-position: 30% 50%; } }
   /* A small pill instead of bare text, so a long streak's overflow
      count reads as its own distinct badge rather than an afterthought
-     stray number tacked onto the balls. */
-  .streak-ball-overflow { font-family: var(--font-nav); font-size: 11px; font-weight: 700; color: var(--purple); background: rgba(139,92,246,0.14); border-radius: 999px; padding: 2px 7px; margin-left: 1px; }
+     stray number tacked onto the balls. Replaced the old bare "+N" text
+     with a flame glyph (the Duolingo/Snapchat streak pattern) plus the
+     tier color, reframing "too many to show as balls" as a status
+     symbol instead of a truncation notice — exactly the streaks that
+     most deserved to stand out were the ones getting flattened into a
+     plain gray "+42". */
+  .streak-flame-badge { display: inline-flex; align-items: center; gap: 2px; font-family: var(--font-nav); font-size: 11px; font-weight: 700; border-radius: 999px; padding: 2px 7px 2px 5px; margin-left: 1px; }
+  .streak-flame-badge--base { color: var(--purple); background: rgba(139,92,246,0.14); }
+  .streak-flame-badge--bronze { color: #d97706; background: rgba(217,119,6,0.14); }
+  .streak-flame-badge--silver { color: #94a3b8; background: rgba(148,163,184,0.16); }
+  .streak-flame-badge--gold { color: #FBBF24; background: rgba(251,191,36,0.16); }
+  .streak-flame-badge--diamond { color: #c4b5fd; background: rgba(167,139,250,0.18); }
   /* Pomodoro status ("Focus"/"Break") for anyone currently live — see
      pomo_status in pomodoro-leaderboard.js, derived from the same
      pomo_active_session row that drives is_live/the live dot, just
