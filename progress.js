@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-14-4';
+  var CLIENT_VERSION = '2026-09-16-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1139,6 +1139,22 @@
             gradient: pomoSettings.gradient,
           };
           savePomoSettings(); // cache locally too, so a later guest-mode reload isn't stuck back on defaults
+          // clampPomoWork() above only ever corrects the in-memory value —
+          // students.pomo_work_min itself was never written back, so a
+          // student who'd saved e.g. 178 (legal before the 120-min cap
+          // shipped) kept reading 178 from the server forever, silently
+          // reclamped to 120 on every load with nothing to show for it in
+          // the database. Caught via a real student's report ("miscalc"):
+          // their pomo_daily_sessions showed a clean 178.0-min/session
+          // history right up to the cap's ship date, then 120.0 exactly
+          // from the next day on — the credited math was always correct,
+          // but the stored setting silently disagreed with what actually
+          // ran, forever. Persisting the corrected value here means this
+          // only ever fires once per affected student (the very next load
+          // already sees a server value of 120, so the condition goes
+          // false) — this doesn't add a work fetch, saveRemotePomoSettings
+          // already POSTs whatever's currently in pomoSettings.
+          if (savedPomo.work > POMO_WORK_MAX_MINUTES) saveRemotePomoSettings();
           // Real bug, caught by a full end-to-end verification pass before
           // shipping: this block runs on EVERY loadMonth() call (i.e. every
           // page load) for any signed-in student who has ever saved
