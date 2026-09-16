@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-16-3';
+  var CLIENT_VERSION = '2026-09-16-4';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2719,21 +2719,20 @@
     }
     return 'base';
   }
-  // Flame glyph for the overflow badge — reframes "too many to show as
-  // balls" as a status symbol (the Duolingo/Snapchat streak-flame
-  // pattern) instead of the flat "+N" truncation pill this replaced,
-  // which read as an afterthought for exactly the streaks that most
-  // deserved to stand out.
-  var STREAK_FLAME_SVG = '<svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true">' +
-    '<path d="M12 2c1 3-2 4-2 7a3 3 0 006 0c1.5 1.5 2 3.5 2 5a6 6 0 11-12 0c0-4 3-6 3-9 0-1.2.5-2.3 1-3.2C10.2 2.3 11 2.1 12 2z"/></svg>';
   function streakBallsHtml(streak) {
     if (!streak) return '<span class="leaderboard-streak"></span>';
     var tier = streakTierFor(streak);
     var filled = Math.min(streak, STREAK_BALLS_CAP);
     var balls = '';
     for (var i = 0; i < filled; i++) balls += '<span class="streak-ball streak-ball--' + tier + '"></span>';
+    // Plain tier-colored number, no icon — an earlier version paired
+    // this with a small flame glyph (the Duolingo/Snapchat pattern) but
+    // that read as an unwanted emoji-like decoration rather than a
+    // status symbol, per direct feedback ("what is the emoji beside the
+    // numbers, i don't like them"). The tier coloring alone still does
+    // the actual job (distinguishing this from the old flat gray "+N").
     var overflow = streak > STREAK_BALLS_CAP
-      ? '<span class="streak-flame-badge streak-flame-badge--' + tier + '">' + STREAK_FLAME_SVG + (streak - STREAK_BALLS_CAP) + '</span>'
+      ? '<span class="streak-flame-badge streak-flame-badge--' + tier + '">' + (streak - STREAK_BALLS_CAP) + '</span>'
       : '';
     return '<span class="leaderboard-streak" title="' + streak + ' day streak">' + balls + overflow + '</span>';
   }

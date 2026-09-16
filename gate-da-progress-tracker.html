@@ -1011,7 +1011,12 @@
   .streak-ball { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 6px rgba(139,92,246,0.6), inset 0 -1px 1.5px rgba(0,0,0,0.2); }
   .streak-ball--base { background: radial-gradient(circle at 32% 30%, #ffc2e3, #FF7FB7 45%, var(--purple) 100%); }
   .streak-ball--bronze { background: radial-gradient(circle at 32% 30%, #ffd9b3, #d97706 45%, #92400e 100%); box-shadow: 0 0 6px rgba(217,119,6,0.55), inset 0 -1px 1.5px rgba(0,0,0,0.2); }
-  .streak-ball--silver { background: radial-gradient(circle at 32% 30%, #f8fafc, #cbd5e1 45%, #64748b 100%); box-shadow: 0 0 6px rgba(148,163,184,0.6), inset 0 -1px 1.5px rgba(0,0,0,0.2); }
+  /* Richer/higher-contrast than a first pass that read as "too bleak"
+     (direct feedback) — a near-white highlight against a deeper,
+     more-saturated slate base for real polished-chrome shine, instead
+     of two adjacent pale grays that barely registered against the
+     dark page background. */
+  .streak-ball--silver { background: radial-gradient(circle at 30% 28%, #ffffff, #e2e8f0 30%, #94a3b8 62%, #475569 100%); box-shadow: 0 0 8px rgba(100,116,139,0.85), inset 0 -1px 1.5px rgba(0,0,0,0.25); }
   .streak-ball--gold { background: radial-gradient(circle at 32% 30%, #fef3c7, #FBBF24 45%, #b45309 100%); box-shadow: 0 0 7px rgba(251,191,36,0.65), inset 0 -1px 1.5px rgba(0,0,0,0.2); }
   /* Diamond (180+, the full program length) gets a genuinely different
      treatment, not just another flat color — a slow shimmer across the
@@ -1029,16 +1034,15 @@
   @media (prefers-reduced-motion: reduce) { .streak-ball--diamond { animation: none; background-position: 30% 50%; } }
   /* A small pill instead of bare text, so a long streak's overflow
      count reads as its own distinct badge rather than an afterthought
-     stray number tacked onto the balls. Replaced the old bare "+N" text
-     with a flame glyph (the Duolingo/Snapchat streak pattern) plus the
-     tier color, reframing "too many to show as balls" as a status
-     symbol instead of a truncation notice — exactly the streaks that
-     most deserved to stand out were the ones getting flattened into a
-     plain gray "+42". */
-  .streak-flame-badge { display: inline-flex; align-items: center; gap: 2px; font-family: var(--font-nav); font-size: 11px; font-weight: 700; border-radius: 999px; padding: 2px 7px 2px 5px; margin-left: 1px; }
+     stray number tacked onto the balls, tier-colored to match. A flame
+     glyph inside this badge was tried and removed the same day — direct
+     feedback ("what is the emoji beside the numbers, i don't like
+     them") — the tier color alone still does the actual job (distinct
+     from the old flat gray "+N") without an icon nobody asked for. */
+  .streak-flame-badge { display: inline-flex; align-items: center; font-family: var(--font-nav); font-size: 11px; font-weight: 700; border-radius: 999px; padding: 2px 7px; margin-left: 1px; }
   .streak-flame-badge--base { color: var(--purple); background: rgba(139,92,246,0.14); }
   .streak-flame-badge--bronze { color: #d97706; background: rgba(217,119,6,0.14); }
-  .streak-flame-badge--silver { color: #94a3b8; background: rgba(148,163,184,0.16); }
+  .streak-flame-badge--silver { color: #e2e8f0; background: rgba(100,116,139,0.32); }
   .streak-flame-badge--gold { color: #FBBF24; background: rgba(251,191,36,0.16); }
   .streak-flame-badge--diamond { color: #c4b5fd; background: rgba(167,139,250,0.18); }
   /* Pomodoro status ("Focus"/"Break") for anyone currently live — see
