@@ -71,6 +71,20 @@ export function json(statusCode, body) {
 // Identity dashboard (a one-time manual step, not something committable —
 // same category as Identity/git-gateway setup itself).
 export function requireAdmin(context) {
+  // Local-dev-only bypass — Netlify Identity can never authenticate
+  // against localhost at all (no real domain to issue a JWT for), which
+  // is exactly why /team's real login flow has only ever been testable
+  // on the deployed site, or via a throwaway script invoking a handler()
+  // directly with a hand-built context (see CLAUDE.md's /team section).
+  // NETLIFY_DEV is set exclusively by `netlify dev` itself (confirmed
+  // directly: reads 'true' locally, undefined in every real deploy
+  // context) and is read from this function's own process environment —
+  // nothing a request sends can influence it, so this can't be triggered
+  // outside an actual local `netlify dev` session no matter what a
+  // client does.
+  if (process.env.NETLIFY_DEV === 'true') {
+    return { authorized: true, user: { email: 'dev-admin@localhost', app_metadata: { roles: ['admin'] } } };
+  }
   const roles = context?.clientContext?.user?.app_metadata?.roles || [];
   if (!roles.includes('admin')) {
     return { authorized: false, response: json(401, { error: 'unauthorized' }) };

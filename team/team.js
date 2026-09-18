@@ -9,6 +9,15 @@
   'use strict';
 
   var API_BASE = '/api';
+  // Local-dev-only — mirrors requireAdmin()'s own NETLIFY_DEV-gated
+  // bypass in lib/supabase.js. Netlify Identity can never authenticate
+  // against localhost (no real domain to issue a JWT for), so without
+  // this, `/team` on localhost is permanently stuck on the login gate
+  // with a non-functional "Log in" button — the only way to test
+  // anything was previously a throwaway script invoking a function
+  // handler() directly, never the real page itself. This can't fire on
+  // a real deploy — `location.hostname` is never 'localhost' there.
+  var DEV_BYPASS = location.hostname === 'localhost';
   var DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   var SOURCE_LABELS = {
     custom: 'Custom message (also used for weekly batch schedules)',
@@ -607,10 +616,10 @@
     root.innerHTML =
       '<div class="wrap">' +
         '<header>' +
-          '<div><h1>Team Console</h1><div class="sub">Signed in as ' + escapeHtml(user.email) + '</div></div>' +
+          '<div><h1>Team Console</h1><div class="sub">' + (DEV_BYPASS ? 'Local dev mode — auth bypassed, not signed in' : 'Signed in as ' + escapeHtml(user.email)) + '</div></div>' +
           '<div style="display:flex;gap:10px;">' +
             actionsHtml +
-            '<button class="btn" id="logout-btn">Log out</button>' +
+            (DEV_BYPASS ? '' : '<button class="btn" id="logout-btn">Log out</button>') +
           '</div>' +
         '</header>' +
         tabsHtml +
@@ -1236,6 +1245,12 @@
   }
 
   function init() {
+    if (DEV_BYPASS) {
+      state.authorized = true;
+      render();
+      loadPosts();
+      return;
+    }
     if (!window.netlifyIdentity) {
       document.getElementById('root').innerHTML = '<div class="wrap"><div id="gate"><p>Netlify Identity failed to load.</p></div></div>';
       return;
