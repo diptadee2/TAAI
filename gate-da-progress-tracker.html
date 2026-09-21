@@ -1183,17 +1183,13 @@
      inline-flex (not flex) keeps the cell sized to its content instead
      of stretching to fill the grid track, matching how every sibling
      header cell in this same row already behaves. */
-  /* Left-aligned, not centered — reverted back after centering visibly
-     broke the match with this column's own content. Streak's content
-     (the balls) is deliberately left-anchored at a fixed x regardless of
-     how many balls a given row has (see the streak-ball comment above),
-     often just one small ~14px ball inside a much wider flexible column
-     — centering the header over the whole column left a real visible
-     gap to where the balls actually start, confirmed directly from a
-     screenshot. Name's header stayed centered (its content, real display
-     names, spans most of its own column, so centering there doesn't
-     create the same gap), but Streak's short, variable-width content
-     needs its header anchored to the same left edge instead. */
+  /* Left-aligned, not centered — tried centering twice (once over the
+     full flexible column, once within a bounded 160px sub-box) and both
+     were reverted at direct request. Left-aligned matches this column's
+     own content, which is itself deliberately left-anchored at a fixed
+     x regardless of how many balls a given row has (see the streak-ball
+     comment above) — this is the one column pair (header + content)
+     that reads better matched than centered. */
   .leaderboard-col-streak { display: inline-flex; align-items: center; justify-content: flex-start; gap: 5px; min-width: 0; text-align: left; position: relative; }
   /* Small "?" toggle — costs nothing in the header's own layout until
      clicked (the popover it opens is position:absolute, out of flow),
