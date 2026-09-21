@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-21-37';
+  var CLIENT_VERSION = '2026-09-21-38';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1153,10 +1153,48 @@
     observeFadeIns();
   }
 
+  // A rough approximation of this page's real layout (streak/champions
+  // card, month nav, today card, week rows, heatmap + subject cards), not
+  // pixel-exact — its only job is to fill the screen with something that
+  // reads as "content is coming" instead of a blank page or a lone
+  // sentence, replacing the old plain "Loading your roadmap..." text.
+  // Byte-identical to the skeleton hand-written into gate-da-progress-
+  // tracker.html's initial `#app` markup (the page's very first paint,
+  // before this script has even run) — kept as two copies since
+  // generating that first-paint one via JS wouldn't help; keep both in
+  // sync if this ever changes, same established tradeoff as this
+  // codebase's other small hand-duplicated pairs (e.g. DEFAULT_BODY_BY_SOURCE).
+  function loadingSkeletonHtml() {
+    return '<div class="skeleton-wrap">' +
+      '<div class="skeleton-block skeleton-hero"></div>' +
+      '<div class="skeleton-block skeleton-nav"></div>' +
+      '<div class="skeleton-block skeleton-card"></div>' +
+      '<div class="skeleton-grid">' +
+        '<div>' +
+          '<div class="skeleton-week-group">' +
+            '<div class="skeleton-block skeleton-week-label"></div>' +
+            '<div class="skeleton-block skeleton-row"></div>' +
+            '<div class="skeleton-block skeleton-row"></div>' +
+            '<div class="skeleton-block skeleton-row"></div>' +
+          '</div>' +
+          '<div class="skeleton-week-group">' +
+            '<div class="skeleton-block skeleton-week-label"></div>' +
+            '<div class="skeleton-block skeleton-row"></div>' +
+            '<div class="skeleton-block skeleton-row"></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="skeleton-week-group">' +
+          '<div class="skeleton-block skeleton-card"></div>' +
+          '<div class="skeleton-block skeleton-hero"></div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
   // ── Calendar ────────────────────────────────────────────────────────
   function loadMonth(monthStr) {
     state.month = monthStr;
-    app.innerHTML = '<p class="center-note">Loading your roadmap…</p>';
+    app.innerHTML = loadingSkeletonHtml();
 
     // Guests (no student yet) only need the public schedule/leaders piece —
     // tracker-data.js omits the per-student pieces server-side when email

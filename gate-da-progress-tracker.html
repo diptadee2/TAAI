@@ -255,6 +255,29 @@
   #app { min-height: 40vh; }
 
   .center-note { text-align: center; color: var(--ink-soft); font-size: 14px; padding: 60px 0; }
+  /* Loading-state skeleton (replaces the old plain "Loading your
+     roadmap..." text) — a rough approximation of this page's real layout
+     (streak/champions card, month nav, today card, week rows, heatmap +
+     subject cards), not a pixel-exact one, since its only job is to fill
+     the screen with something that reads as "content is coming" rather
+     than a blank page or a lone sentence. Rendered both here (the page's
+     very first paint, before progress.js has even run) and by
+     loadingSkeletonHtml() in progress.js (every loadMonth() call after
+     that, including month navigation) — kept as two copies, same
+     established tradeoff as this file's other small hand-duplicated
+     pairs, since generating it via JS wouldn't help the pre-JS paint. */
+  .skeleton-wrap { display: flex; flex-direction: column; gap: 14px; }
+  .skeleton-block { border-radius: var(--radius-md); border: 1px solid var(--line); background: linear-gradient(100deg, var(--card) 30%, rgba(255,255,255,0.07) 50%, var(--card) 70%); background-size: 200% 100%; animation: skeleton-shimmer 1.6s ease-in-out infinite; }
+  @keyframes skeleton-shimmer { 0% { background-position: 150% 0; } 100% { background-position: -50% 0; } }
+  @media (prefers-reduced-motion: reduce) { .skeleton-block { animation: none; background: var(--card); } }
+  .skeleton-hero { height: 168px; }
+  .skeleton-nav { height: 40px; max-width: 260px; margin: 0 auto; border-radius: 999px; }
+  .skeleton-card { height: 130px; }
+  .skeleton-row { height: 46px; }
+  .skeleton-week-label { height: 20px; max-width: 140px; border-radius: 6px; }
+  .skeleton-week-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+  .skeleton-grid { display: grid; grid-template-columns: 1fr 300px; gap: 20px; align-items: start; }
+  @media (max-width: 900px) { .skeleton-grid { grid-template-columns: 1fr; } }
 
   /* Registration form */
   .reg-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 36px 28px; max-width: 420px; margin: 40px auto; text-align: center; }
@@ -1487,7 +1510,30 @@
 <div id="nav-root"></div>
 
 <div class="wrap">
-  <div id="app"><p class="center-note">Loading your roadmap…</p></div>
+  <div id="app"><div class="skeleton-wrap">
+    <div class="skeleton-block skeleton-hero"></div>
+    <div class="skeleton-block skeleton-nav"></div>
+    <div class="skeleton-block skeleton-card"></div>
+    <div class="skeleton-grid">
+      <div>
+        <div class="skeleton-week-group">
+          <div class="skeleton-block skeleton-week-label"></div>
+          <div class="skeleton-block skeleton-row"></div>
+          <div class="skeleton-block skeleton-row"></div>
+          <div class="skeleton-block skeleton-row"></div>
+        </div>
+        <div class="skeleton-week-group">
+          <div class="skeleton-block skeleton-week-label"></div>
+          <div class="skeleton-block skeleton-row"></div>
+          <div class="skeleton-block skeleton-row"></div>
+        </div>
+      </div>
+      <div class="skeleton-week-group">
+        <div class="skeleton-block skeleton-card"></div>
+        <div class="skeleton-block skeleton-hero"></div>
+      </div>
+    </div>
+  </div></div>
 </div>
 
 <button class="back-to-top" id="back-to-top" aria-label="Back to top">
