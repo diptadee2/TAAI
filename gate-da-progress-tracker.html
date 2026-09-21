@@ -1437,6 +1437,21 @@
      both. */
   .hourly-busy-meter-marker { position: absolute; top: 50%; left: 0; width: 15px; height: 15px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 3px rgba(10,10,16,0.55), 0 2px 6px rgba(0,0,0,0.4); transform: translate(-50%, -50%); transition: left .8s cubic-bezier(.34,1.2,.64,1); }
   @media (prefers-reduced-motion: reduce) { .hourly-busy-meter-marker { transition: none; } }
+  /* A 🔥 above the knob once it's solidly in Intense territory — direct
+     request ("after a certain threshold of busy meter in the intense
+     side can we have a fire emoji, on top of the knob maintaining equal
+     spacing"). A CSS ::after on the marker itself rather than a separate
+     DOM element — it then automatically tracks the marker's own `left`
+     (and its transition) with zero extra JS, appearing/disappearing via
+     a class toggle from the exact same code paths that already move the
+     knob (hourlyMeterMarkerClass at render time, applyLiveCountUpdate on
+     every live poll tick), so a session starting or ending that pushes
+     the meter across the threshold updates the flame immediately, not
+     just at page load. `top: -18px` matches the same spacing this page
+     already used for a similarly-placed flame above the (now-removed)
+     bar-chart peak indicator, for visual consistency with that earlier
+     pattern rather than an arbitrary new offset. */
+  .hourly-busy-meter-marker--fire::after { content: '🔥'; position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 13px; line-height: 1; }
   .hourly-busy-meter-scale { display: flex; justify-content: space-between; font-family: var(--font-nav); font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-soft); margin-top: 8px; }
 </style>
 </head>

@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-21-29';
+  var CLIENT_VERSION = '2026-09-21-30';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2706,6 +2706,14 @@
   // the highest concurrent count anyone has ever actually triggered, so
   // the scale adjusts itself as the batch's real usage patterns emerge
   // instead of drifting stale against a fixed number.
+  // Once the marker is at least this far toward the Intense end, it gets
+  // a 🔥 above it — direct request ("after a certain threshold of busy
+  // meter in the intense side can we have a fire emoji"). 70 means
+  // solidly past the midpoint, not just barely leaning intense.
+  var BUSY_METER_FIRE_THRESHOLD = 70;
+  function hourlyMeterMarkerClass(pct) {
+    return 'hourly-busy-meter-marker' + (pct >= BUSY_METER_FIRE_THRESHOLD ? ' hourly-busy-meter-marker--fire' : '');
+  }
   function hourlyBusyMeterHtml() {
     var liveCount = state.liveCount || 0;
     var liveCountMax = Math.max(state.liveCountMax || 0, liveCount, 1);
@@ -2735,7 +2743,7 @@
     return '<div class="hourly-busy-meter">' +
       '<div class="hourly-busy-meter-title">Busy meter</div>' +
       '<div class="hourly-busy-meter-track" title="' + escapeAttr(nowRange + ': ' + liveCount + ' students live right now') + '">' +
-      '<div class="hourly-busy-meter-marker" data-meter-pct="' + meterPct + '" style="left:0%"></div>' +
+      '<div class="' + hourlyMeterMarkerClass(meterPct) + '" data-meter-pct="' + meterPct + '" style="left:0%"></div>' +
       '</div>' +
       '<div class="hourly-busy-meter-scale"><span>Chill</span><span>Intense</span></div>' +
       '</div>';
@@ -3203,7 +3211,14 @@
     var liveCountMax = Math.max(state.liveCountMax, state.liveCount, 1);
     var pct = Math.round(Math.min(100, (state.liveCount / liveCountMax) * 100));
     var el = document.querySelector('.hourly-busy-meter-marker');
-    if (el) { el.setAttribute('data-meter-pct', pct); el.style.left = pct + '%'; }
+    if (el) {
+      el.setAttribute('data-meter-pct', pct);
+      el.style.left = pct + '%';
+      // Same threshold as the initial render (hourlyMeterMarkerClass) —
+      // a live update can genuinely cross into/out of "fire" territory
+      // as students start/finish sessions, not just at page load.
+      el.classList.toggle('hourly-busy-meter-marker--fire', pct >= BUSY_METER_FIRE_THRESHOLD);
+    }
   }
 
   // Standalone endpoint (last-week-leaders.js), not the big tracker-data.js
