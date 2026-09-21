@@ -267,13 +267,33 @@
      established tradeoff as this file's other small hand-duplicated
      pairs, since generating it via JS wouldn't help the pre-JS paint. */
   .skeleton-wrap { display: flex; flex-direction: column; gap: 14px; }
-  .skeleton-block { border-radius: var(--radius-md); border: 1px solid var(--line); background: linear-gradient(100deg, var(--card) 30%, rgba(255,255,255,0.07) 50%, var(--card) 70%); background-size: 200% 100%; animation: skeleton-shimmer 1.6s ease-in-out infinite; }
-  @keyframes skeleton-shimmer { 0% { background-position: 150% 0; } 100% { background-position: -50% 0; } }
-  @media (prefers-reduced-motion: reduce) { .skeleton-block { animation: none; background: var(--card); } }
+  /* Base fill is a visible step up from --card/--bg-soft (which sit only
+     ~3 hex units apart — fine for a real bordered card, but meant these
+     skeleton blocks nearly vanished against the page background before
+     this pass), and the shimmer is a narrow, bright band swept directionally
+     across via background-position rather than a symmetric 3-stop gradient
+     sized to the whole block — reads as a clear, deliberate sweep instead
+     of a faint wobble, including in a single still frame. */
+  .skeleton-block { border-radius: var(--radius-md); border: 1px solid var(--line); background-color: rgba(255,255,255,0.05); background-image: linear-gradient(100deg, transparent 30%, rgba(255,255,255,0.16) 50%, transparent 70%); background-repeat: no-repeat; background-size: 60% 100%; background-position: -60% 0; animation: skeleton-shimmer 1.7s ease-in-out infinite; }
+  @keyframes skeleton-shimmer { to { background-position: 220% 0; } }
+  @media (prefers-reduced-motion: reduce) { .skeleton-block { animation: none; } }
   .skeleton-hero { height: 168px; }
-  .skeleton-nav { height: 40px; max-width: 260px; margin: 0 auto; border-radius: 999px; }
+  /* Explicit width, not max-width + stretch — margin:auto on a flex
+     child's cross axis (this is a column flex, so left/right margins are
+     the cross axis) opts that child OUT of stretch per the flex spec, so
+     it was shrinking to its own empty content + border (a literal 2px
+     sliver) instead of ever reaching 260px. A real, confirmed bug, not
+     just a look-and-feel tweak. */
+  .skeleton-nav { width: 260px; height: 40px; margin: 0 auto; border-radius: 999px; }
   .skeleton-card { height: 130px; }
   .skeleton-row { height: 46px; }
+  /* A little width variation per row (rather than every row identically
+     full-width) reads as more like real content of varying length —
+     applied to specific rows via these modifiers, not nth-child, since
+     .skeleton-week-label sits as an earlier sibling in the same group and
+     would throw off a pure position-based count. */
+  .skeleton-row--md { max-width: 82%; }
+  .skeleton-row--sm { max-width: 60%; }
   .skeleton-week-label { height: 20px; max-width: 140px; border-radius: 6px; }
   .skeleton-week-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
   .skeleton-grid { display: grid; grid-template-columns: 1fr 300px; gap: 20px; align-items: start; }
@@ -1519,13 +1539,13 @@
         <div class="skeleton-week-group">
           <div class="skeleton-block skeleton-week-label"></div>
           <div class="skeleton-block skeleton-row"></div>
-          <div class="skeleton-block skeleton-row"></div>
-          <div class="skeleton-block skeleton-row"></div>
+          <div class="skeleton-block skeleton-row skeleton-row--md"></div>
+          <div class="skeleton-block skeleton-row skeleton-row--sm"></div>
         </div>
         <div class="skeleton-week-group">
           <div class="skeleton-block skeleton-week-label"></div>
           <div class="skeleton-block skeleton-row"></div>
-          <div class="skeleton-block skeleton-row"></div>
+          <div class="skeleton-block skeleton-row skeleton-row--md"></div>
         </div>
       </div>
       <div class="skeleton-week-group">
