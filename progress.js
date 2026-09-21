@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-21-14';
+  var CLIENT_VERSION = '2026-09-21-15';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2594,11 +2594,18 @@
     for (var b2 = 0; b2 < 8; b2++) {
       var bucket = buckets[b2];
       var pct = Math.max(Math.round((bucket.total_minutes / max) * 100), bucket.total_minutes > 0 ? 6 : 0);
-      var label = hourLabel12(bucket.startHour) + '–' + hourLabel12((bucket.startHour + 3) % 24);
-      var title = label + ': ' + Math.round(bucket.total_minutes) + ' min logged';
+      var range = hourLabel12(bucket.startHour) + '–' + hourLabel12((bucket.startHour + 3) % 24);
+      var title = range + ': ' + Math.round(bucket.total_minutes) + ' min logged';
+      // Just the tick (bucket start hour), not the full "12a–3a" range —
+      // the full range crammed into an already-narrow bar column read as
+      // cluttered (direct feedback: "the hour labels still look
+      // terrible"). A single tick per bar, evenly spaced 3 hours apart,
+      // is how a normal chart axis reads; the full range is still there
+      // as the bar's own hover tooltip for anyone who wants it.
       bars += '<div class="hourly-bar-col' + (b2 === peakIdx ? ' hourly-bar-col--peak' : '') + '">' +
+        (b2 === peakIdx ? '<div class="hourly-bar-peak-spark">🔥</div>' : '') +
         '<div class="hourly-bar-track" title="' + escapeAttr(title) + '"><div class="hourly-bar-fill" style="height:' + pct + '%"></div></div>' +
-        '<div class="hourly-bar-label">' + label + '</div>' +
+        '<div class="hourly-bar-label">' + hourLabel12(bucket.startHour) + '</div>' +
         '</div>';
     }
     var peakLabel = hourLabel12(buckets[peakIdx].startHour) + '–' + hourLabel12((buckets[peakIdx].startHour + 3) % 24);
@@ -2606,7 +2613,7 @@
       '<div class="hourly-activity-title">Activity by hour</div>' +
       '<div class="hourly-activity-body">' +
       '<div class="hourly-activity-bars">' + bars + '</div>' +
-      '<p class="hourly-activity-peak">Busiest: ' + peakLabel + '</p>' +
+      '<p class="hourly-activity-peak">🔥 Busiest: ' + peakLabel + '</p>' +
       '</div>' +
       '</div>';
   }

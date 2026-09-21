@@ -1294,7 +1294,7 @@
   .hourly-activity-body { flex: 1; display: flex; flex-direction: column; justify-content: center; }
   .hourly-activity-empty { font-size: 12px; color: var(--ink-soft); line-height: 1.4; margin: 0; }
   .hourly-activity-bars { display: flex; align-items: flex-end; gap: 6px; height: 130px; }
-  .hourly-bar-col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; height: 100%; }
+  .hourly-bar-col { position: relative; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; height: 100%; }
   .hourly-bar-track { width: 100%; flex: 1; display: flex; align-items: flex-end; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; }
   /* A tight 2-stop gradient (adjacent hues, not 3 clashing ones) — the
      original pink-purple-blue gradient compressed into a short bar
@@ -1303,9 +1303,20 @@
      "the graph looks terrible". Two adjacent brand hues blend cleanly
      at any bar height instead. */
   .hourly-bar-fill { width: 100%; background: linear-gradient(180deg, #C99CFB, var(--purple)); border-radius: 3px 3px 0 0; }
-  .hourly-bar-col--peak .hourly-bar-fill { background: linear-gradient(180deg, #FF9FCB, #FF7FB7); box-shadow: 0 0 10px rgba(255,127,183,0.45); }
-  .hourly-bar-label { font-family: var(--font-nav); font-size: 9px; color: var(--ink-soft); margin-top: 6px; white-space: nowrap; }
-  .hourly-bar-col--peak .hourly-bar-label { color: var(--ink); font-weight: 700; }
+  /* The busiest bucket gets its own highlighted color, a breathing
+     glow, and a small flame above it — "catchy to the eye" per direct
+     request. The glow pulses via opacity alone, never transform/
+     box-shadow directly on this element, since it already carries both
+     box-shadow and border-radius — exactly the combination this file's
+     own known Chromium DOM-node-leak gotcha warns against animating
+     directly (see the streak-legend-toggle pulse above for the same
+     reasoning already applied once on this page). */
+  .hourly-bar-col--peak .hourly-bar-fill { background: linear-gradient(180deg, #FF9FCB, #FF7FB7); box-shadow: 0 0 12px rgba(255,127,183,0.55); animation: hourly-peak-pulse 2.2s ease-in-out infinite; }
+  @keyframes hourly-peak-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .72; } }
+  @media (prefers-reduced-motion: reduce) { .hourly-bar-col--peak .hourly-bar-fill { animation: none; } }
+  .hourly-bar-peak-spark { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 14px; line-height: 1; }
+  .hourly-bar-label { font-family: var(--font-nav); font-size: 10.5px; font-weight: 600; letter-spacing: .01em; color: var(--ink-soft); margin-top: 8px; white-space: nowrap; }
+  .hourly-bar-col--peak .hourly-bar-label { color: #FF7FB7; font-weight: 800; }
   .hourly-activity-peak { font-size: 11.5px; color: var(--ink-soft); margin: 12px 0 0; }
 </style>
 </head>
