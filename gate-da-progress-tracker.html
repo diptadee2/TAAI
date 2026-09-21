@@ -470,10 +470,27 @@
        full height (ring + dots + buttons + tip text), so vertically
        centering it left it sitting noticeably lower than the ring's own
        top edge. Top-aligning instead keeps it level with the timer. */
-    .pomo-today-row #today-leaderboard-card { flex: 0 1 300px; min-width: 0; align-self: flex-start; margin-top: 8px; padding: 16px 16px; }
+    /* 300px (its original width) truncated most real names hard —
+       "GATE DA ASPIRANT" down to "GATE DA ASPI…" — since the row's own
+       rank/arrow columns (40px/16px, sized for the full-width boards)
+       ate a fixed chunk of an already-narrow card before the name got
+       whatever was left. Direct follow-up report ("the names are not
+       visible full... increase the length of the names visible") after
+       an earlier, wrong first guess at this same complaint (more gap
+       between the live dot and the name — reverted, see CLAUDE.md).
+       Fixed two ways together: the card itself grew 300px→360px (there's
+       ~250px of slack in .pomo-today-row even at the narrowest allowed
+       viewport, 1081px — the ring+gap+card total was 750px against
+       roughly 1000px available, so this fits comfortably with room to
+       spare), and this card's own rank/arrow columns shrank from the
+       shared 40px/16px to 26px/10px — a 1-2 digit rank or small medal
+       icon doesn't need the full-width boards' allowance, and every
+       pixel clawed back here goes straight to the name column instead
+       (minmax(0,1fr) still absorbs whatever's left over). */
+    .pomo-today-row #today-leaderboard-card { flex: 0 1 360px; min-width: 0; align-self: flex-start; margin-top: 8px; padding: 16px 16px; }
     .pomo-today-row #today-leaderboard-card .leaderboard-title { font-size: 15px; }
     .pomo-today-row #today-leaderboard-card .leaderboard-subtitle { font-size: 12px; margin-bottom: 10px; }
-    .pomo-today-row #today-leaderboard-card .leaderboard-row { padding: 9px 10px; gap: 10px; font-size: 15px; }
+    .pomo-today-row #today-leaderboard-card .leaderboard-row { grid-template-columns: 26px 10px minmax(0,1fr) auto; padding: 9px 10px; gap: 10px; font-size: 15px; }
     .pomo-today-row #today-leaderboard-card .leaderboard-rank { font-size: 13px; }
     .pomo-today-row #today-leaderboard-card .leaderboard-row--top .leaderboard-rank { font-size: 17px; }
     .pomo-today-row #today-leaderboard-card .leaderboard-time { font-size: 13px; }
@@ -972,7 +989,7 @@
      together) stays static — animating transform on an element
      carrying both is the Chromium DOM-node-leak gotcha documented in
      CLAUDE.md. */
-  .live-dot-slot { display: inline-block; vertical-align: middle; width: 18px; }
+  .live-dot-slot { display: inline-block; vertical-align: middle; width: 13px; }
   .live-dot-wrap { display: inline-block; vertical-align: middle; margin-bottom: 1px; animation: live-pulse 1.6s ease-in-out infinite; }
   .live-dot { display: block; width: 7px; height: 7px; border-radius: 50%; background: #34D399; box-shadow: 0 0 5px rgba(52,211,153,0.75); }
   @keyframes live-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .5; transform: scale(0.75); } }
@@ -1138,11 +1155,11 @@
      column on every row, not just approximately near it. */
   .leaderboard-columns { display: grid; grid-template-columns: 40px 16px minmax(0,130px) minmax(92px,1fr) 76px 60px 58px; align-items: center; gap: 16px; padding: 0 14px 6px; font-family: var(--font-nav); font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
   .leaderboard-col-rank { text-align: center; min-width: 0; }
-  /* padding-left matches .live-dot-slot's fixed 18px width (see the
-     live-dot comment above) — every row's actual name text starts 18px
+  /* padding-left matches .live-dot-slot's fixed 13px width (see the
+     live-dot comment above) — every row's actual name text starts 13px
      into its column now, so the "Name" header needs the same offset or
      it reads as starting to the left of the names it's labeling. */
-  .leaderboard-col-name { min-width: 0; text-align: left; padding-left: 18px; }
+  .leaderboard-col-name { min-width: 0; text-align: left; padding-left: 13px; }
   /* position:relative so the popover (position:absolute) anchors to
      this header cell specifically, not the whole grid row.
      display:inline-flex + align-items:center — a plain inline span left
