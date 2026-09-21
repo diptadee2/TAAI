@@ -1363,7 +1363,13 @@
      old peak-bar highlight (which pointed at the historically busiest
      bucket, a different concept the busy meter below no longer uses). */
   .hourly-bar-col--now .hourly-bar-label { color: var(--ink); font-weight: 800; }
-  .hourly-bar-now-dot { display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: var(--purple); margin-left: 4px; vertical-align: middle; }
+  /* --pomo-g2 (the "signature" middle stop of the picked theme, same var
+     the Reset/Skip button icons already use for their own accent) —
+     matches the bars' own theming instead of staying a fixed purple
+     regardless of what the student picked. --purple kept as the CSS
+     fallback (Sunset's own g2 is literally var(--purple) already, so
+     this is byte-identical at the default). */
+  .hourly-bar-now-dot { display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: var(--pomo-g2, var(--purple)); margin-left: 4px; vertical-align: middle; }
   /* Reverted from a "reward" badge (glow, pink pill, animated gradient
      text, 🔥 icon) back to a plain informational line — direct
      feedback: "the busiest [line] is just information not a
