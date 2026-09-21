@@ -32,8 +32,6 @@
 // fetchPomoActive below and pomo-active.js (the write side).
 import { getSupabase, json, monthRange, todayIST, fetchLastWeekLeaders, fetchTodayLeaders } from './lib/supabase.js';
 
-const DEMO_TODAY_FLOOR = '2026-08-01'; // see streak.js — same self-expiring floor
-
 async function fetchSchedule(supabase, range) {
   const { data, error } = await supabase
     .from('schedule_tasks')
@@ -73,33 +71,26 @@ async function fetchProgress(supabase, email, range) {
   return { progress: data };
 }
 
+// Reads the cached students.current_streak column, same as streak.js —
+// this used to recompute the streak itself, from schedule_tasks +
+// task_progress, with none of streak.js's protections (see
+// streakScheduledDatesFor in lib/supabase.js): a real, live bug, found
+// 2026-09-21 investigating an unrelated Pomodoro-credit report. This
+// function was simply missed when the rest of the streak-caching
+// migration landed (streak.js, pomodoro-leaderboard.js, team-students.js
+// were all switched over — see CLAUDE.md's streak-caching write-up — this
+// one wasn't), so every fresh page load showed a streak computed the old,
+// unprotected way, while any task-toggle-triggered refresh (which hits
+// streak.js) correctly showed the cached value — a real, visible mismatch
+// confirmed directly against production: 8 of the top 20 highest-streak
+// students were seeing a number 2 lower on load than their real, correct
+// streak, exactly the shape of the Aug 29/30 schedule-reload bug that
+// streakScheduledDatesFor() was built to fix, just still live in this one
+// un-migrated code path.
 async function fetchStreak(supabase, email) {
-  const realToday = todayIST();
-  const today = realToday > DEMO_TODAY_FLOOR ? realToday : DEMO_TODAY_FLOOR;
-
-  const { data: scheduled, error: schedErr } = await supabase
-    .from('schedule_tasks')
-    .select('date')
-    .lte('date', today)
-    .order('date', { ascending: false });
-  if (schedErr) throw new Error(schedErr.message);
-  const scheduledDates = [...new Set(scheduled.map(r => r.date))];
-
-  const { data: completed, error: progErr } = await supabase
-    .from('task_progress')
-    .select('date')
-    .eq('email', email)
-    .eq('completed', true);
-  if (progErr) throw new Error(progErr.message);
-  const completedDates = new Set(completed.map(r => r.date));
-
-  let streak = 0;
-  for (const date of scheduledDates) {
-    if (completedDates.has(date)) { streak++; continue; }
-    if (date === today) continue;
-    break;
-  }
-  return { streak };
+  const { data, error } = await supabase.from('students').select('current_streak').eq('email', email).maybeSingle();
+  if (error) throw new Error(error.message);
+  return { streak: data ? data.current_streak || 0 : 0 };
 }
 
 async function fetchSubjectProgress(supabase, email) {
