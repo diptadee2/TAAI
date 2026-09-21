@@ -1217,7 +1217,16 @@
   .streak-legend-range { font-size: 10.5px; font-weight: 600; color: var(--ink-soft); }
   .leaderboard-col-status { text-align: center; min-width: 0; }
   .leaderboard-col-timer { text-align: center; min-width: 0; }
-  .leaderboard-col-time { text-align: right; min-width: 0; }
+  /* Centered, not right-aligned to match the numbers below it — direct
+     request ("the minutes column name is not centrally aligned witht
+     it's contents"), confirmed via follow-up as wanting the HEADER
+     centered in its own column like Rank/Status/Timer, a deliberate
+     choice over matching the right-aligned numeric content — measured
+     precisely beforehand and the two were already byte-identical
+     right-aligned (this wasn't a rendering bug, it's a requested style
+     change). .leaderboard-time (the actual "540m" values) stays
+     right-aligned, untouched. */
+  .leaderboard-col-time { text-align: center; min-width: 0; }
   .leaderboard-gap { text-align: center; color: var(--ink-soft); font-size: 12px; letter-spacing: .2em; padding: 2px 0; }
   /* "NEW" badge — deliberately more aggressive than .leaderboard-you above
      (shake + an expanding ping ring, both continuous until dismissed),
