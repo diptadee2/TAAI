@@ -267,14 +267,18 @@
      established tradeoff as this file's other small hand-duplicated
      pairs, since generating it via JS wouldn't help the pre-JS paint. */
   .skeleton-wrap { display: flex; flex-direction: column; gap: 14px; }
-  /* Base fill is a visible step up from --card/--bg-soft (which sit only
-     ~3 hex units apart — fine for a real bordered card, but meant these
-     skeleton blocks nearly vanished against the page background before
-     this pass), and the shimmer is a narrow, bright band swept directionally
-     across via background-position rather than a symmetric 3-stop gradient
-     sized to the whole block — reads as a clear, deliberate sweep instead
-     of a faint wobble, including in a single still frame. */
-  .skeleton-block { border-radius: var(--radius-md); border: 1px solid var(--line); background-color: rgba(255,255,255,0.05); background-image: linear-gradient(100deg, transparent 30%, rgba(255,255,255,0.16) 50%, transparent 70%); background-repeat: no-repeat; background-size: 60% 100%; background-position: -60% 0; animation: skeleton-shimmer 1.7s ease-in-out infinite; }
+  /* A translucent fill + a hairline border on dark is exactly the
+     frosted-glass look this page's card system was deliberately converted
+     AWAY from (see the glassmorphic-to-minimalist entry in CLAUDE.md) —
+     the previous pass fixed contrast/visibility but kept that same
+     "glass pane" recipe (border + rgba overlay), which read as glassy and
+     generic rather than as this site's own. Rebuilt as a genuinely solid,
+     opaque block (no border, no transparency in the resting fill) — flat,
+     matching the rest of the page's minimalist idiom — with the shimmer
+     itself tinted the site's own brand purple instead of plain white, so
+     it reads as branded texture rather than a generic loading-library
+     effect. */
+  .skeleton-block { border-radius: var(--radius-md); background-color: #2a2a33; background-image: linear-gradient(100deg, transparent 25%, rgba(167,139,250,0.32) 50%, transparent 75%); background-repeat: no-repeat; background-size: 55% 100%; background-position: -55% 0; animation: skeleton-shimmer 1.7s ease-in-out infinite; }
   @keyframes skeleton-shimmer { to { background-position: 220% 0; } }
   @media (prefers-reduced-motion: reduce) { .skeleton-block { animation: none; } }
   .skeleton-hero { height: 168px; }
