@@ -203,7 +203,7 @@ export async function handler(event) {
     fetchHourlyActivity(supabase).catch(() => ({ hours: [] })),
     // Just the initial value — live-count.js is polled separately for
     // updates after this (see startLiveCountPoll in progress.js).
-    fetchLiveCount(supabase).catch(() => ({ count: 0 })),
+    fetchLiveCount(supabase).catch(() => ({ count: 0, maxCount: 0 })),
   ]);
 
   return json(200, { schedule, lastWeekLeaders, todayLeaders, progress, streak, subjectProgress, pomoSettings, pomoSessions, pomoActive, hourlyActivity, liveCount });

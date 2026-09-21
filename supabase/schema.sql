@@ -241,6 +241,47 @@ $$ LANGUAGE sql;
 
 GRANT EXECUTE ON FUNCTION increment_hourly_activity TO service_role;
 
+-- The single highest concurrent-live-student count ever observed —
+-- powers the Today card's busy meter (progress.js's hourlyBusyMeterHtml)
+-- self-calibrating "Chill to Intense" scale, replacing an earlier
+-- hardcoded guess at what counts as "fully Intense". One row, always —
+-- same "tiny, fixed-size, never needs cleanup" shape as
+-- pomo_hourly_activity above, not a growing history of every count ever
+-- seen. Updated from whichever request happens to observe a new high
+-- (see update_live_count_max, called from fetchLiveCount every time
+-- anyone's poll/page-load checks the live count) — this can miss a true
+-- peak that happens to land between two requests, an accepted
+-- imprecision given no continuous monitoring exists, not a correctness
+-- bug this table is meant to solve.
+CREATE TABLE IF NOT EXISTS live_count_stats (
+  id            INTEGER PRIMARY KEY DEFAULT 1,
+  max_count     INTEGER NOT NULL DEFAULT 0,
+  max_seen_at   TIMESTAMPTZ,
+  updated_at    TIMESTAMPTZ DEFAULT now(),
+  CONSTRAINT live_count_stats_single_row CHECK (id = 1)
+);
+GRANT SELECT, INSERT, UPDATE, DELETE ON live_count_stats TO service_role;
+
+-- Atomic "record a new high if this one actually is one" — GREATEST()
+-- inside the UPDATE means concurrent requests observing different counts
+-- around the same moment can't race each other into recording a lower
+-- value over a higher one (the same row-level-locking-during-UPDATE
+-- reasoning as increment_pomodoro_stats/increment_hourly_activity
+-- above), and max_seen_at only moves when a genuine new high lands, not
+-- on every call.
+CREATE OR REPLACE FUNCTION update_live_count_max(p_count INTEGER)
+RETURNS TABLE(max_count INTEGER) AS $$
+  INSERT INTO live_count_stats (id, max_count, max_seen_at, updated_at)
+  VALUES (1, p_count, now(), now())
+  ON CONFLICT (id) DO UPDATE SET
+    max_count = GREATEST(live_count_stats.max_count, p_count),
+    max_seen_at = CASE WHEN p_count > live_count_stats.max_count THEN now() ELSE live_count_stats.max_seen_at END,
+    updated_at = now()
+  RETURNING max_count;
+$$ LANGUAGE sql;
+
+GRANT EXECUTE ON FUNCTION update_live_count_max TO service_role;
+
 -- Discord announcements the /team page can create/edit — any webhook
 -- (any channel), fully custom text or one of a few built-in dynamic
 -- sources (today's top student, last week's top 5, monthly consistency —

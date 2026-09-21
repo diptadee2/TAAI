@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-21-24';
+  var CLIENT_VERSION = '2026-09-21-25';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -546,6 +546,7 @@
     todayViewerRank: null, // { rank, total_minutes } — set only when the viewer isn't in today's top 10
     hourlyActivity: [], // [{ hour, session_count, total_minutes }] x24 — batch-wide, shown beside the Today checklist
     liveCount: 0, // students in a live session right now — polled independently, see startLiveCountPoll
+    liveCountMax: 0, // highest concurrent live count ever observed — server-tracked, see live_count_stats in schema.sql
     streak: null,
     subjectProgress: [], // [{ subject, done, total }] — global, independent of viewed month
     expanded: new Set(), // dates whose day-card is open, non-native accordion
@@ -1144,6 +1145,7 @@
         state.todayViewerRank = data.todayLeaders.viewerRank || null;
         state.hourlyActivity = (data.hourlyActivity && data.hourlyActivity.hours) || [];
         state.liveCount = (data.liveCount && data.liveCount.count) || 0;
+        state.liveCountMax = (data.liveCount && data.liveCount.maxCount) || 0;
         var progressRows = state.student ? (data.progress.progress || []) : [];
         state.streak = state.student ? data.streak.streak : null;
         state.subjectProgress = state.student ? (data.subjectProgress.subjects || []) : [];
@@ -2665,21 +2667,21 @@
   // own). refreshLiveCount patches the existing marker element directly
   // rather than regenerating this HTML on every poll tick, see
   // animateHourlyBusyMeter's own comment for why.
-  // How many concurrent live students counts as "fully Intense" (the
-  // right end of the track) — a starting, tunable guess (this project
-  // has no existing baseline for typical concurrent live count to
-  // calibrate against yet), not a measured constant. Raised from an
-  // initial guess of 10 to 20 after a direct "why is it showing intense
-  // right now" question — production genuinely runs 12-14 concurrent
-  // live students during normal evening hours, well past that first
-  // guess, so the gauge was pegged at the max essentially all the time
-  // instead of only during a real, unusually busy moment. Still just a
-  // guess, now a more generous one — revisit if it turns out to need
-  // tuning again once there's a real sense of what a genuinely quiet vs.
-  // packed moment looks like over time.
-  var LIVE_COUNT_INTENSITY_CAP = 20;
+  // What counts as "fully Intense" (the right end of the track) is now
+  // self-calibrating, not a hardcoded guess — direct request ("can the
+  // max be the max of all time encountered, which is updated
+  // dynamically and the min be of 0"), after a hand-picked cap (first
+  // 10, then 20) kept needing a person to notice it was miscalibrated
+  // and manually raise it. state.liveCountMax is the real all-time high
+  // (see live_count_stats/update_live_count_max in schema.sql,
+  // maintained server-side by fetchLiveCount every time anyone's
+  // request checks the live count) — min is always 0, max is whatever
+  // the highest concurrent count anyone has ever actually triggered, so
+  // the scale adjusts itself as the batch's real usage patterns emerge
+  // instead of drifting stale against a fixed number.
   function hourlyBusyMeterHtml() {
     var liveCount = state.liveCount || 0;
+    var liveCountMax = Math.max(state.liveCountMax || 0, liveCount, 1);
     // A single real hour ("3p–4p"), not the bars' own 3-hour bucket
     // range — direct request ("use hourly intervals to calculate not
     // three hourly"). The bars still group by 3 hours for chart
@@ -2689,7 +2691,7 @@
     // should describe "right now".
     var nowHour = new Date().getHours();
     var nowRange = hourLabel12(nowHour) + '–' + hourLabel12((nowHour + 1) % 24);
-    var meterPct = Math.round(Math.min(100, (liveCount / LIVE_COUNT_INTENSITY_CAP) * 100));
+    var meterPct = Math.round(Math.min(100, (liveCount / liveCountMax) * 100));
     // No live-count/hour-range text at all — direct request ("don't show
     // the no of live users and the hourly interval, just busy meter and
     // the meter"). That data still drives meterPct and the tooltip below
@@ -3175,7 +3177,9 @@
     api('/live-count')
       .then(function (r) {
         state.liveCount = (r && r.count) || 0;
-        var pct = Math.round(Math.min(100, (state.liveCount / LIVE_COUNT_INTENSITY_CAP) * 100));
+        state.liveCountMax = (r && r.maxCount) || 0;
+        var liveCountMax = Math.max(state.liveCountMax, state.liveCount, 1);
+        var pct = Math.round(Math.min(100, (state.liveCount / liveCountMax) * 100));
         var el = document.querySelector('.hourly-busy-meter-marker');
         // Patches the SAME marker element in place — this is what makes
         // the update glide smoothly via CSS transition from wherever it

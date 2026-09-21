@@ -50,7 +50,7 @@ export async function fetchAllRows(buildQuery, pageSize = 1000) {
 // (old JS silently sending a request shape the new server no longer
 // accepts) doesn't stay stuck indefinitely waiting for someone to notice
 // and manually refresh.
-export const CLIENT_VERSION = '2026-09-21-24';
+export const CLIENT_VERSION = '2026-09-21-25';
 
 export function json(statusCode, body) {
   return {
@@ -372,6 +372,15 @@ export async function fetchLiveStatusByEmail(supabase, emails) {
 // completed sessions), this is a genuinely live number that changes as
 // students start/finish sessions, so it's polled independently (see
 // live-count.js) rather than only fetched once at page load.
+//
+// Also records/returns the all-time high (see live_count_stats,
+// update_live_count_max in schema.sql) — the meter's scale used to be a
+// hardcoded guess at what counts as "fully Intense" (first 10, then
+// raised to 20 after production consistently blew past it), which
+// needed a person to notice it was miscalibrated and manually bump a
+// constant. Self-calibrating instead: min is always 0, max is whatever
+// the highest concurrent count anyone's request has ever actually
+// observed, updated automatically the moment a new high happens.
 export async function fetchLiveCount(supabase) {
   const { count, error } = await supabase
     .from('pomo_active_session')
@@ -379,7 +388,14 @@ export async function fetchLiveCount(supabase) {
     .eq('running', true)
     .gt('phase_end_at', Date.now());
   if (error) throw new Error(error.message);
-  return { count: count || 0 };
+  const liveCount = count || 0;
+
+  const { data: maxData, error: maxError } = await supabase
+    .rpc('update_live_count_max', { p_count: liveCount })
+    .maybeSingle();
+  if (maxError) throw new Error(maxError.message);
+
+  return { count: liveCount, maxCount: maxData ? maxData.max_count : liveCount };
 }
 
 // Top 10 by focus minutes logged on a given IST date (todayIST() by
