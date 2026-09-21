@@ -992,30 +992,16 @@
      always rendered whether or not the row is actually live — leaving
      it out entirely for non-live rows meant every name's text started
      at a different x depending on the previous row's live state, same
-     misalignment already fixed once for the streak balls.
-     Upgraded from a plain scale+opacity breathing dot to a real "sonar
-     ping" — a solid dot with an expanding, fading ring, the same visual
-     language a live-map "you are here" marker or a recording indicator
-     uses, reading as distinctly more "this is happening right now" than
-     a dot that merely dims and shrinks ("can the live pulsing dots be
-     better?"). .live-dot itself (the glow, via box-shadow+border-radius
-     together) stays completely static — animating transform/box-shadow
-     on an element carrying both is the Chromium DOM-node-leak gotcha
-     documented in CLAUDE.md. .live-dot-ripple is a second, separate
-     circle with NO box-shadow of its own (only border-radius), so
-     animating its transform is safe. Sized to fit inside the 13px slot
-     rather than a more dramatic full-size ping deliberately — this dot
-     sits inside .leaderboard-name, which needs overflow:hidden for the
-     name's own text-overflow:ellipsis, so anything expanding past the
-     slot's own bounds would get visibly clipped; text-align:center on
-     the slot centers the dot within it (was flush-left before) so the
-     ripple has equal room to grow on both sides. */
-  .live-dot-slot { display: inline-block; vertical-align: middle; width: 13px; text-align: center; }
-  .live-dot-wrap { display: inline-block; vertical-align: middle; margin-bottom: 1px; position: relative; width: 7px; height: 7px; }
-  .live-dot { display: block; width: 7px; height: 7px; border-radius: 50%; background: #34D399; box-shadow: 0 0 5px rgba(52,211,153,0.75); position: relative; z-index: 1; }
-  .live-dot-ripple { position: absolute; top: 0; left: 0; width: 7px; height: 7px; border-radius: 50%; background: #34D399; animation: live-ripple 1.8s cubic-bezier(0,.5,.5,1) infinite; pointer-events: none; }
-  @keyframes live-ripple { 0% { transform: scale(1); opacity: .55; } 100% { transform: scale(1.85); opacity: 0; } }
-  @media (prefers-reduced-motion: reduce) { .live-dot-ripple { animation: none; opacity: 0; } }
+     misalignment already fixed once for the streak balls. .live-dot-
+     wrap (no box-shadow/border-radius of its own) is what's actually
+     animated; .live-dot (the glow, via box-shadow+border-radius
+     together) stays static — animating transform on an element
+     carrying both is the Chromium DOM-node-leak gotcha documented in
+     CLAUDE.md. */
+  .live-dot-slot { display: inline-block; vertical-align: middle; width: 13px; }
+  .live-dot-wrap { display: inline-block; vertical-align: middle; margin-bottom: 1px; animation: live-pulse 1.6s ease-in-out infinite; }
+  .live-dot { display: block; width: 7px; height: 7px; border-radius: 50%; background: #34D399; box-shadow: 0 0 5px rgba(52,211,153,0.75); }
+  @keyframes live-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .5; transform: scale(0.75); } }
   .leaderboard-you { display: inline-block; font-family: var(--font-nav); font-size: 9.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--purple); background: rgba(139,92,246,0.16); border-radius: 999px; padding: 1px 7px; margin-left: 4px; vertical-align: middle; }
   /* Streak balls, centered within their grid column (minmax(92px,1fr)
      above — floor sized for the worst case: 5 balls + a "+NNN" overflow
