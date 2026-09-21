@@ -19,6 +19,29 @@
 // still accepted/logged but likewise not what's credited — see below.
 import { getSupabase, json, weekStartIST, todayIST } from './lib/supabase.js';
 
+// See pomodoro_credit_failures in supabase/schema.sql — a rejected/errored
+// completion used to leave zero trace anywhere once the response was
+// sent, which made a real report ("I completed a 2-hour session, it
+// never showed up") impossible to actually diagnose after the fact, only
+// guess at. Best-effort and never allowed to change the real response —
+// wrapped in its own try/catch so a logging failure can't turn an
+// already-decided rejection into a 500, or (worse) silently swallow the
+// real error the caller needs to see.
+async function logCreditFailure(supabase, { email, reason, claimedPhaseEndAt, session, elapsedMs, claimedMs }) {
+  try {
+    await supabase.from('pomodoro_credit_failures').insert({
+      email,
+      reason,
+      claimed_phase_end_at: Number.isFinite(claimedPhaseEndAt) ? claimedPhaseEndAt : null,
+      session_snapshot: session || null,
+      elapsed_ms: elapsedMs != null ? elapsedMs : null,
+      claimed_ms: claimedMs != null ? claimedMs : null,
+    });
+  } catch (e) {
+    console.error('pomodoro-complete.js: failed to log credit failure for', email, e);
+  }
+}
+
 // Matches the Focus settings panel's own max (progress.js's
 // POMO_WORK_MAX_MINUTES, pomo-settings.js's own POST clamp) — a single
 // real session can never legitimately exceed this, so cap credited
@@ -73,25 +96,43 @@ export async function handler(event) {
     .maybeSingle();
   if (sessionError) return json(500, { error: sessionError.message });
 
-  if (
-    !session ||
-    session.mode !== 'work' ||
-    session.phase_end_at !== phaseEndAt ||
-    !session.phase_started_at ||
-    !Number.isFinite(session.total_seconds) ||
-    session.total_seconds <= 0
-  ) {
+  // Each check logged with its own specific reason (see
+  // pomodoro_credit_failures in schema.sql) rather than one combined OR —
+  // "could not verify this session" was the only trace of a rejection
+  // before, with nothing recorded about WHICH condition actually failed.
+  if (!session) {
+    await logCreditFailure(supabase, { email, reason: 'no_active_session', claimedPhaseEndAt: phaseEndAt });
+    return json(400, { error: 'could not verify this session' });
+  }
+  if (session.mode !== 'work') {
+    await logCreditFailure(supabase, { email, reason: 'wrong_mode', claimedPhaseEndAt: phaseEndAt, session });
+    return json(400, { error: 'could not verify this session' });
+  }
+  if (session.phase_end_at !== phaseEndAt) {
+    await logCreditFailure(supabase, { email, reason: 'phase_end_mismatch', claimedPhaseEndAt: phaseEndAt, session });
+    return json(400, { error: 'could not verify this session' });
+  }
+  if (!session.phase_started_at) {
+    await logCreditFailure(supabase, { email, reason: 'no_phase_started_at', claimedPhaseEndAt: phaseEndAt, session });
+    return json(400, { error: 'could not verify this session' });
+  }
+  if (!Number.isFinite(session.total_seconds) || session.total_seconds <= 0) {
+    await logCreditFailure(supabase, { email, reason: 'invalid_total_seconds', claimedPhaseEndAt: phaseEndAt, session });
     return json(400, { error: 'could not verify this session' });
   }
 
   const claimedMs = session.total_seconds * 1000;
   const elapsedMs = Date.now() - session.phase_started_at;
   if (elapsedMs < claimedMs - GRACE_MS) {
+    await logCreditFailure(supabase, { email, reason: 'insufficient_elapsed', claimedPhaseEndAt: phaseEndAt, session, elapsedMs, claimedMs });
     return json(400, { error: 'not enough time has elapsed for this session' });
   }
 
   const minutes = Math.min(MAX_MINUTES_PER_SESSION, Math.round(session.total_seconds / 60));
-  if (minutes <= 0) return json(400, { error: 'invalid session duration' });
+  if (minutes <= 0) {
+    await logCreditFailure(supabase, { email, reason: 'invalid_minutes', claimedPhaseEndAt: phaseEndAt, session, elapsedMs, claimedMs });
+    return json(400, { error: 'invalid session duration' });
+  }
 
   // Atomic claim-once (see credit_pomodoro_phase in schema.sql) — a second
   // completion call for the same phase (two tabs mirroring one real
@@ -101,7 +142,10 @@ export async function handler(event) {
   const { data: claim, error: claimError } = await supabase
     .rpc('credit_pomodoro_phase', { p_email: email, p_phase_end_at: phaseEndAt })
     .maybeSingle();
-  if (claimError) return json(500, { error: claimError.message });
+  if (claimError) {
+    await logCreditFailure(supabase, { email, reason: 'claim_rpc_error: ' + claimError.message, claimedPhaseEndAt: phaseEndAt, session });
+    return json(500, { error: claimError.message });
+  }
   if (!claim) return json(200, { ok: true, alreadyCredited: true });
 
   // Atomic UPSERTs (see increment_pomodoro_stats/increment_pomo_daily_sessions
@@ -111,12 +155,18 @@ export async function handler(event) {
   const { data: weekData, error: weekError } = await supabase
     .rpc('increment_pomodoro_stats', { p_email: email, p_week_start: weekStartIST(), p_minutes: minutes })
     .single();
-  if (weekError) return json(500, { error: weekError.message });
+  if (weekError) {
+    await logCreditFailure(supabase, { email, reason: 'week_increment_error: ' + weekError.message, claimedPhaseEndAt: phaseEndAt, session });
+    return json(500, { error: weekError.message });
+  }
 
   const { data: dayData, error: dayError } = await supabase
     .rpc('increment_pomo_daily_sessions', { p_email: email, p_date: todayIST(), p_minutes: minutes })
     .single();
-  if (dayError) return json(500, { error: dayError.message });
+  if (dayError) {
+    await logCreditFailure(supabase, { email, reason: 'day_increment_error: ' + dayError.message, claimedPhaseEndAt: phaseEndAt, session });
+    return json(500, { error: dayError.message });
+  }
 
   return json(200, {
     ok: true,

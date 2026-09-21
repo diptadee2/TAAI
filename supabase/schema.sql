@@ -372,3 +372,26 @@ RETURNS void AS $$
 $$ LANGUAGE sql;
 
 GRANT EXECUTE ON FUNCTION update_student_streaks TO service_role;
+
+-- A record of every real completion attempt pomodoro-complete.js rejects
+-- (or errors on), added after a real, unresolved report (2026-09-21): a
+-- student's genuinely-completed 2-hour Focus session never showed up in
+-- pomo_daily_sessions, and the investigation had nothing to go on — the
+-- 400/500 responses this endpoint returns leave no trace anywhere once
+-- the response is sent, so there was no way to tell WHICH check failed or
+-- why, only that it had. This table exists so the next occurrence leaves
+-- an actual record instead of another after-the-fact guessing session.
+-- session_snapshot holds whatever pomo_active_session looked like at
+-- rejection time (null if no row existed at all for that email).
+CREATE TABLE IF NOT EXISTS pomodoro_credit_failures (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT NOT NULL,
+  reason TEXT NOT NULL,
+  claimed_phase_end_at BIGINT,
+  session_snapshot JSONB,
+  elapsed_ms BIGINT,
+  claimed_ms BIGINT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_pomodoro_credit_failures_email ON pomodoro_credit_failures(email, created_at DESC);
+GRANT SELECT, INSERT, UPDATE, DELETE ON pomodoro_credit_failures TO service_role;
