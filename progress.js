@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-21-6';
+  var CLIENT_VERSION = '2026-09-21-7';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2689,7 +2689,7 @@
   // streak balls (see streakBallsHtml above). A fixed-width slot keeps
   // every name starting at the same offset regardless.
   function liveDotHtml(isLive) {
-    var dot = isLive ? '<span class="live-dot-wrap" title="In a focus session right now"><span class="live-dot"></span></span>' : '';
+    var dot = isLive ? '<span class="live-dot-wrap" title="In a focus session right now"><span class="live-dot-ripple"></span><span class="live-dot"></span></span>' : '';
     return '<span class="live-dot-slot">' + dot + '</span>';
   }
 
