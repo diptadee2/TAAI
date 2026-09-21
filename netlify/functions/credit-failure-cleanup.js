@@ -1,5 +1,5 @@
 // Scheduled function (see netlify.toml) — runs once a day and deletes
-// pomodoro_credit_failures rows older than 7 days.
+// pomodoro_credit_failures rows older than 8 days.
 //
 // Unlike every other table this project writes to on a regular cadence
 // (pomo_daily_sessions/pomodoro_stats are naturally bounded by active
@@ -15,7 +15,7 @@
 // to be kept long-term.
 import { getSupabase, json } from './lib/supabase.js';
 
-const RETENTION_DAYS = 7;
+const RETENTION_DAYS = 8;
 
 export async function handler() {
   const supabase = getSupabase();

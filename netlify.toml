@@ -51,7 +51,7 @@
   schedule = "45 18 * * *"
 
 # Runs once a day at 19:00 UTC (00:30 IST) and deletes
-# pomodoro_credit_failures rows older than 7 days — see
+# pomodoro_credit_failures rows older than 8 days — see
 # credit-failure-cleanup.js's own comment for why this table needs a cap
 # unlike everything else this project writes to on a schedule.
 [functions."credit-failure-cleanup"]
