@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-21-33';
+  var CLIENT_VERSION = '2026-09-21-34';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -716,6 +716,7 @@
     // so this correctly stays off when the block above just restored Focus
     // Mode, and correctly starts for the normal fresh-load-onto-checklist case.
     startLastWeekPoll();
+    setupAllTimeTooltip();
   }
 
   // ── Scroll progress + back-to-top — same pattern as blog.js ──────────
@@ -1497,18 +1498,89 @@
   }
 
   // Hover-a-name tooltip showing all-time total minutes across the whole
-  // program (see all_time_minutes in schema.sql) — a plain title attribute
-  // rather than a custom popover, since the browser's native tooltip needs
-  // zero extra markup/JS and this is genuinely just supplementary info, not
-  // something that needs its own styled UI. Reads a value that's already
-  // present on every leaderboard row/viewer-rank object from the initial
-  // fetch (pomodoro-leaderboard.js / fetchLastWeekLeaders / fetchTodayLeaders
-  // all now select it alongside display_name), so this costs zero extra
-  // requests — the explicit reason a cached students.all_time_minutes
-  // column was used instead of a live per-hover SUM query.
+  // program (see all_time_minutes in schema.sql). Reads a value that's
+  // already present on every leaderboard row/viewer-rank object from the
+  // initial fetch (pomodoro-leaderboard.js / fetchLastWeekLeaders /
+  // fetchTodayLeaders all now select it alongside display_name), so this
+  // costs zero extra requests — the explicit reason a cached
+  // students.all_time_minutes column was used instead of a live per-hover
+  // SUM query. Emits a `data-alltime` attribute, NOT the native `title`
+  // attribute — a first pass used `title` (zero extra markup/JS/styling
+  // needed), but a real user report ("still nothing on hover") after
+  // repeated attempts made clear the browser's native tooltip is too
+  // unreliable/invisible in practice (inconsistent dwell timing across
+  // browsers/OSes, easy to miss, and a screenshot can't even confirm
+  // whether it fired). setupAllTimeTooltip() (below) renders a real,
+  // deliberately-styled tooltip off this data attribute instead, so it's
+  // guaranteed visible rather than dependent on the browser's own
+  // native-tooltip behavior.
   function allTimeTitleAttr(minutes) {
     if (!Number.isFinite(minutes)) return '';
-    return ' title="' + (minutes / 60).toFixed(1) + 'h all-time"';
+    return ' data-alltime="' + (minutes / 60).toFixed(1) + 'h all-time"';
+  }
+
+  // A single shared tooltip element (lazily created once, reused for
+  // every leaderboard name) rather than one per row — cheap, and there's
+  // only ever one hover at a time anyway. Positioned via `position: fixed`
+  // off the hovered element's own real bounding rect, appended directly
+  // to <body> — deliberately NOT nested inside the leaderboard card's own
+  // DOM, since at least one card this needs to work inside
+  // (.streak-champions-card, wrapping #champions-card's rows) has
+  // `overflow: hidden` on an ancestor, which would silently clip an
+  // absolutely-positioned-within-the-card tooltip for rows near either
+  // edge. `position: fixed` + appending to <body> sidesteps that
+  // entirely, regardless of which of the three leaderboard cards a name
+  // is hovered in.
+  var allTimeTooltipEl = null;
+  function getAllTimeTooltipEl() {
+    if (!allTimeTooltipEl) {
+      allTimeTooltipEl = document.createElement('div');
+      allTimeTooltipEl.className = 'alltime-tooltip';
+      document.body.appendChild(allTimeTooltipEl);
+    }
+    return allTimeTooltipEl;
+  }
+  function showAllTimeTooltip(target) {
+    var text = target.getAttribute('data-alltime');
+    if (!text) return;
+    var el = getAllTimeTooltipEl();
+    el.textContent = text;
+    el.classList.add('visible');
+    var rect = target.getBoundingClientRect();
+    // Measured AFTER content + .visible are set, so offsetWidth/Height
+    // reflect this tooltip's real rendered size, not a stale/zero one
+    // from before it had content.
+    var tipW = el.offsetWidth;
+    var tipH = el.offsetHeight;
+    var left = rect.left;
+    if (left + tipW > window.innerWidth - 8) left = window.innerWidth - tipW - 8;
+    if (left < 8) left = 8;
+    var top = rect.top - tipH - 8;
+    if (top < 8) top = rect.bottom + 8; // flip below when there's no room above
+    el.style.left = left + 'px';
+    el.style.top = top + 'px';
+  }
+  function hideAllTimeTooltip() {
+    if (allTimeTooltipEl) allTimeTooltipEl.classList.remove('visible');
+  }
+  // Delegated on document, bound exactly once (called from init()) —
+  // NOT bound per-row, since leaderboard rows are wholesale regenerated
+  // on every poll tick (refreshLeaderboard/refreshLastWeekChampions/
+  // applyLiveCountUpdate's callers) across three separate boards, which
+  // would mean constantly re-binding (and leaking) per-element listeners
+  // otherwise. mouseover/mouseout (not mouseenter/mouseleave, which don't
+  // bubble and so can't be delegated this way) with a relatedTarget check
+  // so a hover moving between the name text and its own child (the live
+  // dot) doesn't flicker the tooltip hide/show.
+  function setupAllTimeTooltip() {
+    document.addEventListener('mouseover', function (e) {
+      var target = e.target.closest && e.target.closest('.leaderboard-name[data-alltime]');
+      if (target) showAllTimeTooltip(target);
+    });
+    document.addEventListener('mouseout', function (e) {
+      var target = e.target.closest && e.target.closest('.leaderboard-name[data-alltime]');
+      if (target && !target.contains(e.relatedTarget)) hideAllTimeTooltip();
+    });
   }
 
   // Split from renderTodayLeaders (below) so refreshLeaderboard can patch

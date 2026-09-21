@@ -986,6 +986,18 @@
      cliff", worth calling out more sharply than an ordinary drop. */
   .rank-down-big { color: var(--red); }
   .leaderboard-name { min-width: 0; font-weight: 600; color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .leaderboard-name[data-alltime] { cursor: default; }
+  /* Custom all-time-minutes hover tooltip (progress.js's setupAllTimeTooltip)
+     — one shared element, appended to <body> and positioned `fixed` via JS
+     off the hovered name's own rect, not a CSS ::after on .leaderboard-name
+     itself: that element already has `overflow: hidden` for its own
+     ellipsis-truncation (above), which would clip a pseudo-element tooltip
+     outright, and `position: fixed` off <body> also sidesteps
+     .streak-champions-card's own `overflow: hidden` clipping #champions-card's
+     rows near either edge. */
+  .alltime-tooltip { position: fixed; z-index: 200; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 6px 11px; font-size: 12px; font-weight: 600; color: var(--ink); white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,0.45); opacity: 0; pointer-events: none; transform: translateY(4px); transition: opacity .15s ease, transform .15s ease; }
+  .alltime-tooltip.visible { opacity: 1; transform: translateY(0); }
+  @media (prefers-reduced-motion: reduce) { .alltime-tooltip { transition: opacity .15s ease; transform: none; } }
   /* "Live now" indicator — a small pulsing green dot before the name of
      anyone currently mid-focus-session (see is_live in pomodoro-
      leaderboard.js). .live-dot-slot is a fixed-width reserved space,
