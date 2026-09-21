@@ -892,8 +892,17 @@
      Okay button, see bindCalendarEvents) would silently do nothing and
      both the gate and the clock underneath it would show at once —
      caught from a real screenshot after clicking Okay, not assumed. */
-  .pomo-malpractice-gate { margin-bottom: 18px; padding: 24px 22px; border-radius: 16px; text-align: center; min-height: 420px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+  .pomo-malpractice-gate { margin-bottom: 18px; padding: 24px 22px; border-radius: 16px; text-align: center; min-height: 420px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; opacity: 1; transform: scale(1); transition: opacity .25s ease, transform .25s ease; }
   .pomo-malpractice-gate[hidden] { display: none; }
+  /* Dismiss-on-Okay animation (see the click handler in bindCalendarEvents,
+     which adds this class, waits for it to finish, then sets `hidden`) —
+     safe to animate `transform` directly on this element since it has no
+     `box-shadow` (only `border-radius`), so this doesn't trip the
+     Chromium DOM-node-leak gotcha that combination causes elsewhere on
+     this page. Respects prefers-reduced-motion (an instant, un-animated
+     dismiss rather than the fade+scale). */
+  .pomo-malpractice-gate--dismissing { opacity: 0; transform: scale(0.95); }
+  @media (prefers-reduced-motion: reduce) { .pomo-malpractice-gate { transition: none; } }
   .pomo-malpractice-gate .pomo-gate-title { font-size: 16px; margin-bottom: 0; }
   .pomo-malpractice-gate .pomo-gate-body { max-width: 300px; margin: 0; }
   .pomo-malpractice-gate #pomo-malpractice-okay { margin-top: 8px; width: auto; padding-left: 32px; padding-right: 32px; }

@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-22-2';
+  var CLIENT_VERSION = '2026-09-22-3';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2714,7 +2714,7 @@
       var until = new Date(state.malpractice.frozenUntil).toLocaleString();
       html += '<p class="pomo-gate-body">Repeated irregular session timing was detected on this account. Focus sessions are frozen until <strong>' + escapeHtml(until) + '</strong>.</p>';
     } else {
-      html += '<p class="pomo-gate-body">Irregular session timing was noticed on this account. Continued attempts may result in Focus sessions being temporarily frozen.</p>' +
+      html += '<p class="pomo-gate-body">Irregular session timing was noticed on this account. Continued attempts may result in Focus sessions being frozen.</p>' +
         '<button class="pomo-btn pomo-btn-primary" id="pomo-malpractice-okay" type="button">Okay</button>';
     }
     html += '</div>';
@@ -3983,13 +3983,29 @@
     });
 
     // Plain DOM toggle, not a re-render — see renderPomoMalpracticeGateHtml's
-    // own comment for why both blocks are always present in the DOM.
+    // own comment for why both blocks are always present in the DOM. The
+    // gate fades+scales out first (.pomo-malpractice-gate--dismissing,
+    // matching its own CSS transition) before actually hiding it and
+    // revealing the clock — a plain instant swap read as too abrupt for
+    // what's otherwise a deliberate "I acknowledge this" action. Same
+    // reduced-motion check already used elsewhere (see animateExamCountdown)
+    // rather than relying on a transitionend listener, which would never
+    // fire at all once the CSS's own `transition: none` (under reduced
+    // motion) removes the animation for it to listen for.
     var pomoMalpracticeOkay = document.getElementById('pomo-malpractice-okay');
     if (pomoMalpracticeOkay) pomoMalpracticeOkay.addEventListener('click', function () {
       var gate = document.getElementById('pomo-malpractice-gate');
       var clock = document.querySelector('.pomo-clock-wrap');
-      if (gate) gate.hidden = true;
-      if (clock) clock.hidden = false;
+      if (!gate) return;
+      var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      function reveal() {
+        gate.hidden = true;
+        gate.classList.remove('pomo-malpractice-gate--dismissing');
+        if (clock) clock.hidden = false;
+      }
+      if (reduceMotion) { reveal(); return; }
+      gate.classList.add('pomo-malpractice-gate--dismissing');
+      setTimeout(reveal, 250);
     });
 
     var prev = document.getElementById('prev-month');
