@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-21-27';
+  var CLIENT_VERSION = '2026-09-21-28';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -754,6 +754,34 @@
     Array.prototype.forEach.call(document.querySelectorAll('.fade-in:not(.visible)'), function (el) {
       fadeObserver.observe(el);
     });
+  }
+
+  // The hourly-activity bar chart's grow-in and the busy meter's
+  // slide-in used to fire the instant this markup was inserted (at
+  // renderCalendar's synchronous tail) — completely invisible whenever
+  // the Today card was below the fold on open, which it often is (same
+  // "the confetti card is often below the fold" reasoning as
+  // CONFETTI_KEY_PREFIX's own comment above). Direct request: "can the
+  // bar graph and busy meter have first visit scroll animations" — same
+  // IntersectionObserver-on-scroll-into-view pattern as fadeObserver,
+  // just triggering a JS call (animateHourlyBusyMeter) and a CSS class
+  // (.in-view, which pomo_bar_fill's animation-play-state is gated on)
+  // instead of only a plain .visible toggle. Re-observed on every
+  // render, same reasoning as observeFadeIns — this markup is replaced
+  // wholesale via innerHTML each time, so a previous render's observed
+  // element is simply gone.
+  var hourlyRevealObserver = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        e.target.classList.add('in-view');
+        animateHourlyBusyMeter();
+        hourlyRevealObserver.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.05, rootMargin: '0px 0px -40px 0px' });
+  function observeHourlyActivityReveal() {
+    var el = document.querySelector('.hourly-activity');
+    if (el) hourlyRevealObserver.observe(el);
   }
 
   // ── Leaderboard confetti — once per student per week, only for someone
@@ -1851,7 +1879,7 @@
     bindCalendarEvents();
     observeFadeIns();
     animateExamCountdown();
-    animateHourlyBusyMeter();
+    observeHourlyActivityReveal();
     // Ancestor-level fallback for the very first paint of a saved
     // non-default preset — #pomo-card's own inline style (see
     // renderPomodoro) already gets this right on its own, but the
@@ -2717,8 +2745,10 @@
   // string above because a CSS `transition` (unlike a `@keyframes`
   // animation) only fires on a genuine property change to an
   // already-painted element, not just because the element appeared with
-  // that value already set. Called once after the Today card's markup is
-  // actually in the DOM (see renderCalendar's tail); applyLiveCountUpdate
+  // that value already set. Called once the hourly-activity section
+  // actually scrolls into view (see observeHourlyActivityReveal — a
+  // "first visit scroll animation", not the instant this markup lands
+  // in the DOM, which could be well below the fold); applyLiveCountUpdate
   // (called from refreshLeaderboard/refreshLastWeekChampions on every
   // poll tick) reuses the exact same marker element rather than this
   // function, since it's never destroyed/recreated, so the transition

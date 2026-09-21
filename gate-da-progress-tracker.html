@@ -1342,7 +1342,18 @@
      call to it, widened from Focus-Mode-only specifically so this card
      (which also renders on the plain checklist) picks up the theme
      there too. */
-  .hourly-bar-fill { width: 100%; height: 0; opacity: var(--intensity); background: linear-gradient(180deg, var(--pomo-g1, #C99CFB), var(--pomo-g2, var(--purple))); box-shadow: inset 0 1px 0 rgba(255,255,255,0.22); border-radius: 3px 3px 0 0; animation: hourly-bar-grow .7s cubic-bezier(.34,1.56,.64,1) both; animation-delay: var(--grow-delay); transition: filter .18s ease; }
+  /* animation-play-state starts paused, held at the animation's own
+     "from" state (height:0, via fill-mode `both`) until
+     .hourly-activity picks up `.in-view` — a first-visit scroll
+     animation, not something that plays the instant this markup lands
+     in the DOM (which is very often below the fold — see
+     observeHourlyActivityReveal's own comment). Pausing (not
+     reassigning `animation` entirely) means the staggered
+     --grow-delay only starts counting once actually played, so the
+     cascade still looks right regardless of how long the section sat
+     off-screen first. */
+  .hourly-bar-fill { width: 100%; height: 0; opacity: var(--intensity); background: linear-gradient(180deg, var(--pomo-g1, #C99CFB), var(--pomo-g2, var(--purple))); box-shadow: inset 0 1px 0 rgba(255,255,255,0.22); border-radius: 3px 3px 0 0; animation: hourly-bar-grow .7s cubic-bezier(.34,1.56,.64,1) both; animation-delay: var(--grow-delay); animation-play-state: paused; transition: filter .18s ease; }
+  .hourly-activity.in-view .hourly-bar-fill { animation-play-state: running; }
   .hourly-bar-fill:hover { filter: brightness(1.18); }
   @keyframes hourly-bar-grow { to { height: var(--bar-h); } }
   @media (prefers-reduced-motion: reduce) { .hourly-bar-fill { animation: none; height: var(--bar-h); } }
