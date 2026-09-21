@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-21-15';
+  var CLIENT_VERSION = '2026-09-21-16';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2602,9 +2602,13 @@
       // terrible"). A single tick per bar, evenly spaced 3 hours apart,
       // is how a normal chart axis reads; the full range is still there
       // as the bar's own hover tooltip for anyone who wants it.
+      // --bar-h/--grow-delay drive a CSS-only grow-in entrance (see
+      // .hourly-bar-fill's @keyframes) — a static height would just pop
+      // in instantly, which is what "make the graph look more dynamic"
+      // was asking to move away from.
       bars += '<div class="hourly-bar-col' + (b2 === peakIdx ? ' hourly-bar-col--peak' : '') + '">' +
         (b2 === peakIdx ? '<div class="hourly-bar-peak-spark">🔥</div>' : '') +
-        '<div class="hourly-bar-track" title="' + escapeAttr(title) + '"><div class="hourly-bar-fill" style="height:' + pct + '%"></div></div>' +
+        '<div class="hourly-bar-track" title="' + escapeAttr(title) + '"><div class="hourly-bar-fill" style="--bar-h:' + pct + '%; --grow-delay:' + (b2 * 70) + 'ms;"></div></div>' +
         '<div class="hourly-bar-label">' + hourLabel12(bucket.startHour) + '</div>' +
         '</div>';
     }
@@ -2613,13 +2617,17 @@
       '<div class="hourly-activity-title">Activity by hour</div>' +
       '<div class="hourly-activity-body">' +
       '<div class="hourly-activity-bars">' + bars + '</div>' +
-      '<p class="hourly-activity-peak">🔥 Busiest: ' + peakLabel + '</p>' +
+      '<div class="hourly-peak-badge">' +
+      '<span class="hourly-peak-badge-icon">🔥</span>' +
+      '<span class="hourly-peak-badge-label">Busiest</span>' +
+      '<span class="hourly-peak-badge-time">' + peakLabel + '</span>' +
+      '</div>' +
       '</div>' +
       '</div>';
   }
 
   function renderTodayCard(day, missedBeforeCount) {
-    var left = '<div class="today-tag">Today</div>';
+    var left = '<div class="today-tag">Today · Batch C</div>';
     left += '<div class="today-date">' + dayLabel(day.date) + '</div>';
     if (missedBeforeCount > 0) {
       left += '<div class="catchup-warn">⚠️ ' + missedBeforeCount + ' day' + (missedBeforeCount === 1 ? '' : 's') +

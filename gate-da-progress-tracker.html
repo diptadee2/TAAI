@@ -1301,8 +1301,19 @@
      showed a muddy, inconsistent smear (a 4%-height bar and a
      100%-height bar rendered nothing alike), which was a real part of
      "the graph looks terrible". Two adjacent brand hues blend cleanly
-     at any bar height instead. */
-  .hourly-bar-fill { width: 100%; background: linear-gradient(180deg, #C99CFB, var(--purple)); border-radius: 3px 3px 0 0; }
+     at any bar height instead. A static (never animated) inset
+     highlight along the top edge gives each bar a bit of glossy depth —
+     safe regardless of the DOM-leak gotcha below, since that only
+     applies to an ANIMATED box-shadow/transform, not a plain static one.
+     --bar-h/--grow-delay (set inline per bar) drive a one-shot grow-in
+     on load instead of the bars just popping in at full height —
+     "make the graph ... more dynamic" per direct request. Animating
+     height (a layout property), not transform, so this doesn't
+     implicate the leak gotcha either. */
+  .hourly-bar-fill { width: 100%; height: 0; background: linear-gradient(180deg, #C99CFB, var(--purple)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.22); border-radius: 3px 3px 0 0; animation: hourly-bar-grow .7s cubic-bezier(.34,1.56,.64,1) both; animation-delay: var(--grow-delay); transition: filter .18s ease; }
+  .hourly-bar-fill:hover { filter: brightness(1.18); }
+  @keyframes hourly-bar-grow { to { height: var(--bar-h); } }
+  @media (prefers-reduced-motion: reduce) { .hourly-bar-fill { animation: none; height: var(--bar-h); } }
   /* The busiest bucket gets its own highlighted color, a breathing
      glow, and a small flame above it — "catchy to the eye" per direct
      request. The glow pulses via opacity alone, never transform/
@@ -1310,14 +1321,31 @@
      box-shadow and border-radius — exactly the combination this file's
      own known Chromium DOM-node-leak gotcha warns against animating
      directly (see the streak-legend-toggle pulse above for the same
-     reasoning already applied once on this page). */
-  .hourly-bar-col--peak .hourly-bar-fill { background: linear-gradient(180deg, #FF9FCB, #FF7FB7); box-shadow: 0 0 12px rgba(255,127,183,0.55); animation: hourly-peak-pulse 2.2s ease-in-out infinite; }
+     reasoning already applied once on this page). Redeclares BOTH
+     animations together (grow + pulse) since the `animation` shorthand
+     doesn't merge across cascaded rules — a later rule fully replaces
+     an earlier one's `animation`, it doesn't add to it. The second
+     animation-delay value (0s) is the pulse's own — it starts
+     immediately and loops forever, only the one-shot grow is staggered. */
+  .hourly-bar-col--peak .hourly-bar-fill { background: linear-gradient(180deg, #FF9FCB, #FF7FB7); box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 0 12px rgba(255,127,183,0.55); animation: hourly-bar-grow .7s cubic-bezier(.34,1.56,.64,1) both, hourly-peak-pulse 2.2s ease-in-out infinite; animation-delay: var(--grow-delay), 0s; }
   @keyframes hourly-peak-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .72; } }
-  @media (prefers-reduced-motion: reduce) { .hourly-bar-col--peak .hourly-bar-fill { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .hourly-bar-col--peak .hourly-bar-fill { animation: none; height: var(--bar-h); } }
   .hourly-bar-peak-spark { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 14px; line-height: 1; }
   .hourly-bar-label { font-family: var(--font-nav); font-size: 10.5px; font-weight: 600; letter-spacing: .01em; color: var(--ink-soft); margin-top: 8px; white-space: nowrap; }
   .hourly-bar-col--peak .hourly-bar-label { color: #FF7FB7; font-weight: 800; }
-  .hourly-activity-peak { font-size: 11.5px; color: var(--ink-soft); margin: 12px 0 0; }
+  /* Redesigned from a plain caption line into a real "reward" badge —
+     bigger, bolder, more spacing from the bars above it (all direct
+     feedback: "increase the spacing... make it somewhat bigger and feel
+     like rewarding"). The time itself reuses the exact animated
+     pink->purple->blue gradient-text treatment (@keyframes streak-grad,
+     defined near .streak-number) already used for every other genuine
+     "stat" number on this page (streak count, exam countdown, Pomodoro
+     time) — ties this into the same "this is a real achievement number"
+     visual language instead of inventing a new one-off style. */
+  .hourly-peak-badge { align-self: center; display: inline-flex; align-items: baseline; gap: 8px; margin-top: 28px; padding: 10px 20px; border-radius: 999px; background: linear-gradient(135deg, rgba(255,127,183,0.16), rgba(139,92,246,0.14)); border: 1px solid rgba(255,127,183,0.4); box-shadow: 0 0 18px rgba(255,127,183,0.28); }
+  .hourly-peak-badge-icon { font-size: 16px; }
+  .hourly-peak-badge-label { font-family: var(--font-nav); font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-soft); }
+  .hourly-peak-badge-time { font-family: var(--font-body); font-size: 18px; font-weight: 800; background: linear-gradient(120deg,#FF7FB7,var(--purple),#4D8BFF); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: streak-grad 6s ease infinite; }
 </style>
 </head>
 <body>
