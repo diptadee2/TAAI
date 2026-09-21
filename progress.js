@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-21-35';
+  var CLIENT_VERSION = '2026-09-21-36';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1516,7 +1516,11 @@
   // native-tooltip behavior.
   function allTimeTitleAttr(minutes) {
     if (!Number.isFinite(minutes)) return '';
-    return ' data-alltime="ALL TIME: ' + Math.round(minutes / 60) + 'h"';
+    // Just the number here — showAllTimeTooltip (below) builds the actual
+    // "label + colored number" markup from it, since a plain data
+    // attribute can only ever hold a flat string, not two differently-
+    // styled pieces.
+    return ' data-alltime="' + Math.round(minutes / 60) + '"';
   }
 
   // A single shared tooltip element (lazily created once, reused for
@@ -1541,10 +1545,17 @@
     return allTimeTooltipEl;
   }
   function showAllTimeTooltip(target) {
-    var text = target.getAttribute('data-alltime');
-    if (!text) return;
+    var hours = target.getAttribute('data-alltime');
+    if (!hours) return;
     var el = getAllTimeTooltipEl();
-    el.textContent = text;
+    // Minimal muted label + the number itself in the accent color — two
+    // separate spans (.alltime-tooltip-label/-value, styled in
+    // gate-da-progress-tracker.html), not one flat string, so the number
+    // can actually read as a distinct, colored figure rather than plain
+    // text. hours is always a plain digit string (Math.round in
+    // allTimeTitleAttr), never user-supplied, so this is safe to build via
+    // innerHTML without escaping.
+    el.innerHTML = '<span class="alltime-tooltip-label">All time</span> <span class="alltime-tooltip-value">' + hours + 'h</span>';
     el.classList.add('visible');
     var rect = target.getBoundingClientRect();
     // Measured AFTER content + .visible are set, so offsetWidth/Height

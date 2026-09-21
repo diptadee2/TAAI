@@ -995,7 +995,9 @@
      outright, and `position: fixed` off <body> also sidesteps
      .streak-champions-card's own `overflow: hidden` clipping #champions-card's
      rows near either edge. */
-  .alltime-tooltip { position: fixed; z-index: 200; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 6px 11px; font-size: 12px; font-weight: 600; color: var(--ink); white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,0.45); opacity: 0; pointer-events: none; transform: translateY(4px); transition: opacity .15s ease, transform .15s ease; }
+  .alltime-tooltip { position: fixed; z-index: 200; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 6px 11px; font-size: 12px; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,0.45); opacity: 0; pointer-events: none; transform: translateY(4px); transition: opacity .15s ease, transform .15s ease; }
+  .alltime-tooltip-label { color: var(--ink-soft); font-weight: 500; }
+  .alltime-tooltip-value { color: var(--purple); font-weight: 700; }
   .alltime-tooltip.visible { opacity: 1; transform: translateY(0); }
   @media (prefers-reduced-motion: reduce) { .alltime-tooltip { transition: opacity .15s ease; transform: none; } }
   /* "Live now" indicator — a small pulsing green dot before the name of
