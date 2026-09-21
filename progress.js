@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-21-25';
+  var CLIENT_VERSION = '2026-09-21-26';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -545,7 +545,7 @@
     todayLeaders: [], // [{ display_name, total_minutes, is_me }] — top 5 by focus minutes today, shown in Focus Mode
     todayViewerRank: null, // { rank, total_minutes } — set only when the viewer isn't in today's top 10
     hourlyActivity: [], // [{ hour, session_count, total_minutes }] x24 — batch-wide, shown beside the Today checklist
-    liveCount: 0, // students in a live session right now — polled independently, see startLiveCountPoll
+    liveCount: 0, // students in a live session right now — updated via applyLiveCountUpdate, piggybacked on the leaderboard/champions polls
     liveCountMax: 0, // highest concurrent live count ever observed — server-tracked, see live_count_stats in schema.sql
     streak: null,
     subjectProgress: [], // [{ subject, done, total }] — global, independent of viewed month
@@ -716,10 +716,6 @@
     // so this correctly stays off when the block above just restored Focus
     // Mode, and correctly starts for the normal fresh-load-onto-checklist case.
     startLastWeekPoll();
-    // Unlike the poll above, this one runs regardless of state.focus — the
-    // Today card (and its busy meter) renders in both contexts, see
-    // startLiveCountPoll's own comment.
-    startLiveCountPoll();
   }
 
   // ── Scroll progress + back-to-top — same pattern as blog.js ──────────
@@ -2660,13 +2656,16 @@
   // calculation from the bars above (which are a cumulative, all-time
   // histogram of past completed sessions). state.liveCount comes from
   // fetchLiveCount (lib/supabase.js) via tracker-data.js's initial batch,
-  // then live-count.js's own poll (see startLiveCountPoll/refreshLiveCount)
-  // — a real-time number, not a static fact, so the marker keeps moving
-  // as it changes, unlike the bars (which only change once per session
-  // completion anywhere, not worth polling this same card for on its
-  // own). refreshLiveCount patches the existing marker element directly
-  // rather than regenerating this HTML on every poll tick, see
-  // animateHourlyBusyMeter's own comment for why.
+  // then via applyLiveCountUpdate — piggybacked on whichever of
+  // refreshLeaderboard/refreshLastWeekChampions is already polling every
+  // 60s for its own reasons (pomodoro-leaderboard.js/last-week-leaders.js
+  // both now carry liveCount alongside their own data), rather than a
+  // separate poll of its own — a real-time number, not a static fact, so
+  // the marker keeps moving as it changes, unlike the bars (which only
+  // change once per session completion anywhere, not worth polling this
+  // same card for on its own). applyLiveCountUpdate patches the existing
+  // marker element directly rather than regenerating this HTML on every
+  // poll tick, see animateHourlyBusyMeter's own comment for why.
   // What counts as "fully Intense" (the right end of the track) is now
   // self-calibrating, not a hardcoded guess — direct request ("can the
   // max be the max of all time encountered, which is updated
@@ -2719,13 +2718,14 @@
   // animation) only fires on a genuine property change to an
   // already-painted element, not just because the element appeared with
   // that value already set. Called once after the Today card's markup is
-  // actually in the DOM (see renderCalendar's tail), and reused by
-  // refreshLiveCount for live updates — in that second case the marker
-  // is the SAME element as before (never destroyed/recreated), so the
-  // transition glides smoothly from wherever it currently sits to the
-  // new value instead of resetting to 0 and replaying, which is what
-  // made the previous version's poll-driven updates feel janky rather
-  // than "flawless".
+  // actually in the DOM (see renderCalendar's tail); applyLiveCountUpdate
+  // (called from refreshLeaderboard/refreshLastWeekChampions on every
+  // poll tick) reuses the exact same marker element rather than this
+  // function, since it's never destroyed/recreated, so the transition
+  // glides smoothly from wherever it currently sits to the new value
+  // instead of resetting to 0 and replaying, which is what made the
+  // previous version's poll-driven updates feel janky rather than
+  // "flawless".
   function animateHourlyBusyMeter() {
     var marker = document.querySelector('.hourly-busy-meter-marker');
     if (!marker) return;
@@ -3155,40 +3155,25 @@
   // The Today card (and therefore the busy meter) renders in BOTH
   // contexts — inside Focus Mode and on the main checklist (see
   // renderCalendar) — unlike LEADERBOARD_POLL_MS/LAST_WEEK_POLL_MS above,
-  // each of which only runs in one context or the other. So this poll
-  // just runs unconditionally (started once from init(), only paused for
-  // a hidden tab), rather than being started/stopped on Focus Mode
-  // entry/exit the way those two are.
-  var LIVE_COUNT_POLL_MS = 60000;
-  var liveCountPollId = null;
-  function startLiveCountPoll() {
-    stopLiveCountPoll();
-    if (document.hidden) return;
-    liveCountPollId = setInterval(refreshLiveCount, LIVE_COUNT_POLL_MS);
-  }
-  function stopLiveCountPoll() {
-    if (!liveCountPollId) return;
-    clearInterval(liveCountPollId);
-    liveCountPollId = null;
-  }
-  function refreshLiveCount() {
-    var marker = document.querySelector('.hourly-busy-meter-marker');
-    if (!marker) return;
-    api('/live-count')
-      .then(function (r) {
-        state.liveCount = (r && r.count) || 0;
-        state.liveCountMax = (r && r.maxCount) || 0;
-        var liveCountMax = Math.max(state.liveCountMax, state.liveCount, 1);
-        var pct = Math.round(Math.min(100, (state.liveCount / liveCountMax) * 100));
-        var el = document.querySelector('.hourly-busy-meter-marker');
-        // Patches the SAME marker element in place — this is what makes
-        // the update glide smoothly via CSS transition from wherever it
-        // currently sits, instead of regenerating the HTML (which would
-        // create a brand-new element with the new position already set,
-        // no transition to animate from).
-        if (el) { el.setAttribute('data-meter-pct', pct); el.style.left = pct + '%'; }
-      })
-      .catch(function () { /* non-critical — meter just stays stale until the next tick */ });
+  // each of which only runs in one context or the other. This used to run
+  // its own separate 60s poll (a genuinely new always-on background
+  // request for every viewer, regardless of context) — folded instead
+  // into whichever of those two polls is already running (see
+  // pomodoro-leaderboard.js/last-week-leaders.js, which now both carry
+  // liveCount alongside their own data), since together they already
+  // cover every context the Today card appears in. This patches the
+  // SAME marker element in place — what makes the update glide smoothly
+  // via CSS transition from wherever it currently sits, instead of
+  // regenerating the HTML (which would create a brand-new element with
+  // the new position already set, no transition to animate from).
+  function applyLiveCountUpdate(liveCountData) {
+    if (!liveCountData) return;
+    state.liveCount = liveCountData.count || 0;
+    state.liveCountMax = liveCountData.maxCount || 0;
+    var liveCountMax = Math.max(state.liveCountMax, state.liveCount, 1);
+    var pct = Math.round(Math.min(100, (state.liveCount / liveCountMax) * 100));
+    var el = document.querySelector('.hourly-busy-meter-marker');
+    if (el) { el.setAttribute('data-meter-pct', pct); el.style.left = pct + '%'; }
   }
 
   // Standalone endpoint (last-week-leaders.js), not the big tracker-data.js
@@ -3201,10 +3186,15 @@
   // refreshLeaderboard's #today-leaderboard-rows guard below.
   function refreshLastWeekChampions() {
     var rows = document.getElementById('champions-rows');
-    if (!rows) return;
+    // Not gated on `rows` alone anymore — the busy meter (see
+    // applyLiveCountUpdate) also rides on this same poll now, and it can
+    // exist even when the champions card has nothing to show yet (no
+    // last-week data at all, a real if now-rare early-adoption case).
+    if (!rows && !document.querySelector('.hourly-busy-meter-marker')) return;
     var q = state.student ? '?email=' + encodeURIComponent(state.student.email) : '';
     api('/last-week-leaders' + q)
       .then(function (r) {
+        applyLiveCountUpdate(r.liveCount);
         state.lastWeekLeaders = r.leaders || [];
         state.lastWeekViewerRank = r.viewerRank || null;
         var rowsEl = document.getElementById('champions-rows');
@@ -3305,6 +3295,7 @@
     var q = state.student ? '?email=' + encodeURIComponent(state.student.email) : '';
     api('/pomodoro-leaderboard' + q)
       .then(function (r) {
+        applyLiveCountUpdate(r.liveCount);
         state.leaderboard = r.leaderboard || [];
         state.viewerRank = r.viewerRank || null;
         var rows = document.getElementById('leaderboard-rows');
@@ -3735,9 +3726,6 @@
       if (document.hidden) stopLastWeekPoll();
       else { refreshLastWeekChampions(); startLastWeekPoll(); }
     }
-    // Runs regardless of state.focus — see startLiveCountPoll's own comment.
-    if (document.hidden) stopLiveCountPoll();
-    else { refreshLiveCount(); startLiveCountPoll(); }
   });
 
   // See sendPomoStoppedBeacon above — tells the server a running Pomodoro

@@ -4,7 +4,7 @@
 // design; no email or other identity is returned in the response. The
 // optional `email` query param (the viewer's own, if logged in) is only
 // used to flag their own row with is_me, never anyone else's.
-import { getSupabase, json, weekStartIST, weekBefore, fetchTodayLeaders, fetchLiveStatusByEmail } from './lib/supabase.js';
+import { getSupabase, json, weekStartIST, weekBefore, fetchTodayLeaders, fetchLiveStatusByEmail, fetchLiveCount } from './lib/supabase.js';
 
 const LIMIT = 20;
 
@@ -24,15 +24,26 @@ export async function handler(event) {
   // stats and today's leaders — so they run concurrently instead of
   // sequentially. Last week's ranks moved to the second batch below (see
   // final_rank) since it now depends on streakEmails.
-  const [statsResult, todayLeaders] = await Promise.all([
+  // liveCount rides along here too, same reasoning as todayLeaders below —
+  // the Today card's busy meter (progress.js) used to poll its own
+  // separate /api/live-count endpoint every 60s regardless of context,
+  // which meant a genuinely new always-on background request for every
+  // viewer. This poll and last-week-leaders.js's together already cover
+  // both contexts the Today card can appear in (Focus Mode vs. the plain
+  // checklist, mutually exclusive), so folding it into both existing 60s
+  // polls instead means zero extra requests, not a smaller third one.
+  const [statsResult, todayLeaders, liveCount] = await Promise.all([
     supabase.from('pomodoro_stats').select('email, total_minutes, total_sessions').eq('week_start', weekStart).order('total_minutes', { ascending: false }).limit(LIMIT),
     fetchTodayLeaders(supabase, viewerEmail),
+    // Non-critical — a live-count hiccup (or, pre-migration, the table
+    // simply not existing yet) must never fail the whole leaderboard poll.
+    fetchLiveCount(supabase).catch(() => ({ count: 0, maxCount: 0 })),
   ]);
 
   const { data: stats, error: statsError } = statsResult;
   if (statsError) return json(500, { error: statsError.message });
 
-  if (!stats.length) return json(200, { leaderboard: [], viewerRank: null, todayLeaders });
+  if (!stats.length) return json(200, { leaderboard: [], viewerRank: null, todayLeaders, liveCount });
 
   const streakEmails = stats.map(s => s.email);
   if (viewerEmail && !streakEmails.includes(viewerEmail)) streakEmails.push(viewerEmail);
@@ -138,5 +149,5 @@ export async function handler(event) {
   // every 60s — no extra network round-trip, just a modest amount of
   // extra JSON on an existing one. See refreshLeaderboard in progress.js
   // for the client side.
-  return json(200, { leaderboard, viewerRank, todayLeaders });
+  return json(200, { leaderboard, viewerRank, todayLeaders, liveCount });
 }
