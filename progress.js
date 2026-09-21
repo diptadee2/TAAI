@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-21-5';
+  var CLIENT_VERSION = '2026-09-21-6';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -3106,15 +3106,39 @@
   // Returns a promise that ALWAYS resolves (never rejects, success or
   // failure alike) — pomoTick relies on this to know when it's safe to
   // move on to the next phase without racing this request (see there).
+  // Retries twice with backoff, same as savePomoActiveRemote — a real
+  // asymmetry, found investigating a student's report of a completed
+  // session never showing up: the routine Start/Pause/Reset/Skip sync
+  // already retried on failure (its own comment says exactly why — "a
+  // dropped request could cost a real student real credit"), but this
+  // call, the one thing that actually determines whether a finished
+  // session counts at all, had none. A single dropped request or slow
+  // cold start on this one POST silently loses the credit forever, with
+  // nothing on screen ever indicating it happened — pomoAdvance() still
+  // runs either way, so the student sees a completed session, filled
+  // dot, and the next phase starting, with no sign anything went wrong.
+  // Retrying blindly on any failure (not just network-level) mirrors
+  // savePomoActiveRemote's own behavior — a genuine server rejection
+  // (an unverifiable session) just fails identically again, wastefully
+  // but harmlessly, since api() doesn't preserve status codes to tell
+  // the two apart.
   function recordPomodoroCompletion(minutes, phaseEndAt) {
     if (!state.student) return Promise.resolve(); // guests aren't tracked — no identity to credit
-    return api('/pomodoro-complete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: state.student.email, minutes: minutes, phaseEndAt: phaseEndAt }),
-    })
-      .then(refreshLeaderboard)
-      .catch(function () { /* non-critical — this session just won't count this time */ });
+    function attempt(retriesLeft) {
+      return api('/pomodoro-complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: state.student.email, minutes: minutes, phaseEndAt: phaseEndAt }),
+      })
+        .then(refreshLeaderboard)
+        .catch(function () {
+          if (retriesLeft > 0) {
+            return new Promise(function (resolve) { setTimeout(resolve, 800); }).then(function () { return attempt(retriesLeft - 1); });
+          }
+          // non-critical after retries exhausted — this session just won't count this time
+        });
+    }
+    return attempt(2);
   }
 
   // Whenever state.focus becomes true (enterFocus, or the reload restore
