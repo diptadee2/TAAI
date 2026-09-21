@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-21-1';
+  var CLIENT_VERSION = '2026-09-21-2';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1487,8 +1487,6 @@
         '<span class="leaderboard-rank">' + rank + '</span>' +
         rankMovementHtml(i + 1) +
         '<span class="leaderboard-name">' + liveDotHtml(l.is_live) + escapeHtml(l.display_name) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
-        pomoStatusHtml(l.pomo_status, l.pomo_last_seen_at) +
-        pomoTimerHtml(l.pomo_phase_end_at, l.pomo_phase_total_seconds, l.pomo_status) +
         '<span class="leaderboard-time">' + formatHoursDecimal(l.total_minutes) + '</span>' +
         '</div>';
     }).join('');
@@ -1498,8 +1496,6 @@
         '<span class="leaderboard-rank">' + state.todayViewerRank.rank + '</span>' +
         rankMovementHtml(state.todayViewerRank.rank) +
         '<span class="leaderboard-name">' + liveDotHtml(state.todayViewerRank.is_live) + 'You</span>' +
-        pomoStatusHtml(state.todayViewerRank.pomo_status, state.todayViewerRank.pomo_last_seen_at) +
-        pomoTimerHtml(state.todayViewerRank.pomo_phase_end_at, state.todayViewerRank.pomo_phase_total_seconds, state.todayViewerRank.pomo_status) +
         '<span class="leaderboard-time">' + formatHoursDecimal(state.todayViewerRank.total_minutes) + '</span>' +
         '</div>';
     }
@@ -1511,15 +1507,6 @@
     return '<div class="leaderboard-card fade-in" id="today-leaderboard-card">' +
       '<div class="leaderboard-title">Today’s Leaders</div>' +
       '<div class="leaderboard-subtitle">Top 10 by hours logged · Today</div>' +
-      // No Streak column here (unlike the weekly board) — this card is
-      // about today specifically, and a multi-day streak has no obvious
-      // "today" reading; scoped to just what's actually relevant to a
-      // single day's ranking. Column widths mirror the weekly board's
-      // own Status/Timer/Minutes tracks (see the #today-leaderboard-card
-      // grid-template-columns override in CSS) so the two boards read
-      // consistently even though this one has fewer columns.
-      '<div class="leaderboard-columns"><span class="leaderboard-col-rank">Rank</span><span></span><span class="leaderboard-col-name">Name</span>' +
-      '<span class="leaderboard-col-status">Status</span><span class="leaderboard-col-timer">Timer</span><span class="leaderboard-col-time">Minutes</span></div>' +
       '<div id="today-leaderboard-rows">' + renderTodayLeaderboardRows(true) + '</div>' +
       '</div>';
   }
