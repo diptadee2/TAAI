@@ -1137,7 +1137,18 @@
   .leaderboard-timer--urgent .leaderboard-timer-fill { background: linear-gradient(90deg,#FBBF24,#EF4444); animation: leaderboard-timer-urgent-pulse 1.4s ease-in-out infinite; }
   @media (prefers-reduced-motion: reduce) { .leaderboard-timer--urgent .leaderboard-timer-fill { animation: none; } }
   @keyframes leaderboard-timer-urgent-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-  .leaderboard-time { font-family: var(--font-nav); font-weight: 700; font-size: 14px; color: var(--ink); text-align: right; min-width: 0; }
+  /* Centered, not right-aligned — matches .leaderboard-col-time's header
+     now that it's centered too (see its own comment). Right-aligned
+     content under a centered header looked visibly offset once actually
+     rendered (direct follow-up: "the minutes is not properly
+     alligned"), the same lesson already learned once on this page for
+     Streak's header/content pair — header and content need to share ONE
+     alignment, not each pick their own. Harmless on the narrow
+     Today's-Leaders companion card too (line 496's override), since that
+     column is auto-width/content-sized there with no header of its own,
+     so centering vs. right-aligning text inside a box exactly as wide as
+     the text makes no visible difference. */
+  .leaderboard-time { font-family: var(--font-nav); font-weight: 700; font-size: 14px; color: var(--ink); text-align: center; min-width: 0; }
   /* Greyed-out non-live rows so a student mid-focus-session actually
      stands out from everyone else on the board, instead of every name/
      minutes reading in the same bright ink regardless of who's actually
