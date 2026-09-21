@@ -1365,27 +1365,40 @@
      many people are live currently, this calculation is different from
      the bar graph calculation". No glow/pill/fire-emoji treatment, per
      an earlier round of feedback — this reads as a real gauge, not a
-     celebration. */
-  .hourly-busy-meter { align-self: center; width: 100%; max-width: 220px; margin-top: 24px; }
-  /* A plain static title ("Busy meter", matching "Activity by hour"
-     above the bars) plus a small subtitle carrying the actual numbers —
-     replaces a dynamic "N live — Intense/Chill" sentence per direct
-     request ("don't use the live-intense thing text, use the text busy
-     meter"). The Chill/Intense read still comes through via the track +
-     marker + endpoint labels below, just not spelled out as a sentence. */
-  .hourly-busy-meter-title { font-family: var(--font-nav); font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); text-align: center; margin-bottom: 6px; }
-  .hourly-busy-meter-sub { font-size: 12px; color: var(--ink-soft); text-align: center; margin-bottom: 10px; }
-  .hourly-busy-meter-sub b { color: var(--ink); font-weight: 700; }
+     celebration. Full width, not a narrower centered block — matches
+     the bars above it (which already span the column's full width),
+     direct feedback: "align and space it properly according to the
+     content above". */
+  .hourly-busy-meter { width: 100%; margin-top: 22px; }
+  /* Plain static title, no live-count/hour-range text at all — direct
+     request ("don't show the no of live users and the hourly interval,
+     just busy meter and the meter"); that data still drives meterPct
+     and the track's own hover tooltip, just isn't shown by default
+     anymore. Left-aligned to match .hourly-activity-title above it (was
+     centered — direct feedback: "align the heading properly" — the
+     two titles in this one card need to share an alignment). */
+  .hourly-busy-meter-title { font-family: var(--font-nav); font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 12px; }
   .hourly-busy-meter-track { position: relative; height: 6px; border-radius: 999px; background: linear-gradient(90deg, #7DD3FC, #A78BFA, #FBBF24); }
-  /* Animates `left` (a layout property), never `transform` — this
-     marker isn't a leak risk either way (border-radius but no
-     box-shadow), but staying consistent with the same "animate layout
-     position, not transform/box-shadow" discipline used for the bars'
-     own grow-in above. The translate(-50%,-50%) is a fixed, unanimated
-     centering offset, not part of what's moving. */
-  .hourly-busy-meter-marker { position: absolute; top: 50%; left: 0; width: 12px; height: 12px; border-radius: 50%; background: var(--card); border: 2px solid var(--ink); transform: translate(-50%, -50%); animation: hourly-meter-slide .9s cubic-bezier(.34,1.2,.64,1) both; }
-  @keyframes hourly-meter-slide { from { left: 0%; } to { left: var(--meter-pct); } }
-  @media (prefers-reduced-motion: reduce) { .hourly-busy-meter-marker { animation: none; left: var(--meter-pct); } }
+  /* A real CSS transition, not a @keyframes animation — a transition
+     fires on any genuine property change to an element already in the
+     DOM, which is what makes a later live update (see refreshLiveCount)
+     glide smoothly from wherever the marker currently sits to its new
+     position, rather than resetting to 0 and replaying from scratch on
+     every 60s poll tick (direct feedback: "make the meter animations
+     flawless" — that reset-and-replay was the actual flaw). The very
+     first paint animates the exact same way: the marker starts at
+     left:0% in the server-rendered markup, and animateHourlyBusyMeter
+     (progress.js) sets the real target a frame later, so the same one
+     transition mechanism handles both the initial slide-in and every
+     live update after it — not two different systems. Animates `left`
+     (a layout property), never `transform` — this marker isn't a leak
+     risk either way (border-radius but no box-shadow), but staying
+     consistent with the "animate layout position, not transform/
+     box-shadow" discipline used for the bars' own grow-in above. The
+     translate(-50%,-50%) is a fixed, unanimated centering offset, not
+     part of what's moving. */
+  .hourly-busy-meter-marker { position: absolute; top: 50%; left: 0; width: 12px; height: 12px; border-radius: 50%; background: var(--card); border: 2px solid var(--ink); transform: translate(-50%, -50%); transition: left .8s cubic-bezier(.34,1.2,.64,1); }
+  @media (prefers-reduced-motion: reduce) { .hourly-busy-meter-marker { transition: none; } }
   .hourly-busy-meter-scale { display: flex; justify-content: space-between; font-family: var(--font-nav); font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-soft); margin-top: 8px; }
 </style>
 </head>

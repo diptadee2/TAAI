@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-21-22';
+  var CLIENT_VERSION = '2026-09-21-23';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1853,6 +1853,7 @@
     bindCalendarEvents();
     observeFadeIns();
     animateExamCountdown();
+    animateHourlyBusyMeter();
     // Ancestor-level fallback for the very first paint of a saved
     // non-default preset — #pomo-card's own inline style (see
     // renderPomodoro) already gets this right on its own, but the
@@ -2640,7 +2641,7 @@
       '<div class="hourly-activity-title">Activity by hour</div>' +
       '<div class="hourly-activity-body">' +
       '<div class="hourly-activity-bars">' + bars + '</div>' +
-      '<div id="hourly-busy-meter-wrap">' + hourlyBusyMeterHtml() + '</div>' +
+      hourlyBusyMeterHtml() +
       '</div>' +
       '</div>';
   }
@@ -2650,11 +2651,13 @@
   // calculation from the bars above (which are a cumulative, all-time
   // histogram of past completed sessions). state.liveCount comes from
   // fetchLiveCount (lib/supabase.js) via tracker-data.js's initial batch,
-  // then live-count.js's own poll (see startLiveCountPoll) — a real-time
-  // number, not a static fact, so this is re-rendered into
-  // #hourly-busy-meter-wrap on every poll tick rather than only at page
-  // load, unlike the bars (which only change once per session completion
-  // anywhere, not worth polling this same card for on its own).
+  // then live-count.js's own poll (see startLiveCountPoll/refreshLiveCount)
+  // — a real-time number, not a static fact, so the marker keeps moving
+  // as it changes, unlike the bars (which only change once per session
+  // completion anywhere, not worth polling this same card for on its
+  // own). refreshLiveCount patches the existing marker element directly
+  // rather than regenerating this HTML on every poll tick, see
+  // animateHourlyBusyMeter's own comment for why.
   // How many concurrent live students counts as "fully Intense" (the
   // right end of the track) — a starting, tunable guess (this project
   // has no existing baseline for typical concurrent live count to
@@ -2672,20 +2675,56 @@
     var nowHour = new Date().getHours();
     var nowRange = hourLabel12(nowHour) + '–' + hourLabel12((nowHour + 1) % 24);
     var meterPct = Math.round(Math.min(100, (liveCount / LIVE_COUNT_INTENSITY_CAP) * 100));
-    // No "N live — Intense/Chill" sentence — direct request ("don't use
-    // the live-intense thing text, use the text busy meter"). The title
-    // is a plain static label (matching "Activity by hour" above the
-    // bars), the actual numbers sit underneath as a small subtitle, and
-    // the Chill/Intense read is conveyed by the track + marker position
-    // + endpoint labels alone, not spelled out as a sentence.
+    // No live-count/hour-range text at all — direct request ("don't show
+    // the no of live users and the hourly interval, just busy meter and
+    // the meter"). That data still drives meterPct and the tooltip below
+    // (hover-only, not part of the default visible UI), just isn't
+    // spelled out as on-page text anymore. Title left-aligned to match
+    // .hourly-activity-title above it (was centered — direct feedback:
+    // "align the heading properly" — the two titles in this card need to
+    // share one alignment, not each pick their own, same lesson already
+    // learned once for the leaderboard's column headers). data-meter-pct
+    // + a starting left:0% is what animateHourlyBusyMeter (called once
+    // after this markup is actually in the DOM) reads to trigger a real
+    // CSS transition into place, rather than the marker just appearing
+    // already at its final position.
     return '<div class="hourly-busy-meter">' +
       '<div class="hourly-busy-meter-title">Busy meter</div>' +
-      '<div class="hourly-busy-meter-sub">' + nowRange + ' · <b>' + liveCount + '</b> live now</div>' +
-      '<div class="hourly-busy-meter-track" title="' + escapeAttr(liveCount + ' students live right now') + '">' +
-      '<div class="hourly-busy-meter-marker" style="--meter-pct:' + meterPct + '%;"></div>' +
+      '<div class="hourly-busy-meter-track" title="' + escapeAttr(nowRange + ': ' + liveCount + ' students live right now') + '">' +
+      '<div class="hourly-busy-meter-marker" data-meter-pct="' + meterPct + '" style="left:0%"></div>' +
       '</div>' +
       '<div class="hourly-busy-meter-scale"><span>Chill</span><span>Intense</span></div>' +
       '</div>';
+  }
+
+  // Triggers the marker's slide-into-place — separated from the HTML
+  // string above because a CSS `transition` (unlike a `@keyframes`
+  // animation) only fires on a genuine property change to an
+  // already-painted element, not just because the element appeared with
+  // that value already set. Called once after the Today card's markup is
+  // actually in the DOM (see renderCalendar's tail), and reused by
+  // refreshLiveCount for live updates — in that second case the marker
+  // is the SAME element as before (never destroyed/recreated), so the
+  // transition glides smoothly from wherever it currently sits to the
+  // new value instead of resetting to 0 and replaying, which is what
+  // made the previous version's poll-driven updates feel janky rather
+  // than "flawless".
+  function animateHourlyBusyMeter() {
+    var marker = document.querySelector('.hourly-busy-meter-marker');
+    if (!marker) return;
+    var pct = marker.getAttribute('data-meter-pct');
+    if (pct === null) return;
+    // Double rAF: the first frame lets the browser actually paint the
+    // starting left:0% before the second frame changes it — a single
+    // rAF can still land in the same paint as the initial render on some
+    // browsers, which would skip the transition entirely (the marker
+    // would just appear already in its final spot).
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        var el = document.querySelector('.hourly-busy-meter-marker');
+        if (el) el.style.left = pct + '%';
+      });
+    });
   }
 
   function renderTodayCard(day, missedBeforeCount) {
@@ -3116,13 +3155,19 @@
     liveCountPollId = null;
   }
   function refreshLiveCount() {
-    var wrap = document.getElementById('hourly-busy-meter-wrap');
-    if (!wrap) return;
+    var marker = document.querySelector('.hourly-busy-meter-marker');
+    if (!marker) return;
     api('/live-count')
       .then(function (r) {
         state.liveCount = (r && r.count) || 0;
-        var wrapEl = document.getElementById('hourly-busy-meter-wrap');
-        if (wrapEl) wrapEl.innerHTML = hourlyBusyMeterHtml();
+        var pct = Math.round(Math.min(100, (state.liveCount / LIVE_COUNT_INTENSITY_CAP) * 100));
+        var el = document.querySelector('.hourly-busy-meter-marker');
+        // Patches the SAME marker element in place — this is what makes
+        // the update glide smoothly via CSS transition from wherever it
+        // currently sits, instead of regenerating the HTML (which would
+        // create a brand-new element with the new position already set,
+        // no transition to animate from).
+        if (el) { el.setAttribute('data-meter-pct', pct); el.style.left = pct + '%'; }
       })
       .catch(function () { /* non-critical — meter just stays stale until the next tick */ });
   }
