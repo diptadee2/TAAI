@@ -1330,8 +1330,19 @@
      on load instead of the bars just popping in at full height —
      "make the graph ... more dynamic" per direct request. Animating
      height (a layout property), not transform, so this doesn't
-     implicate the leak gotcha either. */
-  .hourly-bar-fill { width: 100%; height: 0; opacity: var(--intensity); background: linear-gradient(180deg, #C99CFB, var(--purple)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.22); border-radius: 3px 3px 0 0; animation: hourly-bar-grow .7s cubic-bezier(.34,1.56,.64,1) both; animation-delay: var(--grow-delay); transition: filter .18s ease; }
+     implicate the leak gotcha either. Colors read --pomo-g1/--pomo-g2 —
+     the same per-student Pomodoro ring/timer theme vars every other
+     themed element on this page already reads (buttons, countdown chip,
+     ring) — direct request ("make the bar graph colour gradients
+     according to the theme selected for the pomodoro timer"), with the
+     original 2-stop pairing's exact colors kept as the CSS fallback so
+     a student who's never touched the theme picker (or the vars
+     genuinely aren't set yet) sees byte-identical bars to before. Set on
+     #app by applyPomoGradient() — see renderCalendar's now-unconditional
+     call to it, widened from Focus-Mode-only specifically so this card
+     (which also renders on the plain checklist) picks up the theme
+     there too. */
+  .hourly-bar-fill { width: 100%; height: 0; opacity: var(--intensity); background: linear-gradient(180deg, var(--pomo-g1, #C99CFB), var(--pomo-g2, var(--purple))); box-shadow: inset 0 1px 0 rgba(255,255,255,0.22); border-radius: 3px 3px 0 0; animation: hourly-bar-grow .7s cubic-bezier(.34,1.56,.64,1) both; animation-delay: var(--grow-delay); transition: filter .18s ease; }
   .hourly-bar-fill:hover { filter: brightness(1.18); }
   @keyframes hourly-bar-grow { to { height: var(--bar-h); } }
   @media (prefers-reduced-motion: reduce) { .hourly-bar-fill { animation: none; height: var(--bar-h); } }

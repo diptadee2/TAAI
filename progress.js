@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-21-23';
+  var CLIENT_VERSION = '2026-09-21-24';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1859,7 +1859,14 @@
     // renderPomodoro) already gets this right on its own, but the
     // countdown chip sits outside .focus-card as a sibling, so it needs
     // #app itself carrying the vars too (see applyPomoGradient's comment).
-    if (state.focus) applyPomoGradient();
+    // Unconditional, not just `if (state.focus)` — the Today card's
+    // hourly-activity bars (see .hourly-bar-fill) now also read these
+    // vars off #app, and that card renders on the plain checklist too,
+    // not only inside Focus Mode, so the theme needs to be live there as
+    // well, not just while a Pomodoro session is actually visible.
+    // applyPomoGradient() is documented safe to call even where
+    // #pomo-card doesn't exist (a no-op for that one element).
+    applyPomoGradient();
     // state.lastWeekLeaders/lastWeekViewerRank are already fresh at this
     // point (set earlier in loadMonth's resolve, before renderCalendar is
     // called) — unlike the top-20 card in Focus Mode, this one doesn't
@@ -2661,8 +2668,16 @@
   // How many concurrent live students counts as "fully Intense" (the
   // right end of the track) — a starting, tunable guess (this project
   // has no existing baseline for typical concurrent live count to
-  // calibrate against yet), not a measured constant.
-  var LIVE_COUNT_INTENSITY_CAP = 10;
+  // calibrate against yet), not a measured constant. Raised from an
+  // initial guess of 10 to 20 after a direct "why is it showing intense
+  // right now" question — production genuinely runs 12-14 concurrent
+  // live students during normal evening hours, well past that first
+  // guess, so the gauge was pegged at the max essentially all the time
+  // instead of only during a real, unusually busy moment. Still just a
+  // guess, now a more generous one — revisit if it turns out to need
+  // tuning again once there's a real sense of what a genuinely quiet vs.
+  // packed moment looks like over time.
+  var LIVE_COUNT_INTENSITY_CAP = 20;
   function hourlyBusyMeterHtml() {
     var liveCount = state.liveCount || 0;
     // A single real hour ("3p–4p"), not the bars' own 3-hour bucket
