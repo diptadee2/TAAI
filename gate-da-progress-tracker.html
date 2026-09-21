@@ -1367,8 +1367,15 @@
      an earlier round of feedback — this reads as a real gauge, not a
      celebration. */
   .hourly-busy-meter { align-self: center; width: 100%; max-width: 220px; margin-top: 24px; }
-  .hourly-busy-meter-head { font-size: 12px; color: var(--ink-soft); text-align: center; margin-bottom: 10px; }
-  .hourly-busy-meter-head b { color: var(--ink); font-weight: 700; }
+  /* A plain static title ("Busy meter", matching "Activity by hour"
+     above the bars) plus a small subtitle carrying the actual numbers —
+     replaces a dynamic "N live — Intense/Chill" sentence per direct
+     request ("don't use the live-intense thing text, use the text busy
+     meter"). The Chill/Intense read still comes through via the track +
+     marker + endpoint labels below, just not spelled out as a sentence. */
+  .hourly-busy-meter-title { font-family: var(--font-nav); font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); text-align: center; margin-bottom: 6px; }
+  .hourly-busy-meter-sub { font-size: 12px; color: var(--ink-soft); text-align: center; margin-bottom: 10px; }
+  .hourly-busy-meter-sub b { color: var(--ink); font-weight: 700; }
   .hourly-busy-meter-track { position: relative; height: 6px; border-radius: 999px; background: linear-gradient(90deg, #7DD3FC, #A78BFA, #FBBF24); }
   /* Animates `left` (a layout property), never `transform` — this
      marker isn't a leak risk either way (border-radius but no
@@ -1380,9 +1387,6 @@
   @keyframes hourly-meter-slide { from { left: 0%; } to { left: var(--meter-pct); } }
   @media (prefers-reduced-motion: reduce) { .hourly-busy-meter-marker { animation: none; left: var(--meter-pct); } }
   .hourly-busy-meter-scale { display: flex; justify-content: space-between; font-family: var(--font-nav); font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-soft); margin-top: 8px; }
-  .hourly-vibe { font-weight: 700; }
-  .hourly-vibe--chill { color: #7DD3FC; }
-  .hourly-vibe--intense { color: #FBBF24; }
 </style>
 </head>
 <body>

@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-21-21';
+  var CLIENT_VERSION = '2026-09-21-22';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2655,20 +2655,32 @@
   // #hourly-busy-meter-wrap on every poll tick rather than only at page
   // load, unlike the bars (which only change once per session completion
   // anywhere, not worth polling this same card for on its own).
-  // LIVE_COUNT_INTENSITY_CAP: how many concurrent live students counts
-  // as "fully Intense" on the meter — a starting, tunable guess (this
-  // project has no existing baseline for typical concurrent live count
-  // to calibrate against yet), not a measured constant.
+  // How many concurrent live students counts as "fully Intense" (the
+  // right end of the track) — a starting, tunable guess (this project
+  // has no existing baseline for typical concurrent live count to
+  // calibrate against yet), not a measured constant.
   var LIVE_COUNT_INTENSITY_CAP = 10;
-  var LIVE_COUNT_VIBE_THRESHOLD = 5;
   function hourlyBusyMeterHtml() {
     var liveCount = state.liveCount || 0;
-    var nowIdx = hourlyCurrentBucketIdx();
-    var nowRange = hourLabel12(nowIdx * 3) + '–' + hourLabel12((nowIdx * 3 + 3) % 24);
-    var vibe = liveCount >= LIVE_COUNT_VIBE_THRESHOLD ? 'Intense' : 'Chill';
+    // A single real hour ("3p–4p"), not the bars' own 3-hour bucket
+    // range — direct request ("use hourly intervals to calculate not
+    // three hourly"). The bars still group by 3 hours for chart
+    // readability (see hourlyCurrentBucketIdx/pomoHourlyActivityHtml,
+    // unchanged) — that's a display-density concern for 8 vs. 24 bars,
+    // a genuinely different question from how precisely this meter
+    // should describe "right now".
+    var nowHour = new Date().getHours();
+    var nowRange = hourLabel12(nowHour) + '–' + hourLabel12((nowHour + 1) % 24);
     var meterPct = Math.round(Math.min(100, (liveCount / LIVE_COUNT_INTENSITY_CAP) * 100));
+    // No "N live — Intense/Chill" sentence — direct request ("don't use
+    // the live-intense thing text, use the text busy meter"). The title
+    // is a plain static label (matching "Activity by hour" above the
+    // bars), the actual numbers sit underneath as a small subtitle, and
+    // the Chill/Intense read is conveyed by the track + marker position
+    // + endpoint labels alone, not spelled out as a sentence.
     return '<div class="hourly-busy-meter">' +
-      '<div class="hourly-busy-meter-head">Right now (<b>' + nowRange + '</b>): <b>' + liveCount + '</b> live — <span class="hourly-vibe hourly-vibe--' + vibe.toLowerCase() + '">' + vibe + '</span></div>' +
+      '<div class="hourly-busy-meter-title">Busy meter</div>' +
+      '<div class="hourly-busy-meter-sub">' + nowRange + ' · <b>' + liveCount + '</b> live now</div>' +
       '<div class="hourly-busy-meter-track" title="' + escapeAttr(liveCount + ' students live right now') + '">' +
       '<div class="hourly-busy-meter-marker" style="--meter-pct:' + meterPct + '%;"></div>' +
       '</div>' +
