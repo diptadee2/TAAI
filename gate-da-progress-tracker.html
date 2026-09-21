@@ -911,6 +911,15 @@
      never renders streak/status/timer content and needs its own
      simpler shape instead. */
   #leaderboard-card .leaderboard-row { grid-template-columns: 40px 16px minmax(0,130px) minmax(92px,1fr) 76px 60px 58px; }
+  /* Today's board gets Status + Timer too ("can you include the timer
+     status column here?"), but not Streak — a single day's ranking has
+     no obvious "streak" to show. Name gets the flexible track Streak
+     would otherwise have taken (minmax(0,1fr) instead of the weekly
+     board's fixed minmax(0,130px)), since there's one fewer fixed-width
+     column competing for space; Status/Timer/Minutes reuse the exact
+     same widths as the weekly board's own so the two read consistently. */
+  #today-leaderboard-card .leaderboard-row { grid-template-columns: 40px 16px minmax(0,1fr) 76px 60px 58px; }
+  #today-leaderboard-card .leaderboard-columns { grid-template-columns: 40px 16px minmax(0,1fr) 76px 60px 58px; }
   .leaderboard-row:last-child { border-bottom: none; }
   .leaderboard-row--top { padding-top: 14px; padding-bottom: 14px; }
   .leaderboard-row--me { background: rgba(139,92,246,0.1); border-bottom-color: transparent; }
