@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-21-36';
+  var CLIENT_VERSION = '2026-09-21-37';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -303,9 +303,9 @@
   // style="stop-color:var(...)" on each <stop>, the ring's own SVG
   // gradient — see renderPomodoro) live, no re-render needed — so picking
   // a new swatch mid-session doesn't touch pomo.running/secondsLeft/
-  // anything else about an in-progress phase. Written to BOTH #app (the
+  // anything else about an in-progress phase. Written to #app (the
   // shared ancestor of the countdown chip and .pomodoro-card, which are
-  // rendered as siblings — see renderCalendar's state.focus branch) AND
+  // rendered as siblings — see renderCalendar's state.focus branch),
   // #pomo-card itself — #pomo-card carries its own local copy from
   // renderPomodoro()'s inline style (for the very first paint, before
   // this function has run even once), and a descendant's own local custom
@@ -313,14 +313,21 @@
   // stale from-render-time value in place would silently block every live
   // update to anything inside it (the ring, buttons, time text) after the
   // very first pick — a real regression caught by testing an Ocean pick's
-  // Save-changes button screenshot still showing Sunset's pink/blue.
+  // Save-changes button screenshot still showing Sunset's pink/blue — AND
+  // documentElement (:root), added once a themed element (the
+  // all-time-minutes hover tooltip) needed to live entirely outside #app
+  // (appended directly to <body>, so overflow:hidden ancestors like
+  // .streak-champions-card can't clip it — see setupAllTimeTooltip).
+  // :root is the one place a CSS custom property reaches literally every
+  // element regardless of where it sits in the DOM, which #app can't do
+  // for anything appended as a sibling of it or outside it entirely.
   // Safe to call even when #app/#pomo-card don't exist yet — becomes a
   // no-op for whichever is missing, and the CSS vars still get set
   // correctly the next time renderCalendar()/renderPomodoro() actually
   // run anyway.
   function applyPomoGradient() {
     var preset = POMO_GRADIENTS[pomoSettings.gradient] || POMO_GRADIENTS[0];
-    [document.getElementById('app'), document.getElementById('pomo-card')].forEach(function (el) {
+    [document.documentElement, document.getElementById('app'), document.getElementById('pomo-card')].forEach(function (el) {
       if (!el) return;
       el.style.setProperty('--pomo-g1', preset.colors[0]);
       el.style.setProperty('--pomo-g2', preset.colors[1]);
