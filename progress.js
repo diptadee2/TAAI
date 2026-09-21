@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-21-19';
+  var CLIENT_VERSION = '2026-09-21-20';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2630,11 +2630,23 @@
     var othersAvg = othersCount > 0 ? othersTotal / othersCount : 0;
     var spikeRatio = othersAvg > 0 ? max / othersAvg : (max > 0 ? 99 : 1);
     var vibe = spikeRatio >= 1.8 ? 'Intense' : 'Chill';
+    // A real spectrum meter, not just a word — a ratio of 1 (totally
+    // flat day) maps to 0%, 3+ (a sharp, concentrated spike) maps to
+    // 100%, clamped between. The marker's position is the actual
+    // "dynamic" content here (driven by spikeRatio), not an animation
+    // effect layered on top of a static fact.
+    var meterPct = Math.round(Math.min(100, Math.max(0, ((spikeRatio - 1) / 2) * 100)));
     return '<div class="hourly-activity">' +
       '<div class="hourly-activity-title">Activity by hour</div>' +
       '<div class="hourly-activity-body">' +
       '<div class="hourly-activity-bars">' + bars + '</div>' +
-      '<p class="hourly-activity-peak">Busiest: <b>' + peakLabel + '</b> <span class="hourly-vibe hourly-vibe--' + vibe.toLowerCase() + '">' + vibe + '</span></p>' +
+      '<div class="hourly-busy-meter">' +
+      '<div class="hourly-busy-meter-head">Busiest: <b>' + peakLabel + '</b> — <span class="hourly-vibe hourly-vibe--' + vibe.toLowerCase() + '">' + vibe + '</span></div>' +
+      '<div class="hourly-busy-meter-track" title="' + escapeAttr(vibe + ' — ' + spikeRatio.toFixed(1) + 'x the rest of the day') + '">' +
+      '<div class="hourly-busy-meter-marker" style="--meter-pct:' + meterPct + '%;"></div>' +
+      '</div>' +
+      '<div class="hourly-busy-meter-scale"><span>Chill</span><span>Intense</span></div>' +
+      '</div>' +
       '</div>' +
       '</div>';
   }

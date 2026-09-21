@@ -1347,8 +1347,28 @@
      minutes), colored to match the read (a calm blue for a fairly even
      day, a warm amber for a real spike) but with no glow/pill/animation
      of any kind. */
-  .hourly-activity-peak { align-self: center; margin-top: 24px; font-size: 12.5px; color: var(--ink-soft); }
-  .hourly-activity-peak b { color: var(--ink); font-weight: 700; }
+  /* A real spectrum meter — Chill on one end, Intense on the other —
+     rather than a plain caption ("i want the busiest one like a
+     dynamic busy meter"). The track's own gradient represents the full
+     spectrum always (fixed, not animated); the marker's position is
+     what's actually dynamic, sliding to wherever today's real
+     spikeRatio (see pomoHourlyActivityHtml) falls on it. No glow/pill/
+     fire-emoji treatment, per the immediately preceding round of
+     feedback — this reads as a real gauge, not a celebration. */
+  .hourly-busy-meter { align-self: center; width: 100%; max-width: 220px; margin-top: 24px; }
+  .hourly-busy-meter-head { font-size: 12px; color: var(--ink-soft); text-align: center; margin-bottom: 10px; }
+  .hourly-busy-meter-head b { color: var(--ink); font-weight: 700; }
+  .hourly-busy-meter-track { position: relative; height: 6px; border-radius: 999px; background: linear-gradient(90deg, #7DD3FC, #A78BFA, #FBBF24); }
+  /* Animates `left` (a layout property), never `transform` — this
+     marker isn't a leak risk either way (border-radius but no
+     box-shadow), but staying consistent with the same "animate layout
+     position, not transform/box-shadow" discipline used for the bars'
+     own grow-in above. The translate(-50%,-50%) is a fixed, unanimated
+     centering offset, not part of what's moving. */
+  .hourly-busy-meter-marker { position: absolute; top: 50%; left: 0; width: 12px; height: 12px; border-radius: 50%; background: var(--card); border: 2px solid var(--ink); transform: translate(-50%, -50%); animation: hourly-meter-slide .9s cubic-bezier(.34,1.2,.64,1) both; }
+  @keyframes hourly-meter-slide { from { left: 0%; } to { left: var(--meter-pct); } }
+  @media (prefers-reduced-motion: reduce) { .hourly-busy-meter-marker { animation: none; left: var(--meter-pct); } }
+  .hourly-busy-meter-scale { display: flex; justify-content: space-between; font-family: var(--font-nav); font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-soft); margin-top: 8px; }
   .hourly-vibe { font-weight: 700; }
   .hourly-vibe--chill { color: #7DD3FC; }
   .hourly-vibe--intense { color: #FBBF24; }
