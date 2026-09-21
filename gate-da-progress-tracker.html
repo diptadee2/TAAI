@@ -926,8 +926,17 @@
      #leaderboard-card (the top-20 board specifically) since the
      champions/top-5 card — sharing .leaderboard-row's base rule above —
      never renders streak/status/timer content and needs its own
-     simpler shape instead. */
-  #leaderboard-card .leaderboard-row { grid-template-columns: 40px 16px minmax(0,130px) minmax(92px,1fr) 76px 60px 58px; }
+     simpler shape instead.
+
+     Name's own cap grew 130px→180px ("can we have the same spacing fix
+     here" — the same name-truncation problem already fixed on Today's
+     Leaders, "GATE DA ASPIRANT" clipping to "GATE DA ASPI…"). The extra
+     50px comes straight out of the Streak column's own flexible space
+     (minmax(92px,1fr) — it's the row's one column that grows into
+     leftover width), which this board has plenty of: most rows carry 0-5
+     small streak balls, nowhere near enough to actually need the width
+     that column was otherwise sitting on unused. */
+  #leaderboard-card .leaderboard-row { grid-template-columns: 40px 16px minmax(0,180px) minmax(92px,1fr) 76px 60px 58px; }
   .leaderboard-row:last-child { border-bottom: none; }
   .leaderboard-row--top { padding-top: 14px; padding-bottom: 14px; }
   .leaderboard-row--me { background: rgba(139,92,246,0.1); border-bottom-color: transparent; }
@@ -1151,9 +1160,10 @@
   #leaderboard-card .leaderboard-row--live .leaderboard-time,
   #today-leaderboard-card .leaderboard-row--live .leaderboard-time { color: var(--ink); }
   /* Column header row — identical grid-template-columns to
-     .leaderboard-row above, so every label lands exactly above its
-     column on every row, not just approximately near it. */
-  .leaderboard-columns { display: grid; grid-template-columns: 40px 16px minmax(0,130px) minmax(92px,1fr) 76px 60px 58px; align-items: center; gap: 16px; padding: 0 14px 6px; font-family: var(--font-nav); font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
+     .leaderboard-row above (including its 180px Name cap, see that
+     rule's own comment), so every label lands exactly above its column
+     on every row, not just approximately near it. */
+  .leaderboard-columns { display: grid; grid-template-columns: 40px 16px minmax(0,180px) minmax(92px,1fr) 76px 60px 58px; align-items: center; gap: 16px; padding: 0 14px 6px; font-family: var(--font-nav); font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
   .leaderboard-col-rank { text-align: center; min-width: 0; }
   /* padding-left matches .live-dot-slot's fixed 13px width (see the
      live-dot comment above) — every row's actual name text starts 13px
