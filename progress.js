@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-21-18';
+  var CLIENT_VERSION = '2026-09-21-19';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2596,6 +2596,12 @@
       var pct = Math.max(Math.round((bucket.total_minutes / max) * 100), bucket.total_minutes > 0 ? 6 : 0);
       var range = hourLabel12(bucket.startHour) + '–' + hourLabel12((bucket.startHour + 3) % 24);
       var title = range + ': ' + Math.round(bucket.total_minutes) + ' min logged';
+      // One color family for every bar — intensity (opacity) scales with
+      // the bar's own share of the busiest hour instead of the busiest
+      // bar switching to a different, celebratory color. The busiest bar
+      // is always pct=100 by construction (it IS the max), so it's
+      // automatically the most vivid one with no special-casing needed.
+      var intensity = (0.35 + 0.65 * (pct / 100)).toFixed(2);
       // Just the tick (bucket start hour), not the full "12a–3a" range —
       // the full range crammed into an already-narrow bar column read as
       // cluttered (direct feedback: "the hour labels still look
@@ -2607,21 +2613,28 @@
       // in instantly, which is what "make the graph look more dynamic"
       // was asking to move away from.
       bars += '<div class="hourly-bar-col' + (b2 === peakIdx ? ' hourly-bar-col--peak' : '') + '">' +
-        (b2 === peakIdx ? '<div class="hourly-bar-peak-spark">🔥</div>' : '') +
-        '<div class="hourly-bar-track" title="' + escapeAttr(title) + '"><div class="hourly-bar-fill" style="--bar-h:' + pct + '%; --grow-delay:' + (b2 * 70) + 'ms;"></div></div>' +
+        '<div class="hourly-bar-track" title="' + escapeAttr(title) + '"><div class="hourly-bar-fill" style="--bar-h:' + pct + '%; --grow-delay:' + (b2 * 70) + 'ms; --intensity:' + intensity + ';"></div></div>' +
         '<div class="hourly-bar-label">' + hourLabel12(bucket.startHour) + '</div>' +
         '</div>';
     }
     var peakLabel = hourLabel12(buckets[peakIdx].startHour) + '–' + hourLabel12((buckets[peakIdx].startHour + 3) % 24);
+    // "Chill" vs "Intense" — a real read on the data (how much the
+    // busiest window actually stands out above the rest), not a
+    // celebratory label. Peak-vs-average-of-the-other-7-buckets ratio:
+    // a fairly even spread across the day (nothing stands out much)
+    // reads as "Chill"; a sharp, concentrated spike reads as "Intense".
+    var othersTotal = 0, othersCount = 0;
+    for (var i2 = 0; i2 < buckets.length; i2++) {
+      if (i2 !== peakIdx) { othersTotal += buckets[i2].total_minutes; othersCount++; }
+    }
+    var othersAvg = othersCount > 0 ? othersTotal / othersCount : 0;
+    var spikeRatio = othersAvg > 0 ? max / othersAvg : (max > 0 ? 99 : 1);
+    var vibe = spikeRatio >= 1.8 ? 'Intense' : 'Chill';
     return '<div class="hourly-activity">' +
       '<div class="hourly-activity-title">Activity by hour</div>' +
       '<div class="hourly-activity-body">' +
       '<div class="hourly-activity-bars">' + bars + '</div>' +
-      '<div class="hourly-peak-badge">' +
-      '<span class="hourly-peak-badge-icon">🔥</span>' +
-      '<span class="hourly-peak-badge-label">Busiest</span>' +
-      '<span class="hourly-peak-badge-time">' + peakLabel + '</span>' +
-      '</div>' +
+      '<p class="hourly-activity-peak">Busiest: <b>' + peakLabel + '</b> <span class="hourly-vibe hourly-vibe--' + vibe.toLowerCase() + '">' + vibe + '</span></p>' +
       '</div>' +
       '</div>';
   }
