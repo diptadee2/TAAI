@@ -1266,6 +1266,24 @@
   .today-card .today-tag { position: relative; font-family: var(--font-nav); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--purple); margin-bottom: 4px; }
   .today-card .today-date { position: relative; font-family: var(--font-nav); font-weight: 700; font-size: 16px; margin-bottom: 10px; color: var(--ink); }
   .catchup-warn { position: relative; background: var(--amber-soft); color: var(--amber); font-size: 13px; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; line-height: 1.4; }
+  /* Splits the Today card into the existing checklist (left) and a new
+     batch-wide "when does everyone study" bar chart (right) — flex with
+     flex-wrap rather than a fixed-breakpoint grid, since .today-card's
+     own width already varies a lot depending on whether the page-grid
+     sidebar is showing (see .page-grid above) — wrapping to a stacked
+     layout once either side drops below its own min comfortable width
+     is more robust than guessing one "mobile" pixel number. */
+  .today-card-split { position: relative; display: flex; gap: 22px; align-items: flex-start; flex-wrap: wrap; }
+  .today-card-left { flex: 2 1 260px; min-width: 0; }
+  .today-card-right { flex: 1 1 200px; min-width: 0; padding-top: 2px; }
+  @media (min-width: 561px) { .today-card-right { border-left: 1px solid var(--line); padding-left: 22px; } }
+  .hourly-activity-title { font-family: var(--font-nav); font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 10px; }
+  .hourly-activity-empty { font-size: 12px; color: var(--ink-soft); line-height: 1.4; margin: 0; }
+  .hourly-activity-bars { display: flex; align-items: flex-end; gap: 2px; height: 84px; }
+  .hourly-bar-col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; height: 100%; }
+  .hourly-bar-track { width: 100%; flex: 1; display: flex; align-items: flex-end; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; }
+  .hourly-bar-fill { width: 100%; background: linear-gradient(180deg, #FF7FB7, var(--purple), #4D8BFF); border-radius: 2px 2px 0 0; }
+  .hourly-bar-label { font-family: var(--font-nav); font-size: 8px; color: var(--ink-soft); margin-top: 4px; white-space: nowrap; }
 </style>
 </head>
 <body>

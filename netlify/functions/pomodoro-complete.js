@@ -17,7 +17,7 @@
 // itself has a matching record of that exact phase, and enough real
 // wall-clock time has genuinely passed since it began. `phaseEndAt` is
 // still accepted/logged but likewise not what's credited — see below.
-import { getSupabase, json, weekStartIST, todayIST } from './lib/supabase.js';
+import { getSupabase, json, weekStartIST, todayIST, hourIST } from './lib/supabase.js';
 
 // See pomodoro_credit_failures in supabase/schema.sql — a rejected/errored
 // completion used to leave zero trace anywhere once the response was
@@ -166,6 +166,22 @@ export async function handler(event) {
   if (dayError) {
     await logCreditFailure(supabase, { email, reason: 'day_increment_error: ' + dayError.message, claimedPhaseEndAt: phaseEndAt, session });
     return json(500, { error: dayError.message });
+  }
+
+  // Batch-wide "when does everyone study" histogram (see
+  // pomo_hourly_activity in schema.sql) — attributed to the hour the
+  // session STARTED in (phase_started_at), not when it finished, so a
+  // session that happens to straddle an hour boundary still counts once,
+  // toward the hour someone actually sat down. Best-effort: this is a
+  // supplementary chart, not part of what a student is owed credit for,
+  // so a failure here must never turn an already-successful completion
+  // (the week/day increments above already landed) into an error
+  // response — same reasoning as logCreditFailure's own try/catch.
+  try {
+    const { error: hourlyError } = await supabase.rpc('increment_hourly_activity', { p_hour: hourIST(session.phase_started_at), p_minutes: minutes });
+    if (hourlyError) console.error('pomodoro-complete.js: failed to increment hourly activity for', email, hourlyError.message);
+  } catch (e) {
+    console.error('pomodoro-complete.js: failed to increment hourly activity for', email, e);
   }
 
   return json(200, {

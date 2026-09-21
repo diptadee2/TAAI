@@ -50,7 +50,7 @@ export async function fetchAllRows(buildQuery, pageSize = 1000) {
 // (old JS silently sending a request shape the new server no longer
 // accepts) doesn't stay stuck indefinitely waiting for someone to notice
 // and manually refresh.
-export const CLIENT_VERSION = '2026-09-21-10';
+export const CLIENT_VERSION = '2026-09-21-12';
 
 export function json(statusCode, body) {
   return {
@@ -132,6 +132,18 @@ export function weekStartIST() {
   const diff = day === 0 ? -6 : 1 - day;
   d.setUTCDate(d.getUTCDate() + diff);
   return d.toISOString().slice(0, 10);
+}
+
+// The IST hour-of-day (0-23) a given ms-epoch timestamp falls in — used
+// to attribute a completed session to "what time was it" for the
+// pomo_hourly_activity histogram (see pomodoro-complete.js), same
+// Asia/Kolkata reasoning as todayIST() above, just for the hour instead
+// of the date. hour12:false can format midnight as "24" rather than "0"
+// on some ICU builds, so the result is taken mod 24 rather than trusted
+// as-is.
+const IST_HOUR_FORMATTER = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Kolkata', hour: 'numeric', hour12: false });
+export function hourIST(epochMs) {
+  return Number(IST_HOUR_FORMATTER.format(new Date(epochMs))) % 24;
 }
 
 // The Monday exactly one week before a given week_start — used to look
@@ -414,6 +426,28 @@ export async function fetchTodayLeaders(supabase, email, date) {
   }
 
   return { date: today, leaders, viewerRank };
+}
+
+// The batch-wide "what hour does everyone actually study" histogram (see
+// pomo_hourly_activity in schema.sql) — always exactly 0-24 rows
+// (however many hours have accumulated any activity since this shipped),
+// never scoped to a student or a date, so this is called unconditionally
+// from tracker-data.js the same way fetchSchedule is, regardless of
+// whether a viewer is a signed-in student or a guest. Returns a plain
+// 24-length array (index === hour) rather than a sparse map, so the
+// frontend never needs to guard against a missing hour — any hour with
+// no credited sessions yet just reads as zero.
+export async function fetchHourlyActivity(supabase) {
+  const { data, error } = await supabase
+    .from('pomo_hourly_activity')
+    .select('hour, session_count, total_minutes');
+  if (error) throw new Error(error.message);
+  const byHour = Object.fromEntries((data || []).map(r => [r.hour, r]));
+  const hours = [];
+  for (let h = 0; h < 24; h++) {
+    hours.push({ hour: h, session_count: byHour[h]?.session_count || 0, total_minutes: byHour[h]?.total_minutes || 0 });
+  }
+  return { hours };
 }
 
 // The single highest total_minutes any student has logged in one

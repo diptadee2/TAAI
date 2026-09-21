@@ -204,6 +204,43 @@ $$ LANGUAGE sql;
 
 GRANT EXECUTE ON FUNCTION credit_pomodoro_phase TO service_role;
 
+-- Aggregate, batch-wide "when does everyone actually study" histogram —
+-- one row per hour-of-day (0-23, IST), incremented every time a work-phase
+-- session is credited (see pomodoro-complete.js, which attributes the
+-- whole session to the hour it STARTED in, via phase_started_at). Powers
+-- a single 24-bar chart on the checklist page's Today card. Deliberately
+-- NOT per-student or per-date — this is one shared, ever-growing-in-place
+-- table of exactly 24 rows, not a new row per student per day, so it
+-- never needs cleanup and stays tiny regardless of how many students or
+-- days accumulate into it. Starts completely empty and fills in going
+-- forward from whenever this ships — no prior table ever recorded a
+-- session's time-of-day (only its date), so there's nothing to backfill.
+CREATE TABLE IF NOT EXISTS pomo_hourly_activity (
+  hour           INTEGER PRIMARY KEY CHECK (hour >= 0 AND hour <= 23),
+  session_count  INTEGER NOT NULL DEFAULT 0,
+  total_minutes  INTEGER NOT NULL DEFAULT 0,
+  updated_at     TIMESTAMPTZ DEFAULT now()
+);
+GRANT SELECT, INSERT, UPDATE, DELETE ON pomo_hourly_activity TO service_role;
+
+-- Same atomic-UPSERT pattern as increment_pomodoro_stats/
+-- increment_pomo_daily_sessions above — one row per hour, incremented
+-- under row-level locking during the UPDATE rather than a racy
+-- read-then-write from the Netlify Function.
+CREATE OR REPLACE FUNCTION increment_hourly_activity(p_hour INTEGER, p_minutes INTEGER)
+RETURNS TABLE(session_count INTEGER, total_minutes INTEGER) AS $$
+  INSERT INTO pomo_hourly_activity (hour, session_count, total_minutes, updated_at)
+  VALUES (p_hour, 1, p_minutes, now())
+  ON CONFLICT (hour)
+  DO UPDATE SET
+    session_count = pomo_hourly_activity.session_count + 1,
+    total_minutes = pomo_hourly_activity.total_minutes + p_minutes,
+    updated_at = now()
+  RETURNING session_count, total_minutes;
+$$ LANGUAGE sql;
+
+GRANT EXECUTE ON FUNCTION increment_hourly_activity TO service_role;
+
 -- Discord announcements the /team page can create/edit — any webhook
 -- (any channel), fully custom text or one of a few built-in dynamic
 -- sources (today's top student, last week's top 5, monthly consistency —
@@ -395,3 +432,14 @@ CREATE TABLE IF NOT EXISTS pomodoro_credit_failures (
 );
 CREATE INDEX IF NOT EXISTS idx_pomodoro_credit_failures_email ON pomodoro_credit_failures(email, created_at DESC);
 GRANT SELECT, INSERT, UPDATE, DELETE ON pomodoro_credit_failures TO service_role;
+
+-- Explicit, admin-controlled tiebreak for two scheduled_posts rows that
+-- share the exact same next_fire_at (e.g. weekly_leaderboard and
+-- weekly_batch_trend, both set to fire at 10:30 IST) — discord-dispatch.js
+-- orders by this (then created_at) so which one posts first is a
+-- deliberate choice made via /team's ▲/▼ buttons, not whatever order an
+-- otherwise-unordered query happens to return. Default 0 for every row
+-- that's never been manually reordered, so created_at (the row created
+-- first posts first) is what actually decides ties until someone
+-- explicitly reorders them.
+ALTER TABLE scheduled_posts ADD COLUMN IF NOT EXISTS dispatch_order INTEGER NOT NULL DEFAULT 0;

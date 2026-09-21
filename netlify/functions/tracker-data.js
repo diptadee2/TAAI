@@ -30,7 +30,7 @@
 //
 // pomoActive was added later, for cross-device pomodoro sync — see
 // fetchPomoActive below and pomo-active.js (the write side).
-import { getSupabase, json, monthRange, todayIST, fetchLastWeekLeaders, fetchTodayLeaders } from './lib/supabase.js';
+import { getSupabase, json, monthRange, todayIST, fetchLastWeekLeaders, fetchTodayLeaders, fetchHourlyActivity } from './lib/supabase.js';
 
 async function fetchSchedule(supabase, range) {
   const { data, error } = await supabase
@@ -190,7 +190,7 @@ export async function handler(event) {
 
   // Everything else degrades to its old client-side .catch() fallback
   // instead of failing the whole response.
-  const [lastWeekLeaders, todayLeaders, streak, subjectProgress, pomoSettings, pomoSessions, pomoActive] = await Promise.all([
+  const [lastWeekLeaders, todayLeaders, streak, subjectProgress, pomoSettings, pomoSessions, pomoActive, hourlyActivity] = await Promise.all([
     fetchLastWeekLeaders(supabase, email).catch(() => ({ leaders: [] })),
     fetchTodayLeaders(supabase, email).catch(() => ({ leaders: [] })),
     email ? fetchStreak(supabase, email).catch(() => ({ streak: null })) : Promise.resolve(null),
@@ -198,7 +198,10 @@ export async function handler(event) {
     email ? fetchPomoSettings(supabase, email).catch(() => null) : Promise.resolve(null),
     email ? fetchPomoSessions(supabase, email).catch(() => null) : Promise.resolve(null),
     email ? fetchPomoActive(supabase, email).catch(() => null) : Promise.resolve(null),
+    // Batch-wide, not per-student — fetched unconditionally regardless of
+    // guest/student, same as schedule/lastWeekLeaders/todayLeaders above.
+    fetchHourlyActivity(supabase).catch(() => ({ hours: [] })),
   ]);
 
-  return json(200, { schedule, lastWeekLeaders, todayLeaders, progress, streak, subjectProgress, pomoSettings, pomoSessions, pomoActive });
+  return json(200, { schedule, lastWeekLeaders, todayLeaders, progress, streak, subjectProgress, pomoSettings, pomoSessions, pomoActive, hourlyActivity });
 }

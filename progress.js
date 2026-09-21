@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-21-10';
+  var CLIENT_VERSION = '2026-09-21-12';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -544,6 +544,7 @@
     lastWeekViewerRank: null, // { rank, total_minutes } — set only when the viewer isn't in that top 5
     todayLeaders: [], // [{ display_name, total_minutes, is_me }] — top 5 by focus minutes today, shown in Focus Mode
     todayViewerRank: null, // { rank, total_minutes } — set only when the viewer isn't in today's top 10
+    hourlyActivity: [], // [{ hour, session_count, total_minutes }] x24 — batch-wide, shown beside the Today checklist
     streak: null,
     subjectProgress: [], // [{ subject, done, total }] — global, independent of viewed month
     expanded: new Set(), // dates whose day-card is open, non-native accordion
@@ -1136,6 +1137,7 @@
         state.lastWeekViewerRank = data.lastWeekLeaders.viewerRank || null;
         state.todayLeaders = data.todayLeaders.leaders || [];
         state.todayViewerRank = data.todayLeaders.viewerRank || null;
+        state.hourlyActivity = (data.hourlyActivity && data.hourlyActivity.hours) || [];
         var progressRows = state.student ? (data.progress.progress || []) : [];
         state.streak = state.student ? data.streak.streak : null;
         state.subjectProgress = state.student ? (data.subjectProgress.subjects || []) : [];
@@ -2551,17 +2553,66 @@
       '</div>';
   }
 
+  // 12a/1a.../11a/12p/1p.../11p — compact hour-of-day labels for the
+  // hourly activity chart's x-axis, only every 3rd hour (0/3/6/9/12/15/
+  // 18/21) so 24 labels don't crowd a narrow chart.
+  function hourLabel12(h) {
+    var period = h < 12 ? 'a' : 'p';
+    var h12 = h % 12;
+    if (h12 === 0) h12 = 12;
+    return h12 + period;
+  }
+
+  // Batch-wide "when does everyone actually study" histogram — see
+  // pomo_hourly_activity in schema.sql / fetchHourlyActivity in
+  // lib/supabase.js. state.hourlyActivity is always a plain 24-length
+  // array (index === hour), so this never needs to guard against a
+  // missing hour, just an all-zero one (a genuinely quiet hour, or —
+  // early on — no data logged yet at all since this only starts filling
+  // in from whenever it shipped, with nothing to backfill from).
+  function pomoHourlyActivityHtml() {
+    var hours = state.hourlyActivity || [];
+    var max = 0;
+    for (var i = 0; i < hours.length; i++) {
+      if (hours[i].total_minutes > max) max = hours[i].total_minutes;
+    }
+    if (max <= 0) {
+      return '<div class="hourly-activity">' +
+        '<div class="hourly-activity-title">📊 When the batch studies</div>' +
+        '<p class="hourly-activity-empty">Fills in as students complete focus sessions.</p>' +
+        '</div>';
+    }
+    var bars = '';
+    for (var h = 0; h < 24; h++) {
+      var entry = hours[h] || { total_minutes: 0 };
+      var pct = Math.max(Math.round((entry.total_minutes / max) * 100), entry.total_minutes > 0 ? 4 : 0);
+      var title = hourLabel12(h) + '–' + hourLabel12((h + 1) % 24) + ': ' + Math.round(entry.total_minutes) + ' min logged';
+      bars += '<div class="hourly-bar-col">' +
+        '<div class="hourly-bar-track" title="' + escapeAttr(title) + '"><div class="hourly-bar-fill" style="height:' + pct + '%"></div></div>' +
+        '<div class="hourly-bar-label">' + (h % 3 === 0 ? hourLabel12(h) : '') + '</div>' +
+        '</div>';
+    }
+    return '<div class="hourly-activity">' +
+      '<div class="hourly-activity-title">📊 When the batch studies</div>' +
+      '<div class="hourly-activity-bars">' + bars + '</div>' +
+      '</div>';
+  }
+
   function renderTodayCard(day, missedBeforeCount) {
-    var html = '<div class="today-card fade-in">';
-    html += '<div class="today-tag">Today</div>';
-    html += '<div class="today-date">' + dayLabel(day.date) + '</div>';
+    var left = '<div class="today-tag">Today</div>';
+    left += '<div class="today-date">' + dayLabel(day.date) + '</div>';
     if (missedBeforeCount > 0) {
-      html += '<div class="catchup-warn">⚠️ ' + missedBeforeCount + ' day' + (missedBeforeCount === 1 ? '' : 's') +
+      left += '<div class="catchup-warn">⚠️ ' + missedBeforeCount + ' day' + (missedBeforeCount === 1 ? '' : 's') +
         ' incomplete before today. Today’s content builds on those, so consider catching up first.</div>';
     }
     day.tasks.forEach(function (t) {
-      html += taskRowHtml(day.date, t);
+      left += taskRowHtml(day.date, t);
     });
+    var html = '<div class="today-card fade-in">';
+    html += '<div class="today-card-split">';
+    html += '<div class="today-card-left">' + left + '</div>';
+    html += '<div class="today-card-right">' + pomoHourlyActivityHtml() + '</div>';
+    html += '</div>';
     html += '</div>';
     return html;
   }
