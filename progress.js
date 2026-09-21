@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-21-34';
+  var CLIENT_VERSION = '2026-09-21-35';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1516,7 +1516,7 @@
   // native-tooltip behavior.
   function allTimeTitleAttr(minutes) {
     if (!Number.isFinite(minutes)) return '';
-    return ' data-alltime="' + (minutes / 60).toFixed(1) + 'h all-time"';
+    return ' data-alltime="ALL TIME: ' + Math.round(minutes / 60) + 'h"';
   }
 
   // A single shared tooltip element (lazily created once, reused for
