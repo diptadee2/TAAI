@@ -562,3 +562,64 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON pomodoro_credit_failures TO service_role
 -- first posts first) is what actually decides ties until someone
 -- explicitly reorders them.
 ALTER TABLE scheduled_posts ADD COLUMN IF NOT EXISTS dispatch_order INTEGER NOT NULL DEFAULT 0;
+
+-- Malpractice detection for the Pomodoro timer's anti-cheat check (see
+-- pomodoro-complete.js's insufficient_elapsed rejection — verified live,
+-- confirmed against a real student who repeatedly tried to fake session
+-- completions via a manipulated browser clock). Three columns, all on
+-- students: malpractice_incident_count is a distinct-attempt counter
+-- (deduped by phase — a single doomed request retried 3x by the client
+-- only ever counts once, see pomodoro-complete.js's dedupe check before
+-- calling record_malpractice_incident below), malpractice_offense_count
+-- tracks how many times a freeze has actually been triggered (used only
+-- to look up the escalating duration), and malpractice_frozen_until is
+-- the live freeze deadline itself, checked by pomo-active.js before
+-- allowing a new work phase to start. Deliberately keyed off
+-- insufficient_elapsed alone, not any other pomodoro_credit_failures
+-- reason — every other reason has a known legitimate cause (e.g.
+-- phase_end_mismatch from two genuine requests racing each other), where
+-- insufficient_elapsed requires claiming far more real time passed than
+-- actually did, well past the endpoint's own 15s grace window — not
+-- something normal usage or network flakiness can trigger by accident.
+ALTER TABLE students ADD COLUMN IF NOT EXISTS malpractice_incident_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS malpractice_offense_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS malpractice_frozen_until TIMESTAMPTZ;
+
+-- Atomic claim-and-escalate, called once per genuinely NEW distinct
+-- incident (never per retry — see the dedupe check at pomodoro-
+-- complete.js's call site). The first 3 distinct incidents are silent-log/
+-- warning-only (progress.js decides what to show based on the returned
+-- malpractice_incident_count, 1 = nothing shown, 2-3 = a warning banner) —
+-- only the 4th and every one after that actually escalates
+-- malpractice_offense_count and (re)sets a fresh freeze, looked up from a
+-- fixed escalation ladder: 6h -> 24h -> 72h -> 7 days, capped at the last
+-- tier for anything beyond. A plain `now() + tier`, not stacking onto
+-- whatever time was left on a previous freeze — a genuinely NEW incident
+-- can only happen after a previous freeze has already expired in the
+-- first place, since pomo-active.js refuses to start a new work phase at
+-- all while already frozen, so there's no "still-frozen-plus-new-offense"
+-- case to reconcile.
+CREATE OR REPLACE FUNCTION record_malpractice_incident(p_email TEXT)
+RETURNS TABLE(malpractice_incident_count INTEGER, malpractice_offense_count INTEGER, malpractice_frozen_until TIMESTAMPTZ) AS $$
+  UPDATE students
+  SET
+    malpractice_incident_count = students.malpractice_incident_count + 1,
+    malpractice_offense_count = CASE
+      WHEN students.malpractice_incident_count + 1 >= 4 THEN students.malpractice_offense_count + 1
+      ELSE students.malpractice_offense_count
+    END,
+    malpractice_frozen_until = CASE
+      WHEN students.malpractice_incident_count + 1 >= 4 THEN
+        now() + (CASE LEAST(students.malpractice_offense_count + 1, 4)
+          WHEN 1 THEN INTERVAL '6 hours'
+          WHEN 2 THEN INTERVAL '24 hours'
+          WHEN 3 THEN INTERVAL '72 hours'
+          ELSE INTERVAL '7 days'
+        END)
+      ELSE students.malpractice_frozen_until
+    END
+  WHERE email = p_email
+  RETURNING students.malpractice_incident_count, students.malpractice_offense_count, students.malpractice_frozen_until;
+$$ LANGUAGE sql;
+
+GRANT EXECUTE ON FUNCTION record_malpractice_incident TO service_role;

@@ -51,6 +51,41 @@ export async function handler(event) {
     existing.mode !== body.mode ||
     existing.total_seconds !== totalSeconds ||
     (running && secondsLeft === totalSeconds);
+
+  // Malpractice freeze enforcement (see record_malpractice_incident in
+  // schema.sql) — only blocks genuinely starting a NEW work phase, never
+  // Pause/Reset/a break phase (break earns no credit anyway, so freezing
+  // it accomplishes nothing). This is the real backstop: progress.js
+  // already checks the student's own frozen-until field (fetched at page
+  // load via tracker-data.js) before ever calling this endpoint, so a
+  // frozen student normally never gets this far at all — but this check
+  // still has to exist here too, since the client-side one is only a
+  // convenience a determined user could bypass by hitting this endpoint
+  // directly. Checked only for a genuine new work-phase start (not every
+  // call) both to keep this cheap and because that's the only case
+  // "frozen" is actually supposed to mean anything for.
+  if (isNewPhase && body.mode === 'work' && running) {
+    // Best-effort, not a hard dependency — pre-migration (or any other
+    // failure), a broken freeze CHECK must never break the routine
+    // Start/Pause/Skip/Reset sync every student relies on. A genuine
+    // "column does not exist" error here would otherwise 500 this whole
+    // endpoint for every single Start click until the migration runs —
+    // the same class of mistake already caught once this session for the
+    // all-time-minutes feature (see CLAUDE.md).
+    try {
+      const { data: student, error: studentError } = await supabase
+        .from('students')
+        .select('malpractice_frozen_until')
+        .eq('email', email)
+        .maybeSingle();
+      if (!studentError && student?.malpractice_frozen_until && new Date(student.malpractice_frozen_until).getTime() > Date.now()) {
+        return json(403, { error: 'malpractice_frozen', frozenUntil: student.malpractice_frozen_until });
+      }
+    } catch (e) {
+      console.error('pomo-active.js: malpractice freeze check failed for', email, e);
+    }
+  }
+
   const phaseStartedAt = isNewPhase ? Date.now() : (existing.phase_started_at ?? Date.now());
 
   const { error } = await supabase

@@ -863,6 +863,16 @@
      needed notification permission and didn't get it — see
      renderPomoNotifyNotice/pomoToggleRun, never shown preemptively. */
   .pomo-notify-notice { margin-top: 18px; padding: 16px 18px; border-radius: 14px; background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.25); text-align: left; }
+  /* Same box treatment as .pomo-notify-notice above (a real amber "heads
+     up" tone for the 2-3-incident warning band, no freeze yet), plus a
+     more severe red variant for an active freeze — see
+     renderPomoMalpracticeNotice in progress.js. */
+  .pomo-malpractice-notice { margin-top: 18px; padding: 16px 18px; border-radius: 14px; text-align: left; }
+  .pomo-malpractice-notice--warning { background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.25); }
+  .pomo-malpractice-notice--freeze { background: var(--red-soft); border: 1px solid rgba(248,113,113,0.35); }
+  .pomo-malpractice-notice--freeze .pomo-gate-title { color: var(--red); }
+  .pomo-malpractice-notice--freeze .pomo-gate-body { margin-bottom: 0; }
+  .pomo-malpractice-notice--warning .pomo-gate-body { margin-bottom: 0; }
   .pomo-gate-title { font-family: var(--font-nav); font-weight: 700; font-size: 14px; margin-bottom: 8px; color: var(--amber); }
   .pomo-gate-body { font-size: 13px; color: var(--ink-dim); line-height: 1.55; margin: 0 0 12px; }
   .pomo-gate-steps { padding-left: 20px; font-size: 13px; color: var(--ink-dim); line-height: 1.6; margin: 0 0 14px; }

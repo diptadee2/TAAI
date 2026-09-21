@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-21-42';
+  var CLIENT_VERSION = '2026-09-22-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -572,6 +572,10 @@
     renaming: false, // showing the inline rename form in place of the name + Rename/Not you? line
     renameError: null,
     pomoBlockedReason: null, // null | 'denied' | 'unsupported' — set when Start needed notification permission and didn't get it
+    // See record_malpractice_incident in schema.sql / fetchMalpracticeStatus
+    // in tracker-data.js — null for a guest (no account to flag),
+    // otherwise { incidentCount, frozenUntil }. Drives renderPomoMalpracticeNotice.
+    malpractice: null,
   };
 
   // Set when a signed-out visitor tries to check a task — captured so
@@ -1240,6 +1244,7 @@
         var progressRows = state.student ? (data.progress.progress || []) : [];
         state.streak = state.student ? data.streak.streak : null;
         state.subjectProgress = state.student ? (data.subjectProgress.subjects || []) : [];
+        state.malpractice = state.student ? (data.malpractice || { incidentCount: 0, frozenUntil: null }) : null;
 
         // Only present once a student has actually saved custom durations
         // somewhere before (see applyPomoSettings) — merge in place of
@@ -2502,6 +2507,16 @@
       return;
     }
 
+    // The notice explaining why is already visible on screen unconditionally
+    // whenever this is true (see renderPomoMalpracticeNotice, rendered
+    // regardless of any click) — Start just has to actually refuse to do
+    // anything while it's up, rather than starting the local timer anyway
+    // and only failing invisibly later at the server. pomo-active.js
+    // enforces this same freeze server-side too (see its own comment) —
+    // this client-side check is what makes it visibly refuse rather than
+    // silently do nothing, not the actual security boundary.
+    if (pomoIsFrozen()) return;
+
     var notifyState = pomoNotifyState();
     if (notifyState === 'granted') {
       pomoActuallyStart();
@@ -2648,6 +2663,40 @@
     return html;
   }
 
+  // True only while a real, currently-in-effect freeze is on record — see
+  // record_malpractice_incident in schema.sql. Guests always read false
+  // (state.malpractice is null for them, see loadMonth), matching that
+  // they can't have an account to freeze in the first place.
+  function pomoIsFrozen() {
+    return !!(state.malpractice && state.malpractice.frozenUntil && new Date(state.malpractice.frozenUntil).getTime() > Date.now());
+  }
+
+  // Shown inline alongside the normal timer controls (same spot as
+  // renderPomoNotifyNotice, just below Start/Reset/Skip) — not a
+  // replacement gate, since only the frozen case actually needs to block
+  // anything; the 2-3-incident warning band is informational only, the
+  // timer itself stays fully usable underneath it. See
+  // record_malpractice_incident's own comment for what each incident
+  // count actually means: 1 is silent (nothing shown here at all), 2-3
+  // is a warning with no freeze, 4+ is an active freeze.
+  function renderPomoMalpracticeNotice() {
+    if (!state.malpractice) return '';
+    if (pomoIsFrozen()) {
+      var until = new Date(state.malpractice.frozenUntil).toLocaleString();
+      return '<div class="pomo-malpractice-notice pomo-malpractice-notice--freeze fade-in">' +
+        '<div class="pomo-gate-title">⚠️ Malpractice Detected</div>' +
+        '<p class="pomo-gate-body">Repeated irregular session timing was detected on this account. Focus sessions are frozen until <strong>' + escapeHtml(until) + '</strong>.</p>' +
+        '</div>';
+    }
+    if (state.malpractice.incidentCount >= 2) {
+      return '<div class="pomo-malpractice-notice pomo-malpractice-notice--warning fade-in">' +
+        '<div class="pomo-gate-title">⚠️ Malpractice Detected</div>' +
+        '<p class="pomo-gate-body">Irregular session timing was noticed on this account. Continued attempts may result in Focus sessions being temporarily frozen.</p>' +
+        '</div>';
+    }
+    return '';
+  }
+
   // One row of the settings panel's stepper controls — label, then a
   // −/+ pair either side of the number field (see .pomo-stepper). Factored
   // out since all four rows (Focus/Short break/Long break/Sessions) are
@@ -2773,6 +2822,7 @@
       '</div>' +
       '<p class="pomo-notify-permanent-tip">🔔 Notifications need your computer’s permission too, not just this site’s — check your OS’s own notification settings for this browser if they don’t show up.</p>' +
       renderPomoNotifyNotice() +
+      renderPomoMalpracticeNotice() +
       '<div class="pomo-settings" id="pomo-settings" hidden>' +
       '<div class="pomo-settings-header">⚙️ Timer settings</div>' +
       pomoGradientSwatchesHtml() +

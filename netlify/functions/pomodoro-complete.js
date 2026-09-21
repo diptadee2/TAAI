@@ -42,6 +42,36 @@ async function logCreditFailure(supabase, { email, reason, claimedPhaseEndAt, se
   }
 }
 
+// Malpractice detection — see record_malpractice_incident in schema.sql.
+// Only ever called for the insufficient_elapsed reason (every other
+// rejection reason has a known legitimate, non-malicious cause — see that
+// function's own comment), and only once per genuinely NEW distinct
+// phase, never once per retry: recordPomodoroCompletion (progress.js)
+// retries a failed completion up to 2 more times, and without this
+// dedupe check every one of those retries would independently count as
+// its own "incident," inflating a single doomed attempt into 3.
+// Deliberately checked BEFORE this rejection's own logCreditFailure call
+// runs, so that insert is never mistaken for prior evidence of itself.
+async function recordMalpracticeIfNewIncident(supabase, email, session) {
+  try {
+    const phaseStartedAt = session.phase_started_at;
+    const { data: existing, error: existingError } = await supabase
+      .from('pomodoro_credit_failures')
+      .select('id')
+      .eq('email', email)
+      .eq('reason', 'insufficient_elapsed')
+      .eq('session_snapshot->>phase_started_at', String(phaseStartedAt))
+      .limit(1);
+    if (existingError) { console.error('pomodoro-complete.js: malpractice dedupe check failed for', email, existingError.message); return; }
+    if (existing && existing.length) return; // a retry of an already-counted incident
+
+    const { error: recordError } = await supabase.rpc('record_malpractice_incident', { p_email: email });
+    if (recordError) console.error('pomodoro-complete.js: failed to record malpractice incident for', email, recordError.message);
+  } catch (e) {
+    console.error('pomodoro-complete.js: malpractice tracking threw for', email, e);
+  }
+}
+
 // Matches the Focus settings panel's own max (progress.js's
 // POMO_WORK_MAX_MINUTES, pomo-settings.js's own POST clamp) — a single
 // real session can never legitimately exceed this, so cap credited
@@ -124,6 +154,11 @@ export async function handler(event) {
   const claimedMs = session.total_seconds * 1000;
   const elapsedMs = Date.now() - session.phase_started_at;
   if (elapsedMs < claimedMs - GRACE_MS) {
+    // Checked BEFORE logCreditFailure's own insert below, so that row is
+    // never mistaken for prior evidence of itself — see
+    // recordMalpracticeIfNewIncident's own comment for why this has to
+    // run first and only counts genuinely new phases, not retries.
+    await recordMalpracticeIfNewIncident(supabase, email, session);
     await logCreditFailure(supabase, { email, reason: 'insufficient_elapsed', claimedPhaseEndAt: phaseEndAt, session, elapsedMs, claimedMs });
     return json(400, { error: 'not enough time has elapsed for this session' });
   }

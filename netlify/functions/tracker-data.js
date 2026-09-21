@@ -93,6 +93,25 @@ async function fetchStreak(supabase, email) {
   return { streak: data ? data.current_streak || 0 : 0 };
 }
 
+// See record_malpractice_incident in schema.sql / pomodoro-complete.js.
+// Fetched once per page load (not per Start click) so progress.js can
+// check it entirely client-side before ever attempting a session —
+// pomo-active.js still enforces the actual freeze server-side regardless
+// (see its own comment), this is purely what lets the UI show the right
+// message without a dedicated round-trip at Start time.
+async function fetchMalpracticeStatus(supabase, email) {
+  const { data, error } = await supabase
+    .from('students')
+    .select('malpractice_incident_count, malpractice_frozen_until')
+    .eq('email', email)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return {
+    incidentCount: data ? data.malpractice_incident_count || 0 : 0,
+    frozenUntil: data ? data.malpractice_frozen_until : null,
+  };
+}
+
 async function fetchSubjectProgress(supabase, email) {
   const { data: scheduled, error: schedErr } = await supabase
     .from('schedule_tasks')
@@ -190,7 +209,7 @@ export async function handler(event) {
 
   // Everything else degrades to its old client-side .catch() fallback
   // instead of failing the whole response.
-  const [lastWeekLeaders, todayLeaders, streak, subjectProgress, pomoSettings, pomoSessions, pomoActive, hourlyActivity, liveCount] = await Promise.all([
+  const [lastWeekLeaders, todayLeaders, streak, subjectProgress, pomoSettings, pomoSessions, pomoActive, hourlyActivity, liveCount, malpractice] = await Promise.all([
     fetchLastWeekLeaders(supabase, email).catch(() => ({ leaders: [] })),
     fetchTodayLeaders(supabase, email).catch(() => ({ leaders: [] })),
     email ? fetchStreak(supabase, email).catch(() => ({ streak: null })) : Promise.resolve(null),
@@ -204,7 +223,11 @@ export async function handler(event) {
     // Just the initial value — live-count.js is polled separately for
     // updates after this (see startLiveCountPoll in progress.js).
     fetchLiveCount(supabase).catch(() => ({ count: 0, maxCount: 0 })),
+    // Non-critical — a hiccup here (or, pre-migration, the columns simply
+    // not existing yet) must never block the rest of the page; a guest
+    // has no account to freeze, hence null rather than a fetch at all.
+    email ? fetchMalpracticeStatus(supabase, email).catch(() => ({ incidentCount: 0, frozenUntil: null })) : Promise.resolve(null),
   ]);
 
-  return json(200, { schedule, lastWeekLeaders, todayLeaders, progress, streak, subjectProgress, pomoSettings, pomoSessions, pomoActive, hourlyActivity, liveCount });
+  return json(200, { schedule, lastWeekLeaders, todayLeaders, progress, streak, subjectProgress, pomoSettings, pomoSessions, pomoActive, hourlyActivity, liveCount, malpractice });
 }

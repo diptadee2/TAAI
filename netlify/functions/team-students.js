@@ -54,9 +54,9 @@ export async function handler(event, context) {
 
   const today = todayForStreak();
 
-  let studentsResult, completed, sessions, weekStatsResult, totalTaskResult;
+  let studentsResult, completed, sessions, weekStatsResult, totalTaskResult, malpracticeResult;
   try {
-    [studentsResult, completed, sessions, weekStatsResult, totalTaskResult] = await Promise.all([
+    [studentsResult, completed, sessions, weekStatsResult, totalTaskResult, malpracticeResult] = await Promise.all([
       supabase.from('students').select('email, display_name, notes, created_at, current_streak'),
       fetchAllRows(() => supabase.from('task_progress').select('email, date').eq('completed', true).lte('date', today)),
       fetchAllRows(() => supabase.from('pomo_daily_sessions').select('email, date, total_minutes')),
@@ -71,6 +71,12 @@ export async function handler(event, context) {
       // request, not a real row fetch, so it isn't subject to the same
       // 1,000-row response cap the two fetchAllRows queries above are.
       supabase.from('schedule_tasks').select('*', { count: 'exact', head: true }),
+      // Best-effort, deliberately its own query rather than added to the
+      // main students select above — see record_malpractice_incident in
+      // schema.sql. A pre-migration "column does not exist" error here
+      // must never fail the WHOLE Students view the way a missing
+      // display_name/streak legitimately would.
+      supabase.from('students').select('email, malpractice_incident_count, malpractice_offense_count, malpractice_frozen_until'),
     ]);
   } catch (err) {
     return json(500, { error: err.message });
@@ -80,6 +86,13 @@ export async function handler(event, context) {
   const { count: totalTaskCount, error: totalErr } = totalTaskResult;
   const err = studentsErr || weekErr || totalErr;
   if (err) return json(500, { error: err.message });
+
+  const malpracticeByEmail = new Map();
+  if (!malpracticeResult.error) {
+    for (const row of malpracticeResult.data || []) {
+      malpracticeByEmail.set(row.email, row);
+    }
+  }
 
   const completedByEmail = new Map(); // email -> Set(date), for streak
   const taskCountByEmail = new Map(); // email -> completed task count
@@ -141,6 +154,7 @@ export async function handler(event, context) {
 
   const rows = students.map(s => {
     const lastActive = lastActiveByEmail.get(s.email) || null;
+    const malpractice = malpracticeByEmail.get(s.email);
     return {
       email: s.email,
       display_name: s.display_name,
@@ -154,6 +168,13 @@ export async function handler(event, context) {
       consistency_minutes: consistencyFor(s.email),
       last_active: lastActive,
       days_inactive: daysInactiveFor(lastActive),
+      // See record_malpractice_incident in schema.sql — for spotting
+      // repeat cheat attempts. malpractice_frozen_until is only meaningful
+      // if it's still in the future; a past one just means a freeze that
+      // already expired, not an active one.
+      malpractice_incident_count: malpractice?.malpractice_incident_count || 0,
+      malpractice_offense_count: malpractice?.malpractice_offense_count || 0,
+      malpractice_frozen_until: malpractice?.malpractice_frozen_until || null,
     };
   });
 
@@ -171,6 +192,7 @@ export async function handler(event, context) {
     never_active: rows.filter(r => r.days_inactive == null).length,
     avg_progress_pct: rows.length ? Math.round(rows.reduce((sum, r) => sum + r.progress_pct, 0) / rows.length) : 0,
     avg_consistency_minutes: rows.length ? Math.round(rows.reduce((sum, r) => sum + r.consistency_minutes, 0) / rows.length) : 0,
+    malpractice_flagged: rows.filter(r => r.malpractice_incident_count > 0).length,
   };
 
   return json(200, { students: rows, summary });
