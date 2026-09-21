@@ -50,6 +50,13 @@
 [functions."daily-streak-snapshot"]
   schedule = "45 18 * * *"
 
+# Runs once a day at 19:00 UTC (00:30 IST) and deletes
+# pomodoro_credit_failures rows older than 7 days — see
+# credit-failure-cleanup.js's own comment for why this table needs a cap
+# unlike everything else this project writes to on a schedule.
+[functions."credit-failure-cleanup"]
+  schedule = "0 19 * * *"
+
 # No headers were configured at all before this, so every static asset
 # (images, vendor React bundle, favicons) inherited Netlify's default
 # `Cache-Control: public, max-age=0, must-revalidate` — the same policy
