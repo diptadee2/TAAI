@@ -1272,18 +1272,41 @@
      own width already varies a lot depending on whether the page-grid
      sidebar is showing (see .page-grid above) — wrapping to a stacked
      layout once either side drops below its own min comfortable width
-     is more robust than guessing one "mobile" pixel number. */
-  .today-card-split { position: relative; display: flex; gap: 22px; align-items: flex-start; flex-wrap: wrap; }
+     is more robust than guessing one "mobile" pixel number.
+     align-items:stretch (the default, stated explicitly) makes the right
+     column the same height as the left — the checklist is usually
+     taller, and the chart used to just sit pinned to the top of a
+     shorter box, leaving a large dead gap below it (direct feedback).
+     .hourly-activity-title stays pinned to the top of that stretched
+     column (aligned with .today-tag on the left) rather than being
+     centered along with everything else — an earlier pass centered the
+     WHOLE block including the heading, which threw "Activity by hour"
+     out of alignment with "Today" on the left (also direct feedback:
+     "the heading position is terrible"). Only .hourly-activity-body (the
+     bars + peak caption, everything BELOW the heading) centers within
+     the leftover space under that pinned title. */
+  .today-card-split { position: relative; display: flex; gap: 22px; align-items: stretch; flex-wrap: wrap; }
   .today-card-left { flex: 2 1 260px; min-width: 0; }
-  .today-card-right { flex: 1 1 200px; min-width: 0; padding-top: 2px; }
+  .today-card-right { flex: 1 1 220px; min-width: 0; }
   @media (min-width: 561px) { .today-card-right { border-left: 1px solid var(--line); padding-left: 22px; } }
-  .hourly-activity-title { font-family: var(--font-nav); font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 10px; }
+  .hourly-activity { display: flex; flex-direction: column; height: 100%; }
+  .hourly-activity-title { font-family: var(--font-nav); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 14px; }
+  .hourly-activity-body { flex: 1; display: flex; flex-direction: column; justify-content: center; }
   .hourly-activity-empty { font-size: 12px; color: var(--ink-soft); line-height: 1.4; margin: 0; }
-  .hourly-activity-bars { display: flex; align-items: flex-end; gap: 2px; height: 84px; }
+  .hourly-activity-bars { display: flex; align-items: flex-end; gap: 6px; height: 130px; }
   .hourly-bar-col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; height: 100%; }
-  .hourly-bar-track { width: 100%; flex: 1; display: flex; align-items: flex-end; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; }
-  .hourly-bar-fill { width: 100%; background: linear-gradient(180deg, #FF7FB7, var(--purple), #4D8BFF); border-radius: 2px 2px 0 0; }
-  .hourly-bar-label { font-family: var(--font-nav); font-size: 8px; color: var(--ink-soft); margin-top: 4px; white-space: nowrap; }
+  .hourly-bar-track { width: 100%; flex: 1; display: flex; align-items: flex-end; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; }
+  /* A tight 2-stop gradient (adjacent hues, not 3 clashing ones) — the
+     original pink-purple-blue gradient compressed into a short bar
+     showed a muddy, inconsistent smear (a 4%-height bar and a
+     100%-height bar rendered nothing alike), which was a real part of
+     "the graph looks terrible". Two adjacent brand hues blend cleanly
+     at any bar height instead. */
+  .hourly-bar-fill { width: 100%; background: linear-gradient(180deg, #C99CFB, var(--purple)); border-radius: 3px 3px 0 0; }
+  .hourly-bar-col--peak .hourly-bar-fill { background: linear-gradient(180deg, #FF9FCB, #FF7FB7); box-shadow: 0 0 10px rgba(255,127,183,0.45); }
+  .hourly-bar-label { font-family: var(--font-nav); font-size: 9px; color: var(--ink-soft); margin-top: 6px; white-space: nowrap; }
+  .hourly-bar-col--peak .hourly-bar-label { color: var(--ink); font-weight: 700; }
+  .hourly-activity-peak { font-size: 11.5px; color: var(--ink-soft); margin: 12px 0 0; }
 </style>
 </head>
 <body>

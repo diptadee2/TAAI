@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-21-12';
+  var CLIENT_VERSION = '2026-09-21-14';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2553,9 +2553,7 @@
       '</div>';
   }
 
-  // 12a/1a.../11a/12p/1p.../11p — compact hour-of-day labels for the
-  // hourly activity chart's x-axis, only every 3rd hour (0/3/6/9/12/15/
-  // 18/21) so 24 labels don't crowd a narrow chart.
+  // 12a/1a.../11a/12p/1p.../11p — compact hour-of-day labels.
   function hourLabel12(h) {
     var period = h < 12 ? 'a' : 'p';
     var h12 = h % 12;
@@ -2565,36 +2563,51 @@
 
   // Batch-wide "when does everyone actually study" histogram — see
   // pomo_hourly_activity in schema.sql / fetchHourlyActivity in
-  // lib/supabase.js. state.hourlyActivity is always a plain 24-length
-  // array (index === hour), so this never needs to guard against a
-  // missing hour, just an all-zero one (a genuinely quiet hour, or —
-  // early on — no data logged yet at all since this only starts filling
-  // in from whenever it shipped, with nothing to backfill from).
+  // lib/supabase.js. Grouped into 8 three-hour buckets rather than 24
+  // individual bars — the original per-hour version packed 24 slivers
+  // into a ~200px column (each bar only 6-7px wide), which read as noise
+  // rather than a chart (direct feedback: "the graph looks terrible").
+  // Wider, fewer bars with a real label under every one of them (not
+  // just every 3rd, which the 24-bar version needed just to avoid
+  // crowding) reads as an actual bar chart at this size.
   function pomoHourlyActivityHtml() {
     var hours = state.hourlyActivity || [];
-    var max = 0;
-    for (var i = 0; i < hours.length; i++) {
-      if (hours[i].total_minutes > max) max = hours[i].total_minutes;
+    var buckets = [];
+    for (var b = 0; b < 8; b++) {
+      var total = 0;
+      for (var h = b * 3; h < b * 3 + 3; h++) {
+        if (hours[h]) total += hours[h].total_minutes;
+      }
+      buckets.push({ startHour: b * 3, total_minutes: total });
+    }
+    var max = 0, peakIdx = -1;
+    for (var i = 0; i < buckets.length; i++) {
+      if (buckets[i].total_minutes > max) { max = buckets[i].total_minutes; peakIdx = i; }
     }
     if (max <= 0) {
       return '<div class="hourly-activity">' +
-        '<div class="hourly-activity-title">📊 When the batch studies</div>' +
-        '<p class="hourly-activity-empty">Fills in as students complete focus sessions.</p>' +
+        '<div class="hourly-activity-title">Activity by hour</div>' +
+        '<div class="hourly-activity-body"><p class="hourly-activity-empty">Fills in as students complete focus sessions.</p></div>' +
         '</div>';
     }
     var bars = '';
-    for (var h = 0; h < 24; h++) {
-      var entry = hours[h] || { total_minutes: 0 };
-      var pct = Math.max(Math.round((entry.total_minutes / max) * 100), entry.total_minutes > 0 ? 4 : 0);
-      var title = hourLabel12(h) + '–' + hourLabel12((h + 1) % 24) + ': ' + Math.round(entry.total_minutes) + ' min logged';
-      bars += '<div class="hourly-bar-col">' +
+    for (var b2 = 0; b2 < 8; b2++) {
+      var bucket = buckets[b2];
+      var pct = Math.max(Math.round((bucket.total_minutes / max) * 100), bucket.total_minutes > 0 ? 6 : 0);
+      var label = hourLabel12(bucket.startHour) + '–' + hourLabel12((bucket.startHour + 3) % 24);
+      var title = label + ': ' + Math.round(bucket.total_minutes) + ' min logged';
+      bars += '<div class="hourly-bar-col' + (b2 === peakIdx ? ' hourly-bar-col--peak' : '') + '">' +
         '<div class="hourly-bar-track" title="' + escapeAttr(title) + '"><div class="hourly-bar-fill" style="height:' + pct + '%"></div></div>' +
-        '<div class="hourly-bar-label">' + (h % 3 === 0 ? hourLabel12(h) : '') + '</div>' +
+        '<div class="hourly-bar-label">' + label + '</div>' +
         '</div>';
     }
+    var peakLabel = hourLabel12(buckets[peakIdx].startHour) + '–' + hourLabel12((buckets[peakIdx].startHour + 3) % 24);
     return '<div class="hourly-activity">' +
-      '<div class="hourly-activity-title">📊 When the batch studies</div>' +
+      '<div class="hourly-activity-title">Activity by hour</div>' +
+      '<div class="hourly-activity-body">' +
       '<div class="hourly-activity-bars">' + bars + '</div>' +
+      '<p class="hourly-activity-peak">Busiest: ' + peakLabel + '</p>' +
+      '</div>' +
       '</div>';
   }
 
