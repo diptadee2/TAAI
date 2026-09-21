@@ -488,6 +488,47 @@ $$ LANGUAGE sql;
 
 GRANT EXECUTE ON FUNCTION update_student_streaks TO service_role;
 
+-- All-time focus minutes, cached on the student row rather than summed
+-- live — powers a "hover a name, see their all-time total" tooltip on
+-- the leaderboards (direct request: "whenever someone hovers over
+-- someone's name can we show them their total minutes... is it too much
+-- resource intensive"). The boards already show that WEEK's or that
+-- DAY's total right next to each name; this is the genuinely new number
+-- (their whole-program total), and the whole point of caching it here —
+-- same reasoning as current_streak above — is that showing it costs
+-- nothing extra per hover: it's fetched once per leaderboard poll/page
+-- load (fetchAllTimeMinutesByEmail in lib/supabase.js, its own query,
+-- kept separate from the main students SELECT so a pre-migration
+-- "column does not exist" error there can never break display_name/
+-- streak rendering), not a live SUM(pomodoro_stats.total_minutes)
+-- aggregate query or a network call per hover.
+ALTER TABLE students ADD COLUMN IF NOT EXISTS all_time_minutes INTEGER NOT NULL DEFAULT 0;
+
+-- One-time backfill so "all-time" is actually correct from the moment
+-- this ships, not just counting forward from zero for students who
+-- already have months of real history in pomodoro_stats.
+UPDATE students s
+SET all_time_minutes = COALESCE((
+  SELECT SUM(ps.total_minutes) FROM pomodoro_stats ps WHERE ps.email = s.email
+), 0);
+
+-- Same atomic-UPDATE-under-row-level-locking pattern as
+-- increment_pomodoro_stats/increment_pomo_daily_sessions above — called
+-- from pomodoro-complete.js alongside those two, right when a session is
+-- actually credited. A plain UPDATE, not an upsert: a session can only
+-- ever be credited to a student who already has a row (every other write
+-- in that same function already assumes this), so there's no ON CONFLICT
+-- branch to worry about the way current_streak's bulk updater does.
+CREATE OR REPLACE FUNCTION increment_student_all_time_minutes(p_email TEXT, p_minutes INTEGER)
+RETURNS TABLE(all_time_minutes INTEGER) AS $$
+  UPDATE students
+  SET all_time_minutes = students.all_time_minutes + p_minutes
+  WHERE email = p_email
+  RETURNING students.all_time_minutes;
+$$ LANGUAGE sql;
+
+GRANT EXECUTE ON FUNCTION increment_student_all_time_minutes TO service_role;
+
 -- A record of every real completion attempt pomodoro-complete.js rejects
 -- (or errors on), added after a real, unresolved report (2026-09-21): a
 -- student's genuinely-completed 2-hour Focus session never showed up in

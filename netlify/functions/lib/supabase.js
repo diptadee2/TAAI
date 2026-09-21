@@ -50,7 +50,7 @@ export async function fetchAllRows(buildQuery, pageSize = 1000) {
 // (old JS silently sending a request shape the new server no longer
 // accepts) doesn't stay stuck indefinitely waiting for someone to notice
 // and manually refresh.
-export const CLIENT_VERSION = '2026-09-21-32';
+export const CLIENT_VERSION = '2026-09-21-33';
 
 export function json(statusCode, body) {
   return {
@@ -278,10 +278,12 @@ export async function fetchLastWeekLeaders(supabase, email) {
   const prevRankByEmail = Object.fromEntries(prevWeekStats.map((s, i) => [s.email, i + 1]));
 
   const nameByEmail = Object.fromEntries(students.map(s => [s.email, s.display_name]));
+  const allTimeMinutesByEmail = await fetchAllTimeMinutesByEmail(supabase, stats.map(s => s.email));
   const liveStatusByEmail = await fetchLiveStatusByEmail(supabase, stats.map(s => s.email));
   const leaders = stats.map((s, i) => ({
     display_name: nameByEmail[s.email] || 'Anonymous',
     total_minutes: s.total_minutes,
+    all_time_minutes: allTimeMinutesByEmail[s.email] || 0,
     is_me: !!email && s.email === email,
     previous_week_rank: prevRankByEmail[s.email] ?? null,
     ...liveStatusByEmail[s.email],
@@ -310,7 +312,8 @@ export async function fetchLastWeekLeaders(supabase, email) {
       if (countError) throw new Error(countError.message);
 
       const viewerLiveStatus = await fetchLiveStatusByEmail(supabase, [email]);
-      viewerRank = { rank: (count || 0) + 1, total_minutes: viewerStats.total_minutes, previous_week_rank: prevRankByEmail[email] ?? null, ...viewerLiveStatus[email] };
+      const viewerAllTime = await fetchAllTimeMinutesByEmail(supabase, [email]);
+      viewerRank = { rank: (count || 0) + 1, total_minutes: viewerStats.total_minutes, all_time_minutes: viewerAllTime[email] || 0, previous_week_rank: prevRankByEmail[email] ?? null, ...viewerLiveStatus[email] };
     }
   }
 
@@ -398,6 +401,23 @@ export async function fetchLiveCount(supabase) {
   return { count: liveCount, maxCount: maxData ? maxData.max_count : liveCount };
 }
 
+// All-time total focus minutes per email (see all_time_minutes in
+// schema.sql) — powers the leaderboard hover tooltip (progress.js).
+// Deliberately its own query, never folded into a caller's main students
+// select: a pre-migration "column does not exist" error (or any other
+// failure) here must never break rendering of a leaderboard's actual
+// required fields (display_name, streak, minutes) the way it legitimately
+// would if this column were part of that same select. Swallows its own
+// error and returns {} on failure — every caller already treats a missing
+// entry as "0 all-time minutes", a harmless fallback for a supplementary
+// hover number, not something a student is owed credit for.
+export async function fetchAllTimeMinutesByEmail(supabase, emails) {
+  if (!emails.length) return {};
+  const { data, error } = await supabase.from('students').select('email, all_time_minutes').in('email', emails);
+  if (error || !data) return {};
+  return Object.fromEntries(data.map(s => [s.email, s.all_time_minutes || 0]));
+}
+
 // Top 10 by focus minutes logged on a given IST date (todayIST() by
 // default), keyed to pomo_daily_sessions.total_minutes — resets by
 // construction every midnight IST since a new day is just a new row
@@ -426,10 +446,12 @@ export async function fetchTodayLeaders(supabase, email, date) {
   if (studentsError) throw new Error(studentsError.message);
 
   const nameByEmail = Object.fromEntries(students.map(s => [s.email, s.display_name]));
+  const allTimeMinutesByEmail = await fetchAllTimeMinutesByEmail(supabase, stats.map(s => s.email));
   const liveStatusByEmail = await fetchLiveStatusByEmail(supabase, stats.map(s => s.email));
   const leaders = stats.map(s => ({
     display_name: nameByEmail[s.email] || 'Anonymous',
     total_minutes: s.total_minutes,
+    all_time_minutes: allTimeMinutesByEmail[s.email] || 0,
     is_me: !!email && s.email === email,
     ...liveStatusByEmail[s.email],
   }));
@@ -456,7 +478,8 @@ export async function fetchTodayLeaders(supabase, email, date) {
       if (countError) throw new Error(countError.message);
 
       const viewerLiveStatus = await fetchLiveStatusByEmail(supabase, [email]);
-      viewerRank = { rank: (count || 0) + 1, total_minutes: viewerStats.total_minutes, ...viewerLiveStatus[email] };
+      const viewerAllTime = await fetchAllTimeMinutesByEmail(supabase, [email]);
+      viewerRank = { rank: (count || 0) + 1, total_minutes: viewerStats.total_minutes, all_time_minutes: viewerAllTime[email] || 0, ...viewerLiveStatus[email] };
     }
   }
 

@@ -168,6 +168,19 @@ export async function handler(event) {
     return json(500, { error: dayError.message });
   }
 
+  // All-time total (see all_time_minutes in schema.sql) — powers the
+  // leaderboard hover tooltip (progress.js). Best-effort, same as the
+  // hourly-activity increment below: a supplementary display number, not
+  // something a student is owed credit for, so a failure here must never
+  // turn an already-successful completion (the week/day increments above
+  // already landed) into an error response.
+  try {
+    const { error: allTimeError } = await supabase.rpc('increment_student_all_time_minutes', { p_email: email, p_minutes: minutes });
+    if (allTimeError) console.error('pomodoro-complete.js: failed to increment all-time minutes for', email, allTimeError.message);
+  } catch (e) {
+    console.error('pomodoro-complete.js: failed to increment all-time minutes for', email, e);
+  }
+
   // Batch-wide "when does everyone study" histogram (see
   // pomo_hourly_activity in schema.sql) — attributed to the hour the
   // session STARTED in (phase_started_at), not when it finished, so a

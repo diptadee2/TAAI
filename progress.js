@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-21-32';
+  var CLIENT_VERSION = '2026-09-21-33';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1442,7 +1442,7 @@
       return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (l.is_me ? ' leaderboard-row--me' : '') + (l.is_live ? ' leaderboard-row--live' : '') + '">' +
         '<span class="leaderboard-rank">' + rank + '</span>' +
         rankMovementHtml(i + 1, l.previous_week_rank) +
-        '<span class="leaderboard-name">' + liveDotHtml(l.is_live) + escapeHtml(l.display_name) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
+        '<span class="leaderboard-name"' + allTimeTitleAttr(l.all_time_minutes) + '>' + liveDotHtml(l.is_live) + escapeHtml(l.display_name) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
         '<span class="leaderboard-time">' + formatHoursDecimal(l.total_minutes) + '</span>' +
         '</div>';
     }).join('');
@@ -1454,7 +1454,7 @@
         '<div class="leaderboard-row leaderboard-row--me' + (state.lastWeekViewerRank.is_live ? ' leaderboard-row--live' : '') + '">' +
         '<span class="leaderboard-rank">' + state.lastWeekViewerRank.rank + '</span>' +
         rankMovementHtml(state.lastWeekViewerRank.rank, state.lastWeekViewerRank.previous_week_rank) +
-        '<span class="leaderboard-name">' + liveDotHtml(state.lastWeekViewerRank.is_live) + 'You</span>' +
+        '<span class="leaderboard-name"' + allTimeTitleAttr(state.lastWeekViewerRank.all_time_minutes) + '>' + liveDotHtml(state.lastWeekViewerRank.is_live) + 'You</span>' +
         '<span class="leaderboard-time">' + formatHoursDecimal(state.lastWeekViewerRank.total_minutes) + '</span>' +
         '</div>';
     }
@@ -1496,6 +1496,21 @@
     return (minutes / 60).toFixed(1) + 'h';
   }
 
+  // Hover-a-name tooltip showing all-time total minutes across the whole
+  // program (see all_time_minutes in schema.sql) — a plain title attribute
+  // rather than a custom popover, since the browser's native tooltip needs
+  // zero extra markup/JS and this is genuinely just supplementary info, not
+  // something that needs its own styled UI. Reads a value that's already
+  // present on every leaderboard row/viewer-rank object from the initial
+  // fetch (pomodoro-leaderboard.js / fetchLastWeekLeaders / fetchTodayLeaders
+  // all now select it alongside display_name), so this costs zero extra
+  // requests — the explicit reason a cached students.all_time_minutes
+  // column was used instead of a live per-hover SUM query.
+  function allTimeTitleAttr(minutes) {
+    if (!Number.isFinite(minutes)) return '';
+    return ' title="' + (minutes / 60).toFixed(1) + 'h all-time"';
+  }
+
   // Split from renderTodayLeaders (below) so refreshLeaderboard can patch
   // just the rows on its smart-poll (see LEADERBOARD_POLL_MS), same reason renderLeaderboardRows is
   // split from renderLeaderboardCard — replacing the whole card would
@@ -1520,7 +1535,7 @@
       return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (l.is_me ? ' leaderboard-row--me' : '') + (l.is_live ? ' leaderboard-row--live' : '') + leaderboardRowEnterAttrs(animate, i) + '">' +
         '<span class="leaderboard-rank">' + rank + '</span>' +
         rankMovementHtml(i + 1) +
-        '<span class="leaderboard-name">' + liveDotHtml(l.is_live) + escapeHtml(l.display_name) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
+        '<span class="leaderboard-name"' + allTimeTitleAttr(l.all_time_minutes) + '>' + liveDotHtml(l.is_live) + escapeHtml(l.display_name) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
         '<span class="leaderboard-time">' + formatHoursDecimal(l.total_minutes) + '</span>' +
         '</div>';
     }).join('');
@@ -1529,7 +1544,7 @@
         '<div class="leaderboard-row leaderboard-row--me' + (state.todayViewerRank.is_live ? ' leaderboard-row--live' : '') + leaderboardRowEnterAttrs(animate, leaders.length) + '">' +
         '<span class="leaderboard-rank">' + state.todayViewerRank.rank + '</span>' +
         rankMovementHtml(state.todayViewerRank.rank) +
-        '<span class="leaderboard-name">' + liveDotHtml(state.todayViewerRank.is_live) + 'You</span>' +
+        '<span class="leaderboard-name"' + allTimeTitleAttr(state.todayViewerRank.all_time_minutes) + '>' + liveDotHtml(state.todayViewerRank.is_live) + 'You</span>' +
         '<span class="leaderboard-time">' + formatHoursDecimal(state.todayViewerRank.total_minutes) + '</span>' +
         '</div>';
     }
@@ -3312,7 +3327,7 @@
       return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (r.is_me ? ' leaderboard-row--me' : '') + (r.is_live ? ' leaderboard-row--live' : '') + leaderboardRowEnterAttrs(animate, i) + '">' +
         '<span class="leaderboard-rank">' + rankLabel + '</span>' +
         rankMovementHtml(i + 1, r.previous_week_rank) +
-        '<span class="leaderboard-name">' + liveDotHtml(r.is_live) + escapeHtml(r.display_name) + (r.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
+        '<span class="leaderboard-name"' + allTimeTitleAttr(r.all_time_minutes) + '>' + liveDotHtml(r.is_live) + escapeHtml(r.display_name) + (r.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
         streakBallsHtml(r.streak) +
         pomoStatusHtml(r.pomo_status, r.pomo_last_seen_at) +
         pomoTimerHtml(r.pomo_phase_end_at, r.pomo_phase_total_seconds, r.pomo_status) +
@@ -3329,7 +3344,7 @@
         '<div class="leaderboard-row leaderboard-row--me' + (state.viewerRank.is_live ? ' leaderboard-row--live' : '') + leaderboardRowEnterAttrs(animate, state.leaderboard.length) + '">' +
         '<span class="leaderboard-rank">' + state.viewerRank.rank + '</span>' +
         rankMovementHtml(state.viewerRank.rank, state.viewerRank.previous_week_rank) +
-        '<span class="leaderboard-name">' + liveDotHtml(state.viewerRank.is_live) + 'You</span>' +
+        '<span class="leaderboard-name"' + allTimeTitleAttr(state.viewerRank.all_time_minutes) + '>' + liveDotHtml(state.viewerRank.is_live) + 'You</span>' +
         streakBallsHtml(state.viewerRank.streak) +
         pomoStatusHtml(state.viewerRank.pomo_status, state.viewerRank.pomo_last_seen_at) +
         pomoTimerHtml(state.viewerRank.pomo_phase_end_at, state.viewerRank.pomo_phase_total_seconds, state.viewerRank.pomo_status) +

@@ -4,7 +4,7 @@
 // design; no email or other identity is returned in the response. The
 // optional `email` query param (the viewer's own, if logged in) is only
 // used to flag their own row with is_me, never anyone else's.
-import { getSupabase, json, weekStartIST, weekBefore, fetchTodayLeaders, fetchLiveStatusByEmail, fetchLiveCount } from './lib/supabase.js';
+import { getSupabase, json, weekStartIST, weekBefore, fetchTodayLeaders, fetchLiveStatusByEmail, fetchLiveCount, fetchAllTimeMinutesByEmail } from './lib/supabase.js';
 
 const LIMIT = 20;
 
@@ -56,9 +56,9 @@ export async function handler(event) {
   // daily-streak-snapshot.js's daily sweep — see CLAUDE.md) instead of
   // recomputing it from schedule_tasks + task_progress on every single
   // 60s poll.
-  let studentsResult, liveStatusByEmail, lastWeekRankResult;
+  let studentsResult, liveStatusByEmail, lastWeekRankResult, allTimeMinutesByEmail;
   try {
-    [studentsResult, liveStatusByEmail, lastWeekRankResult] = await Promise.all([
+    [studentsResult, liveStatusByEmail, lastWeekRankResult, allTimeMinutesByEmail] = await Promise.all([
       supabase.from('students').select('email, display_name, current_streak').in('email', streakEmails),
       fetchLiveStatusByEmail(supabase, streakEmails),
       // Rank-movement arrow, compared to where each student stood at the
@@ -76,6 +76,12 @@ export async function handler(event) {
       // same as "no previous rank at all" (a brand-new student), no
       // arrow shown, not an error.
       supabase.from('pomodoro_stats').select('email, final_rank').eq('week_start', lastWeekStart).in('email', streakEmails),
+      // Best-effort — see all_time_minutes in schema.sql / its own comment
+      // on fetchAllTimeMinutesByEmail. A pre-migration "column does not
+      // exist" error (or any other failure) here must never fail the
+      // whole leaderboard poll the way a missing display_name/
+      // current_streak legitimately would.
+      fetchAllTimeMinutesByEmail(supabase, streakEmails),
     ]);
   } catch (err) {
     return json(500, { error: err.message });
@@ -102,6 +108,7 @@ export async function handler(event) {
     total_minutes: s.total_minutes,
     total_sessions: s.total_sessions,
     streak: streakByEmail[s.email] || 0,
+    all_time_minutes: allTimeMinutesByEmail[s.email] || 0,
     previous_week_rank: lastWeekRankByEmail[s.email] ?? null,
     ...pomoFieldsFor(s.email),
     is_me: !!viewerEmail && s.email === viewerEmail,
@@ -137,6 +144,7 @@ export async function handler(event) {
         total_minutes: viewerStats.total_minutes,
         total_sessions: viewerStats.total_sessions,
         streak: streakByEmail[viewerEmail] || 0,
+        all_time_minutes: allTimeMinutesByEmail[viewerEmail] || 0,
         previous_week_rank: lastWeekRankByEmail[viewerEmail] ?? null,
         ...pomoFieldsFor(viewerEmail),
       };
