@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-21-30';
+  var CLIENT_VERSION = '2026-09-21-31';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2620,6 +2620,46 @@
     return Math.floor(new Date().getHours() / 3);
   }
 
+  // The "now" dot (see pomoHourlyActivityHtml) is only ever computed at
+  // render time — a tab left open across an hour boundary (this page's
+  // own docs already note students keep it open 12-14 hours daily) would
+  // keep pointing at whichever bucket was current when the card last
+  // fully re-rendered, not the real current one — direct report, a
+  // screenshot showing the dot still on an old bar. Patches the DOM in
+  // place rather than re-rendering the whole card (same "don't replay
+  // a .fade-in ancestor's entrance for a routine update" discipline this
+  // page already applies elsewhere), and is a no-op on any render where
+  // the bucket hasn't actually changed, not just cosmetically re-adding
+  // an already-present class. Piggybacked on applyLiveCountUpdate rather
+  // than its own new interval — that function already fires reliably
+  // every 60s in BOTH contexts the Today card can appear in (Focus Mode
+  // and the plain checklist, via refreshLeaderboard/
+  // refreshLastWeekChampions respectively), the same "two existing polls
+  // already cover every context" reasoning that already replaced the
+  // busy meter's own dedicated poll — up to a minute's staleness on the
+  // hour boundary is a non-issue for a display this coarse.
+  function refreshHourlyNowIndicator() {
+    var cols = document.querySelectorAll('.hourly-activity-bars .hourly-bar-col');
+    if (!cols.length) return;
+    var nowIdx = hourlyCurrentBucketIdx();
+    cols.forEach(function (col, idx) {
+      var isNow = col.classList.contains('hourly-bar-col--now');
+      var shouldBeNow = idx === nowIdx;
+      if (shouldBeNow === isNow) return;
+      col.classList.toggle('hourly-bar-col--now', shouldBeNow);
+      var label = col.querySelector('.hourly-bar-label');
+      if (!label) return;
+      var dot = label.querySelector('.hourly-bar-now-dot');
+      if (shouldBeNow && !dot) {
+        dot = document.createElement('span');
+        dot.className = 'hourly-bar-now-dot';
+        label.appendChild(dot);
+      } else if (!shouldBeNow && dot) {
+        dot.remove();
+      }
+    });
+  }
+
   function pomoHourlyActivityHtml() {
     var hours = state.hourlyActivity || [];
     var buckets = [];
@@ -3205,6 +3245,11 @@
   // regenerating the HTML (which would create a brand-new element with
   // the new position already set, no transition to animate from).
   function applyLiveCountUpdate(liveCountData) {
+    // Piggybacks the hour-boundary check onto this same call regardless
+    // of whether there's actual liveCountData this time — see
+    // refreshHourlyNowIndicator's own comment for why this function
+    // specifically (not a new interval) is what keeps it fresh.
+    refreshHourlyNowIndicator();
     if (!liveCountData) return;
     state.liveCount = liveCountData.count || 0;
     state.liveCountMax = liveCountData.maxCount || 0;
