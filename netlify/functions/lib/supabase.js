@@ -837,61 +837,57 @@ function median(values) {
 
 // Median (not mean — one binge-hours student shouldn't swing a whole-batch
 // read the way it would an average, same reasoning already used for the
-// "consistency" figures elsewhere in this file) of total_minutes, computed
-// over the INTERSECTION of students active in both weeks being compared —
-// deliberately not each week's own independently-varying full active
-// population.
+// "consistency" figures elsewhere in this file) of total_minutes, each
+// week computed independently over its OWN full active population —
+// "it's a batch median," direct instruction 2026-09-21, reverting an
+// earlier common-cohort-only version (restricting both weeks to just the
+// students active in both of them).
 //
-// Real bug, caught by direct report ("I don't believe the numbers" on a
-// posted ▲71% swing): the original version computed each week's median
-// separately over whoever was active THAT week, so the comparison was
-// contaminated by population churn — students new this week, or who
-// dropped off last week — not just genuine change in how hard the same
-// people worked. Confirmed directly against production, for the exact
-// week that prompted the report: the full-population comparison showed
-// 8.3h -> 14.3h (+71%), but restricting to the 47 students who were
-// active in BOTH weeks showed 17.3h -> 19.8h (+14%) — a real, modest
-// increase, nothing like the dramatic swing the full-population number
-// implied. 15 students who dropped off dragged the prior week's full
-// median down; 14 students new that week dragged the reported week's
-// full median down too (independently) — neither swing has anything to
-// do with "the same people doing more," which is what this line is
-// supposed to describe.
-async function fetchCommonCohortMedians(supabase, weekStart, lastWeekStart) {
+// That earlier version was itself a real bug fix at the time (a posted
+// ▲71% swing turned out to be almost entirely population churn, not
+// genuine behavior change — see git history around 2026-09-07 if this
+// needs resurrecting), but it introduced a different, worse problem:
+// the exact same calendar week's median stopped being one fixed number
+// at all — it silently changed depending on which OTHER week it
+// happened to be compared against, since a different comparison implies
+// a different intersecting cohort. Confirmed directly against
+// production, 2026-09-21: week-of-09-07 measured 17.5h when compared
+// against 08-31 (47-student common cohort) but 25.8h when compared
+// against 09-14 (a different, 38-student common cohort) — two live
+// Discord posts, days apart, reporting two different numbers for the
+// identical week, with no way for a reader to know why. A real batch
+// median has to mean the same thing regardless of what it's being
+// compared to.
+async function fetchWeeklyMedians(supabase, weekStart, lastWeekStart) {
   const [thisWeekResult, lastWeekResult] = await Promise.all([
-    supabase.from('pomodoro_stats').select('email, total_minutes').eq('week_start', weekStart),
-    supabase.from('pomodoro_stats').select('email, total_minutes').eq('week_start', lastWeekStart),
+    supabase.from('pomodoro_stats').select('total_minutes').eq('week_start', weekStart),
+    supabase.from('pomodoro_stats').select('total_minutes').eq('week_start', lastWeekStart),
   ]);
   if (thisWeekResult.error) throw new Error(thisWeekResult.error.message);
   if (lastWeekResult.error) throw new Error(lastWeekResult.error.message);
-  const thisMap = new Map(thisWeekResult.data.map(r => [r.email, r.total_minutes]));
-  const lastMap = new Map(lastWeekResult.data.map(r => [r.email, r.total_minutes]));
-  const commonEmails = [...thisMap.keys()].filter((e) => lastMap.has(e));
-  if (!commonEmails.length) return { thisWeek: null, lastWeek: null };
-  return {
-    thisWeek: median(commonEmails.map((e) => thisMap.get(e))),
-    lastWeek: median(commonEmails.map((e) => lastMap.get(e))),
-  };
+  const thisWeek = median(thisWeekResult.data.map((r) => r.total_minutes));
+  const lastWeek = median(lastWeekResult.data.map((r) => r.total_minutes));
+  if (thisWeek == null || lastWeek == null) return { thisWeek: null, lastWeek: null };
+  return { thisWeek, lastWeek };
 }
 
 // Core sentence for the standalone 'weekly_batch_trend' source (its own
 // post, scheduled to fire right after weekly_leaderboard — see
 // resolveScheduledPostEmbed below) — whether the batch's typical (median)
-// focus time rose or fell compared to the week before, among students who
-// were around for both weeks, not any one individual's ranking. `weekStart`
-// is always the week the post is actually reporting on (fetchLastWeekLeaders'
+// focus time rose or fell compared to the week before, across the whole
+// batch each week, not any one individual's ranking. `weekStart` is
+// always the week the post is actually reporting on (fetchLastWeekLeaders'
 // own weekBefore(weekStartIST()) result, reused here so both posts report on
 // the identical week), so "last week" here means whatever full 7-day
 // period preceded THAT week — this falls back correctly across a month
 // boundary with no special-casing needed, since a week is just a plain
 // date range and doesn't care where a calendar month happens to start or
 // end. Returns null (not a thrown error) when there's nothing to report
-// yet — either nobody logged anything this week, or there's no overlap at
-// all with last week's roster (only realistic very early in the tracker's
-// life, or after a near-total population turnover) — same "nothing to
-// show" tolerance every other source here uses.
+// yet — nobody logged anything one of the two weeks (only realistic very
+// early in the tracker's life) — same "nothing to show" tolerance every
+// other source here uses.
 async function weeklyBatchTrendText(supabase, weekStart) {
-  const { thisWeek, lastWeek } = await fetchCommonCohortMedians(supabase, weekStart, weekBefore(weekStart));
+  const { thisWeek, lastWeek } = await fetchWeeklyMedians(supabase, weekStart, weekBefore(weekStart));
   if (thisWeek == null || lastWeek == null) return null;
   const diff = thisWeek - lastWeek;
   const arrow = diff > 0 ? '▲' : diff < 0 ? '▼' : '→';
