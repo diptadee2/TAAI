@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-22-3';
+  var CLIENT_VERSION = '2026-09-22-4';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -574,7 +574,8 @@
     pomoBlockedReason: null, // null | 'denied' | 'unsupported' — set when Start needed notification permission and didn't get it
     // See record_malpractice_incident in schema.sql / fetchMalpracticeStatus
     // in tracker-data.js — null for a guest (no account to flag),
-    // otherwise { incidentCount, frozenUntil }. Drives renderPomoMalpracticeNotice.
+    // otherwise { incidentCount, frozenUntil, warningAckCount }. Drives
+    // renderPomoMalpracticeGateHtml/pomoMalpracticeWarningActive.
     malpractice: null,
   };
 
@@ -1244,7 +1245,7 @@
         var progressRows = state.student ? (data.progress.progress || []) : [];
         state.streak = state.student ? data.streak.streak : null;
         state.subjectProgress = state.student ? (data.subjectProgress.subjects || []) : [];
-        state.malpractice = state.student ? (data.malpractice || { incidentCount: 0, frozenUntil: null }) : null;
+        state.malpractice = state.student ? (data.malpractice || { incidentCount: 0, frozenUntil: null, warningAckCount: 0 }) : null;
 
         // Only present once a student has actually saved custom durations
         // somewhere before (see applyPomoSettings) — merge in place of
@@ -2704,10 +2705,21 @@
   // since Start would still refuse to do anything underneath it (see
   // pomoIsFrozen() in pomoToggleRun) — dismissing would just reveal a
   // clock that doesn't work, which is worse than not dismissing at all.
+  // True while the (non-freeze) warning is still worth showing — 2-3
+  // incidents AND it hasn't already been dismissed 3 times for this exact
+  // incident count. malpractice_incident_count itself never decreases
+  // (a permanent record for admin visibility — see schema.sql), but
+  // malpractice_warning_ack_count does reset to 0 whenever a genuinely
+  // new incident happens, so a fresh incident always gets its own fresh
+  // 3-nag budget rather than inheriting an already-exhausted one.
+  function pomoMalpracticeWarningActive() {
+    return !!(state.malpractice && state.malpractice.incidentCount >= 2 && (state.malpractice.warningAckCount || 0) < 3);
+  }
+
   function renderPomoMalpracticeGateHtml(show) {
     if (!state.malpractice) return '';
     var frozen = pomoIsFrozen();
-    if (!frozen && state.malpractice.incidentCount < 2) return '';
+    if (!frozen && !pomoMalpracticeWarningActive()) return '';
     var html = '<div class="pomo-malpractice-gate' + (frozen ? ' pomo-malpractice-gate--freeze' : ' pomo-malpractice-gate--warning') + '" id="pomo-malpractice-gate"' + (show ? '' : ' hidden') + '>' +
       '<div class="pomo-gate-title">⚠️ Malpractice Detected</div>';
     if (frozen) {
@@ -2794,7 +2806,7 @@
     // already uses (see pomo-settings-toggle in bindCalendarEvents), so
     // dismissing the gate later is a plain DOM toggle, not a re-render
     // that would replay this card's .fade-in entrance.
-    var showMalpracticeGate = !!(state.malpractice && (pomoIsFrozen() || state.malpractice.incidentCount >= 2));
+    var showMalpracticeGate = pomoIsFrozen() || pomoMalpracticeWarningActive();
 
     return '<div class="pomodoro-card fade-in' + (pomo.mode === 'break' ? ' on-break' : '') + '" id="pomo-card" style="' + pomoGradStyle + '">' +
       renderPomoMalpracticeGateHtml(showMalpracticeGate) +
@@ -3997,15 +4009,41 @@
       var gate = document.getElementById('pomo-malpractice-gate');
       var clock = document.querySelector('.pomo-clock-wrap');
       if (!gate) return;
+      // Persisted server-side (not just this dismiss) so the "nag at most
+      // 3 times" budget is genuine across page loads/devices, not reset
+      // by a reload — see increment_malpractice_warning_ack in schema.sql.
+      // Updated locally too, immediately, so a same-session re-entry into
+      // Focus Mode (no reload in between) already reflects it without
+      // needing to wait on this request or re-fetch tracker-data.
+      if (state.malpractice) state.malpractice.warningAckCount = (state.malpractice.warningAckCount || 0) + 1;
+      if (state.student) {
+        api('/malpractice-ack', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: state.student.email }) })
+          .catch(function () { /* non-critical — see malpractice-ack.js's own comment */ });
+      }
       var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       function reveal() {
         gate.hidden = true;
         gate.classList.remove('pomo-malpractice-gate--dismissing');
-        if (clock) clock.hidden = false;
+        if (!clock) return;
+        if (reduceMotion) { clock.hidden = false; return; }
+        // Starts the clock faded/scaled down, THEN reveals it, THEN (a
+        // frame later — see the double-rAF comment on
+        // animateHourlyBusyMeter for why one rAF alone can still land in
+        // the same paint and skip the transition) removes that class so
+        // it transitions up to its normal state — a real fade-in
+        // coordinated with the gate's own fade-out just before it, not an
+        // instant pop the moment `hidden` flips.
+        clock.classList.add('pomo-clock-wrap--revealing');
+        clock.hidden = false;
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            clock.classList.remove('pomo-clock-wrap--revealing');
+          });
+        });
       }
       if (reduceMotion) { reveal(); return; }
       gate.classList.add('pomo-malpractice-gate--dismissing');
-      setTimeout(reveal, 250);
+      setTimeout(reveal, 320);
     });
 
     var prev = document.getElementById('prev-month');

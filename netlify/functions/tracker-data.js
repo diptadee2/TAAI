@@ -106,9 +106,31 @@ async function fetchMalpracticeStatus(supabase, email) {
     .eq('email', email)
     .maybeSingle();
   if (error) throw new Error(error.message);
+
+  // Deliberately its own separate query, not folded into the select
+  // above — a real, live-caught regression, not a hypothetical: a single
+  // PostgREST select fails ENTIRELY if even one requested column doesn't
+  // exist, so adding malpractice_warning_ack_count (added after the
+  // first two columns had already been migrated) straight into that same
+  // select would silently mask a real, already-correct
+  // incident_count/frozen_until behind the safe-default fallback the
+  // moment this new column didn't exist yet — confirmed directly: a real
+  // account already at incident_count 2 stopped showing the warning gate
+  // at all the moment this was added to the combined select, pre-migration.
+  let warningAckCount = 0;
+  try {
+    const { data: ackData, error: ackError } = await supabase
+      .from('students')
+      .select('malpractice_warning_ack_count')
+      .eq('email', email)
+      .maybeSingle();
+    if (!ackError && ackData) warningAckCount = ackData.malpractice_warning_ack_count || 0;
+  } catch (e) { /* pre-migration or any other hiccup — 0 is a safe default */ }
+
   return {
     incidentCount: data ? data.malpractice_incident_count || 0 : 0,
     frozenUntil: data ? data.malpractice_frozen_until : null,
+    warningAckCount,
   };
 }
 
@@ -226,7 +248,7 @@ export async function handler(event) {
     // Non-critical — a hiccup here (or, pre-migration, the columns simply
     // not existing yet) must never block the rest of the page; a guest
     // has no account to freeze, hence null rather than a fetch at all.
-    email ? fetchMalpracticeStatus(supabase, email).catch(() => ({ incidentCount: 0, frozenUntil: null })) : Promise.resolve(null),
+    email ? fetchMalpracticeStatus(supabase, email).catch(() => ({ incidentCount: 0, frozenUntil: null, warningAckCount: 0 })) : Promise.resolve(null),
   ]);
 
   return json(200, { schedule, lastWeekLeaders, todayLeaders, progress, streak, subjectProgress, pomoSettings, pomoSessions, pomoActive, hourlyActivity, liveCount, malpractice });

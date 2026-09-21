@@ -892,8 +892,18 @@
      Okay button, see bindCalendarEvents) would silently do nothing and
      both the gate and the clock underneath it would show at once —
      caught from a real screenshot after clicking Okay, not assumed. */
-  .pomo-malpractice-gate { margin-bottom: 18px; padding: 24px 22px; border-radius: 16px; text-align: center; min-height: 420px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; opacity: 1; transform: scale(1); transition: opacity .25s ease, transform .25s ease; }
+  .pomo-malpractice-gate { margin-bottom: 18px; padding: 24px 22px; border-radius: 16px; text-align: center; min-height: 420px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; opacity: 1; transform: scale(1) translateY(0); transition: opacity .32s cubic-bezier(.4,0,.2,1), transform .32s cubic-bezier(.4,0,.2,1); }
   .pomo-malpractice-gate[hidden] { display: none; }
+  /* The clock's own fade-in handoff, coordinated with the gate's fade-out
+     below (see the Okay handler in bindCalendarEvents) — an abrupt
+     instant pop-in right after a smooth dismiss read as a mismatched,
+     jarring handoff; this makes the two feel like one continuous
+     transition instead of two unrelated ones stitched together. No
+     border-radius/box-shadow on this wrapper, so transform+opacity here
+     is safe against this file's own known Chromium DOM-node-leak gotcha. */
+  .pomo-clock-wrap { opacity: 1; transform: scale(1); transition: opacity .3s ease, transform .3s ease; }
+  .pomo-clock-wrap--revealing { opacity: 0; transform: scale(0.98); }
+  @media (prefers-reduced-motion: reduce) { .pomo-clock-wrap { transition: none; } }
   /* Dismiss-on-Okay animation (see the click handler in bindCalendarEvents,
      which adds this class, waits for it to finish, then sets `hidden`) —
      safe to animate `transform` directly on this element since it has no
@@ -901,7 +911,7 @@
      Chromium DOM-node-leak gotcha that combination causes elsewhere on
      this page. Respects prefers-reduced-motion (an instant, un-animated
      dismiss rather than the fade+scale). */
-  .pomo-malpractice-gate--dismissing { opacity: 0; transform: scale(0.95); }
+  .pomo-malpractice-gate--dismissing { opacity: 0; transform: scale(0.92) translateY(-10px); }
   @media (prefers-reduced-motion: reduce) { .pomo-malpractice-gate { transition: none; } }
   .pomo-malpractice-gate .pomo-gate-title { font-size: 16px; margin-bottom: 0; }
   .pomo-malpractice-gate .pomo-gate-body { max-width: 300px; margin: 0; }

@@ -584,6 +584,13 @@ ALTER TABLE scheduled_posts ADD COLUMN IF NOT EXISTS dispatch_order INTEGER NOT 
 ALTER TABLE students ADD COLUMN IF NOT EXISTS malpractice_incident_count INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS malpractice_offense_count INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS malpractice_frozen_until TIMESTAMPTZ;
+-- How many times the CURRENT warning tier (2-3 incidents, no freeze) has
+-- been shown-and-dismissed via the Okay button — see
+-- increment_malpractice_warning_ack below and its own comment. Reset to
+-- 0 by record_malpractice_incident every time a genuinely new incident
+-- happens, so a fresh incident always gets its own fresh 3-nag budget
+-- rather than inheriting an already-exhausted one from an earlier tier.
+ALTER TABLE students ADD COLUMN IF NOT EXISTS malpractice_warning_ack_count INTEGER NOT NULL DEFAULT 0;
 
 -- Atomic claim-and-escalate, called once per genuinely NEW distinct
 -- incident (never per retry — see the dedupe check at pomodoro-
@@ -598,7 +605,10 @@ ALTER TABLE students ADD COLUMN IF NOT EXISTS malpractice_frozen_until TIMESTAMP
 -- can only happen after a previous freeze has already expired in the
 -- first place, since pomo-active.js refuses to start a new work phase at
 -- all while already frozen, so there's no "still-frozen-plus-new-offense"
--- case to reconcile.
+-- case to reconcile. Also resets malpractice_warning_ack_count to 0 on
+-- every call — a genuinely new incident means the warning is worth
+-- showing again from scratch, not counted against whatever nagging
+-- budget an earlier, different incident already used up.
 CREATE OR REPLACE FUNCTION record_malpractice_incident(p_email TEXT)
 RETURNS TABLE(malpractice_incident_count INTEGER, malpractice_offense_count INTEGER, malpractice_frozen_until TIMESTAMPTZ) AS $$
   UPDATE students
@@ -617,9 +627,32 @@ RETURNS TABLE(malpractice_incident_count INTEGER, malpractice_offense_count INTE
           ELSE INTERVAL '7 days'
         END)
       ELSE students.malpractice_frozen_until
-    END
+    END,
+    malpractice_warning_ack_count = 0
   WHERE email = p_email
   RETURNING students.malpractice_incident_count, students.malpractice_offense_count, students.malpractice_frozen_until;
 $$ LANGUAGE sql;
 
 GRANT EXECUTE ON FUNCTION record_malpractice_incident TO service_role;
+
+-- Called once per Okay click on the (non-freeze) warning gate — see
+-- malpractice-ack.js and the client-side gating in
+-- renderPomoMalpracticeGateHtml/progress.js: the gate only shows while
+-- malpractice_warning_ack_count < 3, so a specific incident tier nags at
+-- most 3 times (across however many separate Focus Mode visits that
+-- spans) before going quiet on its own, without needing the underlying
+-- incident_count itself to ever decrease — that count stays a permanent,
+-- honest record for admin visibility, only the VISIBLE nagging stops.
+-- Capped at 3 server-side too (not just relying on the client to stop
+-- asking), since a determined client could otherwise increment this
+-- indefinitely for no real benefit — LEAST just makes that a harmless
+-- no-op past 3 rather than actually preventing it.
+CREATE OR REPLACE FUNCTION increment_malpractice_warning_ack(p_email TEXT)
+RETURNS TABLE(malpractice_warning_ack_count INTEGER) AS $$
+  UPDATE students
+  SET malpractice_warning_ack_count = LEAST(students.malpractice_warning_ack_count + 1, 3)
+  WHERE email = p_email
+  RETURNING students.malpractice_warning_ack_count;
+$$ LANGUAGE sql;
+
+GRANT EXECUTE ON FUNCTION increment_malpractice_warning_ack TO service_role;
