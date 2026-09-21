@@ -282,6 +282,43 @@ $$ LANGUAGE sql;
 
 GRANT EXECUTE ON FUNCTION update_live_count_max TO service_role;
 
+-- A one-time flag, nothing more — see hourly-activity-mock-cutover.js.
+-- pomo_hourly_activity was seeded with realistic-looking mock data for
+-- launch (so the Today card's chart wasn't empty on day one) — direct
+-- instruction: "use the mock data till 7pm tomorrow and then update it
+-- to the real data calculated in between till forever." A scheduled
+-- function checks this row every 15 minutes and, once past the deadline,
+-- subtracts the exact known mock baseline back out of every hour bucket
+-- (leaving only whatever real sessions contributed since launch), then
+-- sets `done` here so it can never run that subtraction a second time.
+CREATE TABLE IF NOT EXISTS hourly_activity_cutover (
+  id      INTEGER PRIMARY KEY DEFAULT 1,
+  done    BOOLEAN NOT NULL DEFAULT false,
+  done_at TIMESTAMPTZ,
+  CONSTRAINT hourly_activity_cutover_single_row CHECK (id = 1)
+);
+GRANT SELECT, INSERT, UPDATE, DELETE ON hourly_activity_cutover TO service_role;
+
+-- Atomic claim-once, same reasoning as credit_pomodoro_phase above — this
+-- runs on a 15-minute cron, so two invocations CAN overlap in flight
+-- (a slow one still running when the next one starts). The WHERE
+-- done = false on the UPDATE branch means a second, racing caller's
+-- UPDATE matches zero rows once the first has already flipped it to
+-- true, so it gets nothing back from RETURNING and knows to skip the
+-- subtraction rather than doing it twice.
+CREATE OR REPLACE FUNCTION claim_hourly_activity_cutover()
+RETURNS TABLE(claimed BOOLEAN) AS $$
+  INSERT INTO hourly_activity_cutover (id, done, done_at)
+  VALUES (1, true, now())
+  ON CONFLICT (id) DO UPDATE SET
+    done = true,
+    done_at = now()
+  WHERE hourly_activity_cutover.done = false
+  RETURNING true AS claimed;
+$$ LANGUAGE sql;
+
+GRANT EXECUTE ON FUNCTION claim_hourly_activity_cutover TO service_role;
+
 -- Discord announcements the /team page can create/edit — any webhook
 -- (any channel), fully custom text or one of a few built-in dynamic
 -- sources (today's top student, last week's top 5, monthly consistency —

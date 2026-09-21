@@ -57,6 +57,16 @@
 [functions."credit-failure-cleanup"]
   schedule = "0 19 * * *"
 
+# Runs every 15 minutes and, once past 7:00 PM IST on 2026-09-22, does a
+# one-time subtraction of pomo_hourly_activity's launch-day mock data
+# baseline, then never runs it again (see hourly-activity-mock-cutover.js
+# for the full reasoning and hourly_activity_cutover in schema.sql for
+# the idempotency guard). Safe to leave running indefinitely afterward —
+# once `done`, every invocation is just one cheap read against a 1-row
+# table.
+[functions."hourly-activity-mock-cutover"]
+  schedule = "*/15 * * * *"
+
 # No headers were configured at all before this, so every static asset
 # (images, vendor React bundle, favicons) inherited Netlify's default
 # `Cache-Control: public, max-age=0, must-revalidate` — the same policy
