@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-21-20';
+  var CLIENT_VERSION = '2026-09-21-21';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -545,6 +545,7 @@
     todayLeaders: [], // [{ display_name, total_minutes, is_me }] — top 5 by focus minutes today, shown in Focus Mode
     todayViewerRank: null, // { rank, total_minutes } — set only when the viewer isn't in today's top 10
     hourlyActivity: [], // [{ hour, session_count, total_minutes }] x24 — batch-wide, shown beside the Today checklist
+    liveCount: 0, // students in a live session right now — polled independently, see startLiveCountPoll
     streak: null,
     subjectProgress: [], // [{ subject, done, total }] — global, independent of viewed month
     expanded: new Set(), // dates whose day-card is open, non-native accordion
@@ -714,6 +715,10 @@
     // so this correctly stays off when the block above just restored Focus
     // Mode, and correctly starts for the normal fresh-load-onto-checklist case.
     startLastWeekPoll();
+    // Unlike the poll above, this one runs regardless of state.focus — the
+    // Today card (and its busy meter) renders in both contexts, see
+    // startLiveCountPoll's own comment.
+    startLiveCountPoll();
   }
 
   // ── Scroll progress + back-to-top — same pattern as blog.js ──────────
@@ -1138,6 +1143,7 @@
         state.todayLeaders = data.todayLeaders.leaders || [];
         state.todayViewerRank = data.todayLeaders.viewerRank || null;
         state.hourlyActivity = (data.hourlyActivity && data.hourlyActivity.hours) || [];
+        state.liveCount = (data.liveCount && data.liveCount.count) || 0;
         var progressRows = state.student ? (data.progress.progress || []) : [];
         state.streak = state.student ? data.streak.streak : null;
         state.subjectProgress = state.student ? (data.subjectProgress.subjects || []) : [];
@@ -2570,6 +2576,16 @@
   // Wider, fewer bars with a real label under every one of them (not
   // just every 3rd, which the 24-bar version needed just to avoid
   // crowding) reads as an actual bar chart at this size.
+  // The bucket (0-7) covering right now, by the viewer's own local hour —
+  // same "just use the browser's local time" convention todayIso() etc.
+  // already rely on for this India-based audience, not a server round
+  // trip. Shared by the bars (to mark which one is "now") and the busy
+  // meter (which reports on this exact bucket, not the historically
+  // busiest one).
+  function hourlyCurrentBucketIdx() {
+    return Math.floor(new Date().getHours() / 3);
+  }
+
   function pomoHourlyActivityHtml() {
     var hours = state.hourlyActivity || [];
     var buckets = [];
@@ -2580,10 +2596,11 @@
       }
       buckets.push({ startHour: b * 3, total_minutes: total });
     }
-    var max = 0, peakIdx = -1;
+    var max = 0;
     for (var i = 0; i < buckets.length; i++) {
-      if (buckets[i].total_minutes > max) { max = buckets[i].total_minutes; peakIdx = i; }
+      if (buckets[i].total_minutes > max) max = buckets[i].total_minutes;
     }
+    var nowIdx = hourlyCurrentBucketIdx();
     if (max <= 0) {
       return '<div class="hourly-activity">' +
         '<div class="hourly-activity-title">Activity by hour</div>' +
@@ -2611,43 +2628,51 @@
       // --bar-h/--grow-delay drive a CSS-only grow-in entrance (see
       // .hourly-bar-fill's @keyframes) — a static height would just pop
       // in instantly, which is what "make the graph look more dynamic"
-      // was asking to move away from.
-      bars += '<div class="hourly-bar-col' + (b2 === peakIdx ? ' hourly-bar-col--peak' : '') + '">' +
+      // was asking to move away from. hourly-bar-col--now marks whichever
+      // bucket covers this exact moment, tying the bars visually to the
+      // busy meter below (which reports on this same bucket).
+      bars += '<div class="hourly-bar-col' + (b2 === nowIdx ? ' hourly-bar-col--now' : '') + '">' +
         '<div class="hourly-bar-track" title="' + escapeAttr(title) + '"><div class="hourly-bar-fill" style="--bar-h:' + pct + '%; --grow-delay:' + (b2 * 70) + 'ms; --intensity:' + intensity + ';"></div></div>' +
-        '<div class="hourly-bar-label">' + hourLabel12(bucket.startHour) + '</div>' +
+        '<div class="hourly-bar-label">' + hourLabel12(bucket.startHour) + (b2 === nowIdx ? '<span class="hourly-bar-now-dot"></span>' : '') + '</div>' +
         '</div>';
     }
-    var peakLabel = hourLabel12(buckets[peakIdx].startHour) + '–' + hourLabel12((buckets[peakIdx].startHour + 3) % 24);
-    // "Chill" vs "Intense" — a real read on the data (how much the
-    // busiest window actually stands out above the rest), not a
-    // celebratory label. Peak-vs-average-of-the-other-7-buckets ratio:
-    // a fairly even spread across the day (nothing stands out much)
-    // reads as "Chill"; a sharp, concentrated spike reads as "Intense".
-    var othersTotal = 0, othersCount = 0;
-    for (var i2 = 0; i2 < buckets.length; i2++) {
-      if (i2 !== peakIdx) { othersTotal += buckets[i2].total_minutes; othersCount++; }
-    }
-    var othersAvg = othersCount > 0 ? othersTotal / othersCount : 0;
-    var spikeRatio = othersAvg > 0 ? max / othersAvg : (max > 0 ? 99 : 1);
-    var vibe = spikeRatio >= 1.8 ? 'Intense' : 'Chill';
-    // A real spectrum meter, not just a word — a ratio of 1 (totally
-    // flat day) maps to 0%, 3+ (a sharp, concentrated spike) maps to
-    // 100%, clamped between. The marker's position is the actual
-    // "dynamic" content here (driven by spikeRatio), not an animation
-    // effect layered on top of a static fact.
-    var meterPct = Math.round(Math.min(100, Math.max(0, ((spikeRatio - 1) / 2) * 100)));
     return '<div class="hourly-activity">' +
       '<div class="hourly-activity-title">Activity by hour</div>' +
       '<div class="hourly-activity-body">' +
       '<div class="hourly-activity-bars">' + bars + '</div>' +
-      '<div class="hourly-busy-meter">' +
-      '<div class="hourly-busy-meter-head">Busiest: <b>' + peakLabel + '</b> — <span class="hourly-vibe hourly-vibe--' + vibe.toLowerCase() + '">' + vibe + '</span></div>' +
-      '<div class="hourly-busy-meter-track" title="' + escapeAttr(vibe + ' — ' + spikeRatio.toFixed(1) + 'x the rest of the day') + '">' +
+      '<div id="hourly-busy-meter-wrap">' + hourlyBusyMeterHtml() + '</div>' +
+      '</div>' +
+      '</div>';
+  }
+
+  // How many students are in a live focus/break session RIGHT NOW, and
+  // where that falls on a Chill<->Intense scale — a genuinely different
+  // calculation from the bars above (which are a cumulative, all-time
+  // histogram of past completed sessions). state.liveCount comes from
+  // fetchLiveCount (lib/supabase.js) via tracker-data.js's initial batch,
+  // then live-count.js's own poll (see startLiveCountPoll) — a real-time
+  // number, not a static fact, so this is re-rendered into
+  // #hourly-busy-meter-wrap on every poll tick rather than only at page
+  // load, unlike the bars (which only change once per session completion
+  // anywhere, not worth polling this same card for on its own).
+  // LIVE_COUNT_INTENSITY_CAP: how many concurrent live students counts
+  // as "fully Intense" on the meter — a starting, tunable guess (this
+  // project has no existing baseline for typical concurrent live count
+  // to calibrate against yet), not a measured constant.
+  var LIVE_COUNT_INTENSITY_CAP = 10;
+  var LIVE_COUNT_VIBE_THRESHOLD = 5;
+  function hourlyBusyMeterHtml() {
+    var liveCount = state.liveCount || 0;
+    var nowIdx = hourlyCurrentBucketIdx();
+    var nowRange = hourLabel12(nowIdx * 3) + '–' + hourLabel12((nowIdx * 3 + 3) % 24);
+    var vibe = liveCount >= LIVE_COUNT_VIBE_THRESHOLD ? 'Intense' : 'Chill';
+    var meterPct = Math.round(Math.min(100, (liveCount / LIVE_COUNT_INTENSITY_CAP) * 100));
+    return '<div class="hourly-busy-meter">' +
+      '<div class="hourly-busy-meter-head">Right now (<b>' + nowRange + '</b>): <b>' + liveCount + '</b> live — <span class="hourly-vibe hourly-vibe--' + vibe.toLowerCase() + '">' + vibe + '</span></div>' +
+      '<div class="hourly-busy-meter-track" title="' + escapeAttr(liveCount + ' students live right now') + '">' +
       '<div class="hourly-busy-meter-marker" style="--meter-pct:' + meterPct + '%;"></div>' +
       '</div>' +
       '<div class="hourly-busy-meter-scale"><span>Chill</span><span>Intense</span></div>' +
-      '</div>' +
-      '</div>' +
       '</div>';
   }
 
@@ -3058,6 +3083,38 @@
     clearInterval(lastWeekPollId);
     lastWeekPollId = null;
   }
+
+  // The Today card (and therefore the busy meter) renders in BOTH
+  // contexts — inside Focus Mode and on the main checklist (see
+  // renderCalendar) — unlike LEADERBOARD_POLL_MS/LAST_WEEK_POLL_MS above,
+  // each of which only runs in one context or the other. So this poll
+  // just runs unconditionally (started once from init(), only paused for
+  // a hidden tab), rather than being started/stopped on Focus Mode
+  // entry/exit the way those two are.
+  var LIVE_COUNT_POLL_MS = 60000;
+  var liveCountPollId = null;
+  function startLiveCountPoll() {
+    stopLiveCountPoll();
+    if (document.hidden) return;
+    liveCountPollId = setInterval(refreshLiveCount, LIVE_COUNT_POLL_MS);
+  }
+  function stopLiveCountPoll() {
+    if (!liveCountPollId) return;
+    clearInterval(liveCountPollId);
+    liveCountPollId = null;
+  }
+  function refreshLiveCount() {
+    var wrap = document.getElementById('hourly-busy-meter-wrap');
+    if (!wrap) return;
+    api('/live-count')
+      .then(function (r) {
+        state.liveCount = (r && r.count) || 0;
+        var wrapEl = document.getElementById('hourly-busy-meter-wrap');
+        if (wrapEl) wrapEl.innerHTML = hourlyBusyMeterHtml();
+      })
+      .catch(function () { /* non-critical — meter just stays stale until the next tick */ });
+  }
+
   // Standalone endpoint (last-week-leaders.js), not the big tracker-data.js
   // batch — same "small independently-pollable endpoint" pattern already
   // used for streak.js/subject-progress.js/pomo-settings.js, since this is
@@ -3602,6 +3659,9 @@
       if (document.hidden) stopLastWeekPoll();
       else { refreshLastWeekChampions(); startLastWeekPoll(); }
     }
+    // Runs regardless of state.focus — see startLiveCountPoll's own comment.
+    if (document.hidden) stopLiveCountPoll();
+    else { refreshLiveCount(); startLiveCountPoll(); }
   });
 
   // See sendPomoStoppedBeacon above — tells the server a running Pomodoro

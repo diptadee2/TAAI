@@ -50,7 +50,7 @@ export async function fetchAllRows(buildQuery, pageSize = 1000) {
 // (old JS silently sending a request shape the new server no longer
 // accepts) doesn't stay stuck indefinitely waiting for someone to notice
 // and manually refresh.
-export const CLIENT_VERSION = '2026-09-21-20';
+export const CLIENT_VERSION = '2026-09-21-21';
 
 export function json(statusCode, body) {
   return {
@@ -361,6 +361,25 @@ export async function fetchLiveStatusByEmail(supabase, emails) {
     };
   }
   return result;
+}
+
+// Global count of students in a live focus/break session RIGHT NOW —
+// same is-live definition as fetchLiveStatusByEmail just above (running
+// AND phase_end_at still in the future), just counted across every
+// student instead of looked up for a specific list of emails. Powers
+// the Today card's busy meter (progress.js's hourlyBusyMeterHtml) —
+// unlike the hourly bar chart (a cumulative, all-time histogram of past
+// completed sessions), this is a genuinely live number that changes as
+// students start/finish sessions, so it's polled independently (see
+// live-count.js) rather than only fetched once at page load.
+export async function fetchLiveCount(supabase) {
+  const { count, error } = await supabase
+    .from('pomo_active_session')
+    .select('*', { count: 'exact', head: true })
+    .eq('running', true)
+    .gt('phase_end_at', Date.now());
+  if (error) throw new Error(error.message);
+  return { count: count || 0 };
 }
 
 // Top 10 by focus minutes logged on a given IST date (todayIST() by
