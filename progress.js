@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-21-41';
+  var CLIENT_VERSION = '2026-09-21-42';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -530,6 +530,10 @@
     running: false,
     timerId: null,
     completedSessions: 0,
+    // Which calendar day completedSessions is currently counting for — see
+    // pomoResetSessionsIfNewDay's own comment for why this exists
+    // alongside (not instead of) pomoSavedIsFromToday's restore-time check.
+    completedSessionsDate: todayIso(),
     // Wall-clock deadline (Date.now() + secondsLeft*1000) set whenever the
     // timer starts/resumes. pomoTick derives secondsLeft from this rather
     // than decrementing per-tick, because background tabs get their
@@ -618,6 +622,14 @@
   // span midnight (a late-night session shouldn't get killed just because
   // the calendar date ticked over) and restores correctly regardless of
   // which day it started on.
+  // Purely a corrupted-data detector, not a real feature limit — see its
+  // one use in applyPomoActiveState below. Generous on purpose: even an
+  // extremely dedicated student running back-to-back short sessions for
+  // every waking hour couldn't plausibly clear this in one real day, so
+  // anything above it is treated as leftover cross-day accumulation from
+  // before pomoResetSessionsIfNewDay existed, not a real count to trust.
+  var POMO_SESSIONS_SANITY_CAP = 60;
+
   function pomoSavedIsFromToday(saved) {
     var ms = saved.savedAt != null ? saved.savedAt : (saved.updatedAt ? parseUtcTimestamp(saved.updatedAt).getTime() : null);
     if (ms == null) return true; // no timestamp on this blob — preserve prior (pre-fix) behavior rather than guess
@@ -637,7 +649,23 @@
     // progress this device already knows really happened. But only when
     // `saved` is genuinely from today — see pomoSavedIsFromToday above.
     var savedCompletedSessions = pomoSavedIsFromToday(saved) ? (saved.completedSessions || 0) : 0;
+    // A real, separate gap pomoSavedIsFromToday alone can't catch: a tab
+    // that's continuously active across many real days (never reloading,
+    // so this restore never ran to reset it) kept re-saving with a fresh
+    // "saved today" timestamp on every real completion — confirmed
+    // directly against production, where one student's completed_sessions
+    // reached 1033 and kept climbing. pomoResetSessionsIfNewDay (see its
+    // own comment) fixes this going forward for an active tab, but a blob
+    // written by the OLD, pre-fix code can still carry an already-
+    // corrupted large count with a perfectly legitimate "today" timestamp
+    // the very first time it's restored under the fix — no real single
+    // day produces anywhere close to this many sessions, so treat an
+    // implausibly large value as corrupted historical data regardless of
+    // its own timestamp, rather than trusting it once more and only
+    // self-correcting at the next actual midnight.
+    if (savedCompletedSessions > POMO_SESSIONS_SANITY_CAP) savedCompletedSessions = 0;
     pomo.completedSessions = Math.max(pomo.completedSessions, savedCompletedSessions);
+    pomo.completedSessionsDate = todayIso();
     if (saved.running) {
       pomo.phaseEndAt = saved.phaseEndAt;
       pomo.running = true;
@@ -1292,6 +1320,12 @@
         var dailySessions = state.student ? data.pomoSessions : null;
         if (dailySessions) {
           pomo.completedSessions = Math.max(pomo.completedSessions, dailySessions.sessionsCompleted || 0);
+          // dailySessions.sessionsCompleted is always correctly day-scoped
+          // (pomo_daily_sessions, keyed by todayIST() server-side) — this
+          // merge adopts a value genuinely known to be today's, so keep
+          // completedSessionsDate in sync rather than leaving it at
+          // whatever applyPomoActiveState's own restore set it to.
+          pomo.completedSessionsDate = todayIso();
         }
 
         // Cross-device pomodoro sync: if a session was started on a
@@ -2071,6 +2105,29 @@
     return pad(m) + ':' + pad(s);
   }
 
+  // Real bug, confirmed directly against production: one student's
+  // pomo_active_session.completed_sessions reached 1033 and kept
+  // climbing — a tab that's continuously active (real completions keep
+  // happening, so it never reloads) means applyPomoActiveState's own
+  // day-scoping (pomoSavedIsFromToday) never gets a chance to catch the
+  // rollover, since every real completion re-saves with a fresh "saved
+  // today" timestamp regardless of how many real calendar days the
+  // underlying count has actually accumulated across. That earlier fix
+  // only ever covered "midnight passes while idle, then a stale blob gets
+  // read on the next save/restore" — not "midnight passes while actively
+  // ticking, with no restore ever happening at all." Checked live at both
+  // points that actually change or display completedSessions —
+  // pomoAdvance (every real completion) and updatePomoDisplay (every
+  // per-second tick while a phase is running) — so this self-corrects
+  // regardless of how long the tab has been open, not just at reload time.
+  function pomoResetSessionsIfNewDay() {
+    var today = todayIso();
+    if (pomo.completedSessionsDate !== today) {
+      pomo.completedSessions = 0;
+      pomo.completedSessionsDate = today;
+    }
+  }
+
   function pomoDotsText() {
     var filled = pomo.completedSessions % pomoSettings.cycle;
     var dots = '';
@@ -2164,6 +2221,10 @@
   function updatePomoDisplay() {
     var card = document.getElementById('pomo-card');
     if (!card) return;
+    // Self-corrects the displayed count live once a real day boundary
+    // passes while this tab is open and ticking, even with no new
+    // completion yet — see pomoResetSessionsIfNewDay's own comment.
+    pomoResetSessionsIfNewDay();
     card.classList.toggle('on-break', pomo.mode === 'break');
     var modeEl = document.getElementById('pomo-mode');
     if (modeEl) {
@@ -2219,6 +2280,7 @@
     // pomo.mode was a moment ago).
     var finishedMode = pomo.mode;
     var oldPhaseEndAt = pomo.phaseEndAt;
+    pomoResetSessionsIfNewDay();
     if (pomo.mode === 'work') pomo.completedSessions++;
     pomo.mode = pomo.mode === 'work' ? 'break' : 'work';
     pomo.totalSeconds = pomoDurationFor(pomo.mode);
