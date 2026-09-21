@@ -1398,8 +1398,13 @@
      and the track's own hover tooltip, just isn't shown by default
      anymore. Left-aligned to match .hourly-activity-title above it (was
      centered — direct feedback: "align the heading properly" — the
-     two titles in this one card need to share an alignment). */
-  .hourly-busy-meter-title { font-family: var(--font-nav); font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 12px; }
+     two titles in this one card need to share an alignment). Font-size
+     and margin-bottom now byte-identical to .hourly-activity-title too
+     (was 10.5px/12px vs. 11px/14px — direct follow-up: "can the busy
+     meter have equal font size... maintaining equal spacing") — the two
+     headings should read as one consistent pair, not two independently
+     sized labels that happen to look similar. */
+  .hourly-busy-meter-title { font-family: var(--font-nav); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 14px; }
   .hourly-busy-meter-track { position: relative; height: 6px; border-radius: 999px; background: linear-gradient(90deg, #7DD3FC, #A78BFA, #FBBF24); }
   /* A real CSS transition, not a @keyframes animation — a transition
      fires on any genuine property change to an element already in the
