@@ -505,7 +505,21 @@
        max-width instead of stretching to fill all remaining space (flex:1
        with no cap looked sparse/dominant purely from empty width, not
        from anything actually in it). */
-    .pomo-today-row .pomodoro-card { flex: 0 0 auto; }
+    /* Real bug, caught from a screenshot: with no explicit width here,
+       the card's shrink-to-fit sizing (flex: 0 0 auto with no width) was
+       an implicit, fragile assumption that the ring (340px) would always
+       be the widest thing inside it — true until a wide, unwrapped
+       sentence (the malpractice warning's text, at the time still a
+       below-the-controls notice rather than the in-place gate it became
+       right after — see renderPomoMalpracticeGateHtml) became the new
+       widest content and ballooned the whole card to ~900px, squeezing
+       #today-leaderboard-card (its flex-shrink:1 sibling) down to a
+       barely-visible sliver. width: 380px pins the card explicitly
+       instead (340px ring + the card's own 20px each-side padding,
+       border-box), so nothing inside it — however wide its text —
+       can ever widen the card again; long text just wraps within it,
+       same as it should have all along. */
+    .pomo-today-row .pomodoro-card { flex: 0 0 auto; width: 380px; }
     .pomo-today-row .pomodoro-ring-wrap { width: 340px; height: 272px; }
     .pomo-today-row .pomodoro-time { font-size: 62px; }
     .pomo-today-row .pomodoro-mode { font-size: 18px; }
@@ -867,12 +881,25 @@
      up" tone for the 2-3-incident warning band, no freeze yet), plus a
      more severe red variant for an active freeze — see
      renderPomoMalpracticeNotice in progress.js. */
-  .pomo-malpractice-notice { margin-top: 18px; padding: 16px 18px; border-radius: 14px; text-align: left; }
-  .pomo-malpractice-notice--warning { background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.25); }
-  .pomo-malpractice-notice--freeze { background: var(--red-soft); border: 1px solid rgba(248,113,113,0.35); }
-  .pomo-malpractice-notice--freeze .pomo-gate-title { color: var(--red); }
-  .pomo-malpractice-notice--freeze .pomo-gate-body { margin-bottom: 0; }
-  .pomo-malpractice-notice--warning .pomo-gate-body { margin-bottom: 0; }
+  /* Sits IN PLACE OF .pomo-clock-wrap (ring/dots/controls), not below it
+     — see renderPomoMalpracticeGateHtml. min-height roughly matches the
+     clock area's own real footprint at this breakpoint (ring 272px +
+     dots/label/controls) so the card doesn't visibly shrink when gated. */
+  /* [hidden] override is required, not just tidy — a bare class rule
+     setting `display` has the same specificity as the browser's own
+     `[hidden] { display: none }` UA rule, and an author style always wins
+     that tie, so without this the `hidden` attribute (toggled by the
+     Okay button, see bindCalendarEvents) would silently do nothing and
+     both the gate and the clock underneath it would show at once —
+     caught from a real screenshot after clicking Okay, not assumed. */
+  .pomo-malpractice-gate { margin-bottom: 18px; padding: 24px 22px; border-radius: 16px; text-align: center; min-height: 420px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+  .pomo-malpractice-gate[hidden] { display: none; }
+  .pomo-malpractice-gate .pomo-gate-title { font-size: 16px; margin-bottom: 0; }
+  .pomo-malpractice-gate .pomo-gate-body { max-width: 300px; margin: 0; }
+  .pomo-malpractice-gate #pomo-malpractice-okay { margin-top: 8px; width: auto; padding-left: 32px; padding-right: 32px; }
+  .pomo-malpractice-gate--warning { background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.25); }
+  .pomo-malpractice-gate--freeze { background: var(--red-soft); border: 1px solid rgba(248,113,113,0.35); }
+  .pomo-malpractice-gate--freeze .pomo-gate-title { color: var(--red); }
   .pomo-gate-title { font-family: var(--font-nav); font-weight: 700; font-size: 14px; margin-bottom: 8px; color: var(--amber); }
   .pomo-gate-body { font-size: 13px; color: var(--ink-dim); line-height: 1.55; margin: 0 0 12px; }
   .pomo-gate-steps { padding-left: 20px; font-size: 13px; color: var(--ink-dim); line-height: 1.6; margin: 0 0 14px; }

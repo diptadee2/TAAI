@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-22-1';
+  var CLIENT_VERSION = '2026-09-22-2';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2679,22 +2679,46 @@
   // record_malpractice_incident's own comment for what each incident
   // count actually means: 1 is silent (nothing shown here at all), 2-3
   // is a warning with no freeze, 4+ is an active freeze.
-  function renderPomoMalpracticeNotice() {
+  // Renders IN PLACE OF the clock/dots/controls (see .pomo-clock-wrap in
+  // renderPomodoro, and showMalpracticeGate there) rather than as a small
+  // notice sitting below them — a direct request ("can the message come
+  // in place of the clock and then you press okay to go back to the
+  // clock?"), and also what fixed a real layout bug the earlier
+  // below-the-controls version caused: .pomo-today-row .pomodoro-card has
+  // no explicit width of its own (relies on shrink-to-fit sizing driven
+  // by the ring being the widest thing inside it), and the warning
+  // message's long unwrapped sentence became the new widest content,
+  // ballooning the whole card and squeezing #today-leaderboard-card down
+  // to a sliver — seen directly in a real screenshot. This gate sits
+  // inside the same ring-width-constrained card as everything else, so
+  // it can't cause that again.
+  //
+  // Always rendered (never conditionally omitted) — `show` just toggles
+  // its `hidden` attribute, the same pattern the settings panel already
+  // uses, so dismissing it later is a plain DOM toggle (see the Okay
+  // button's click handler in bindCalendarEvents), not something that
+  // needs a full re-render.
+  //
+  // The Okay button only exists for the warning band (2-3 incidents), not
+  // an active freeze — there's nothing to "go back to" during a freeze,
+  // since Start would still refuse to do anything underneath it (see
+  // pomoIsFrozen() in pomoToggleRun) — dismissing would just reveal a
+  // clock that doesn't work, which is worse than not dismissing at all.
+  function renderPomoMalpracticeGateHtml(show) {
     if (!state.malpractice) return '';
-    if (pomoIsFrozen()) {
+    var frozen = pomoIsFrozen();
+    if (!frozen && state.malpractice.incidentCount < 2) return '';
+    var html = '<div class="pomo-malpractice-gate' + (frozen ? ' pomo-malpractice-gate--freeze' : ' pomo-malpractice-gate--warning') + '" id="pomo-malpractice-gate"' + (show ? '' : ' hidden') + '>' +
+      '<div class="pomo-gate-title">⚠️ Malpractice Detected</div>';
+    if (frozen) {
       var until = new Date(state.malpractice.frozenUntil).toLocaleString();
-      return '<div class="pomo-malpractice-notice pomo-malpractice-notice--freeze fade-in">' +
-        '<div class="pomo-gate-title">⚠️ Malpractice Detected</div>' +
-        '<p class="pomo-gate-body">Repeated irregular session timing was detected on this account. Focus sessions are frozen until <strong>' + escapeHtml(until) + '</strong>.</p>' +
-        '</div>';
+      html += '<p class="pomo-gate-body">Repeated irregular session timing was detected on this account. Focus sessions are frozen until <strong>' + escapeHtml(until) + '</strong>.</p>';
+    } else {
+      html += '<p class="pomo-gate-body">Irregular session timing was noticed on this account. Continued attempts may result in Focus sessions being temporarily frozen.</p>' +
+        '<button class="pomo-btn pomo-btn-primary" id="pomo-malpractice-okay" type="button">Okay</button>';
     }
-    if (state.malpractice.incidentCount >= 2) {
-      return '<div class="pomo-malpractice-notice pomo-malpractice-notice--warning fade-in">' +
-        '<div class="pomo-gate-title">⚠️ Malpractice Detected</div>' +
-        '<p class="pomo-gate-body">Irregular session timing was noticed on this account. Continued attempts may result in Focus sessions being temporarily frozen.</p>' +
-        '</div>';
-    }
-    return '';
+    html += '</div>';
+    return html;
   }
 
   // One row of the settings panel's stepper controls — label, then a
@@ -2762,7 +2786,19 @@
     var pomoGradStyle = '--pomo-g1:' + pomoGradPreset.colors[0] + ';--pomo-g2:' + pomoGradPreset.colors[1] + ';--pomo-g3:' + pomoGradPreset.colors[2] + ';--pomo-glow:' + pomoGradPreset.glow + ';' +
       '--pomo-break-g1:' + pomoGradPreset.breakColors[0] + ';--pomo-break-g2:' + pomoGradPreset.breakColors[1] + ';--pomo-break-glow:' + pomoGradPreset.breakGlow + ';';
 
+    // Whether the clock/dots/controls should start out hidden behind the
+    // malpractice gate instead — see renderPomoMalpracticeGateHtml below.
+    // Both blocks are ALWAYS rendered (never conditionally swapped in the
+    // HTML string itself), one just starts with the `hidden` attribute —
+    // the same always-present-just-toggled pattern the settings panel
+    // already uses (see pomo-settings-toggle in bindCalendarEvents), so
+    // dismissing the gate later is a plain DOM toggle, not a re-render
+    // that would replay this card's .fade-in entrance.
+    var showMalpracticeGate = !!(state.malpractice && (pomoIsFrozen() || state.malpractice.incidentCount >= 2));
+
     return '<div class="pomodoro-card fade-in' + (pomo.mode === 'break' ? ' on-break' : '') + '" id="pomo-card" style="' + pomoGradStyle + '">' +
+      renderPomoMalpracticeGateHtml(showMalpracticeGate) +
+      '<div class="pomo-clock-wrap"' + (showMalpracticeGate ? ' hidden' : '') + '>' +
       '<div class="pomodoro-ring-wrap">' +
       // Anchored to the ring itself (a child of ring-wrap, not the card) —
       // sitting on the ring's own top-right edge reads as "settings for
@@ -2820,9 +2856,9 @@
       '<button id="pomo-skip" class="pomo-btn pomo-btn-secondary">' +
       '<span class="pomo-btn-icon">' + POMO_ICON_SKIP + '</span><span class="pomo-btn-label">Skip</span></button>' +
       '</div>' +
+      '</div>' + // .pomo-clock-wrap
       '<p class="pomo-notify-permanent-tip">🔔 Notifications need your computer’s permission too, not just this site’s — check your OS’s own notification settings for this browser if they don’t show up.</p>' +
       renderPomoNotifyNotice() +
-      renderPomoMalpracticeNotice() +
       '<div class="pomo-settings" id="pomo-settings" hidden>' +
       '<div class="pomo-settings-header">⚙️ Timer settings</div>' +
       pomoGradientSwatchesHtml() +
@@ -3944,6 +3980,16 @@
     var pomoGateReload = document.getElementById('pomo-gate-reload');
     if (pomoGateReload) pomoGateReload.addEventListener('click', function () {
       location.reload();
+    });
+
+    // Plain DOM toggle, not a re-render — see renderPomoMalpracticeGateHtml's
+    // own comment for why both blocks are always present in the DOM.
+    var pomoMalpracticeOkay = document.getElementById('pomo-malpractice-okay');
+    if (pomoMalpracticeOkay) pomoMalpracticeOkay.addEventListener('click', function () {
+      var gate = document.getElementById('pomo-malpractice-gate');
+      var clock = document.querySelector('.pomo-clock-wrap');
+      if (gate) gate.hidden = true;
+      if (clock) clock.hidden = false;
     });
 
     var prev = document.getElementById('prev-month');
