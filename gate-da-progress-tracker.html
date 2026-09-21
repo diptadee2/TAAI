@@ -1165,11 +1165,13 @@
      on every row, not just approximately near it. */
   .leaderboard-columns { display: grid; grid-template-columns: 40px 16px minmax(0,180px) minmax(92px,1fr) 76px 60px 58px; align-items: center; gap: 16px; padding: 0 14px 6px; font-family: var(--font-nav); font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
   .leaderboard-col-rank { text-align: center; min-width: 0; }
-  /* padding-left matches .live-dot-slot's fixed 13px width (see the
-     live-dot comment above) — every row's actual name text starts 13px
-     into its column now, so the "Name" header needs the same offset or
-     it reads as starting to the left of the names it's labeling. */
-  .leaderboard-col-name { min-width: 0; text-align: left; padding-left: 13px; }
+  /* Centered, not left-aligned to match the live-dot offset like it used
+     to be — direct request to center every header label within its own
+     column regardless of the row content's own alignment ("center align
+     all the column names according to their content within"). Rank/
+     Status/Timer/Minutes were already centered; Name and Streak were the
+     two odd ones out, still left-aligned from before this. */
+  .leaderboard-col-name { min-width: 0; text-align: center; }
   /* position:relative so the popover (position:absolute) anchors to
      this header cell specifically, not the whole grid row.
      display:inline-flex + align-items:center — a plain inline span left
@@ -1181,7 +1183,7 @@
      inline-flex (not flex) keeps the cell sized to its content instead
      of stretching to fill the grid track, matching how every sibling
      header cell in this same row already behaves. */
-  .leaderboard-col-streak { display: inline-flex; align-items: center; gap: 5px; min-width: 0; text-align: left; position: relative; }
+  .leaderboard-col-streak { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-width: 0; text-align: center; position: relative; }
   /* Small "?" toggle — costs nothing in the header's own layout until
      clicked (the popover it opens is position:absolute, out of flow),
      "smart use of negative space" per the direct request, rather than a
