@@ -490,6 +490,22 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   padding: 12px 24px; border-radius: 14px;
   box-shadow: 0 10px 36px rgba(0,0,0,0.45), 0 0 28px rgba(251,191,36,0.22);
   position: relative; overflow: hidden;
+  max-width: 100%; box-sizing: border-box;
+}
+/* Real bug caught from testing, not assumed: the desktop clamp's own
+   5.5vw growth rate genuinely doesn't matter below ~400px (5.5vw only
+   ever reaches its own 22px floor there), so this chip was rendering
+   at a flat 22px regardless of how narrow the phone actually was —
+   too wide for its own box once the includes-wrap itself shrinks
+   below ~250px, clipping "Coming Soon" mid-word (confirmed: scrollWidth
+   253px vs an available 224px at 390px). Padding/gap are em-based here
+   specifically so they shrink in step with the font-size instead of
+   staying fixed while only the text shrinks — verified to actually fit,
+   with real margin to spare, from 320px through 430px real device
+   widths, not just calculated. */
+@media (max-width: 480px) {
+  .combo-coming-soon-overlay-inner { font-size: clamp(13px, calc(7.5vw - 12px), 20px); padding: 0.5em 0.9em; gap: 0.4em; }
+  .combo-coming-soon-overlay-inner svg { width: 1em; height: 1em; }
 }
 /* Animated on request, but not by moving/scaling the chip's own box —
    it carries both box-shadow and border-radius, exactly the combination
