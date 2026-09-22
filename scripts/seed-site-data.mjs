@@ -1,20 +1,33 @@
-// One-time load of sheets/pricing.csv, sheets/notes.csv, sheets/lectures.csv
-// into the new site_pricing / site_notes / site_lectures tables (see
-// supabase/schema.sql, CLAUDE.md's "Site data corner" section) — so /team's
-// new Site data tab starts populated with today's real data instead of
+// One-time load of the site's real pricing/notes/lectures data into the
+// new site_pricing / site_notes / site_lectures tables (see
+// supabase/schema.sql, CLAUDE.md's "Site data corner" section) — so
+// /team's new Site data tab starts populated with real data instead of
 // empty. Run once, manually, after the schema migration:
-//   node scripts/seed-site-data.mjs
+//   npm run seed-site-data
 //
-// Deliberately not an ongoing sync — same "provided directly, loaded by
-// hand" discipline already established for schedule.csv (see
-// load-schedule.mjs's own comment). The live pages keep reading the
-// published Google Sheet CSV directly; this script only seeds the new
-// admin-editable copy, it doesn't change what those pages read from.
+// Fetches the SAME published Google Sheet CSV URLs the live pages
+// themselves already read (PRICING_CSV_URL in gate-da-courses.html,
+// NOTES_CSV_URL/LECTURES_CSV_URL in gate-da-free-notes.html) — NOT the
+// local sheets/*.csv files. Those local files are gitignored, one-off
+// snapshots someone saved at some point, never kept in sync — confirmed
+// stale against the real sheet the first time this ran (11 vs 12 pricing
+// rows with different prices, 1 vs 3 real notes, lecture rows missing
+// real slides links). Unlike schedule.csv, which has an explicit,
+// deliberate "provided directly, never auto-synced" policy (see
+// load-schedule.mjs's own comment and CLAUDE.md's "Schedule data flow"
+// section), pricing/notes/lectures have always been live-synced from
+// this same sheet by the pages that read them — seeding from anywhere
+// else would just be seeding stale data.
+//
+// Deliberately still a one-time script, not an ongoing cron — this
+// project's standing rule is no automatic background sync of anything;
+// re-run this by hand whenever /team's copy needs to be refreshed from
+// the sheet again (e.g. before a first real cutover).
 //
 // Idempotent, safe to re-run: site_pricing is upserted by its own stable
 // id (the same slug already used everywhere else on the site); site_notes/
 // site_lectures have no natural business key of their own (a UUID PK), so
-// they're fully replaced (delete-all, then re-insert from the CSV) instead.
+// they're fully replaced (delete-all, then re-insert) instead.
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -23,6 +36,15 @@ import { getSupabase } from '../netlify/functions/lib/supabase.js';
 
 const __dir = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dir, '..');
+
+// Same published sheet, three tabs (different gid) — see PRICING_CSV_URL
+// in gate-da-courses.html and NOTES_CSV_URL/LECTURES_CSV_URL in
+// gate-da-free-notes.html. Keep these in sync by hand if those ever
+// change (same maintenance burden as every other hand-duplicated
+// constant already documented in this codebase).
+const PRICING_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSVYXQcKli0NtjXf93cxRwx3A15WiNcETEw26MubPYIihLyMQs2rfZjXKm85fNsOxxlUWkoyR89DKCK/pub?gid=0&single=true&output=csv';
+const NOTES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSVYXQcKli0NtjXf93cxRwx3A15WiNcETEw26MubPYIihLyMQs2rfZjXKm85fNsOxxlUWkoyR89DKCK/pub?gid=850997370&single=true&output=csv';
+const LECTURES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSVYXQcKli0NtjXf93cxRwx3A15WiNcETEw26MubPYIihLyMQs2rfZjXKm85fNsOxxlUWkoyR89DKCK/pub?gid=725480532&single=true&output=csv';
 
 function loadEnvFile() {
   const envPath = path.join(ROOT, '.env');
@@ -33,10 +55,11 @@ function loadEnvFile() {
   }
 }
 
-function readCsvAsObjects(relPath) {
-  const fullPath = path.join(ROOT, relPath);
-  if (!fs.existsSync(fullPath)) return [];
-  const rows = parseCsv(fs.readFileSync(fullPath, 'utf8'));
+async function fetchCsvAsObjects(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`fetch ${url} failed: ${res.status}`);
+  const text = await res.text();
+  const rows = parseCsv(text);
   if (rows.length < 2) return [];
   const [header, ...dataRows] = rows;
   return dataRows
@@ -53,7 +76,8 @@ function dateOrNull(v) {
 }
 
 async function seedPricing(supabase) {
-  const rows = readCsvAsObjects('sheets/pricing.csv').map(r => ({
+  const csvRows = await fetchCsvAsObjects(PRICING_CSV_URL);
+  const rows = csvRows.map(r => ({
     id: r.id,
     type: r.type,
     name: r.name,
@@ -65,14 +89,15 @@ async function seedPricing(supabase) {
     validity: dateOrNull(r.validity),
   })).filter(r => r.id);
 
-  if (!rows.length) { console.log('No rows in sheets/pricing.csv — skipping site_pricing.'); return; }
+  if (!rows.length) { console.log('No rows fetched from the pricing sheet — skipping site_pricing.'); return; }
   const { error } = await supabase.from('site_pricing').upsert(rows, { onConflict: 'id' });
   if (error) { console.error('site_pricing upsert failed:', error.message); process.exit(1); }
   console.log(`site_pricing: upserted ${rows.length} rows.`);
 }
 
 async function seedNotes(supabase) {
-  const rows = readCsvAsObjects('sheets/notes.csv').map(r => ({
+  const csvRows = await fetchCsvAsObjects(NOTES_CSV_URL);
+  const rows = csvRows.map(r => ({
     subject: r.subject,
     title: r.title || null,
     description: r.desc || null,
@@ -90,7 +115,8 @@ async function seedNotes(supabase) {
 }
 
 async function seedLectures(supabase) {
-  const rows = readCsvAsObjects('sheets/lectures.csv').map(r => ({
+  const csvRows = await fetchCsvAsObjects(LECTURES_CSV_URL);
+  const rows = csvRows.map(r => ({
     subject: r.subject,
     lecture_number: intOrNull(r.lectureNumber),
     title: r.title || null,
