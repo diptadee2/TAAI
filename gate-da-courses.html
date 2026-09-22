@@ -468,10 +468,21 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .combo-includes-wrap { position: relative; }
 .combo-coming-soon-overlay {
   position: absolute; inset: 0; z-index: 2;
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  font-size: clamp(18px, 4vw, 24px); font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
-  color: #FCD34D; text-shadow: 0 2px 16px rgba(0,0,0,0.65), 0 0 28px rgba(251,191,36,0.35);
-  pointer-events: none;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none; padding: 12px;
+}
+/* A solid chip, not bare text directly on the blur — bigger type sitting
+   with nothing behind it started fighting for legibility against the
+   blurred bullet rows right underneath it; a contained card reads as a
+   clean, deliberate stamp regardless of exactly which row of blurred
+   text happens to sit behind it. */
+.combo-coming-soon-overlay-inner {
+  display: flex; align-items: center; gap: 10px;
+  font-size: clamp(22px, 5.5vw, 30px); font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
+  color: #FDE68A; white-space: nowrap;
+  background: rgba(12,7,2,0.72); border: 1px solid rgba(251,191,36,0.4);
+  padding: 12px 24px; border-radius: 14px;
+  box-shadow: 0 10px 36px rgba(0,0,0,0.45), 0 0 28px rgba(251,191,36,0.22);
 }
 /* Horizontal split (badge/title/includes on the left, price/CTA on the
    right) — desktop only, on request; stays the normal stacked layout
@@ -2400,7 +2411,11 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   // directly over the blurred What's-included list instead (see
   // combo-includes-wrap below), the most visually prominent blurred
   // area on the card, rather than a small label off to the side.
-  const comingSoonTagEl = <div className="combo-coming-soon-overlay"><Icon.Bell size={20} /> Coming Soon</div>;
+  const comingSoonTagEl = (
+    <div className="combo-coming-soon-overlay">
+      <div className="combo-coming-soon-overlay-inner"><Icon.Bell size={22} /> Coming Soon</div>
+    </div>
+  );
 
   // comingSoon gets a genuinely different structure (two side-by-side
   // halves on desktop — see .combo-horizontal), not just the same flat
