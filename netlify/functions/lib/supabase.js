@@ -1,6 +1,20 @@
 import { createClient } from '@supabase/supabase-js';
 import ws from 'ws';
 
+// The fixed set of subject ids site_notes.subject/site_lectures.subject
+// are validated against — mirrors notes-data.json's own subjects[].id
+// list (gate-da-free-notes.html's subject tabs) by hand, the same
+// "can't import a JSON/JS file across this particular boundary, so keep
+// a synced copy with a pointer comment" tradeoff already accepted for
+// admin/config.yml's own tag list vs. gate-da-subjects.js. team.js keeps
+// its own client-side mirror of this same list for its subject <select>.
+// Keep both in sync with notes-data.json's subjects[].id by hand if that
+// ever changes.
+export const SITE_DATA_SUBJECT_IDS = [
+  'linear-algebra', 'probability', 'statistics', 'calculus',
+  'machine-learning', 'ai', 'python', 'data-structures', 'algorithms', 'dbms',
+];
+
 let client = null;
 
 export function getSupabase() {

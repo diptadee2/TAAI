@@ -53,6 +53,100 @@
     'Machine Learning', 'AI', 'DBMS', 'Python', 'Data Structures', 'Algorithms',
   ];
   var SUBJECT_OPTIONS = GATE_DA_SUBJECT_NAMES.slice();
+  // site_notes.subject/site_lectures.subject use the same kebab-case ids
+  // gate-da-free-notes.html's own notes-data.json already defines for its
+  // subject tabs (linear-algebra, machine-learning, ...) — derived here by
+  // slugifying GATE_DA_SUBJECT_NAMES rather than a second hardcoded list,
+  // since every one of those 10 names slugifies to exactly that id already
+  // (confirmed by hand against notes-data.json). The server-side mirror
+  // (SITE_DATA_SUBJECT_IDS in lib/supabase.js) can't reach this file's
+  // window.GATE_DA_SUBJECTS global, so it stays its own hardcoded copy —
+  // keep both in sync if the subject list ever changes.
+  var SITE_SUBJECT_OPTIONS = GATE_DA_SUBJECT_NAMES.map(function (name) {
+    return { id: name.toLowerCase().replace(/\s+/g, '-'), label: name };
+  });
+
+  // Declarative shape for the three Site data sub-tabs (Pricing/Notes/
+  // Lectures) — one config object drives the generic list table, the
+  // generic create/edit form, and the generic FormData-based payload
+  // reader all three share (renderSiteDataList/-Form/readSiteDataPayload
+  // below), instead of three near-identical copies of each. Each field:
+  // {name, label, type: 'text'|'number'|'url'|'date'|'select', options?,
+  // required?, hint?, lockedOnEdit?} — lockedOnEdit disables the input
+  // once editing an existing row (only site_pricing.id needs this: it's
+  // the real primary key elsewhere on the site, not safe to silently
+  // rename out from under every other consumer via this form).
+  var SITE_DATA_RESOURCES = {
+    pricing: {
+      label: 'Pricing',
+      endpoint: '/site-pricing',
+      idKey: 'id',
+      newRow: { id: '', type: 'individual', name: '', price: '', price_old: '', discount: '', discount_reason: '', discount_deadline: '', validity: '' },
+      columns: [
+        { name: 'id', label: 'ID' },
+        { name: 'type', label: 'Type' },
+        { name: 'name', label: 'Name' },
+        { name: 'price', label: 'Price', format: function (r) { return r.price != null ? '₹' + r.price : '—'; } },
+        { name: 'price_old', label: 'Old price', format: function (r) { return r.price_old != null ? '₹' + r.price_old : '—'; } },
+        { name: 'discount_deadline', label: 'Discount deadline', format: function (r) { return r.discount_deadline || '—'; } },
+        { name: 'validity', label: 'Validity', format: function (r) { return r.validity || '—'; } },
+      ],
+      fields: [
+        { name: 'id', label: 'ID (slug)', type: 'text', required: true, lockedOnEdit: true, hint: 'The exact id used elsewhere on the site (e.g. full-course, statistics) — can\'t be changed once created.' },
+        { name: 'type', label: 'Type', type: 'select', options: [{ id: 'combo', label: 'Combo/bundle' }, { id: 'individual', label: 'Individual course' }, { id: 'test-series', label: 'Test series' }], required: true },
+        { name: 'name', label: 'Display name', type: 'text', required: true },
+        { name: 'price', label: 'Price (₹)', type: 'number' },
+        { name: 'price_old', label: 'Old price (₹, optional — shown struck through)', type: 'number' },
+        { name: 'discount', label: 'Discount label (optional, e.g. "30% OFF")', type: 'text' },
+        { name: 'discount_reason', label: 'Discount reason (optional)', type: 'text' },
+        { name: 'discount_deadline', label: 'Discount deadline', type: 'date' },
+        { name: 'validity', label: 'Validity', type: 'date' },
+      ],
+    },
+    notes: {
+      label: 'Notes',
+      endpoint: '/site-notes',
+      idKey: 'id',
+      newRow: { subject: SITE_SUBJECT_OPTIONS[0].id, title: '', description: '', file_url: '', posted_on: '' },
+      columns: [
+        { name: 'subject', label: 'Subject', format: function (r) { return subjectLabel(r.subject); } },
+        { name: 'title', label: 'Title' },
+        { name: 'posted_on', label: 'Posted on', format: function (r) { return r.posted_on || '—'; } },
+      ],
+      fields: [
+        { name: 'subject', label: 'Subject', type: 'select', options: SITE_SUBJECT_OPTIONS, required: true },
+        { name: 'title', label: 'Title', type: 'text' },
+        { name: 'description', label: 'Description (optional)', type: 'text' },
+        { name: 'file_url', label: 'PDF file URL', type: 'url', hint: 'A direct link to the downloadable PDF.' },
+        { name: 'posted_on', label: 'Posted on', type: 'date' },
+      ],
+    },
+    lectures: {
+      label: 'Lectures',
+      endpoint: '/site-lectures',
+      idKey: 'id',
+      newRow: { subject: SITE_SUBJECT_OPTIONS[0].id, lecture_number: '', title: '', youtube_url: '', slides_url: '', posted_on: '' },
+      columns: [
+        { name: 'subject', label: 'Subject', format: function (r) { return subjectLabel(r.subject); } },
+        { name: 'lecture_number', label: '#' },
+        { name: 'title', label: 'Title' },
+        { name: 'posted_on', label: 'Posted on', format: function (r) { return r.posted_on || '—'; } },
+      ],
+      fields: [
+        { name: 'subject', label: 'Subject', type: 'select', options: SITE_SUBJECT_OPTIONS, required: true },
+        { name: 'lecture_number', label: 'Lecture #', type: 'number' },
+        { name: 'title', label: 'Title', type: 'text' },
+        { name: 'youtube_url', label: 'YouTube URL', type: 'url' },
+        { name: 'slides_url', label: 'Slides URL (optional)', type: 'url' },
+        { name: 'posted_on', label: 'Posted on', type: 'date' },
+      ],
+    },
+  };
+
+  function subjectLabel(id) {
+    var match = SITE_SUBJECT_OPTIONS.filter(function (s) { return s.id === id; })[0];
+    return match ? match.label : id;
+  }
   var SCHEDULE_LABELS = { once: 'Once', daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly' };
   // The exact same fallback text resolveScheduledPostEmbed() in
   // lib/supabase.js uses when body is blank — shown pre-filled in the Body
@@ -68,6 +162,78 @@
     daily_leader: '**{{name}}** logged the most focus time yesterday — **{{hours}}**!',
     monthly_consistency: '**{{name}}** was the most consistent student this month — a **typical day of {{hours}}** of focused study, day after day, all month long.',
   };
+
+  // Direct feedback on a real screenshot: a built-in source's Title box
+  // showed completely blank, with no hint anywhere in the box itself that
+  // a real default title exists and is what's actually posting right now
+  // — only the Body field had this treatment (see DEFAULT_BODY_BY_SOURCE
+  // above), and only for 2 of the 5 built-in sources. These 4 are the
+  // exact same literal strings resolveScheduledPostEmbed() in
+  // lib/supabase.js falls back to (`row.title || '...'`) — keep both
+  // copies in sync by hand if that wording ever changes, same maintenance
+  // burden DEFAULT_BODY_BY_SOURCE already has. monthly_consistency is
+  // deliberately NOT here — its real default title bakes in the CURRENT
+  // month's name (`Most Consistent Student — ${label}`), so prefilling a
+  // literal value would freeze a future month's post to whatever month
+  // happened to be current when someone last saved without noticing —
+  // see monthlyConsistencyTitlePlaceholder below for how that one's
+  // handled instead (a placeholder, never a real saved value).
+  var DEFAULT_TITLE_BY_SOURCE = {
+    daily_leader: '🏆 Yesterday\'s Top Focus Session',
+    daily_leaderboard: '🏆 Yesterday\'s Top 3',
+    weekly_leaderboard: '📅 Weekly Top 5 Leaderboard',
+    weekly_batch_trend: '📊 Weekly Batch Trend',
+  };
+
+  // A client-side approximation of previousMonthIST()/monthLabel() in
+  // lib/supabase.js — good enough for a placeholder PREVIEW (the real
+  // computation still only ever happens server-side, at actual post time),
+  // not meant to be authoritative. Uses the browser's own local clock
+  // rather than round-tripping to the server just to preview a label.
+  function previousMonthLabelApprox() {
+    var now = new Date();
+    var d = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  }
+
+  // Exactly which {{tokens}} are valid for the currently-selected Source —
+  // drives the click-to-insert chips above the Body textarea (see
+  // placeholderChipsHtml/bindEvents' .js-insert-placeholder handler).
+  // Direct ask: someone non-technical needs to be able to make a small
+  // wording change without knowing this curly-brace syntax exists, let
+  // alone typing it correctly by hand (a single typo like {{Name}} or
+  // {{ name }} just renders literally instead of being replaced — there's
+  // no validation catching that server-side). Single-entity sources get
+  // {{name}}/{{hours}}; ranked-list sources get one pair per position, up
+  // to however many the real post shows (3 for daily, 5 for weekly); every
+  // other source (custom, plain-intro) gets none, since neither has any
+  // per-entry data to interpolate at all.
+  function placeholdersForSource(source) {
+    if (LIST_SOURCES.indexOf(source) !== -1) {
+      var count = source === 'weekly_leaderboard' ? 5 : 3;
+      var ordinals = ['1st', '2nd', '3rd', '4th', '5th'];
+      var out = [];
+      for (var i = 0; i < count; i++) {
+        var suffix = i === 0 ? '' : String(i + 1);
+        out.push({ token: '{{name' + suffix + '}}', desc: ordinals[i] + ' place\'s name' });
+        out.push({ token: '{{hours' + suffix + '}}', desc: ordinals[i] + ' place\'s hours' });
+      }
+      return out;
+    }
+    if (PLAIN_INTRO_SOURCES.indexOf(source) !== -1 || source === 'custom') return [];
+    return [{ token: '{{name}}', desc: 'their name' }, { token: '{{hours}}', desc: 'their hours' }];
+  }
+
+  function placeholderChipsHtml(source) {
+    var placeholders = placeholdersForSource(source);
+    if (!placeholders.length) return '';
+    return '<div class="placeholder-chips">' +
+      '<span class="placeholder-chips-label">Click to insert:</span> ' +
+      placeholders.map(function (ph) {
+        return '<button type="button" class="chip js-insert-placeholder" data-token="' + escapeHtml(ph.token) + '" title="Inserts ' + escapeHtml(ph.token) + ' — ' + escapeHtml(ph.desc) + '">' + escapeHtml(ph.token) + '</button>';
+      }).join('') +
+    '</div>';
+  }
 
   var state = {
     authorized: false,
@@ -87,6 +253,19 @@
     studentSummary: null,
     studentFilters: { search: '', inactive: '', minStreak: '' }, // inactive: '' | '3' | '7' | '14' | '30' | 'never'
     noteSaving: {}, // email -> 'saving' | 'saved' | 'error', transient per-row save feedback
+    // Pricing/Notes/Lectures are three independent lists under one Site
+    // data tab — rows/editing are keyed by resource type (see
+    // SITE_DATA_RESOURCES) rather than three near-identical flat state
+    // shapes, same "one config, generic renderer" discipline the resource
+    // config object itself follows.
+    siteData: {
+      subTab: 'pricing', // 'pricing' | 'notes' | 'lectures'
+      rows: { pricing: null, notes: null, lectures: null }, // null = not loaded yet
+      loading: { pricing: false, notes: false, lectures: false },
+      error: { pricing: null, notes: null, lectures: null },
+      editing: null, // { type, row } | null
+      saving: false,
+    },
     msg: null,
     msgType: null,
   };
@@ -130,7 +309,32 @@
     return d.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' }) + ' IST';
   }
 
-  function renderPostRow(p) {
+  // isFirst/isLast are about position within this post's own channel
+  // group (see renderPostGroups' dispatch-order sort), not the flat post
+  // list — the up/down buttons only ever reorder posts that share a
+  // destination, since dispatch_order otherwise has no visible effect
+  // (two posts going to different channels never interleave with each
+  // other from a viewer's perspective either way).
+  // Shows exactly what's currently configured — the raw, literal text
+  // (placeholders and markdown shown as-typed, not resolved) — right in
+  // the list, so checking current wording no longer requires opening Edit
+  // first. Direct ask: "everything should have the current... syntax in
+  // the body" visible. A 'custom' post's real content can live in
+  // `sections` instead of `body` (a weekly schedule has no body text at
+  // all) — summarized as a day/topic count in that case rather than
+  // showing blank with no explanation.
+  function bodySnippetText(p) {
+    if (p.body) return p.body;
+    if (p.source === 'custom') {
+      var sections = Array.isArray(p.sections) ? p.sections : [];
+      var dayCount = sections.reduce(function (n, s) { return n + (Array.isArray(s.rows) ? s.rows.length : 0); }, 0);
+      if (dayCount) return '(no body text — ' + sections.length + ' section(s), ' + dayCount + ' day row(s) below)';
+      return '(empty — click Edit to add text)';
+    }
+    if (DEFAULT_BODY_BY_SOURCE[p.source]) return '(using the default wording) ' + DEFAULT_BODY_BY_SOURCE[p.source];
+    return '(no intro line — just the computed number/list)';
+  }
+  function renderPostRow(p, isFirst, isLast) {
     var isBuiltIn = p.source !== 'custom';
     var tagHtml = isBuiltIn
       ? '<span class="tag tag-builtin">' + escapeHtml(SOURCE_LABELS[p.source] || p.source) + '</span>'
@@ -141,12 +345,19 @@
     if (p.schedule_type === 'weekly') scheduleDesc = DAY_NAMES[p.schedule_day_of_week] + 's, ' + scheduleDesc;
     if (p.schedule_type === 'monthly') scheduleDesc = 'Day ' + p.schedule_day_of_month + ' of month, ' + scheduleDesc;
     if (p.schedule_type === 'once') scheduleDesc = p.schedule_date + ' at ' + escapeHtml(p.schedule_time) + ' IST';
+    var bodySnippet = bodySnippetText(p);
+    var truncated = bodySnippet.length > 160 ? bodySnippet.slice(0, 160) + '…' : bodySnippet;
 
     return (
       '<div class="post-row" data-id="' + p.id + '">' +
+        '<div class="post-order-buttons">' +
+          '<button class="btn-order js-move-up" data-id="' + p.id + '" title="Fire earlier than the post below it, when both are due at the same time"' + (isFirst ? ' disabled' : '') + '>▲</button>' +
+          '<button class="btn-order js-move-down" data-id="' + p.id + '" title="Fire later than the post above it, when both are due at the same time"' + (isLast ? ' disabled' : '') + '>▼</button>' +
+        '</div>' +
         '<div class="post-main">' +
           '<div class="post-title">' + tagHtml + disabledTag + ' ' + escapeHtml(title) + (p.tag_everyone ? ' 📣' : '') + '</div>' +
           '<div class="post-meta">' + scheduleDesc + ' — next: ' + formatNextFire(p.next_fire_at) + '</div>' +
+          '<div class="post-body-snippet" title="' + escapeHtml(bodySnippet) + '">' + escapeHtml(truncated) + '</div>' +
         '</div>' +
         '<div class="post-actions">' +
           '<button class="btn btn-small js-edit" data-id="' + p.id + '">Edit</button>' +
@@ -155,6 +366,18 @@
         '</div>' +
       '</div>'
     );
+  }
+
+  // Same tiebreak discord-dispatch.js's own query uses (dispatch_order,
+  // then created_at) — so a group's on-screen order always matches the
+  // order posts sharing a fire time would actually go out in, which is
+  // the whole point of showing the up/down buttons at all.
+  function sortByDispatchOrder(rows) {
+    return rows.slice().sort(function (a, b) {
+      var orderDiff = (a.dispatch_order || 0) - (b.dispatch_order || 0);
+      if (orderDiff !== 0) return orderDiff;
+      return (a.created_at || '').localeCompare(b.created_at || '');
+    });
   }
 
   // Distinct webhooks already used by an existing post, newest first —
@@ -186,11 +409,21 @@
     return c.platform === 'telegram' ? '📨 ' + tail : tail;
   }
 
-  function renderChannelSelect() {
+  // Real gap, direct feedback: this never showed which channel a post
+  // ALREADY uses when opened for Edit — always defaulted to "-- Enter a
+  // new webhook below --" even when the post's own webhook/chat exactly
+  // matches a channel already in the list, same "empty box that should
+  // show what's actually there" issue Title/Body just got fixed for.
+  // `p` is optional — the "+ New post" flow calls this with nothing, and
+  // an unmatched channel (its own key not found among getKnownChannels,
+  // e.g. a genuinely new webhook nobody's saved yet) correctly falls back
+  // to the same "-- Enter a new webhook --" as before, not a false match.
+  function renderChannelSelect(p) {
     var known = getKnownChannels();
     if (!known.length) return '';
+    var currentKey = p ? channelKey(p) : '';
     var options = known.map(function (c, i) {
-      return '<option value="' + i + '">' + escapeHtml(channelSelectLabel(c)) + '</option>';
+      return '<option value="' + i + '"' + (currentKey && c.key === currentKey ? ' selected' : '') + '>' + escapeHtml(channelSelectLabel(c)) + '</option>';
     }).join('');
     return (
       '<div class="field"><label>Load a saved channel</label>' +
@@ -228,7 +461,7 @@
     });
 
     return keys.map(function (key) {
-      var rows = groups[key];
+      var rows = sortByDispatchOrder(groups[key]);
       var label = groupLabel(rows);
       var isTelegram = rows[0].platform === 'telegram';
       var isRenaming = state.renamingWebhook === key;
@@ -246,7 +479,7 @@
         '<div class="card channel-group">' +
           '<div class="channel-group-heading">' + headingHtml + '</div>' +
           (state.renameStatus && state.renameStatus.webhookUrl === key ? renderRenameStatus() : '') +
-          rows.map(renderPostRow).join('') +
+          rows.map(function (p, i) { return renderPostRow(p, i === 0, i === rows.length - 1); }).join('') +
         '</div>'
       );
     }).join('');
@@ -393,9 +626,17 @@
     var source = p.source || 'custom';
     var scheduleType = p.schedule_type || 'daily';
 
-    var sourceOptions = Object.keys(SOURCE_LABELS).map(function (key) {
-      return '<option value="' + key + '"' + (key === source ? ' selected' : '') + '>' + SOURCE_LABELS[key] + '</option>';
-    }).join('');
+    // Grouped into the same two buckets the post list itself already uses
+    // (Custom announcements vs. recurring leaderboards) — the dropdown
+    // used to list all 6 flat, so "Custom" (the one someone actually wants
+    // most weeks) sat visually equal to 5 built-in options it has nothing
+    // in common with, no hint that it's the odd one out.
+    function sourceOptionHtml(key) { return '<option value="' + key + '"' + (key === source ? ' selected' : '') + '>' + SOURCE_LABELS[key] + '</option>'; }
+    var sourceOptions =
+      '<optgroup label="Custom">' + sourceOptionHtml('custom') + '</optgroup>' +
+      '<optgroup label="Recurring leaderboards">' +
+        Object.keys(SOURCE_LABELS).filter(function (key) { return key !== 'custom'; }).map(sourceOptionHtml).join('') +
+      '</optgroup>';
 
     var scheduleOptions = Object.keys(SCHEDULE_LABELS).map(function (key) {
       return '<option value="' + key + '"' + (key === scheduleType ? ' selected' : '') + '>' + SCHEDULE_LABELS[key] + '</option>';
@@ -421,7 +662,29 @@
     // default" functionally (see resolveScheduledPostEmbed's `row.body ||
     // DEFAULT`), there's no distinct "truly blank" state to preserve.
     var bodyValue = (p.body != null && p.body !== '') ? p.body : (DEFAULT_BODY_BY_SOURCE[source] || '');
-    var bodyField = '<div class="field"><label>Body</label><textarea name="body">' + escapeHtml(bodyValue) + '</textarea><div class="field-hint">' + bodyHint + '</div></div>';
+    // A ranked-list/plain-intro source's blank Body is a real, meaningful
+    // choice (no intro line, not "use some default sentence") — so unlike
+    // bodyValue above, this is a placeholder (grayed hint text INSIDE the
+    // empty box, never saved), not a value, so it can't get typed over and
+    // accidentally saved as if it were real body text.
+    var bodyPlaceholder = !bodyValue
+      ? (isList ? 'Leave blank to show just the ranked list below, with no intro line.'
+        : isPlainIntro ? 'Leave blank to show just the number, with no intro line.' : '')
+      : '';
+    var bodyField = '<div class="field"><label>Body</label><textarea name="body" id="f-body"' + (bodyPlaceholder ? ' placeholder="' + escapeHtml(bodyPlaceholder) + '"' : '') + '>' + escapeHtml(bodyValue) + '</textarea>' + placeholderChipsHtml(source) + '<div class="field-hint">' + bodyHint + '</div></div>';
+
+    // Same "show what's actually in use, not a blank box" treatment as
+    // Body above — see DEFAULT_TITLE_BY_SOURCE's own comment for why
+    // monthly_consistency is a placeholder (dynamic, never safe to bake in
+    // as a saved value) while the other 4 built-ins get a real prefilled
+    // value (all 4 are fixed strings — saving them verbatim changes
+    // nothing about what would have posted anyway).
+    var titleValue = p.title || '';
+    var titlePlaceholder = '';
+    if (!titleValue && source !== 'custom') {
+      if (DEFAULT_TITLE_BY_SOURCE[source]) titleValue = DEFAULT_TITLE_BY_SOURCE[source];
+      else if (source === 'monthly_consistency') titlePlaceholder = '🏅 Most Consistent Student — ' + previousMonthLabelApprox() + ' (the month name updates itself automatically)';
+    }
 
     var platform = p.platform === 'telegram' ? 'telegram' : 'discord';
     var platformOptions =
@@ -457,7 +720,7 @@
           '<div class="form-section">' +
             '<div class="form-section-heading">Destination</div>' +
             '<div class="field"><label>Platform</label><select name="platform" id="f-platform">' + platformOptions + '</select></div>' +
-            renderChannelSelect() +
+            renderChannelSelect(p) +
             '<div class="field"><label>Channel name (for your reference)</label><input type="text" name="channel_name" placeholder="e.g. #announcements" value="' + escapeHtml(p.channel_name) + '"></div>' +
             destinationHtml +
           '</div>' +
@@ -465,7 +728,7 @@
           '<div class="form-section">' +
             '<div class="form-section-heading">Content</div>' +
             '<div class="field"><label>Source</label><select name="source" id="f-source">' + sourceOptions + '</select></div>' +
-            '<div class="field"><label>Title (optional' + (source !== 'custom' ? ' — overrides the default' : '') + ')</label><input type="text" name="title" value="' + escapeHtml(p.title) + '"></div>' +
+            '<div class="field"><label>Title (optional' + (source !== 'custom' ? ' — overrides the default' : '') + ')</label><input type="text" name="title" value="' + escapeHtml(titleValue) + '"' + (titlePlaceholder ? ' placeholder="' + escapeHtml(titlePlaceholder) + '"' : '') + '></div>' +
             bodyField +
             (platform === 'telegram' ? '' : '<div class="field"><label>Card color</label><input type="color" name="color" value="' + colorToHex(p.color) + '"></div>') +
           '</div>' +
@@ -483,16 +746,29 @@
             '<div class="form-section-heading">Schedule</div>' +
             '<div class="field-row">' +
               '<div class="field"><label>Frequency</label><select name="schedule_type" id="f-schedule-type">' + scheduleOptions + '</select></div>' +
-              '<div class="field"><label>Time (IST)</label><input type="time" name="schedule_time" value="' + escapeHtml(p.schedule_time || '10:00') + '" required></div>' +
+              '<div class="field"><label>Time (IST)</label><input type="time" name="schedule_time" value="' + escapeHtml(p.schedule_time || '10:00') + '" required>' +
+              '<div class="field-hint">Posts are checked every 15 minutes (:00, :15, :30, :45), not continuously — a time in between (like 10:31) won\'t fire until the next check after it, so it\'d actually go out at 10:45. Pick a time ending in :00/:15/:30/:45 to fire on the exact minute.</div>' +
+              '</div>' +
             '</div>' +
             '<div id="f-schedule-extra">' +
-              (scheduleType === 'once' ? '<div class="field"><label>Date</label><input type="date" name="schedule_date" value="' + escapeHtml(p.schedule_date) + '" required></div>' : '') +
+              (scheduleType === 'once' ? '<div class="field"><label>Date</label><input type="date" name="schedule_date" value="' + escapeHtml(p.schedule_date) + '" required><div class="field-hint">Fires exactly once, then pauses itself automatically (shows as "Paused" in the list below — it\'s not deleted, you can still open and resume it).</div></div>' : '') +
               (scheduleType === 'weekly' ? '<div class="field"><label>Day of week</label><select name="schedule_day_of_week">' + dayOfWeekOptions + '</select></div>' : '') +
               (scheduleType === 'monthly' ? '<div class="field"><label>Day of month</label><input type="number" name="schedule_day_of_month" min="1" max="31" value="' + (p.schedule_day_of_month || 1) + '" required></div>' : '') +
             '</div>' +
             '<div class="checkbox-row"><input type="checkbox" id="f-enabled" name="enabled"' + (p.enabled !== false ? ' checked' : '') + '><label for="f-enabled">Enabled</label></div>' +
           '</div>' +
 
+          // Previously only explained inside the "? Syntax reference"
+          // panel (collapsed by default) — easy to never see before
+          // clicking one of these for the first time. Moved right above
+          // the buttons themselves, where the decision "which one do I
+          // click" actually happens, not documented elsewhere and hoped
+          // someone finds it first.
+          '<div class="field-hint" style="margin-top:-6px;">' +
+            '<strong>Preview</strong> shows what would post right now — nothing is sent or saved. ' +
+            '<strong>Send Test</strong> actually posts, for real, to the Test webhook/chat above (never the real one). ' +
+            '<strong>' + (isNew ? 'Create' : 'Save') + '</strong> stores this post\'s settings — it doesn\'t post anything by itself, it just schedules it for its own next fire time.' +
+          '</div>' +
           renderPreviewBox() +
           renderTestStatus() +
           '<div class="form-actions">' +
@@ -595,23 +871,49 @@
     var msgHtml = state.msg ? '<div class="msg msg-' + (state.msgType === 'error' ? 'error' : 'ok') + '">' + escapeHtml(state.msg) + '</div>' : '';
 
     var isAnnouncements = state.tab === 'announcements';
+    var isStudents = state.tab === 'students';
+    var isSiteData = state.tab === 'site-data';
+    // Counts right on the tab itself — knowing "there are 12 announcements,
+    // 334 students" without having to click in first is a small thing, but
+    // it's also the kind of at-a-glance orientation a two-tab page with no
+    // other landing content otherwise has zero of. Students' count is
+    // blank until actually loaded (null, not 0) rather than showing a
+    // misleading "(0)" before the first fetch resolves.
+    var postsCountLabel = state.posts.length ? ' (' + state.posts.length + ')' : '';
+    var studentsCountLabel = state.students ? ' (' + state.students.length + ')' : '';
     var tabsHtml =
       '<div class="tabs">' +
-        '<button class="tab-btn' + (isAnnouncements ? ' active' : '') + '" data-tab="announcements">📣 Announcements</button>' +
-        '<button class="tab-btn' + (!isAnnouncements ? ' active' : '') + '" data-tab="students">👥 Students</button>' +
+        '<button class="tab-btn' + (isAnnouncements ? ' active' : '') + '" data-tab="announcements">📣 Announcements' + postsCountLabel + '</button>' +
+        '<button class="tab-btn' + (isStudents ? ' active' : '') + '" data-tab="students">👥 Students' + studentsCountLabel + '</button>' +
+        '<button class="tab-btn' + (isSiteData ? ' active' : '') + '" data-tab="site-data">🗂️ Site data</button>' +
       '</div>';
 
     var actionsHtml = isAnnouncements
       ? ('<button class="btn" id="reference-toggle">' + (state.showReference ? 'Hide syntax reference' : '? Syntax reference') + '</button>' +
          (state.editing ? '' : '<button class="btn btn-primary" id="new-btn">+ New post</button>'))
-      : '';
+      // Students has no "create" action (rows come from real registrations,
+      // never created here) — a refresh button fills that gap instead, so
+      // checking for someone's just-completed session doesn't require
+      // switching to Announcements and back (the only way to force a
+      // re-fetch before this, since loadStudents() only ever ran once per
+      // page visit, on the tab's first click — see bindEvents' tab handler).
+      : isStudents
+        ? '<button class="btn" id="students-refresh"' + (state.studentsLoading ? ' disabled' : '') + '>↻ Refresh</button>'
+        // Site data's own create action is per-sub-tab (Pricing/Notes/
+        // Lectures are three independent lists, not one form) — rendered
+        // inside renderSiteData() itself, next to its own sub-tab bar,
+        // rather than up here where there'd be no way to know which of
+        // the three "+ New" should apply to.
+        : '';
 
     var bodyHtml = isAnnouncements
       ? ((state.showReference ? renderReference() : '') +
          msgHtml +
          (state.editing ? renderForm(state.editing) : '') +
          renderPostList())
-      : renderStudents();
+      : isStudents
+        ? renderStudents()
+        : (msgHtml + renderSiteData());
 
     root.innerHTML =
       '<div class="wrap">' +
@@ -664,6 +966,8 @@
           '<div class="ref-row"><strong>Preview</strong> button — shows exactly what would post right now, using real live data, before you save. Doesn\'t post anything or save your changes.</div>' +
           '<div class="ref-row"><strong>Send Test</strong> button — actually posts a real message right now, to whatever\'s in the "Test webhook URL" field above it (never the real Webhook URL, and never saves your changes). Point that at a private test channel so you can see the real rendered message in an actual Discord client before trusting it with the real one.</div>' +
           '<div class="ref-row"><strong>Once</strong> schedule — fires exactly one time at the date/time you set, then automatically pauses itself (doesn\'t delete, just switches to disabled).</div>' +
+          '<div class="ref-row"><strong>▲/▼ buttons</strong> on each post — set which post fires first when two posts in the same channel are due at the same time (e.g. the weekly leaderboard before the weekly trend post). Only matters within one channel; has no effect on posts going to a different destination.</div>' +
+          '<div class="ref-row"><strong>Posts are checked every 15 minutes</strong> (:00/:15/:30/:45), not continuously — a Time that doesn\'t land exactly on one of those fires at the next check after it, not the minute you typed.</div>' +
         '</div>' +
       '</div>'
     );
@@ -777,14 +1081,37 @@
     );
   }
 
+  // The Last Active dot (inactivityClass) has never had a legend anywhere
+  // on this page — color alone doesn't say what green/amber/red/gray each
+  // mean without guessing or reading inactivityClass's own source. Built
+  // from the exact same class names/thresholds that color the real dots
+  // (not a separately-typed description), so it can't silently drift out
+  // of sync if those thresholds ever change.
+  function renderInactivityLegend() {
+    var items = [
+      ['inactivity-fresh', '≤2 days'],
+      ['inactivity-warm', '3-6 days'],
+      ['inactivity-cold', '7+ days'],
+      ['inactivity-never', 'Never active'],
+    ];
+    return '<div class="inactivity-legend">' + items.map(function (item) {
+      return '<span class="inactivity-legend-item"><span class="inactivity-dot ' + item[0] + '"></span>' + item[1] + '</span>';
+    }).join('') + '</div>';
+  }
+
   function renderStudents() {
     if (state.studentsLoading) return '<div class="card"><div class="field-hint">Loading students…</div></div>';
     if (state.studentsError) return '<div class="card"><div class="msg msg-error" style="margin:0;">' + escapeHtml(state.studentsError) + '</div></div>';
     if (!state.students || !state.students.length) return '<div class="card"><div class="empty">No students registered yet.</div></div>';
 
+    // The active column's real ▲/▼ direction is unmistakable already, but
+    // every OTHER column only ever hinted "this is clickable" via a hover
+    // color change — invisible until you happen to mouse over it. A faint,
+    // always-visible ↕ on the inactive columns is the same "this sorts"
+    // signal a hover gives, just not gated on already knowing to hover.
     var headerHtml = STUDENT_COLUMNS.map(function (col) {
       var active = state.studentSort.key === col.key;
-      var arrow = active ? (state.studentSort.dir === 'asc' ? ' ▲' : ' ▼') : '';
+      var arrow = active ? (state.studentSort.dir === 'asc' ? ' ▲' : ' ▼') : ' <span class="sort-hint">↕</span>';
       return '<th class="js-sort" data-key="' + col.key + '">' + escapeHtml(col.label) + arrow + '</th>';
     }).join('') + '<th>Notes</th>';
 
@@ -819,11 +1146,148 @@
         renderStudentSummary() +
         '<h2 style="font-size:16px;margin-bottom:12px;">' + countLabel + '</h2>' +
         renderStudentFilters() +
+        renderInactivityLegend() +
         '<div class="field-hint" style="margin:10px 0;">Sorted by All-time hours by default — click a column to re-sort. Consistency = median daily minutes this month so far (same measure as the monthly Discord post), zero-filled on quiet days, so it rewards showing up regularly over binge days. Course progress = tasks completed out of everything scheduled so far. Try sorting by Consistency for steady-but-not-flashy students, or filtering by Inactive days to see who\'s gone quiet.</div>' +
         (visible.length ? '<div class="students-table-wrap"><table class="students-table"><thead><tr>' + headerHtml + '</tr></thead><tbody>' + rowsHtml + '</tbody></table></div>'
           : '<div class="empty">No students match the current filters.</div>') +
       '</div>'
     );
+  }
+
+  // ── Site data (Pricing / Notes / Lectures) ─────────────────────────
+  // Admin-editable storage for data that today lives in a published
+  // Google Sheet CSV, read live by gate-da-courses.html/
+  // gate-da-test-series.html/index.html (pricing) and
+  // gate-da-free-notes.html (notes, lectures) — see CLAUDE.md's "Site
+  // data corner" section. The live pages are NOT reading from here yet;
+  // this tab only manages the new Supabase-backed copy.
+
+  function loadSiteData(type) {
+    var sd = state.siteData;
+    sd.loading[type] = true;
+    sd.error[type] = null;
+    render();
+    var endpoint = SITE_DATA_RESOURCES[type].endpoint;
+    api(endpoint).then(function (data) {
+      sd.rows[type] = data.rows || [];
+      sd.loading[type] = false;
+      render();
+    }).catch(function (err) {
+      sd.loading[type] = false;
+      sd.error[type] = err.message;
+      render();
+    });
+  }
+
+  function renderSiteDataTabs() {
+    return Object.keys(SITE_DATA_RESOURCES).map(function (type) {
+      var cfg = SITE_DATA_RESOURCES[type];
+      var active = state.siteData.subTab === type;
+      var rows = state.siteData.rows[type];
+      var countLabel = rows ? ' (' + rows.length + ')' : '';
+      return '<button class="tab-btn' + (active ? ' active' : '') + '" data-sitetab="' + type + '">' + cfg.label + countLabel + '</button>';
+    }).join('');
+  }
+
+  function renderSiteDataList(type) {
+    var sd = state.siteData;
+    var cfg = SITE_DATA_RESOURCES[type];
+    if (sd.loading[type]) return '<div class="field-hint">Loading…</div>';
+    if (sd.error[type]) return '<div class="msg msg-error">' + escapeHtml(sd.error[type]) + '</div>';
+    var rows = sd.rows[type];
+    if (!rows || !rows.length) return '<div class="empty">No rows yet.</div>';
+
+    var headerHtml = cfg.columns.map(function (col) { return '<th>' + escapeHtml(col.label) + '</th>'; }).join('') + '<th></th>';
+    var rowsHtml = rows.map(function (r) {
+      var cellsHtml = cfg.columns.map(function (col) {
+        var val = col.format ? col.format(r) : (r[col.name] == null ? '—' : r[col.name]);
+        return '<td>' + escapeHtml(val) + '</td>';
+      }).join('');
+      var id = r[cfg.idKey];
+      return (
+        '<tr>' + cellsHtml +
+          '<td style="white-space:nowrap;">' +
+            '<button class="btn btn-small js-sitedata-edit" data-sitetype="' + type + '" data-id="' + escapeHtml(id) + '">Edit</button> ' +
+            '<button class="btn btn-small btn-danger js-sitedata-delete" data-sitetype="' + type + '" data-id="' + escapeHtml(id) + '">Delete</button>' +
+          '</td>' +
+        '</tr>'
+      );
+    }).join('');
+
+    return '<div class="students-table-wrap"><table class="students-table sitedata-table"><thead><tr>' + headerHtml + '</tr></thead><tbody>' + rowsHtml + '</tbody></table></div>';
+  }
+
+  function siteDataFieldHtml(field, row, isEdit) {
+    var value = row[field.name] == null ? '' : row[field.name];
+    var disabled = (isEdit && field.lockedOnEdit) ? ' disabled' : '';
+    var required = field.required ? ' required' : '';
+    var inputHtml;
+    if (field.type === 'select') {
+      var options = field.options.map(function (opt) {
+        return '<option value="' + escapeHtml(opt.id) + '"' + (opt.id === value ? ' selected' : '') + '>' + escapeHtml(opt.label) + '</option>';
+      }).join('');
+      inputHtml = '<select name="' + field.name + '"' + disabled + required + '>' + options + '</select>';
+    } else if (field.type === 'number') {
+      inputHtml = '<input type="number" name="' + field.name + '" value="' + escapeHtml(value) + '"' + disabled + required + '>';
+    } else if (field.type === 'date') {
+      inputHtml = '<input type="date" name="' + field.name + '" value="' + escapeHtml(value) + '"' + disabled + required + '>';
+    } else if (field.type === 'url') {
+      inputHtml = '<input type="url" name="' + field.name + '" value="' + escapeHtml(value) + '"' + disabled + required + '>';
+    } else {
+      inputHtml = '<input type="text" name="' + field.name + '" value="' + escapeHtml(value) + '"' + disabled + required + '>';
+    }
+    // A locked field's disabled input never submits via FormData — a
+    // hidden mirror keeps its real value flowing through to the payload
+    // (see readSiteDataPayload) without the input itself being editable.
+    var lockedMirror = (isEdit && field.lockedOnEdit) ? '<input type="hidden" name="' + field.name + '" value="' + escapeHtml(value) + '">' : '';
+    return '<div class="field"><label>' + escapeHtml(field.label) + '</label>' + inputHtml + lockedMirror + (field.hint ? '<div class="field-hint">' + escapeHtml(field.hint) + '</div>' : '') + '</div>';
+  }
+
+  function renderSiteDataForm(type, row) {
+    var cfg = SITE_DATA_RESOURCES[type];
+    var isEdit = !!row[cfg.idKey];
+    var fieldsHtml = cfg.fields.map(function (f) { return siteDataFieldHtml(f, row, isEdit); }).join('');
+    return (
+      '<div class="card form-card">' +
+        '<h2 style="font-size:16px;margin-bottom:14px;">' + (isEdit ? 'Edit ' : 'New ') + cfg.label.replace(/s$/, '') + '</h2>' +
+        '<form id="sitedata-form">' +
+          fieldsHtml +
+          '<div class="form-actions">' +
+            '<button type="button" class="btn" id="sitedata-cancel">Cancel</button>' +
+            '<button type="submit" class="btn btn-primary"' + (state.siteData.saving ? ' disabled' : '') + '>' + (state.siteData.saving ? 'Saving…' : (isEdit ? 'Save' : 'Create')) + '</button>' +
+          '</div>' +
+        '</form>' +
+      '</div>'
+    );
+  }
+
+  function renderSiteData() {
+    var sd = state.siteData;
+    var type = sd.subTab;
+    var cfg = SITE_DATA_RESOURCES[type];
+    var editingThis = sd.editing && sd.editing.type === type ? sd.editing.row : null;
+
+    return (
+      '<div class="card">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">' +
+          '<div class="tabs" style="margin:0;">' + renderSiteDataTabs() + '</div>' +
+          (editingThis ? '' : '<button class="btn btn-primary" id="sitedata-new">+ New ' + cfg.label.replace(/s$/, '').toLowerCase() + '</button>') +
+        '</div>' +
+        '<div class="field-hint" style="margin-bottom:14px;">Admin-editable copy of the ' + cfg.label.toLowerCase() + ' data. The live site pages still read the published Google Sheet directly — nothing here affects them yet.</div>' +
+        (editingThis ? renderSiteDataForm(type, editingThis) : renderSiteDataList(type)) +
+      '</div>'
+    );
+  }
+
+  function readSiteDataPayload(type, form) {
+    var cfg = SITE_DATA_RESOURCES[type];
+    var fd = new FormData(form);
+    var payload = {};
+    cfg.fields.forEach(function (f) {
+      var raw = (fd.get(f.name) || '').toString().trim();
+      payload[f.name] = raw === '' ? null : raw;
+    });
+    return payload;
   }
 
   function loadStudents() {
@@ -848,6 +1312,9 @@
       state.showReference = !state.showReference;
       render();
     });
+
+    var studentsRefreshBtn = document.getElementById('students-refresh');
+    if (studentsRefreshBtn) studentsRefreshBtn.addEventListener('click', function () { loadStudents(); });
 
     var builtinToggle = document.getElementById('builtin-toggle');
     if (builtinToggle) builtinToggle.addEventListener('click', function () {
@@ -896,13 +1363,96 @@
     });
 
     document.querySelectorAll('.tab-btn').forEach(function (btn) {
+      var tab = btn.getAttribute('data-tab');
+      // The Site data sub-tab buttons (Pricing/Notes/Lectures) reuse this
+      // same .tab-btn class for identical styling but carry data-sitetab
+      // instead — skip those here, they get their own handler below.
+      if (!tab) return;
       btn.addEventListener('click', function () {
-        var tab = btn.getAttribute('data-tab');
         if (tab === state.tab) return;
         state.tab = tab;
         if (tab === 'students' && state.students === null) { loadStudents(); return; }
+        if (tab === 'site-data' && state.siteData.rows[state.siteData.subTab] === null) { loadSiteData(state.siteData.subTab); return; }
         render();
       });
+    });
+
+    document.querySelectorAll('[data-sitetab]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var type = btn.getAttribute('data-sitetab');
+        if (type === state.siteData.subTab) return;
+        state.siteData.subTab = type;
+        state.siteData.editing = null;
+        if (state.siteData.rows[type] === null) { loadSiteData(type); return; }
+        render();
+      });
+    });
+
+    var sitedataNewBtn = document.getElementById('sitedata-new');
+    if (sitedataNewBtn) sitedataNewBtn.addEventListener('click', function () {
+      var type = state.siteData.subTab;
+      state.siteData.editing = { type: type, row: Object.assign({}, SITE_DATA_RESOURCES[type].newRow) };
+      render();
+    });
+
+    var sitedataCancelBtn = document.getElementById('sitedata-cancel');
+    if (sitedataCancelBtn) sitedataCancelBtn.addEventListener('click', function () {
+      state.siteData.editing = null;
+      render();
+    });
+
+    document.querySelectorAll('.js-sitedata-edit').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var type = btn.getAttribute('data-sitetype');
+        var id = btn.getAttribute('data-id');
+        var idKey = SITE_DATA_RESOURCES[type].idKey;
+        var row = (state.siteData.rows[type] || []).filter(function (r) { return String(r[idKey]) === id; })[0];
+        if (!row) return;
+        state.siteData.editing = { type: type, row: row };
+        render();
+      });
+    });
+
+    document.querySelectorAll('.js-sitedata-delete').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var type = btn.getAttribute('data-sitetype');
+        var id = btn.getAttribute('data-id');
+        var cfg = SITE_DATA_RESOURCES[type];
+        if (!confirm('Delete this ' + cfg.label.replace(/s$/, '').toLowerCase() + ' row? This can\'t be undone.')) return;
+        api(cfg.endpoint + '?id=' + encodeURIComponent(id), { method: 'DELETE' }).then(function () {
+          return loadSiteData(type);
+        }).catch(function (err) {
+          state.msg = err.message;
+          state.msgType = 'error';
+          render();
+        });
+      });
+    });
+
+    var sitedataForm = document.getElementById('sitedata-form');
+    if (sitedataForm) sitedataForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var type = state.siteData.editing.type;
+      var cfg = SITE_DATA_RESOURCES[type];
+      var isEdit = !!state.siteData.editing.row[cfg.idKey];
+      var payload = readSiteDataPayload(type, sitedataForm);
+      if (isEdit) payload[cfg.idKey] = state.siteData.editing.row[cfg.idKey];
+      state.siteData.saving = true;
+      render();
+      api(cfg.endpoint, { method: isEdit ? 'PUT' : 'POST', body: JSON.stringify(payload) })
+        .then(function () {
+          state.siteData.saving = false;
+          state.siteData.editing = null;
+          state.msg = isEdit ? 'Saved.' : 'Created.';
+          state.msgType = 'ok';
+          return loadSiteData(type);
+        })
+        .catch(function (err) {
+          state.siteData.saving = false;
+          state.msg = err.message;
+          state.msgType = 'error';
+          render();
+        });
     });
 
     document.querySelectorAll('.js-sort').forEach(function (th) {
@@ -1021,14 +1571,93 @@
       });
     });
 
+    // Swaps this post's dispatch_order with whichever neighbor it's
+    // moving past, within its own channel group (same sort discord-
+    // dispatch.js itself uses) — a straight swap rather than a full
+    // renumber, so moving one post never disturbs any other pair's
+    // relative order.
+    function movePost(id, direction) {
+      var post = state.posts.filter(function (p) { return p.id === id; })[0];
+      if (!post) return;
+      var groupRows = sortByDispatchOrder(state.posts.filter(function (p) { return channelKey(p) === channelKey(post); }));
+      var index = groupRows.findIndex(function (p) { return p.id === id; });
+      var neighborIndex = index + direction;
+      if (neighborIndex < 0 || neighborIndex >= groupRows.length) return;
+      var neighbor = groupRows[neighborIndex];
+      var postOrder = post.dispatch_order || 0;
+      var neighborOrder = neighbor.dispatch_order || 0;
+      // Identical dispatch_order (the common default-0 case) swapping to
+      // the same value would be a no-op — nudge apart by 1 in the
+      // intended direction instead of a plain swap, so the move always
+      // actually takes effect on the very first click.
+      var newPostOrder = postOrder === neighborOrder ? postOrder + direction : neighborOrder;
+      var newNeighborOrder = postOrder === neighborOrder ? neighborOrder : postOrder;
+      Promise.all([
+        api('/team-posts', { method: 'PUT', body: JSON.stringify(Object.assign({}, post, { dispatch_order: newPostOrder })) }),
+        api('/team-posts', { method: 'PUT', body: JSON.stringify(Object.assign({}, neighbor, { dispatch_order: newNeighborOrder })) }),
+      ])
+        .then(function () { return loadPosts(); })
+        .catch(function (err) { state.msg = err.message; state.msgType = 'error'; render(); });
+    }
+    document.querySelectorAll('.js-move-up').forEach(function (btn) {
+      btn.addEventListener('click', function () { movePost(btn.getAttribute('data-id'), -1); });
+    });
+    document.querySelectorAll('.js-move-down').forEach(function (btn) {
+      btn.addEventListener('click', function () { movePost(btn.getAttribute('data-id'), 1); });
+    });
+
     var sourceSelect = document.getElementById('f-source');
     if (sourceSelect) sourceSelect.addEventListener('change', function () {
+      // Real bug, caught from testing, not assumed away: renderForm()
+      // prefills Title/Body with the OLD source's default text as a real
+      // `value` (see DEFAULT_TITLE_BY_SOURCE/DEFAULT_BODY_BY_SOURCE) — if
+      // that's left untouched and syncEditingFromForm() runs as-is right
+      // before the source actually changes, it captures that prefilled
+      // default as if it were genuinely typed content, and it then keeps
+      // carrying over through every subsequent source switch (confirmed:
+      // switching daily_leaderboard → weekly_leaderboard → custom left
+      // "Yesterday's Top 3" stuck in Title the whole way, and eventually
+      // the OTHER source's stale Body default too). Clearing any field
+      // that still exactly matches its OWN source's untouched default —
+      // right before syncing, using the source this change is leaving —
+      // means sync only ever captures genuinely user-edited text, so the
+      // new source's own default correctly takes over instead.
+      var oldSource = state.editing.source || 'custom';
+      var titleInput = document.querySelector('#post-form [name="title"]');
+      if (titleInput && titleInput.value === (DEFAULT_TITLE_BY_SOURCE[oldSource] || ' ')) titleInput.value = '';
+      var bodyTextarea = document.getElementById('f-body');
+      if (bodyTextarea && bodyTextarea.value === (DEFAULT_BODY_BY_SOURCE[oldSource] || ' ')) bodyTextarea.value = '';
       syncEditingFromForm();
       state.editing.source = sourceSelect.value;
       state.preview = null;
       state.testStatus = null;
       render();
       document.getElementById('f-source').focus();
+    });
+
+    // Splices the token in at wherever the cursor/selection currently is
+    // (replacing a selection rather than just appending after it) instead
+    // of always appending to the end — the whole point is behaving like a
+    // normal "insert at cursor" action, not a fixed append. Doesn't use
+    // document.execCommand('insertText', ...) (deprecated, inconsistent
+    // undo-stack behavior across browsers) — a plain value splice plus a
+    // real 'input' event dispatch (so anything that might listen for
+    // changes, now or later, still sees one) is simpler and reliable.
+    document.querySelectorAll('.js-insert-placeholder').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var textarea = document.getElementById('f-body');
+        if (!textarea) return;
+        var token = btn.getAttribute('data-token');
+        var start = textarea.selectionStart;
+        var end = textarea.selectionEnd;
+        var before = textarea.value.slice(0, start);
+        var after = textarea.value.slice(end);
+        textarea.value = before + token + after;
+        var cursor = start + token.length;
+        textarea.focus();
+        textarea.setSelectionRange(cursor, cursor);
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      });
     });
 
     var addSectionBtn = document.getElementById('f-add-section');
@@ -1202,10 +1831,20 @@
     });
   }
 
+  // dispatch_order has no form input of its own — it's only ever set via
+  // the ▲/▼ buttons on the post list (see movePost), never typed. Read
+  // straight from state.editing (unaffected by whatever's on the form)
+  // rather than defaulting to 0 here, or saving any OTHER field through
+  // the normal form/Save button would silently reset a post's custom
+  // order back to 0 — a real bug caught before shipping the up/down
+  // buttons, not a hypothetical one: this function is what both the
+  // final Submit and every mid-edit syncEditingFromForm() call route
+  // through, and neither has any other way to know the post's order.
   function readFormPayload(form) {
     var fd = new FormData(form);
     return {
       source: fd.get('source'),
+      dispatch_order: state.editing.dispatch_order || 0,
       platform: fd.get('platform') === 'telegram' ? 'telegram' : 'discord',
       channel_name: (fd.get('channel_name') || '').trim(),
       webhook_url: (fd.get('webhook_url') || '').trim(),

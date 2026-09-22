@@ -676,3 +676,71 @@ GRANT EXECUTE ON FUNCTION increment_malpractice_warning_ack TO service_role;
 -- naturally completes, expires, or is changed by that SAME device,
 -- rather than losing to whichever device's sync happens to land last.
 ALTER TABLE pomo_active_session ADD COLUMN IF NOT EXISTS owner_token TEXT;
+
+-- Site data corner (added 2026-09-22) — /team-editable storage for data
+-- that today lives in a published Google Sheet CSV, read live by
+-- gate-da-courses.html/gate-da-test-series.html/index.html (pricing) and
+-- gate-da-free-notes.html (notes, lectures). These three tables are the
+-- new storage the /team "Site data" tab reads/writes; the live pages
+-- themselves are NOT switched over to reading from here yet — they keep
+-- fetching the CSV exactly as before, by explicit instruction, until a
+-- later, separate cutover. See CLAUDE.md's own "Site data corner" section
+-- for the full writeup and that cutover's own to-do entry.
+
+-- Mirrors sheets/pricing.csv 1:1. id is the same slug already used
+-- everywhere else on the site (COMBOS[].id in gate-da-courses.html,
+-- pricingMap keys) — kept as the real primary key rather than a
+-- surrogate UUID, since every consumer already looks rows up by this
+-- exact string.
+CREATE TABLE IF NOT EXISTS site_pricing (
+  id                TEXT PRIMARY KEY,
+  type              TEXT NOT NULL,        -- 'combo' | 'individual' | 'test-series'
+  name              TEXT NOT NULL,
+  price             INTEGER,
+  price_old         INTEGER,
+  discount          TEXT,
+  discount_reason   TEXT,
+  discount_deadline DATE,
+  validity          DATE,
+  created_at        TIMESTAMPTZ DEFAULT now(),
+  updated_at        TIMESTAMPTZ DEFAULT now()
+);
+GRANT SELECT, INSERT, UPDATE, DELETE ON site_pricing TO service_role;
+
+-- Mirrors sheets/notes.csv — one row per downloadable PDF, many per
+-- subject (unlike pricing, subject is not unique, so a real UUID PK).
+-- subject values are the same kebab-case ids notes-data.json's own
+-- subjects[].id list already defines (linear-algebra, probability,
+-- statistics, calculus, machine-learning, ai, python, data-structures,
+-- algorithms, dbms) — /team's dropdown mirrors that fixed list rather
+-- than inventing a new one, same "reuse the centralized list" discipline
+-- team.js's SUBJECT_OPTIONS already applies for the Discord schedule
+-- feature (see gate-da-subjects.js).
+CREATE TABLE IF NOT EXISTS site_notes (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  subject     TEXT NOT NULL,
+  title       TEXT,
+  description TEXT,
+  file_url    TEXT,                        -- downloadable PDF link (note.file in gate-da-free-notes.html)
+  posted_on   DATE,
+  created_at  TIMESTAMPTZ DEFAULT now(),
+  updated_at  TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_site_notes_subject ON site_notes(subject);
+GRANT SELECT, INSERT, UPDATE, DELETE ON site_notes TO service_role;
+
+-- Mirrors sheets/lectures.csv — one row per lecture video, numbered per
+-- subject (lecture_number drives display order on the live page).
+CREATE TABLE IF NOT EXISTS site_lectures (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  subject        TEXT NOT NULL,
+  lecture_number INTEGER,
+  title          TEXT,
+  youtube_url    TEXT,
+  slides_url     TEXT,                     -- lecture.slidesFile in gate-da-free-notes.html — a URL, not a filename
+  posted_on      DATE,
+  created_at     TIMESTAMPTZ DEFAULT now(),
+  updated_at     TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_site_lectures_subject ON site_lectures(subject);
+GRANT SELECT, INSERT, UPDATE, DELETE ON site_lectures TO service_role;

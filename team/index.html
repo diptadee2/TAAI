@@ -54,11 +54,27 @@
   .post-main { flex: 1; min-width: 0; }
   .post-title { font-weight: 600; font-size: 14.5px; display: flex; align-items: center; gap: 8px; }
   .post-meta { color: var(--ink-soft); font-size: 12.5px; margin-top: 3px; }
+  /* The raw, literal current Body text (or a sections/blank summary — see
+     bodySnippetText) shown right in the list, monospace so placeholder
+     syntax like {{name}} reads as code, not prose — the whole point is
+     seeing exactly what's configured without opening Edit first. Clamped
+     to 2 lines with a native title tooltip carrying the untruncated text
+     for anything longer. */
+  .post-body-snippet { font-family: ui-monospace, 'SF Mono', Consolas, monospace; font-size: 11.5px; color: var(--ink-dim); margin-top: 5px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; }
   .tag-custom { background: var(--purple-soft); color: var(--purple); }
   .tag-builtin { background: var(--amber-soft); color: var(--amber); }
   .tag-disabled { background: var(--red-soft); color: var(--red); }
   .post-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  /* Only meaningful within a post's own channel group (posts to
+     different channels never interleave from a viewer's perspective) —
+     see sortByDispatchOrder/movePost in team.js. Disabled rather than
+     hidden at the top/bottom of a group so the column stays aligned
+     instead of the row's other content shifting side to side. */
+  .post-order-buttons { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+  .btn-order { width: 22px; height: 18px; padding: 0; border-radius: 4px; border: 1px solid var(--line); background: var(--bg-soft); color: var(--ink-dim); font-size: 10px; line-height: 1; cursor: pointer; display: grid; place-items: center; }
+  .btn-order:hover:not(:disabled) { background: var(--purple-soft); border-color: var(--purple); color: var(--purple); }
+  .btn-order:disabled { opacity: 0.25; cursor: default; }
 
   .empty { color: var(--ink-soft); font-size: 13.5px; text-align: center; padding: 30px 0; }
   .post-list-heading { font-size: 13px; font-weight: 700; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 10px; }
@@ -82,8 +98,19 @@
   .students-table th, .students-table td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
   .students-table th { color: var(--ink-dim); font-weight: 600; font-size: 12px; cursor: pointer; user-select: none; }
   .students-table th:hover { color: var(--ink); }
+  /* Faint until hovered — signals "this column sorts" at a glance without
+     competing with the label text or the active column's real ▲/▼. */
+  .sort-hint { opacity: 0.35; font-size: 10px; }
+  .students-table th:hover .sort-hint { opacity: 0.8; }
   .students-table tbody tr:last-child td { border-bottom: none; }
   .students-notes-cell { white-space: normal; min-width: 220px; }
+  /* Site data's tables reuse .students-table for identical styling, but
+     their headers aren't click-to-sort (small, already-ordered datasets —
+     see renderSiteDataList) — this class just turns off the inherited
+     "this is clickable" cursor/hover so unsortable headers don't look
+     like they should be. */
+  .sitedata-table th { cursor: default; }
+  .sitedata-table th:hover { color: var(--ink-dim); }
   .students-notes-cell textarea { width: 100%; min-height: 34px; padding: 6px 8px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--bg-soft); color: var(--ink); font-family: inherit; font-size: 12.5px; resize: vertical; margin-bottom: 5px; }
   .students-notes-cell textarea:focus { outline: none; border-color: var(--purple); }
   .students-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 16px; }
@@ -100,6 +127,9 @@
   .inactivity-warm { background: var(--amber); }
   .inactivity-cold { background: var(--red); }
   .inactivity-never { background: var(--ink-soft); }
+  .inactivity-legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 8px 0 2px; }
+  .inactivity-legend-item { display: flex; align-items: center; font-size: 11.5px; color: var(--ink-soft); }
+  .inactivity-legend-item .inactivity-dot { margin-right: 5px; }
 
   .channel-group { margin-bottom: 16px; }
   .channel-group:last-child { margin-bottom: 0; }
@@ -121,6 +151,15 @@
   .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--purple); }
   .field textarea { min-height: 80px; resize: vertical; }
   .field-hint { color: var(--ink-soft); font-size: 11.5px; margin-top: 4px; }
+  /* Click-to-insert {{placeholder}} chips above the Body field (see
+     placeholderChipsHtml/js-insert-placeholder in team.js) — the actual
+     ask this exists for: a non-technical editor shouldn't need to already
+     know this curly-brace syntax exists, let alone type it correctly by
+     hand, just to make a small wording change. */
+  .placeholder-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
+  .placeholder-chips-label { font-size: 11.5px; color: var(--ink-soft); margin-right: 2px; }
+  .chip { padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg-soft); color: var(--purple); font-family: ui-monospace, 'SF Mono', Consolas, monospace; font-size: 11.5px; }
+  .chip:hover { border-color: var(--purple); background: var(--purple-soft); }
   .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .checkbox-row { display: flex; align-items: center; gap: 8px; }
   .checkbox-row input { width: auto; }
