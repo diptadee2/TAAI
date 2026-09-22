@@ -235,6 +235,12 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .page-hero h1               { animation: pageHeroIn .70s cubic-bezier(.34,1.12,.64,1) .18s both; }
 .page-hero .hero-sub        { animation: pageHeroIn .60s cubic-bezier(.34,1.12,.64,1) .30s both; }
 .page-hero .ph-cta          { animation: pageHeroIn .58s cubic-bezier(.34,1.12,.64,1) .42s both; }
+/* Joins the same staggered entrance every other hero element already
+   has (see pageHeroIn above) — this link previously had none at all,
+   so it just popped in instantly while everything around it animated.
+   Delay sits between .ph-cta's .42s and .hero-proof-row's .54s, next
+   in the visual/DOM order. */
+.page-hero .hero-guide-link { animation: pageHeroIn .55s cubic-bezier(.34,1.12,.64,1) .50s both; }
 .hero-guide-link { display: inline-block; margin-top: 34px; font-size: 14.5px; font-weight: 500; color: var(--purple); text-decoration: none; }
 .hero-guide-link:hover { text-decoration: underline; }
 .page-hero .hero-proof-row  { animation: pageHeroIn .65s cubic-bezier(.34,1.12,.64,1) .54s both; }
