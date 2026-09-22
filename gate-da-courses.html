@@ -452,16 +452,27 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .combo-horizontal-right { display: flex; flex-direction: column; gap: 16px; }
 /* .combo-price-row's own margin-top:auto exists to push it to the
    bottom of the ORIGINAL flat flex-column card (see its own rule) — inside
-   this now-short two-item right column it would instead shove both the
-   price and the button down to the bottom edge, fighting the vertical
-   centering .combo-horizontal gives this column on desktop. Neutralized
-   here specifically (harmless at the mobile/stacked width too). */
+   this now-single-item right column it would instead shove the price
+   down to the bottom edge, fighting the vertical centering
+   .combo-horizontal gives this column on desktop. Neutralized here
+   specifically (harmless at the mobile/stacked width too). */
 .combo-horizontal-right .combo-price-row { margin-top: 0; padding-top: 0; margin-bottom: 0; }
-/* Replaces the old disabled "Coming Soon" button — plain text sitting
-   directly above the blurred price, not a pill/control, per direct
-   request. Uses the card's own amber theme (matching .combo-badge.soon)
-   so it reads as this card's own accent, not a generic label. */
-.combo-coming-soon-tag { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #FCD34D; }
+/* Replaces the old disabled "Coming Soon" button (and, before that, a
+   small label beside the price) — a big overlay sitting directly on
+   top of the blurred What's-included list instead, per direct request,
+   since that's the most visually prominent blurred area on the card.
+   The wrapper is what the list is actually sized/positioned against;
+   inset:0 on the overlay then exactly covers it regardless of whether
+   the list is rendering as 1 column (mobile) or 2 (desktop, see
+   .combo-horizontal-left .combo-includes ul below). */
+.combo-includes-wrap { position: relative; }
+.combo-coming-soon-overlay {
+  position: absolute; inset: 0; z-index: 2;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  font-size: clamp(18px, 4vw, 24px); font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
+  color: #FCD34D; text-shadow: 0 2px 16px rgba(0,0,0,0.65), 0 0 28px rgba(251,191,36,0.35);
+  pointer-events: none;
+}
 /* Horizontal split (badge/title/includes on the left, price/CTA on the
    right) — desktop only, on request; stays the normal stacked layout
    below this breakpoint (same one .combos-grid itself switches to a
@@ -2385,9 +2396,11 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
     </div>
   );
   const ctaEl = <a href={c.href} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-full">Enrol now <Icon.ArrowRight /></a>;
-  // comingSoon has no button at all — see combo-coming-soon-tag below,
-  // rendered directly above the blurred price instead.
-  const comingSoonTagEl = <div className="combo-coming-soon-tag"><Icon.Bell size={13} /> Coming Soon</div>;
+  // comingSoon has no button at all — a big "Coming Soon" overlay sits
+  // directly over the blurred What's-included list instead (see
+  // combo-includes-wrap below), the most visually prominent blurred
+  // area on the card, rather than a small label off to the side.
+  const comingSoonTagEl = <div className="combo-coming-soon-overlay"><Icon.Bell size={20} /> Coming Soon</div>;
 
   // comingSoon gets a genuinely different structure (two side-by-side
   // halves on desktop — see .combo-horizontal), not just the same flat
@@ -2406,10 +2419,12 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
           {validityEl}
           <div className="combo-divider" />
           <div className="combo-includes-label">What's included</div>
-          {includesEl}
+          <div className="combo-includes-wrap">
+            {includesEl}
+            {comingSoonTagEl}
+          </div>
         </div>
         <div className="combo-horizontal-right">
-          {comingSoonTagEl}
           {priceRowEl}
         </div>
       </div>
