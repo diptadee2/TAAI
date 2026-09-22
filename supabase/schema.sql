@@ -656,3 +656,23 @@ RETURNS TABLE(malpractice_warning_ack_count INTEGER) AS $$
 $$ LANGUAGE sql;
 
 GRANT EXECUTE ON FUNCTION increment_malpractice_warning_ack TO service_role;
+
+-- Multi-device/tab session-ownership protection — a real bug, confirmed
+-- against production: pomo_active_session is ONE shared row per email,
+-- so a second, stale tab/device silently re-syncing its own old idle
+-- state can clobber a genuinely in-progress session on a DIFFERENT
+-- device right before its completion call arrives, wiping out the only
+-- server-side record pomodoro-complete.js verifies elapsed time
+-- against — the student's real session then gets rejected as
+-- unverifiable through no fault of their own (see CLAUDE.md, the
+-- 2026-09-22 investigation into a real student's report). owner_token is
+-- a random per-tab identity (see getPomoDeviceToken in progress.js,
+-- generated once per tab load into sessionStorage, so it's distinct
+-- across tabs/devices but stable across reloads of the SAME tab) stamped
+-- by pomo-active.js whenever a genuinely new phase starts. pomo-active.js
+-- then refuses to let a DIFFERENT device's conflicting write overwrite an
+-- existing phase that's still actively running and hasn't hit its own
+-- phase_end_at yet — the owning device keeps priority until its session
+-- naturally completes, expires, or is changed by that SAME device,
+-- rather than losing to whichever device's sync happens to land last.
+ALTER TABLE pomo_active_session ADD COLUMN IF NOT EXISTS owner_token TEXT;

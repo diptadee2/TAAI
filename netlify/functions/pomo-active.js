@@ -1,4 +1,4 @@
-// POST /api/pomo-active  { email, mode, running, secondsLeft, totalSeconds, phaseEndAt, completedSessions }
+// POST /api/pomo-active  { email, mode, running, secondsLeft, totalSeconds, phaseEndAt, completedSessions, deviceToken }
 //
 // Persists the pomodoro timer's active/paused state server-side, mirroring
 // what's already written to this device's own localStorage (see
@@ -42,7 +42,7 @@ export async function handler(event) {
   // accumulating from when it first began).
   const { data: existing, error: readError } = await supabase
     .from('pomo_active_session')
-    .select('mode, total_seconds, phase_started_at')
+    .select('mode, total_seconds, phase_started_at, running, phase_end_at')
     .eq('email', email)
     .maybeSingle();
   if (readError) return json(500, { error: readError.message });
@@ -51,6 +51,43 @@ export async function handler(event) {
     existing.mode !== body.mode ||
     existing.total_seconds !== totalSeconds ||
     (running && secondsLeft === totalSeconds);
+
+  // Multi-device/tab ownership protection (see owner_token in schema.sql)
+  // — a real bug, confirmed against production: without this, a second,
+  // stale tab/device re-syncing its own old idle state can silently
+  // clobber a genuinely in-progress session on a DIFFERENT device right
+  // before its completion call arrives, wiping out the only server-side
+  // record pomodoro-complete.js verifies elapsed time against. Its own
+  // separate, best-effort query (not added to the `existing` select
+  // above) so a pre-migration "column does not exist" error can never
+  // break the routine sync every Start/Pause/Skip/Reset depends on — the
+  // same fault-tolerance discipline as the malpractice freeze check just
+  // above.
+  const deviceToken = typeof body.deviceToken === 'string' && body.deviceToken ? body.deviceToken.slice(0, 100) : null;
+  let existingOwnerToken = null;
+  try {
+    const { data: ownerRow, error: ownerError } = await supabase
+      .from('pomo_active_session')
+      .select('owner_token')
+      .eq('email', email)
+      .maybeSingle();
+    if (!ownerError && ownerRow) existingOwnerToken = ownerRow.owner_token;
+  } catch (e) {
+    console.error('pomo-active.js: owner_token lookup failed for', email, e);
+  }
+
+  // Only blocks a write that would actually CHANGE the phase (isNewPhase)
+  // while a DIFFERENT device's session is still genuinely active (running,
+  // and its own deadline hasn't passed) — a same-device update (matching
+  // token, or no token recorded yet e.g. pre-migration) always proceeds
+  // normally, and so does anything once the owning device's phase has
+  // actually ended. The owning device keeps priority until its own
+  // session naturally completes/expires/changes, rather than losing to
+  // whichever device's sync happens to land last.
+  const existingStillActive = !!(existing && existing.running && Number.isFinite(existing.phase_end_at) && existing.phase_end_at > Date.now());
+  if (isNewPhase && existingStillActive && existingOwnerToken && deviceToken && existingOwnerToken !== deviceToken) {
+    return json(200, { ok: true, ignored: 'another device owns the active session' });
+  }
 
   // Malpractice freeze enforcement (see record_malpractice_incident in
   // schema.sql) — only blocks genuinely starting a NEW work phase, never
@@ -88,19 +125,35 @@ export async function handler(event) {
 
   const phaseStartedAt = isNewPhase ? Date.now() : (existing.phase_started_at ?? Date.now());
 
-  const { error } = await supabase
-    .from('pomo_active_session')
-    .upsert({
-      email,
-      mode: body.mode,
-      running,
-      phase_end_at: Number.isFinite(body.phaseEndAt) ? body.phaseEndAt : null,
-      seconds_left: secondsLeft,
-      total_seconds: totalSeconds,
-      completed_sessions: Number.isFinite(body.completedSessions) ? body.completedSessions : 0,
-      phase_started_at: phaseStartedAt,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'email' });
+  const upsertPayload = {
+    email,
+    mode: body.mode,
+    running,
+    phase_end_at: Number.isFinite(body.phaseEndAt) ? body.phaseEndAt : null,
+    seconds_left: secondsLeft,
+    total_seconds: totalSeconds,
+    completed_sessions: Number.isFinite(body.completedSessions) ? body.completedSessions : 0,
+    phase_started_at: phaseStartedAt,
+    updated_at: new Date().toISOString(),
+  };
+  // Claims ownership for THIS device only when a genuinely new phase is
+  // starting — a Pause/Resume/tick-sync of the SAME phase doesn't touch
+  // who owns it. No token to stamp (sessionStorage unavailable, or an
+  // old pre-fix tab) just means this write goes through unowned, same as
+  // today's behavior — never blocks the write itself.
+  if (isNewPhase && deviceToken) upsertPayload.owner_token = deviceToken;
+
+  let { error } = await supabase.from('pomo_active_session').upsert(upsertPayload, { onConflict: 'email' });
+  if (error && upsertPayload.owner_token) {
+    // Pre-migration fallback: the column doesn't exist yet, so retry
+    // without it rather than failing this routine sync entirely — the
+    // same "never let a new, optional field break an existing critical
+    // path" discipline used throughout this session. Once the migration
+    // runs, the first attempt above succeeds directly and this never
+    // triggers again.
+    delete upsertPayload.owner_token;
+    ({ error } = await supabase.from('pomo_active_session').upsert(upsertPayload, { onConflict: 'email' }));
+  }
   if (error) return json(500, { error: error.message });
 
   return json(200, { ok: true });

@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-22-4';
+  var CLIENT_VERSION = '2026-09-22-5';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -355,6 +355,33 @@
   // either — a student's is already covered by loadMonth's Math.max merge,
   // but persisting it here doesn't conflict with that.
   var POMO_ACTIVE_KEY = 'taai_pomo_active';
+
+  // A random identity for THIS tab, sent to /pomo-active as deviceToken —
+  // see owner_token in schema.sql. sessionStorage specifically, not
+  // localStorage: it's scoped per-tab (a new tab, or a different device,
+  // always gets its own fresh token) but stable across reloads of the
+  // SAME tab (so a legitimate reload mid-session doesn't look like a
+  // different device taking over). Lets the server tell "this write is
+  // from the device that actually owns the currently in-progress
+  // session" apart from "this write is from some other, unrelated
+  // device" — without this, a second stale tab/device re-syncing its own
+  // old idle state could silently clobber a real, in-progress session on
+  // a different device (a real bug, confirmed against production — see
+  // CLAUDE.md's 2026-09-22 multi-device investigation). Falls back to
+  // null (no protection for this tab, matches the pre-fix behavior)
+  // rather than breaking anything if sessionStorage is unavailable.
+  function getPomoDeviceToken() {
+    try {
+      var token = sessionStorage.getItem('taai_pomo_device_token');
+      if (!token) {
+        token = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now().toString(36) + Math.random().toString(36).slice(2));
+        sessionStorage.setItem('taai_pomo_device_token', token);
+      }
+      return token;
+    } catch (e) {
+      return null;
+    }
+  }
   // Tracks the freshness (epoch ms) of whatever's currently applied to
   // `pomo`, whether it came from this device's own localStorage or a sync
   // from the server (see applyPomoActiveState/loadMonth) — lets the
@@ -439,6 +466,7 @@
       totalSeconds: payload.totalSeconds,
       phaseEndAt: payload.phaseEndAt,
       completedSessions: payload.completedSessions,
+      deviceToken: getPomoDeviceToken(),
     });
     function attempt(retriesLeft) {
       api('/pomo-active', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body })
