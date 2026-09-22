@@ -568,8 +568,14 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
      the "already in view at load" skip-animation path a few lines
      below in the JS, which needs that timing untouched), only the
      visual start of the transition itself is pushed back. */
-  .combo-full-row.fade-in { transform: translateX(-70px); transition: opacity .7s cubic-bezier(.34,1.1,.64,1) .3s, transform .7s cubic-bezier(.34,1.1,.64,1) .3s; }
-  .combo-full-row.fade-in.visible { transform: translateX(0); }
+  /* Better on request — more presence (further travel, a touch of
+     scale for depth) and a proper bounce: switched from a mild
+     cubic-bezier(.34,1.1,.64,1) to the site's actual signature
+     overshoot-and-settle curve (.34,1.56,.64,1), the same one used
+     for bump/pop moments elsewhere on this page — the original was
+     barely different from a plain ease. */
+  .combo-full-row.fade-in { transform: translateX(-90px) scale(0.96); transition: opacity .8s cubic-bezier(.34,1.56,.64,1) .3s, transform .8s cubic-bezier(.34,1.56,.64,1) .3s; }
+  .combo-full-row.fade-in.visible { transform: translateX(0) scale(1); }
 }
 .combo-featured-frame {
   border-radius: calc(var(--radius-xl) + 2px); padding: 2px;
