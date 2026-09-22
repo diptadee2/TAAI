@@ -2773,10 +2773,31 @@ function App() {
 
   React.useEffect(() => {
     const mobile = window.matchMedia('(max-width: 768px)').matches;
-    const show = el => {
+    // Elements genuinely on-screen at page load (before anyone has
+    // scrolled) skip the animation — sliding/fading in something that
+    // was never actually hidden looks wrong. Real bug caught from
+    // testing, not assumed: this used to be re-derived from
+    // getBoundingClientRect() *inside* show(), at the moment each
+    // observer's callback fired — which happens to work for the `io`
+    // observer below (its 200px rootMargin means the callback usually
+    // fires slightly BEFORE the element is actually on-screen, so the
+    // recheck still correctly reads false for a real scroll-triggered
+    // reveal), but is a straight-up tautology for `ioRow` (no
+    // rootMargin): its callback can only ever fire once the element
+    // already has >=10% real overlap with the viewport, so the "is it
+    // on-screen right now" recheck was always true — meaning the
+    // combo-full-row's slide-in never actually played on scroll, it
+    // just snapped straight to its final state every time. Computed
+    // once per element, synchronously, before any scrolling can have
+    // happened yet, so it reflects the true page-load state regardless
+    // of which observer (or rootMargin) later reports the reveal.
+    const alreadyVisibleAtLoad = new WeakSet();
+    const markInitialVisibility = el => {
       const rect = el.getBoundingClientRect();
-      const alreadyInView = rect.top < window.innerHeight && rect.bottom > 0;
-      if (alreadyInView) {
+      if (rect.top < window.innerHeight && rect.bottom > 0) alreadyVisibleAtLoad.add(el);
+    };
+    const show = el => {
+      if (alreadyVisibleAtLoad.has(el)) {
         el.style.transition = 'none';
         el.classList.add('visible');
         void el.offsetHeight; // force reflow so transition:none takes effect before restoring
@@ -2804,7 +2825,7 @@ function App() {
       return obs;
     };
     const io = makeObserver({ threshold: 0.1, rootMargin: '0px 0px 200px 0px' });
-    document.querySelectorAll('.fade-in:not(.combo-full-row)').forEach((el) => io.observe(el));
+    document.querySelectorAll('.fade-in:not(.combo-full-row)').forEach((el) => { markInitialVisibility(el); io.observe(el); });
 
     // Real feedback: "the animation happens too early" — the shared 200px
     // early rootMargin above barely registers on the ordinary fade-in's
@@ -2817,7 +2838,7 @@ function App() {
     // specifically, without touching the shared 200px timing every
     // other fade-in element on the page already relies on.
     const ioRow = makeObserver({ threshold: 0.1 });
-    document.querySelectorAll('.fade-in.combo-full-row').forEach((el) => ioRow.observe(el));
+    document.querySelectorAll('.fade-in.combo-full-row').forEach((el) => { markInitialVisibility(el); ioRow.observe(el); });
 
     return () => { io.disconnect(); ioRow.disconnect(); };
   }, []);
