@@ -483,6 +483,34 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   background: rgba(12,7,2,0.72); border: 1px solid rgba(251,191,36,0.4);
   padding: 12px 24px; border-radius: 14px;
   box-shadow: 0 10px 36px rgba(0,0,0,0.45), 0 0 28px rgba(251,191,36,0.22);
+  position: relative; overflow: hidden;
+}
+/* Animated on request, but not by moving/scaling the chip's own box —
+   it carries both box-shadow and border-radius, exactly the combination
+   that leaks detached DOM nodes under Chromium when transform/box-shadow
+   animate directly on it (see this file's own known-gotchas note). Two
+   animations that stay clear of that: a gold shimmer sweep on a
+   ::after pseudo-element (reuses combo-shimmer-sweep, same technique
+   already used for the card's own shine, not the box itself), and the
+   bell icon wiggling in place — a bare SVG with no shadow/radius of its
+   own, safe to animate transform on directly. */
+.combo-coming-soon-overlay-inner::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  background: linear-gradient(105deg, transparent 38%, rgba(255,255,255,0.22) 50%, transparent 62%);
+  transform: translateX(-130%) skewX(-15deg);
+  animation: combo-shimmer-sweep 3.4s ease-in-out 1s infinite;
+  pointer-events: none;
+}
+@keyframes combo-coming-soon-bell-wiggle {
+  0%, 50%, 100% { transform: rotate(0deg); }
+  10% { transform: rotate(-12deg); }
+  20% { transform: rotate(10deg); }
+  30% { transform: rotate(-8deg); }
+  40% { transform: rotate(5deg); }
+}
+.combo-coming-soon-overlay-inner svg { animation: combo-coming-soon-bell-wiggle 3.4s ease-in-out 1s infinite; transform-origin: 50% 15%; flex-shrink: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .combo-coming-soon-overlay-inner::after, .combo-coming-soon-overlay-inner svg { animation: none; }
 }
 /* Horizontal split (badge/title/includes on the left, price/CTA on the
    right) — desktop only, on request; stays the normal stacked layout
@@ -525,7 +553,14 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
      that alignment), landing on the site's signature overshoot curve
      rather than the plain ease the default fade-in uses, for a touch
      more presence on the one row that gets this treatment. */
-  .combo-full-row.fade-in { transform: translateX(-70px); transition: opacity .7s cubic-bezier(.34,1.1,.64,1), transform .7s cubic-bezier(.34,1.1,.64,1); }
+  /* A short delay before the slide starts — on request, so it reads as
+     a deliberate beat rather than firing the instant the row crosses
+     the viewport edge. Pure transition-delay, not a JS setTimeout: the
+     .visible class still gets added immediately by the observer (see
+     the "already in view at load" skip-animation path a few lines
+     below in the JS, which needs that timing untouched), only the
+     visual start of the transition itself is pushed back. */
+  .combo-full-row.fade-in { transform: translateX(-70px); transition: opacity .7s cubic-bezier(.34,1.1,.64,1) .3s, transform .7s cubic-bezier(.34,1.1,.64,1) .3s; }
   .combo-full-row.fade-in.visible { transform: translateX(0); }
 }
 .combo-featured-frame {
