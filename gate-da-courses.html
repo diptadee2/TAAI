@@ -528,8 +528,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
      halves — the split had no visual boundary before, so the right side
      just floated in empty space with nothing marking it as its own
      zone. Padding-left matches the row gap so the divider sits centered
-     in the gap rather than crowding either side. */
-  .combo-horizontal-right { flex: 1; justify-content: center; border-left: 1px solid rgba(255,255,255,0.1); padding-left: 40px; }
+     in the gap rather than crowding either side. Thicker and tinted to
+     the card's own amber theme (not a generic gray hairline) on
+     request, so it reads as a deliberate part of this card's design. */
+  .combo-horizontal-right { flex: 1; justify-content: center; border-left: 3px solid rgba(251,191,36,0.28); padding-left: 40px; }
   /* Two columns instead of one long list — the left half has real width
      now, and a single tall column of 9 items would leave the shorter
      price/button column beside it looking stranded in empty space. Real
