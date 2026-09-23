@@ -1270,14 +1270,25 @@
     return type === 'pricing' ? renderPricingGroups(rows) : renderSiteDataTable(type, rows);
   }
 
-  // Edit/Delete — shared by every pricing card and every plain
-  // sitedata-table row, so the two layouts' action buttons never drift
-  // apart from each other.
-  function siteDataRowActionsHtml(type, id) {
-    return (
-      '<button class="btn btn-small js-sitedata-edit" data-sitetype="' + type + '" data-id="' + escapeHtml(id) + '">Edit</button> ' +
-      '<button class="btn btn-small btn-danger js-sitedata-delete" data-sitetype="' + type + '" data-id="' + escapeHtml(id) + '">Delete</button>'
-    );
+  // Edit/Delete — shared by every plain sitedata-table row (Notes,
+  // Lectures) and, minus Delete, every pricing card too, so Edit's own
+  // markup never drifts between the two layouts.
+  //
+  // showDelete defaults true for Notes/Lectures, but pricing cards
+  // always pass false — removed on direct request, after it became
+  // clear Delete here was actively misleading: only a course's ORDER is
+  // wired to the live page, not its existence, so deleting a site_pricing
+  // row never actually takes a course off taai.live — the card keeps
+  // rendering from its own hardcoded entry in gate-da-courses.html
+  // regardless, just demoted to the end of its group once it has no
+  // display_order left to sort by. An admin clicking Delete expecting
+  // to remove a course would get exactly that wrong impression, with
+  // no error to catch it. Actually removing a course is still a code
+  // change (deleting its COMBOS/INDIVIDUAL entry), not a /team action —
+  // see CLAUDE.md's "Site data corner" section.
+  function siteDataRowActionsHtml(type, id, showDelete) {
+    var deleteHtml = showDelete === false ? '' : ' <button class="btn btn-small btn-danger js-sitedata-delete" data-sitetype="' + type + '" data-id="' + escapeHtml(id) + '">Delete</button>';
+    return '<button class="btn btn-small js-sitedata-edit" data-sitetype="' + type + '" data-id="' + escapeHtml(id) + '">Edit</button>' + deleteHtml;
   }
 
   // One course as a scannable card — name/status up top, the price
@@ -1329,7 +1340,7 @@
         discountHtml +
         metaHtml +
         soldOutHtml +
-        '<div class="pricing-card-actions">' + siteDataRowActionsHtml('pricing', row.id) + '</div>' +
+        '<div class="pricing-card-actions">' + siteDataRowActionsHtml('pricing', row.id, false) + '</div>' +
       '</div>'
     );
   }
