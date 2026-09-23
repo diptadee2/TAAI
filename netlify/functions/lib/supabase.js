@@ -444,14 +444,37 @@ export async function fetchAllTimeMinutesByEmail(supabase, emails) {
 // ended.
 export async function fetchTodayLeaders(supabase, email, date) {
   const today = date || todayIST();
-  const { data: stats, error: statsError } = await supabase
+  // Fetches every row for today (not just LIMIT 10) and ranks in JS —
+  // real bug this replaced, caught by direct report (a student's own
+  // pinned rank showed the same number already visible on someone else
+  // in the top 10): the old query took the top 10 with no secondary
+  // sort, then separately gave a viewer outside the top 10 a rank of
+  // "how many people have STRICTLY more minutes, plus 1" — a tie-aware
+  // formula that hands every tied student the identical rank number
+  // (confirmed against production: 8 students tied at exactly 120
+  // minutes all outside the literal top 2 of that tie would all have
+  // computed to "rank 9"), while the visible list's own rank numbers
+  // were just its untied array position (9, 10, ...). Two different
+  // ranking conventions for the same leaderboard, guaranteed to collide
+  // whenever a tie spans the top-10 cutoff. Sorting all of today's rows
+  // once, with a deterministic secondary tiebreak (email, so two
+  // students on equal minutes always land in the same fixed order
+  // instead of whatever unspecified order Postgres happened to return),
+  // and using that ONE array's index for both what's shown in the top
+  // 10 and the viewer's own pinned rank guarantees the two can never
+  // disagree again. pomo_daily_sessions is naturally bounded to (active
+  // students today) — small enough to fetch in full regardless of total
+  // student count, and actually fewer round-trips than the two extra
+  // queries (a single-row lookup, then a count) this replaced.
+  const { data: allStats, error: statsError } = await supabase
     .from('pomo_daily_sessions')
     .select('email, total_minutes')
-    .eq('date', today)
-    .order('total_minutes', { ascending: false })
-    .limit(10);
+    .eq('date', today);
   if (statsError) throw new Error(statsError.message);
-  if (!stats.length) return { date: today, leaders: [], viewerRank: null };
+  if (!allStats.length) return { date: today, leaders: [], viewerRank: null };
+
+  const sorted = allStats.slice().sort((a, b) => b.total_minutes - a.total_minutes || (a.email < b.email ? -1 : a.email > b.email ? 1 : 0));
+  const stats = sorted.slice(0, 10);
 
   const { data: students, error: studentsError } = await supabase
     .from('students')
@@ -475,25 +498,11 @@ export async function fetchTodayLeaders(supabase, email, date) {
   let viewerRank = null;
   const viewerInTop = leaders.some(l => l.is_me);
   if (email && !viewerInTop) {
-    const { data: viewerStats, error: viewerError } = await supabase
-      .from('pomo_daily_sessions')
-      .select('total_minutes')
-      .eq('email', email)
-      .eq('date', today)
-      .maybeSingle();
-    if (viewerError) throw new Error(viewerError.message);
-
-    if (viewerStats) {
-      const { count, error: countError } = await supabase
-        .from('pomo_daily_sessions')
-        .select('*', { count: 'exact', head: true })
-        .eq('date', today)
-        .gt('total_minutes', viewerStats.total_minutes);
-      if (countError) throw new Error(countError.message);
-
+    const viewerIndex = sorted.findIndex(s => s.email === email);
+    if (viewerIndex !== -1) {
       const viewerLiveStatus = await fetchLiveStatusByEmail(supabase, [email]);
       const viewerAllTime = await fetchAllTimeMinutesByEmail(supabase, [email]);
-      viewerRank = { rank: (count || 0) + 1, total_minutes: viewerStats.total_minutes, all_time_minutes: viewerAllTime[email] || 0, ...viewerLiveStatus[email] };
+      viewerRank = { rank: viewerIndex + 1, total_minutes: sorted[viewerIndex].total_minutes, all_time_minutes: viewerAllTime[email] || 0, ...viewerLiveStatus[email] };
     }
   }
 
