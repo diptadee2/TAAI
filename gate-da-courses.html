@@ -807,6 +807,27 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .combo-card:hover .combo-num { opacity: 0.18; }
 .combo-card.featured .combo-num { opacity: 0.12; }
 .combo-card.featured:hover .combo-num { opacity: 0.24; }
+/* Countdown-in-the-corner, on request — title now flows first/full-
+   width (the ghost numeral is hidden entirely for this card, see
+   daysUntilSoldOut in ComboCard), with just the "Nd left" headline
+   pinned where the numeral used to sit — same position, similarly
+   compact footprint, so it genuinely replaces it rather than fighting
+   the title for room. First attempt tried putting the FULL countdown
+   box (icon+num row, progress bar, date line) in a flex row beside the
+   title — direct feedback: "terrible", the title got crushed into an
+   ugly 3-line wrap and left a big dead gap under the much-shorter
+   countdown box. The progress bar + exact date now live in their own
+   full-width line below the title instead (combo-countdown-detail),
+   where they're not fighting anything for horizontal room. */
+.combo-countdown-corner-badge {
+  position: absolute; top: 20px; right: 24px; z-index: 1;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: 999px;
+  background: rgba(245,158,11,0.14); border: 1px solid rgba(245,158,11,0.35);
+  color: #FCD34D; font-size: 11.5px; font-weight: 700; white-space: nowrap;
+}
+.combo-countdown-detail { max-width: 260px; margin: -4px 0 18px; position: relative; z-index: 1; }
+.combo-countdown-detail .combo-countdown-track { margin-bottom: 6px; }
 
 /* Individual courses, redesigned */
 .courses-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
@@ -2615,20 +2636,38 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   const trackerProgressPct = soldOutAt && trackerWindowStartAt
     ? Math.min(100, Math.max(0, ((new Date() - trackerWindowStartAt) / (soldOutAt - trackerWindowStartAt)) * 100))
     : 0;
-  const countdownEl = daysUntilSoldOut != null && (
-    <div className="combo-countdown">
-      <div className="combo-countdown-top">
-        <span className="combo-countdown-icon"><Icon.Bell size={12} /></span>
-        <span className="combo-countdown-num">{daysUntilSoldOut}</span>
-        <span className="combo-countdown-unit">day{daysUntilSoldOut === 1 ? '' : 's'} left</span>
-      </div>
+  // badgeEl (the plain "Best value"/"Bundle" pill) only ever renders for
+  // cards with NO real countdown (daysUntilSoldOut == null) — see the
+  // render below. A card that DOES have a countdown gets its own two
+  // pieces instead, never this pill: countdownCornerBadgeEl (replacing
+  // the ghost numeral) and countdownDetailEl (the progress bar + exact
+  // date, in normal flow below the title). Originally this variable
+  // doubled as the countdown container too via a ternary, but once the
+  // countdown split into those two dedicated pieces below, that branch
+  // of the ternary became dead — simplified away rather than left as
+  // unreachable code.
+  const badgeEl = <div className={'combo-badge ' + c.badge}><Icon.Sparkle />{c.badgeLabel}</div>;
+  // A genuinely compact corner badge — replacing the ghost numeral means
+  // matching its small footprint, not cramming a full countdown box
+  // (icon+num row, progress bar, date line — three stacked rows, quite
+  // tall) into a shared row with the title. First attempt did exactly
+  // that and it looked terrible (title crushed into an ugly 3-line
+  // wrap, a big dead gap under the short countdown). This corner badge
+  // is just the headline ("🔔 12 days left"); the progress bar + exact
+  // date move to their own line below the title instead, where they
+  // have the card's full width to breathe in — see countdownDetailEl.
+  const countdownCornerBadgeEl = daysUntilSoldOut != null && (
+    <div className="combo-countdown-corner-badge">
+      <Icon.Bell size={11} />
+      <span>{daysUntilSoldOut}d left</span>
+    </div>
+  );
+  const countdownDetailEl = daysUntilSoldOut != null && (
+    <div className="combo-countdown-detail">
       <div className="combo-countdown-track"><div className="combo-countdown-fill" style={{ width: trackerProgressPct.toFixed(1) + '%' }} /></div>
       <div className="combo-countdown-date">Enrollment closes {fmtDate(soldOutDate)}</div>
     </div>
   );
-  const badgeEl = daysUntilSoldOut != null
-    ? countdownEl
-    : <div className={'combo-badge ' + c.badge}><Icon.Sparkle />{c.badgeLabel}</div>;
   const titleEl = <div className="combo-title">{c.title}</div>;
   const taglineEl = c.tagline && <div className="combo-tagline">{c.tagline}</div>;
   const validityEl = (
@@ -2730,11 +2769,20 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
     </div>
   ) : (
     <div id={c.id} className={cls} {...spotlightProps}>
-      <div className="combo-num">{c.num}</div>
+      {/* On request, off a screenshot: the countdown now sits where the
+          ghost corner numeral used to (replacing it, not just avoiding
+          it — see the numeral's own now-inverted comment above), with
+          the title brought back to being the first thing at the top of
+          the card. Only for cards that actually have a countdown
+          (daysUntilSoldOut != null, currently only full-course) — every
+          other combo keeps its plain badge-then-title order untouched. */}
+      {daysUntilSoldOut == null && <div className="combo-num">{c.num}</div>}
+      {!isSoldOut && countdownCornerBadgeEl}
       <div className="combo-accent" style={{ background: c.accent }} />
-      {!isSoldOut && badgeEl}
+      {daysUntilSoldOut == null && !isSoldOut && badgeEl}
       {titleEl}
       {taglineEl}
+      {!isSoldOut && countdownDetailEl}
       {/* "Valid until Feb 15, 2027" reads as "still on offer" — directly
           contradicts the sold-out stamp a few lines below it, real
           feedback from a screenshot. Hidden once sold out rather than
