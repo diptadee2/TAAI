@@ -3157,15 +3157,22 @@ function App() {
                     return `Save ₹${diff.toLocaleString('en-IN')} vs buying ${c.bundleOf.length === 5 ? 'all 5' : 'all 4'} courses individually`;
                   })()
                 : null;
-              // The dedicated own-row treatment only makes sense once
-              // there's a 4th card to share the row with the other
-              // three — at exactly 3 (e.g. if the coming-soon card were
-              // ever removed) they already fill one 3-column row on
-              // their own, so forcing this one onto its own row would
-              // just leave two empty grid cells beside it instead of
-              // reverting cleanly to the plain grid every other combo
-              // card already uses.
-              const getsOwnRow = c.comingSoon && COMBOS.length > 3;
+              // Purely positional, not tied to comingSoon (direct
+              // correction: "the first card should be horizontal no
+              // matter what and coming soon doesn't matter" — the 2028
+              // card only ever got this by happening to also be first;
+              // reordering via /team now genuinely moves which card
+              // gets the spotlight, not just which card LOOKS like it
+              // does). i is the index within sortedCombos, i.e. after
+              // live reordering, not COMBOS' own hardcoded order.
+              //
+              // Still only makes sense once there's a 4th card to share
+              // the row with the other three — at exactly 3 they
+              // already fill one 3-column row on their own, so forcing
+              // one onto its own row would just leave two empty grid
+              // cells beside it instead of reverting cleanly to the
+              // plain grid every other combo card uses.
+              const getsOwnRow = i === 0 && COMBOS.length > 3;
               return <div key={i} className={'fade-in' + (getsOwnRow ? ' combo-full-row' : '')}><ComboCard c={{ ...c, saving }} pricing={pricingMap[c.id] || null} /></div>;
             })}
           </div>
