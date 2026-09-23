@@ -1764,37 +1764,63 @@ const _pricingFetch = fetch(PRICING_CSV_URL)
   .then(text => { const map = {}; parseCSV(text).forEach(r => { if (r.id) map[r.id] = r; }); _pricingCache = map; return map; })
   .catch(() => { _pricingCache = {}; return {}; });
 
-// Card order — /team's Pricing tab (site_pricing.display_order, dragged
-// by mouse there) is the one admin-editable field this session wired up
-// to actually affect this page's card order, rather than staying an
-// admin-only preview like every other field on that row (price, sold-out
-// date, etc. all still come from PRICING_CSV_URL/the hardcoded COMBOS/
-// INDIVIDUAL arrays above — only the ORDER of those same hardcoded cards
-// is live here). A tiny, deliberately narrow public endpoint
-// (netlify/functions/site-pricing-order.js) returns just {id: order},
-// nothing else — no price/discount/etc leaves that function unauthenticated.
-// Falls back to this array's own hardcoded order (an empty {} map) if the
-// fetch fails or the migration hasn't run yet — reordering a card in
-// /team can only ever improve on the hardcoded order, never break this
-// page if the endpoint is unavailable.
-const ORDER_API = '/api/site-pricing-order';
-let _orderCache = null;
-const _orderFetch = fetch(ORDER_API)
+// /team's site_pricing cutover (2026-09-23) — price/discount/validity/
+// enrol-link/sold-out-date/card-order are now all genuinely live here,
+// read from a single public, unauthenticated endpoint
+// (netlify/functions/site-pricing-public.js — every column it returns is
+// already meant to be shown publicly, nothing sensitive). This REPLACES
+// the earlier order-only cutover (site-pricing-order.js, deleted) with
+// one endpoint covering everything /team's Pricing tab now controls
+// live, rather than two overlapping fetches. PRICING_CSV_URL/
+// _pricingFetch above is kept as the fallback base layer, not replaced
+// outright — mergePricingRow() below prefers a live Supabase value per
+// field, falling back to the CSV's own value for any field Supabase
+// doesn't have yet (a brand-new row, or one field left blank) — so this
+// can only ever improve on the CSV, never break the page if a row is
+// incomplete or the fetch fails entirely (falls back to an empty map).
+const SITE_PRICING_API = '/api/site-pricing-public';
+let _sitePricingCache = null;
+const _sitePricingFetch = fetch(SITE_PRICING_API)
   .then(r => r.json())
-  .then(d => { _orderCache = (d && d.order) || {}; return _orderCache; })
-  .catch(() => { _orderCache = {}; return {}; });
+  .then(d => { _sitePricingCache = (d && d.rows) || {}; return _sitePricingCache; })
+  .catch(() => { _sitePricingCache = {}; return {}; });
 
-// Sorts `list` by displayOrder[c.id] where that's known, leaving any
-// card with no known order (a brand-new card not yet in site_pricing, or
-// the whole fetch having failed) exactly where it already sits in the
-// hardcoded array — never yanked to the front/back for having no data.
-// Also renumbers each card's own `num` field (the big corner numeral) to
-// match its new visual position, since that field is otherwise a static
-// value tied to the object, not the position — without this, reordering
-// via /team would leave the numerals reading out of sequence.
-function sortByDisplayOrder(list, displayOrder) {
-  if (!Object.keys(displayOrder).length) return list;
-  const withIndex = list.map((c, i) => ({ c, i, order: displayOrder[c.id] }));
+// Merges one course's CSV row (camelCase field names — id, price,
+// priceOld, discount, discountReason, discountDeadline, validity, as
+// parseCSV/PRICING_CSV_URL already produce) with its live site_pricing
+// row (snake_case column names), Supabase winning per-field only where
+// it actually has a non-null value. enrollUrl/soldOutDate have no CSV
+// equivalent at all — they only ever come from the live row, and stay
+// undefined (falling through to each card's own hardcoded c.href/
+// c.soldOutDate — see ComboCard/CourseCard) when Supabase has nothing
+// for this id yet.
+function mergePricingRow(csvRow, apiRow) {
+  if (!apiRow) return csvRow || null;
+  const merged = Object.assign({}, csvRow);
+  if (apiRow.price != null) merged.price = apiRow.price;
+  if (apiRow.price_old != null) merged.priceOld = apiRow.price_old;
+  if (apiRow.discount != null) merged.discount = apiRow.discount;
+  if (apiRow.discount_reason != null) merged.discountReason = apiRow.discount_reason;
+  if (apiRow.discount_deadline != null) merged.discountDeadline = apiRow.discount_deadline;
+  if (apiRow.validity != null) merged.validity = apiRow.validity;
+  if (apiRow.enroll_url) merged.enrollUrl = apiRow.enroll_url;
+  if (apiRow.sold_out_date) merged.soldOutDate = apiRow.sold_out_date;
+  return merged;
+}
+
+// Sorts `list` by sitePricing[c.id].display_order where that's known,
+// leaving any card with no known order (a brand-new card not yet in
+// site_pricing, or the whole fetch having failed) exactly where it
+// already sits in the hardcoded array — never yanked to the front/back
+// for having no data. Also renumbers each card's own `num` field (the
+// big corner numeral) to match its new visual position, since that
+// field is otherwise a static value tied to the object, not the
+// position — without this, reordering via /team would leave the
+// numerals reading out of sequence.
+function sortByDisplayOrder(list, sitePricing) {
+  if (!Object.keys(sitePricing).length) return list;
+  const orderFor = id => (sitePricing[id] ? sitePricing[id].display_order : null);
+  const withIndex = list.map((c, i) => ({ c, i, order: orderFor(c.id) }));
   withIndex.sort((a, b) => {
     if (a.order == null && b.order == null) return a.i - b.i;
     if (a.order == null) return 1;
@@ -2481,15 +2507,15 @@ function BundleComparison({ pricingMap }) {
               <div className="compare-footer-cell" />
               <div className="compare-footer-cell featured">
                 <span className={`compare-price best${loaded ? ' data-fade-in' : ''}`}>{fmtPrice((pricingMap['full-course']||{}).price) || '-'}</span>
-                <a href="https://learn.taai.live/learn/batch/GATE-2027/content" target="_blank" rel="noopener noreferrer" className="compare-enroll-btn featured">Enrol now</a>
+                <a href={(pricingMap['full-course']||{}).enrollUrl || 'https://learn.taai.live/learn/batch/GATE-2027/content'} target="_blank" rel="noopener noreferrer" className="compare-enroll-btn featured">Enrol now</a>
               </div>
               <div className="compare-footer-cell">
                 <span className={`compare-price${loaded ? ' data-fade-in' : ''}`}>{fmtPrice((pricingMap['maths-ml-bundle']||{}).price) || '-'}</span>
-                <a href="https://learn.taai.live/learn/Maths--ML---AI-Bundle---GATE-2026" target="_blank" rel="noopener noreferrer" className="compare-enroll-btn">Enrol now</a>
+                <a href={(pricingMap['maths-ml-bundle']||{}).enrollUrl || 'https://learn.taai.live/learn/Maths--ML---AI-Bundle---GATE-2026'} target="_blank" rel="noopener noreferrer" className="compare-enroll-btn">Enrol now</a>
               </div>
               <div className="compare-footer-cell">
                 <span className={`compare-price${loaded ? ' data-fade-in' : ''}`}>{fmtPrice((pricingMap['maths-bundle']||{}).price) || '-'}</span>
-                <a href="https://learn.taai.live/learn/Mathematics-Course-by-manoj-sir-gate-2026-gateda" target="_blank" rel="noopener noreferrer" className="compare-enroll-btn">Enrol now</a>
+                <a href={(pricingMap['maths-bundle']||{}).enrollUrl || 'https://learn.taai.live/learn/Mathematics-Course-by-manoj-sir-gate-2026-gateda'} target="_blank" rel="noopener noreferrer" className="compare-enroll-btn">Enrol now</a>
               </div>
             </div>
           </div>
@@ -2514,16 +2540,20 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   const discountReason   = pd.discountReason  || null;
   const saving           = c.saving;
   const comingSoon = !!c.comingSoon;
-  // On request: this card's own enrollment cutoff, separate from
-  // discountDeadline (a pricing-CSV field driving the unrelated ⏳
-  // discount-offer line below) — soldOutDate is data on the combo
-  // itself, hardcoded here rather than fetched, since it isn't a price
-  // change, it's "this batch stops accepting students." IST midnight,
-  // matching every other server/client date-cutoff on this site (see
-  // e.g. todayIST() in lib/supabase.js) rather than the visitor's own
-  // local timezone, so it flips at the same real moment for everyone
-  // regardless of where they are.
-  const soldOutDate = c.soldOutDate || null;
+  // This card's own enrollment cutoff, separate from discountDeadline
+  // (a pricing field driving the unrelated ⏳ discount-offer line
+  // below) — isn't a price change, it's "this batch stops accepting
+  // students." IST midnight, matching every other server/client
+  // date-cutoff on this site (see e.g. todayIST() in lib/supabase.js)
+  // rather than the visitor's own local timezone, so it flips at the
+  // same real moment for everyone regardless of where they are.
+  // Live site_pricing.sold_out_date (2026-09-23 cutover) wins when set,
+  // falling back to this card's own hardcoded value — so an admin can
+  // now change, or newly set, a sold-out cutover for ANY combo from
+  // /team without a code change, while a card with no live row yet
+  // (nothing ever set in Supabase for it) keeps behaving exactly as
+  // before this cutover shipped.
+  const soldOutDate = pd.soldOutDate || c.soldOutDate || null;
   const soldOutAt = soldOutDate ? new Date(soldOutDate + 'T00:00:00+05:30') : null;
   const isSoldOut = !!(soldOutAt && new Date() >= soldOutAt);
   const daysUntilSoldOut = soldOutAt && !isSoldOut
@@ -2641,7 +2671,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   // clickable.
   const ctaEl = isSoldOut
     ? <a href="mailto:support@taai.live?subject=GATE%202027%20Full%20Course" className="btn btn-primary btn-full"><Icon.Mail size={15} /> Confident? Contact us</a>
-    : <a href={c.href} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-full">Enrol now <Icon.ArrowRight /></a>;
+    : <a href={pd.enrollUrl || c.href} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-full">Enrol now <Icon.ArrowRight /></a>;
   // comingSoon has no button at all — a big "Coming Soon" overlay sits
   // directly over the blurred What's-included list instead (see
   // combo-includes-wrap below), the most visually prominent blurred
@@ -2730,7 +2760,7 @@ const CourseCard = React.memo(function CourseCard({ c, pricing }) {
         {priceOld && <div className="course-price-old">{priceOld}</div>}
       </div>
       <div className="ticket-notch"><div className="ticket-notch-line" /></div>
-      <a target="_blank" rel="noopener noreferrer" href={c.href} className="btn btn-ghost btn-full">Get course <Icon.ArrowRight /></a>
+      <a target="_blank" rel="noopener noreferrer" href={p.enrollUrl || c.href} className="btn btn-ghost btn-full">Get course <Icon.ArrowRight /></a>
     </div>
   );
 });
@@ -2955,7 +2985,7 @@ const COURSE_JSONLD_IDS = {
 
 function App() {
   const [pricingMap, setPricingMap] = React.useState(() => _pricingCache || {});
-  const [displayOrder, setDisplayOrder] = React.useState(() => _orderCache || {});
+  const [sitePricing, setSitePricing] = React.useState(() => _sitePricingCache || {});
 
   React.useEffect(() => {
     if (!_pricingCache) {
@@ -2964,16 +2994,27 @@ function App() {
   }, []);
 
   React.useEffect(() => {
-    if (!_orderCache) {
-      _orderFetch.then(setDisplayOrder);
+    if (!_sitePricingCache) {
+      _sitePricingFetch.then(setSitePricing);
     }
   }, []);
 
-  const sortedCombos = React.useMemo(() => sortByDisplayOrder(COMBOS, displayOrder), [displayOrder]);
-  const sortedIndividual = React.useMemo(() => sortByDisplayOrder(INDIVIDUAL, displayOrder), [displayOrder]);
+  // The one merged source every card/comparison-table/JSON-LD reads
+  // from — CSV as the base, live site_pricing data winning per-field
+  // where it has one. See mergePricingRow's own comment for exactly how
+  // the two combine.
+  const effectivePricingMap = React.useMemo(() => {
+    const ids = new Set(Object.keys(pricingMap).concat(Object.keys(sitePricing)));
+    const merged = {};
+    ids.forEach(id => { merged[id] = mergePricingRow(pricingMap[id], sitePricing[id]); });
+    return merged;
+  }, [pricingMap, sitePricing]);
+
+  const sortedCombos = React.useMemo(() => sortByDisplayOrder(COMBOS, sitePricing), [sitePricing]);
+  const sortedIndividual = React.useMemo(() => sortByDisplayOrder(INDIVIDUAL, sitePricing), [sitePricing]);
 
   React.useEffect(() => {
-    if (!Object.keys(pricingMap).length) return;
+    if (!Object.keys(effectivePricingMap).length) return;
     const el = document.getElementById('course-jsonld');
     if (!el) return;
     try {
@@ -2981,7 +3022,7 @@ function App() {
       const list = data['@graph'].find(g => g['@type'] === 'ItemList');
       list.itemListElement.forEach(li => {
         const id = COURSE_JSONLD_IDS[li.position];
-        const row = id && pricingMap[id];
+        const row = id && effectivePricingMap[id];
         if (row && row.price && li.item.offers) {
           li.item.offers.price = String(row.price);
           if (row.validity) li.item.offers.priceValidUntil = row.validity;
@@ -2989,7 +3030,7 @@ function App() {
       });
       el.textContent = JSON.stringify(data);
     } catch (e) { /* leave static fallback in place */ }
-  }, [pricingMap]);
+  }, [effectivePricingMap]);
 
   React.useEffect(() => {
     const mobile = window.matchMedia('(max-width: 768px)').matches;
@@ -3160,10 +3201,10 @@ function App() {
           </div>
           <div className="combos-grid">
             {sortedCombos.map((c, i) => {
-              const comboPrice = parseInt((pricingMap[c.id] || {}).price) || 0;
+              const comboPrice = parseInt((effectivePricingMap[c.id] || {}).price) || 0;
               const saving = c.bundleOf && comboPrice
                 ? (() => {
-                    const total = c.bundleOf.reduce((s, id) => s + (parseInt((pricingMap[id] || {}).price) || 0), 0);
+                    const total = c.bundleOf.reduce((s, id) => s + (parseInt((effectivePricingMap[id] || {}).price) || 0), 0);
                     const diff = total - comboPrice;
                     if (diff <= 0) return null;
                     return `Save ₹${diff.toLocaleString('en-IN')} vs buying ${c.bundleOf.length === 5 ? 'all 5' : 'all 4'} courses individually`;
@@ -3185,7 +3226,7 @@ function App() {
               // cells beside it instead of reverting cleanly to the
               // plain grid every other combo card uses.
               const getsOwnRow = i === 0 && COMBOS.length > 3;
-              return <div key={i} className={'fade-in' + (getsOwnRow ? ' combo-full-row' : '')}><ComboCard c={{ ...c, saving }} pricing={pricingMap[c.id] || null} /></div>;
+              return <div key={i} className={'fade-in' + (getsOwnRow ? ' combo-full-row' : '')}><ComboCard c={{ ...c, saving }} pricing={effectivePricingMap[c.id] || null} /></div>;
             })}
           </div>
         </div>
@@ -3204,9 +3245,9 @@ function App() {
             </div>
           </div>
           <div className="courses-grid">
-            {sortedIndividual.map((c, i) => <div key={i} className="fade-in"><CourseCard c={c} pricing={pricingMap[c.id] || null} /></div>)}
+            {sortedIndividual.map((c, i) => <div key={i} className="fade-in"><CourseCard c={c} pricing={effectivePricingMap[c.id] || null} /></div>)}
           </div>
-          <BundleComparison pricingMap={pricingMap} />
+          <BundleComparison pricingMap={effectivePricingMap} />
           <div className="courses-chat-footer fade-in">
             <span>Not sure which to pick?</span>
             <a href="https://wa.me/9088553305" target="_blank" rel="noopener noreferrer">Chat with us →</a>

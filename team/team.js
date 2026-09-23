@@ -116,24 +116,9 @@
       endpoint: '/site-pricing',
       idKey: 'id',
       newRow: { id: '', type: 'individual', name: '', price: '', price_old: '', discount: '', discount_reason: '', discount_deadline: '', validity: '', sold_out_date: '', display_order: 0, enroll_url: '' },
-      columns: [
-        { name: 'id', label: 'ID' },
-        { name: 'type', label: 'Type' },
-        { name: 'name', label: 'Name' },
-        { name: 'price', label: 'Price', format: function (r) { return r.price != null ? '₹' + r.price : '—'; } },
-        { name: 'price_old', label: 'Old price', format: function (r) { return r.price_old != null ? '₹' + r.price_old : '—'; } },
-        { name: 'discount_deadline', label: 'Discount deadline', format: function (r) { return r.discount_deadline || '—'; } },
-        { name: 'validity', label: 'Validity', format: function (r) { return r.validity || '—'; } },
-        { name: 'sold_out_date', label: 'Sold-out date', format: function (r) { return r.sold_out_date || '—'; } },
-        // Computed, not a separate flag — whether the Enrol Now button
-        // would be clickable is entirely a function of "is there a real
-        // link yet", on request ("the course can be declared coming
-        // soon... without the enroll now link, like the full course
-        // 2028 card"). Filling in Enrol URL is what flips this from
-        // "Coming Soon" to "Live" — no separate toggle to forget to
-        // flip alongside it.
-        { name: 'enroll_url', label: 'Status', format: function (r) { return r.enroll_url ? 'Live' : 'Coming Soon'; } },
-      ],
+      // No `columns` array — Pricing renders as cards (renderPricingGroups/
+      // pricingCardHtml), not the generic table renderSiteDataTable uses
+      // for Notes/Lectures, so there's nothing here to define columns for.
       // Grouped into labeled sections (renderSiteDataForm) — same
       // .form-section/.form-section-heading pattern the Announcements
       // form already uses for Destination/Content/etc — so a
@@ -141,7 +126,7 @@
       // dates" instead of one long undifferentiated list of 10 fields.
       fields: [
         { name: 'id', label: 'Course', type: 'select', optionGroups: SITE_PRICING_ID_GROUPS, required: true, lockedOnEdit: true, hint: 'Which course/bundle on the live site this row is for — can\'t be changed once created.', section: 'Basic info' },
-        { name: 'type', label: 'Type', type: 'select', options: [{ id: 'combo', label: 'Combo/bundle' }, { id: 'individual', label: 'Individual course' }, { id: 'test-series', label: 'Test series' }], required: true, hint: 'Combo/bundle courses show up under "Bundled courses" below and can be reordered with ▲/▼; everything else shows under "Individual courses".', section: 'Basic info' },
+        { name: 'type', label: 'Type', type: 'select', options: [{ id: 'combo', label: 'Combo/bundle' }, { id: 'individual', label: 'Individual course' }, { id: 'test-series', label: 'Test series' }], required: true, hint: 'Combo/bundle courses show up under "Bundled courses" below; individual subjects under "Individual courses"; test series under "Test series". Drag a card to reorder within its own group.', section: 'Basic info' },
         { name: 'name', label: 'Display name', type: 'text', required: true, section: 'Basic info' },
         { name: 'price', label: 'Price (₹)', type: 'number', section: 'Pricing' },
         { name: 'price_old', label: 'Old price (₹, optional — shown struck through)', type: 'number', section: 'Pricing' },
@@ -149,19 +134,25 @@
         { name: 'discount_reason', label: 'Discount reason (optional)', type: 'text', section: 'Pricing' },
         { name: 'discount_deadline', label: 'Discount deadline', type: 'date', section: 'Enrollment & dates' },
         { name: 'validity', label: 'Validity', type: 'date', section: 'Enrollment & dates' },
-        // On request: leaving this blank is what puts the course in a
-        // "Coming Soon" state (an unclickable button on the live page,
-        // once this is ever wired up) — the same relationship the 2028
-        // card already has to having no real pricing row at all, just
-        // explicit here as one field instead of an absent row.
-        { name: 'enroll_url', label: 'Enrol now link (blank = Coming Soon, unclickable)', type: 'url', hint: 'The real enrolment URL (e.g. https://learn.taai.live/learn/batch/GATE-2027/content). Leave blank while this course isn\'t open for enrolment yet.', section: 'Enrollment & dates' },
-        // Only the full-course row gets this field, on request — the
-        // live card's own sold-out cutover is exclusive to that one
-        // course, so exposing it as editable elsewhere would just be
-        // dead data with nothing reading it. Admin-only for now, same
-        // as every other new field this round — see schema.sql's own
-        // comment on why the live page doesn't read this yet.
-        { name: 'sold_out_date', label: 'Sold-out date (full-course only, admin-only — not yet live)', type: 'date', showIf: function (row) { return row.id === 'full-course'; }, section: 'Enrollment & dates' },
+        // LIVE since 2026-09-23 (see CLAUDE.md's "Site data corner"
+        // section) — sets the real "Enrol now" button's destination on
+        // the live page. Leaving it blank does NOT make the button
+        // unclickable/"Coming Soon" for a course that already has its
+        // own built-in link in code (gate-da-courses.html's own c.href)
+        // — it just falls back to that. Only a course with no built-in
+        // link at all (the 2028 preview card, comingSoon-gated in code,
+        // no button rendered regardless of this field) reads as
+        // "Coming Soon" — that's driven by the card's own code, not by
+        // this field being empty.
+        { name: 'enroll_url', label: 'Enrol now link (overrides the button — blank keeps the course\'s existing link)', type: 'url', hint: 'The real enrolment URL (e.g. https://learn.taai.live/learn/batch/GATE-2027/content). Live on taai.live immediately.', section: 'Enrollment & dates' },
+        // LIVE since 2026-09-23, same cutover — any combo (bundle) can
+        // now have a real sold-out cutover date, not just full-course
+        // (that restriction was only ever a /team form limit; the live
+        // page's own ComboCard has always supported it generically).
+        // Individual/test-series rows don't get this field — only
+        // ComboCard reads soldOutDate at all, CourseCard has no such
+        // concept.
+        { name: 'sold_out_date', label: 'Sold-out date (bundled courses only)', type: 'date', showIf: function (row) { return row.type === 'combo'; }, section: 'Enrollment & dates' },
       ],
     },
     notes: {
@@ -1310,16 +1301,21 @@
   // can never be dropped into the wrong section; draggable is false for
   // a lone card in a group of 1, where there's nothing to reorder against.
   function pricingCardHtml(row, dragGroup, draggable) {
-    // Status is still purely the enroll_url computed value (see
-    // SITE_DATA_RESOURCES.pricing's own comment on why there's no
-    // separate toggle) — sold_out_date is shown as its own note below,
-    // never folded into this badge, since it's an admin-only preview
-    // value the live page doesn't act on yet (see schema.sql).
+    // Deliberately "link set" / "no link set", not "Live"/"Coming Soon"
+    // — corrected 2026-09-23 alongside the live cutover, since /team has
+    // no way to know from this field alone whether a course is actually
+    // purchasable. enroll_url only OVERRIDES the live page's Enrol Now
+    // button destination; leaving it blank falls back to that course's
+    // own built-in link in code, which may well already be live — it
+    // does NOT mean "Coming Soon" the way the old label implied. The
+    // 2028 preview card reads "No enrol link set" here too, correctly,
+    // but is only actually gated to Coming Soon by its own comingSoon
+    // flag in code, not by this field.
     var statusHtml = row.enroll_url
-      ? '<span class="pricing-status pricing-status-live">● Live</span>'
-      : '<span class="pricing-status pricing-status-soon">Coming Soon</span>';
+      ? '<span class="pricing-status pricing-status-live">● Enrol link set</span>'
+      : '<span class="pricing-status pricing-status-soon">No enrol link set</span>';
     var soldOutHtml = row.sold_out_date
-      ? '<div class="pricing-soldout-note">🔒 Sold-out cutover: ' + escapeHtml(row.sold_out_date) + ' <span class="field-hint" style="margin:0;">(preview only)</span></div>'
+      ? '<div class="pricing-soldout-note">🔒 Sold-out cutover: ' + escapeHtml(row.sold_out_date) + ' <span class="field-hint" style="margin:0;">(live on taai.live)</span></div>'
       : '';
     var priceHtml = row.price != null
       ? '<span class="pricing-card-price-main">₹' + escapeHtml(row.price) + '</span>' + (row.price_old != null ? '<span class="pricing-card-price-old">₹' + escapeHtml(row.price_old) + '</span>' : '')
@@ -1508,11 +1504,21 @@
   // Plain-language intro per sub-tab, shown instead of a generic
   // "Admin-editable copy of the X data" line — written for someone who's
   // never seen a database table, explaining in one sentence what this
-  // list is and what it doesn't do yet (still preview-only, not live).
+  // list is and whether it's actually live yet.
   var SITE_DATA_INTRO = {
-    pricing: 'Every course, bundle, and test series shown on the site — its price, discount, and enrolment link. Grouped below into Bundled courses and Individual courses.',
+    pricing: 'Every course, bundle, and test series shown on the site — its price, discount, validity, sold-out date, enrolment link, and order. Grouped below into Bundled courses, Individual courses, and Test series.',
     notes: 'Downloadable PDF notes, organized by subject.',
     lectures: 'Video lectures and their slides, organized by subject.',
+  };
+  // Pricing went live 2026-09-23 (see CLAUDE.md's "Site data corner"
+  // section) — Notes/Lectures are still preview-only, the live pages
+  // keep reading their own published spreadsheet for those. Kept as a
+  // per-type sentence rather than one blanket line so this stays
+  // accurate if/when Notes/Lectures ever get their own cutover later.
+  var SITE_DATA_LIVE_NOTE = {
+    pricing: 'Changes here go live on taai.live immediately — no deploy needed.',
+    notes: 'Changes here are a preview only for now — the live site still reads its own published spreadsheet, so nothing you edit here shows up on taai.live yet.',
+    lectures: 'Changes here are a preview only for now — the live site still reads its own published spreadsheet, so nothing you edit here shows up on taai.live yet.',
   };
   var SITE_DATA_NEW_LABEL = { pricing: '+ New course', notes: '+ New note', lectures: '+ New lecture' };
   var SITE_DATA_SINGULAR = { pricing: 'course', notes: 'note', lectures: 'lecture' };
@@ -1538,7 +1544,7 @@
           '<div class="tabs" style="margin:0;">' + renderSiteDataTabs() + '</div>' +
           (editingThis || !showNewButton ? '' : '<button class="btn btn-primary" id="sitedata-new">' + SITE_DATA_NEW_LABEL[type] + '</button>') +
         '</div>' +
-        '<div class="field-hint" style="margin-bottom:16px;">' + SITE_DATA_INTRO[type] + ' Changes here are a preview only for now — the live site still reads its own published spreadsheet, so nothing you edit here shows up on taai.live yet.</div>' +
+        '<div class="field-hint" style="margin-bottom:16px;">' + SITE_DATA_INTRO[type] + ' ' + SITE_DATA_LIVE_NOTE[type] + '</div>' +
         (editingThis ? renderSiteDataForm(type, editingThis) : renderSiteDataList(type)) +
       '</div>'
     );
