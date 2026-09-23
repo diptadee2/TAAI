@@ -596,6 +596,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .combo-featured-frame {
   border-radius: calc(var(--radius-xl) + 2px); padding: 2px;
   position: relative; overflow: hidden;
+  background: conic-gradient(from 0deg, #8b5cf6, #6366f1 33%, #38bdf8 55%, #a78bfa 75%, #8b5cf6 100%);
   box-shadow: 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12);
   transition: transform .3s cubic-bezier(.34,1.05,.64,1), box-shadow .3s ease;
 }
@@ -605,15 +606,27 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
    gradient inherently spans its full 360° at once, so removing the
    rotation doesn't lose the multi-color ring look — it just holds one
    fixed, complete sweep instead of cycling through it, reading as a
-   deliberate gradient-ring border rather than a moving effect. inset
-   only needs to clear the card's own corners now (no rotation sweeping
-   a bigger radius past them), so this can sit much closer than the old
-   -100% an animated version needed. */
-.combo-featured-frame::before {
-  content: ''; position: absolute; inset: -8px; z-index: 0;
-  background: conic-gradient(from 0deg, #8b5cf6, #6366f1 33%, #38bdf8 55%, #a78bfa 75%, #8b5cf6 100%);
-}
-.combo-featured-frame > .combo-card { position: relative; z-index: 1; }
+   deliberate gradient-ring border rather than a moving effect.
+   Rebuilt 2026-09-23, real Safari-only bug from a screenshot (a bright
+   beam converging to a point, with visible spoke lines — the gradient's
+   own center becoming visible instead of just a thin ring): this used
+   to be an oversized `::before` pseudo-element sitting behind the card
+   at a lower z-index, with the ring's visible width controlled purely
+   by the child `.combo-card`'s opaque background covering everything
+   except the parent's own 2px padding gap — a stacking-context-
+   dependent trick Chromium renders fine but WebKit apparently doesn't
+   composite reliably here. Rebuilt to put the conic-gradient directly
+   on `.combo-featured-frame`'s own `background` instead — the "ring" is
+   now just this element's real 2px `padding` (already declared above)
+   with the card sitting in normal flow on top of it, no absolute
+   positioning, no z-index, nothing for a stacking-context quirk to get
+   wrong in any engine. The exact same simplification (a flat, non-
+   gradient version of this same idea) already existed for touch
+   devices below (`@media (hover: none)`) — this brings the default
+   case onto equally solid footing, just keeping its gradient. Not
+   verified in real Safari (same standing limitation as every other
+   Safari-only report in this codebase — no way to automate it here);
+   confirm on your end once this deploys. */
 .fade-in:has(> .combo-featured-frame) { will-change: opacity, transform; }
 .combo-featured-frame:hover { transform: translateY(-10px); box-shadow: 0 32px 100px rgba(139,92,246,0.55), 0 0 72px rgba(139,92,246,0.2); }
 /* The 2028 card's own spin/glow — amber/gold/rose instead of the 2027
@@ -626,8 +639,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
    rather than a deliberate part of the gradient. Rebuilt as a genuinely
    warm gold→amber→rose loop with a brighter gold peak, no off-palette
    color anywhere in the rotation, and a stronger, more saturated glow. */
-.combo-featured-frame.coming-soon { box-shadow: 0 24px 80px rgba(245,158,11,0.4), 0 0 60px rgba(251,191,36,0.18); }
-.combo-featured-frame.coming-soon::before { background: conic-gradient(from 0deg, #FCD34D, #F59E0B 25%, #FB7185 50%, #F59E0B 75%, #FCD34D 100%); }
+.combo-featured-frame.coming-soon { background: conic-gradient(from 0deg, #FCD34D, #F59E0B 25%, #FB7185 50%, #F59E0B 75%, #FCD34D 100%); box-shadow: 0 24px 80px rgba(245,158,11,0.4), 0 0 60px rgba(251,191,36,0.18); }
 .combo-featured-frame.coming-soon:hover { box-shadow: 0 32px 100px rgba(245,158,11,0.55), 0 0 84px rgba(251,191,36,0.24); }
 .combo-card {
   border-radius: var(--radius-xl); padding: 36px;
