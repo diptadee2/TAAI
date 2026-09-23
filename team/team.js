@@ -1266,7 +1266,11 @@
     if (sd.loading[type]) return '<div class="field-hint">Loading…</div>';
     if (sd.error[type]) return '<div class="msg msg-error">' + escapeHtml(sd.error[type]) + '</div>';
     var rows = sd.rows[type];
-    if (!rows || !rows.length) return '<div class="empty">No rows yet. Click "+ New' + (type === 'pricing' ? ' course' : '') + '" above to add one.</div>';
+    if (!rows || !rows.length) {
+      return type === 'pricing'
+        ? '<div class="empty">No pricing rows yet — these are added directly (with their matching course card), not through this page.</div>'
+        : '<div class="empty">No rows yet. Click "+ New' + (type === 'notes' ? ' note' : ' lecture') + '" above to add one.</div>';
+    }
     return type === 'pricing' ? renderPricingGroups(rows) : renderSiteDataTable(type, rows);
   }
 
@@ -1517,12 +1521,22 @@
     var sd = state.siteData;
     var type = sd.subTab;
     var editingThis = sd.editing && sd.editing.type === type ? sd.editing.row : null;
+    // No "+ New course" for Pricing — removed on direct request ("we
+    // will add them from here to both courses page and team page"): a
+    // genuinely new course always needs its own hardcoded card added to
+    // gate-da-courses.html/gate-da-test-series.html first (see the ID
+    // dropdown's own comment — SITE_PRICING_ID_GROUPS only ever lists
+    // ids that already have a real card to attach to), so creating one
+    // is a deliberate two-step, code-first action, not a one-click /team
+    // form. Notes/Lectures have no such constraint and keep their own
+    // "+ New" button.
+    var showNewButton = type !== 'pricing';
 
     return (
       '<div class="card">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px;">' +
           '<div class="tabs" style="margin:0;">' + renderSiteDataTabs() + '</div>' +
-          (editingThis ? '' : '<button class="btn btn-primary" id="sitedata-new">' + SITE_DATA_NEW_LABEL[type] + '</button>') +
+          (editingThis || !showNewButton ? '' : '<button class="btn btn-primary" id="sitedata-new">' + SITE_DATA_NEW_LABEL[type] + '</button>') +
         '</div>' +
         '<div class="field-hint" style="margin-bottom:16px;">' + SITE_DATA_INTRO[type] + ' Changes here are a preview only for now — the live site still reads its own published spreadsheet, so nothing you edit here shows up on taai.live yet.</div>' +
         (editingThis ? renderSiteDataForm(type, editingThis) : renderSiteDataList(type)) +
