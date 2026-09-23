@@ -684,6 +684,17 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .combo-badge.best { background: linear-gradient(135deg, var(--pink), var(--purple)); color: #fff; box-shadow: 0 4px 14px rgba(139,92,246,0.4); }
 .combo-badge.soon { background: linear-gradient(135deg, #FCD34D 0%, #F59E0B 55%, #FB7185 100%); color: #2a1608; box-shadow: 0 4px 16px rgba(245,158,11,0.5); }
 .combo-badge.combo { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.72); border: 1px solid rgba(255,255,255,0.14); }
+/* Spans the card's own edges via a negative margin matching its 36px
+   padding exactly, so it reads as a real banner across the top rather
+   than a badge — clipped back to the card's own rounded corners by its
+   overflow:hidden, the same trick .combo-full-row's siblings don't need
+   since this only ever applies to one non-featured-frame-shaped card. */
+.combo-sold-out-banner { margin: -36px -36px 24px; padding: 13px 36px; background: linear-gradient(135deg, #7f1d1d, #b91c1c); color: #fff; font-weight: 800; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; text-align: center; position: relative; z-index: 2; }
+/* Sits in the card's own badge slot (see ComboCard's badgeEl) while a
+   countdown is live, so the top of the card only ever says one thing
+   at a time — never "Best value" and "closing soon" together, which
+   would read as manufactured urgency stacked on an unrelated claim. */
+.combo-countdown { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 999px; font-size: 11.5px; font-weight: 700; color: #FCD34D; background: rgba(245,158,11,0.14); border: 1px solid rgba(245,158,11,0.35); align-self: flex-start; margin-bottom: 22px; position: relative; z-index: 1; }
 .combo-title { font-family: var(--font-display); font-size: 26px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.15; margin-bottom: 6px; color: #fff; position: relative; z-index: 1; }
 .combo-card.featured .combo-title { font-size: 30px; }
 .combo-validity { font-family: var(--font-mono); font-size: 13px; color: rgba(255,255,255,0.35); margin-bottom: 18px; letter-spacing: .06em; position: relative; z-index: 1; }
@@ -1674,6 +1685,7 @@ const Icon = {
   Code:  () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M8 6L3 12L8 18M16 6L21 12L16 18M14 4L10 20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>,
   Note:  () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 4H20V16L16 20H4V4Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="M8 9H16M8 13H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>,
   Bell:  ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><path d="M6 10C6 6.7 8.7 4 12 4C15.3 4 18 6.7 18 10C18 15 20 16 20 16H4C4 16 6 15 6 10Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" /><path d="M10 19.5C10.4 20.4 11.1 21 12 21C12.9 21 13.6 20.4 14 19.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>,
+  Mail:  ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none"><path d="M4 6H20C20.6 6 21 6.4 21 7V17C21 17.6 20.6 18 20 18H4C3.4 18 3 17.6 3 17V7C3 6.4 3.4 6 4 6Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" /><path d="M4 7L12 13L20 7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>,
 };
 
 // ── Pricing CSV ───────────────────────────────────────────────────
@@ -1931,6 +1943,12 @@ const COMBOS = [
     badge: 'best', badgeLabel: 'Best value',
     accent: 'linear-gradient(90deg, var(--pink), var(--purple), var(--blue))',
     title: 'GATE 2027 Full Course',
+    // On request: enrollment for this batch closes 2026-10-05 — a
+    // countdown shows on the card until then, and a "Sold Out" banner
+    // (with the Enrol button swapped for a contact-us link) takes over
+    // automatically once that date passes. IST midnight, matching every
+    // other date-cutoff on this site (see ComboCard's isSoldOut).
+    soldOutDate: '2026-10-05',
     includes: [
       'Linear Algebra, Probability, Statistics, Calculus',
       'Machine Learning, AI',
@@ -2413,6 +2431,21 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   const discountReason   = pd.discountReason  || null;
   const saving           = c.saving;
   const comingSoon = !!c.comingSoon;
+  // On request: this card's own enrollment cutoff, separate from
+  // discountDeadline (a pricing-CSV field driving the unrelated ⏳
+  // discount-offer line below) — soldOutDate is data on the combo
+  // itself, hardcoded here rather than fetched, since it isn't a price
+  // change, it's "this batch stops accepting students." IST midnight,
+  // matching every other server/client date-cutoff on this site (see
+  // e.g. todayIST() in lib/supabase.js) rather than the visitor's own
+  // local timezone, so it flips at the same real moment for everyone
+  // regardless of where they are.
+  const soldOutDate = c.soldOutDate || null;
+  const soldOutAt = soldOutDate ? new Date(soldOutDate + 'T00:00:00+05:30') : null;
+  const isSoldOut = !!(soldOutAt && new Date() >= soldOutAt);
+  const daysUntilSoldOut = soldOutAt && !isSoldOut
+    ? Math.max(1, Math.ceil((soldOutAt - new Date()) / 86400000))
+    : null;
   // A real live-data validity (pd.validity) never exists for a comingSoon
   // course (nothing in pricingMap for an id with no real offer yet) — so
   // this reads the date straight off the combo's own data instead, the
@@ -2424,7 +2457,25 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
     onMouseMove: e => { const r = e.currentTarget.getBoundingClientRect(); e.currentTarget.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100).toFixed(1) + '%'); e.currentTarget.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%'); },
     onMouseLeave: e => { e.currentTarget.style.setProperty('--mx', '-200%'); e.currentTarget.style.setProperty('--my', '-200%'); }
   };
-  const badgeEl = <div className={'combo-badge ' + c.badge}><Icon.Sparkle />{c.badgeLabel}</div>;
+  // Full-width, spans past the card's own 36px padding via a negative
+  // margin (clipped back to the card's rounded corners by its own
+  // overflow:hidden) — reads as a real banner sitting across the top of
+  // the card, not just another badge in the usual badge slot. Rendered
+  // first, before combo-num/combo-accent, so it's unmistakably the first
+  // thing on the card.
+  const soldOutBannerEl = <div className="combo-sold-out-banner">Sold Out</div>;
+  // Shown instead of the card's own badge while a countdown is live —
+  // claiming "Best value" and "closes in 3 days" in the same breath
+  // reads as pressure-selling; swapping the badge for the countdown
+  // itself (rather than showing both) keeps the card's top slot saying
+  // one clear thing at a time. Gone entirely once sold out — the banner
+  // above already owns that message.
+  const countdownEl = daysUntilSoldOut != null && (
+    <div className="combo-countdown"><Icon.Bell size={13} /> Enrollment closes in {daysUntilSoldOut} day{daysUntilSoldOut === 1 ? '' : 's'} — {fmtDate(soldOutDate)}</div>
+  );
+  const badgeEl = daysUntilSoldOut != null
+    ? countdownEl
+    : <div className={'combo-badge ' + c.badge}><Icon.Sparkle />{c.badgeLabel}</div>;
   const titleEl = <div className="combo-title">{c.title}</div>;
   const validityEl = (
     <div className={`combo-validity${live ? ' data-fade-in' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -2471,7 +2522,13 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
       {!comingSoon && discount && <div className="combo-discount">{discount}</div>}
     </div>
   );
-  const ctaEl = <a href={c.href} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-full">Enrol now <Icon.ArrowRight /></a>;
+  // On request: once sold out, "Enrol now" (which would just 404/mislead
+  // against a batch that's no longer taking students) is replaced with a
+  // direct line to support instead of quietly disappearing or staying
+  // clickable.
+  const ctaEl = isSoldOut
+    ? <a href="mailto:support@taai.live?subject=GATE%202027%20Full%20Course" className="btn btn-primary btn-full"><Icon.Mail size={15} /> If you think you need this, contact us</a>
+    : <a href={c.href} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-full">Enrol now <Icon.ArrowRight /></a>;
   // comingSoon has no button at all — a big "Coming Soon" overlay sits
   // directly over the blurred What's-included list instead (see
   // combo-includes-wrap below), the most visually prominent blurred
@@ -2511,9 +2568,10 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
     </div>
   ) : (
     <div id={c.id} className={cls} {...spotlightProps}>
+      {isSoldOut && soldOutBannerEl}
       <div className="combo-num">{c.num}</div>
       <div className="combo-accent" style={{ background: c.accent }} />
-      {badgeEl}
+      {!isSoldOut && badgeEl}
       {titleEl}
       {validityEl}
       <div className="combo-divider" />
