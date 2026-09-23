@@ -750,6 +750,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 .combo-title { font-family: var(--font-display); font-size: 26px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.15; margin-bottom: 6px; color: #fff; position: relative; z-index: 1; }
 .combo-card.featured .combo-title { font-size: 30px; }
+/* One-line pitch under the title — optional (c.tagline), currently
+   only set on the 2027 card. Sits between title and validity, so it
+   reads as a subtitle rather than competing with either. */
+.combo-tagline { font-size: 13.5px; line-height: 1.45; color: rgba(255,255,255,0.62); margin-bottom: 14px; max-width: 34ch; position: relative; z-index: 1; }
 .combo-validity { font-family: var(--font-mono); font-size: 13px; color: rgba(255,255,255,0.35); margin-bottom: 18px; letter-spacing: .06em; position: relative; z-index: 1; }
 .combo-divider { height: 1px; background: rgba(255,255,255,0.09); margin: 0 0 18px; position: relative; z-index: 1; }
 .combo-includes-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 14px; position: relative; z-index: 1; }
@@ -2062,6 +2066,9 @@ const COMBOS = [
     badge: 'best', badgeLabel: 'Best value',
     accent: 'linear-gradient(90deg, var(--pink), var(--purple), var(--blue))',
     title: 'GATE 2027 Full Course',
+    // On request: a one-line pitch right under the title — only this
+    // card has one (optional field, ComboCard renders it only when set).
+    tagline: '300+ hours of content — the most concise, no-fluff GATE DA course out there.',
     // On request: enrollment for this batch closes 2026-10-05 — a
     // countdown shows on the card until then, and a "Sold Out" banner
     // (with the Enrol button swapped for a contact-us link) takes over
@@ -2623,6 +2630,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
     ? countdownEl
     : <div className={'combo-badge ' + c.badge}><Icon.Sparkle />{c.badgeLabel}</div>;
   const titleEl = <div className="combo-title">{c.title}</div>;
+  const taglineEl = c.tagline && <div className="combo-tagline">{c.tagline}</div>;
   const validityEl = (
     <div className={`combo-validity${live ? ' data-fade-in' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
       {validity}
@@ -2706,6 +2714,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
         <div className="combo-horizontal-left">
           {badgeEl}
           {titleEl}
+          {taglineEl}
           {validityEl}
           <div className="combo-divider" />
           <div className="combo-includes-label">What's included</div>
@@ -2725,6 +2734,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
       <div className="combo-accent" style={{ background: c.accent }} />
       {!isSoldOut && badgeEl}
       {titleEl}
+      {taglineEl}
       {/* "Valid until Feb 15, 2027" reads as "still on offer" — directly
           contradicts the sold-out stamp a few lines below it, real
           feedback from a screenshot. Hidden once sold out rather than
