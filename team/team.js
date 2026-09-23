@@ -1706,14 +1706,19 @@
   // Price/old price/discount are three independent fields with nothing
   // relating them — direct report: "does the discount percentage auto
   // calculate the price?" (no), followed by "yes" to adding a real
-  // auto-calculated/auto-checked field. Rather than force `discount`
-  // into a pure computed number (it's also used as free custom text,
-  // e.g. "SAVE BIG", not just a %), this adds a live hint under the
-  // field instead — computed from whatever Price/Old price currently
-  // hold, with a one-click "Use N%" fill, and a mismatch warning if a
-  // typed numeric discount disagrees with what the prices actually
-  // imply. Purely a client-side authoring aid — doesn't change what's
-  // stored or validated server-side, `discount` stays free text there.
+  // auto-calculated/auto-checked field, then a direct follow-up asking
+  // for the reverse too ("if we give the discounted price, can you
+  // auto calculate the discount percentage?" — already true; "if
+  // discount is given, [can] price [be] auto calculated" — wasn't yet).
+  // Rather than force `discount` into a pure computed number (it's also
+  // used as free custom text, e.g. "SAVE BIG", not just a %), this adds
+  // a live BIDIRECTIONAL hint under the field instead, computed from
+  // whichever two of {price, price_old, discount} are already filled:
+  // price+old price known, discount empty → offers to fill discount;
+  // discount+old price known, price empty → offers to fill price; all
+  // three present → match/mismatch check. Purely a client-side
+  // authoring aid — doesn't change what's stored or validated
+  // server-side, `discount` stays free text there.
   function bindPricingDiscountCheck() {
     if (state.siteData.subTab !== 'pricing') return;
     var form = document.getElementById('sitedata-form');
@@ -1732,34 +1737,50 @@
       var price = parseInt(priceEl.value, 10);
       var priceOld = parseInt(priceOldEl.value, 10);
       var discountRaw = discountEl.value.trim();
-      hintEl.className = 'field-hint';
-      if (!Number.isFinite(price) || !Number.isFinite(priceOld) || priceOld <= price || priceOld <= 0) {
-        hintEl.innerHTML = '';
-        return;
-      }
-      var computedPct = Math.round((priceOld - price) / priceOld * 100);
+      var priceValid = Number.isFinite(price);
+      var priceOldValid = Number.isFinite(priceOld) && priceOld > 0;
       var enteredPct = discountRaw === '' ? null : parseFloat(discountRaw);
       // Same isNaN() rule gate-da-courses.html's own ComboCard already
       // uses to decide whether `discount` is a plain number (append "%
       // off") or custom text (show as-is) — matching it here so this
       // check agrees with what actually renders live.
       var enteredIsNumeric = discountRaw !== '' && !isNaN(discountRaw);
-      if (discountRaw === '') {
-        hintEl.innerHTML = 'Price implies <strong>' + computedPct + '% off</strong> — <button type="button" class="chip" id="discount-fill-btn">Use ' + computedPct + '%</button>';
-      } else if (enteredIsNumeric && Math.round(enteredPct) === computedPct) {
-        hintEl.classList.add('field-hint--ok');
-        hintEl.textContent = '✓ Matches the price math (' + computedPct + '% off).';
-      } else if (enteredIsNumeric) {
-        hintEl.classList.add('field-hint--warn');
-        hintEl.textContent = '⚠ Doesn\'t match the price math — price implies ' + computedPct + '% off, this field says ' + enteredPct + '%.';
-      } else {
-        hintEl.innerHTML = 'Price implies <strong>' + computedPct + '% off</strong> (this field has custom text, not a plain % — nothing to check it against).';
+
+      hintEl.className = 'field-hint';
+      hintEl.innerHTML = '';
+      if (!priceOldValid) return;
+
+      if (priceValid && priceOld > price) {
+        // Forward: price + old price known → check/offer discount.
+        var computedPct = Math.round((priceOld - price) / priceOld * 100);
+        if (discountRaw === '') {
+          hintEl.innerHTML = 'Price implies <strong>' + computedPct + '% off</strong> — <button type="button" class="chip" id="discount-fill-btn">Use ' + computedPct + '%</button>';
+          document.getElementById('discount-fill-btn').addEventListener('click', function () {
+            discountEl.value = String(computedPct);
+            update();
+          });
+        } else if (enteredIsNumeric && Math.round(enteredPct) === computedPct) {
+          hintEl.classList.add('field-hint--ok');
+          hintEl.textContent = '✓ Matches the price math (' + computedPct + '% off).';
+        } else if (enteredIsNumeric) {
+          hintEl.classList.add('field-hint--warn');
+          hintEl.textContent = '⚠ Doesn\'t match the price math — price implies ' + computedPct + '% off, this field says ' + enteredPct + '%.';
+        } else {
+          hintEl.innerHTML = 'Price implies <strong>' + computedPct + '% off</strong> (this field has custom text, not a plain % — nothing to check it against).';
+        }
+      } else if (!priceValid && enteredIsNumeric && enteredPct > 0 && enteredPct < 100) {
+        // Reverse: discount % + old price known, price still blank →
+        // offer to fill price. Only kicks in while price is genuinely
+        // empty — once a real price is typed, the forward branch above
+        // takes over and treats that price as the thing to check the
+        // discount against, not the other way around.
+        var computedPrice = Math.round(priceOld * (1 - enteredPct / 100));
+        hintEl.innerHTML = enteredPct + '% off ₹' + priceOld.toLocaleString('en-IN') + ' is <strong>₹' + computedPrice.toLocaleString('en-IN') + '</strong> — <button type="button" class="chip" id="price-fill-btn">Use ₹' + computedPrice + '</button>';
+        document.getElementById('price-fill-btn').addEventListener('click', function () {
+          priceEl.value = String(computedPrice);
+          update();
+        });
       }
-      var fillBtn = document.getElementById('discount-fill-btn');
-      if (fillBtn) fillBtn.addEventListener('click', function () {
-        discountEl.value = String(computedPct);
-        update();
-      });
     }
 
     priceEl.addEventListener('input', update);
