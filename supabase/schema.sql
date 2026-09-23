@@ -716,12 +716,15 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON site_pricing TO service_role;
 -- NULL value here is inert for every other row regardless.
 ALTER TABLE site_pricing ADD COLUMN IF NOT EXISTS sold_out_date DATE;
 
--- Backs /team's ▲/▼ reorder buttons on combo-type (bundled course) rows
--- specifically — same swap-with-neighbor pattern scheduled_posts.
--- dispatch_order already established (see movePost in team.js), applied
--- here to site_pricing instead. Admin-only, same as sold_out_date above:
--- doesn't affect the live page's own card order (COMBOS' array order)
--- yet. Defaults to 0 for every row until someone actually reorders.
+-- Backs /team's mouse drag-and-drop card reorder (combo rows reorder
+-- against other combo rows; individual+test-series rows share their own
+-- separate order space — see bindPricingCardDrag/commitPricingDragOrder
+-- in team.js). Unlike sold_out_date above, this one IS live (added
+-- 2026-09-23, on direct request) — gate-da-courses.html's own COMBOS/
+-- INDIVIDUAL arrays are sorted by this column at page load via the
+-- public, unauthenticated netlify/functions/site-pricing-order.js
+-- endpoint (returns id+display_order only, nothing else). Defaults to 0
+-- for every row until someone actually drags a card.
 ALTER TABLE site_pricing ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0;
 
 -- The "Enrol now" destination (COMBOS[].href/INDIVIDUAL[].href on the

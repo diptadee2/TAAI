@@ -140,6 +140,14 @@
   .pricing-card-meta { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--ink-dim); }
   .pricing-card-meta b { color: var(--ink-soft); font-weight: 600; }
   .pricing-card-actions { display: flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 10px; border-top: 1px solid var(--line); }
+  /* Mouse drag-and-drop reorder (bindPricingCardDrag in team.js) — a
+     draggable card gets a visible grip handle (a plain unicode dot-grid
+     glyph, no icon asset needed) and a grab cursor; the card being
+     physically dragged dims and scales down slightly so it reads as
+     "lifted" while every other card stays put until dropped on. */
+  .pricing-card--draggable { cursor: grab; position: relative; padding-top: 26px; }
+  .pricing-card-drag-handle { position: absolute; top: 6px; left: 50%; transform: translateX(-50%); color: var(--ink-soft); font-size: 13px; line-height: 1; letter-spacing: 1px; user-select: none; }
+  .pricing-card--dragging { opacity: 0.45; transform: scale(0.97); cursor: grabbing; }
   .students-notes-cell textarea { width: 100%; min-height: 34px; padding: 6px 8px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--bg-soft); color: var(--ink); font-family: inherit; font-size: 12.5px; resize: vertical; margin-bottom: 5px; }
   .students-notes-cell textarea:focus { outline: none; border-color: var(--purple); }
   .students-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 16px; }

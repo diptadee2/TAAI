@@ -1752,6 +1752,46 @@ const _pricingFetch = fetch(PRICING_CSV_URL)
   .then(text => { const map = {}; parseCSV(text).forEach(r => { if (r.id) map[r.id] = r; }); _pricingCache = map; return map; })
   .catch(() => { _pricingCache = {}; return {}; });
 
+// Card order — /team's Pricing tab (site_pricing.display_order, dragged
+// by mouse there) is the one admin-editable field this session wired up
+// to actually affect this page's card order, rather than staying an
+// admin-only preview like every other field on that row (price, sold-out
+// date, etc. all still come from PRICING_CSV_URL/the hardcoded COMBOS/
+// INDIVIDUAL arrays above — only the ORDER of those same hardcoded cards
+// is live here). A tiny, deliberately narrow public endpoint
+// (netlify/functions/site-pricing-order.js) returns just {id: order},
+// nothing else — no price/discount/etc leaves that function unauthenticated.
+// Falls back to this array's own hardcoded order (an empty {} map) if the
+// fetch fails or the migration hasn't run yet — reordering a card in
+// /team can only ever improve on the hardcoded order, never break this
+// page if the endpoint is unavailable.
+const ORDER_API = '/api/site-pricing-order';
+let _orderCache = null;
+const _orderFetch = fetch(ORDER_API)
+  .then(r => r.json())
+  .then(d => { _orderCache = (d && d.order) || {}; return _orderCache; })
+  .catch(() => { _orderCache = {}; return {}; });
+
+// Sorts `list` by displayOrder[c.id] where that's known, leaving any
+// card with no known order (a brand-new card not yet in site_pricing, or
+// the whole fetch having failed) exactly where it already sits in the
+// hardcoded array — never yanked to the front/back for having no data.
+// Also renumbers each card's own `num` field (the big corner numeral) to
+// match its new visual position, since that field is otherwise a static
+// value tied to the object, not the position — without this, reordering
+// via /team would leave the numerals reading out of sequence.
+function sortByDisplayOrder(list, displayOrder) {
+  if (!Object.keys(displayOrder).length) return list;
+  const withIndex = list.map((c, i) => ({ c, i, order: displayOrder[c.id] }));
+  withIndex.sort((a, b) => {
+    if (a.order == null && b.order == null) return a.i - b.i;
+    if (a.order == null) return 1;
+    if (b.order == null) return -1;
+    return a.order - b.order || a.i - b.i;
+  });
+  return withIndex.map(({ c }, i) => ({ ...c, num: String(i + 1).padStart(2, '0') }));
+}
+
 const COURSE_DROPDOWN = [
   { label: 'Bundled Courses',    href: '/gate-da-courses#combos'    },
   { label: 'Individual Courses', href: '/gate-da-courses#individual', dividerBefore: true },
@@ -2903,12 +2943,22 @@ const COURSE_JSONLD_IDS = {
 
 function App() {
   const [pricingMap, setPricingMap] = React.useState(() => _pricingCache || {});
+  const [displayOrder, setDisplayOrder] = React.useState(() => _orderCache || {});
 
   React.useEffect(() => {
     if (!_pricingCache) {
       _pricingFetch.then(map => setPricingMap(map));
     }
   }, []);
+
+  React.useEffect(() => {
+    if (!_orderCache) {
+      _orderFetch.then(setDisplayOrder);
+    }
+  }, []);
+
+  const sortedCombos = React.useMemo(() => sortByDisplayOrder(COMBOS, displayOrder), [displayOrder]);
+  const sortedIndividual = React.useMemo(() => sortByDisplayOrder(INDIVIDUAL, displayOrder), [displayOrder]);
 
   React.useEffect(() => {
     if (!Object.keys(pricingMap).length) return;
@@ -3097,7 +3147,7 @@ function App() {
             </a>
           </div>
           <div className="combos-grid">
-            {COMBOS.map((c, i) => {
+            {sortedCombos.map((c, i) => {
               const comboPrice = parseInt((pricingMap[c.id] || {}).price) || 0;
               const saving = c.bundleOf && comboPrice
                 ? (() => {
@@ -3135,7 +3185,7 @@ function App() {
             </div>
           </div>
           <div className="courses-grid">
-            {INDIVIDUAL.map((c, i) => <div key={i} className="fade-in"><CourseCard c={c} pricing={pricingMap[c.id] || null} /></div>)}
+            {sortedIndividual.map((c, i) => <div key={i} className="fade-in"><CourseCard c={c} pricing={pricingMap[c.id] || null} /></div>)}
           </div>
           <BundleComparison pricingMap={pricingMap} />
           <div className="courses-chat-footer fade-in">

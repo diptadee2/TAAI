@@ -66,6 +66,40 @@
     return { id: name.toLowerCase().replace(/\s+/g, '-'), label: name };
   });
 
+  // Every real site_pricing id that actually maps to a card rendered
+  // somewhere on the live public site — COMBOS[]/INDIVIDUAL[] in
+  // gate-da-courses.html, plus the test-series page's own 3 pricing
+  // rows — hand-transcribed from those files (same unavoidable "can't
+  // share a constant across this file boundary" tradeoff already
+  // accepted for SITE_DATA_SUBJECT_IDS/COMBO_OWN_ROW_THRESHOLD). Backs
+  // the Pricing form's ID field as a dropdown instead of free text (on
+  // request, "the ids should be selectable from a dropdown menu") — a
+  // non-technical admin can no longer create a typo'd slug that
+  // silently never matches any live card. The two Full Course entries
+  // spell out their year in the label, since "Full Course" alone
+  // doesn't say which of the two cards a new row is even for.
+  var SITE_PRICING_ID_GROUPS = [
+    { label: 'Bundled courses', options: [
+      { id: 'full-course-2028', label: 'Full Course — 2028 (full-course-2028)' },
+      { id: 'full-course', label: 'Full Course — 2027 (full-course)' },
+      { id: 'maths-ml-bundle', label: 'Mathematics & ML Bundle (maths-ml-bundle)' },
+      { id: 'maths-bundle', label: 'Mathematics Bundle (maths-bundle)' },
+    ] },
+    { label: 'Individual courses', options: [
+      { id: 'statistics', label: 'Statistics (statistics)' },
+      { id: 'calculus', label: 'Calculus (calculus)' },
+      { id: 'linear-algebra', label: 'Linear Algebra (linear-algebra)' },
+      { id: 'probability', label: 'Probability (probability)' },
+      { id: 'machine-learning', label: 'Machine Learning (machine-learning)' },
+      { id: 'python-programming', label: 'Python Programming (python-programming)' },
+    ] },
+    { label: 'Test series', options: [
+      { id: 'test-series', label: 'GATE DA Test Series (test-series)' },
+      { id: 'test-series-quizzes', label: 'Test Series + Weekly Quizzes (test-series-quizzes)' },
+      { id: 'weekly-quizzes', label: 'Weekly Quiz Pack (weekly-quizzes)' },
+    ] },
+  ];
+
   // Declarative shape for the three Site data sub-tabs (Pricing/Notes/
   // Lectures) — one config object drives the generic list table, the
   // generic create/edit form, and the generic FormData-based payload
@@ -106,7 +140,7 @@
       // non-technical admin sees "Basic info / Pricing / Enrollment &
       // dates" instead of one long undifferentiated list of 10 fields.
       fields: [
-        { name: 'id', label: 'ID (slug)', type: 'text', required: true, lockedOnEdit: true, hint: 'The exact id used elsewhere on the site (e.g. full-course, statistics) — can\'t be changed once created.', section: 'Basic info' },
+        { name: 'id', label: 'Course', type: 'select', optionGroups: SITE_PRICING_ID_GROUPS, required: true, lockedOnEdit: true, hint: 'Which course/bundle on the live site this row is for — can\'t be changed once created.', section: 'Basic info' },
         { name: 'type', label: 'Type', type: 'select', options: [{ id: 'combo', label: 'Combo/bundle' }, { id: 'individual', label: 'Individual course' }, { id: 'test-series', label: 'Test series' }], required: true, hint: 'Combo/bundle courses show up under "Bundled courses" below and can be reordered with ▲/▼; everything else shows under "Individual courses".', section: 'Basic info' },
         { name: 'name', label: 'Display name', type: 'text', required: true, section: 'Basic info' },
         { name: 'price', label: 'Price (₹)', type: 'number', section: 'Pricing' },
@@ -1220,9 +1254,11 @@
   // uses (getsOwnRow = c.comingSoon && COMBOS.length > 3) — kept in sync
   // by hand, same "can't share a constant across this boundary" tradeoff
   // already accepted elsewhere in this codebase (e.g. SITE_DATA_SUBJECT_IDS
-  // vs notes-data.json). Purely informational here — see this file's own
-  // comment on sold_out_date/display_order: nothing below actually
-  // changes what the live page does yet.
+  // vs notes-data.json). Purely informational here — reordering the cards
+  // themselves is handled separately (see the drag-and-drop block below),
+  // and IS live now, but the row-count threshold that decides whether the
+  // featured card gets its own row is still a fixed number gate-da-
+  // courses.html computes itself, not something this order controls.
   var COMBO_OWN_ROW_THRESHOLD = 3;
 
   function renderSiteDataList(type) {
@@ -1234,24 +1270,13 @@
     return type === 'pricing' ? renderPricingGroups(rows) : renderSiteDataTable(type, rows);
   }
 
-  // Edit/Delete (+ ▲/▼ for combo rows) — shared by every pricing card and
-  // every plain sitedata-table row, so the two layouts' action buttons
-  // never drift apart from each other.
-  function siteDataRowActionsHtml(type, id, orderButtonsHtml) {
+  // Edit/Delete — shared by every pricing card and every plain
+  // sitedata-table row, so the two layouts' action buttons never drift
+  // apart from each other.
+  function siteDataRowActionsHtml(type, id) {
     return (
-      (orderButtonsHtml || '') +
       '<button class="btn btn-small js-sitedata-edit" data-sitetype="' + type + '" data-id="' + escapeHtml(id) + '">Edit</button> ' +
       '<button class="btn btn-small btn-danger js-sitedata-delete" data-sitetype="' + type + '" data-id="' + escapeHtml(id) + '">Delete</button>'
-    );
-  }
-
-  function pricingOrderButtonsHtml(row, comboRows) {
-    if (row.type !== 'combo') return '';
-    var comboIndex = comboRows.indexOf(row);
-    var id = row.id;
-    return (
-      '<button class="btn-order js-pricing-move-up" data-id="' + escapeHtml(id) + '" title="Move earlier"' + (comboIndex <= 0 ? ' disabled' : '') + '>▲</button>' +
-      '<button class="btn-order js-pricing-move-down" data-id="' + escapeHtml(id) + '" title="Move later"' + (comboIndex === comboRows.length - 1 ? ' disabled' : '') + '>▼</button>'
     );
   }
 
@@ -1261,7 +1286,15 @@
   // technical admin to puzzle over). Built to replace the old flat
   // 9-column table, which needed horizontal scroll and showed mostly
   // dashes for any course without every field filled in.
-  function pricingCardHtml(row, comboRows) {
+  //
+  // dragGroup/draggable: whole-card mouse drag-and-drop reordering (see
+  // bindPricingCardDrag below), replacing the old ▲/▼ buttons on request
+  // ("the reordering should be done by dragging with mouse and not
+  // buttons") — dragGroup scopes a drag to its own group ('combo' or
+  // 'individual', matching renderPricingGroups' own split) so a card
+  // can never be dropped into the wrong section; draggable is false for
+  // a lone card in a group of 1, where there's nothing to reorder against.
+  function pricingCardHtml(row, dragGroup, draggable) {
     // Status is still purely the enroll_url computed value (see
     // SITE_DATA_RESOURCES.pricing's own comment on why there's no
     // separate toggle) — sold_out_date is shown as its own note below,
@@ -1281,9 +1314,13 @@
     if (row.validity) metaRows.push('<div><b>Valid until</b> ' + escapeHtml(row.validity) + '</div>');
     if (row.discount_deadline) metaRows.push('<div><b>Discount ends</b> ' + escapeHtml(row.discount_deadline) + '</div>');
     var metaHtml = metaRows.length ? '<div class="pricing-card-meta">' + metaRows.join('') + '</div>' : '';
-    var orderButtonsHtml = pricingOrderButtonsHtml(row, comboRows);
+    var dragAttrs = draggable
+      ? ' draggable="true" data-drag-id="' + escapeHtml(row.id) + '" data-drag-group="' + dragGroup + '"'
+      : '';
+    var dragHandleHtml = draggable ? '<div class="pricing-card-drag-handle" title="Drag to reorder">⠿</div>' : '';
     return (
-      '<div class="pricing-card">' +
+      '<div class="pricing-card' + (draggable ? ' pricing-card--draggable' : '') + '"' + dragAttrs + '>' +
+        dragHandleHtml +
         '<div class="pricing-card-head">' +
           '<div><div class="pricing-card-name">' + escapeHtml(row.name || row.id) + '</div><div class="pricing-card-id">' + escapeHtml(row.id) + '</div></div>' +
           statusHtml +
@@ -1292,7 +1329,7 @@
         discountHtml +
         metaHtml +
         soldOutHtml +
-        '<div class="pricing-card-actions">' + siteDataRowActionsHtml('pricing', row.id, orderButtonsHtml) + '</div>' +
+        '<div class="pricing-card-actions">' + siteDataRowActionsHtml('pricing', row.id) + '</div>' +
       '</div>'
     );
   }
@@ -1315,22 +1352,29 @@
         (ownRow
           ? 'On the live page, the featured bundle currently gets its own full-width row above the rest (4+ bundled courses).'
           : 'On the live page, the featured bundle currently sits in the plain grid with the others (3 or fewer bundled courses).') +
-        ' Use ▲ / ▼ on a card to reorder — admin-only preview for now, the live page doesn\'t read this order yet.' +
+        (comboRows.length > 1 ? ' Drag a card by its ⠿ handle to reorder — this order is live on taai.live.' : '') +
         '</div>';
     }
+    var individualHintHtml = individualRows.length > 1
+      ? '<div class="pricing-group-hint">Drag a card by its ⠿ handle to reorder — live for individual subjects; test series rows have no live position of their own yet.</div>'
+      : '';
 
-    function groupHtml(title, groupRows, hintHtml) {
+    // dragGroup is a plain string key ('combo'/'individual') scoping a
+    // drag to its own section (see pricingCardHtml/bindPricingCardDrag)
+    // — a card can never be dropped into the other group.
+    function groupHtml(title, groupRows, hintHtml, dragGroup) {
       if (!groupRows.length) return '';
+      var draggable = groupRows.length > 1;
       return (
         '<div class="pricing-group">' +
           '<div class="pricing-group-heading">' + escapeHtml(title) + ' <span class="pricing-group-count">(' + groupRows.length + ')</span></div>' +
           hintHtml +
-          '<div class="pricing-cards">' + groupRows.map(function (r) { return pricingCardHtml(r, comboRows); }).join('') + '</div>' +
+          '<div class="pricing-cards" data-drag-group="' + dragGroup + '">' + groupRows.map(function (r) { return pricingCardHtml(r, dragGroup, draggable); }).join('') + '</div>' +
         '</div>'
       );
     }
 
-    return groupHtml('Bundled courses', comboRows, comboHintHtml) + groupHtml('Individual courses', individualRows, '');
+    return groupHtml('Bundled courses', comboRows, comboHintHtml, 'combo') + groupHtml('Individual courses', individualRows, individualHintHtml, 'individual');
   }
 
   // Plain click-to-sort-free table — still used for Notes/Lectures,
@@ -1345,7 +1389,7 @@
         return '<td>' + escapeHtml(val) + '</td>';
       }).join('');
       var id = r[cfg.idKey];
-      return '<tr>' + cellsHtml + '<td style="white-space:nowrap;">' + siteDataRowActionsHtml(type, id, '') + '</td></tr>';
+      return '<tr>' + cellsHtml + '<td style="white-space:nowrap;">' + siteDataRowActionsHtml(type, id) + '</td></tr>';
     }).join('');
     return '<div class="students-table-wrap"><table class="students-table sitedata-table"><thead><tr>' + headerHtml + '</tr></thead><tbody>' + rowsHtml + '</tbody></table></div>';
   }
@@ -1356,9 +1400,25 @@
     var required = field.required ? ' required' : '';
     var inputHtml;
     if (field.type === 'select') {
-      var options = field.options.map(function (opt) {
+      var optionHtml = function (opt) {
         return '<option value="' + escapeHtml(opt.id) + '"' + (opt.id === value ? ' selected' : '') + '>' + escapeHtml(opt.label) + '</option>';
-      }).join('');
+      };
+      var options;
+      if (field.optionGroups) {
+        // Grouped <optgroup>s (e.g. site_pricing's ID field — Bundled
+        // courses / Individual courses / Test series) instead of one
+        // flat list, so the dropdown itself communicates the same
+        // combo-vs-individual split the rest of this page draws. A
+        // blank leading placeholder forces an explicit real choice for
+        // a brand-new row (newRow's own id starts '') rather than
+        // silently defaulting to the first real option.
+        options = (!isEdit ? '<option value="" disabled' + (value ? '' : ' selected') + '>Choose a course…</option>' : '') +
+          field.optionGroups.map(function (g) {
+            return '<optgroup label="' + escapeHtml(g.label) + '">' + g.options.map(optionHtml).join('') + '</optgroup>';
+          }).join('');
+      } else {
+        options = field.options.map(optionHtml).join('');
+      }
       inputHtml = '<select name="' + field.name + '"' + disabled + required + '>' + options + '</select>';
     } else if (field.type === 'number') {
       inputHtml = '<input type="number" name="' + field.name + '" value="' + escapeHtml(value) + '"' + disabled + required + '>';
@@ -1459,6 +1519,92 @@
       payload[f.name] = raw === '' ? null : raw;
     });
     return payload;
+  }
+
+  // Pricing drag-and-drop reorder — see the "bindPricingCardDrag()" call
+  // site in bindEvents() for why this replaced the old ▲/▼ buttons.
+  // Module-level (not nested in bindEvents) since bindEvents() re-runs
+  // and rebinds fresh listeners on every render anyway — no state needs
+  // to survive a render here, `pricingDrag` only lives for the duration
+  // of one physical drag gesture.
+  var pricingDrag = { id: null, group: null };
+
+  function bindPricingCardDrag() {
+    document.querySelectorAll('.pricing-card[draggable="true"]').forEach(function (card) {
+      card.addEventListener('dragstart', function (e) {
+        pricingDrag.id = card.getAttribute('data-drag-id');
+        pricingDrag.group = card.getAttribute('data-drag-group');
+        card.classList.add('pricing-card--dragging');
+        if (e.dataTransfer) {
+          e.dataTransfer.effectAllowed = 'move';
+          // Firefox refuses to start a real drag without setData called.
+          try { e.dataTransfer.setData('text/plain', pricingDrag.id); } catch (err) { /* ignore */ }
+        }
+      });
+      card.addEventListener('dragend', function () {
+        card.classList.remove('pricing-card--dragging');
+        pricingDrag.id = null;
+        pricingDrag.group = null;
+      });
+      card.addEventListener('dragover', function (e) {
+        if (!pricingDrag.id || card.getAttribute('data-drag-group') !== pricingDrag.group) return;
+        if (card.getAttribute('data-drag-id') === pricingDrag.id) return;
+        e.preventDefault();
+        var dragged = document.querySelector('.pricing-card[data-drag-id="' + pricingDrag.id + '"]');
+        if (!dragged || !card.parentElement) return;
+        var rect = card.getBoundingClientRect();
+        var before = (e.clientY - rect.top) < rect.height / 2;
+        card.parentElement.insertBefore(dragged, before ? card : card.nextSibling);
+      });
+      card.addEventListener('drop', function (e) {
+        e.preventDefault();
+        commitPricingDragOrder(pricingDrag.group);
+      });
+    });
+
+    // A drop on the empty space of the group's own grid (not directly
+    // over another card — e.g. dragging past the last card into the
+    // trailing gap) still needs to count as "moved to the end" instead
+    // of silently doing nothing.
+    document.querySelectorAll('.pricing-cards[data-drag-group]').forEach(function (container) {
+      container.addEventListener('dragover', function (e) {
+        if (e.target === container && pricingDrag.id && container.getAttribute('data-drag-group') === pricingDrag.group) e.preventDefault();
+      });
+      container.addEventListener('drop', function (e) {
+        if (e.target !== container || !pricingDrag.id) return;
+        e.preventDefault();
+        var dragged = document.querySelector('.pricing-card[data-drag-id="' + pricingDrag.id + '"]');
+        if (dragged) container.appendChild(dragged);
+        commitPricingDragOrder(pricingDrag.group);
+      });
+    });
+  }
+
+  // Reads back whatever order the drag left the DOM in and persists it —
+  // only rows whose display_order actually changed get written, so
+  // dropping a card back where it started (or a drag that never crosses
+  // another card) costs zero requests.
+  function commitPricingDragOrder(group) {
+    if (!group) return;
+    var container = document.querySelector('.pricing-cards[data-drag-group="' + group + '"]');
+    if (!container) return;
+    var ids = Array.prototype.map.call(container.querySelectorAll('.pricing-card[data-drag-id]'), function (el) {
+      return el.getAttribute('data-drag-id');
+    });
+    var rows = state.siteData.rows.pricing || [];
+    var byId = {};
+    rows.forEach(function (r) { byId[r.id] = r; });
+    var writes = [];
+    ids.forEach(function (id, i) {
+      var row = byId[id];
+      if (row && (row.display_order || 0) !== i) {
+        writes.push(api('/site-pricing', { method: 'PUT', body: JSON.stringify(Object.assign({}, row, { display_order: i })) }));
+      }
+    });
+    if (!writes.length) return;
+    Promise.all(writes)
+      .then(function () { return loadSiteData('pricing'); })
+      .catch(function (err) { state.msg = err.message; state.msgType = 'error'; render(); });
   }
 
   function loadStudents() {
@@ -1600,40 +1746,19 @@
       });
     });
 
-    // Swaps this pricing row's display_order with whichever neighboring
-    // combo row it's moving past — same swap-with-neighbor pattern
-    // movePost already established for scheduled_posts.dispatch_order,
-    // applied to site_pricing's combo rows instead (see
-    // renderSiteDataList's own comment on why only combo rows get this).
-    function movePricingRow(id, direction) {
-      var rows = (state.siteData.rows.pricing || []).filter(function (r) { return r.type === 'combo'; });
-      var index = rows.findIndex(function (r) { return r.id === id; });
-      if (index === -1) return;
-      var neighborIndex = index + direction;
-      if (neighborIndex < 0 || neighborIndex >= rows.length) return;
-      var row = rows[index];
-      var neighbor = rows[neighborIndex];
-      var rowOrder = row.display_order || 0;
-      var neighborOrder = neighbor.display_order || 0;
-      // Identical display_order (the common default-0 case) swapping to
-      // the same value would be a no-op — nudge apart by 1 in the
-      // intended direction instead, so the move always actually takes
-      // effect on the very first click.
-      var newRowOrder = rowOrder === neighborOrder ? rowOrder + direction : neighborOrder;
-      var newNeighborOrder = rowOrder === neighborOrder ? neighborOrder : rowOrder;
-      Promise.all([
-        api('/site-pricing', { method: 'PUT', body: JSON.stringify(Object.assign({}, row, { display_order: newRowOrder })) }),
-        api('/site-pricing', { method: 'PUT', body: JSON.stringify(Object.assign({}, neighbor, { display_order: newNeighborOrder })) }),
-      ])
-        .then(function () { return loadSiteData('pricing'); })
-        .catch(function (err) { state.msg = err.message; state.msgType = 'error'; render(); });
-    }
-    document.querySelectorAll('.js-pricing-move-up').forEach(function (btn) {
-      btn.addEventListener('click', function () { movePricingRow(btn.getAttribute('data-id'), -1); });
-    });
-    document.querySelectorAll('.js-pricing-move-down').forEach(function (btn) {
-      btn.addEventListener('click', function () { movePricingRow(btn.getAttribute('data-id'), 1); });
-    });
+    // Whole-card mouse drag-and-drop reordering, replacing the old ▲/▼
+    // buttons on direct request ("the reordering should be done by
+    // dragging with mouse and not buttons"). Native HTML5 drag events,
+    // no library — dragover on a sibling card physically moves the
+    // dragged element in the DOM (plain insertBefore/insertAfter, no
+    // re-render mid-drag, so the drag itself stays perfectly smooth);
+    // the actual write only happens once, on drop, by reading back
+    // whatever order the DOM ended up in and assigning fresh sequential
+    // display_order values (0, 1, 2, ...) to that group's rows. Scoped
+    // per data-drag-group ('combo'/'individual', see renderPricingGroups)
+    // so a card can only ever be reordered within its own section, never
+    // dragged across into the other one.
+    bindPricingCardDrag();
 
     var sitedataForm = document.getElementById('sitedata-form');
     if (sitedataForm) sitedataForm.addEventListener('submit', function (e) {
@@ -1643,12 +1768,27 @@
       var isEdit = !!state.siteData.editing.row[cfg.idKey];
       var payload = readSiteDataPayload(type, sitedataForm);
       if (isEdit) payload[cfg.idKey] = state.siteData.editing.row[cfg.idKey];
-      // display_order has no form input of its own (only the pricing
-      // list's ▲/▼ buttons ever set it, see movePricingRow) — same
-      // "carry the existing value through, don't let an unrelated field
-      // edit silently reset it" discipline dispatch_order already needs
-      // for scheduled_posts.
-      if (type === 'pricing') payload.display_order = state.siteData.editing.row.display_order || 0;
+      // display_order has no form input of its own (only dragging a
+      // card in the list ever sets it, see bindPricingCardDrag) — an
+      // edit carries the existing value through unchanged, same "don't
+      // let an unrelated field edit silently reset it" discipline
+      // dispatch_order already needs for scheduled_posts. A brand NEW
+      // row appends to the END of its own type-group (combo rows only
+      // compete with other combo rows for position, same grouping the
+      // drag-and-drop itself uses) rather than defaulting to 0, which
+      // would otherwise silently jump every new course to the front.
+      if (type === 'pricing') {
+        if (isEdit) {
+          payload.display_order = state.siteData.editing.row.display_order || 0;
+        } else {
+          var siblingType = payload.type === 'combo' ? 'combo' : null; // individual + test-series share one order space, matching renderPricingGroups
+          var siblings = (state.siteData.rows.pricing || []).filter(function (r) {
+            return siblingType ? r.type === 'combo' : r.type !== 'combo';
+          });
+          var maxOrder = siblings.reduce(function (m, r) { return Math.max(m, r.display_order || 0); }, -1);
+          payload.display_order = maxOrder + 1;
+        }
+      }
       state.siteData.saving = true;
       render();
       api(cfg.endpoint, { method: isEdit ? 'PUT' : 'POST', body: JSON.stringify(payload) })
