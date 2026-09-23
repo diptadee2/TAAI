@@ -724,6 +724,18 @@ ALTER TABLE site_pricing ADD COLUMN IF NOT EXISTS sold_out_date DATE;
 -- yet. Defaults to 0 for every row until someone actually reorders.
 ALTER TABLE site_pricing ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0;
 
+-- The "Enrol now" destination (COMBOS[].href/INDIVIDUAL[].href on the
+-- live page, e.g. https://learn.taai.live/learn/batch/GATE-2027/content)
+-- — admin-only for now, same as the two columns above; gate-da-courses.html
+-- keeps using its own hardcoded href. A row with no enroll_url set reads
+-- as "Coming Soon" in /team's own Pricing list (a computed Status column,
+-- not a separate boolean — the button being unclickable is entirely a
+-- function of "is there a real link yet", the same relationship the
+-- 2028 card's own comingSoon card already has to its (nonexistent)
+-- pricing row, just made explicit here instead of a separate flag that
+-- could disagree with whether a link is actually set).
+ALTER TABLE site_pricing ADD COLUMN IF NOT EXISTS enroll_url TEXT;
+
 -- Mirrors sheets/notes.csv — one row per downloadable PDF, many per
 -- subject (unlike pricing, subject is not unique, so a real UUID PK).
 -- subject values are the same kebab-case ids notes-data.json's own

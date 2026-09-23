@@ -52,6 +52,11 @@ function rowFromBody(body) {
     // sent, defaulting to 0 only for a genuinely new row.
     sold_out_date: sanitizeDate(body.sold_out_date),
     display_order: Number.isInteger(body.display_order) ? body.display_order : 0,
+    // The "Enrol now" link (see schema.sql's own comment) — a plain
+    // form field on every row, unlike sold_out_date. Empty means
+    // "Coming Soon" in /team's own list; the live page doesn't read
+    // this yet either.
+    enroll_url: body.enroll_url || null,
   };
 }
 

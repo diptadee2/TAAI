@@ -81,7 +81,7 @@
       label: 'Pricing',
       endpoint: '/site-pricing',
       idKey: 'id',
-      newRow: { id: '', type: 'individual', name: '', price: '', price_old: '', discount: '', discount_reason: '', discount_deadline: '', validity: '', sold_out_date: '', display_order: 0 },
+      newRow: { id: '', type: 'individual', name: '', price: '', price_old: '', discount: '', discount_reason: '', discount_deadline: '', validity: '', sold_out_date: '', display_order: 0, enroll_url: '' },
       columns: [
         { name: 'id', label: 'ID' },
         { name: 'type', label: 'Type' },
@@ -91,6 +91,14 @@
         { name: 'discount_deadline', label: 'Discount deadline', format: function (r) { return r.discount_deadline || '—'; } },
         { name: 'validity', label: 'Validity', format: function (r) { return r.validity || '—'; } },
         { name: 'sold_out_date', label: 'Sold-out date', format: function (r) { return r.sold_out_date || '—'; } },
+        // Computed, not a separate flag — whether the Enrol Now button
+        // would be clickable is entirely a function of "is there a real
+        // link yet", on request ("the course can be declared coming
+        // soon... without the enroll now link, like the full course
+        // 2028 card"). Filling in Enrol URL is what flips this from
+        // "Coming Soon" to "Live" — no separate toggle to forget to
+        // flip alongside it.
+        { name: 'enroll_url', label: 'Status', format: function (r) { return r.enroll_url ? 'Live' : 'Coming Soon'; } },
       ],
       fields: [
         { name: 'id', label: 'ID (slug)', type: 'text', required: true, lockedOnEdit: true, hint: 'The exact id used elsewhere on the site (e.g. full-course, statistics) — can\'t be changed once created.' },
@@ -102,6 +110,12 @@
         { name: 'discount_reason', label: 'Discount reason (optional)', type: 'text' },
         { name: 'discount_deadline', label: 'Discount deadline', type: 'date' },
         { name: 'validity', label: 'Validity', type: 'date' },
+        // On request: leaving this blank is what puts the course in a
+        // "Coming Soon" state (an unclickable button on the live page,
+        // once this is ever wired up) — the same relationship the 2028
+        // card already has to having no real pricing row at all, just
+        // explicit here as one field instead of an absent row.
+        { name: 'enroll_url', label: 'Enrol now link (blank = Coming Soon, unclickable)', type: 'url', hint: 'The real enrolment URL (e.g. https://learn.taai.live/learn/batch/GATE-2027/content). Leave blank while this course isn\'t open for enrolment yet.' },
         // Only the full-course row gets this field, on request — the
         // live card's own sold-out cutover is exclusive to that one
         // course, so exposing it as editable elsewhere would just be
