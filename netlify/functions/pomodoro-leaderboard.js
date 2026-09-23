@@ -33,7 +33,16 @@ export async function handler(event) {
   // checklist, mutually exclusive), so folding it into both existing 60s
   // polls instead means zero extra requests, not a smaller third one.
   const [statsResult, todayLeaders, liveCount] = await Promise.all([
-    supabase.from('pomodoro_stats').select('email, total_minutes, total_sessions').eq('week_start', weekStart).order('total_minutes', { ascending: false }).limit(LIMIT),
+    // Secondary tiebreak (email) added alongside the same fix in
+    // fetchTodayLeaders — without one, two students on equal minutes
+    // land in whatever order Postgres happens to return, which isn't
+    // guaranteed stable across repeated polls. Deliberately still
+    // LIMIT 20 + a query here, not a full fetch-and-sort-in-JS like
+    // fetchTodayLeaders' fix — pomodoro_stats scales with total active
+    // students, not (bounded) daily activity, and this endpoint is
+    // polled every 60s per viewer; see the viewer-rank fix below for how
+    // the tiebreak stays consistent without an unbounded fetch.
+    supabase.from('pomodoro_stats').select('email, total_minutes, total_sessions').eq('week_start', weekStart).order('total_minutes', { ascending: false }).order('email', { ascending: true }).limit(LIMIT),
     fetchTodayLeaders(supabase, viewerEmail),
     // Non-critical — a live-count hiccup (or, pre-migration, the table
     // simply not existing yet) must never fail the whole leaderboard poll.
@@ -117,9 +126,22 @@ export async function handler(event) {
   // A logged-in viewer who didn't make the top 20 otherwise sees zero
   // indication of their own standing — the query above simply never
   // fetches their row. Look it up separately so Focus Mode can still show
-  // them where they stand. Rank is computed as "how many students have
-  // strictly more minutes than me, plus one" rather than something
-  // stored, since it has to reflect the live leaderboard order.
+  // them where they stand.
+  //
+  // Real bug, fixed alongside the identical one in fetchTodayLeaders:
+  // rank used to be "how many students have strictly more minutes, plus
+  // one" — a tie-aware formula that hands every student tied on minutes
+  // the SAME rank number, while the visible top-20 list above just uses
+  // untied array position (1, 2, 3, ...). A tie spanning the top-20
+  // cutoff meant a viewer just outside it could get handed a rank
+  // already shown on a specific different (also-tied) student in the
+  // visible list — confirmed happening for real via the identical daily-
+  // board bug. Fixed the same way conceptually (one consistent
+  // tiebreak — email — used everywhere), but without fetching every
+  // row: strictly-greater and tied-but-alphabetically-earlier are two
+  // separate bounded COUNT queries, added together, rather than a full
+  // fetch-and-sort (see the LIMIT-20 query above for why that'd be too
+  // expensive here, unlike the daily board's naturally small table).
   let viewerRank = null;
   const viewerInTop = leaderboard.some(r => r.is_me);
   if (viewerEmail && !viewerInTop) {
@@ -132,15 +154,15 @@ export async function handler(event) {
     if (viewerError) return json(500, { error: viewerError.message });
 
     if (viewerStats) {
-      const { count, error: countError } = await supabase
-        .from('pomodoro_stats')
-        .select('*', { count: 'exact', head: true })
-        .eq('week_start', weekStart)
-        .gt('total_minutes', viewerStats.total_minutes);
-      if (countError) return json(500, { error: countError.message });
+      const [greaterResult, tiedEarlierResult] = await Promise.all([
+        supabase.from('pomodoro_stats').select('*', { count: 'exact', head: true }).eq('week_start', weekStart).gt('total_minutes', viewerStats.total_minutes),
+        supabase.from('pomodoro_stats').select('*', { count: 'exact', head: true }).eq('week_start', weekStart).eq('total_minutes', viewerStats.total_minutes).lt('email', viewerEmail),
+      ]);
+      if (greaterResult.error) return json(500, { error: greaterResult.error.message });
+      if (tiedEarlierResult.error) return json(500, { error: tiedEarlierResult.error.message });
 
       viewerRank = {
-        rank: (count || 0) + 1,
+        rank: (greaterResult.count || 0) + (tiedEarlierResult.count || 0) + 1,
         total_minutes: viewerStats.total_minutes,
         total_sessions: viewerStats.total_sessions,
         streak: streakByEmail[viewerEmail] || 0,
