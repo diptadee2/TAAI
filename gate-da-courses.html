@@ -737,7 +737,17 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
    0-100% timeline. */
 .combo-countdown-track { height: 5px; border-radius: 999px; background: rgba(255,255,255,0.1); overflow: hidden; margin-bottom: 8px; }
 .combo-countdown-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #FCD34D, #F59E0B); }
-.combo-countdown-date { font-size: 10.5px; color: rgba(255,255,255,0.4); font-weight: 600; }
+/* A slow opacity breathe, not a transform — this text sits at 10.5px,
+   the same size class this file's own known gotchas already flag as
+   pixel-snapping visibly under any transform-based animation (see the
+   Pomodoro button-icon jitter saga referenced elsewhere in this
+   codebase); opacity has no geometry to snap between, so it reads as a
+   clean "ticking, time-sensitive" pulse instead. */
+.combo-countdown-date { font-size: 10.5px; color: rgba(255,255,255,0.4); font-weight: 600; animation: combo-countdown-date-pulse 2.4s ease-in-out infinite; }
+@keyframes combo-countdown-date-pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .combo-countdown-date { animation: none; }
+}
 .combo-title { font-family: var(--font-display); font-size: 26px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.15; margin-bottom: 6px; color: #fff; position: relative; z-index: 1; }
 .combo-card.featured .combo-title { font-size: 30px; }
 .combo-validity { font-family: var(--font-mono); font-size: 13px; color: rgba(255,255,255,0.35); margin-bottom: 18px; letter-spacing: .06em; position: relative; z-index: 1; }
