@@ -30,10 +30,30 @@
   var COOKIE_NAME = 'taai_user';
   var COOKIE_DAYS = 365;
 
+  // state.month used to always initialize to currentMonthStr() (today's
+  // real calendar month) on every single page load — a student who
+  // deliberately navigated back to catch up on an earlier month (e.g.
+  // starting from August 1st content on a day that's really September)
+  // got dumped back to the current month on every reload/revisit, with no
+  // way to just pick up where they left off. Persisting the last-viewed
+  // month sidesteps that; SCHEDULE_START_MONTH itself isn't declared yet
+  // at this point in the file, so the floor check happens where it's used
+  // (init()) rather than inside loadStoredMonth().
+  var MONTH_STORAGE_KEY = 'taai_last_month';
+  function loadStoredMonth() {
+    try {
+      var raw = localStorage.getItem(MONTH_STORAGE_KEY);
+      return /^\d{4}-\d{2}$/.test(raw) ? raw : null;
+    } catch (e) { return null; }
+  }
+  function saveStoredMonth(monthStr) {
+    try { localStorage.setItem(MONTH_STORAGE_KEY, monthStr); } catch (e) { /* localStorage unavailable — just won't persist across reloads */ }
+  }
+
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-22-10';
+  var CLIENT_VERSION = '2026-09-23-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -595,7 +615,15 @@
   var app = document.getElementById('app');
   var state = {
     student: null,
-    month: currentMonthStr(),
+    // Restores whichever month the student last viewed (see
+    // MONTH_STORAGE_KEY above) instead of always defaulting to the
+    // current real month — clamped to SCHEDULE_START_MONTH so a stale
+    // stored value from before the schedule existed can't land on a
+    // month with no content at all.
+    month: (function () {
+      var stored = loadStoredMonth();
+      return stored && stored >= SCHEDULE_START_MONTH ? stored : currentMonthStr();
+    })(),
     days: [], // [{ date, tasks: [{subject, task_text, position, completed}] }]
     latestScheduledMonth: null, // 'YYYY-MM' with any schedule data at all, from schedule.js — caps month-nav's "next" arrow
     lastWeekLeaders: [], // [{ display_name, total_minutes, is_me }] — top 5 by focus minutes last week, shown outside Focus Mode
@@ -1267,6 +1295,7 @@
   // ── Calendar ────────────────────────────────────────────────────────
   function loadMonth(monthStr) {
     state.month = monthStr;
+    saveStoredMonth(monthStr);
     app.innerHTML = loadingSkeletonHtml();
 
     // Guests (no student yet) only need the public schedule/leaders piece —
