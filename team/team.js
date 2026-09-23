@@ -919,7 +919,7 @@
           '<div id="gate">' +
             '<h1 style="margin-bottom:10px;">Team Console</h1>' +
             (user
-              ? '<p>Signed in as ' + escapeHtml(user.email) + ', but this account is not authorized for /team.</p>'
+              ? '<p>Signed in' + (user.email ? ' as ' + escapeHtml(user.email) : '') + ', but this account is not authorized for /team.</p>'
               : '<p>Sign in to manage Discord scheduled posts.</p>') +
             '<div style="margin-top:20px;"><button class="btn btn-primary" id="login-btn">' + (user ? 'Switch account' : 'Log in') + '</button></div>' +
           '</div>' +
@@ -2253,18 +2253,38 @@
       document.getElementById('root').innerHTML = '<div class="wrap"><div id="gate"><p>Netlify Identity failed to load.</p></div></div>';
       return;
     }
-    window.netlifyIdentity.on('init', function (user) {
+    function applyIdentityUser(user) {
       var roles = (user && user.app_metadata && user.app_metadata.roles) || [];
       state.authorized = roles.indexOf('admin') !== -1;
       render();
       if (state.authorized) loadPosts();
-    });
-    window.netlifyIdentity.on('login', function (user) {
-      var roles = (user && user.app_metadata && user.app_metadata.roles) || [];
-      state.authorized = roles.indexOf('admin') !== -1;
-      render();
-      if (state.authorized) loadPosts();
-    });
+    }
+
+    // A real, reported bug: signing in with a genuinely-authorized admin
+    // account still briefly showed "not authorized for /team" (sometimes
+    // with a blank email too), self-correcting only on a manual page
+    // refresh. The user object netlifyIdentity's own 'init'/'login'
+    // events hand over — especially right after the Google OAuth
+    // redirect completes, or right after a role was just granted in the
+    // Netlify dashboard — can be a stale or not-yet-fully-resolved
+    // snapshot (missing app_metadata.roles it should have). Applying
+    // that snapshot immediately (below) is still correct for the common
+    // case, but user.jwt(true) then forces a real token refresh against
+    // the server, re-resolving app_metadata from the actual source of
+    // truth — re-applying whatever THAT returns silently corrects a
+    // stale first snapshot instead of leaving the person stuck looking
+    // unauthorized until they think to reload themselves.
+    function applyIdentityUserAndRefresh(user) {
+      applyIdentityUser(user);
+      if (user && typeof user.jwt === 'function') {
+        user.jwt(true).then(function () {
+          applyIdentityUser(window.netlifyIdentity.currentUser());
+        }).catch(function () { /* keep whatever the initial snapshot already said */ });
+      }
+    }
+
+    window.netlifyIdentity.on('init', applyIdentityUserAndRefresh);
+    window.netlifyIdentity.on('login', applyIdentityUserAndRefresh);
     window.netlifyIdentity.on('logout', function () {
       state.authorized = false;
       state.posts = [];
