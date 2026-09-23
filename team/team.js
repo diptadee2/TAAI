@@ -81,7 +81,7 @@
       label: 'Pricing',
       endpoint: '/site-pricing',
       idKey: 'id',
-      newRow: { id: '', type: 'individual', name: '', price: '', price_old: '', discount: '', discount_reason: '', discount_deadline: '', validity: '' },
+      newRow: { id: '', type: 'individual', name: '', price: '', price_old: '', discount: '', discount_reason: '', discount_deadline: '', validity: '', sold_out_date: '', display_order: 0 },
       columns: [
         { name: 'id', label: 'ID' },
         { name: 'type', label: 'Type' },
@@ -90,6 +90,7 @@
         { name: 'price_old', label: 'Old price', format: function (r) { return r.price_old != null ? '₹' + r.price_old : '—'; } },
         { name: 'discount_deadline', label: 'Discount deadline', format: function (r) { return r.discount_deadline || '—'; } },
         { name: 'validity', label: 'Validity', format: function (r) { return r.validity || '—'; } },
+        { name: 'sold_out_date', label: 'Sold-out date', format: function (r) { return r.sold_out_date || '—'; } },
       ],
       fields: [
         { name: 'id', label: 'ID (slug)', type: 'text', required: true, lockedOnEdit: true, hint: 'The exact id used elsewhere on the site (e.g. full-course, statistics) — can\'t be changed once created.' },
@@ -101,6 +102,13 @@
         { name: 'discount_reason', label: 'Discount reason (optional)', type: 'text' },
         { name: 'discount_deadline', label: 'Discount deadline', type: 'date' },
         { name: 'validity', label: 'Validity', type: 'date' },
+        // Only the full-course row gets this field, on request — the
+        // live card's own sold-out cutover is exclusive to that one
+        // course, so exposing it as editable elsewhere would just be
+        // dead data with nothing reading it. Admin-only for now, same
+        // as every other new field this round — see schema.sql's own
+        // comment on why the live page doesn't read this yet.
+        { name: 'sold_out_date', label: 'Sold-out date (full-course only, admin-only — not yet live)', type: 'date', showIf: function (row) { return row.id === 'full-course'; } },
       ],
     },
     notes: {
@@ -1189,6 +1197,15 @@
     }).join('');
   }
 
+  // Mirrors the real threshold gate-da-courses.html's own COMBOS.map()
+  // uses (getsOwnRow = c.comingSoon && COMBOS.length > 3) — kept in sync
+  // by hand, same "can't share a constant across this boundary" tradeoff
+  // already accepted elsewhere in this codebase (e.g. SITE_DATA_SUBJECT_IDS
+  // vs notes-data.json). Purely informational here — see this file's own
+  // comment on sold_out_date/display_order: nothing below actually
+  // changes what the live page does yet.
+  var COMBO_OWN_ROW_THRESHOLD = 3;
+
   function renderSiteDataList(type) {
     var sd = state.siteData;
     var cfg = SITE_DATA_RESOURCES[type];
@@ -1197,6 +1214,22 @@
     var rows = sd.rows[type];
     if (!rows || !rows.length) return '<div class="empty">No rows yet.</div>';
 
+    // "Bundled courses" = the combo-type rows specifically (full-course,
+    // the two bundles, 2028) — reordering/counting only makes sense
+    // among these, not mixed in with individual subjects/test-series.
+    var comboRows = rows.filter(function (r) { return r.type === 'combo'; });
+    var alignmentHtml = '';
+    if (type === 'pricing' && comboRows.length) {
+      var ownRow = comboRows.length > COMBO_OWN_ROW_THRESHOLD;
+      alignmentHtml = '<div class="field-hint" style="margin-bottom:12px;">' +
+        '<strong>' + comboRows.length + ' bundled course' + (comboRows.length === 1 ? '' : 's') + '</strong> — ' +
+        (ownRow
+          ? 'the live page\'s featured card currently gets its own full-width row above the rest (4+ bundled courses).'
+          : 'the live page\'s featured card currently sits in the plain grid with the others (3 or fewer bundled courses).') +
+        ' Use ▲/▼ below to reorder them. Admin-only preview for now — the live page doesn\'t read this order yet.' +
+        '</div>';
+    }
+
     var headerHtml = cfg.columns.map(function (col) { return '<th>' + escapeHtml(col.label) + '</th>'; }).join('') + '<th></th>';
     var rowsHtml = rows.map(function (r) {
       var cellsHtml = cfg.columns.map(function (col) {
@@ -1204,9 +1237,20 @@
         return '<td>' + escapeHtml(val) + '</td>';
       }).join('');
       var id = r[cfg.idKey];
+      // ▲/▼ only for combo rows, positioned relative to OTHER combo
+      // rows specifically (comboRows, not the full mixed-type list) —
+      // same swap-with-neighbor pattern movePost already established
+      // for scheduled_posts.dispatch_order (see movePricingRow below).
+      var isCombo = type === 'pricing' && r.type === 'combo';
+      var comboIndex = isCombo ? comboRows.indexOf(r) : -1;
+      var orderButtonsHtml = isCombo
+        ? '<button class="btn-order js-pricing-move-up" data-id="' + escapeHtml(id) + '" title="Move earlier"' + (comboIndex <= 0 ? ' disabled' : '') + '>▲</button>' +
+          '<button class="btn-order js-pricing-move-down" data-id="' + escapeHtml(id) + '" title="Move later"' + (comboIndex === comboRows.length - 1 ? ' disabled' : '') + '>▼</button>'
+        : '';
       return (
         '<tr>' + cellsHtml +
           '<td style="white-space:nowrap;">' +
+            orderButtonsHtml +
             '<button class="btn btn-small js-sitedata-edit" data-sitetype="' + type + '" data-id="' + escapeHtml(id) + '">Edit</button> ' +
             '<button class="btn btn-small btn-danger js-sitedata-delete" data-sitetype="' + type + '" data-id="' + escapeHtml(id) + '">Delete</button>' +
           '</td>' +
@@ -1214,7 +1258,7 @@
       );
     }).join('');
 
-    return '<div class="students-table-wrap"><table class="students-table sitedata-table"><thead><tr>' + headerHtml + '</tr></thead><tbody>' + rowsHtml + '</tbody></table></div>';
+    return alignmentHtml + '<div class="students-table-wrap"><table class="students-table sitedata-table"><thead><tr>' + headerHtml + '</tr></thead><tbody>' + rowsHtml + '</tbody></table></div>';
   }
 
   function siteDataFieldHtml(field, row, isEdit) {
@@ -1246,7 +1290,11 @@
   function renderSiteDataForm(type, row) {
     var cfg = SITE_DATA_RESOURCES[type];
     var isEdit = !!row[cfg.idKey];
-    var fieldsHtml = cfg.fields.map(function (f) { return siteDataFieldHtml(f, row, isEdit); }).join('');
+    // showIf (optional per field) — e.g. sold_out_date only makes sense
+    // on the full-course pricing row; every other row just skips
+    // rendering the input entirely rather than showing an always-blank,
+    // meaningless field.
+    var fieldsHtml = cfg.fields.filter(function (f) { return !f.showIf || f.showIf(row); }).map(function (f) { return siteDataFieldHtml(f, row, isEdit); }).join('');
     return (
       '<div class="card form-card">' +
         '<h2 style="font-size:16px;margin-bottom:14px;">' + (isEdit ? 'Edit ' : 'New ') + cfg.label.replace(/s$/, '') + '</h2>' +
@@ -1429,6 +1477,41 @@
       });
     });
 
+    // Swaps this pricing row's display_order with whichever neighboring
+    // combo row it's moving past — same swap-with-neighbor pattern
+    // movePost already established for scheduled_posts.dispatch_order,
+    // applied to site_pricing's combo rows instead (see
+    // renderSiteDataList's own comment on why only combo rows get this).
+    function movePricingRow(id, direction) {
+      var rows = (state.siteData.rows.pricing || []).filter(function (r) { return r.type === 'combo'; });
+      var index = rows.findIndex(function (r) { return r.id === id; });
+      if (index === -1) return;
+      var neighborIndex = index + direction;
+      if (neighborIndex < 0 || neighborIndex >= rows.length) return;
+      var row = rows[index];
+      var neighbor = rows[neighborIndex];
+      var rowOrder = row.display_order || 0;
+      var neighborOrder = neighbor.display_order || 0;
+      // Identical display_order (the common default-0 case) swapping to
+      // the same value would be a no-op — nudge apart by 1 in the
+      // intended direction instead, so the move always actually takes
+      // effect on the very first click.
+      var newRowOrder = rowOrder === neighborOrder ? rowOrder + direction : neighborOrder;
+      var newNeighborOrder = rowOrder === neighborOrder ? neighborOrder : rowOrder;
+      Promise.all([
+        api('/site-pricing', { method: 'PUT', body: JSON.stringify(Object.assign({}, row, { display_order: newRowOrder })) }),
+        api('/site-pricing', { method: 'PUT', body: JSON.stringify(Object.assign({}, neighbor, { display_order: newNeighborOrder })) }),
+      ])
+        .then(function () { return loadSiteData('pricing'); })
+        .catch(function (err) { state.msg = err.message; state.msgType = 'error'; render(); });
+    }
+    document.querySelectorAll('.js-pricing-move-up').forEach(function (btn) {
+      btn.addEventListener('click', function () { movePricingRow(btn.getAttribute('data-id'), -1); });
+    });
+    document.querySelectorAll('.js-pricing-move-down').forEach(function (btn) {
+      btn.addEventListener('click', function () { movePricingRow(btn.getAttribute('data-id'), 1); });
+    });
+
     var sitedataForm = document.getElementById('sitedata-form');
     if (sitedataForm) sitedataForm.addEventListener('submit', function (e) {
       e.preventDefault();
@@ -1437,6 +1520,12 @@
       var isEdit = !!state.siteData.editing.row[cfg.idKey];
       var payload = readSiteDataPayload(type, sitedataForm);
       if (isEdit) payload[cfg.idKey] = state.siteData.editing.row[cfg.idKey];
+      // display_order has no form input of its own (only the pricing
+      // list's ▲/▼ buttons ever set it, see movePricingRow) — same
+      // "carry the existing value through, don't let an unrelated field
+      // edit silently reset it" discipline dispatch_order already needs
+      // for scheduled_posts.
+      if (type === 'pricing') payload.display_order = state.siteData.editing.row.display_order || 0;
       state.siteData.saving = true;
       render();
       api(cfg.endpoint, { method: isEdit ? 'PUT' : 'POST', body: JSON.stringify(payload) })

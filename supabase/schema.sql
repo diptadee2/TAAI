@@ -707,6 +707,23 @@ CREATE TABLE IF NOT EXISTS site_pricing (
 );
 GRANT SELECT, INSERT, UPDATE, DELETE ON site_pricing TO service_role;
 
+-- Admin-only for now, added 2026-09-23 — /team's Pricing editor can set
+-- this, but gate-da-courses.html does NOT read it; the live card's own
+-- sold-out cutover still uses its own hardcoded soldOutDate in COMBOS
+-- (see CLAUDE.md's "Site data corner" section). /team's form only shows
+-- this field for the full-course row specifically (see SITE_DATA_RESOURCES
+-- in team.js) — this column itself has no such restriction, since a
+-- NULL value here is inert for every other row regardless.
+ALTER TABLE site_pricing ADD COLUMN IF NOT EXISTS sold_out_date DATE;
+
+-- Backs /team's ▲/▼ reorder buttons on combo-type (bundled course) rows
+-- specifically — same swap-with-neighbor pattern scheduled_posts.
+-- dispatch_order already established (see movePost in team.js), applied
+-- here to site_pricing instead. Admin-only, same as sold_out_date above:
+-- doesn't affect the live page's own card order (COMBOS' array order)
+-- yet. Defaults to 0 for every row until someone actually reorders.
+ALTER TABLE site_pricing ADD COLUMN IF NOT EXISTS display_order INTEGER NOT NULL DEFAULT 0;
+
 -- Mirrors sheets/notes.csv — one row per downloadable PDF, many per
 -- subject (unlike pricing, subject is not unique, so a real UUID PK).
 -- subject values are the same kebab-case ids notes-data.json's own
