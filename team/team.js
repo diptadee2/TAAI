@@ -1334,16 +1334,17 @@
     );
   }
 
-  // "Bundled courses" (combo) vs. "Individual courses" (individual +
-  // test-series) — the actual split requested ("divide the site data
-  // into two parts combo and individual"). Grouping, not filtering — a
-  // sub-tab switch isn't needed since both groups are short enough to
-  // show at once, and seeing them together is what makes the live
-  // page's own "combo gets its own row past 3 bundles" behavior legible
-  // (see the alignment hint below).
+  // Three genuinely separate groups — "Bundled courses" (combo),
+  // "Individual courses" (individual subjects only), "Test series" — each
+  // with its own drag-reorder order space. Test series used to share the
+  // "Individual courses" group/order with real subjects; split out on
+  // direct correction ("test series is separate") — a test-series plan
+  // isn't a subject course, so it shouldn't compete for position against
+  // them, or be silently renumbered whenever a subject card moves.
   function renderPricingGroups(rows) {
     var comboRows = rows.filter(function (r) { return r.type === 'combo'; });
-    var individualRows = rows.filter(function (r) { return r.type !== 'combo'; });
+    var individualRows = rows.filter(function (r) { return r.type === 'individual'; });
+    var testSeriesRows = rows.filter(function (r) { return r.type === 'test-series'; });
 
     var comboHintHtml = '';
     if (comboRows.length) {
@@ -1356,12 +1357,16 @@
         '</div>';
     }
     var individualHintHtml = individualRows.length > 1
-      ? '<div class="pricing-group-hint">Drag a card by its ⠿ handle to reorder — live for individual subjects; test series rows have no live position of their own yet.</div>'
+      ? '<div class="pricing-group-hint">Drag a card by its ⠿ handle to reorder — this order is live on taai.live.</div>'
+      : '';
+    var testSeriesHintHtml = testSeriesRows.length > 1
+      ? '<div class="pricing-group-hint">Drag a card by its ⠿ handle to reorder — admin-only preview for now, the test series page doesn\'t read this order yet.</div>'
       : '';
 
-    // dragGroup is a plain string key ('combo'/'individual') scoping a
-    // drag to its own section (see pricingCardHtml/bindPricingCardDrag)
-    // — a card can never be dropped into the other group.
+    // dragGroup is a plain string key ('combo'/'individual'/'test-series')
+    // scoping a drag to its own section (see pricingCardHtml/
+    // bindPricingCardDrag) — a card can never be dropped into another
+    // group.
     function groupHtml(title, groupRows, hintHtml, dragGroup) {
       if (!groupRows.length) return '';
       var draggable = groupRows.length > 1;
@@ -1374,7 +1379,11 @@
       );
     }
 
-    return groupHtml('Bundled courses', comboRows, comboHintHtml, 'combo') + groupHtml('Individual courses', individualRows, individualHintHtml, 'individual');
+    return (
+      groupHtml('Bundled courses', comboRows, comboHintHtml, 'combo') +
+      groupHtml('Individual courses', individualRows, individualHintHtml, 'individual') +
+      groupHtml('Test series', testSeriesRows, testSeriesHintHtml, 'test-series')
+    );
   }
 
   // Plain click-to-sort-free table — still used for Notes/Lectures,
@@ -1773,18 +1782,16 @@
       // edit carries the existing value through unchanged, same "don't
       // let an unrelated field edit silently reset it" discipline
       // dispatch_order already needs for scheduled_posts. A brand NEW
-      // row appends to the END of its own type-group (combo rows only
-      // compete with other combo rows for position, same grouping the
-      // drag-and-drop itself uses) rather than defaulting to 0, which
-      // would otherwise silently jump every new course to the front.
+      // row appends to the END of its own type's group (combo/
+      // individual/test-series each their own order space — exact type
+      // match, matching renderPricingGroups' three-way split) rather
+      // than defaulting to 0, which would otherwise silently jump every
+      // new course to the front.
       if (type === 'pricing') {
         if (isEdit) {
           payload.display_order = state.siteData.editing.row.display_order || 0;
         } else {
-          var siblingType = payload.type === 'combo' ? 'combo' : null; // individual + test-series share one order space, matching renderPricingGroups
-          var siblings = (state.siteData.rows.pricing || []).filter(function (r) {
-            return siblingType ? r.type === 'combo' : r.type !== 'combo';
-          });
+          var siblings = (state.siteData.rows.pricing || []).filter(function (r) { return r.type === payload.type; });
           var maxOrder = siblings.reduce(function (m, r) { return Math.max(m, r.display_order || 0); }, -1);
           payload.display_order = maxOrder + 1;
         }
