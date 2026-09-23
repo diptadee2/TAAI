@@ -1697,6 +1697,71 @@
       .catch(function (err) { state.msg = err.message; state.msgType = 'error'; render(); });
   }
 
+  // Price/old price/discount are three independent fields with nothing
+  // relating them — direct report: "does the discount percentage auto
+  // calculate the price?" (no), followed by "yes" to adding a real
+  // auto-calculated/auto-checked field. Rather than force `discount`
+  // into a pure computed number (it's also used as free custom text,
+  // e.g. "SAVE BIG", not just a %), this adds a live hint under the
+  // field instead — computed from whatever Price/Old price currently
+  // hold, with a one-click "Use N%" fill, and a mismatch warning if a
+  // typed numeric discount disagrees with what the prices actually
+  // imply. Purely a client-side authoring aid — doesn't change what's
+  // stored or validated server-side, `discount` stays free text there.
+  function bindPricingDiscountCheck() {
+    if (state.siteData.subTab !== 'pricing') return;
+    var form = document.getElementById('sitedata-form');
+    if (!form) return;
+    var priceEl = form.querySelector('input[name="price"]');
+    var priceOldEl = form.querySelector('input[name="price_old"]');
+    var discountEl = form.querySelector('input[name="discount"]');
+    if (!priceEl || !priceOldEl || !discountEl) return;
+
+    var hintEl = document.createElement('div');
+    hintEl.id = 'discount-calc-hint';
+    hintEl.className = 'field-hint';
+    discountEl.insertAdjacentElement('afterend', hintEl);
+
+    function update() {
+      var price = parseInt(priceEl.value, 10);
+      var priceOld = parseInt(priceOldEl.value, 10);
+      var discountRaw = discountEl.value.trim();
+      hintEl.className = 'field-hint';
+      if (!Number.isFinite(price) || !Number.isFinite(priceOld) || priceOld <= price || priceOld <= 0) {
+        hintEl.innerHTML = '';
+        return;
+      }
+      var computedPct = Math.round((priceOld - price) / priceOld * 100);
+      var enteredPct = discountRaw === '' ? null : parseFloat(discountRaw);
+      // Same isNaN() rule gate-da-courses.html's own ComboCard already
+      // uses to decide whether `discount` is a plain number (append "%
+      // off") or custom text (show as-is) — matching it here so this
+      // check agrees with what actually renders live.
+      var enteredIsNumeric = discountRaw !== '' && !isNaN(discountRaw);
+      if (discountRaw === '') {
+        hintEl.innerHTML = 'Price implies <strong>' + computedPct + '% off</strong> — <button type="button" class="chip" id="discount-fill-btn">Use ' + computedPct + '%</button>';
+      } else if (enteredIsNumeric && Math.round(enteredPct) === computedPct) {
+        hintEl.classList.add('field-hint--ok');
+        hintEl.textContent = '✓ Matches the price math (' + computedPct + '% off).';
+      } else if (enteredIsNumeric) {
+        hintEl.classList.add('field-hint--warn');
+        hintEl.textContent = '⚠ Doesn\'t match the price math — price implies ' + computedPct + '% off, this field says ' + enteredPct + '%.';
+      } else {
+        hintEl.innerHTML = 'Price implies <strong>' + computedPct + '% off</strong> (this field has custom text, not a plain % — nothing to check it against).';
+      }
+      var fillBtn = document.getElementById('discount-fill-btn');
+      if (fillBtn) fillBtn.addEventListener('click', function () {
+        discountEl.value = String(computedPct);
+        update();
+      });
+    }
+
+    priceEl.addEventListener('input', update);
+    priceOldEl.addEventListener('input', update);
+    discountEl.addEventListener('input', update);
+    update();
+  }
+
   function loadStudents() {
     state.studentsLoading = true;
     state.studentsError = null;
@@ -1839,16 +1904,14 @@
     // Whole-card mouse drag-and-drop reordering, replacing the old ▲/▼
     // buttons on direct request ("the reordering should be done by
     // dragging with mouse and not buttons"). Native HTML5 drag events,
-    // no library — dragover on a sibling card physically moves the
-    // dragged element in the DOM (plain insertBefore/insertAfter, no
-    // re-render mid-drag, so the drag itself stays perfectly smooth);
-    // the actual write only happens once, on drop, by reading back
-    // whatever order the DOM ended up in and assigning fresh sequential
-    // display_order values (0, 1, 2, ...) to that group's rows. Scoped
-    // per data-drag-group ('combo'/'individual', see renderPricingGroups)
-    // so a card can only ever be reordered within its own section, never
-    // dragged across into the other one.
+    // no library — see bindPricingCardDrag's own comment for how it
+    // tracks the intended drop position without touching the DOM until
+    // the actual drop, and why. Scoped per data-drag-group ('combo'/
+    // 'individual'/'test-series', see renderPricingGroups) so a card
+    // can only ever be reordered within its own section, never dragged
+    // across into another one.
     bindPricingCardDrag();
+    bindPricingDiscountCheck();
 
     var sitedataForm = document.getElementById('sitedata-form');
     if (sitedataForm) sitedataForm.addEventListener('submit', function (e) {

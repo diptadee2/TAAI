@@ -197,6 +197,11 @@
   .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--purple); }
   .field textarea { min-height: 80px; resize: vertical; }
   .field-hint { color: var(--ink-soft); font-size: 11.5px; margin-top: 4px; }
+  /* Pricing's live discount-vs-price hint (bindPricingDiscountCheck in
+     team.js) — reuses the plain .field-hint layout, just recolored for
+     the match/mismatch states. */
+  .field-hint--ok { color: var(--green); }
+  .field-hint--warn { color: var(--amber); }
   /* Click-to-insert {{placeholder}} chips above the Body field (see
      placeholderChipsHtml/js-insert-placeholder in team.js) — the actual
      ask this exists for: a non-technical editor shouldn't need to already
