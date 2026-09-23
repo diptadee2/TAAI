@@ -33,7 +33,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-22-5';
+  var CLIENT_VERSION = '2026-09-22-10';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -513,6 +513,25 @@
   // actually running on a different device.
   function sendPomoStoppedBeacon() {
     if (!state.student || !pomoStateKnown || typeof navigator.sendBeacon !== 'function') return;
+    // Real bug, confirmed against production: this used to read
+    // pomo.completedSessions directly, but this is the one write path
+    // pomoResetSessionsIfNewDay (see its own comment) was never wired
+    // into — updatePomoDisplay/pomoAdvance only reset it while the timer
+    // is actively ticking or actually completes a phase, neither of which
+    // happens for a tab that's sitting paused/idle across a real midnight
+    // with no interaction. The FIRST thing such a tab does the next day is
+    // often this beacon (a CLIENT_VERSION-bump reload, a tab close, a
+    // navigation) — firing with yesterday's still-unreset count, but a
+    // brand-new "today" updated_at. That poisons the next restore:
+    // pomoSavedIsFromToday (see there) only checks the blob's OWN
+    // timestamp, so a stale count re-dated to today by this beacon reads
+    // as legitimately today's and survives the Math.max merge, then any
+    // real completions that day stack on top of it instead of starting
+    // from 0. Confirmed directly: a real student's server row showed 15
+    // (12 stale + 3 genuinely completed that day) against a true daily
+    // count of 3. Calling the same reset here closes the one path that
+    // bypassed it.
+    pomoResetSessionsIfNewDay();
     var body = JSON.stringify({
       email: state.student.email,
       mode: pomo.mode,
@@ -1629,6 +1648,17 @@
     return ' data-alltime="' + Math.round(minutes / 60) + '"';
   }
 
+  // Monday through today, inclusive — matches mondayOf()'s own local-date
+  // parsing convention rather than weekStartIST's UTC one, since this
+  // only ever runs client-side against todayIso(), the same date basis
+  // mondayOf() already expects. Used by weeklyPaceStatusHtml (see
+  // renderLeaderboardRows) to turn a raw weekly total into a daily pace.
+  function weeklyDaysElapsed() {
+    var monday = mondayOf(todayIso());
+    var diffDays = Math.round((new Date(todayIso() + 'T00:00:00') - new Date(monday + 'T00:00:00')) / 86400000);
+    return diffDays + 1;
+  }
+
   // A single shared tooltip element (lazily created once, reused for
   // every leaderboard name) rather than one per row — cheap, and there's
   // only ever one hover at a time anyway. Positioned via `position: fixed`
@@ -1980,9 +2010,13 @@
     html += '<div class="roadmap-sub">' +
       '<div class="roadmap-sub-left">' + renderIdentityLine() + '</div>' +
       (state.focus ?
+        // Left-arrow, not the old X — "go back to the checklist" reads
+        // calmer than "cancel/close", which is what an X implies. See
+        // the CSS for why this whole control reads much quieter than
+        // before: it's the least-used button on this screen.
         '<button id="focus-toggle" class="focus-toggle active">' +
-        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>' +
-        ' Exit Focus</button>' : '') +
+        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12L11 6M5 12L11 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+        ' Exit focus</button>' : '') +
       '</div>';
 
     if (!state.focus) html += '<div class="page-grid"><div class="main-col">';
@@ -3413,6 +3447,25 @@
     return '<span class="leaderboard-status"></span>';
   }
 
+  // "Last seen 1h ago" for the VIEWER'S OWN row is telling them something
+  // they already know (they were just there) — real feedback that this is
+  // "a useless metric right now" for that specific case. Swapped for a
+  // daily pace figure instead, but only there: every other student's own
+  // last-seen time stays genuinely useful info about THEM to a viewer
+  // checking the board, so this never replaces pomoStatusHtml's idle
+  // branch for anyone but the viewer's own row (see the two call sites in
+  // renderLeaderboardRows, both gated on r.is_me / this always being the
+  // viewer's own gap row). Only swapped when idle, not live — "Focus"/
+  // "Break" during an active phase is still more useful than a static
+  // weekly average even on your own row. Weekly board only, same
+  // reasoning weeklyDaysElapsed's own comment gives — a daily/last-week
+  // total doesn't need a "per day" conversion at all.
+  function weeklyPaceStatusHtml(totalMinutes) {
+    if (!Number.isFinite(totalMinutes)) return '<span class="leaderboard-status"></span>';
+    var hoursPerDay = (totalMinutes / 60 / weeklyDaysElapsed()).toFixed(1);
+    return '<span class="leaderboard-status pomo-pace" title="Your average pace this week">' + hoursPerDay + 'h/day</span>';
+  }
+
   // Live mm:ss countdown for a live student's current phase — computed
   // fresh from data-phase-end on every tick (tickLeaderboardTimers)
   // rather than a value baked in at render time, since that would
@@ -3638,7 +3691,7 @@
         rankMovementHtml(i + 1, r.previous_week_rank) +
         '<span class="leaderboard-name"' + allTimeTitleAttr(r.all_time_minutes) + '>' + liveDotHtml(r.is_live) + escapeHtml(r.display_name) + (r.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
         streakBallsHtml(r.streak) +
-        pomoStatusHtml(r.pomo_status, r.pomo_last_seen_at) +
+        (r.is_me && !r.pomo_status ? weeklyPaceStatusHtml(r.total_minutes) : pomoStatusHtml(r.pomo_status, r.pomo_last_seen_at)) +
         pomoTimerHtml(r.pomo_phase_end_at, r.pomo_phase_total_seconds, r.pomo_status) +
         '<span class="leaderboard-time">' + timeLabel + '</span>' +
         '</div>';
@@ -3655,7 +3708,7 @@
         rankMovementHtml(state.viewerRank.rank, state.viewerRank.previous_week_rank) +
         '<span class="leaderboard-name"' + allTimeTitleAttr(state.viewerRank.all_time_minutes) + '>' + liveDotHtml(state.viewerRank.is_live) + 'You</span>' +
         streakBallsHtml(state.viewerRank.streak) +
-        pomoStatusHtml(state.viewerRank.pomo_status, state.viewerRank.pomo_last_seen_at) +
+        (state.viewerRank.pomo_status ? pomoStatusHtml(state.viewerRank.pomo_status, state.viewerRank.pomo_last_seen_at) : weeklyPaceStatusHtml(state.viewerRank.total_minutes)) +
         pomoTimerHtml(state.viewerRank.pomo_phase_end_at, state.viewerRank.pomo_phase_total_seconds, state.viewerRank.pomo_status) +
         '<span class="leaderboard-time">' + state.viewerRank.total_minutes + 'm</span>' +
         '</div>';
