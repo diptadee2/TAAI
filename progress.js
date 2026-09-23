@@ -53,7 +53,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-23-1';
+  var CLIENT_VERSION = '2026-09-24-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -3209,23 +3209,28 @@
     });
   }
 
+  // Was a two-column split — checklist on the left, an "Activity by
+  // hour" chart + busy meter on the right (see pomoHourlyActivityHtml/
+  // hourlyBusyMeterHtml) — dropped back to just the plain checklist on
+  // direct request ("just the daily task without the extra shenanigan").
+  // The chart/meter's underlying data fetch, poll wiring, and render
+  // functions are deliberately left in place, not deleted — they're all
+  // already guarded to no-op cleanly when their target elements aren't
+  // in the DOM (see applyLiveCountUpdate/refreshHourlyNowIndicator/
+  // animateHourlyBusyMeter/observeHourlyActivityReveal), and the live-
+  // count piece in particular is piggybacked onto the leaderboard/
+  // champions polls for other reasons unrelated to this card.
   function renderTodayCard(day, missedBeforeCount) {
-    var left = '<div class="today-tag">Today · Batch C</div>';
-    left += '<div class="today-date">' + dayLabel(day.date) + '</div>';
+    var html = '<div class="today-tag">Today · Batch C</div>';
+    html += '<div class="today-date">' + dayLabel(day.date) + '</div>';
     if (missedBeforeCount > 0) {
-      left += '<div class="catchup-warn">⚠️ ' + missedBeforeCount + ' day' + (missedBeforeCount === 1 ? '' : 's') +
+      html += '<div class="catchup-warn">⚠️ ' + missedBeforeCount + ' day' + (missedBeforeCount === 1 ? '' : 's') +
         ' incomplete before today. Today’s content builds on those, so consider catching up first.</div>';
     }
     day.tasks.forEach(function (t) {
-      left += taskRowHtml(day.date, t);
+      html += taskRowHtml(day.date, t);
     });
-    var html = '<div class="today-card fade-in">';
-    html += '<div class="today-card-split">';
-    html += '<div class="today-card-left">' + left + '</div>';
-    html += '<div class="today-card-right">' + pomoHourlyActivityHtml() + '</div>';
-    html += '</div>';
-    html += '</div>';
-    return html;
+    return '<div class="today-card fade-in">' + html + '</div>';
   }
 
   // Non-native accordion (div-based, not <details>/<summary>) so the
