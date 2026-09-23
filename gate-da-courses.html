@@ -828,6 +828,17 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 .combo-countdown-detail { max-width: 260px; margin: -4px 0 18px; position: relative; z-index: 1; }
 .combo-countdown-detail .combo-countdown-track { margin-bottom: 6px; }
+/* The corner badge is position:absolute (out of flow), so the title's own
+   line box has no idea it needs to leave room for it — on a narrow card
+   (mobile), the featured 30px title text ran straight under the badge.
+   Reported directly from a real mobile screenshot after the corner-badge
+   rework above shipped. A floated spacer (see the titleEl JSX) reserves
+   the badge's own footprint for just the top of the title's text flow,
+   not the whole block — a padding-right on .combo-title itself was tried
+   first and rejected: it narrows every wrapped line, not just the one
+   sharing the badge's vertical band, which crushed a 4-word title into
+   one word per line on a narrow card. */
+.combo-title-badge-spacer { float: right; width: 88px; height: 32px; }
 
 /* Individual courses, redesigned */
 .courses-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
@@ -2668,7 +2679,20 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
       <div className="combo-countdown-date">Enrollment closes {fmtDate(soldOutDate)}</div>
     </div>
   );
-  const titleEl = <div className="combo-title">{c.title}</div>;
+  // A floated spacer (not padding-right on the whole title) reserves room
+  // for the corner badge — padding-right narrows every wrapped line, not
+  // just the top one near the badge, which on a narrow mobile card crushed
+  // this exact title into an ugly one-word-per-line 4-line wrap ("GATE" /
+  // "2027" / "Full" / "Course") — the same failure mode already rejected
+  // once this session for a different layout. A float only pushes the
+  // lines that actually share the badge's vertical band; once the text
+  // wraps past the float's height, later lines reclaim the full width.
+  const titleEl = (
+    <div className="combo-title">
+      {daysUntilSoldOut != null && !isSoldOut && <span className="combo-title-badge-spacer" />}
+      {c.title}
+    </div>
+  );
   const taglineEl = c.tagline && <div className="combo-tagline">{c.tagline}</div>;
   const validityEl = (
     <div className={`combo-validity${live ? ' data-fade-in' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
