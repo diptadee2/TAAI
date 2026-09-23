@@ -147,7 +147,16 @@
      "lifted" while every other card stays put until dropped on. */
   .pricing-card--draggable { cursor: grab; position: relative; padding-top: 26px; }
   .pricing-card-drag-handle { position: absolute; top: 6px; left: 50%; transform: translateX(-50%); color: var(--ink-soft); font-size: 13px; line-height: 1; letter-spacing: 1px; user-select: none; }
-  .pricing-card--dragging { opacity: 0.45; transform: scale(0.97); cursor: grabbing; }
+  .pricing-card--dragging { opacity: 0.45; cursor: grabbing; }
+  /* Insertion-point indicator (bindPricingCardDrag/applyPricingDrop in
+     team.js) — a plain border highlight on whichever card is currently
+     the drop target, not a live DOM reflow. Rebuilt this way specifically
+     because moving the dragged card in the DOM on every dragover (the
+     original version) reflowed the grid under the cursor mid-drag,
+     which read as finnicky and could make a drop silently do nothing —
+     this version never moves anything until the actual drop. */
+  .pricing-card--drop-before { box-shadow: inset 0 3px 0 0 var(--purple); }
+  .pricing-card--drop-after { box-shadow: inset 0 -3px 0 0 var(--purple); }
   .students-notes-cell textarea { width: 100%; min-height: 34px; padding: 6px 8px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--bg-soft); color: var(--ink); font-family: inherit; font-size: 12.5px; resize: vertical; margin-bottom: 5px; }
   .students-notes-cell textarea:focus { outline: none; border-color: var(--purple); }
   .students-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 16px; }

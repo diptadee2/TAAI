@@ -1561,13 +1561,37 @@
   // and rebinds fresh listeners on every render anyway — no state needs
   // to survive a render here, `pricingDrag` only lives for the duration
   // of one physical drag gesture.
-  var pricingDrag = { id: null, group: null };
+  //
+  // Rebuilt (2026-09-23) after a real report that the first version —
+  // which physically moved the dragged card in the DOM on every
+  // dragover, Trello-style — felt "finnicky" and sometimes dropped a
+  // card with nothing changing at all. Root cause: moving the node live
+  // reflows the grid under the cursor mid-drag, which can shift the
+  // very geometry the next dragover's before/after check depends on,
+  // and in the worst case can make the browser lose track of a valid
+  // drop target entirely (silently rejecting the drop — no error, no
+  // visible change, exactly the reported symptom). Fixed by never
+  // touching the DOM during the drag itself: dragover only tracks
+  // where the drop WOULD land (`pricingDrag.overId`/`overBefore`) and
+  // paints a lightweight border highlight on the hovered card, over a
+  // grid whose geometry never moves underneath the cursor. The actual
+  // reorder is computed once, on drop, from the still-untouched
+  // original DOM order plus that tracked target.
+  var pricingDrag = { id: null, group: null, overId: null, overBefore: null };
+
+  function clearPricingDropIndicator() {
+    document.querySelectorAll('.pricing-card--drop-before, .pricing-card--drop-after').forEach(function (el) {
+      el.classList.remove('pricing-card--drop-before', 'pricing-card--drop-after');
+    });
+  }
 
   function bindPricingCardDrag() {
     document.querySelectorAll('.pricing-card[draggable="true"]').forEach(function (card) {
       card.addEventListener('dragstart', function (e) {
         pricingDrag.id = card.getAttribute('data-drag-id');
         pricingDrag.group = card.getAttribute('data-drag-group');
+        pricingDrag.overId = null;
+        pricingDrag.overBefore = null;
         card.classList.add('pricing-card--dragging');
         if (e.dataTransfer) {
           e.dataTransfer.effectAllowed = 'move';
@@ -1577,54 +1601,86 @@
       });
       card.addEventListener('dragend', function () {
         card.classList.remove('pricing-card--dragging');
+        clearPricingDropIndicator();
         pricingDrag.id = null;
         pricingDrag.group = null;
       });
       card.addEventListener('dragover', function (e) {
         if (!pricingDrag.id || card.getAttribute('data-drag-group') !== pricingDrag.group) return;
-        if (card.getAttribute('data-drag-id') === pricingDrag.id) return;
         e.preventDefault();
-        var dragged = document.querySelector('.pricing-card[data-drag-id="' + pricingDrag.id + '"]');
-        if (!dragged || !card.parentElement) return;
+        if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+        if (card.getAttribute('data-drag-id') === pricingDrag.id) return;
+        var targetId = card.getAttribute('data-drag-id');
         var rect = card.getBoundingClientRect();
         var before = (e.clientY - rect.top) < rect.height / 2;
-        card.parentElement.insertBefore(dragged, before ? card : card.nextSibling);
+        if (pricingDrag.overId === targetId && pricingDrag.overBefore === before) return; // unchanged — skip the class churn
+        clearPricingDropIndicator();
+        card.classList.add(before ? 'pricing-card--drop-before' : 'pricing-card--drop-after');
+        pricingDrag.overId = targetId;
+        pricingDrag.overBefore = before;
       });
       card.addEventListener('drop', function (e) {
         e.preventDefault();
-        commitPricingDragOrder(pricingDrag.group);
+        applyPricingDrop();
       });
     });
 
-    // A drop on the empty space of the group's own grid (not directly
-    // over another card — e.g. dragging past the last card into the
-    // trailing gap) still needs to count as "moved to the end" instead
-    // of silently doing nothing.
+    // Hovering the group's own empty grid space (not directly over
+    // another card — the trailing gap past the last card, or gutters
+    // between cards) means "drop at the end" — overId stays null, which
+    // applyPricingDrop() below treats as append. Checked via e.target
+    // (not e.currentTarget) specifically so a dragover that bubbled up
+    // from a child card — already handled by that card's own listener
+    // above — doesn't get double-processed here.
     document.querySelectorAll('.pricing-cards[data-drag-group]').forEach(function (container) {
       container.addEventListener('dragover', function (e) {
-        if (e.target === container && pricingDrag.id && container.getAttribute('data-drag-group') === pricingDrag.group) e.preventDefault();
+        if (!pricingDrag.id || e.target !== container || container.getAttribute('data-drag-group') !== pricingDrag.group) return;
+        e.preventDefault();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+        if (pricingDrag.overId !== null) { clearPricingDropIndicator(); pricingDrag.overId = null; pricingDrag.overBefore = null; }
       });
       container.addEventListener('drop', function (e) {
-        if (e.target !== container || !pricingDrag.id) return;
+        if (!pricingDrag.id || e.target !== container || container.getAttribute('data-drag-group') !== pricingDrag.group) return;
         e.preventDefault();
-        var dragged = document.querySelector('.pricing-card[data-drag-id="' + pricingDrag.id + '"]');
-        if (dragged) container.appendChild(dragged);
-        commitPricingDragOrder(pricingDrag.group);
+        applyPricingDrop();
       });
     });
   }
 
-  // Reads back whatever order the drag left the DOM in and persists it —
-  // only rows whose display_order actually changed get written, so
-  // dropping a card back where it started (or a drag that never crosses
-  // another card) costs zero requests.
-  function commitPricingDragOrder(group) {
-    if (!group) return;
+  // Computes the final order from the ORIGINAL, never-mutated-during-
+  // drag DOM order plus wherever pricingDrag ended up tracking as the
+  // drop target, then persists it. `overId === null` means "no specific
+  // card was hovered" (dropped on the empty grid area, or never moved
+  // off the card it started on) — append to the end.
+  function applyPricingDrop() {
+    var group = pricingDrag.group;
+    var draggedId = pricingDrag.id;
+    var overId = pricingDrag.overId;
+    var overBefore = pricingDrag.overBefore;
+    clearPricingDropIndicator();
+    if (!group || !draggedId) return;
     var container = document.querySelector('.pricing-cards[data-drag-group="' + group + '"]');
     if (!container) return;
     var ids = Array.prototype.map.call(container.querySelectorAll('.pricing-card[data-drag-id]'), function (el) {
       return el.getAttribute('data-drag-id');
     });
+    var fromIndex = ids.indexOf(draggedId);
+    if (fromIndex === -1) return;
+    ids.splice(fromIndex, 1);
+    if (overId === null) {
+      ids.push(draggedId);
+    } else {
+      var targetIndex = ids.indexOf(overId);
+      if (targetIndex === -1) ids.push(draggedId);
+      else ids.splice(overBefore ? targetIndex : targetIndex + 1, 0, draggedId);
+    }
+    commitPricingOrder(group, ids);
+  }
+
+  // Only rows whose display_order actually changed get written, so a
+  // drop that lands back where it started (or never moved off its own
+  // starting card) costs zero requests.
+  function commitPricingOrder(group, ids) {
     var rows = state.siteData.rows.pricing || [];
     var byId = {};
     rows.forEach(function (r) { byId[r.id] = r; });
