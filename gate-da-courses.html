@@ -2582,7 +2582,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   // direct line to support instead of quietly disappearing or staying
   // clickable.
   const ctaEl = isSoldOut
-    ? <a href="mailto:support@taai.live?subject=GATE%202027%20Full%20Course" className="btn btn-primary btn-full"><Icon.Mail size={15} /> If you think you need this, contact us</a>
+    ? <a href="mailto:support@taai.live?subject=GATE%202027%20Full%20Course" className="btn btn-primary btn-full"><Icon.Mail size={15} /> Need this? Contact us</a>
     : <a href={c.href} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-full">Enrol now <Icon.ArrowRight /></a>;
   // comingSoon has no button at all — a big "Coming Soon" overlay sits
   // directly over the blurred What's-included list instead (see
