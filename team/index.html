@@ -111,6 +111,35 @@
      like they should be. */
   .sitedata-table th { cursor: default; }
   .sitedata-table th:hover { color: var(--ink-dim); }
+  /* Pricing's card-per-course layout (renderPricingGroups/pricingCardHtml
+     in team.js) — replaced the old single flat 9-column table (needed
+     horizontal scroll, showed "—" for every unset field) with something a
+     non-technical admin can scan at a glance: one card per course, grouped
+     into "Bundled courses" / "Individual courses" sections, only the
+     fields that are actually set are shown at all. Notes/Lectures keep
+     the plain .sitedata-table above — fewer columns, no grouping need. */
+  .pricing-group { margin-bottom: 24px; }
+  .pricing-group:last-child { margin-bottom: 0; }
+  .pricing-group-heading { display: flex; align-items: baseline; gap: 8px; font-weight: 700; font-size: 14px; color: var(--ink); margin-bottom: 3px; }
+  .pricing-group-count { color: var(--ink-soft); font-weight: 500; font-size: 12px; }
+  .pricing-group-hint { color: var(--ink-soft); font-size: 12px; margin-bottom: 12px; }
+  .pricing-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+  .pricing-card { border: 1px solid var(--line); border-radius: 12px; padding: 14px; background: var(--bg-soft); display: flex; flex-direction: column; gap: 10px; }
+  .pricing-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .pricing-card-name { font-weight: 700; font-size: 14.5px; color: var(--ink); line-height: 1.35; }
+  .pricing-card-id { font-family: ui-monospace, 'SF Mono', Consolas, monospace; font-size: 10.5px; color: var(--ink-soft); margin-top: 3px; }
+  .pricing-status { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+  .pricing-status-live { background: var(--green-soft); color: var(--green); }
+  .pricing-status-soon { background: var(--amber-soft); color: var(--amber); }
+  .pricing-soldout-note { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: var(--red); }
+  .pricing-card-price { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .pricing-card-price-main { font-size: 21px; font-weight: 800; color: var(--ink); }
+  .pricing-card-price-none { font-size: 13px; color: var(--ink-soft); font-style: italic; }
+  .pricing-card-price-old { font-size: 12.5px; color: var(--ink-soft); text-decoration: line-through; }
+  .pricing-card-discount { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; background: var(--purple-soft); color: var(--purple); align-self: flex-start; }
+  .pricing-card-meta { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--ink-dim); }
+  .pricing-card-meta b { color: var(--ink-soft); font-weight: 600; }
+  .pricing-card-actions { display: flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 10px; border-top: 1px solid var(--line); }
   .students-notes-cell textarea { width: 100%; min-height: 34px; padding: 6px 8px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--bg-soft); color: var(--ink); font-family: inherit; font-size: 12.5px; resize: vertical; margin-bottom: 5px; }
   .students-notes-cell textarea:focus { outline: none; border-color: var(--purple); }
   .students-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 16px; }

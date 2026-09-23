@@ -100,29 +100,34 @@
         // flip alongside it.
         { name: 'enroll_url', label: 'Status', format: function (r) { return r.enroll_url ? 'Live' : 'Coming Soon'; } },
       ],
+      // Grouped into labeled sections (renderSiteDataForm) — same
+      // .form-section/.form-section-heading pattern the Announcements
+      // form already uses for Destination/Content/etc — so a
+      // non-technical admin sees "Basic info / Pricing / Enrollment &
+      // dates" instead of one long undifferentiated list of 10 fields.
       fields: [
-        { name: 'id', label: 'ID (slug)', type: 'text', required: true, lockedOnEdit: true, hint: 'The exact id used elsewhere on the site (e.g. full-course, statistics) — can\'t be changed once created.' },
-        { name: 'type', label: 'Type', type: 'select', options: [{ id: 'combo', label: 'Combo/bundle' }, { id: 'individual', label: 'Individual course' }, { id: 'test-series', label: 'Test series' }], required: true },
-        { name: 'name', label: 'Display name', type: 'text', required: true },
-        { name: 'price', label: 'Price (₹)', type: 'number' },
-        { name: 'price_old', label: 'Old price (₹, optional — shown struck through)', type: 'number' },
-        { name: 'discount', label: 'Discount label (optional, e.g. "30% OFF")', type: 'text' },
-        { name: 'discount_reason', label: 'Discount reason (optional)', type: 'text' },
-        { name: 'discount_deadline', label: 'Discount deadline', type: 'date' },
-        { name: 'validity', label: 'Validity', type: 'date' },
+        { name: 'id', label: 'ID (slug)', type: 'text', required: true, lockedOnEdit: true, hint: 'The exact id used elsewhere on the site (e.g. full-course, statistics) — can\'t be changed once created.', section: 'Basic info' },
+        { name: 'type', label: 'Type', type: 'select', options: [{ id: 'combo', label: 'Combo/bundle' }, { id: 'individual', label: 'Individual course' }, { id: 'test-series', label: 'Test series' }], required: true, hint: 'Combo/bundle courses show up under "Bundled courses" below and can be reordered with ▲/▼; everything else shows under "Individual courses".', section: 'Basic info' },
+        { name: 'name', label: 'Display name', type: 'text', required: true, section: 'Basic info' },
+        { name: 'price', label: 'Price (₹)', type: 'number', section: 'Pricing' },
+        { name: 'price_old', label: 'Old price (₹, optional — shown struck through)', type: 'number', section: 'Pricing' },
+        { name: 'discount', label: 'Discount label (optional, e.g. "30% OFF")', type: 'text', section: 'Pricing' },
+        { name: 'discount_reason', label: 'Discount reason (optional)', type: 'text', section: 'Pricing' },
+        { name: 'discount_deadline', label: 'Discount deadline', type: 'date', section: 'Enrollment & dates' },
+        { name: 'validity', label: 'Validity', type: 'date', section: 'Enrollment & dates' },
         // On request: leaving this blank is what puts the course in a
         // "Coming Soon" state (an unclickable button on the live page,
         // once this is ever wired up) — the same relationship the 2028
         // card already has to having no real pricing row at all, just
         // explicit here as one field instead of an absent row.
-        { name: 'enroll_url', label: 'Enrol now link (blank = Coming Soon, unclickable)', type: 'url', hint: 'The real enrolment URL (e.g. https://learn.taai.live/learn/batch/GATE-2027/content). Leave blank while this course isn\'t open for enrolment yet.' },
+        { name: 'enroll_url', label: 'Enrol now link (blank = Coming Soon, unclickable)', type: 'url', hint: 'The real enrolment URL (e.g. https://learn.taai.live/learn/batch/GATE-2027/content). Leave blank while this course isn\'t open for enrolment yet.', section: 'Enrollment & dates' },
         // Only the full-course row gets this field, on request — the
         // live card's own sold-out cutover is exclusive to that one
         // course, so exposing it as editable elsewhere would just be
         // dead data with nothing reading it. Admin-only for now, same
         // as every other new field this round — see schema.sql's own
         // comment on why the live page doesn't read this yet.
-        { name: 'sold_out_date', label: 'Sold-out date (full-course only, admin-only — not yet live)', type: 'date', showIf: function (row) { return row.id === 'full-course'; } },
+        { name: 'sold_out_date', label: 'Sold-out date (full-course only, admin-only — not yet live)', type: 'date', showIf: function (row) { return row.id === 'full-course'; }, section: 'Enrollment & dates' },
       ],
     },
     notes: {
@@ -1222,28 +1227,117 @@
 
   function renderSiteDataList(type) {
     var sd = state.siteData;
-    var cfg = SITE_DATA_RESOURCES[type];
     if (sd.loading[type]) return '<div class="field-hint">Loading…</div>';
     if (sd.error[type]) return '<div class="msg msg-error">' + escapeHtml(sd.error[type]) + '</div>';
     var rows = sd.rows[type];
-    if (!rows || !rows.length) return '<div class="empty">No rows yet.</div>';
+    if (!rows || !rows.length) return '<div class="empty">No rows yet. Click "+ New' + (type === 'pricing' ? ' course' : '') + '" above to add one.</div>';
+    return type === 'pricing' ? renderPricingGroups(rows) : renderSiteDataTable(type, rows);
+  }
 
-    // "Bundled courses" = the combo-type rows specifically (full-course,
-    // the two bundles, 2028) — reordering/counting only makes sense
-    // among these, not mixed in with individual subjects/test-series.
+  // Edit/Delete (+ ▲/▼ for combo rows) — shared by every pricing card and
+  // every plain sitedata-table row, so the two layouts' action buttons
+  // never drift apart from each other.
+  function siteDataRowActionsHtml(type, id, orderButtonsHtml) {
+    return (
+      (orderButtonsHtml || '') +
+      '<button class="btn btn-small js-sitedata-edit" data-sitetype="' + type + '" data-id="' + escapeHtml(id) + '">Edit</button> ' +
+      '<button class="btn btn-small btn-danger js-sitedata-delete" data-sitetype="' + type + '" data-id="' + escapeHtml(id) + '">Delete</button>'
+    );
+  }
+
+  function pricingOrderButtonsHtml(row, comboRows) {
+    if (row.type !== 'combo') return '';
+    var comboIndex = comboRows.indexOf(row);
+    var id = row.id;
+    return (
+      '<button class="btn-order js-pricing-move-up" data-id="' + escapeHtml(id) + '" title="Move earlier"' + (comboIndex <= 0 ? ' disabled' : '') + '>▲</button>' +
+      '<button class="btn-order js-pricing-move-down" data-id="' + escapeHtml(id) + '" title="Move later"' + (comboIndex === comboRows.length - 1 ? ' disabled' : '') + '>▼</button>'
+    );
+  }
+
+  // One course as a scannable card — name/status up top, the price
+  // that's actually the point front and center, then only whichever
+  // dates/labels are actually set (no "—" placeholders for a non-
+  // technical admin to puzzle over). Built to replace the old flat
+  // 9-column table, which needed horizontal scroll and showed mostly
+  // dashes for any course without every field filled in.
+  function pricingCardHtml(row, comboRows) {
+    // Status is still purely the enroll_url computed value (see
+    // SITE_DATA_RESOURCES.pricing's own comment on why there's no
+    // separate toggle) — sold_out_date is shown as its own note below,
+    // never folded into this badge, since it's an admin-only preview
+    // value the live page doesn't act on yet (see schema.sql).
+    var statusHtml = row.enroll_url
+      ? '<span class="pricing-status pricing-status-live">● Live</span>'
+      : '<span class="pricing-status pricing-status-soon">Coming Soon</span>';
+    var soldOutHtml = row.sold_out_date
+      ? '<div class="pricing-soldout-note">🔒 Sold-out cutover: ' + escapeHtml(row.sold_out_date) + ' <span class="field-hint" style="margin:0;">(preview only)</span></div>'
+      : '';
+    var priceHtml = row.price != null
+      ? '<span class="pricing-card-price-main">₹' + escapeHtml(row.price) + '</span>' + (row.price_old != null ? '<span class="pricing-card-price-old">₹' + escapeHtml(row.price_old) + '</span>' : '')
+      : '<span class="pricing-card-price-none">No price set</span>';
+    var discountHtml = row.discount ? '<span class="pricing-card-discount">' + escapeHtml(row.discount) + (row.discount_reason ? ' — ' + escapeHtml(row.discount_reason) : '') + '</span>' : '';
+    var metaRows = [];
+    if (row.validity) metaRows.push('<div><b>Valid until</b> ' + escapeHtml(row.validity) + '</div>');
+    if (row.discount_deadline) metaRows.push('<div><b>Discount ends</b> ' + escapeHtml(row.discount_deadline) + '</div>');
+    var metaHtml = metaRows.length ? '<div class="pricing-card-meta">' + metaRows.join('') + '</div>' : '';
+    var orderButtonsHtml = pricingOrderButtonsHtml(row, comboRows);
+    return (
+      '<div class="pricing-card">' +
+        '<div class="pricing-card-head">' +
+          '<div><div class="pricing-card-name">' + escapeHtml(row.name || row.id) + '</div><div class="pricing-card-id">' + escapeHtml(row.id) + '</div></div>' +
+          statusHtml +
+        '</div>' +
+        '<div class="pricing-card-price">' + priceHtml + '</div>' +
+        discountHtml +
+        metaHtml +
+        soldOutHtml +
+        '<div class="pricing-card-actions">' + siteDataRowActionsHtml('pricing', row.id, orderButtonsHtml) + '</div>' +
+      '</div>'
+    );
+  }
+
+  // "Bundled courses" (combo) vs. "Individual courses" (individual +
+  // test-series) — the actual split requested ("divide the site data
+  // into two parts combo and individual"). Grouping, not filtering — a
+  // sub-tab switch isn't needed since both groups are short enough to
+  // show at once, and seeing them together is what makes the live
+  // page's own "combo gets its own row past 3 bundles" behavior legible
+  // (see the alignment hint below).
+  function renderPricingGroups(rows) {
     var comboRows = rows.filter(function (r) { return r.type === 'combo'; });
-    var alignmentHtml = '';
-    if (type === 'pricing' && comboRows.length) {
+    var individualRows = rows.filter(function (r) { return r.type !== 'combo'; });
+
+    var comboHintHtml = '';
+    if (comboRows.length) {
       var ownRow = comboRows.length > COMBO_OWN_ROW_THRESHOLD;
-      alignmentHtml = '<div class="field-hint" style="margin-bottom:12px;">' +
-        '<strong>' + comboRows.length + ' bundled course' + (comboRows.length === 1 ? '' : 's') + '</strong> — ' +
+      comboHintHtml = '<div class="pricing-group-hint">' +
         (ownRow
-          ? 'the live page\'s featured card currently gets its own full-width row above the rest (4+ bundled courses).'
-          : 'the live page\'s featured card currently sits in the plain grid with the others (3 or fewer bundled courses).') +
-        ' Use ▲/▼ below to reorder them. Admin-only preview for now — the live page doesn\'t read this order yet.' +
+          ? 'On the live page, the featured bundle currently gets its own full-width row above the rest (4+ bundled courses).'
+          : 'On the live page, the featured bundle currently sits in the plain grid with the others (3 or fewer bundled courses).') +
+        ' Use ▲ / ▼ on a card to reorder — admin-only preview for now, the live page doesn\'t read this order yet.' +
         '</div>';
     }
 
+    function groupHtml(title, groupRows, hintHtml) {
+      if (!groupRows.length) return '';
+      return (
+        '<div class="pricing-group">' +
+          '<div class="pricing-group-heading">' + escapeHtml(title) + ' <span class="pricing-group-count">(' + groupRows.length + ')</span></div>' +
+          hintHtml +
+          '<div class="pricing-cards">' + groupRows.map(function (r) { return pricingCardHtml(r, comboRows); }).join('') + '</div>' +
+        '</div>'
+      );
+    }
+
+    return groupHtml('Bundled courses', comboRows, comboHintHtml) + groupHtml('Individual courses', individualRows, '');
+  }
+
+  // Plain click-to-sort-free table — still used for Notes/Lectures,
+  // which are short enough (few columns, no grouping/status logic
+  // needed) that the card treatment above would be overkill.
+  function renderSiteDataTable(type, rows) {
+    var cfg = SITE_DATA_RESOURCES[type];
     var headerHtml = cfg.columns.map(function (col) { return '<th>' + escapeHtml(col.label) + '</th>'; }).join('') + '<th></th>';
     var rowsHtml = rows.map(function (r) {
       var cellsHtml = cfg.columns.map(function (col) {
@@ -1251,28 +1345,9 @@
         return '<td>' + escapeHtml(val) + '</td>';
       }).join('');
       var id = r[cfg.idKey];
-      // ▲/▼ only for combo rows, positioned relative to OTHER combo
-      // rows specifically (comboRows, not the full mixed-type list) —
-      // same swap-with-neighbor pattern movePost already established
-      // for scheduled_posts.dispatch_order (see movePricingRow below).
-      var isCombo = type === 'pricing' && r.type === 'combo';
-      var comboIndex = isCombo ? comboRows.indexOf(r) : -1;
-      var orderButtonsHtml = isCombo
-        ? '<button class="btn-order js-pricing-move-up" data-id="' + escapeHtml(id) + '" title="Move earlier"' + (comboIndex <= 0 ? ' disabled' : '') + '>▲</button>' +
-          '<button class="btn-order js-pricing-move-down" data-id="' + escapeHtml(id) + '" title="Move later"' + (comboIndex === comboRows.length - 1 ? ' disabled' : '') + '>▼</button>'
-        : '';
-      return (
-        '<tr>' + cellsHtml +
-          '<td style="white-space:nowrap;">' +
-            orderButtonsHtml +
-            '<button class="btn btn-small js-sitedata-edit" data-sitetype="' + type + '" data-id="' + escapeHtml(id) + '">Edit</button> ' +
-            '<button class="btn btn-small btn-danger js-sitedata-delete" data-sitetype="' + type + '" data-id="' + escapeHtml(id) + '">Delete</button>' +
-          '</td>' +
-        '</tr>'
-      );
+      return '<tr>' + cellsHtml + '<td style="white-space:nowrap;">' + siteDataRowActionsHtml(type, id, '') + '</td></tr>';
     }).join('');
-
-    return alignmentHtml + '<div class="students-table-wrap"><table class="students-table sitedata-table"><thead><tr>' + headerHtml + '</tr></thead><tbody>' + rowsHtml + '</tbody></table></div>';
+    return '<div class="students-table-wrap"><table class="students-table sitedata-table"><thead><tr>' + headerHtml + '</tr></thead><tbody>' + rowsHtml + '</tbody></table></div>';
   }
 
   function siteDataFieldHtml(field, row, isEdit) {
@@ -1308,10 +1383,33 @@
     // on the full-course pricing row; every other row just skips
     // rendering the input entirely rather than showing an always-blank,
     // meaningless field.
-    var fieldsHtml = cfg.fields.filter(function (f) { return !f.showIf || f.showIf(row); }).map(function (f) { return siteDataFieldHtml(f, row, isEdit); }).join('');
+    var applicableFields = cfg.fields.filter(function (f) { return !f.showIf || f.showIf(row); });
+    // Optional per-field `section` (only pricing uses this so far) groups
+    // the form the same way the Announcements form already groups
+    // Destination/Content/etc — .form-section/.form-section-heading, see
+    // team/index.html. A resource with no sectioned fields (Notes,
+    // Lectures — short enough already) falls back to one flat list,
+    // unchanged from before.
+    var fieldsHtml;
+    if (applicableFields.some(function (f) { return f.section; })) {
+      var order = [];
+      var bySection = {};
+      applicableFields.forEach(function (f) {
+        var sec = f.section || 'Details';
+        if (!bySection[sec]) { bySection[sec] = []; order.push(sec); }
+        bySection[sec].push(f);
+      });
+      fieldsHtml = order.map(function (sec) {
+        return '<div class="form-section"><div class="form-section-heading">' + escapeHtml(sec) + '</div>' +
+          bySection[sec].map(function (f) { return siteDataFieldHtml(f, row, isEdit); }).join('') +
+        '</div>';
+      }).join('');
+    } else {
+      fieldsHtml = applicableFields.map(function (f) { return siteDataFieldHtml(f, row, isEdit); }).join('');
+    }
     return (
       '<div class="card form-card">' +
-        '<h2 style="font-size:16px;margin-bottom:14px;">' + (isEdit ? 'Edit ' : 'New ') + cfg.label.replace(/s$/, '') + '</h2>' +
+        '<h2 style="font-size:16px;margin-bottom:14px;">' + (isEdit ? 'Edit ' : 'New ') + SITE_DATA_SINGULAR[type] + '</h2>' +
         '<form id="sitedata-form">' +
           fieldsHtml +
           '<div class="form-actions">' +
@@ -1323,19 +1421,30 @@
     );
   }
 
+  // Plain-language intro per sub-tab, shown instead of a generic
+  // "Admin-editable copy of the X data" line — written for someone who's
+  // never seen a database table, explaining in one sentence what this
+  // list is and what it doesn't do yet (still preview-only, not live).
+  var SITE_DATA_INTRO = {
+    pricing: 'Every course, bundle, and test series shown on the site — its price, discount, and enrolment link. Grouped below into Bundled courses and Individual courses.',
+    notes: 'Downloadable PDF notes, organized by subject.',
+    lectures: 'Video lectures and their slides, organized by subject.',
+  };
+  var SITE_DATA_NEW_LABEL = { pricing: '+ New course', notes: '+ New note', lectures: '+ New lecture' };
+  var SITE_DATA_SINGULAR = { pricing: 'course', notes: 'note', lectures: 'lecture' };
+
   function renderSiteData() {
     var sd = state.siteData;
     var type = sd.subTab;
-    var cfg = SITE_DATA_RESOURCES[type];
     var editingThis = sd.editing && sd.editing.type === type ? sd.editing.row : null;
 
     return (
       '<div class="card">' +
-        '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px;">' +
           '<div class="tabs" style="margin:0;">' + renderSiteDataTabs() + '</div>' +
-          (editingThis ? '' : '<button class="btn btn-primary" id="sitedata-new">+ New ' + cfg.label.replace(/s$/, '').toLowerCase() + '</button>') +
+          (editingThis ? '' : '<button class="btn btn-primary" id="sitedata-new">' + SITE_DATA_NEW_LABEL[type] + '</button>') +
         '</div>' +
-        '<div class="field-hint" style="margin-bottom:14px;">Admin-editable copy of the ' + cfg.label.toLowerCase() + ' data. The live site pages still read the published Google Sheet directly — nothing here affects them yet.</div>' +
+        '<div class="field-hint" style="margin-bottom:16px;">' + SITE_DATA_INTRO[type] + ' Changes here are a preview only for now — the live site still reads its own published spreadsheet, so nothing you edit here shows up on taai.live yet.</div>' +
         (editingThis ? renderSiteDataForm(type, editingThis) : renderSiteDataList(type)) +
       '</div>'
     );
@@ -1480,7 +1589,7 @@
         var type = btn.getAttribute('data-sitetype');
         var id = btn.getAttribute('data-id');
         var cfg = SITE_DATA_RESOURCES[type];
-        if (!confirm('Delete this ' + cfg.label.replace(/s$/, '').toLowerCase() + ' row? This can\'t be undone.')) return;
+        if (!confirm('Delete this ' + SITE_DATA_SINGULAR[type] + '? This can\'t be undone.')) return;
         api(cfg.endpoint + '?id=' + encodeURIComponent(id), { method: 'DELETE' }).then(function () {
           return loadSiteData(type);
         }).catch(function (err) {
