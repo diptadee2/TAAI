@@ -2572,9 +2572,15 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
         // anywhere, purely decorative, and aria-hidden since a screen
         // reader has nothing meaningful to read from a blurred number.
         ? <div className="combo-price combo-price-blurred" aria-hidden="true">₹13,999</div>
-        : <div className="combo-price">{price}</div>}
-      {!comingSoon && priceOld && <div className="combo-price-old">{priceOld}</div>}
-      {!comingSoon && discount && <div className="combo-discount">{discount}</div>}
+        // Sold out: the real price (unlike comingSoon, a genuine one
+        // already exists in pricingMap) blurs the same way, on request —
+        // still legible as "a real number," just not worth reading once
+        // this batch isn't taking enrollments.
+        : isSoldOut
+          ? <div className="combo-price combo-price-blurred" aria-hidden="true">{price}</div>
+          : <div className="combo-price">{price}</div>}
+      {!comingSoon && !isSoldOut && priceOld && <div className="combo-price-old">{priceOld}</div>}
+      {!comingSoon && !isSoldOut && discount && <div className="combo-discount">{discount}</div>}
     </div>
   );
   // On request: once sold out, "Enrol now" (which would just 404/mislead
@@ -2627,7 +2633,12 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
       <div className="combo-accent" style={{ background: c.accent }} />
       {!isSoldOut && badgeEl}
       {titleEl}
-      {validityEl}
+      {/* "Valid until Feb 15, 2027" reads as "still on offer" — directly
+          contradicts the sold-out stamp a few lines below it, real
+          feedback from a screenshot. Hidden once sold out rather than
+          replaced with something else; the stamp + contact button
+          already say everything that needs saying here. */}
+      {!isSoldOut && validityEl}
       <div className="combo-divider" />
       <div className="combo-includes-label">What's included</div>
       {isSoldOut ? (
