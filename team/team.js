@@ -305,7 +305,6 @@
     studentSummary: null,
     studentFilters: { search: '', inactive: '', minStreak: '' }, // inactive: '' | '3' | '7' | '14' | '30' | 'never'
     noteSaving: {}, // email -> 'saving' | 'saved' | 'error', transient per-row save feedback
-    flagStatus: {}, // email -> 'saving' | 'error' | { claudeAgrees, claudeReason, claudeSkipped } — transient result of the Flag/Unflag action
     // Pricing/Notes/Lectures are three independent lists under one Site
     // data tab — rows/editing are keyed by resource type (see
     // SITE_DATA_RESOURCES) rather than three near-identical flat state
@@ -1164,33 +1163,16 @@
     }).join('') + '</div>';
   }
 
-  // The needs_rename flag/unflag action + status, shown right under a
-  // student's name/email (team-flag-name.js is the backing endpoint —
-  // see its own comment for why the admin's click always wins regardless
-  // of what Claude's "second opinion" says).
+  // Read-only — no admin flag/unflag action anymore (see CLAUDE.md's
+  // "Name moderation" section: dropped at direct request, "delegate
+  // everything to claude"). needs_rename is now set/cleared entirely by
+  // Claude (name-check-scan.js's nightly pass, rename.js's own check
+  // when a gated student tries to resolve it) with zero human step in
+  // the loop — this just shows what Claude has already decided, for
+  // visibility, not for the team to act on.
   function renderNameFlagCell(s) {
-    var status = state.flagStatus[s.email];
-    var html = '';
-    if (s.needs_rename) {
-      var sourceLabel = s.needs_rename_source === 'ai_scan' ? 'AI scan' : 'admin';
-      html += '<div class="name-flag-badge" title="' + escapeHtml(s.name_check_reason || '') + '">🚩 Flagged (' + sourceLabel + ')</div>';
-      html += '<button type="button" class="btn btn-small js-name-unflag" data-email="' + escapeHtml(s.email) + '"' + (status === 'saving' ? ' disabled' : '') + '>' + (status === 'saving' ? 'Working…' : 'Unflag') + '</button>';
-    } else {
-      html += '<button type="button" class="btn btn-small js-name-flag" data-email="' + escapeHtml(s.email) + '"' + (status === 'saving' ? ' disabled' : '') + '>' + (status === 'saving' ? 'Checking…' : '🚩 Flag name') + '</button>';
-    }
-    if (status && status !== 'saving' && status !== 'error') {
-      // A just-completed Flag action's Claude opinion — shown once, right
-      // after clicking, so the admin isn't just staring at a bare
-      // "flagged" with no idea whether the AI agrees. Not persisted past
-      // this render cycle beyond what name_check_reason (above) already
-      // carries forward on the badge itself.
-      var opinionText = status.claudeSkipped
-        ? 'Claude check unavailable (no API key configured) — flagged on your call alone.'
-        : (status.claudeAgrees ? '✓ Claude agrees this looks inappropriate.' : '⚠ Claude did NOT flag this name — you flagged it anyway.') + (status.claudeReason ? ' "' + escapeHtml(status.claudeReason) + '"' : '');
-      html += '<div class="field-hint">' + opinionText + '</div>';
-    }
-    if (status === 'error') html += '<div class="field-hint" style="color:#f87171;">Action failed — try again.</div>';
-    return html;
+    if (!s.needs_rename) return '';
+    return '<div class="name-flag-badge" title="' + escapeHtml(s.name_check_reason || '') + '">🚩 Flagged by Claude</div>';
   }
 
   function renderStudents() {
@@ -2185,42 +2167,6 @@
             render();
           })
           .catch(function () { state.noteSaving[email] = 'error'; render(); });
-      });
-    });
-
-    document.querySelectorAll('.js-name-flag').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var email = btn.getAttribute('data-email');
-        state.flagStatus[email] = 'saving';
-        render();
-        api('/team-flag-name', { method: 'POST', body: JSON.stringify({ email: email }) })
-          .then(function (data) {
-            var s = (state.students || []).filter(function (x) { return x.email === email; })[0];
-            if (s) {
-              s.needs_rename = true;
-              s.needs_rename_source = 'admin';
-              if (!data.claudeSkipped) s.name_check_reason = data.claudeReason;
-            }
-            state.flagStatus[email] = { claudeAgrees: data.claudeAgrees, claudeReason: data.claudeReason, claudeSkipped: data.claudeSkipped };
-            render();
-          })
-          .catch(function () { state.flagStatus[email] = 'error'; render(); });
-      });
-    });
-
-    document.querySelectorAll('.js-name-unflag').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var email = btn.getAttribute('data-email');
-        state.flagStatus[email] = 'saving';
-        render();
-        api('/team-flag-name', { method: 'POST', body: JSON.stringify({ email: email, unflag: true }) })
-          .then(function () {
-            var s = (state.students || []).filter(function (x) { return x.email === email; })[0];
-            if (s) { s.needs_rename = false; s.needs_rename_source = null; }
-            delete state.flagStatus[email];
-            render();
-          })
-          .catch(function () { state.flagStatus[email] = 'error'; render(); });
       });
     });
 
