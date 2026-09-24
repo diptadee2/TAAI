@@ -1061,7 +1061,19 @@
      an overflow chip (~105px worst case), so capping it at 115px still
      comfortably fits every real row while giving Name whatever's left
      over instead of Streak hoarding it unused. */
-  #leaderboard-card .leaderboard-row { grid-template-columns: 40px 16px minmax(140px,1fr) minmax(75px,115px) 76px 60px 58px; }
+  /* Name capped rather than left fully open-ended (1fr) — direct
+     correction: an unbounded Name column grew to hundreds of pixels on
+     a wide viewport, dragging its own centered header label ("NAME")
+     visually far from the left-aligned row content beneath it
+     ("positioned wrongly"), and left Streak's own (then-capped) column
+     hugging the right edge next to Status instead of sitting in the
+     freed middle space. 300px comfortably fits a long name + up to 4
+     badges (4 × ~22px) with room to spare. Streak is the flexible
+     column again, but see .leaderboard-streak below for how its
+     content is kept centered within that space rather than pinned to
+     its own left edge, which is what actually reads as "the streak
+     column sitting in the middle of the negative space." */
+  #leaderboard-card .leaderboard-row { grid-template-columns: 40px 16px minmax(160px,300px) minmax(75px,1fr) 76px 60px 58px; }
   .leaderboard-row:last-child { border-bottom: none; }
   .leaderboard-row--top { padding-top: 14px; padding-bottom: 14px; }
   .leaderboard-row--me { background: rgba(139,92,246,0.1); border-bottom-color: transparent; }
@@ -1156,36 +1168,37 @@
      a string of random emoji. box-shadow+border-radius together are
      never animated here (only left/opacity move elsewhere on this
      page), so this doesn't trip the Chromium DOM-leak gotcha. */
-  /* Deliberately quiet — no box-shadow glow (the loud part of the
-     earlier version), just a muted tier-tinted circle small enough to
-     sit beside the name without competing with it. Only ever one of
-     these renders per row now (highestEffortBadgeHtml), so there's no
-     multi-badge crowding to design around either. */
-  .leaderboard-effort-badge { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; margin-left: 6px; border-radius: 50%; font-size: 9.5px; vertical-align: middle; cursor: default; border: 1px solid; }
-  .leaderboard-effort-badge--star { background: rgba(251,191,36,0.12); border-color: rgba(251,191,36,0.3); }
-  .leaderboard-effort-badge--flame { background: rgba(249,115,22,0.12); border-color: rgba(249,115,22,0.3); }
-  .leaderboard-effort-badge--lightning { background: rgba(56,189,248,0.12); border-color: rgba(56,189,248,0.3); }
-  .leaderboard-effort-badge--crown { background: rgba(167,139,250,0.14); border-color: rgba(167,139,250,0.35); }
-  /* Streak balls, centered within their grid column (minmax(92px,1fr)
-     above — floor sized for the worst case: 5 balls + a "+NNN" overflow
-     pill, see STREAK_BALLS_CAP in progress.js). This is the row's one
-     column that grows into leftover space, which is what actually puts
-     it in the visual middle between name and minutes. */
-  /* justify-content:flex-start, not center — centering each row's ball
-     cluster independently meant the first ball's x-position drifted row
-     to row depending on that row's own streak length (1 ball centers
-     very differently than 5 balls + a "+15" pill), so the balls never
-     lined up into a straight column despite the column itself being
-     aligned. Left-anchored instead: every row's first ball now starts
-     at the exact same x, and only the tail (more balls, then the
-     overflow pill) grows rightward from there. Breathing room from Name
-     comes from .leaderboard-row's own shared 16px column gap now, not a
-     one-off padding-left here — used to have its own extra 20px on top
-     of the row's (then-12px) gap, which made this the one column pair
-     with a bigger gap than every other; a single larger shared gap
-     gives the same breathing room while keeping every column's spacing
-     consistent. */
-  .leaderboard-streak { display: flex; align-items: center; justify-content: flex-start; gap: 5px; min-width: 0; }
+  /* Deliberately quiet — no box-shadow glow, and no bright saturated
+     border ring either (direct feedback: "can't the design of the
+     badges be a bit more matte than glossy" — a thin high-contrast ring
+     around a bright tint is what read as glossy/glassy against the
+     page's own near-black background). Flat, no border at all, filled
+     with a desaturated/darkened version of each tier's hue at moderate
+     opacity instead of a bright thin tint — reads as a solid chalky
+     chip rather than a glowing glass bead. The emoji glyph itself still
+     carries the system font's own native shading (not something CSS
+     can restyle), but the chip it sits in no longer competes with it. */
+  .leaderboard-effort-badge { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; margin-left: 6px; border-radius: 50%; font-size: 9.5px; vertical-align: middle; cursor: default; }
+  .leaderboard-effort-badge--star { background: rgba(146,116,45,0.45); }
+  .leaderboard-effort-badge--flame { background: rgba(150,79,42,0.45); }
+  .leaderboard-effort-badge--lightning { background: rgba(51,97,120,0.45); }
+  .leaderboard-effort-badge--crown { background: rgba(101,83,130,0.5); }
+  /* justify-content stays flex-start, not center — centering each row's
+     ball cluster independently would make the first ball's x-position
+     drift row to row depending on that row's own streak length (1 ball
+     centers very differently than 5 balls + a "+15" pill), so the balls
+     would never line up into a straight column despite the column
+     itself being aligned (confirmed the hard way once already — see
+     git history on this file from 2026-09-21). Left-anchored means
+     every row's first ball starts at the exact same x, and only the
+     tail (more balls, then the overflow pill) grows rightward from
+     there. To still read as "sitting in the middle of the space after
+     Name" (direct request, once Name itself grew wider and Streak
+     became the flexible trailing column again — see the row's own
+     grid-template-columns), a fixed padding-left shifts that shared
+     anchor point rightward instead — the same offset for every row, so
+     the column-alignment property this fix depends on is untouched. */
+  .leaderboard-streak { display: flex; align-items: center; justify-content: flex-start; gap: 5px; min-width: 0; padding-left: 26px; }
   /* Radial highlight (not just a flat linear gradient) for a glossy,
      gem-like ball instead of a flat dot, plus a soft outer glow and a
      faint inset shadow along the bottom edge for a bit of depth.
@@ -1349,15 +1362,20 @@
      .leaderboard-row above (including its 180px Name cap, see that
      rule's own comment), so every label lands exactly above its column
      on every row, not just approximately near it. */
-  .leaderboard-columns { display: grid; grid-template-columns: 40px 16px minmax(140px,1fr) minmax(75px,115px) 76px 60px 58px; align-items: center; gap: 16px; padding: 0 14px 6px; font-family: var(--font-nav); font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
+  .leaderboard-columns { display: grid; grid-template-columns: 40px 16px minmax(160px,300px) minmax(75px,1fr) 76px 60px 58px; align-items: center; gap: 16px; padding: 0 14px 6px; font-family: var(--font-nav); font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
   .leaderboard-col-rank { text-align: center; min-width: 0; }
-  /* Centered, not left-aligned to match the live-dot offset like it used
-     to be — direct request to center every header label within its own
-     column regardless of the row content's own alignment ("center align
-     all the column names according to their content within"). Rank/
-     Status/Timer/Minutes were already centered; Name and Streak were the
-     two odd ones out, still left-aligned from before this. */
-  .leaderboard-col-name { min-width: 0; text-align: center; position: relative; }
+  /* Was centered per an earlier request ("center align all the column
+     names according to their content within") — held up fine while
+     Name was capped at a narrow 180px, where a typical name's own text
+     roughly spanned the column edge to edge. Reverted back to left
+     once Name grew to a much wider, capped-but-generous range (see the
+     row's own grid-template-columns) specifically to fit badges beside
+     the name — centering "NAME" within that wider column visually
+     detached the header from the actual left-aligned name text below
+     it, worse the wider the column got ("the name column name is
+     positioned wrongly"). Left-aligning it re-anchors the header
+     directly above where names (and their live dot) actually start. */
+  .leaderboard-col-name { min-width: 0; text-align: left; position: relative; }
   /* position:relative so the popover (position:absolute) anchors to
      this header cell specifically, not the whole grid row.
      display:inline-flex + align-items:center — a plain inline span left
@@ -1375,8 +1393,11 @@
      own content, which is itself deliberately left-anchored at a fixed
      x regardless of how many balls a given row has (see the streak-ball
      comment above) — this is the one column pair (header + content)
-     that reads better matched than centered. */
-  .leaderboard-col-streak { display: inline-flex; align-items: center; justify-content: flex-start; gap: 5px; min-width: 0; text-align: left; position: relative; }
+     that reads better matched than centered. Carries the row content's
+     own padding-left shift too, so "STREAK ?" still lines up directly
+     above the balls' actual (now shifted) starting x rather than the
+     two silently drifting apart. */
+  .leaderboard-col-streak { display: inline-flex; align-items: center; justify-content: flex-start; gap: 5px; min-width: 0; text-align: left; position: relative; padding-left: 26px; }
   /* Small "?" toggle — costs nothing in the header's own layout until
      clicked (the popover it opens is position:absolute, out of flow),
      "smart use of negative space" per the direct request, rather than a
