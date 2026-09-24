@@ -1124,7 +1124,7 @@
      requiring a separate click on the Name column's "?" toggle. */
   .alltime-tooltip-badges { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; }
   .alltime-tooltip-badge-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--ink-soft); }
-  .alltime-tooltip-badge-row .leaderboard-effort-badge { width: 16px; height: 16px; font-size: 9.5px; margin-left: 0; }
+  .alltime-tooltip-badge-row .leaderboard-effort-badge { margin-left: 0; }
   /* "Live now" indicator — a small pulsing green dot before the name of
      anyone currently mid-focus-session (see is_live in pomodoro-
      leaderboard.js). .live-dot-slot is a fixed-width reserved space,
@@ -1149,11 +1149,16 @@
      a string of random emoji. box-shadow+border-radius together are
      never animated here (only left/opacity move elsewhere on this
      page), so this doesn't trip the Chromium DOM-leak gotcha. */
-  .leaderboard-effort-badge { display: inline-flex; align-items: center; justify-content: center; width: 19px; height: 19px; border-radius: 50%; font-size: 11px; vertical-align: middle; cursor: default; border: 1px solid; }
-  .leaderboard-effort-badge--star { background: rgba(251,191,36,0.16); border-color: rgba(251,191,36,0.4); box-shadow: 0 0 6px rgba(251,191,36,0.25); }
-  .leaderboard-effort-badge--flame { background: rgba(249,115,22,0.16); border-color: rgba(249,115,22,0.4); box-shadow: 0 0 6px rgba(249,115,22,0.25); }
-  .leaderboard-effort-badge--lightning { background: rgba(56,189,248,0.16); border-color: rgba(56,189,248,0.4); box-shadow: 0 0 6px rgba(56,189,248,0.25); }
-  .leaderboard-effort-badge--crown { background: rgba(167,139,250,0.18); border-color: rgba(167,139,250,0.45); box-shadow: 0 0 6px rgba(167,139,250,0.3); }
+  /* Deliberately quiet — no box-shadow glow (the loud part of the
+     earlier version), just a muted tier-tinted circle small enough to
+     sit beside the name without competing with it. Only ever one of
+     these renders per row now (highestEffortBadgeHtml), so there's no
+     multi-badge crowding to design around either. */
+  .leaderboard-effort-badge { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; margin-left: 6px; border-radius: 50%; font-size: 9.5px; vertical-align: middle; cursor: default; border: 1px solid; }
+  .leaderboard-effort-badge--star { background: rgba(251,191,36,0.12); border-color: rgba(251,191,36,0.3); }
+  .leaderboard-effort-badge--flame { background: rgba(249,115,22,0.12); border-color: rgba(249,115,22,0.3); }
+  .leaderboard-effort-badge--lightning { background: rgba(56,189,248,0.12); border-color: rgba(56,189,248,0.3); }
+  .leaderboard-effort-badge--crown { background: rgba(167,139,250,0.14); border-color: rgba(167,139,250,0.35); }
   /* Streak balls, centered within their grid column (minmax(92px,1fr)
      above — floor sized for the worst case: 5 balls + a "+NNN" overflow
      pill, see STREAK_BALLS_CAP in progress.js). This is the row's one
