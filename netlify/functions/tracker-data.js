@@ -134,6 +134,23 @@ async function fetchMalpracticeStatus(supabase, email) {
   };
 }
 
+// See needs_rename in schema.sql — its own standalone query, not folded
+// into fetchMalpracticeStatus above, for the exact same reason that
+// function already keeps warningAckCount separate: a single PostgREST
+// select fails entirely if even one requested column doesn't exist, and
+// this is a brand-new, likely-not-yet-migrated column that must never be
+// able to take down malpractice status (or vice versa) just because one
+// of the two hasn't been migrated yet.
+async function fetchNeedsRename(supabase, email) {
+  const { data, error } = await supabase
+    .from('students')
+    .select('needs_rename')
+    .eq('email', email)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return { needsRename: !!(data && data.needs_rename) };
+}
+
 async function fetchSubjectProgress(supabase, email) {
   const { data: scheduled, error: schedErr } = await supabase
     .from('schedule_tasks')
@@ -231,7 +248,7 @@ export async function handler(event) {
 
   // Everything else degrades to its old client-side .catch() fallback
   // instead of failing the whole response.
-  const [lastWeekLeaders, todayLeaders, streak, subjectProgress, pomoSettings, pomoSessions, pomoActive, hourlyActivity, liveCount, malpractice] = await Promise.all([
+  const [lastWeekLeaders, todayLeaders, streak, subjectProgress, pomoSettings, pomoSessions, pomoActive, hourlyActivity, liveCount, malpractice, needsRename] = await Promise.all([
     fetchLastWeekLeaders(supabase, email).catch(() => ({ leaders: [] })),
     fetchTodayLeaders(supabase, email).catch(() => ({ leaders: [] })),
     email ? fetchStreak(supabase, email).catch(() => ({ streak: null })) : Promise.resolve(null),
@@ -249,7 +266,10 @@ export async function handler(event) {
     // not existing yet) must never block the rest of the page; a guest
     // has no account to freeze, hence null rather than a fetch at all.
     email ? fetchMalpracticeStatus(supabase, email).catch(() => ({ incidentCount: 0, frozenUntil: null, warningAckCount: 0 })) : Promise.resolve(null),
+    // A guest has no account to flag, hence null rather than a fetch —
+    // same reasoning as malpractice just above.
+    email ? fetchNeedsRename(supabase, email).catch(() => ({ needsRename: false })) : Promise.resolve(null),
   ]);
 
-  return json(200, { schedule, lastWeekLeaders, todayLeaders, progress, streak, subjectProgress, pomoSettings, pomoSessions, pomoActive, hourlyActivity, liveCount, malpractice });
+  return json(200, { schedule, lastWeekLeaders, todayLeaders, progress, streak, subjectProgress, pomoSettings, pomoSessions, pomoActive, hourlyActivity, liveCount, malpractice, needsRename });
 }

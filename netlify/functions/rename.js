@@ -18,12 +18,29 @@ export async function handler(event) {
   if (!displayName) return json(400, { error: 'display_name is required' });
 
   const supabase = getSupabase();
-  const { data, error } = await supabase
+  // Clears needs_rename (see its own comment in schema.sql) as part of
+  // the same write, not a separate call — the whole point of that flag
+  // is "blocked until they rename," so the act of renaming itself is
+  // what resolves it, with no separate admin step needed. Tries with
+  // the field first, falls back without it on a pre-migration "column
+  // does not exist" error, same fallback shape already used elsewhere
+  // in this codebase (e.g. pomo-active.js's owner_token) — a rename
+  // must never fail outright just because this newer column doesn't
+  // exist in production yet.
+  let { data, error } = await supabase
     .from('students')
-    .update({ display_name: displayName })
+    .update({ display_name: displayName, needs_rename: false })
     .eq('email', email)
     .select('email, display_name')
     .maybeSingle();
+  if (error) {
+    ({ data, error } = await supabase
+      .from('students')
+      .update({ display_name: displayName })
+      .eq('email', email)
+      .select('email, display_name')
+      .maybeSingle());
+  }
   if (error) return json(500, { error: error.message });
   if (!data) return json(404, { error: 'student not found' });
 

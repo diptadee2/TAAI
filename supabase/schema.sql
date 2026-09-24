@@ -657,6 +657,22 @@ $$ LANGUAGE sql;
 
 GRANT EXECUTE ON FUNCTION increment_malpractice_warning_ack TO service_role;
 
+-- students.needs_rename — an admin-set flag ("please use a proper
+-- username") for a student whose display_name isn't presentable
+-- (spam/joke/meme handles, e.g. real ones already seen on this
+-- leaderboard). Deliberately no self-serve /team control for setting
+-- this yet — flagged one email at a time via a direct SQL statement,
+-- same "targeted one-account data correction, not a UI, until asked
+-- for" pattern already established for Puneet's manual
+-- malpractice_incident_count bump. Checked by pomo-active.js before
+-- allowing a new work phase to start, reusing the exact same
+-- enforcement point and fault-tolerance discipline as
+-- malpractice_frozen_until just above (a missing/pre-migration column
+-- must never break the routine Start/Pause/Skip/Reset sync). Cleared
+-- automatically by rename.js the moment the student actually renames
+-- themselves — no admin action needed to un-flag once fixed.
+ALTER TABLE students ADD COLUMN IF NOT EXISTS needs_rename BOOLEAN NOT NULL DEFAULT false;
+
 -- Multi-device/tab session-ownership protection — a real bug, confirmed
 -- against production: pomo_active_session is ONE shared row per email,
 -- so a second, stale tab/device silently re-syncing its own old idle

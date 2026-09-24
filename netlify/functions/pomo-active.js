@@ -121,6 +121,28 @@ export async function handler(event) {
     } catch (e) {
       console.error('pomo-active.js: malpractice freeze check failed for', email, e);
     }
+
+    // needs_rename enforcement (see its own comment in schema.sql) — same
+    // real backstop reasoning and fault-tolerance discipline as the
+    // malpractice freeze check just above: progress.js already checks
+    // this client-side (state.needsRename, fetched at page load) before
+    // ever calling this endpoint, but a determined user hitting this
+    // directly still has to be stopped here too. Own separate try/catch,
+    // not folded into the malpractice query above, so a pre-migration
+    // "column does not exist" error on either one can never take down
+    // the other, or this routine sync as a whole.
+    try {
+      const { data: renameRow, error: renameError } = await supabase
+        .from('students')
+        .select('needs_rename')
+        .eq('email', email)
+        .maybeSingle();
+      if (!renameError && renameRow?.needs_rename) {
+        return json(403, { error: 'needs_rename' });
+      }
+    } catch (e) {
+      console.error('pomo-active.js: needs_rename check failed for', email, e);
+    }
   }
 
   const phaseStartedAt = isNewPhase ? Date.now() : (existing.phase_started_at ?? Date.now());

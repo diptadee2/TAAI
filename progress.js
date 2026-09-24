@@ -53,7 +53,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-24-12';
+  var CLIENT_VERSION = '2026-09-24-13';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -652,6 +652,12 @@
     // otherwise { incidentCount, frozenUntil, warningAckCount }. Drives
     // renderPomoMalpracticeGateHtml/pomoMalpracticeWarningActive.
     malpractice: null,
+    // See needs_rename in schema.sql — an admin flag ("please use a
+    // proper username") that blocks starting a new Focus session until
+    // the student renames themselves. Always false for a guest, same
+    // reasoning as malpractice above. Drives pomoGateState.
+    needsRename: false,
+    pomoRenameGateError: null, // error text from a failed submit of the rename-gate's own form (renderPomoRenameGateHtml)
   };
 
   // Set when a signed-out visitor tries to check a task — captured so
@@ -1322,6 +1328,7 @@
         state.streak = state.student ? data.streak.streak : null;
         state.subjectProgress = state.student ? (data.subjectProgress.subjects || []) : [];
         state.malpractice = state.student ? (data.malpractice || { incidentCount: 0, frozenUntil: null, warningAckCount: 0 }) : null;
+        state.needsRename = state.student ? !!(data.needsRename && data.needsRename.needsRename) : false;
 
         // Only present once a student has actually saved custom durations
         // somewhere before (see applyPomoSettings) — merge in place of
@@ -2623,6 +2630,13 @@
     // silently do nothing, not the actual security boundary.
     if (pomoIsFrozen()) return;
 
+    // Same reasoning as the freeze check just above — the gate itself
+    // (see renderPomoRenameGateHtml, occupying this same clock slot) is
+    // already visibly telling them why; Start just has to actually
+    // refuse rather than silently start a session that pomo-active.js
+    // would reject anyway (see its own needs_rename check).
+    if (state.needsRename) return;
+
     var notifyState = pomoNotifyState();
     if (notifyState === 'granted') {
       pomoActuallyStart();
@@ -2821,10 +2835,53 @@
     return !!(state.malpractice && state.malpractice.incidentCount >= 2 && (state.malpractice.warningAckCount || 0) < 3);
   }
 
+  // Which single thing (if any) currently occupies the clock's gate slot
+  // — direct request to reuse that one space for more than the
+  // malpractice notice, rather than stacking a second box beside it:
+  // "we would want to use the malpractice detected popup space for
+  // another notification." Priority order, not independent flags: an
+  // active freeze always wins (nothing else matters if Start can't work
+  // at all regardless of what else is going on); needs-rename is next —
+  // it also blocks Start, but unlike a freeze the student can resolve it
+  // right here immediately, so it's worth surfacing over a merely-
+  // informational notice; the malpractice warning band never blocks
+  // Start at all, so it only gets the slot when nothing more urgent
+  // needs it.
+  function pomoGateState() {
+    if (pomoIsFrozen()) return 'freeze';
+    if (state.needsRename) return 'rename';
+    if (pomoMalpracticeWarningActive()) return 'warning';
+    return null;
+  }
+
+  // Please-rename gate — reuses the exact same #pomo-malpractice-gate
+  // element id and hide/reveal mechanism as the malpractice notice below
+  // (same box, different content depending on pomoGateState), rather
+  // than a second parallel gate needing its own separate reveal/dismiss
+  // wiring. No Okay/dismiss button, same reasoning as an active freeze —
+  // there's nothing to "go back to" while Start is still blocked
+  // underneath it (see needsRenameGate() in pomoToggleRun); the rename
+  // form itself, submitted successfully, is what clears this (rename.js
+  // resets needs_rename server-side as part of the same write — see its
+  // own comment).
+  function renderPomoRenameGateHtml(show) {
+    var currentName = state.student ? state.student.display_name : '';
+    return '<div class="pomo-malpractice-gate pomo-malpractice-gate--rename" id="pomo-malpractice-gate"' + (show ? '' : ' hidden') + '>' +
+      '<div class="pomo-gate-title">✏️ Update your name</div>' +
+      '<p class="pomo-gate-body">"' + escapeHtml(currentName) + '" isn’t a usable display name here — please enter your real name to keep using Focus sessions.</p>' +
+      '<form id="pomo-rename-gate-form" class="rename-form">' +
+      '<input id="pomo-rename-gate-input" type="text" maxlength="60" required autocomplete="name" placeholder="Your real name">' +
+      '<button type="submit" class="pomo-btn pomo-btn-primary">Save</button>' +
+      '</form>' +
+      (state.pomoRenameGateError ? '<p class="form-error">' + escapeHtml(state.pomoRenameGateError) + '</p>' : '') +
+      '</div>';
+  }
+
   function renderPomoMalpracticeGateHtml(show) {
-    if (!state.malpractice) return '';
-    var frozen = pomoIsFrozen();
-    if (!frozen && !pomoMalpracticeWarningActive()) return '';
+    var gateState = pomoGateState();
+    if (!gateState) return '';
+    if (gateState === 'rename') return renderPomoRenameGateHtml(show);
+    var frozen = gateState === 'freeze';
     var html = '<div class="pomo-malpractice-gate' + (frozen ? ' pomo-malpractice-gate--freeze' : ' pomo-malpractice-gate--warning') + '" id="pomo-malpractice-gate"' + (show ? '' : ' hidden') + '>' +
       '<div class="pomo-gate-title">⚠️ Malpractice Detected</div>';
     if (frozen) {
@@ -2903,15 +2960,17 @@
     var pomoGradStyle = '--pomo-g1:' + pomoGradPreset.colors[0] + ';--pomo-g2:' + pomoGradPreset.colors[1] + ';--pomo-g3:' + pomoGradPreset.colors[2] + ';--pomo-glow:' + pomoGradPreset.glow + ';' +
       '--pomo-break-g1:' + pomoGradPreset.breakColors[0] + ';--pomo-break-g2:' + pomoGradPreset.breakColors[1] + ';--pomo-break-glow:' + pomoGradPreset.breakGlow + ';';
 
-    // Whether the clock/dots/controls should start out hidden behind the
-    // malpractice gate instead — see renderPomoMalpracticeGateHtml below.
-    // Both blocks are ALWAYS rendered (never conditionally swapped in the
+    // Whether the clock/dots/controls should start out hidden behind a
+    // gate instead — see pomoGateState()/renderPomoMalpracticeGateHtml
+    // below (freeze, needs-rename, or the malpractice warning, whichever
+    // currently applies — only one at a time occupies this slot). Both
+    // blocks are ALWAYS rendered (never conditionally swapped in the
     // HTML string itself), one just starts with the `hidden` attribute —
     // the same always-present-just-toggled pattern the settings panel
     // already uses (see pomo-settings-toggle in bindCalendarEvents), so
     // dismissing the gate later is a plain DOM toggle, not a re-render
     // that would replay this card's .fade-in entrance.
-    var showMalpracticeGate = pomoIsFrozen() || pomoMalpracticeWarningActive();
+    var showMalpracticeGate = pomoGateState() !== null;
 
     return '<div class="pomodoro-card fade-in' + (pomo.mode === 'break' ? ' on-break' : '') + '" id="pomo-card" style="' + pomoGradStyle + '">' +
       renderPomoMalpracticeGateHtml(showMalpracticeGate) +
@@ -4262,6 +4321,42 @@
       if (reduceMotion) { reveal(); return; }
       gate.classList.add('pomo-malpractice-gate--dismissing');
       setTimeout(reveal, 320);
+    });
+
+    // The rename gate (see renderPomoRenameGateHtml) resolves itself via
+    // a genuine rename, not a dismiss button — a full renderCalendar()
+    // on success, same as the top-of-page rename form (renameForm above)
+    // rather than the malpractice Okay handler's own plain-DOM-toggle
+    // dance: a rename actually changes state.student.display_name,
+    // which is shown in more than just this one gate (the identity line
+    // at the top of the page), so everywhere needs to pick up the new
+    // name at once — a full re-render is the simplest way to guarantee
+    // that, and this is a rare, deliberate one-time action, not a
+    // routine reveal worth optimizing the .fade-in replay away for.
+    var pomoRenameGateForm = document.getElementById('pomo-rename-gate-form');
+    if (pomoRenameGateForm) pomoRenameGateForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var input = document.getElementById('pomo-rename-gate-input');
+      var newName = input.value.trim();
+      if (!newName) return;
+      var btn = pomoRenameGateForm.querySelector('.pomo-btn-primary');
+      if (btn) btn.disabled = true;
+      api('/rename', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: state.student.email, display_name: newName }),
+      })
+        .then(function (updated) {
+          state.student.display_name = updated.display_name;
+          writeCookie(state.student);
+          state.needsRename = false;
+          state.pomoRenameGateError = null;
+          renderCalendar();
+        })
+        .catch(function (err) {
+          state.pomoRenameGateError = err.message;
+          renderCalendar();
+        });
     });
 
     var prev = document.getElementById('prev-month');
