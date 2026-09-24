@@ -1135,6 +1135,10 @@
   .live-dot { display: block; width: 7px; height: 7px; border-radius: 50%; background: #34D399; box-shadow: 0 0 5px rgba(52,211,153,0.75); }
   @keyframes live-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .5; transform: scale(0.75); } }
   .leaderboard-you { display: inline-block; font-family: var(--font-nav); font-size: 9.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--purple); background: rgba(139,92,246,0.16); border-radius: 999px; padding: 1px 7px; margin-left: 4px; vertical-align: middle; }
+  /* Just a plain emoji glyph, no background/border-radius of its own —
+     nothing here to trip the box-shadow+border-radius Chromium DOM-leak
+     gotcha, and no reason to animate it. */
+  .leaderboard-effort-badge { display: inline-block; margin-left: 4px; font-size: 12px; vertical-align: middle; cursor: default; }
   /* Streak balls, centered within their grid column (minmax(92px,1fr)
      above — floor sized for the worst case: 5 balls + a "+NNN" overflow
      pill, see STREAK_BALLS_CAP in progress.js). This is the row's one

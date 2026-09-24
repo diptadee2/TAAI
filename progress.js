@@ -53,7 +53,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-24-2';
+  var CLIENT_VERSION = '2026-09-24-3';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -3453,6 +3453,34 @@
     return '<span class="leaderboard-streak" title="' + streak + ' day streak">' + balls + overflow + '</span>';
   }
 
+  // All-time cumulative-effort milestone badges, shown beside a name on
+  // the weekly top-20 board — a different axis from the streak tiers
+  // above (consecutive days) and the 🥇🥈🥉 rank medals (this week's
+  // placement): total hours ever logged, regardless of streak or rank.
+  // Deliberately non-medal emojis (no 🥇🏅🏆-style icons — those already
+  // mean "ranking" elsewhere on this same row) escalating from "getting
+  // serious" to "elite," on an ascending-difficulty spread in the same
+  // spirit as STREAK_TIERS. Real production data at ship time tops out
+  // around ~400-450h (the two highest all-time totals), so 100h/250h are
+  // genuinely reachable soon, 500h/1000h are real stretch goals over the
+  // life of the program, not a cap nobody could ever hit.
+  var EFFORT_TIERS = [
+    { minHours: 1000, emoji: '👑', name: 'Crown' },
+    { minHours: 500, emoji: '⚡', name: 'Lightning' },
+    { minHours: 250, emoji: '🔥', name: 'Flame' },
+    { minHours: 100, emoji: '⭐', name: 'Star' },
+  ];
+  function effortBadgeHtml(allTimeMinutes) {
+    var hours = (allTimeMinutes || 0) / 60;
+    for (var i = 0; i < EFFORT_TIERS.length; i++) {
+      if (hours >= EFFORT_TIERS[i].minHours) {
+        var t = EFFORT_TIERS[i];
+        return '<span class="leaderboard-effort-badge" title="' + t.name + ' milestone — ' + t.minHours + '+ all-time focus hours">' + t.emoji + '</span>';
+      }
+    }
+    return '';
+  }
+
   // Status badge ("Focus"/"Break") for a live student's current phase —
   // pomo_status comes straight from pomo_active_session's mode column
   // ('work'|'break', see schema.sql), null for anyone not live. Blank
@@ -3730,7 +3758,7 @@
       return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (r.is_me ? ' leaderboard-row--me' : '') + (r.is_live ? ' leaderboard-row--live' : '') + leaderboardRowEnterAttrs(animate, i) + '">' +
         '<span class="leaderboard-rank">' + rankLabel + '</span>' +
         rankMovementHtml(i + 1, r.previous_week_rank) +
-        '<span class="leaderboard-name"' + allTimeTitleAttr(r.all_time_minutes) + '>' + liveDotHtml(r.is_live) + escapeHtml(r.display_name) + (r.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
+        '<span class="leaderboard-name"' + allTimeTitleAttr(r.all_time_minutes) + '>' + liveDotHtml(r.is_live) + escapeHtml(r.display_name) + effortBadgeHtml(r.all_time_minutes) + (r.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
         streakBallsHtml(r.streak) +
         (r.is_me && !r.pomo_status ? weeklyPaceStatusHtml(r.total_minutes) : pomoStatusHtml(r.pomo_status, r.pomo_last_seen_at)) +
         pomoTimerHtml(r.pomo_phase_end_at, r.pomo_phase_total_seconds, r.pomo_status) +
@@ -3747,7 +3775,7 @@
         '<div class="leaderboard-row leaderboard-row--me' + (state.viewerRank.is_live ? ' leaderboard-row--live' : '') + leaderboardRowEnterAttrs(animate, state.leaderboard.length) + '">' +
         '<span class="leaderboard-rank">' + state.viewerRank.rank + '</span>' +
         rankMovementHtml(state.viewerRank.rank, state.viewerRank.previous_week_rank) +
-        '<span class="leaderboard-name"' + allTimeTitleAttr(state.viewerRank.all_time_minutes) + '>' + liveDotHtml(state.viewerRank.is_live) + 'You</span>' +
+        '<span class="leaderboard-name"' + allTimeTitleAttr(state.viewerRank.all_time_minutes) + '>' + liveDotHtml(state.viewerRank.is_live) + 'You' + effortBadgeHtml(state.viewerRank.all_time_minutes) + '</span>' +
         streakBallsHtml(state.viewerRank.streak) +
         (state.viewerRank.pomo_status ? pomoStatusHtml(state.viewerRank.pomo_status, state.viewerRank.pomo_last_seen_at) : weeklyPaceStatusHtml(state.viewerRank.total_minutes)) +
         pomoTimerHtml(state.viewerRank.pomo_phase_end_at, state.viewerRank.pomo_phase_total_seconds, state.viewerRank.pomo_status) +
