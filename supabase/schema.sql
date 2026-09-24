@@ -792,3 +792,20 @@ CREATE TABLE IF NOT EXISTS site_lectures (
 );
 CREATE INDEX IF NOT EXISTS idx_site_lectures_subject ON site_lectures(subject);
 GRANT SELECT, INSERT, UPDATE, DELETE ON site_lectures TO service_role;
+
+-- Site-wide feature toggles, admin-controlled from /team's Site data >
+-- Settings sub-tab. A single fixed row (id='main') rather than a table
+-- per toggle — same tiny, fixed-shape-single-row pattern already used
+-- by live_count_stats/hourly_activity_cutover elsewhere in this schema.
+-- Add new BOOLEAN (or other) columns here as more toggles are needed,
+-- rather than new tables. hide_financial_assistance controls whether
+-- index.html's "Can't afford it right now?" CTA card renders at all —
+-- read publicly/unauthenticated via netlify/functions/
+-- site-settings-public.js, written admin-only via site-settings.js.
+CREATE TABLE IF NOT EXISTS site_settings (
+  id                         TEXT PRIMARY KEY DEFAULT 'main',
+  hide_financial_assistance  BOOLEAN NOT NULL DEFAULT false,
+  updated_at                 TIMESTAMPTZ DEFAULT now()
+);
+GRANT SELECT, INSERT, UPDATE, DELETE ON site_settings TO service_role;
+INSERT INTO site_settings (id) VALUES ('main') ON CONFLICT (id) DO NOTHING;

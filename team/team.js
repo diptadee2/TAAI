@@ -318,6 +318,17 @@
       editing: null, // { type, row } | null
       saving: false,
     },
+    // A 4th Site data sub-tab (subTab: 'settings') alongside Pricing/Notes/
+    // Lectures, but deliberately its own small state/functions rather than
+    // shoehorned into SITE_DATA_RESOURCES' generic list-of-rows machinery
+    // — there's exactly one settings row, no create/delete, just toggles.
+    siteSettings: {
+      loaded: false,
+      loading: false,
+      saving: false,
+      error: null,
+      hideFinancialAssistance: false,
+    },
     msg: null,
     msgType: null,
   };
@@ -1231,14 +1242,82 @@
     });
   }
 
+  // ── Site settings (a 5th, non-list sub-tab — see the state comment
+  // above) ────────────────────────────────────────────────────────────
+  // Currently just one toggle (hide the homepage's financial-assistance
+  // CTA card), but built as {row-fetch, single PUT} rather than a
+  // one-off special case, so a second toggle later is just another
+  // field on the same row + another switch in renderSiteSettingsPanel().
+
+  function loadSiteSettings() {
+    var ss = state.siteSettings;
+    ss.loading = true;
+    ss.error = null;
+    render();
+    api('/site-settings').then(function (data) {
+      ss.hideFinancialAssistance = !!(data.row && data.row.hide_financial_assistance);
+      ss.loaded = true;
+      ss.loading = false;
+      render();
+    }).catch(function (err) {
+      ss.loading = false;
+      ss.error = err.message;
+      render();
+    });
+  }
+
+  // Optimistic: flips the switch immediately, reverts it if the save
+  // actually fails — the same instant-feeling toggle UX as a native
+  // settings page, rather than making the admin wait on a round-trip to
+  // see the switch move.
+  function saveSiteSettingsToggle(field, value) {
+    var ss = state.siteSettings;
+    var prev = ss[field];
+    ss[field] = value;
+    ss.saving = true;
+    ss.error = null;
+    render();
+    var payload = {};
+    payload[field === 'hideFinancialAssistance' ? 'hide_financial_assistance' : field] = value;
+    api('/site-settings', { method: 'PUT', body: JSON.stringify(payload) }).then(function (data) {
+      ss.hideFinancialAssistance = !!(data.row && data.row.hide_financial_assistance);
+      ss.saving = false;
+      render();
+    }).catch(function (err) {
+      ss[field] = prev;
+      ss.saving = false;
+      ss.error = err.message;
+      render();
+    });
+  }
+
+  // Shared by both places a Site data sub-tab can become the active one
+  // (the top-level "site-data" tab click, and clicking a sub-tab button
+  // itself) — dispatches to whichever loader this type actually needs,
+  // and reports back whether a load was kicked off (so the caller knows
+  // whether to skip its own render(), since the loader already renders).
+  function ensureSiteDataLoaded(type) {
+    if (type === 'settings') {
+      if (state.siteSettings.loaded || state.siteSettings.loading) return false;
+      loadSiteSettings();
+      return true;
+    }
+    if (state.siteData.rows[type] !== null) return false;
+    loadSiteData(type);
+    return true;
+  }
+
   function renderSiteDataTabs() {
-    return Object.keys(SITE_DATA_RESOURCES).map(function (type) {
+    var html = Object.keys(SITE_DATA_RESOURCES).map(function (type) {
       var cfg = SITE_DATA_RESOURCES[type];
       var active = state.siteData.subTab === type;
       var rows = state.siteData.rows[type];
       var countLabel = rows ? ' (' + rows.length + ')' : '';
       return '<button class="tab-btn' + (active ? ' active' : '') + '" data-sitetab="' + type + '">' + cfg.label + countLabel + '</button>';
     }).join('');
+    var settingsActive = state.siteData.subTab === 'settings';
+    html += '<button class="tab-btn' + (settingsActive ? ' active' : '') + '" data-sitetab="settings">⚙️ Settings</button>';
+    return html;
   }
 
   // Mirrors the real threshold gate-da-courses.html's own COMBOS.map()
@@ -1509,6 +1588,7 @@
     pricing: 'Every course, bundle, and test series shown on the site — its price, discount, validity, sold-out date, enrolment link, and order. Grouped below into Bundled courses, Individual courses, and Test series.',
     notes: 'Downloadable PDF notes, organized by subject.',
     lectures: 'Video lectures and their slides, organized by subject.',
+    settings: 'Site-wide switches for what shows on taai.live.',
   };
   // Pricing went live 2026-09-23 (see CLAUDE.md's "Site data corner"
   // section) — Notes/Lectures are still preview-only, the live pages
@@ -1519,6 +1599,7 @@
     pricing: 'Changes here go live on taai.live immediately — no deploy needed.',
     notes: 'Changes here are a preview only for now — the live site still reads its own published spreadsheet, so nothing you edit here shows up on taai.live yet.',
     lectures: 'Changes here are a preview only for now — the live site still reads its own published spreadsheet, so nothing you edit here shows up on taai.live yet.',
+    settings: 'Changes here go live on taai.live immediately — no deploy needed.',
   };
   var SITE_DATA_NEW_LABEL = { pricing: '+ New course', notes: '+ New note', lectures: '+ New lecture' };
   var SITE_DATA_SINGULAR = { pricing: 'course', notes: 'note', lectures: 'lecture' };
@@ -1535,8 +1616,8 @@
     // ids that already have a real card to attach to), so creating one
     // is a deliberate two-step, code-first action, not a one-click /team
     // form. Notes/Lectures have no such constraint and keep their own
-    // "+ New" button.
-    var showNewButton = type !== 'pricing';
+    // "+ New" button. Settings has no rows to create at all.
+    var showNewButton = type !== 'pricing' && type !== 'settings';
 
     return (
       '<div class="card">' +
@@ -1545,7 +1626,27 @@
           (editingThis || !showNewButton ? '' : '<button class="btn btn-primary" id="sitedata-new">' + SITE_DATA_NEW_LABEL[type] + '</button>') +
         '</div>' +
         '<div class="field-hint" style="margin-bottom:16px;">' + SITE_DATA_INTRO[type] + ' ' + SITE_DATA_LIVE_NOTE[type] + '</div>' +
-        (editingThis ? renderSiteDataForm(type, editingThis) : renderSiteDataList(type)) +
+        (type === 'settings' ? renderSiteSettingsPanel() : (editingThis ? renderSiteDataForm(type, editingThis) : renderSiteDataList(type))) +
+      '</div>'
+    );
+  }
+
+  function renderSiteSettingsPanel() {
+    var ss = state.siteSettings;
+    if (ss.loading && !ss.loaded) return '<div class="field-hint">Loading…</div>';
+    var errorHtml = ss.error ? '<div class="msg msg-error">' + escapeHtml(ss.error) + '</div>' : '';
+    var checked = ss.hideFinancialAssistance;
+    return (
+      errorHtml +
+      '<div class="site-setting-row">' +
+        '<div class="site-setting-info">' +
+          '<div class="site-setting-title">Hide the "Can\'t afford it right now?" card</div>' +
+          '<div class="field-hint">Hides the financial-assistance section near the bottom of the homepage. Nothing else on the page changes — the mobile "Take a Trial" bar stays as-is.</div>' +
+        '</div>' +
+        '<label class="site-setting-switch' + (ss.saving ? ' is-saving' : '') + '" for="setting-hide-financial-assistance">' +
+          '<input type="checkbox" id="setting-hide-financial-assistance" data-setting-field="hideFinancialAssistance"' + (checked ? ' checked' : '') + (ss.saving ? ' disabled' : '') + '>' +
+          '<span class="site-setting-switch-track"></span>' +
+        '</label>' +
       '</div>'
     );
   }
@@ -1871,7 +1972,7 @@
         if (tab === state.tab) return;
         state.tab = tab;
         if (tab === 'students' && state.students === null) { loadStudents(); return; }
-        if (tab === 'site-data' && state.siteData.rows[state.siteData.subTab] === null) { loadSiteData(state.siteData.subTab); return; }
+        if (tab === 'site-data' && ensureSiteDataLoaded(state.siteData.subTab)) return;
         render();
       });
     });
@@ -1882,8 +1983,14 @@
         if (type === state.siteData.subTab) return;
         state.siteData.subTab = type;
         state.siteData.editing = null;
-        if (state.siteData.rows[type] === null) { loadSiteData(type); return; }
+        if (ensureSiteDataLoaded(type)) return;
         render();
+      });
+    });
+
+    document.querySelectorAll('[data-setting-field]').forEach(function (input) {
+      input.addEventListener('change', function () {
+        saveSiteSettingsToggle(input.getAttribute('data-setting-field'), input.checked);
       });
     });
 

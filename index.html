@@ -2024,6 +2024,16 @@ const _fmtDate = d => { if (!d) return ''; const dt = new Date(d + 'T00:00:00');
 let _pricingCache = null;
 const _pricingFetch = fetch(PRICING_CSV_URL).then(r => r.text()).then(text => { const map = {}; _parseCSV(text).forEach(r => { if (r.id) map[r.id] = r; }); _pricingCache = map; return map; }).catch(() => { _pricingCache = {}; return {}; });
 
+// ============ SITE SETTINGS (admin toggles, /team > Site data > Settings) ============
+// Public, unauthenticated (netlify/functions/site-settings-public.js) —
+// same pre-fetch-before-mount pattern as _pricingFetch above. Currently
+// just the one toggle (hide the financial-assistance CTA card); fails
+// closed to "show everything" on any fetch error, so a hiccup here can
+// only ever leave the page exactly as it's always been, never hide
+// something it shouldn't.
+let _siteSettingsCache = null;
+const _siteSettingsFetch = fetch('/api/site-settings-public').then(r => r.json()).then(d => { _siteSettingsCache = d || {}; return _siteSettingsCache; }).catch(() => { _siteSettingsCache = {}; return {}; });
+
 // ============ OFFER STRIP ============
 const OFFERS = [
   {
@@ -2485,6 +2495,21 @@ function FAQ() {
 
 // ============ CTA ============
 function CTA() {
+  const [settings, setSettings] = React.useState(_siteSettingsCache || {});
+  // Always subscribes, never gated on "!_siteSettingsCache" — that guard
+  // (copied at first from Offer()'s matching _pricingFetch pattern) has a
+  // real race: if the fetch resolves between this component's initial
+  // render and this effect running, the cache is already non-null by the
+  // time the guard checks it, so setSettings would never fire and the
+  // stale initial {} would stick around forever. _siteSettingsFetch is
+  // already a memoized, once-resolved Promise — chaining .then() on it
+  // again costs no extra network call regardless of timing, so there's
+  // no downside to just always subscribing.
+  React.useEffect(() => { _siteSettingsFetch.then(setSettings); }, []);
+  // Admin toggle in /team's Site data > Settings sub-tab — hides this
+  // whole section (mobile sticky CTA is a separate, unrelated element
+  // and stays untouched regardless).
+  if (settings.hideFinancialAssistance) return null;
   return (
     <section className="cta" id="cta">
       <div className="container">
