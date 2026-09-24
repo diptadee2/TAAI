@@ -693,12 +693,11 @@ ALTER TABLE students ADD COLUMN IF NOT EXISTS name_last_checked TEXT;
 -- Caps how many real Claude API calls a single gated student can trigger,
 -- closing an abuse vector a direct question raised: a needs_rename-gated
 -- student could otherwise resubmit new names indefinitely, each one a
--- real billed API call (rename.js only ever calls Claude while gated —
--- a plain voluntary rename never does). gate_name_check_count tracks
--- real attempts PER STUDENT, not a global cap; gate_escalated is set
--- once the 3rd real attempt is ALSO rejected.
+-- real billed API call. gate_name_check_count tracks real attempts PER
+-- STUDENT, not a global cap; gate_escalated is set once the 3rd real
+-- attempt in the current calendar month is ALSO rejected.
 --
--- Went through two designs, both changed on direct follow-up questions.
+-- Went through three designs, each changed on a direct follow-up.
 -- First: fall back to the free normalized-dodge check alone once
 -- exhausted, rather than hard-blocking — but "what if they do more than
 -- three inappropriate names" caught a real exploit in that: the dodge
@@ -707,20 +706,38 @@ ALTER TABLE students ADD COLUMN IF NOT EXISTS name_last_checked TEXT;
 -- names, then slip a 4th equally-bad name through completely unchecked.
 -- Second: a 24h rolling-window cooldown instead — closed the exploit,
 -- but replaced again on direct request for a real human in the loop
--- with no time cap. No automated Discord alert either — a follow-up
--- request ruled that out ("no discord webhook, they will manually
--- contact admin"). What ships: once gate_escalated is true, rename.js
--- refuses every further attempt outright, telling the student to reach
--- out to the team directly, until a team member manually clears it. No
--- self-serve /team UI for this (same "one-off SQL statement, not a
--- dedicated screen" pattern as every other rare admin override in this
--- codebase, e.g. Puneet's malpractice bump) — clear it with:
+-- with no time cap: no automated Discord alert either (a follow-up
+-- request ruled that out — "no discord webhook, they will manually
+-- contact admin"). Third: a direct follow-up asked for the gated cap to
+-- also "reset 1st of every month" — added gate_name_check_month
+-- (rename.js treats a stored month that doesn't match the current one
+-- as a fresh start, resetting BOTH the count and gate_escalated) as a
+-- backstop alongside the manual clear, not instead of it: an admin can
+-- still clear it sooner via /team (see team-clear-name-check.js), but a
+-- student is never stuck for more than "however long is left in the
+-- current month" even if nobody manually intervenes. The one-off SQL
+-- fallback (same "no dedicated /team UI for every rare override"
+-- pattern this codebase already used before /team's own clear button
+-- existed) still works too:
 --   UPDATE students SET gate_escalated = false, gate_name_check_count = 0
 --   WHERE email = '...';
--- (this resets their attempt count too, so it's a genuine fresh start,
--- not just re-opening the same exhausted 3 tries).
 ALTER TABLE students ADD COLUMN IF NOT EXISTS gate_name_check_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS gate_name_check_month TEXT;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS gate_escalated BOOLEAN NOT NULL DEFAULT false;
+
+-- Separate cap for a NORMAL, non-gated rename — 3 successful renames per
+-- calendar month, added on direct request ("everyone should have a
+-- three rename per month limit otherwise we will unnecessarily use our
+-- claude resources") once voluntary renames also started calling Claude
+-- synchronously (see rename.js). Deliberately its own counter, not
+-- shared with gate_name_check_count — a gated student resolving their
+-- flag and an ordinary student renaming for fun are different
+-- situations with different limits/consequences (one escalates to the
+-- team, the other just waits until next month). Only a genuinely
+-- SUCCESSFUL rename increments this — a rejected attempt (bad name)
+-- doesn't cost the student one of their 3, only using one for real does.
+ALTER TABLE students ADD COLUMN IF NOT EXISTS voluntary_rename_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS voluntary_rename_month TEXT;
 
 -- name-check-scan.js's original version fetched EVERY student (email,
 -- display_name, needs_rename, name_last_checked) on every single tick

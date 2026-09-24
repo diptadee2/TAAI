@@ -88,10 +88,13 @@ export async function handler(event, context) {
       // display_name/streak legitimately would.
       supabase.from('students').select('email, malpractice_incident_count, malpractice_offense_count, malpractice_frozen_until'),
       // Same best-effort, own-query treatment as malpractice above —
-      // only the two genuinely-new columns here, needs_rename itself is
-      // in the main select above (see its own comment for why the two
-      // can't share one query).
-      supabase.from('students').select('email, needs_rename_source, name_check_reason'),
+      // only the genuinely-new columns here, needs_rename itself is in
+      // the main select above (see its own comment for why they can't
+      // share one query). gate_escalated added alongside the other two
+      // — safe to combine since all three are equally not-yet-migrated
+      // at the time this was added, so there's no already-stable column
+      // to accidentally mask.
+      supabase.from('students').select('email, needs_rename_source, name_check_reason, gate_escalated'),
     ]);
   } catch (err) {
     return json(500, { error: err.message });
@@ -205,6 +208,11 @@ export async function handler(event, context) {
       needs_rename: s.needs_rename || false,
       needs_rename_source: nameCheck?.needs_rename_source || null,
       name_check_reason: nameCheck?.name_check_reason || null,
+      // Whether this student has burned all 3 real gated attempts this
+      // month and is blocked until a team member clears it (see
+      // schema.sql's own comment on gate_escalated) — backs the
+      // "Clear block" / "Rename" actions in the Students view.
+      gate_escalated: nameCheck?.gate_escalated || false,
     };
   });
 
@@ -224,6 +232,7 @@ export async function handler(event, context) {
     avg_consistency_minutes: rows.length ? Math.round(rows.reduce((sum, r) => sum + r.consistency_minutes, 0) / rows.length) : 0,
     malpractice_flagged: rows.filter(r => r.malpractice_incident_count > 0).length,
     needs_rename_flagged: rows.filter(r => r.needs_rename).length,
+    gate_escalated_count: rows.filter(r => r.gate_escalated).length,
   };
 
   return json(200, { students: rows, summary });

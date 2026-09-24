@@ -305,6 +305,7 @@
     studentSummary: null,
     studentFilters: { search: '', inactive: '', minStreak: '', flaggedOnly: false }, // inactive: '' | '3' | '7' | '14' | '30' | 'never'
     noteSaving: {}, // email -> 'saving' | 'saved' | 'error', transient per-row save feedback
+    clearBlockStatus: {}, // email -> 'saving' | 'error', transient status for the gate_escalated Clear block/Rename actions
     // Pricing/Notes/Lectures are three independent lists under one Site
     // data tab — rows/editing are keyed by resource type (see
     // SITE_DATA_RESOURCES) rather than three near-identical flat state
@@ -1123,6 +1124,7 @@
       { label: 'Avg. course progress', value: sum.avg_progress_pct + '%' },
       { label: 'Avg. consistency', value: formatHours(sum.avg_consistency_minutes) + '/day' },
       { label: 'Flagged names', value: sum.needs_rename_flagged, warn: sum.needs_rename_flagged > 0 },
+      { label: 'Blocked (needs clear)', value: sum.gate_escalated_count, warn: sum.gate_escalated_count > 0 },
     ];
     return '<div class="students-summary">' + cards.map(function (c) {
       return '<div class="students-summary-card' + (c.warn ? ' warn' : '') + '"><div class="students-summary-value">' + c.value + '</div><div class="students-summary-label">' + escapeHtml(c.label) + '</div></div>';
@@ -1165,16 +1167,37 @@
     }).join('') + '</div>';
   }
 
-  // Read-only — no admin flag/unflag action anymore (see CLAUDE.md's
-  // "Name moderation" section: dropped at direct request, "delegate
-  // everything to claude"). needs_rename is now set/cleared entirely by
-  // Claude (name-check-scan.js's nightly pass, rename.js's own check
-  // when a gated student tries to resolve it) with zero human step in
-  // the loop — this just shows what Claude has already decided, for
-  // visibility, not for the team to act on.
+  // The flag badge itself is read-only — no admin flag/unflag action
+  // (see CLAUDE.md's "Name moderation" section: dropped at direct
+  // request, "delegate everything to claude"). needs_rename is set/
+  // cleared entirely by Claude (name-check-scan.js's nightly pass,
+  // rename.js's own check when a gated student tries to resolve it)
+  // with zero human step in that loop — this just shows what Claude has
+  // already decided, for visibility, not for the team to act on.
+  //
+  // gate_escalated is different — added later, on direct request for a
+  // real /team clear/rename action once a student has burned all 3
+  // gated attempts this month and is genuinely stuck (see
+  // team-clear-name-check.js). This IS a human step, deliberately: the
+  // whole point of escalating is "self-service is over, a person needs
+  // to look at this."
   function renderNameFlagCell(s) {
-    if (!s.needs_rename) return '';
-    return '<div class="name-flag-badge" title="' + escapeHtml(s.name_check_reason || '') + '">🚩 Flagged by Claude</div>';
+    var html = '';
+    if (s.needs_rename) {
+      html += '<div class="name-flag-badge" title="' + escapeHtml(s.name_check_reason || '') + '">🚩 Flagged by Claude</div>';
+    }
+    if (s.gate_escalated) {
+      var status = state.clearBlockStatus[s.email];
+      var working = status === 'saving';
+      html += '<div class="name-flag-badge name-flag-badge--escalated">⛔ Blocked — needs manual clear</div>';
+      html += '<div class="name-clear-actions">' +
+        '<input type="text" class="js-clear-rename-input" data-email="' + escapeHtml(s.email) + '" placeholder="New name (optional)">' +
+        '<button type="button" class="btn btn-small js-clear-rename" data-email="' + escapeHtml(s.email) + '"' + (working ? ' disabled' : '') + '>' + (working ? 'Working…' : 'Rename') + '</button>' +
+        '<button type="button" class="btn btn-small js-clear-block" data-email="' + escapeHtml(s.email) + '"' + (working ? ' disabled' : '') + '>Clear block</button>' +
+        '</div>';
+      if (status === 'error') html += '<div class="field-hint" style="color:#f87171;">Action failed — try again.</div>';
+    }
+    return html;
   }
 
   function renderStudents() {
@@ -2174,6 +2197,40 @@
             render();
           })
           .catch(function () { state.noteSaving[email] = 'error'; render(); });
+      });
+    });
+
+    function clearNameCheckBlock(email, newDisplayName) {
+      state.clearBlockStatus[email] = 'saving';
+      render();
+      api('/team-clear-name-check', { method: 'POST', body: JSON.stringify({ email: email, new_display_name: newDisplayName || undefined }) })
+        .then(function (data) {
+          delete state.clearBlockStatus[email];
+          var s = (state.students || []).filter(function (x) { return x.email === email; })[0];
+          if (s) {
+            s.gate_escalated = false;
+            if (data.student) {
+              if (data.student.display_name) s.display_name = data.student.display_name;
+              if ('needs_rename' in data.student) s.needs_rename = data.student.needs_rename;
+            }
+          }
+          render();
+        })
+        .catch(function () { state.clearBlockStatus[email] = 'error'; render(); });
+    }
+
+    document.querySelectorAll('.js-clear-block').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        clearNameCheckBlock(btn.getAttribute('data-email'), null);
+      });
+    });
+
+    document.querySelectorAll('.js-clear-rename').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var email = btn.getAttribute('data-email');
+        var input = document.querySelector('.js-clear-rename-input[data-email="' + email + '"]');
+        var newName = input ? input.value.trim() : '';
+        clearNameCheckBlock(email, newName);
       });
     });
 

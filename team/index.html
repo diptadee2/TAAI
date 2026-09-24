@@ -272,6 +272,11 @@
   /* Students table — read-only display of Claude's needs_rename flag
      (no admin action here; see CLAUDE.md's "Name moderation" section) */
   .name-flag-badge { display: inline-block; margin-top: 4px; padding: 2px 7px; border-radius: 6px; font-size: 11px; font-weight: 600; background: var(--amber-soft); color: var(--amber); cursor: help; }
+  /* gate_escalated — a real admin action, unlike the badge above (see
+     team-clear-name-check.js) */
+  .name-flag-badge--escalated { background: var(--red-soft); color: var(--red); cursor: default; }
+  .name-clear-actions { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+  .js-clear-rename-input { width: 130px; padding: 5px 8px; border-radius: 6px; border: 1.5px solid var(--line); background: var(--bg-soft); color: var(--ink); font-family: inherit; font-size: 12px; }
 </style>
 </head>
 <body>

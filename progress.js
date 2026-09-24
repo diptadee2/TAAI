@@ -53,7 +53,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-24-21';
+  var CLIENT_VERSION = '2026-09-24-22';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -646,6 +646,7 @@
     viewerRank: null, // { rank, total_minutes, total_sessions } — set only when the viewer is logged in but didn't make the top 20
     renaming: false, // showing the inline rename form in place of the name + Rename/Not you? line
     renameError: null,
+    renameLimitMessage: null, // set instead of opening the rename form when voluntary_rename_count/month (in state.student, from the cookie) show this month's 3 are already used
     pomoBlockedReason: null, // null | 'denied' | 'unsupported' — set when Start needed notification permission and didn't get it
     // See record_malpractice_incident in schema.sql / fetchMalpracticeStatus
     // in tracker-data.js — null for a guest (no account to flag),
@@ -2032,6 +2033,9 @@
   // deliberately ignores a differently-typed name (see register.js).
   function renderIdentityLine() {
     if (!state.student) return 'Browsing as guest, tick a task to save your progress';
+    if (state.renameLimitMessage) {
+      return escapeHtml(state.student.display_name) + ' &middot; <span class="rename-error">' + escapeHtml(state.renameLimitMessage) + '</span> <button type="button" id="rename-limit-ok">OK</button>';
+    }
     if (state.renaming) {
       return '<form id="rename-form" class="rename-form">' +
         '<input id="rename-input" type="text" value="' + escapeAttr(state.student.display_name) + '" maxlength="60" required autocomplete="name">' +
@@ -4085,11 +4089,30 @@
 
     var renameToggle = document.getElementById('rename-toggle');
     if (renameToggle) renameToggle.addEventListener('click', function () {
+      // Client-side-only convenience check (server is still the real
+      // enforcement point — see rename.js) using whatever count/month
+      // came back on the LAST successful register/rename response for
+      // this student, carried in the cookie. Can be stale across
+      // devices (renaming on another device isn't reflected here until
+      // this one also renames or re-registers) — acceptable, since it
+      // only ever saves an extra click on a form that would fail
+      // anyway, it's never the actual boundary.
+      if (state.student.voluntary_rename_month === currentMonthStr() && (state.student.voluntary_rename_count || 0) >= 3) {
+        state.renameLimitMessage = 'You\'ve used all your renames for this month — you can rename again from the 1st.';
+        renderCalendar();
+        return;
+      }
       state.renaming = true;
       state.renameError = null;
       renderCalendar();
       var input = document.getElementById('rename-input');
       if (input) { input.focus(); input.select(); }
+    });
+
+    var renameLimitOk = document.getElementById('rename-limit-ok');
+    if (renameLimitOk) renameLimitOk.addEventListener('click', function () {
+      state.renameLimitMessage = null;
+      renderCalendar();
     });
 
     var renameCancel = document.getElementById('rename-cancel');
@@ -4114,6 +4137,12 @@
       })
         .then(function (updated) {
           state.student.display_name = updated.display_name;
+          // voluntary_rename_count/month only come back on the voluntary
+          // (non-gated) path — undefined here means "not applicable"
+          // (e.g. a gated resolve), left untouched rather than
+          // overwritten with undefined.
+          if (updated.voluntary_rename_count != null) state.student.voluntary_rename_count = updated.voluntary_rename_count;
+          if (updated.voluntary_rename_month != null) state.student.voluntary_rename_month = updated.voluntary_rename_month;
           writeCookie(state.student);
           state.renaming = false;
           state.renameError = null;
