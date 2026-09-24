@@ -1119,6 +1119,7 @@ body {
 .cta-card h2 { font-family: var(--font-display); font-size: clamp(38px, 4.8vw, 68px); font-weight: 600; letter-spacing: -0.035em; line-height: 1; margin-bottom: 36px; position: relative; z-index: 1; }
 .cta-card h2 em { font-style: normal; color: #fff; box-shadow: 0 6px 0 rgba(255,255,255,0.6); }
 .cta-card p { font-size: 18px; opacity: 0.9; max-width: 560px; margin: 0 auto 36px; position: relative; z-index: 1; }
+.cta-card .cta-note { font-size: 13px; opacity: 0.65; max-width: 460px; margin: 18px auto 0; }
 .cta-btn-white { background: #fff; color: var(--purple); font-weight: 600; box-shadow: 0 4px 20px rgba(0,0,0,0.15); position: relative; z-index: 1; }
 .cta-btn-white:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,0.22); color: var(--purple); }
 .cta-btn-white svg { transition: transform .38s cubic-bezier(.34,1.28,.64,1); flex-shrink: 0; }
@@ -2489,8 +2490,9 @@ function CTA() {
       <div className="container">
         <div className="cta-card fade-in">
           <h2>Can't afford it <em>right now?</em></h2>
-          <p>Financial challenges shouldn't stop a dedicated learner. We offer need-based discounts and scholarships, with priority given to GATE droppers. Message us with your GATE scorecard and a quick note on your situation, our team will get back to you personally.</p>
-          <a href="/contact" className="btn cta-btn-white">Contact us for financial assistance <Icon.ArrowRight /></a>
+          <p>Financial challenges shouldn't stop a dedicated learner. We offer need-based discounts and scholarships, with priority given to GATE droppers. Email us your GATE scorecard, a quick note on your situation, and any documents you feel support it — our team will review it personally and get back to you.</p>
+          <a href="mailto:support@taai.live?subject=Financial%20Assistance%20Request" className="btn cta-btn-white">Contact us for financial assistance <Icon.ArrowRight /></a>
+          <p className="cta-note">This program exists for genuinely underprivileged students — please don't misuse it.</p>
         </div>
       </div>
     </section>
