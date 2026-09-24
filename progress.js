@@ -53,7 +53,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-24-1';
+  var CLIENT_VERSION = '2026-09-24-2';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2093,7 +2093,7 @@
       html += '<div class="pomo-today-row">' + renderPomodoro() + renderTodayLeaders() + '</div>';
       html += '<div class="focus-divider"></div>';
       if (todayDay) {
-        html += renderTodayCard(todayDay, missedBefore.length);
+        html += renderTodayCard(todayDay, missedBefore.length, true);
       } else {
         html += '<p class="center-note">Nothing scheduled for today.</p>';
       }
@@ -3209,27 +3209,34 @@
     });
   }
 
-  // Was a two-column split — checklist on the left, an "Activity by
-  // hour" chart + busy meter on the right (see pomoHourlyActivityHtml/
-  // hourlyBusyMeterHtml) — dropped back to just the plain checklist on
-  // direct request ("just the daily task without the extra shenanigan").
-  // The chart/meter's underlying data fetch, poll wiring, and render
-  // functions are deliberately left in place, not deleted — they're all
-  // already guarded to no-op cleanly when their target elements aren't
-  // in the DOM (see applyLiveCountUpdate/refreshHourlyNowIndicator/
-  // animateHourlyBusyMeter/observeHourlyActivityReveal), and the live-
-  // count piece in particular is piggybacked onto the leaderboard/
-  // champions polls for other reasons unrelated to this card.
-  function renderTodayCard(day, missedBeforeCount) {
-    var html = '<div class="today-tag">Today · Batch C</div>';
-    html += '<div class="today-date">' + dayLabel(day.date) + '</div>';
+  // This same Today card renders in two different places — the plain
+  // checklist page, and again inside Focus Mode (.pomo-today-row's
+  // sibling, between the timer/leaderboard row and the weekly board).
+  // The "Activity by hour" chart + busy meter (pomoHourlyActivityHtml)
+  // was dropped from the plain-checklist rendering on direct request
+  // ("just the daily task without the extra shenanigan" — that request
+  // was about a screenshot of the checklist page specifically), but a
+  // follow-up report ("why did you take the busy meter and bar graph
+  // away from inside the pomodoro page") made clear Focus Mode's own
+  // copy was meant to stay — renderCalendar's Focus Mode call site below
+  // passes showHourly=true, the plain-checklist call site doesn't.
+  function renderTodayCard(day, missedBeforeCount, showHourly) {
+    var left = '<div class="today-tag">Today · Batch C</div>';
+    left += '<div class="today-date">' + dayLabel(day.date) + '</div>';
     if (missedBeforeCount > 0) {
-      html += '<div class="catchup-warn">⚠️ ' + missedBeforeCount + ' day' + (missedBeforeCount === 1 ? '' : 's') +
+      left += '<div class="catchup-warn">⚠️ ' + missedBeforeCount + ' day' + (missedBeforeCount === 1 ? '' : 's') +
         ' incomplete before today. Today’s content builds on those, so consider catching up first.</div>';
     }
     day.tasks.forEach(function (t) {
-      html += taskRowHtml(day.date, t);
+      left += taskRowHtml(day.date, t);
     });
+    if (!showHourly) {
+      return '<div class="today-card fade-in">' + left + '</div>';
+    }
+    var html = '<div class="today-card-split">';
+    html += '<div class="today-card-left">' + left + '</div>';
+    html += '<div class="today-card-right">' + pomoHourlyActivityHtml() + '</div>';
+    html += '</div>';
     return '<div class="today-card fade-in">' + html + '</div>';
   }
 
