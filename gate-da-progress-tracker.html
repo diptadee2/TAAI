@@ -1373,9 +1373,14 @@
      the name — centering "NAME" within that wider column visually
      detached the header from the actual left-aligned name text below
      it, worse the wider the column got ("the name column name is
-     positioned wrongly"). Left-aligning it re-anchors the header
-     directly above where names (and their live dot) actually start. */
-  .leaderboard-col-name { min-width: 0; text-align: left; position: relative; }
+     positioned wrongly"). Left-aligning alone still wasn't quite right
+     though — it put "NAME" flush with .leaderboard-name's own left
+     edge, which is where the always-rendered .live-dot-slot (13px, see
+     liveDotHtml) starts, not where the actual letters do. Direct
+     follow-up: "left align it with the first letter of every name" —
+     padding-left matches that slot's width exactly, so the header text
+     starts at the same x as the name text itself, dot or no dot. */
+  .leaderboard-col-name { min-width: 0; text-align: left; position: relative; padding-left: 13px; }
   /* position:relative so the popover (position:absolute) anchors to
      this header cell specifically, not the whole grid row.
      display:inline-flex + align-items:center — a plain inline span left
