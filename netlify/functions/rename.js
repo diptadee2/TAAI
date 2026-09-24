@@ -6,6 +6,17 @@
 // side effect of registering again on a new device.
 import { getSupabase, json } from './lib/supabase.js';
 
+// Strips everything but letters/digits and lowercases, so "Sandip",
+// "Sandip.", "sandip_", "SANDIP " etc. all normalize identically — used
+// only to catch someone satisfying the needs_rename gate (see schema.sql)
+// with a trivial punctuation/case tweak of the exact name that got them
+// flagged in the first place, not as a general "is this a real name"
+// check (that's not something software can verify, and a voluntary,
+// non-flagged rename is never restricted by this at all).
+function normalizeForCompare(s) {
+  return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
 export async function handler(event) {
   if (event.httpMethod !== 'POST') return json(405, { error: 'method not allowed' });
 
@@ -18,6 +29,29 @@ export async function handler(event) {
   if (!displayName) return json(400, { error: 'display_name is required' });
 
   const supabase = getSupabase();
+
+  // Only a student currently gated by needs_rename gets this extra check
+  // — everyone else can rename to whatever they like, any time, no
+  // restriction. Best-effort/fault-tolerant: a lookup failure (or the
+  // column not existing yet pre-migration) just skips the check rather
+  // than blocking a legitimate rename over it.
+  try {
+    const { data: existing } = await supabase
+      .from('students')
+      .select('display_name, needs_rename')
+      .eq('email', email)
+      .maybeSingle();
+    if (existing && existing.needs_rename) {
+      const oldNorm = normalizeForCompare(existing.display_name);
+      const newNorm = normalizeForCompare(displayName);
+      if (newNorm.length < 2 || newNorm === oldNorm) {
+        return json(400, { error: 'That\'s not really a different name — please enter your actual name.' });
+      }
+    }
+  } catch (e) {
+    console.error('rename.js: needs_rename dodge-check failed for', email, e);
+  }
+
   // Clears needs_rename (see its own comment in schema.sql) as part of
   // the same write, not a separate call — the whole point of that flag
   // is "blocked until they rename," so the act of renaming itself is
