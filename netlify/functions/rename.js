@@ -48,6 +48,7 @@ export async function handler(event) {
   // not existing yet pre-migration) just skips the corresponding check
   // rather than blocking a legitimate rename over it.
   let voluntaryRenameCountThisMonth = null; // set only on the voluntary path, used by the final write below
+  let gatedNameVerified = false; // set only when the gated branch's own synchronous Claude check actually ran and passed for this exact name
   try {
     const { data: existing } = await supabase
       .from('students')
@@ -166,6 +167,7 @@ export async function handler(event) {
         if (result.flagged) {
           return json(400, { error: 'That name still isn\'t appropriate for this site — ' + (result.reason || 'please pick a different one.') });
         }
+        if (!result.skipped) gatedNameVerified = true;
       } catch (e) {
         console.error('rename.js: Claude appropriateness check failed for', email, e);
       }
@@ -184,24 +186,29 @@ export async function handler(event) {
   // place; for a formerly-gated one, whatever flagged them no longer
   // applies, and a future flag should start with a clean slate rather
   // than inheriting an old count/reason). name_check_reason is cleared
-  // unconditionally now, not just when claudeVerified is true — on the
-  // voluntary path nothing here verifies the new name synchronously
+  // unconditionally now, not just when the gated check verified it — on
+  // the voluntary path nothing here verifies the new name synchronously
   // anymore (see the comment above), so a stale reason from BEFORE this
   // rename is never accurate for the new name either way: if the new
   // name also turns out bad, name-check-scan.js writes a fresh reason
   // of its own within ~15 minutes; if it's fine, there's nothing to
-  // explain. (name_last_checked itself is NOT written here — only the
-  // scan writes it, as part of marking a name checked; leaving it as
-  // whatever it was before this rename is exactly what makes the scan's
-  // own candidate filter pick this student back up as needing a fresh
-  // check.) voluntaryRenameCountThisMonth is only non-null on the
-  // voluntary path — incremented here (not earlier) since it should
-  // only count a genuinely SUCCESSFUL rename, and this is the point
-  // where success is certain. Tries with the new fields first, falls
-  // back to progressively fewer fields on a pre-migration "column does
-  // not exist" error, same fallback shape already used elsewhere in
-  // this codebase (e.g. pomo-active.js's owner_token) — a rename must
-  // never fail outright just because a newer column doesn't exist yet.
+  // explain. **name_last_checked is written here ONLY on the gated
+  // path, and only when its own synchronous Claude check genuinely ran
+  // and passed** (`gatedNameVerified`) — a name that just cleared a real
+  // Claude check seconds ago shouldn't cost a second, redundant check
+  // at the next scan tick. A voluntary rename deliberately leaves
+  // name_last_checked untouched (still whatever it was before this
+  // rename) so it stays a genuine mismatch against the NEW display_name
+  // — that mismatch is exactly what makes the scan's own candidate
+  // filter pick this student back up for its one real check.
+  // voluntaryRenameCountThisMonth is only non-null on the voluntary
+  // path — incremented here (not earlier) since it should only count a
+  // genuinely SUCCESSFUL rename, and this is the point where success is
+  // certain. Tries with the new fields first, falls back to
+  // progressively fewer fields on a pre-migration "column does not
+  // exist" error, same fallback shape already used elsewhere in this
+  // codebase (e.g. pomo-active.js's owner_token) — a rename must never
+  // fail outright just because a newer column doesn't exist yet.
   const fullUpdate = {
     display_name: displayName,
     needs_rename: false,
@@ -211,6 +218,7 @@ export async function handler(event) {
     gate_name_check_month: null,
     gate_escalated: false,
   };
+  if (gatedNameVerified) { fullUpdate.name_last_checked = displayName; }
   if (voluntaryRenameCountThisMonth != null) {
     fullUpdate.voluntary_rename_count = voluntaryRenameCountThisMonth + 1;
     fullUpdate.voluntary_rename_month = month;
