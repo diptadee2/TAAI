@@ -53,7 +53,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-24-9';
+  var CLIENT_VERSION = '2026-09-24-10';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -3491,7 +3491,13 @@
   // the badges should show") that a student who's already passed 250h
   // shouldn't lose their earlier ⭐ just because they've since earned 🔥
   // too; each is its own small tier-colored chip (was a bare inline
-  // emoji with no background at all) rather than one plain glyph.
+  // emoji with no background at all) rather than one plain glyph. Went
+  // through single-badge and row-below-name variants in between (see
+  // git history) before landing back here — the Name column was
+  // widened and Streak's own column capped down to its real content
+  // width (see #leaderboard-card .leaderboard-row's grid-template-
+  // columns) specifically to give a multi-badge name real room beside
+  // it without crowding, rather than shrinking the badges again.
   function effortBadgesHtml(allTimeMinutes) {
     var hours = (allTimeMinutes || 0) / 60;
     var html = '';
@@ -3503,29 +3509,6 @@
     return html;
   }
 
-  // Third round on where/how badges render on the row: stacking every
-  // earned tier inline, then on their own row below the name, both read
-  // as cluttering an already info-dense row ("too congested," then "too
-  // much going on"). Landing point: back beside the name, but only the
-  // single HIGHEST earned tier — a student who's earned ⭐🔥 shows just
-  // 🔥, not both — kept small and visually quiet (no glow, a muted
-  // tier-tinted background rather than the earlier loud bordered-glow
-  // chip), so it reads as a subtle status marker next to the name rather
-  // than another competing element. The full set of earned tiers is
-  // still always available without adding row weight, via the exact
-  // same two places as before: the all-time-hours hover tooltip
-  // (showAllTimeTooltip) and the Name column's "?" legend
-  // (effortLegendHtml) — both already use effortBadgesHtml/EFFORT_TIERS
-  // directly and are untouched by this.
-  function highestEffortBadgeHtml(allTimeMinutes) {
-    var hours = (allTimeMinutes || 0) / 60;
-    var highest = null;
-    for (var i = 0; i < EFFORT_TIERS.length; i++) {
-      if (hours >= EFFORT_TIERS[i].minHours) highest = EFFORT_TIERS[i];
-    }
-    if (!highest) return '';
-    return '<span class="leaderboard-effort-badge leaderboard-effort-badge--' + highest.key + '" title="' + highest.name + ' milestone — ' + highest.minHours + '+ all-time focus hours">' + highest.emoji + '</span>';
-  }
 
   // Per-badge title attributes are real but not discoverable — the
   // exact same lesson already learned once this session for the
@@ -3826,7 +3809,7 @@
       return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (r.is_me ? ' leaderboard-row--me' : '') + (r.is_live ? ' leaderboard-row--live' : '') + leaderboardRowEnterAttrs(animate, i) + '">' +
         '<span class="leaderboard-rank">' + rankLabel + '</span>' +
         rankMovementHtml(i + 1, r.previous_week_rank) +
-        '<span class="leaderboard-name"' + allTimeTitleAttr(r.all_time_minutes) + '>' + liveDotHtml(r.is_live) + escapeHtml(r.display_name) + highestEffortBadgeHtml(r.all_time_minutes) + (r.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
+        '<span class="leaderboard-name"' + allTimeTitleAttr(r.all_time_minutes) + '>' + liveDotHtml(r.is_live) + escapeHtml(r.display_name) + effortBadgesHtml(r.all_time_minutes) + (r.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
         streakBallsHtml(r.streak) +
         (r.is_me && !r.pomo_status ? weeklyPaceStatusHtml(r.total_minutes) : pomoStatusHtml(r.pomo_status, r.pomo_last_seen_at)) +
         pomoTimerHtml(r.pomo_phase_end_at, r.pomo_phase_total_seconds, r.pomo_status) +
@@ -3843,7 +3826,7 @@
         '<div class="leaderboard-row leaderboard-row--me' + (state.viewerRank.is_live ? ' leaderboard-row--live' : '') + leaderboardRowEnterAttrs(animate, state.leaderboard.length) + '">' +
         '<span class="leaderboard-rank">' + state.viewerRank.rank + '</span>' +
         rankMovementHtml(state.viewerRank.rank, state.viewerRank.previous_week_rank) +
-        '<span class="leaderboard-name"' + allTimeTitleAttr(state.viewerRank.all_time_minutes) + '>' + liveDotHtml(state.viewerRank.is_live) + 'You' + highestEffortBadgeHtml(state.viewerRank.all_time_minutes) + '</span>' +
+        '<span class="leaderboard-name"' + allTimeTitleAttr(state.viewerRank.all_time_minutes) + '>' + liveDotHtml(state.viewerRank.is_live) + 'You' + effortBadgesHtml(state.viewerRank.all_time_minutes) + '</span>' +
         streakBallsHtml(state.viewerRank.streak) +
         (state.viewerRank.pomo_status ? pomoStatusHtml(state.viewerRank.pomo_status, state.viewerRank.pomo_last_seen_at) : weeklyPaceStatusHtml(state.viewerRank.total_minutes)) +
         pomoTimerHtml(state.viewerRank.pomo_phase_end_at, state.viewerRank.pomo_phase_total_seconds, state.viewerRank.pomo_status) +

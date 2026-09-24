@@ -1049,12 +1049,19 @@
      Name's own cap grew 130px→180px ("can we have the same spacing fix
      here" — the same name-truncation problem already fixed on Today's
      Leaders, "GATE DA ASPIRANT" clipping to "GATE DA ASPI…"). The extra
-     50px comes straight out of the Streak column's own flexible space
-     (minmax(92px,1fr) — it's the row's one column that grows into
-     leftover width), which this board has plenty of: most rows carry 0-5
-     small streak balls, nowhere near enough to actually need the width
-     that column was otherwise sitting on unused. */
-  #leaderboard-card .leaderboard-row { grid-template-columns: 40px 16px minmax(0,180px) minmax(92px,1fr) 76px 60px 58px; }
+     50px originally came out of the Streak column's own flexible space
+     — most rows carry 0-5 small streak balls, nowhere near enough to
+     actually need the width that column was otherwise sitting on
+     unused. Streak was later capped outright (was the row's one 1fr
+     column; Name is now, see below) once effort badges needed real
+     room beside the name too — direct request: "all the badges should
+     be present beside the name, move the streak column right towards
+     the negative space side to free more space for the badges". Streak
+     itself never actually needs more than a handful of 10px balls plus
+     an overflow chip (~105px worst case), so capping it at 115px still
+     comfortably fits every real row while giving Name whatever's left
+     over instead of Streak hoarding it unused. */
+  #leaderboard-card .leaderboard-row { grid-template-columns: 40px 16px minmax(140px,1fr) minmax(75px,115px) 76px 60px 58px; }
   .leaderboard-row:last-child { border-bottom: none; }
   .leaderboard-row--top { padding-top: 14px; padding-bottom: 14px; }
   .leaderboard-row--me { background: rgba(139,92,246,0.1); border-bottom-color: transparent; }
@@ -1342,7 +1349,7 @@
      .leaderboard-row above (including its 180px Name cap, see that
      rule's own comment), so every label lands exactly above its column
      on every row, not just approximately near it. */
-  .leaderboard-columns { display: grid; grid-template-columns: 40px 16px minmax(0,180px) minmax(92px,1fr) 76px 60px 58px; align-items: center; gap: 16px; padding: 0 14px 6px; font-family: var(--font-nav); font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
+  .leaderboard-columns { display: grid; grid-template-columns: 40px 16px minmax(140px,1fr) minmax(75px,115px) 76px 60px 58px; align-items: center; gap: 16px; padding: 0 14px 6px; font-family: var(--font-nav); font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
   .leaderboard-col-rank { text-align: center; min-width: 0; }
   /* Centered, not left-aligned to match the live-dot offset like it used
      to be — direct request to center every header label within its own
@@ -1385,6 +1392,11 @@
      Opacity alone isn't covered by that gotcha and reads as an
      equally-noticeable pulse at this size. */
   .streak-legend-toggle { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border: none; border-radius: 50%; background: rgba(139,92,246,0.45); color: #f3e8ff; font-size: 10.5px; font-weight: 800; line-height: 1; cursor: pointer; text-transform: none; letter-spacing: normal; box-shadow: 0 0 4px rgba(139,92,246,0.4); animation: streak-legend-toggle-pulse 2.2s ease-in-out infinite; }
+  /* .leaderboard-col-streak already gives its own toggle breathing room
+     via flex gap — .leaderboard-col-name has no such flex layout (it's
+     plain centered text), so its "Name" text and "?" sat with zero
+     space between them ("too close, space it adequately"). */
+  #effort-legend-toggle { margin-left: 6px; }
   .streak-legend-toggle:hover { background: rgba(139,92,246,0.7); color: #fff; animation: none; opacity: 1; }
   @keyframes streak-legend-toggle-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
   @media (prefers-reduced-motion: reduce) { .streak-legend-toggle { animation: none; } }
