@@ -53,7 +53,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-24-4';
+  var CLIENT_VERSION = '2026-09-24-5';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -3489,6 +3489,28 @@
     return html;
   }
 
+  // Per-badge title attributes are real but not discoverable — the
+  // exact same lesson already learned once this session for the
+  // all-time-minutes hover ("still nothing on hover," fixed by
+  // replacing a bare title with a real popover) — so nobody hovering a
+  // badge for the first time has any reason to know what it means or
+  // that hovering would even tell them ("nobody would know what
+  // achievement badge means what," direct feedback). Same collapsed-
+  // by-default "?" toggle pattern as streakLegendHtml just above,
+  // built straight from EFFORT_TIERS so a future threshold/emoji change
+  // can't silently drift out of sync with this list.
+  function effortLegendHtml() {
+    var rows = '';
+    for (var i = 0; i < EFFORT_TIERS.length; i++) {
+      var t = EFFORT_TIERS[i];
+      rows += '<div class="streak-legend-row"><span class="leaderboard-effort-badge leaderboard-effort-badge--' + t.key + '">' + t.emoji + '</span>' +
+        '<span class="streak-legend-name">' + t.name + '</span>' +
+        '<span class="streak-legend-range">' + t.minHours + '+ hrs</span></div>';
+    }
+    return '<div class="streak-legend-popover" id="effort-legend-popover" hidden>' +
+      '<div class="streak-legend-title">All-time effort badges</div>' + rows + '</div>';
+  }
+
   // Status badge ("Focus"/"Break") for a live student's current phase —
   // pomo_status comes straight from pomo_active_session's mode column
   // ('work'|'break', see schema.sql), null for anyone not live. Blank
@@ -3819,7 +3841,8 @@
       // Mirrors each row's exact rank/name/streak/time widths so every
       // label sits directly above its column on every row, not just
       // approximately near it.
-      '<div class="leaderboard-columns"><span class="leaderboard-col-rank">Rank</span><span></span><span class="leaderboard-col-name">Name</span>' +
+      '<div class="leaderboard-columns"><span class="leaderboard-col-rank">Rank</span><span></span>' +
+      '<span class="leaderboard-col-name">Name<button type="button" class="streak-legend-toggle" id="effort-legend-toggle" aria-label="What do the badges beside names mean?">?</button>' + effortLegendHtml() + '</span>' +
       '<span class="leaderboard-col-streak">Streak<button type="button" class="streak-legend-toggle" id="streak-legend-toggle" aria-label="What do the streak colors mean?">?</button>' + streakLegendHtml() + '</span>' +
       '<span class="leaderboard-col-status">Status</span><span class="leaderboard-col-timer">Timer</span><span class="leaderboard-col-time">Minutes</span></div>' +
       '<div id="leaderboard-rows">' + renderLeaderboardRows(animateNow) + '</div>' +
@@ -4045,6 +4068,22 @@
       document.addEventListener('click', function (e) {
         if (!streakLegendPopover.hidden && !streakLegendPopover.contains(e.target) && e.target !== streakLegendToggle) {
           streakLegendPopover.hidden = true;
+        }
+      });
+    }
+
+    // Same toggle-popover pattern as the streak legend just above, for
+    // the effort badges beside names — see effortLegendHtml.
+    var effortLegendToggle = document.getElementById('effort-legend-toggle');
+    var effortLegendPopover = document.getElementById('effort-legend-popover');
+    if (effortLegendToggle && effortLegendPopover) {
+      effortLegendToggle.addEventListener('click', function (e) {
+        e.stopPropagation();
+        effortLegendPopover.hidden = !effortLegendPopover.hidden;
+      });
+      document.addEventListener('click', function (e) {
+        if (!effortLegendPopover.hidden && !effortLegendPopover.contains(e.target) && e.target !== effortLegendToggle) {
+          effortLegendPopover.hidden = true;
         }
       });
     }
