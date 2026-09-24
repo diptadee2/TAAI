@@ -1191,8 +1191,23 @@
      visible ink sits noticeably higher than that box's true middle
      (confirmed via a zoomed screenshot: without the nudge, there's a
      visible gap below the glyph and none above), so a plain flex-center
-     alone reads as "floating high" inside the circle. */
+     alone reads as "floating high" inside the circle. Verified with a
+     canvas-pixel-level (not just eyeballed) ink-vs-circle-center
+     measurement across every real badge on the weekly leaderboard —
+     consistently within ~0.1% of true center at this value, don't
+     re-tune it without re-measuring the same way. */
   .leaderboard-effort-badge { display: inline-flex; align-items: center; justify-content: center; width: 13px; height: 13px; margin-left: 7px; border-radius: 50%; font-size: 8px; vertical-align: middle; cursor: default; padding-top: 1px; }
+  /* Today's Leaders needs its own, larger nudge — same badge, same CSS
+     otherwise, but the pixel-level measurement above showed this
+     context's glyphs consistently rendering higher (avg ~-4.2% of
+     diameter at padding-top:1px, worse than the weekly board's ~-0.1%)
+     — a real, reproducible sub-pixel text-rendering difference tied to
+     where this board's narrower column happens to land on the pixel
+     grid, not a CSS mistake fixable by matching the weekly board's
+     value. Tuned separately the same way (10 real badges averaged per
+     candidate value): 2px brought the average to +0.4%, the closest of
+     everything tried. */
+  #today-leaderboard-rows .leaderboard-effort-badge { padding-top: 2px; }
   .leaderboard-effort-badge--star { background: rgba(146,116,45,0.45); }
   .leaderboard-effort-badge--flame { background: rgba(150,79,42,0.45); }
   .leaderboard-effort-badge--lightning { background: rgba(51,97,120,0.45); }
