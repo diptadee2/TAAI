@@ -53,7 +53,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-24-13';
+  var CLIENT_VERSION = '2026-09-24-14';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1804,7 +1804,7 @@
       return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (l.is_me ? ' leaderboard-row--me' : '') + (l.is_live ? ' leaderboard-row--live' : '') + leaderboardRowEnterAttrs(animate, i) + '">' +
         '<span class="leaderboard-rank">' + rank + '</span>' +
         rankMovementHtml(i + 1) +
-        '<span class="leaderboard-name"' + allTimeTitleAttr(l.all_time_minutes) + '>' + liveDotHtml(l.is_live) + escapeHtml(l.display_name) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
+        '<span class="leaderboard-name"' + allTimeTitleAttr(l.all_time_minutes) + '>' + liveDotHtml(l.is_live) + escapeHtml(l.display_name) + effortBadgesHtml(l.all_time_minutes) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
         '<span class="leaderboard-time">' + formatHoursDecimal(l.total_minutes) + '</span>' +
         '</div>';
     }).join('');
@@ -1813,7 +1813,7 @@
         '<div class="leaderboard-row leaderboard-row--me' + (state.todayViewerRank.is_live ? ' leaderboard-row--live' : '') + leaderboardRowEnterAttrs(animate, leaders.length) + '">' +
         '<span class="leaderboard-rank">' + state.todayViewerRank.rank + '</span>' +
         rankMovementHtml(state.todayViewerRank.rank) +
-        '<span class="leaderboard-name"' + allTimeTitleAttr(state.todayViewerRank.all_time_minutes) + '>' + liveDotHtml(state.todayViewerRank.is_live) + 'You</span>' +
+        '<span class="leaderboard-name"' + allTimeTitleAttr(state.todayViewerRank.all_time_minutes) + '>' + liveDotHtml(state.todayViewerRank.is_live) + 'You' + effortBadgesHtml(state.todayViewerRank.all_time_minutes) + '</span>' +
         '<span class="leaderboard-time">' + formatHoursDecimal(state.todayViewerRank.total_minutes) + '</span>' +
         '</div>';
     }
