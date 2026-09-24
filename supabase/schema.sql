@@ -718,6 +718,29 @@ ALTER TABLE students ADD COLUMN IF NOT EXISTS name_last_checked TEXT;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS gate_name_check_count INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS gate_name_check_window_start TIMESTAMPTZ;
 
+-- name-check-scan.js's original version fetched EVERY student (email,
+-- display_name, needs_rename, name_last_checked) on every single tick
+-- and filtered client-side in JS — harmless at the original once-a-day
+-- cadence, but once that cron widened to every 5 minutes (see its own
+-- comment) this was measured directly against real production data as
+-- ~339MB/month just for this one query, almost all of it wasted: the
+-- overwhelming majority of ticks have zero actual candidates, yet still
+-- paid for downloading the full ~344-row roster to find that out. This
+-- function does the exact same filter server-side instead, returning
+-- ONLY the (usually zero, at most p_limit) rows that genuinely need
+-- checking — a near-empty response on a typical tick instead of the
+-- whole table. STABLE, not VOLATILE, since it only reads.
+CREATE OR REPLACE FUNCTION get_name_check_candidates(p_limit INTEGER)
+RETURNS TABLE(email TEXT, display_name TEXT) AS $$
+  SELECT email, display_name FROM students
+  WHERE needs_rename = false
+    AND display_name IS NOT NULL
+    AND (name_last_checked IS NULL OR name_last_checked != display_name)
+  LIMIT p_limit;
+$$ LANGUAGE sql STABLE;
+
+GRANT EXECUTE ON FUNCTION get_name_check_candidates TO service_role;
+
 -- Multi-device/tab session-ownership protection — a real bug, confirmed
 -- against production: pomo_active_session is ONE shared row per email,
 -- so a second, stale tab/device silently re-syncing its own old idle

@@ -9,14 +9,19 @@
 // is the separate, reactive half that stops someone dodging an existing
 // flag with a different-but-still-bad name.
 //
-// A student is a candidate here only if BOTH: (1) they aren't already
+// A student is a candidate only if BOTH: (1) they aren't already
 // needs_rename (no point re-flagging someone already gated — whatever
 // resolves that at rename time will re-check the new name on its own),
 // and (2) their current display_name doesn't match name_last_checked
-// (never checked, or checked a since-changed name). This second
-// condition is what keeps this cheap on every run once caught up: once a
-// name has been checked and passed, it's never re-billed against the
-// API again unless the student actually changes it.
+// (never checked, or checked a since-changed name). This is done
+// entirely server-side via get_name_check_candidates() (schema.sql) —
+// NOT a fetch-everything-then-filter-in-JS pattern. That was the
+// original version, and it was a real, measured cost problem once this
+// cron widened from once-a-day to every 5 minutes: fetching all ~344
+// students on every tick to find usually-zero candidates measured out to
+// ~339MB/month against real production data, almost entirely wasted.
+// The RPC returns only the (usually zero, at most SCAN_LIMIT) rows that
+// actually need checking — a near-empty response on a typical tick.
 //
 // SCAN_LIMIT caps how many students get checked per run — every 5
 // minutes is frequent enough that a brand-new signup is normally caught
@@ -33,27 +38,21 @@ const SCAN_LIMIT = 20;
 export async function handler() {
   const supabase = getSupabase();
 
-  const { data: students, error } = await supabase
-    .from('students')
-    .select('email, display_name, needs_rename, name_last_checked');
+  const { data: candidates, error } = await supabase.rpc('get_name_check_candidates', { p_limit: SCAN_LIMIT });
   if (error) {
-    // Pre-migration (needs_rename_source/name_check_reason/
-    // name_last_checked not added to production yet) or any other
-    // lookup hiccup — a clean no-op response, not a scary 500 from a
-    // scheduled function nobody's watching in real time. Retried
-    // automatically on the next run (5 minutes later) regardless.
+    // Pre-migration (the RPC, or the columns it reads, not added to
+    // production yet) or any other lookup hiccup — a clean no-op
+    // response, not a scary 500 from a scheduled function nobody's
+    // watching in real time. Retried automatically on the next run (5
+    // minutes later) regardless.
     return json(200, { candidates: 0, checked: 0, flagged: 0, errors: [], skipped: error.message });
   }
-
-  const candidates = (students || [])
-    .filter((s) => !s.needs_rename && s.display_name && s.display_name !== s.name_last_checked)
-    .slice(0, SCAN_LIMIT);
 
   let checked = 0;
   let flagged = 0;
   const errors = [];
 
-  for (const student of candidates) {
+  for (const student of candidates || []) {
     try {
       const result = await checkNameAppropriate(student.display_name);
       if (result.skipped) break; // no API key configured — stop the whole run, not just this student, nothing else will succeed either
@@ -75,5 +74,5 @@ export async function handler() {
     }
   }
 
-  return json(200, { candidates: candidates.length, checked, flagged, errors });
+  return json(200, { candidates: (candidates || []).length, checked, flagged, errors });
 }
