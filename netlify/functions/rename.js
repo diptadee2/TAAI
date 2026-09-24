@@ -5,7 +5,7 @@
 // from an explicit "Rename" action the student takes on purpose, not a
 // side effect of registering again on a new device.
 import { getSupabase, json, todayIST } from './lib/supabase.js';
-import { checkNameAppropriate } from './lib/name-check.js';
+import { checkNameAppropriate, triggerNameCheckBackground } from './lib/name-check.js';
 
 // Both caps below are 3, but deliberately separate counters/columns (see
 // schema.sql) — a gated student resolving their flag and an ordinary
@@ -88,15 +88,14 @@ export async function handler(event) {
       // Deliberately NOT checked here — same "save it instantly, check
       // separately" design as register.js (see its own top comment for
       // the direct correction that led here). The new name is saved
-      // unconditionally below; name-check-scan.js picks it up within
-      // ~15 minutes (its candidate filter is just "current display_name
-      // differs from what was last checked" — a fresh rename always
-      // qualifies) and sets needs_rename=true if Claude flags it. The
-      // monthly cap above still applies here, unchanged — it's not about
-      // avoiding a synchronous wait, it's about bounding how many real
-      // Claude calls a student can cause via repeated renaming, which is
-      // exactly as true whether the check happens inline or at the next
-      // scan tick.
+      // unconditionally below; `triggerNameCheckBackground()` (called
+      // right before the final return) fires a real, separate Claude
+      // check a few seconds later and sets needs_rename=true if it's
+      // flagged. The monthly cap above still applies here, unchanged —
+      // it's not about avoiding a synchronous wait, it's about bounding
+      // how many real Claude calls a student can cause via repeated
+      // renaming, which is exactly as true regardless of when the check
+      // actually runs.
     } else if (existing && existing.needs_rename) {
       const oldNorm = normalizeForCompare(existing.display_name);
       const newNorm = normalizeForCompare(displayName);
@@ -190,17 +189,17 @@ export async function handler(event) {
   // the voluntary path nothing here verifies the new name synchronously
   // anymore (see the comment above), so a stale reason from BEFORE this
   // rename is never accurate for the new name either way: if the new
-  // name also turns out bad, name-check-scan.js writes a fresh reason
-  // of its own within ~15 minutes; if it's fine, there's nothing to
-  // explain. **name_last_checked is written here ONLY on the gated
-  // path, and only when its own synchronous Claude check genuinely ran
-  // and passed** (`gatedNameVerified`) — a name that just cleared a real
-  // Claude check seconds ago shouldn't cost a second, redundant check
-  // at the next scan tick. A voluntary rename deliberately leaves
+  // name also turns out bad, check-name-background.js (fired below)
+  // writes a fresh reason of its own within seconds; if it's fine,
+  // there's nothing to explain. **name_last_checked is written here
+  // ONLY on the gated path, and only when its own synchronous Claude
+  // check genuinely ran and passed** (`gatedNameVerified`) — a name that
+  // just cleared a real Claude check seconds ago shouldn't cost a
+  // second, redundant check. A voluntary rename deliberately leaves
   // name_last_checked untouched (still whatever it was before this
   // rename) so it stays a genuine mismatch against the NEW display_name
-  // — that mismatch is exactly what makes the scan's own candidate
-  // filter pick this student back up for its one real check.
+  // — that mismatch is exactly what the background check (and, as a
+  // backstop, the daily safety-net scan) look for.
   // voluntaryRenameCountThisMonth is only non-null on the voluntary
   // path — incremented here (not earlier) since it should only count a
   // genuinely SUCCESSFUL rename, and this is the point where success is
@@ -248,6 +247,14 @@ export async function handler(event) {
   }
   if (error) return json(500, { error: error.message });
   if (!data) return json(404, { error: 'student not found' });
+
+  // Only the voluntary path needs a real check dispatched — the gated
+  // path already ran its own synchronous check above (and, on success,
+  // recorded it via gatedNameVerified, so it wouldn't be a candidate for
+  // this anyway).
+  if (voluntaryRenameCountThisMonth != null) {
+    await triggerNameCheckBackground(event, email, displayName);
+  }
 
   return json(200, data);
 }

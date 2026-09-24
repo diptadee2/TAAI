@@ -2,20 +2,29 @@
 //
 // A single shared helper wrapping the Claude API to classify a student's
 // display name as appropriate/inappropriate for a public, educational
-// leaderboard. Two different usage patterns, by design, not an
+// leaderboard. Three different usage patterns, by design, not an
 // oversight — see each call site's own comment:
-//   - name-check-scan.js (a scheduled function, every 15 minutes) is
-//     what checks a brand-new registration or an ordinary voluntary
-//     rename — ASYNCHRONOUSLY, well after the name was already saved.
-//     register.js and rename.js's voluntary path both save instantly
-//     with zero inline call to this function at all; a flagged result
-//     here gates the student (needs_rename=true) rather than rejecting
-//     anything, since there's nothing left to reject by the time this
-//     runs. This is the restored design after a same-day back-and-forth
-//     — briefly replaced with a fully-synchronous check-then-reject at
-//     both save sites, then reverted on direct correction ("save the
-//     name whatever it is instantly, while putting it on check — if it
-//     comes back with inappropriateness then gate the student").
+//   - check-name-background.js (a Netlify Background Function, triggered
+//     fire-and-forget via triggerNameCheckBackground() below) is what
+//     actually reviews a brand-new registration or an ordinary voluntary
+//     rename — ASYNCHRONOUSLY, a few seconds after the name was already
+//     saved, never blocking the student's own request. register.js and
+//     rename.js's voluntary path both save instantly with zero inline
+//     call to this function at all; a flagged result gates the student
+//     (needs_rename=true) rather than rejecting anything, since there's
+//     nothing left to reject by the time the background function runs.
+//     This event-driven design replaced an earlier 15-minute polling
+//     scan the same day it shipped ("how bout there is a condition if
+//     there are name changes or new signups the function gets called?")
+//     — strictly better on both the latency this codebase cares about
+//     (seconds, not up to 15 minutes) and the resource cost ("let's save
+//     resources" — no more ~96 empty daily poll ticks).
+//   - name-check-scan.js (scheduled, once daily now, see its own top
+//     comment) is a SAFETY NET, not the primary path — it only ever
+//     finds a candidate when a background check above genuinely failed
+//     to run or write (a transient Claude/network error, a dispatch that
+//     never landed), which check-name-background.js deliberately leaves
+//     unrecorded specifically so this daily run can retry it.
 //   - rename.js's OWN gated-resolution branch (a student who's already
 //     needs_rename=true, actively trying to fix it) still calls this
 //     SYNCHRONOUSLY and rejects outright if still flagged — a
@@ -102,4 +111,30 @@ export async function checkNameAppropriate(name) {
   const toolUse = (data.content || []).find((c) => c.type === 'tool_use' && c.name === 'classify_name');
   if (!toolUse) throw new Error('Claude did not return a classify_name tool call');
   return { flagged: !!toolUse.input.flagged, reason: toolUse.input.reason || '' };
+}
+
+// Fires check-name-background.js for (email, displayName) — used by
+// register.js and rename.js's voluntary-rename branch, both of which
+// save the name unconditionally FIRST and let this run the actual Claude
+// check afterward, out of the request/response cycle entirely. Awaited
+// only long enough to confirm Netlify accepted the background invocation
+// (a near-instant 202 ack, not the real multi-second Claude round trip
+// that happens after) — failing to even dispatch it is logged, not
+// thrown, since a missed background check must never fail an otherwise-
+// successful save; name-check-scan.js's daily safety-net run is the
+// backstop for exactly this case too.
+export async function triggerNameCheckBackground(event, email, displayName) {
+  try {
+    const proto = (event.headers && (event.headers['x-forwarded-proto'] || event.headers['X-Forwarded-Proto'])) || 'http';
+    const host = event.headers && (event.headers.host || event.headers.Host);
+    if (!host) return;
+    const url = proto + '://' + host + '/.netlify/functions/check-name-background';
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-internal-secret': process.env.SUPABASE_SERVICE_KEY || '' },
+      body: JSON.stringify({ email, display_name: displayName }),
+    });
+  } catch (e) {
+    console.error('triggerNameCheckBackground: failed to dispatch for', email, e);
+  }
 }

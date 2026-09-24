@@ -67,22 +67,24 @@
 [functions."hourly-activity-mock-cutover"]
   schedule = "*/15 * * * *"
 
-# Checks any student whose name hasn't been reviewed by Claude yet
-# (register.js and rename.js's voluntary-rename path both save a new
-# name instantly with no inline check at all — this scan is what
-# actually reviews it, gating the student afterward if flagged, rather
-# than blocking/rejecting the save itself). Went through a same-day
-# back-and-forth: built at 5 minutes, deleted entirely on a follow-up
-# that (mistakenly, per a direct correction right after) read as "check
-# synchronously instead, no scan needed" — restored at 15 minutes once
-# the real intent was clarified ("if netlify functions run every 15
-# minutes so be it, gate the student after 15 minutes"). See
-# name-check-scan.js's own comment for the full reasoning, including the
-# real Egress cost bug (~339MB/month) that the 5-minute cadence hit once
-# already, and why the RPC-based candidate filter (not fetch-everything-
-# then-filter-in-JS) is what makes 15 minutes safe regardless.
+# Runs once a day at 19:15 UTC (00:45 IST) — a SAFETY NET for the name
+# moderation feature, not its primary path. register.js and rename.js's
+# voluntary-rename path save a new name instantly, then fire a Netlify
+# Background Function (check-name-background.js) to do the real Claude
+# check a few seconds later — this daily run only ever finds a candidate
+# when that background check genuinely failed to run or write. Went
+# through several cadences the same day before landing here: once daily
+# → 5 minutes → deleted entirely (a misread of a follow-up question) →
+# restored at 15 minutes → finally demoted to this daily backstop role
+# once the event-driven background-function design shipped, on direct
+# follow-up ("how bout there is a condition if there are name changes or
+# new signups the function gets called?"). See name-check-scan.js's own
+# comment for the full reasoning, including the real Egress cost bug
+# (~339MB/month) an earlier fetch-everything version hit at a frequent
+# cadence, and why the RPC-based candidate filter avoids that regardless
+# of how often this runs.
 [functions."name-check-scan"]
-  schedule = "*/15 * * * *"
+  schedule = "15 19 * * *"
 
 # No headers were configured at all before this, so every static asset
 # (images, vendor React bundle, favicons) inherited Netlify's default

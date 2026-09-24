@@ -1,47 +1,50 @@
-// Scheduled function (see netlify.toml, every 15 minutes) — checks any
-// student whose display_name hasn't been run through the Claude
-// appropriateness classifier yet (lib/name-check.js). This is what
-// actually reviews a brand-new registration or a voluntary rename —
-// register.js and rename.js's own voluntary-rename branch both
-// deliberately save the submitted name instantly with no Claude check
-// at all (see register.js's top comment for the direct correction that
-// led there: "save the name whatever it is instantly, while putting it
-// on check — if it comes back with inappropriateness then gate the
-// student to change it"), so THIS is where that check actually happens,
-// separately, and where a flagged name gets gated (needs_rename=true)
-// after the fact rather than being rejected up front. rename.js's own
-// inline check (only while a student is already needs_rename-gated) is
-// the separate, synchronous half that stops someone dodging an existing
-// flag with a different-but-still-bad name — that one stays a real
-// reject-and-retry flow, since the whole point there is confirming
-// they've actually fixed it before letting them out of the gate.
+// Scheduled function (see netlify.toml, once daily) — a SAFETY NET, not
+// the primary detection path. Checks any student whose display_name
+// hasn't been run through the Claude appropriateness classifier yet
+// (lib/name-check.js). The primary path is now event-driven:
+// register.js and rename.js's voluntary-rename branch both save a name
+// instantly, then fire check-name-background.js (a Netlify Background
+// Function) to do the actual review a few seconds later — see that
+// file's own comment. This scan exists only to catch what that misses:
+// a background dispatch that never landed, a transient Claude/network
+// error mid-check (check-name-background.js deliberately leaves
+// name_last_checked unset on any failure, specifically so it still
+// reads as a real candidate here). In steady state this should find
+// ~zero candidates on a typical run. Originally the ONLY detection
+// mechanism (15-minute polling, before that 5-minute, before that once
+// a day) — moved to daily and demoted to backstop-only the same day the
+// event-driven design shipped, on direct follow-up ("how bout there is
+// a condition if there are name changes or new signups the function
+// gets called?"): polling every 15 minutes for a check that now almost
+// always already happened seconds after the fact was pure waste once
+// the background function existed. rename.js's own gated-resolution
+// branch (a student already needs_rename-gated, actively trying to fix
+// it) still calls Claude SYNCHRONOUSLY, unrelated to any of this — that
+// one stays a real reject-and-retry flow, since the whole point there is
+// confirming a fix before letting the student out of the gate.
 //
 // A student is a candidate only if BOTH: (1) they aren't already
 // needs_rename (no point re-flagging someone already gated — the gated
 // resolution flow re-checks the new name on its own), and (2) their
 // current display_name doesn't match name_last_checked (never checked,
-// or checked a since-changed name — including a fresh rename, which
-// always qualifies since rename.js never touches name_last_checked
-// itself). This is done entirely server-side via
+// or checked a since-changed name that the background check somehow
+// never got to). This is done entirely server-side via
 // get_name_check_candidates() (schema.sql) — NOT a fetch-everything-
-// then-filter-in-JS pattern. That was the original version, and it was
-// a real, measured cost problem once this cron ran every 5 minutes:
-// fetching all ~344 students on every tick to find usually-zero
-// candidates measured out to ~339MB/month against real production data,
-// almost entirely wasted. The RPC returns only the (usually zero, at
-// most SCAN_LIMIT) rows that actually need checking — a near-empty
-// response on a typical tick. 15 minutes (not 5) is the cadence this
-// time, confirmed directly with the user as an acceptable delay ("if
-// netlify functions run every 15 minutes so be it, gate the student
-// after 15 minutes") rather than re-introducing the earlier cost issue.
+// then-filter-in-JS pattern, which was the original version and a real,
+// measured cost problem once the cron briefly ran every 5 minutes
+// (~339MB/month against real production data, almost entirely wasted).
+// The RPC returns only the (now almost always zero) rows that actually
+// need checking.
 //
-// SCAN_LIMIT caps how many students get checked per run — every 15
-// minutes is frequent enough that a brand-new signup or rename is
-// normally caught within that window, so this only needs to be big
-// enough to clear the occasional backlog (a fresh deploy's very first
-// runs, a burst of signups) within a reasonable number of ticks, not a
-// full day's worth of registrations in one go — a real ceiling against
-// a runaway cost surprise if the candidate filter above ever misbehaves.
+// SCAN_LIMIT caps how many students get checked per run — sized to
+// clear a real backlog (a fresh deploy's very first run, a burst of
+// background-check failures) within a reasonable number of ticks, not a
+// full day's registrations in one go — a real ceiling against a runaway
+// cost surprise if the candidate filter above ever misbehaves. Existing
+// students from before this whole feature existed are NOT swept by this
+// — see CLAUDE.md's "Name moderation" section for the one-time backfill
+// that grandfathered the pre-existing roster in as unverified, by direct
+// instruction, rather than retroactively reviewing it.
 import { getSupabase, json } from './lib/supabase.js';
 import { checkNameAppropriate } from './lib/name-check.js';
 
@@ -55,8 +58,8 @@ export async function handler() {
     // Pre-migration (the RPC, or the columns it reads, not added to
     // production yet) or any other lookup hiccup — a clean no-op
     // response, not a scary 500 from a scheduled function nobody's
-    // watching in real time. Retried automatically on the next run (15
-    // minutes later) regardless.
+    // watching in real time. Retried automatically on the next run
+    // (tomorrow) regardless.
     return json(200, { candidates: 0, checked: 0, flagged: 0, errors: [], skipped: error.message });
   }
 
@@ -95,7 +98,7 @@ export async function handler() {
     } catch (e) {
       // One student's check failing (API hiccup, rate limit) must never
       // stop the rest of the batch — it just stays a candidate and gets
-      // picked up again on the next run (15 minutes later).
+      // picked up again on the next run (tomorrow).
       errors.push({ email: student.email, error: e.message });
     }
   }
