@@ -4,14 +4,19 @@
 // and ignores whatever name they typed that time — this is only reachable
 // from an explicit "Rename" action the student takes on purpose, not a
 // side effect of registering again on a new device.
-import { getSupabase, json, todayIST } from './lib/supabase.js';
+import { getSupabase, json } from './lib/supabase.js';
 import { checkNameAppropriate } from './lib/name-check.js';
 
-// Caps how many real Claude calls one gated student can trigger per
-// month (see gate_name_check_count/month's own comment in schema.sql)
-// — a direct question raised that a gated student could otherwise
-// resubmit indefinitely, each one a real billed API call.
-const GATE_CHECK_MONTHLY_LIMIT = 3;
+// Caps how many real Claude calls one gated student can trigger within
+// a rolling window (see gate_name_check_count/window_start's own
+// comment in schema.sql) — a direct question raised that a gated
+// student could otherwise resubmit indefinitely, each one a real billed
+// API call. Once spent, further attempts are rejected outright (no
+// dodge-check-only fallback — see schema.sql for why an earlier version
+// of this that fell back to "unchecked, anything passes" was a real
+// exploit) until the window expires.
+const GATE_CHECK_LIMIT = 3;
+const GATE_CHECK_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 // Strips everything but letters/digits and lowercases, so "Sandip",
 // "Sandip.", "sandip_", "SANDIP " etc. all normalize identically — used
@@ -66,55 +71,70 @@ export async function handler(event) {
       // flagged, with Claude's own reason surfaced directly in the
       // gate's error message.
       //
-      // Rate-limited to GATE_CHECK_MONTHLY_LIMIT real attempts per
-      // student per month — once spent, further attempts deliberately
-      // skip the Claude call and fall through to just the free dodge
-      // check above (the same protection this gate had before Claude
-      // was ever added), rather than rejecting the student outright.
-      // Permanently trapping someone behind their own unresolved gate
-      // over an unrelated cost cap would be strictly worse than the
-      // abuse this bounds. One read (best-effort, fails open — a
-      // lookup hiccup just means "don't rate-limit this one") decides
-      // whether to spend the check; the increment only happens if a
-      // real (non-skipped) Claude call was actually made, counting the
-      // attempt regardless of whether it passed or failed.
-      let spendGateCheck = true;
-      const currentMonth = todayIST().slice(0, 7);
+      // Rate-limited to GATE_CHECK_LIMIT real attempts per rolling
+      // GATE_CHECK_WINDOW_MS window — once spent, every further attempt
+      // is rejected outright until the window expires (see schema.sql's
+      // own comment: an earlier version of this fell back to letting the
+      // name through unchecked once exhausted, which a direct follow-up
+      // question caught as a real exploit — 3 obviously-bad names to burn
+      // the cap, then a 4th equally-bad name slips through unverified).
+      // One read (best-effort, fails open — a lookup hiccup just means
+      // "don't rate-limit this one") decides whether the window is still
+      // active and, if so, whether it's already spent.
+      let locked = false;
       let priorCheckCount = 0;
+      let windowStartIso = null;
+      let unlockAt = null;
       try {
         const { data: rate } = await supabase
           .from('students')
-          .select('gate_name_check_count, gate_name_check_month')
+          .select('gate_name_check_count, gate_name_check_window_start')
           .eq('email', email)
           .maybeSingle();
-        if (rate) {
-          priorCheckCount = rate.gate_name_check_month === currentMonth ? (rate.gate_name_check_count || 0) : 0;
-          spendGateCheck = priorCheckCount < GATE_CHECK_MONTHLY_LIMIT;
+        if (rate && rate.gate_name_check_window_start) {
+          const windowStartMs = new Date(rate.gate_name_check_window_start).getTime();
+          if (Date.now() - windowStartMs < GATE_CHECK_WINDOW_MS) {
+            // Window still active — carry its count/start forward.
+            priorCheckCount = rate.gate_name_check_count || 0;
+            windowStartIso = rate.gate_name_check_window_start;
+            if (priorCheckCount >= GATE_CHECK_LIMIT) {
+              locked = true;
+              unlockAt = windowStartMs + GATE_CHECK_WINDOW_MS;
+            }
+          }
+          // else: window expired — treat as fresh (priorCheckCount stays
+          // 0, windowStartIso stays null, a new window starts below).
         }
       } catch (e) {
         console.error('rename.js: gate_name_check rate lookup failed for', email, e);
       }
 
-      if (spendGateCheck) {
-        try {
-          const result = await checkNameAppropriate(displayName);
-          if (!result.skipped) {
-            try {
-              await supabase
-                .from('students')
-                .update({ gate_name_check_count: priorCheckCount + 1, gate_name_check_month: currentMonth })
-                .eq('email', email);
-            } catch (e) {
-              console.error('rename.js: gate_name_check increment failed for', email, e);
-            }
+      if (locked) {
+        const hoursLeft = Math.max(1, Math.ceil((unlockAt - Date.now()) / (60 * 60 * 1000)));
+        return json(400, { error: 'You\'ve used all your name-check attempts for now — try again in about ' + hoursLeft + (hoursLeft === 1 ? ' hour.' : ' hours.') });
+      }
+
+      try {
+        const result = await checkNameAppropriate(displayName);
+        if (!result.skipped) {
+          try {
+            await supabase
+              .from('students')
+              .update({
+                gate_name_check_count: priorCheckCount + 1,
+                gate_name_check_window_start: windowStartIso || new Date().toISOString(),
+              })
+              .eq('email', email);
+          } catch (e) {
+            console.error('rename.js: gate_name_check increment failed for', email, e);
           }
-          if (result.flagged) {
-            return json(400, { error: 'That name still isn\'t appropriate for this site — ' + (result.reason || 'please pick a different one.') });
-          }
-          if (!result.skipped) claudeVerifiedName = displayName;
-        } catch (e) {
-          console.error('rename.js: Claude appropriateness check failed for', email, e);
         }
+        if (result.flagged) {
+          return json(400, { error: 'That name still isn\'t appropriate for this site — ' + (result.reason || 'please pick a different one.') });
+        }
+        if (!result.skipped) claudeVerifiedName = displayName;
+      } catch (e) {
+        console.error('rename.js: Claude appropriateness check failed for', email, e);
       }
     }
   } catch (e) {

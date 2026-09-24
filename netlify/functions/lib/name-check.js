@@ -2,12 +2,15 @@
 //
 // A single shared helper wrapping the Claude API to classify a student's
 // display name as appropriate/inappropriate for a public, educational
-// leaderboard. Used by three call sites: register.js (a brand-new
-// student's very first name, before it's ever written or shown
-// anywhere), rename.js (the NEW name a needs_rename-flagged student
-// submits, so they can't dodge the gate with a different-but-still-bad
-// name), and name-check-scan.js (a nightly batch scanning every
-// not-yet-flagged student for a name that's slipped through). Plain
+// leaderboard. Used by two call sites: rename.js (the NEW name a
+// needs_rename-flagged student submits, so they can't dodge the gate
+// with a different-but-still-bad name) and name-check-scan.js (a
+// scheduled scan, every 5 minutes, covering every not-yet-flagged
+// student whose name has changed since it was last checked — this is
+// what covers a brand-new registration, since register.js itself
+// deliberately never calls Claude at all: a brand-new signup has no
+// leaderboard visibility until real focus time is logged, so there's no
+// urgency to block or slow down the signup response itself). Plain
 // fetch, no SDK — matches this codebase's existing lightweight Discord/
 // Telegram posting helpers in this same lib/ folder, no new dependency
 // for one small API call.
@@ -18,12 +21,13 @@ const MODEL = 'claude-haiku-4-5-20251001';
 
 const SYSTEM_PROMPT = 'You review display names for a GATE exam-prep leaderboard used by students in India, mostly in their early-to-mid 20s. Names should stay fun and welcoming: nicknames, anime/game/movie characters, jokes, and playful usernames are all completely fine and must NOT be flagged. Only flag a name if it is genuinely inappropriate for a public educational site any student\'s parent or teacher might see - sexually explicit, hateful or slur-based, harassing or targeting a real person, or similar. When in doubt, do NOT flag it - a false positive (blocking a harmless fun name) is worse than an occasional miss.';
 
-// This call sits directly in the request path of registration and a
-// gated rename — a slow or hung Claude response must never leave a
-// student stuck staring at a loading spinner indefinitely (or worse,
-// eating into Netlify's own function execution ceiling). 6s is
-// generous for a single small tool-forced call under normal
-// conditions but still leaves real headroom before that ceiling; a
+// This call sits directly in the request path of a gated rename — a
+// slow or hung Claude response must never leave a student stuck staring
+// at a loading spinner indefinitely (or worse, eating into Netlify's own
+// function execution ceiling). Also bounds how long name-check-scan.js
+// can stall on any one student mid-batch. 6s is generous for a single
+// small tool-forced call under normal conditions but still leaves real
+// headroom before that ceiling; a
 // timeout is treated exactly like any other failure — caught by the
 // caller's own try/catch, fails open.
 const TIMEOUT_MS = 6000;

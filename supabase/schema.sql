@@ -691,22 +691,32 @@ ALTER TABLE students ADD COLUMN IF NOT EXISTS name_check_reason TEXT;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS name_last_checked TEXT;
 
 -- Caps how many real Claude API calls a single gated student can trigger
--- in a calendar month, closing an abuse vector a direct question raised:
--- a needs_rename-gated student could otherwise resubmit new names
--- indefinitely, each one a real billed API call (rename.js only ever
--- calls Claude while gated — a plain voluntary rename never does).
--- gate_name_check_count/gate_name_check_month (rename.js compares the
--- stored month against the current one and treats a mismatch as 0,
--- rather than a separate reset job) track this PER STUDENT, not a
--- global cap. Deliberately does NOT hard-block a student once
--- exhausted — see rename.js's own comment for why: permanently
--- trapping someone behind their own resolved-or-not gate would be
--- worse than the cost this protects against. After the cap, further
--- attempts skip the Claude call and fall back to the free normalized-
--- dodge check alone (the same protection level this gate had before
--- Claude was ever added) — bounded cost, never a dead end.
+-- in a rolling 24h window, closing an abuse vector a direct question
+-- raised: a needs_rename-gated student could otherwise resubmit new
+-- names indefinitely, each one a real billed API call (rename.js only
+-- ever calls Claude while gated — a plain voluntary rename never does).
+-- gate_name_check_count/gate_name_check_window_start (rename.js treats
+-- a window older than 24h as expired, resetting the count — no separate
+-- reset job needed) track this PER STUDENT, not a global cap.
+--
+-- Originally designed to fall back to the free normalized-dodge check
+-- alone once exhausted, rather than hard-blocking — but a direct
+-- follow-up question ("what if they do more than three inappropriate
+-- names") caught a real exploit in that design: since the dodge check
+-- only catches a trivial tweak of the SAME name, not a genuinely
+-- different one, someone could deliberately burn all 3 real attempts on
+-- obviously-bad names, then slip a 4th, equally bad name through
+-- completely unchecked. Replaced with a genuine, but FINITE, cooldown
+-- instead — once the 3 attempts in the current window are spent, every
+-- further attempt is rejected outright (no dodge-check fallback, no
+-- silent pass-through) until the window expires 24h after the first
+-- attempt in that batch. Still never a permanent trap, same reasoning
+-- as malpractice_frozen_until's own escalating-but-expiring freezes
+-- elsewhere in this file — a student who's out of real attempts can
+-- always try again once the window clears, they just can't force one
+-- through in the meantime.
 ALTER TABLE students ADD COLUMN IF NOT EXISTS gate_name_check_count INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE students ADD COLUMN IF NOT EXISTS gate_name_check_month TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS gate_name_check_window_start TIMESTAMPTZ;
 
 -- Multi-device/tab session-ownership protection — a real bug, confirmed
 -- against production: pomo_active_session is ONE shared row per email,

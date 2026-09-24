@@ -2,8 +2,18 @@
 // First-visit registration. If the email already exists, returns the
 // existing record as-is (the student is "recognised", not renamed) —
 // re-registering on a new device shouldn't silently overwrite their name.
+//
+// Deliberately does NOT call Claude here — a real Claude check was
+// briefly added right before the INSERT, then removed the same day on
+// direct instruction: a brand-new registration has zero leaderboard
+// visibility until the student has actually logged real focus time, so
+// there's no urgency to block signup itself on a moderation call.
+// Registration stays instant; name-check-scan.js's nightly pass covers
+// every new student for free (name_last_checked starts null, so a
+// brand-new row is always a candidate on the very next run) — up to
+// ~24h of exposure, accepted as fine given a fresh signup isn't visible
+// to anyone yet regardless.
 import { getSupabase, json } from './lib/supabase.js';
-import { checkNameAppropriate } from './lib/name-check.js';
 
 export async function handler(event) {
   if (event.httpMethod !== 'POST') return json(405, { error: 'method not allowed' });
@@ -25,25 +35,6 @@ export async function handler(event) {
     .maybeSingle();
   if (fetchError) return json(500, { error: fetchError.message });
   if (existing) return json(200, existing);
-
-  // A brand-new name entering the system for the very first time — the
-  // one moment before this is ever written anywhere or shown on a
-  // public leaderboard. Without this, an inappropriate name would sit
-  // live until name-check-scan.js's nightly pass caught it, up to ~24h
-  // later. Checked here, not left to the nightly scan alone, since that
-  // gap is real exposure on a public, educational site — worth the
-  // extra latency on this one, rare, first-time action. Fails open on
-  // any Claude error (API down, no key configured) so a moderation
-  // hiccup can never block someone from registering at all — the
-  // nightly scan remains as a backstop for exactly that case.
-  try {
-    const result = await checkNameAppropriate(displayName);
-    if (result.flagged) {
-      return json(400, { error: 'That name isn\'t appropriate for this site — ' + (result.reason || 'please pick a different one.') });
-    }
-  } catch (e) {
-    console.error('register.js: Claude appropriateness check failed for', email, e);
-  }
 
   const { data: created, error: insertError } = await supabase
     .from('students')
