@@ -1105,14 +1105,6 @@
   .rank-down-big { color: var(--red); }
   .leaderboard-name { min-width: 0; font-weight: 600; color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .leaderboard-name[data-alltime] { cursor: default; }
-  /* The actual grid item now (see leaderboardNameCellHtml) — .leaderboard-
-     name itself stays a single nowrap/ellipsis line, with any effort
-     badges dropped onto their own row underneath instead of squeezed
-     inline after the name on that same truncating line, which read as
-     cramped once a student had 2+ badges in a narrow (180px-capped)
-     column. */
-  .leaderboard-name-wrap { display: flex; flex-direction: column; min-width: 0; gap: 3px; }
-  .leaderboard-effort-row { display: flex; align-items: center; gap: 5px; }
   /* Custom all-time-minutes hover tooltip (progress.js's setupAllTimeTooltip)
      — one shared element, appended to <body> and positioned `fixed` via JS
      off the hovered name's own rect, not a CSS ::after on .leaderboard-name
