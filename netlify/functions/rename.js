@@ -47,7 +47,7 @@ export async function handler(event) {
   // Best-effort/fault-tolerant throughout: a lookup failure (or a column
   // not existing yet pre-migration) just skips the corresponding check
   // rather than blocking a legitimate rename over it.
-  let claudeVerifiedName = null; // set only if the AI check actually ran and passed
+  let claudeVerified = false; // set only if the AI check actually ran and passed
   let voluntaryRenameCountThisMonth = null; // set only on the voluntary path, used by the final write below
   try {
     const { data: existing } = await supabase
@@ -85,25 +85,21 @@ export async function handler(event) {
       }
       voluntaryRenameCountThisMonth = priorVoluntaryCount; // carried into the final write's increment
 
-      // Checked synchronously, not deferred to name-check-scan.js's next
-      // 5-minute pass. Direct follow-up: "i feel the [immediate] option
-      // is better" — and it's a stronger case here than at registration,
-      // where the check was deliberately left out: a fresh signup has
-      // zero visibility until real focus time is logged, but a student
-      // renaming here is typically already visible on leaderboards, so
-      // their NEW name becomes publicly visible the instant this request
-      // succeeds. Simpler than the gated path below — no dodge-check
+      // Checked synchronously — register.js and this file are the only
+      // two places display_name is ever written (see lib/name-check.js's
+      // own top comment), so there's no separate scan to defer to
+      // anymore. Simpler than the gated path below — no dodge-check
       // (nothing to dodge, they're not currently flagged), no
       // escalation (failing once here just means retyping, not "already
       // in trouble"). Fails open exactly like every other Claude call
-      // site — the scan remains the backstop if this is ever skipped or
-      // errors.
+      // site — see register.js's own comment for the accepted tradeoff
+      // of no longer having a scan as a backstop for that case.
       try {
         const result = await checkNameAppropriate(displayName);
         if (result.flagged) {
           return json(400, { error: 'That name isn\'t appropriate for this site — ' + (result.reason || 'please pick a different one.') });
         }
-        if (!result.skipped) claudeVerifiedName = displayName;
+        if (!result.skipped) claudeVerified = true;
       } catch (e) {
         console.error('rename.js: Claude appropriateness check (voluntary rename) failed for', email, e);
       }
@@ -118,10 +114,10 @@ export async function handler(event) {
       // tweak of the SAME name — it says nothing about whether a
       // genuinely different new name is itself still inappropriate.
       // Closes that gap: a flagged student's replacement name gets run
-      // through the same Claude classifier used by the nightly scan
-      // (lib/name-check.js), and is rejected outright if it's also
-      // flagged, with Claude's own reason surfaced directly in the
-      // gate's error message.
+      // through the same shared Claude classifier (lib/name-check.js) as
+      // every other check in this file, and is rejected outright if
+      // it's also flagged, with Claude's own reason surfaced directly in
+      // the gate's error message.
       //
       // Capped at GATE_CHECK_LIMIT real attempts per calendar month —
       // once already escalated (an admin hasn't cleared it, and the
@@ -177,7 +173,7 @@ export async function handler(event) {
         if (result.flagged) {
           return json(400, { error: 'That name still isn\'t appropriate for this site — ' + (result.reason || 'please pick a different one.') });
         }
-        if (!result.skipped) claudeVerifiedName = displayName;
+        if (!result.skipped) claudeVerified = true;
       } catch (e) {
         console.error('rename.js: Claude appropriateness check failed for', email, e);
       }
@@ -196,18 +192,22 @@ export async function handler(event) {
   // them no longer applies, and a future flag should start with a clean
   // slate rather than inheriting an old count) — and, whenever the
   // Claude check above genuinely ran and passed for this exact new name
-  // (true on BOTH paths now — voluntary and gated), records it in
-  // name_last_checked so name-check-scan.js's next run doesn't
-  // immediately re-bill an API call re-checking a name that was just
-  // vetted seconds ago. voluntaryRenameCountThisMonth is only non-null
-  // on the voluntary path — incremented here (not earlier) since it
-  // should only count a genuinely SUCCESSFUL rename, and this is the
-  // point where success is certain. Tries with the new fields first,
-  // falls back to progressively fewer fields on a pre-migration "column
-  // does not exist" error, same fallback shape already used elsewhere
-  // in this codebase (e.g. pomo-active.js's owner_token) — a rename
-  // must never fail outright just because a newer column doesn't exist
-  // yet.
+  // (true on BOTH paths now — voluntary and gated), clears any stale
+  // name_check_reason left over from a previous flag, since it no
+  // longer describes the current name. (name_last_checked itself is
+  // NOT written here anymore — it only ever existed for
+  // name-check-scan.js's own "don't re-bill an unchanged name" check,
+  // and that scan is gone; see this file's own top comment. The column
+  // is left in schema.sql, just unused now, rather than needing another
+  // migration to drop it.) voluntaryRenameCountThisMonth is only
+  // non-null on the voluntary path — incremented here (not earlier)
+  // since it should only count a genuinely SUCCESSFUL rename, and this
+  // is the point where success is certain. Tries with the new fields
+  // first, falls back to progressively fewer fields on a pre-migration
+  // "column does not exist" error, same fallback shape already used
+  // elsewhere in this codebase (e.g. pomo-active.js's owner_token) — a
+  // rename must never fail outright just because a newer column doesn't
+  // exist yet.
   const fullUpdate = {
     display_name: displayName,
     needs_rename: false,
@@ -216,7 +216,7 @@ export async function handler(event) {
     gate_name_check_month: null,
     gate_escalated: false,
   };
-  if (claudeVerifiedName) { fullUpdate.name_last_checked = claudeVerifiedName; fullUpdate.name_check_reason = null; }
+  if (claudeVerified) { fullUpdate.name_check_reason = null; }
   if (voluntaryRenameCountThisMonth != null) {
     fullUpdate.voluntary_rename_count = voluntaryRenameCountThisMonth + 1;
     fullUpdate.voluntary_rename_month = month;

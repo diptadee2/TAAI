@@ -2,17 +2,19 @@
 //
 // A single shared helper wrapping the Claude API to classify a student's
 // display name as appropriate/inappropriate for a public, educational
-// leaderboard. Used by two call sites: rename.js (the NEW name a
-// needs_rename-flagged student submits, so they can't dodge the gate
-// with a different-but-still-bad name) and name-check-scan.js (a
-// scheduled scan, every 5 minutes, covering every not-yet-flagged
-// student whose name has changed since it was last checked — this is
-// what covers a brand-new registration, since register.js itself
-// deliberately never calls Claude at all: a brand-new signup has no
-// leaderboard visibility until real focus time is logged, so there's no
-// urgency to block or slow down the signup response itself). Plain
-// fetch, no SDK — matches this codebase's existing lightweight Discord/
-// Telegram posting helpers in this same lib/ folder, no new dependency
+// leaderboard. Used by exactly two call sites, checked synchronously at
+// both: register.js (a brand-new student's very first name, before it's
+// ever written anywhere) and rename.js (any later name change — a
+// normal voluntary rename, or a needs_rename-flagged student's resolving
+// attempt). These are the ONLY two places students.display_name is ever
+// written (confirmed by checking, not assumed) — there used to also be
+// a periodic scheduled scan as a catch-all for registrations, removed
+// the same day it was questioned ("why are we scanning... every rename
+// should call for a claude call") once it became clear checking
+// synchronously at both real mutation points made the scan entirely
+// redundant. Plain fetch, no SDK — matches this codebase's existing
+// lightweight Discord/Telegram posting helpers in this same lib/ folder,
+// no new dependency
 // for one small API call.
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
 // Haiku, not a bigger model — this is a simple, cheap binary

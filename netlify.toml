@@ -67,17 +67,18 @@
 [functions."hourly-activity-mock-cutover"]
   schedule = "*/15 * * * *"
 
-# Runs every 5 minutes and Claude-checks any student whose display_name
-# hasn't been reviewed yet (never checked, or changed since the last
-# check) — this includes every brand-new registration, since register.js
-# itself deliberately doesn't call Claude at all (see its own comment).
-# Originally once a day; widened to every 5 minutes on direct request —
-# "no hurry for the result" doesn't mean "don't start for up to 24h", it
-# means the registration response itself shouldn't have to wait on it.
-# See name-check-scan.js's own comment for why this is still capped per
-# run rather than checking everyone in one burst.
-[functions."name-check-scan"]
-  schedule = "*/5 * * * *"
+# name-check-scan.js (a periodic scan checking any never-reviewed
+# student's name) existed here briefly, then was removed the same day —
+# a direct follow-up ("we can assume every name is correct and then
+# whenever someone renames or joins new we can just call claude for
+# it") pointed out that register.js and rename.js are the ONLY two
+# places students.display_name is ever written, so checking
+# synchronously at both is a strictly simpler architecture than a
+# scan-based catch-all for the one path (registration) that wasn't
+# already synchronous. See register.js's own comment for the full
+# reasoning and the one accepted tradeoff (no scan means no automatic
+# re-check for the rare case Claude was unavailable at the exact
+# moment of registration/rename).
 
 # No headers were configured at all before this, so every static asset
 # (images, vendor React bundle, favicons) inherited Netlify's default
