@@ -53,7 +53,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-24-5';
+  var CLIENT_VERSION = '2026-09-24-6';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1720,7 +1720,21 @@
     // text. hours is always a plain digit string (Math.round in
     // allTimeTitleAttr), never user-supplied, so this is safe to build via
     // innerHTML without escaping.
-    el.innerHTML = '<span class="alltime-tooltip-label">All time</span> <span class="alltime-tooltip-value">' + hours + 'h</span>';
+    var html = '<span class="alltime-tooltip-label">All time</span> <span class="alltime-tooltip-value">' + hours + 'h</span>';
+    // Explains each badge right where it's actually contextual — this
+    // hover already exists on every leaderboard (weekly/today/last-week),
+    // not just the weekly board where the on-row chips render, so this
+    // is also the one place a student's earned badges are ever explained
+    // on the two boards that don't show the chips at all. Recomputed
+    // from the same hours figure rather than a second data attribute —
+    // effortBadgesHtml already derives tier membership from hours alone.
+    var earnedTiers = EFFORT_TIERS.filter(function (t) { return Number(hours) >= t.minHours; });
+    if (earnedTiers.length) {
+      html += '<div class="alltime-tooltip-badges">' + earnedTiers.map(function (t) {
+        return '<span class="alltime-tooltip-badge-row"><span class="leaderboard-effort-badge leaderboard-effort-badge--' + t.key + '">' + t.emoji + '</span>' + t.name + ' · ' + t.minHours + '+ hrs</span>';
+      }).join('') + '</div>';
+    }
+    el.innerHTML = html;
     el.classList.add('visible');
     var rect = target.getBoundingClientRect();
     // Measured AFTER content + .visible are set, so offsetWidth/Height

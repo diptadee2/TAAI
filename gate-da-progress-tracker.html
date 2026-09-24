@@ -1118,6 +1118,13 @@
   .alltime-tooltip-value { color: var(--pomo-g2, var(--purple)); font-weight: 700; }
   .alltime-tooltip.visible { opacity: 1; transform: translateY(0); }
   @media (prefers-reduced-motion: reduce) { .alltime-tooltip { transition: opacity .15s ease; transform: none; } }
+  /* Only present when the hovered student has earned at least one
+     effort badge (see showAllTimeTooltip) — explains each one right
+     next to the "All time" figure it's derived from, rather than
+     requiring a separate click on the Name column's "?" toggle. */
+  .alltime-tooltip-badges { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; }
+  .alltime-tooltip-badge-row { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--ink-soft); }
+  .alltime-tooltip-badge-row .leaderboard-effort-badge { width: 16px; height: 16px; font-size: 9.5px; margin-left: 0; }
   /* "Live now" indicator — a small pulsing green dot before the name of
      anyone currently mid-focus-session (see is_live in pomodoro-
      leaderboard.js). .live-dot-slot is a fixed-width reserved space,
