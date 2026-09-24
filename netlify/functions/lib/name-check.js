@@ -2,20 +2,31 @@
 //
 // A single shared helper wrapping the Claude API to classify a student's
 // display name as appropriate/inappropriate for a public, educational
-// leaderboard. Used by three separate call sites: rename.js (checking the
-// NEW name a needs_rename-flagged student submits, so they can't dodge
-// the gate with a different-but-still-bad name), name-check-scan.js (a
-// nightly batch scanning every not-yet-flagged student for a name that's
-// slipped through), and team-flag-name.js (a second opinion alongside an
-// admin's own manual flag in /team). Plain fetch, no SDK — matches this
-// codebase's existing lightweight Discord/Telegram posting helpers in
-// this same lib/ folder, no new dependency for one small API call.
+// leaderboard. Used by three call sites: register.js (a brand-new
+// student's very first name, before it's ever written or shown
+// anywhere), rename.js (the NEW name a needs_rename-flagged student
+// submits, so they can't dodge the gate with a different-but-still-bad
+// name), and name-check-scan.js (a nightly batch scanning every
+// not-yet-flagged student for a name that's slipped through). Plain
+// fetch, no SDK — matches this codebase's existing lightweight Discord/
+// Telegram posting helpers in this same lib/ folder, no new dependency
+// for one small API call.
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
 // Haiku, not a bigger model — this is a simple, cheap binary
 // classification call, not something that benefits from more reasoning.
 const MODEL = 'claude-haiku-4-5-20251001';
 
 const SYSTEM_PROMPT = 'You review display names for a GATE exam-prep leaderboard used by students in India, mostly in their early-to-mid 20s. Names should stay fun and welcoming: nicknames, anime/game/movie characters, jokes, and playful usernames are all completely fine and must NOT be flagged. Only flag a name if it is genuinely inappropriate for a public educational site any student\'s parent or teacher might see - sexually explicit, hateful or slur-based, harassing or targeting a real person, or similar. When in doubt, do NOT flag it - a false positive (blocking a harmless fun name) is worse than an occasional miss.';
+
+// This call sits directly in the request path of registration and a
+// gated rename — a slow or hung Claude response must never leave a
+// student stuck staring at a loading spinner indefinitely (or worse,
+// eating into Netlify's own function execution ceiling). 6s is
+// generous for a single small tool-forced call under normal
+// conditions but still leaves real headroom before that ceiling; a
+// timeout is treated exactly like any other failure — caught by the
+// caller's own try/catch, fails open.
+const TIMEOUT_MS = 6000;
 
 const TOOL = {
   name: 'classify_name',
@@ -41,22 +52,30 @@ export async function checkNameAppropriate(name) {
     return { flagged: false, reason: 'ANTHROPIC_API_KEY not configured', skipped: true };
   }
 
-  const res = await fetch(ANTHROPIC_API_URL, {
-    method: 'POST',
-    headers: {
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      max_tokens: 300,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: 'Display name to review: ' + JSON.stringify(name) }],
-      tools: [TOOL],
-      tool_choice: { type: 'tool', name: 'classify_name' },
-    }),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  let res;
+  try {
+    res = await fetch(ANTHROPIC_API_URL, {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 300,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: 'Display name to review: ' + JSON.stringify(name) }],
+        tools: [TOOL],
+        tool_choice: { type: 'tool', name: 'classify_name' },
+      }),
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!res.ok) {
     const text = await res.text().catch(() => '');

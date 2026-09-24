@@ -690,6 +690,24 @@ ALTER TABLE students ADD COLUMN IF NOT EXISTS needs_rename_source TEXT;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS name_check_reason TEXT;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS name_last_checked TEXT;
 
+-- Caps how many real Claude API calls a single gated student can trigger
+-- in a calendar month, closing an abuse vector a direct question raised:
+-- a needs_rename-gated student could otherwise resubmit new names
+-- indefinitely, each one a real billed API call (rename.js only ever
+-- calls Claude while gated — a plain voluntary rename never does).
+-- gate_name_check_count/gate_name_check_month (rename.js compares the
+-- stored month against the current one and treats a mismatch as 0,
+-- rather than a separate reset job) track this PER STUDENT, not a
+-- global cap. Deliberately does NOT hard-block a student once
+-- exhausted — see rename.js's own comment for why: permanently
+-- trapping someone behind their own resolved-or-not gate would be
+-- worse than the cost this protects against. After the cap, further
+-- attempts skip the Claude call and fall back to the free normalized-
+-- dodge check alone (the same protection level this gate had before
+-- Claude was ever added) — bounded cost, never a dead end.
+ALTER TABLE students ADD COLUMN IF NOT EXISTS gate_name_check_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS gate_name_check_month TEXT;
+
 -- Multi-device/tab session-ownership protection — a real bug, confirmed
 -- against production: pomo_active_session is ONE shared row per email,
 -- so a second, stale tab/device silently re-syncing its own old idle

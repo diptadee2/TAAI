@@ -4,8 +4,14 @@
 // and ignores whatever name they typed that time — this is only reachable
 // from an explicit "Rename" action the student takes on purpose, not a
 // side effect of registering again on a new device.
-import { getSupabase, json } from './lib/supabase.js';
+import { getSupabase, json, todayIST } from './lib/supabase.js';
 import { checkNameAppropriate } from './lib/name-check.js';
+
+// Caps how many real Claude calls one gated student can trigger per
+// month (see gate_name_check_count/month's own comment in schema.sql)
+// — a direct question raised that a gated student could otherwise
+// resubmit indefinitely, each one a real billed API call.
+const GATE_CHECK_MONTHLY_LIMIT = 3;
 
 // Strips everything but letters/digits and lowercases, so "Sandip",
 // "Sandip.", "sandip_", "SANDIP " etc. all normalize identically — used
@@ -55,18 +61,60 @@ export async function handler(event) {
       // tweak of the SAME name — it says nothing about whether a
       // genuinely different new name is itself still inappropriate.
       // Closes that gap: a flagged student's replacement name gets run
-      // through the same Claude classifier used by the nightly scan and
-      // the admin "second opinion" action (lib/name-check.js), and is
-      // rejected outright if it's also flagged, with Claude's own
-      // reason surfaced directly in the gate's error message.
+      // through the same Claude classifier used by the nightly scan
+      // (lib/name-check.js), and is rejected outright if it's also
+      // flagged, with Claude's own reason surfaced directly in the
+      // gate's error message.
+      //
+      // Rate-limited to GATE_CHECK_MONTHLY_LIMIT real attempts per
+      // student per month — once spent, further attempts deliberately
+      // skip the Claude call and fall through to just the free dodge
+      // check above (the same protection this gate had before Claude
+      // was ever added), rather than rejecting the student outright.
+      // Permanently trapping someone behind their own unresolved gate
+      // over an unrelated cost cap would be strictly worse than the
+      // abuse this bounds. One read (best-effort, fails open — a
+      // lookup hiccup just means "don't rate-limit this one") decides
+      // whether to spend the check; the increment only happens if a
+      // real (non-skipped) Claude call was actually made, counting the
+      // attempt regardless of whether it passed or failed.
+      let spendGateCheck = true;
+      const currentMonth = todayIST().slice(0, 7);
+      let priorCheckCount = 0;
       try {
-        const result = await checkNameAppropriate(displayName);
-        if (result.flagged) {
-          return json(400, { error: 'That name still isn\'t appropriate for this site — ' + (result.reason || 'please pick a different one.') });
+        const { data: rate } = await supabase
+          .from('students')
+          .select('gate_name_check_count, gate_name_check_month')
+          .eq('email', email)
+          .maybeSingle();
+        if (rate) {
+          priorCheckCount = rate.gate_name_check_month === currentMonth ? (rate.gate_name_check_count || 0) : 0;
+          spendGateCheck = priorCheckCount < GATE_CHECK_MONTHLY_LIMIT;
         }
-        if (!result.skipped) claudeVerifiedName = displayName;
       } catch (e) {
-        console.error('rename.js: Claude appropriateness check failed for', email, e);
+        console.error('rename.js: gate_name_check rate lookup failed for', email, e);
+      }
+
+      if (spendGateCheck) {
+        try {
+          const result = await checkNameAppropriate(displayName);
+          if (!result.skipped) {
+            try {
+              await supabase
+                .from('students')
+                .update({ gate_name_check_count: priorCheckCount + 1, gate_name_check_month: currentMonth })
+                .eq('email', email);
+            } catch (e) {
+              console.error('rename.js: gate_name_check increment failed for', email, e);
+            }
+          }
+          if (result.flagged) {
+            return json(400, { error: 'That name still isn\'t appropriate for this site — ' + (result.reason || 'please pick a different one.') });
+          }
+          if (!result.skipped) claudeVerifiedName = displayName;
+        } catch (e) {
+          console.error('rename.js: Claude appropriateness check failed for', email, e);
+        }
       }
     }
   } catch (e) {
