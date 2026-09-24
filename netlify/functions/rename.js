@@ -47,12 +47,9 @@ export async function handler(event) {
 
   const supabase = getSupabase();
 
-  // Only a student currently gated by needs_rename gets either of these
-  // two extra checks — everyone else can rename to whatever they like,
-  // any time, no restriction. Best-effort/fault-tolerant throughout: a
-  // lookup failure (or a column not existing yet pre-migration) just
-  // skips the corresponding check rather than blocking a legitimate
-  // rename over it.
+  // Best-effort/fault-tolerant throughout: a lookup failure (or a column
+  // not existing yet pre-migration) just skips the corresponding check
+  // rather than blocking a legitimate rename over it.
   let claudeVerifiedName = null; // set only if the AI check actually ran and passed
   try {
     const { data: existing } = await supabase
@@ -60,7 +57,31 @@ export async function handler(event) {
       .select('display_name, needs_rename')
       .eq('email', email)
       .maybeSingle();
-    if (existing && existing.needs_rename) {
+    if (existing && !existing.needs_rename) {
+      // A normal, non-gated rename — checked synchronously too, not
+      // deferred to name-check-scan.js's next 5-minute pass. Direct
+      // follow-up: "i feel the [immediate] option is better" — and it's
+      // a stronger case here than at registration, where the check was
+      // deliberately left out: a fresh signup has zero visibility until
+      // real focus time is logged, but a student renaming here is
+      // typically already visible on leaderboards, so their NEW name
+      // becomes publicly visible the instant this request succeeds.
+      // Simpler than the gated path — no dodge-check (nothing to dodge,
+      // they're not currently flagged), no counting/escalation (this
+      // isn't "already in trouble," just a normal action; failing once
+      // costs them nothing but retyping). Fails open exactly like every
+      // other Claude call site — the scan remains the backstop if this
+      // is ever skipped or errors.
+      try {
+        const result = await checkNameAppropriate(displayName);
+        if (result.flagged) {
+          return json(400, { error: 'That name isn\'t appropriate for this site — ' + (result.reason || 'please pick a different one.') });
+        }
+        if (!result.skipped) claudeVerifiedName = displayName;
+      } catch (e) {
+        console.error('rename.js: Claude appropriateness check (voluntary rename) failed for', email, e);
+      }
+    } else if (existing && existing.needs_rename) {
       const oldNorm = normalizeForCompare(existing.display_name);
       const newNorm = normalizeForCompare(displayName);
       if (newNorm.length < 2 || newNorm === oldNorm) {
@@ -138,20 +159,19 @@ export async function handler(event) {
   // is "blocked until they rename," so the act of renaming itself is
   // what resolves it, with no separate admin step needed. Also clears
   // needs_rename_source and the gate_name_check_count/gate_escalated
-  // bookkeeping (whatever flagged them no longer applies, and a future
-  // flag should start with a clean slate rather than inheriting an old
-  // count) — and, only when the Claude check above genuinely ran and
-  // passed for this exact new name, records it in name_last_checked so
-  // the nightly scan (name-check-scan.js) doesn't immediately re-bill an
-  // API call re-checking a name that was just vetted seconds ago. A
-  // plain voluntary (non-gated) rename deliberately leaves
-  // name_last_checked untouched — that name has NOT been Claude-checked
-  // by this request, and the nightly scan should still pick it up.
-  // Tries with the new fields first, falls back to progressively fewer
-  // fields on a pre-migration "column does not exist" error, same
-  // fallback shape already used elsewhere in this codebase (e.g.
-  // pomo-active.js's owner_token) — a rename must never fail outright
-  // just because a newer column doesn't exist in production yet.
+  // bookkeeping (harmless no-op for a voluntary renamer, who was never
+  // gated in the first place; for a formerly-gated one, whatever flagged
+  // them no longer applies, and a future flag should start with a clean
+  // slate rather than inheriting an old count) — and, whenever the
+  // Claude check above genuinely ran and passed for this exact new name
+  // (true on BOTH paths now — voluntary and gated), records it in
+  // name_last_checked so name-check-scan.js's next run doesn't
+  // immediately re-bill an API call re-checking a name that was just
+  // vetted seconds ago. Tries with the new fields first, falls back to
+  // progressively fewer fields on a pre-migration "column does not
+  // exist" error, same fallback shape already used elsewhere in this
+  // codebase (e.g. pomo-active.js's owner_token) — a rename must never
+  // fail outright just because a newer column doesn't exist yet.
   const fullUpdate = { display_name: displayName, needs_rename: false, needs_rename_source: null, gate_name_check_count: 0, gate_escalated: false };
   if (claudeVerifiedName) { fullUpdate.name_last_checked = claudeVerifiedName; fullUpdate.name_check_reason = null; }
 
