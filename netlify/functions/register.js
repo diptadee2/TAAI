@@ -3,28 +3,27 @@
 // existing record as-is (the student is "recognised", not renamed) —
 // re-registering on a new device shouldn't silently overwrite their name.
 //
-// Checks the name with Claude synchronously, same as rename.js — this
-// went through two earlier, opposite decisions the same day before
-// landing here. First: checked synchronously, rejecting outright.
-// Second: reverted to instant/unchecked, relying on a scheduled scan
-// instead, on the reasoning that a fresh signup has zero visibility
-// until real focus time is logged, so there's no urgency. Final, on a
-// direct follow-up ("we can assume every name is correct and then
-// whenever someone renames or joins new we can just call claude for
-// it"): register.js and rename.js are the ONLY two places
-// students.display_name is ever written (confirmed by checking, not
-// assumed) — checking synchronously at both, with no separate async
-// scan at all, is a strictly simpler architecture than "check most
-// things immediately, plus a periodic catch-all for the one path that
-// isn't" — so name-check-scan.js was removed entirely rather than kept
-// as a redundant backstop. The one real tradeoff, worth knowing: with
-// no scan, a name that slips through because Claude was genuinely
-// unavailable at that exact moment (no API key, an outage, a timeout)
-// is never automatically re-checked later — fail-open here is a
-// deliberately accepted, expected-to-be-rare risk, not a guaranteed-
-// eventually-caught one anymore.
+// Deliberately does NOT call Claude here at all — saves the submitted
+// name instantly, no check, no rejection path. This went through several
+// designs the same day before landing here for good, on a direct,
+// explicit correction: "save the name whatever it is instantly, while
+// putting it on check — if it comes back with inappropriateness then
+// gate the student to change it." A synchronous reject-before-saving
+// design (tried twice, in both directions) makes signup feel slow and
+// risky over an AI opinion; this doesn't. name-check-scan.js (see
+// netlify.toml, every 15 minutes) is what actually reviews a brand-new
+// name — picking it up via get_name_check_candidates() (schema.sql,
+// name_last_checked IS NULL) within minutes of this insert — and sets
+// needs_rename=true (gating Focus Mode, not the signup itself) if
+// Claude flags it. Accepted, explicit tradeoff, confirmed with the user
+// directly ("if netlify functions run every 15 minutes so be it, gate
+// the student after 15 minutes"): a fresh signup is visible (on
+// leaderboards, to other students) for up to ~15 minutes before a truly
+// bad name would be caught — judged acceptable since a brand-new
+// student has essentially zero visibility until real focus time is
+// logged anyway, so there's no urgency the way there would be for
+// something posted publicly at scale.
 import { getSupabase, json } from './lib/supabase.js';
-import { checkNameAppropriate } from './lib/name-check.js';
 
 export async function handler(event) {
   if (event.httpMethod !== 'POST') return json(405, { error: 'method not allowed' });
@@ -46,20 +45,6 @@ export async function handler(event) {
     .maybeSingle();
   if (fetchError) return json(500, { error: fetchError.message });
   if (existing) return json(200, existing);
-
-  // A brand-new name, the one moment before it's ever written or shown
-  // anywhere. Fails open on any Claude error (missing key, API down,
-  // timeout) — a moderation hiccup must never block a legitimate
-  // registration; see this file's own top comment for the accepted
-  // tradeoff of no longer having a scan as a backstop for that case.
-  try {
-    const result = await checkNameAppropriate(displayName);
-    if (result.flagged) {
-      return json(400, { error: 'That name isn\'t appropriate for this site — ' + (result.reason || 'please pick a different one.') });
-    }
-  } catch (e) {
-    console.error('register.js: Claude appropriateness check failed for', email, e);
-  }
 
   const { data: created, error: insertError } = await supabase
     .from('students')

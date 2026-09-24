@@ -67,18 +67,22 @@
 [functions."hourly-activity-mock-cutover"]
   schedule = "*/15 * * * *"
 
-# name-check-scan.js (a periodic scan checking any never-reviewed
-# student's name) existed here briefly, then was removed the same day —
-# a direct follow-up ("we can assume every name is correct and then
-# whenever someone renames or joins new we can just call claude for
-# it") pointed out that register.js and rename.js are the ONLY two
-# places students.display_name is ever written, so checking
-# synchronously at both is a strictly simpler architecture than a
-# scan-based catch-all for the one path (registration) that wasn't
-# already synchronous. See register.js's own comment for the full
-# reasoning and the one accepted tradeoff (no scan means no automatic
-# re-check for the rare case Claude was unavailable at the exact
-# moment of registration/rename).
+# Checks any student whose name hasn't been reviewed by Claude yet
+# (register.js and rename.js's voluntary-rename path both save a new
+# name instantly with no inline check at all — this scan is what
+# actually reviews it, gating the student afterward if flagged, rather
+# than blocking/rejecting the save itself). Went through a same-day
+# back-and-forth: built at 5 minutes, deleted entirely on a follow-up
+# that (mistakenly, per a direct correction right after) read as "check
+# synchronously instead, no scan needed" — restored at 15 minutes once
+# the real intent was clarified ("if netlify functions run every 15
+# minutes so be it, gate the student after 15 minutes"). See
+# name-check-scan.js's own comment for the full reasoning, including the
+# real Egress cost bug (~339MB/month) that the 5-minute cadence hit once
+# already, and why the RPC-based candidate filter (not fetch-everything-
+# then-filter-in-JS) is what makes 15 minutes safe regardless.
+[functions."name-check-scan"]
+  schedule = "*/15 * * * *"
 
 # No headers were configured at all before this, so every static asset
 # (images, vendor React bundle, favicons) inherited Netlify's default

@@ -208,6 +208,12 @@ export async function handler(event, context) {
       schedule_date: body.schedule_date || null,
       schedule_day_of_week: Number.isInteger(body.schedule_day_of_week) ? body.schedule_day_of_week : null,
       schedule_day_of_month: Number.isInteger(body.schedule_day_of_month) ? body.schedule_day_of_month : null,
+      // Tiebreak for two posts sharing the same next_fire_at (see /team's
+      // ▲/▼ buttons and discord-dispatch.js's own ORDER BY) — has no
+      // form input of its own, so a plain integer pass-through is enough;
+      // readFormPayload() on the client is what's responsible for not
+      // clobbering it when some other field gets edited.
+      dispatch_order: Number.isInteger(body.dispatch_order) ? body.dispatch_order : 0,
       next_fire_at: nextFireAt.toISOString(),
       enabled: body.enabled !== false,
     };
@@ -254,6 +260,12 @@ export async function handler(event, context) {
       schedule_date: body.schedule_date || null,
       schedule_day_of_week: Number.isInteger(body.schedule_day_of_week) ? body.schedule_day_of_week : null,
       schedule_day_of_month: Number.isInteger(body.schedule_day_of_month) ? body.schedule_day_of_month : null,
+      // Tiebreak for two posts sharing the same next_fire_at (see /team's
+      // ▲/▼ buttons and discord-dispatch.js's own ORDER BY) — has no
+      // form input of its own, so a plain integer pass-through is enough;
+      // readFormPayload() on the client is what's responsible for not
+      // clobbering it when some other field gets edited.
+      dispatch_order: Number.isInteger(body.dispatch_order) ? body.dispatch_order : 0,
       next_fire_at: nextFireAt.toISOString(),
       enabled: body.enabled !== false,
       updated_at: new Date().toISOString(),

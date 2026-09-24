@@ -676,27 +676,23 @@ ALTER TABLE students ADD COLUMN IF NOT EXISTS needs_rename BOOLEAN NOT NULL DEFA
 -- Added once needs_rename gained real Claude-API-backed checks (see
 -- lib/name-check.js). needs_rename_source ('admin' | 'ai_scan') and
 -- name_check_reason (Claude's one-sentence explanation, shown in /team
--- for context) were built for a world where a scheduled scan and a
--- since-removed /team "Flag" button could BOTH set needs_rename=true
--- automatically. Neither exists anymore (see get_name_check_candidates'
--- own comment below, and register.js's top comment, for the full
--- history) — register.js and rename.js both now reject a bad name
--- outright, before it's ever saved, so nothing automated sets
--- needs_rename=true anymore at all. The column/values are left as-is
--- (harmless, no migration needed to remove them) since needs_rename can
--- still be set the same way it always could from day one — a direct,
--- manual SQL UPDATE by an admin who spots something that slipped
--- through (e.g. a fail-open moment when Claude was briefly
--- unavailable) — and if that ever happens, these two fields still work
--- exactly as designed to explain why. name_last_checked (below) is
--- fully dead now — see its own note.
+-- for context) are both actively written by name-check-scan.js — the
+-- scheduled function (every 15 minutes) that reviews a brand-new
+-- registration or voluntary rename AFTER it's already been saved (see
+-- lib/name-check.js's own top comment for the full history of designs
+-- this went through the same day, including a brief detour through
+-- "reject synchronously before saving," reverted on direct correction).
+-- needs_rename can also still be set the old way — a direct, manual SQL
+-- UPDATE by an admin who spots something that slipped through — and
+-- these two fields work exactly as designed to explain why either way.
 ALTER TABLE students ADD COLUMN IF NOT EXISTS needs_rename_source TEXT;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS name_check_reason TEXT;
--- Fully dead — only ever existed for name-check-scan.js's own "skip a
--- student whose name hasn't changed since it was last checked" logic,
--- and that scan no longer exists. Nothing reads or writes this anymore.
--- Left in place rather than dropped, same reasoning as the unused
--- get_name_check_candidates function below.
+-- Actively used by name-check-scan.js/get_name_check_candidates() below
+-- to find students whose CURRENT display_name hasn't been checked yet
+-- (NULL for a never-checked student, or != display_name for one who's
+-- since renamed) — the whole mechanism that makes the scan's candidate
+-- list "usually empty, occasionally a few new signups/renames" instead
+-- of the whole roster every single tick.
 ALTER TABLE students ADD COLUMN IF NOT EXISTS name_last_checked TEXT;
 
 -- Caps how many real Claude API calls a single gated student can trigger,
@@ -748,21 +744,18 @@ ALTER TABLE students ADD COLUMN IF NOT EXISTS gate_escalated BOOLEAN NOT NULL DE
 ALTER TABLE students ADD COLUMN IF NOT EXISTS voluntary_rename_count INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS voluntary_rename_month TEXT;
 
--- UNUSED as of the same day it was optimized — kept for the historical
--- record of a real Egress bug fix (see CLAUDE.md's "Name moderation"
--- section), not deleted, since dropping a function costs nothing left
--- in place. Originally backed name-check-scan.js, a scheduled function
--- that periodically found any student whose name hadn't been Claude-
--- checked yet. That scan is now gone entirely — a direct follow-up
--- pointed out that register.js and rename.js are the ONLY two places
--- students.display_name is ever written, so checking synchronously at
--- both makes a periodic catch-all scan redundant. (Its own original
--- purpose, for context: the scan's first version fetched EVERY student
--- on every tick and filtered client-side in JS — harmless once a day,
--- but measured at ~339MB/month once the cron widened to every 5
--- minutes, almost all wasted on empty ticks. This function was the fix
--- for that — the same filter run server-side, returning only genuine
--- candidates — right before the whole scan became unnecessary anyway.)
+-- Actively used by name-check-scan.js (netlify.toml, every 15 minutes)
+-- to find only the students who actually need a fresh Claude check —
+-- server-side, not a fetch-everything-then-filter-in-JS pattern. That
+-- was this function's own predecessor, and it was a real, measured cost
+-- problem once the cron briefly ran every 5 minutes: fetching all ~344
+-- students on every tick to find usually-zero candidates measured out
+-- to ~339MB/month against real production data, almost entirely wasted
+-- on empty ticks. This RPC is the fix — returns only the (usually zero)
+-- rows that genuinely qualify. Went briefly unused entirely the same
+-- day (the whole scan was deleted, then restored — see
+-- name-check-scan.js's own comment for the full back-and-forth), which
+-- is why an earlier version of this comment called it dead; it isn't.
 CREATE OR REPLACE FUNCTION get_name_check_candidates(p_limit INTEGER)
 RETURNS TABLE(email TEXT, display_name TEXT) AS $$
   SELECT email, display_name FROM students

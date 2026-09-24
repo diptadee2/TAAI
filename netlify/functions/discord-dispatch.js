@@ -27,17 +27,22 @@ export async function handler() {
   const supabase = getSupabase();
   const now = new Date();
 
-  // Ordered by created_at so two rows sharing the exact same next_fire_at
-  // (e.g. weekly_leaderboard and weekly_batch_trend, both set to fire at
-  // the same time at explicit request) still process in a deterministic,
-  // predictable order — the row created first posts first — rather than
-  // whatever order Postgres happens to return an otherwise-unordered
-  // query in.
+  // Ordered by dispatch_order (an explicit, admin-controlled tiebreak —
+  // see /team's ▲/▼ buttons on each post row, team.js's movePost),
+  // falling back to created_at, so two rows sharing the exact same
+  // next_fire_at (e.g. weekly_leaderboard and weekly_batch_trend, both
+  // set to fire at the same time at explicit request) still process in a
+  // deterministic, predictable order — never whatever order Postgres
+  // happens to return an otherwise-unordered query in. dispatch_order
+  // defaults to 0 for every row that's never been manually reordered, so
+  // created_at (the row created first posts first) is what actually
+  // decides ties until someone explicitly reorders them.
   const { data: due, error: dueError } = await supabase
     .from('scheduled_posts')
     .select('*')
     .eq('enabled', true)
     .lte('next_fire_at', now.toISOString())
+    .order('dispatch_order', { ascending: true })
     .order('created_at', { ascending: true });
   if (dueError) return json(500, { error: dueError.message });
 

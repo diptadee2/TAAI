@@ -2,20 +2,30 @@
 //
 // A single shared helper wrapping the Claude API to classify a student's
 // display name as appropriate/inappropriate for a public, educational
-// leaderboard. Used by exactly two call sites, checked synchronously at
-// both: register.js (a brand-new student's very first name, before it's
-// ever written anywhere) and rename.js (any later name change — a
-// normal voluntary rename, or a needs_rename-flagged student's resolving
-// attempt). These are the ONLY two places students.display_name is ever
-// written (confirmed by checking, not assumed) — there used to also be
-// a periodic scheduled scan as a catch-all for registrations, removed
-// the same day it was questioned ("why are we scanning... every rename
-// should call for a claude call") once it became clear checking
-// synchronously at both real mutation points made the scan entirely
-// redundant. Plain fetch, no SDK — matches this codebase's existing
-// lightweight Discord/Telegram posting helpers in this same lib/ folder,
-// no new dependency
-// for one small API call.
+// leaderboard. Two different usage patterns, by design, not an
+// oversight — see each call site's own comment:
+//   - name-check-scan.js (a scheduled function, every 15 minutes) is
+//     what checks a brand-new registration or an ordinary voluntary
+//     rename — ASYNCHRONOUSLY, well after the name was already saved.
+//     register.js and rename.js's voluntary path both save instantly
+//     with zero inline call to this function at all; a flagged result
+//     here gates the student (needs_rename=true) rather than rejecting
+//     anything, since there's nothing left to reject by the time this
+//     runs. This is the restored design after a same-day back-and-forth
+//     — briefly replaced with a fully-synchronous check-then-reject at
+//     both save sites, then reverted on direct correction ("save the
+//     name whatever it is instantly, while putting it on check — if it
+//     comes back with inappropriateness then gate the student").
+//   - rename.js's OWN gated-resolution branch (a student who's already
+//     needs_rename=true, actively trying to fix it) still calls this
+//     SYNCHRONOUSLY and rejects outright if still flagged — a
+//     deliberately different, stricter flow, since the whole point
+//     there is confirming the new name is actually fine before letting
+//     the student out of the gate; "save it and check later" doesn't
+//     make sense for a moment that only exists to resolve the check.
+// Plain fetch, no SDK — matches this codebase's existing lightweight
+// Discord/Telegram posting helpers in this same lib/ folder, no new
+// dependency for one small API call.
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
 // Haiku, not a bigger model — this is a simple, cheap binary
 // classification call, not something that benefits from more reasoning.
