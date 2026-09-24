@@ -1105,6 +1105,14 @@
   .rank-down-big { color: var(--red); }
   .leaderboard-name { min-width: 0; font-weight: 600; color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .leaderboard-name[data-alltime] { cursor: default; }
+  /* The actual grid item now (see leaderboardNameCellHtml) — .leaderboard-
+     name itself stays a single nowrap/ellipsis line, with any effort
+     badges dropped onto their own row underneath instead of squeezed
+     inline after the name on that same truncating line, which read as
+     cramped once a student had 2+ badges in a narrow (180px-capped)
+     column. */
+  .leaderboard-name-wrap { display: flex; flex-direction: column; min-width: 0; gap: 3px; }
+  .leaderboard-effort-row { display: flex; align-items: center; gap: 5px; }
   /* Custom all-time-minutes hover tooltip (progress.js's setupAllTimeTooltip)
      — one shared element, appended to <body> and positioned `fixed` via JS
      off the hovered name's own rect, not a CSS ::after on .leaderboard-name
@@ -1149,7 +1157,7 @@
      a string of random emoji. box-shadow+border-radius together are
      never animated here (only left/opacity move elsewhere on this
      page), so this doesn't trip the Chromium DOM-leak gotcha. */
-  .leaderboard-effort-badge { display: inline-flex; align-items: center; justify-content: center; width: 19px; height: 19px; margin-left: 3px; border-radius: 50%; font-size: 11px; vertical-align: middle; cursor: default; border: 1px solid; }
+  .leaderboard-effort-badge { display: inline-flex; align-items: center; justify-content: center; width: 19px; height: 19px; border-radius: 50%; font-size: 11px; vertical-align: middle; cursor: default; border: 1px solid; }
   .leaderboard-effort-badge--star { background: rgba(251,191,36,0.16); border-color: rgba(251,191,36,0.4); box-shadow: 0 0 6px rgba(251,191,36,0.25); }
   .leaderboard-effort-badge--flame { background: rgba(249,115,22,0.16); border-color: rgba(249,115,22,0.4); box-shadow: 0 0 6px rgba(249,115,22,0.25); }
   .leaderboard-effort-badge--lightning { background: rgba(56,189,248,0.16); border-color: rgba(56,189,248,0.4); box-shadow: 0 0 6px rgba(56,189,248,0.25); }

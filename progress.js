@@ -53,7 +53,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-24-6';
+  var CLIENT_VERSION = '2026-09-24-7';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -3503,6 +3503,22 @@
     return html;
   }
 
+  // Badges used to render inline right after the name text, inside the
+  // same nowrap/ellipsis-truncating .leaderboard-name span the name
+  // itself lives in — squeezing a multi-badge student's name and every
+  // badge onto one line within a narrow (180px-capped) column read as
+  // cramped, direct feedback ("the badges... look too congested").
+  // Wrapping name + badges in a column instead puts badges on their own
+  // row below the name, where they have the full column width to
+  // themselves rather than fighting the name for horizontal room.
+  function leaderboardNameCellHtml(nameInnerHtml, dataAttr, allTimeMinutes) {
+    var badges = effortBadgesHtml(allTimeMinutes);
+    return '<span class="leaderboard-name-wrap">' +
+      '<span class="leaderboard-name"' + dataAttr + '>' + nameInnerHtml + '</span>' +
+      (badges ? '<span class="leaderboard-effort-row">' + badges + '</span>' : '') +
+      '</span>';
+  }
+
   // Per-badge title attributes are real but not discoverable — the
   // exact same lesson already learned once this session for the
   // all-time-minutes hover ("still nothing on hover," fixed by
@@ -3802,7 +3818,7 @@
       return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (r.is_me ? ' leaderboard-row--me' : '') + (r.is_live ? ' leaderboard-row--live' : '') + leaderboardRowEnterAttrs(animate, i) + '">' +
         '<span class="leaderboard-rank">' + rankLabel + '</span>' +
         rankMovementHtml(i + 1, r.previous_week_rank) +
-        '<span class="leaderboard-name"' + allTimeTitleAttr(r.all_time_minutes) + '>' + liveDotHtml(r.is_live) + escapeHtml(r.display_name) + effortBadgesHtml(r.all_time_minutes) + (r.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
+        leaderboardNameCellHtml(liveDotHtml(r.is_live) + escapeHtml(r.display_name) + (r.is_me ? ' <span class="leaderboard-you">You</span>' : ''), allTimeTitleAttr(r.all_time_minutes), r.all_time_minutes) +
         streakBallsHtml(r.streak) +
         (r.is_me && !r.pomo_status ? weeklyPaceStatusHtml(r.total_minutes) : pomoStatusHtml(r.pomo_status, r.pomo_last_seen_at)) +
         pomoTimerHtml(r.pomo_phase_end_at, r.pomo_phase_total_seconds, r.pomo_status) +
@@ -3819,7 +3835,7 @@
         '<div class="leaderboard-row leaderboard-row--me' + (state.viewerRank.is_live ? ' leaderboard-row--live' : '') + leaderboardRowEnterAttrs(animate, state.leaderboard.length) + '">' +
         '<span class="leaderboard-rank">' + state.viewerRank.rank + '</span>' +
         rankMovementHtml(state.viewerRank.rank, state.viewerRank.previous_week_rank) +
-        '<span class="leaderboard-name"' + allTimeTitleAttr(state.viewerRank.all_time_minutes) + '>' + liveDotHtml(state.viewerRank.is_live) + 'You' + effortBadgesHtml(state.viewerRank.all_time_minutes) + '</span>' +
+        leaderboardNameCellHtml(liveDotHtml(state.viewerRank.is_live) + 'You', allTimeTitleAttr(state.viewerRank.all_time_minutes), state.viewerRank.all_time_minutes) +
         streakBallsHtml(state.viewerRank.streak) +
         (state.viewerRank.pomo_status ? pomoStatusHtml(state.viewerRank.pomo_status, state.viewerRank.pomo_last_seen_at) : weeklyPaceStatusHtml(state.viewerRank.total_minutes)) +
         pomoTimerHtml(state.viewerRank.pomo_phase_end_at, state.viewerRank.pomo_phase_total_seconds, state.viewerRank.pomo_status) +
