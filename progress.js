@@ -53,7 +53,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-24-20';
+  var CLIENT_VERSION = '2026-09-24-21';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2874,11 +2874,11 @@
       '<button type="submit" class="pomo-btn pomo-btn-primary">Save</button>' +
       '</form>' +
       // Shown every time this gate appears, not just a one-off first-use
-      // flag — a plain, always-accurate note about the underlying
-      // per-month attempt limit (see rename.js's GATE_CHECK_MONTHLY_LIMIT)
-      // is simpler and just as informative as trying to detect "is this
-      // genuinely their first time," and never goes stale/wrong.
-      '<p class="pomo-gate-hint">You get a few tries a month to pick a name here — make it count.</p>' +
+      // flag — a plain, always-accurate note is simpler than trying to
+      // detect "is this genuinely their first time," and never goes
+      // stale. Deliberately avoids internal terms like "attempts" or
+      // "checks" — just a warm, human description of what happens.
+      '<p class="pomo-gate-hint">Take your time picking a name — if it doesn\'t work out after a few tries, you\'ll need to reach out to our team on Discord for help.</p>' +
       (state.pomoRenameGateError ? '<p class="form-error">' + escapeHtml(state.pomoRenameGateError) + '</p>' : '') +
       '</div>';
   }

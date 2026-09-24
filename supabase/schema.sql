@@ -690,33 +690,37 @@ ALTER TABLE students ADD COLUMN IF NOT EXISTS needs_rename_source TEXT;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS name_check_reason TEXT;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS name_last_checked TEXT;
 
--- Caps how many real Claude API calls a single gated student can trigger
--- in a rolling 24h window, closing an abuse vector a direct question
--- raised: a needs_rename-gated student could otherwise resubmit new
--- names indefinitely, each one a real billed API call (rename.js only
--- ever calls Claude while gated — a plain voluntary rename never does).
--- gate_name_check_count/gate_name_check_window_start (rename.js treats
--- a window older than 24h as expired, resetting the count — no separate
--- reset job needed) track this PER STUDENT, not a global cap.
+-- Caps how many real Claude API calls a single gated student can trigger,
+-- closing an abuse vector a direct question raised: a needs_rename-gated
+-- student could otherwise resubmit new names indefinitely, each one a
+-- real billed API call (rename.js only ever calls Claude while gated —
+-- a plain voluntary rename never does). gate_name_check_count tracks
+-- real attempts PER STUDENT, not a global cap; gate_escalated is set
+-- once the 3rd real attempt is ALSO rejected.
 --
--- Originally designed to fall back to the free normalized-dodge check
--- alone once exhausted, rather than hard-blocking — but a direct
--- follow-up question ("what if they do more than three inappropriate
--- names") caught a real exploit in that design: since the dodge check
--- only catches a trivial tweak of the SAME name, not a genuinely
--- different one, someone could deliberately burn all 3 real attempts on
--- obviously-bad names, then slip a 4th, equally bad name through
--- completely unchecked. Replaced with a genuine, but FINITE, cooldown
--- instead — once the 3 attempts in the current window are spent, every
--- further attempt is rejected outright (no dodge-check fallback, no
--- silent pass-through) until the window expires 24h after the first
--- attempt in that batch. Still never a permanent trap, same reasoning
--- as malpractice_frozen_until's own escalating-but-expiring freezes
--- elsewhere in this file — a student who's out of real attempts can
--- always try again once the window clears, they just can't force one
--- through in the meantime.
+-- Went through two designs, both changed on direct follow-up questions.
+-- First: fall back to the free normalized-dodge check alone once
+-- exhausted, rather than hard-blocking — but "what if they do more than
+-- three inappropriate names" caught a real exploit in that: the dodge
+-- check only catches a trivial tweak of the SAME name, not a genuinely
+-- different one, so someone could deliberately burn 3 obviously-bad
+-- names, then slip a 4th equally-bad name through completely unchecked.
+-- Second: a 24h rolling-window cooldown instead — closed the exploit,
+-- but replaced again on direct request for a real human in the loop
+-- with no time cap. No automated Discord alert either — a follow-up
+-- request ruled that out ("no discord webhook, they will manually
+-- contact admin"). What ships: once gate_escalated is true, rename.js
+-- refuses every further attempt outright, telling the student to reach
+-- out to the team directly, until a team member manually clears it. No
+-- self-serve /team UI for this (same "one-off SQL statement, not a
+-- dedicated screen" pattern as every other rare admin override in this
+-- codebase, e.g. Puneet's malpractice bump) — clear it with:
+--   UPDATE students SET gate_escalated = false, gate_name_check_count = 0
+--   WHERE email = '...';
+-- (this resets their attempt count too, so it's a genuine fresh start,
+-- not just re-opening the same exhausted 3 tries).
 ALTER TABLE students ADD COLUMN IF NOT EXISTS gate_name_check_count INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE students ADD COLUMN IF NOT EXISTS gate_name_check_window_start TIMESTAMPTZ;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS gate_escalated BOOLEAN NOT NULL DEFAULT false;
 
 -- name-check-scan.js's original version fetched EVERY student (email,
 -- display_name, needs_rename, name_last_checked) on every single tick
