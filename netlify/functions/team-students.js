@@ -54,10 +54,20 @@ export async function handler(event, context) {
 
   const today = todayForStreak();
 
-  let studentsResult, completed, sessions, weekStatsResult, totalTaskResult, malpracticeResult;
+  let studentsResult, completed, sessions, weekStatsResult, totalTaskResult, malpracticeResult, nameCheckResult;
   try {
-    [studentsResult, completed, sessions, weekStatsResult, totalTaskResult, malpracticeResult] = await Promise.all([
-      supabase.from('students').select('email, display_name, notes, created_at, current_streak'),
+    [studentsResult, completed, sessions, weekStatsResult, totalTaskResult, malpracticeResult, nameCheckResult] = await Promise.all([
+      // needs_rename itself is included directly here, not in the
+      // best-effort query below — it was already migrated in a prior
+      // session (see schema.sql's own comment on it) and is stable, so
+      // mixing it into the SAME select as the genuinely-new
+      // needs_rename_source/name_check_reason columns would be a real
+      // bug: PostgREST fails a select ENTIRELY if even one requested
+      // column doesn't exist, which would mask this already-correct,
+      // already-migrated value behind the two not-yet-migrated ones'
+      // failure — the exact mistake this codebase's own history already
+      // flags (see malpractice_warning_ack_count's writeup in CLAUDE.md).
+      supabase.from('students').select('email, display_name, notes, created_at, current_streak, needs_rename'),
       fetchAllRows(() => supabase.from('task_progress').select('email, date').eq('completed', true).lte('date', today)),
       fetchAllRows(() => supabase.from('pomo_daily_sessions').select('email, date, total_minutes')),
       supabase.from('pomodoro_stats').select('email, total_minutes').eq('week_start', weekStartIST()),
@@ -77,6 +87,11 @@ export async function handler(event, context) {
       // must never fail the WHOLE Students view the way a missing
       // display_name/streak legitimately would.
       supabase.from('students').select('email, malpractice_incident_count, malpractice_offense_count, malpractice_frozen_until'),
+      // Same best-effort, own-query treatment as malpractice above —
+      // only the two genuinely-new columns here, needs_rename itself is
+      // in the main select above (see its own comment for why the two
+      // can't share one query).
+      supabase.from('students').select('email, needs_rename_source, name_check_reason'),
     ]);
   } catch (err) {
     return json(500, { error: err.message });
@@ -91,6 +106,13 @@ export async function handler(event, context) {
   if (!malpracticeResult.error) {
     for (const row of malpracticeResult.data || []) {
       malpracticeByEmail.set(row.email, row);
+    }
+  }
+
+  const nameCheckByEmail = new Map();
+  if (!nameCheckResult.error) {
+    for (const row of nameCheckResult.data || []) {
+      nameCheckByEmail.set(row.email, row);
     }
   }
 
@@ -155,6 +177,7 @@ export async function handler(event, context) {
   const rows = students.map(s => {
     const lastActive = lastActiveByEmail.get(s.email) || null;
     const malpractice = malpracticeByEmail.get(s.email);
+    const nameCheck = nameCheckByEmail.get(s.email);
     return {
       email: s.email,
       display_name: s.display_name,
@@ -175,6 +198,13 @@ export async function handler(event, context) {
       malpractice_incident_count: malpractice?.malpractice_incident_count || 0,
       malpractice_offense_count: malpractice?.malpractice_offense_count || 0,
       malpractice_frozen_until: malpractice?.malpractice_frozen_until || null,
+      // See students.needs_rename in schema.sql — needs_rename_source
+      // ('admin' | 'ai_scan') tells the Students view whether a flag
+      // already has a Claude judgment behind it (name_check_reason)
+      // or is purely a human call awaiting one.
+      needs_rename: s.needs_rename || false,
+      needs_rename_source: nameCheck?.needs_rename_source || null,
+      name_check_reason: nameCheck?.name_check_reason || null,
     };
   });
 
@@ -193,6 +223,7 @@ export async function handler(event, context) {
     avg_progress_pct: rows.length ? Math.round(rows.reduce((sum, r) => sum + r.progress_pct, 0) / rows.length) : 0,
     avg_consistency_minutes: rows.length ? Math.round(rows.reduce((sum, r) => sum + r.consistency_minutes, 0) / rows.length) : 0,
     malpractice_flagged: rows.filter(r => r.malpractice_incident_count > 0).length,
+    needs_rename_flagged: rows.filter(r => r.needs_rename).length,
   };
 
   return json(200, { students: rows, summary });

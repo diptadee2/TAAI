@@ -673,6 +673,23 @@ GRANT EXECUTE ON FUNCTION increment_malpractice_warning_ack TO service_role;
 -- themselves — no admin action needed to un-flag once fixed.
 ALTER TABLE students ADD COLUMN IF NOT EXISTS needs_rename BOOLEAN NOT NULL DEFAULT false;
 
+-- Added once needs_rename gained real Claude-API-backed checks (see
+-- lib/name-check.js) alongside the original manual/SQL flagging path —
+-- 'admin' (set via /team's Flag action, netlify/functions/team-flag-name.js)
+-- vs 'ai_scan' (set automatically by the nightly name-check-scan.js
+-- batch) tells an admin at a glance whether a given flag already has a
+-- machine judgment behind it or is purely a human call. name_check_reason
+-- is Claude's own one-sentence explanation for whatever the most recent
+-- check concluded (flagged or not) — shown in /team for context rather
+-- than a bare unexplained flag. name_last_checked is the exact
+-- display_name value that reason/check was actually run against — the
+-- nightly scan skips a student whose current display_name still matches
+-- this, so an unchanged name is never re-billed against the Claude API
+-- every single night, only re-checked once it actually changes.
+ALTER TABLE students ADD COLUMN IF NOT EXISTS needs_rename_source TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS name_check_reason TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS name_last_checked TEXT;
+
 -- Multi-device/tab session-ownership protection — a real bug, confirmed
 -- against production: pomo_active_session is ONE shared row per email,
 -- so a second, stale tab/device silently re-syncing its own old idle

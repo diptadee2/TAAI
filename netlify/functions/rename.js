@@ -5,6 +5,7 @@
 // from an explicit "Rename" action the student takes on purpose, not a
 // side effect of registering again on a new device.
 import { getSupabase, json } from './lib/supabase.js';
+import { checkNameAppropriate } from './lib/name-check.js';
 
 // Strips everything but letters/digits and lowercases, so "Sandip",
 // "Sandip.", "sandip_", "SANDIP " etc. all normalize identically — used
@@ -30,11 +31,13 @@ export async function handler(event) {
 
   const supabase = getSupabase();
 
-  // Only a student currently gated by needs_rename gets this extra check
-  // — everyone else can rename to whatever they like, any time, no
-  // restriction. Best-effort/fault-tolerant: a lookup failure (or the
-  // column not existing yet pre-migration) just skips the check rather
-  // than blocking a legitimate rename over it.
+  // Only a student currently gated by needs_rename gets either of these
+  // two extra checks — everyone else can rename to whatever they like,
+  // any time, no restriction. Best-effort/fault-tolerant throughout: a
+  // lookup failure (or a column not existing yet pre-migration) just
+  // skips the corresponding check rather than blocking a legitimate
+  // rename over it.
+  let claudeVerifiedName = null; // set only if the AI check actually ran and passed
   try {
     const { data: existing } = await supabase
       .from('students')
@@ -47,6 +50,24 @@ export async function handler(event) {
       if (newNorm.length < 2 || newNorm === oldNorm) {
         return json(400, { error: 'That\'s not really a different name — please enter your actual name.' });
       }
+
+      // The dodge check above only catches a trivial punctuation/case
+      // tweak of the SAME name — it says nothing about whether a
+      // genuinely different new name is itself still inappropriate.
+      // Closes that gap: a flagged student's replacement name gets run
+      // through the same Claude classifier used by the nightly scan and
+      // the admin "second opinion" action (lib/name-check.js), and is
+      // rejected outright if it's also flagged, with Claude's own
+      // reason surfaced directly in the gate's error message.
+      try {
+        const result = await checkNameAppropriate(displayName);
+        if (result.flagged) {
+          return json(400, { error: 'That name still isn\'t appropriate for this site — ' + (result.reason || 'please pick a different one.') });
+        }
+        if (!result.skipped) claudeVerifiedName = displayName;
+      } catch (e) {
+        console.error('rename.js: Claude appropriateness check failed for', email, e);
+      }
     }
   } catch (e) {
     console.error('rename.js: needs_rename dodge-check failed for', email, e);
@@ -55,18 +76,37 @@ export async function handler(event) {
   // Clears needs_rename (see its own comment in schema.sql) as part of
   // the same write, not a separate call — the whole point of that flag
   // is "blocked until they rename," so the act of renaming itself is
-  // what resolves it, with no separate admin step needed. Tries with
-  // the field first, falls back without it on a pre-migration "column
-  // does not exist" error, same fallback shape already used elsewhere
-  // in this codebase (e.g. pomo-active.js's owner_token) — a rename
-  // must never fail outright just because this newer column doesn't
-  // exist in production yet.
+  // what resolves it, with no separate admin step needed. Also clears
+  // needs_rename_source (whatever flagged them no longer applies), and
+  // — only when the Claude check above genuinely ran and passed for
+  // this exact new name — records it in name_last_checked so the
+  // nightly scan (name-check-scan.js) doesn't immediately re-bill an
+  // API call re-checking a name that was just vetted seconds ago. A
+  // plain voluntary (non-gated) rename deliberately leaves
+  // name_last_checked untouched — that name has NOT been Claude-checked
+  // by this request, and the nightly scan should still pick it up.
+  // Tries with the new fields first, falls back to progressively fewer
+  // fields on a pre-migration "column does not exist" error, same
+  // fallback shape already used elsewhere in this codebase (e.g.
+  // pomo-active.js's owner_token) — a rename must never fail outright
+  // just because a newer column doesn't exist in production yet.
+  const fullUpdate = { display_name: displayName, needs_rename: false, needs_rename_source: null };
+  if (claudeVerifiedName) { fullUpdate.name_last_checked = claudeVerifiedName; fullUpdate.name_check_reason = null; }
+
   let { data, error } = await supabase
     .from('students')
-    .update({ display_name: displayName, needs_rename: false })
+    .update(fullUpdate)
     .eq('email', email)
     .select('email, display_name')
     .maybeSingle();
+  if (error) {
+    ({ data, error } = await supabase
+      .from('students')
+      .update({ display_name: displayName, needs_rename: false })
+      .eq('email', email)
+      .select('email, display_name')
+      .maybeSingle());
+  }
   if (error) {
     ({ data, error } = await supabase
       .from('students')

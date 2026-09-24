@@ -67,6 +67,14 @@
 [functions."hourly-activity-mock-cutover"]
   schedule = "*/15 * * * *"
 
+# Runs once a day at 19:15 UTC (00:45 IST) and Claude-checks any student
+# whose display_name hasn't been reviewed yet (never checked, or changed
+# since the last check) — see name-check-scan.js's own comment for the
+# full reasoning, including why this is capped per run rather than
+# checking everyone in one burst.
+[functions."name-check-scan"]
+  schedule = "15 19 * * *"
+
 # No headers were configured at all before this, so every static asset
 # (images, vendor React bundle, favicons) inherited Netlify's default
 # `Cache-Control: public, max-age=0, must-revalidate` — the same policy
