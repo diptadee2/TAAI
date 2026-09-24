@@ -303,7 +303,7 @@
     studentsError: null,
     studentSort: { key: 'total_minutes', dir: 'desc' },
     studentSummary: null,
-    studentFilters: { search: '', inactive: '', minStreak: '' }, // inactive: '' | '3' | '7' | '14' | '30' | 'never'
+    studentFilters: { search: '', inactive: '', minStreak: '', flaggedOnly: false }, // inactive: '' | '3' | '7' | '14' | '30' | 'never'
     noteSaving: {}, // email -> 'saving' | 'saved' | 'error', transient per-row save feedback
     // Pricing/Notes/Lectures are three independent lists under one Site
     // data tab — rows/editing are keyed by resource type (see
@@ -1067,6 +1067,7 @@
     return (state.students || []).filter(function (s) {
       if (search && s.display_name.toLowerCase().indexOf(search) === -1 && s.email.toLowerCase().indexOf(search) === -1) return false;
       if (minStreak != null && s.streak < minStreak) return false;
+      if (f.flaggedOnly && !s.needs_rename) return false;
       if (f.inactive === 'never') return s.days_inactive == null;
       if (f.inactive) return s.days_inactive != null && s.days_inactive >= Number(f.inactive);
       return true;
@@ -1140,7 +1141,8 @@
         '<input type="text" id="student-search" placeholder="Search name or email…" value="' + escapeHtml(f.search) + '">' +
         '<label>Inactive for <select id="student-inactive-filter">' + inactiveOptions + '</select></label>' +
         '<label>Min streak <input type="number" min="0" id="student-min-streak" placeholder="0" value="' + escapeHtml(f.minStreak) + '" style="width:64px;"></label>' +
-        ((f.search || f.inactive || f.minStreak !== '') ? '<button type="button" class="btn btn-small" id="student-filter-clear">Clear filters</button>' : '') +
+        '<label><input type="checkbox" id="student-flagged-only"' + (f.flaggedOnly ? ' checked' : '') + '> 🚩 Flagged names only</label>' +
+        ((f.search || f.inactive || f.minStreak !== '' || f.flaggedOnly) ? '<button type="button" class="btn btn-small" id="student-filter-clear">Clear filters</button>' : '') +
       '</div>'
     );
   }
@@ -2146,9 +2148,14 @@
       render();
       refocusFilterInput('student-min-streak', pos);
     });
+    var flaggedOnlyCheckbox = document.getElementById('student-flagged-only');
+    if (flaggedOnlyCheckbox) flaggedOnlyCheckbox.addEventListener('change', function () {
+      state.studentFilters.flaggedOnly = flaggedOnlyCheckbox.checked;
+      render();
+    });
     var filterClearBtn = document.getElementById('student-filter-clear');
     if (filterClearBtn) filterClearBtn.addEventListener('click', function () {
-      state.studentFilters = { search: '', inactive: '', minStreak: '' };
+      state.studentFilters = { search: '', inactive: '', minStreak: '', flaggedOnly: false };
       render();
     });
 
