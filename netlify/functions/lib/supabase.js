@@ -246,6 +246,43 @@ export function parseUtcTimestamp(pgTimestamp) {
   return new Date(pgTimestamp.endsWith('Z') ? pgTimestamp : pgTimestamp + 'Z');
 }
 
+// A student currently gated for an inappropriate name (needs_rename=true)
+// is excluded entirely from every public leaderboard/ranking computation
+// below — not just hidden from the visible rows, but excluded from rank/
+// count math too, so nobody else's displayed rank silently shifts because
+// of someone who isn't even shown. Added on direct request ("can we
+// momentarily hide him from showing in the leaderboard once a flag check
+// comes true till it is resolved?") — resolves itself automatically the
+// moment needs_rename clears (a successful rename), no separate unhide
+// step anywhere. Best-effort: a lookup failure here just means nobody
+// gets excluded this one time, never a reason to break an otherwise-
+// working leaderboard. Almost always returns an empty set in practice —
+// this whole feature is designed so very few students are ever
+// simultaneously flagged and unresolved.
+export async function fetchFlaggedEmails(supabase) {
+  try {
+    const { data } = await supabase.from('students').select('email').eq('needs_rename', true);
+    return new Set((data || []).map((r) => r.email));
+  } catch (e) {
+    console.error('fetchFlaggedEmails: lookup failed', e);
+    return new Set();
+  }
+}
+
+// PostgREST's not.in filter needs a raw "(...)" list literal, not a plain
+// JS array — confirmed directly, not assumed: supabase-js's usual array
+// form for .not(col, 'in', array) fails to parse ("failed to parse
+// filter"), only this raw string form works. Emails are validated/
+// lowercased before ever being stored, so they can't contain a literal
+// double-quote, but escaping defensively costs nothing. Returns null
+// when there's nothing to exclude, so every call site can skip applying
+// the filter entirely in the common (nobody flagged) case, keeping that
+// case's query identical to before this feature existed.
+export function notInEmailList(emails) {
+  if (!emails || emails.size === 0) return null;
+  return '(' + [...emails].map((e) => '"' + String(e).replace(/"/g, '\\"') + '"').join(',') + ')';
+}
+
 // Top 5 by focus minutes logged *last week* (Mon-start, IST), keyed to
 // pomodoro_stats.total_minutes for the week before this one. Shared by
 // tracker-data.js (the page-load batch, for the main-page champions card)
@@ -257,12 +294,16 @@ export function parseUtcTimestamp(pgTimestamp) {
 // tradeoff already accepted for the daily post's fetchTodayLeaders call.
 export async function fetchLastWeekLeaders(supabase, email) {
   const weekStart = weekBefore(weekStartIST());
-  const { data: stats, error: statsError } = await supabase
+  const flaggedEmails = await fetchFlaggedEmails(supabase);
+  const flaggedFilter = notInEmailList(flaggedEmails);
+  let statsQuery = supabase
     .from('pomodoro_stats')
     .select('email, total_minutes')
     .eq('week_start', weekStart)
     .order('total_minutes', { ascending: false })
     .limit(5);
+  if (flaggedFilter) statsQuery = statsQuery.not('email', 'in', flaggedFilter);
+  const { data: stats, error: statsError } = await statsQuery;
   if (statsError) throw new Error(statsError.message);
   if (!stats.length) return { weekStart, leaders: [], viewerRank: null };
 
@@ -308,7 +349,12 @@ export async function fetchLastWeekLeaders(supabase, email) {
   // stood, since this query never fetches their row at all.
   let viewerRank = null;
   const viewerInTop = leaders.some(l => l.is_me);
-  if (email && !viewerInTop) {
+  // A flagged viewer sees no pinned rank of their own either, not just
+  // exclusion from the visible rows — same "hidden until resolved,
+  // including from themselves" rule applied consistently, matching the
+  // simplest reading of the original ask rather than carving out a
+  // private-only exception.
+  if (email && !viewerInTop && !flaggedEmails.has(email)) {
     const { data: viewerStats, error: viewerError } = await supabase
       .from('pomodoro_stats')
       .select('total_minutes')
@@ -318,11 +364,13 @@ export async function fetchLastWeekLeaders(supabase, email) {
     if (viewerError) throw new Error(viewerError.message);
 
     if (viewerStats) {
-      const { count, error: countError } = await supabase
+      let countQuery = supabase
         .from('pomodoro_stats')
         .select('*', { count: 'exact', head: true })
         .eq('week_start', weekStart)
         .gt('total_minutes', viewerStats.total_minutes);
+      if (flaggedFilter) countQuery = countQuery.not('email', 'in', flaggedFilter);
+      const { count, error: countError } = await countQuery;
       if (countError) throw new Error(countError.message);
 
       const viewerLiveStatus = await fetchLiveStatusByEmail(supabase, [email]);
@@ -442,8 +490,15 @@ export async function fetchAllTimeMinutesByEmail(supabase, emails) {
 // logic — and by discord-dispatch.js's 'daily_leader' source, which
 // passes yesterdayIST() explicitly to report on the day that just fully
 // ended.
-export async function fetchTodayLeaders(supabase, email, date) {
+// flaggedEmails (optional) — pass an already-fetched Set (see
+// fetchFlaggedEmails) to skip a redundant lookup when the caller already
+// has one (pomodoro-leaderboard.js, polled every 60s, fetches it once
+// and reuses it here rather than querying it twice per poll); omitted,
+// this fetches its own, so every other caller stays a simple one-arg-
+// shorter call.
+export async function fetchTodayLeaders(supabase, email, date, flaggedEmails) {
   const today = date || todayIST();
+  const flagged = flaggedEmails || (await fetchFlaggedEmails(supabase));
   // Fetches every row for today (not just LIMIT 10) and ranks in JS —
   // real bug this replaced, caught by direct report (a student's own
   // pinned rank showed the same number already visible on someone else
@@ -473,7 +528,10 @@ export async function fetchTodayLeaders(supabase, email, date) {
   if (statsError) throw new Error(statsError.message);
   if (!allStats.length) return { date: today, leaders: [], viewerRank: null };
 
-  const sorted = allStats.slice().sort((a, b) => b.total_minutes - a.total_minutes || (a.email < b.email ? -1 : a.email > b.email ? 1 : 0));
+  const sorted = allStats
+    .filter((s) => !flagged.has(s.email))
+    .slice()
+    .sort((a, b) => b.total_minutes - a.total_minutes || (a.email < b.email ? -1 : a.email > b.email ? 1 : 0));
   const stats = sorted.slice(0, 10);
 
   const { data: students, error: studentsError } = await supabase
@@ -768,11 +826,18 @@ export async function computeMonthlyConsistency(supabase, month) {
   const daysInMonth = (new Date(range.end) - new Date(range.start)) / 86400000;
   const cutoff = `${month}-07T23:59:59`;
 
-  const { data: students, error: studentsError } = await supabase
+  const { data: allStudents, error: studentsError } = await supabase
     .from('students')
-    .select('email, display_name, created_at')
+    .select('email, display_name, created_at, needs_rename')
     .lte('created_at', cutoff);
   if (studentsError) throw new Error(studentsError.message);
+  // A currently-flagged student is excluded from this too — the whole
+  // point is never publicly naming someone whose display name is
+  // pending review, and this result gets posted to Discord/Telegram,
+  // more public than the in-app leaderboards. "Currently" flagged, not
+  // "flagged at some point during the reported month" — this is about
+  // the name as it stands right now, at posting time.
+  const students = allStudents.filter((s) => !s.needs_rename);
   if (!students.length) return { month, top: [] };
 
   const emails = students.map(s => s.email);

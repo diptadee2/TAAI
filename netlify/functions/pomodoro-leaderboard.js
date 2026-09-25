@@ -4,7 +4,7 @@
 // design; no email or other identity is returned in the response. The
 // optional `email` query param (the viewer's own, if logged in) is only
 // used to flag their own row with is_me, never anyone else's.
-import { getSupabase, json, weekStartIST, weekBefore, fetchTodayLeaders, fetchLiveStatusByEmail, fetchLiveCount, fetchAllTimeMinutesByEmail } from './lib/supabase.js';
+import { getSupabase, json, weekStartIST, weekBefore, fetchTodayLeaders, fetchLiveStatusByEmail, fetchLiveCount, fetchAllTimeMinutesByEmail, fetchFlaggedEmails, notInEmailList } from './lib/supabase.js';
 
 const LIMIT = 20;
 
@@ -32,7 +32,7 @@ export async function handler(event) {
   // both contexts the Today card can appear in (Focus Mode vs. the plain
   // checklist, mutually exclusive), so folding it into both existing 60s
   // polls instead means zero extra requests, not a smaller third one.
-  const [statsResult, todayLeaders, liveCount] = await Promise.all([
+  const [statsResult, todayLeaders, liveCount, flaggedEmails] = await Promise.all([
     // Secondary tiebreak (email) added alongside the same fix in
     // fetchTodayLeaders — without one, two students on equal minutes
     // land in whatever order Postgres happens to return, which isn't
@@ -47,10 +47,32 @@ export async function handler(event) {
     // Non-critical — a live-count hiccup (or, pre-migration, the table
     // simply not existing yet) must never fail the whole leaderboard poll.
     fetchLiveCount(supabase).catch(() => ({ count: 0, maxCount: 0 })),
+    // See fetchFlaggedEmails' own comment — a gated student is excluded
+    // from this board entirely (added on direct request). Fetched here
+    // in parallel rather than sequentially first, to avoid adding a
+    // round-trip to an endpoint polled every 60s — this does mean
+    // fetchTodayLeaders above does its own separate, equally-cheap fetch
+    // of the same thing rather than sharing this one, a small accepted
+    // duplication in exchange for zero added latency on the common case.
+    fetchFlaggedEmails(supabase),
   ]);
 
-  const { data: stats, error: statsError } = statsResult;
+  const { data: rawStats, error: statsError } = statsResult;
   if (statsError) return json(500, { error: statsError.message });
+
+  // Filtered here (post-fetch, in JS) rather than as a DB-side NOT IN on
+  // the query above, for the same latency reason as fetching flaggedEmails
+  // in parallel — the LIMIT-20 query would need flaggedEmails resolved
+  // BEFORE it could apply that filter, which would force it to wait on a
+  // sequential lookup first. Accepted tradeoff: if a currently-flagged
+  // student happens to already be within the raw top 20, the board can
+  // show fewer than 20 rows until their gate resolves or they naturally
+  // drop out of the raw top 20, rather than perfectly backfilling with
+  // whoever's actually 21st — self-corrects on the very next 60s poll
+  // regardless, and this should be a rare, momentary state by design
+  // (this whole feature is built to have very few students simultaneously
+  // flagged and unresolved).
+  const stats = rawStats.filter((s) => !flaggedEmails.has(s.email));
 
   if (!stats.length) return json(200, { leaderboard: [], viewerRank: null, todayLeaders, liveCount });
 
@@ -144,7 +166,11 @@ export async function handler(event) {
   // expensive here, unlike the daily board's naturally small table).
   let viewerRank = null;
   const viewerInTop = leaderboard.some(r => r.is_me);
-  if (viewerEmail && !viewerInTop) {
+  // A flagged viewer sees no pinned rank of their own either, not just
+  // exclusion from the visible rows — same "hidden until resolved,
+  // including from themselves" rule as fetchLastWeekLeaders/
+  // fetchTodayLeaders apply.
+  if (viewerEmail && !viewerInTop && !flaggedEmails.has(viewerEmail)) {
     const { data: viewerStats, error: viewerError } = await supabase
       .from('pomodoro_stats')
       .select('total_minutes, total_sessions')
@@ -154,10 +180,14 @@ export async function handler(event) {
     if (viewerError) return json(500, { error: viewerError.message });
 
     if (viewerStats) {
-      const [greaterResult, tiedEarlierResult] = await Promise.all([
-        supabase.from('pomodoro_stats').select('*', { count: 'exact', head: true }).eq('week_start', weekStart).gt('total_minutes', viewerStats.total_minutes),
-        supabase.from('pomodoro_stats').select('*', { count: 'exact', head: true }).eq('week_start', weekStart).eq('total_minutes', viewerStats.total_minutes).lt('email', viewerEmail),
-      ]);
+      const flaggedFilter = notInEmailList(flaggedEmails);
+      let greaterQuery = supabase.from('pomodoro_stats').select('*', { count: 'exact', head: true }).eq('week_start', weekStart).gt('total_minutes', viewerStats.total_minutes);
+      let tiedEarlierQuery = supabase.from('pomodoro_stats').select('*', { count: 'exact', head: true }).eq('week_start', weekStart).eq('total_minutes', viewerStats.total_minutes).lt('email', viewerEmail);
+      if (flaggedFilter) {
+        greaterQuery = greaterQuery.not('email', 'in', flaggedFilter);
+        tiedEarlierQuery = tiedEarlierQuery.not('email', 'in', flaggedFilter);
+      }
+      const [greaterResult, tiedEarlierResult] = await Promise.all([greaterQuery, tiedEarlierQuery]);
       if (greaterResult.error) return json(500, { error: greaterResult.error.message });
       if (tiedEarlierResult.error) return json(500, { error: tiedEarlierResult.error.message });
 
