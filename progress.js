@@ -53,7 +53,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-24-22';
+  var CLIENT_VERSION = '2026-09-25-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1330,6 +1330,16 @@
         state.subjectProgress = state.student ? (data.subjectProgress.subjects || []) : [];
         state.malpractice = state.student ? (data.malpractice || { incidentCount: 0, frozenUntil: null, warningAckCount: 0 }) : null;
         state.needsRename = state.student ? !!(data.needsRename && data.needsRename.needsRename) : false;
+        // Keep the cookie-cached display_name in sync with the server's
+        // real current one — see fetchNeedsRename's own comment for the
+        // real bug this fixes (the rename gate quoting a stale, already-
+        // changed name back at a student). Only ever moves the cookie
+        // toward what the server actually has, never the reverse.
+        var freshName = state.student && data.needsRename && data.needsRename.currentDisplayName;
+        if (freshName && state.student.display_name !== freshName) {
+          state.student.display_name = freshName;
+          writeCookie(state.student);
+        }
 
         // Only present once a student has actually saved custom durations
         // somewhere before (see applyPomoSettings) — merge in place of
@@ -2872,10 +2882,15 @@
     var currentName = state.student ? state.student.display_name : '';
     return '<div class="pomo-malpractice-gate pomo-malpractice-gate--rename" id="pomo-malpractice-gate"' + (show ? '' : ' hidden') + '>' +
       '<div class="pomo-gate-title">✏️ Update your name</div>' +
-      '<p class="pomo-gate-body">"' + escapeHtml(currentName) + '" isn’t a usable display name here — please enter your real name to keep using Focus sessions.</p>' +
+      // Deliberately NOT "enter your real name" — the system never
+      // actually requires real/legal identity, only that the name isn't
+      // inappropriate. Framing this as "check/pick something else" is
+      // both more accurate and less demanding than implying a real-name
+      // requirement that doesn't exist.
+      '<p class="pomo-gate-body">"' + escapeHtml(currentName) + '" isn’t a usable display name here — please pick a different name to keep using Focus sessions.</p>' +
       '<form id="pomo-rename-gate-form" class="rename-form">' +
-      '<input id="pomo-rename-gate-input" type="text" maxlength="60" required autocomplete="name" placeholder="Your real name">' +
-      '<button type="submit" class="pomo-btn pomo-btn-primary">Save</button>' +
+      '<input id="pomo-rename-gate-input" type="text" maxlength="60" required autocomplete="name" placeholder="Pick a new name">' +
+      '<button type="submit" class="pomo-btn pomo-btn-primary"><span class="pomo-rename-gate-btn-label">Save</span></button>' +
       '</form>' +
       // Shown every time this gate appears, not just a one-off first-use
       // flag — a plain, always-accurate note is simpler than trying to
@@ -4396,7 +4411,17 @@
       var newName = input.value.trim();
       if (!newName) return;
       var btn = pomoRenameGateForm.querySelector('.pomo-btn-primary');
+      var label = pomoRenameGateForm.querySelector('.pomo-rename-gate-btn-label');
+      // A real, visible loading state — this submit is a genuinely
+      // synchronous Claude call now (this gate is only ever shown while
+      // needs_rename is true, which routes through rename.js's gated-
+      // resolution branch, the one path that still checks inline), so it
+      // can take a couple of real seconds, not feel instant. Just
+      // disabling the button (the previous behavior) gave no visible
+      // sign anything was happening during that wait.
       if (btn) btn.disabled = true;
+      if (input) input.disabled = true;
+      if (label) label.innerHTML = '<span class="pomo-rename-gate-spinner"></span> Checking…';
       api('/rename', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

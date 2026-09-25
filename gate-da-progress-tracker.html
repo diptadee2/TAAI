@@ -940,8 +940,33 @@
      shares this box with. */
   .pomo-malpractice-gate--rename { background: var(--purple-soft); border: 1px solid rgba(139,92,246,0.35); }
   .pomo-malpractice-gate--rename .pomo-gate-title { color: var(--purple); }
-  .pomo-malpractice-gate--rename .rename-form { justify-content: center; margin-top: 4px; }
-  .pomo-malpractice-gate--rename .rename-form input { min-width: 180px; }
+  .pomo-malpractice-gate--rename .rename-form { justify-content: center; margin-top: 4px; gap: 10px; }
+  /* This form reuses .rename-form (also used by the small inline "Rename"
+     link at the top of the page), whose own .rename-form input/button
+     rules are tuned for that tiny inline context — not big enough or
+     visually weighted enough for the main focal action of a full gate
+     card. Scoped overrides here, not a new class, so this still benefits
+     from any future shared tweak to the base form styling. */
+  .pomo-malpractice-gate--rename .rename-form input { min-width: 200px; padding: 11px 16px; font-size: 14px; border-radius: 12px; }
+  /* Real bug, not just a size tweak: .rename-form button's own
+     background:none/border:none/text-decoration:underline (0,1,1
+     specificity) was silently beating .pomo-btn-primary's gradient
+     (0,1,0) on this exact button, despite both classes being present in
+     the markup — confirmed by the rendered result being a plain
+     underlined text link instead of the intended gradient pill. This
+     restores it explicitly, at higher specificity, rather than fighting
+     the cascade a different way. */
+  .pomo-malpractice-gate--rename .rename-form .pomo-btn-primary {
+    background: linear-gradient(135deg,var(--pomo-g1,#FF7FB7),var(--pomo-g2,var(--purple)),var(--pomo-g3,#4D8BFF));
+    color: #fff; text-decoration: none; padding: 11px 26px; border-radius: 12px;
+    box-shadow: 0 8px 24px var(--pomo-glow,rgba(139,92,246,0.35));
+    display: inline-flex; align-items: center; gap: 6px; min-width: 0;
+  }
+  .pomo-malpractice-gate--rename .rename-form .pomo-btn-primary:hover:not(:disabled) { opacity: 1; box-shadow: 0 12px 30px var(--pomo-glow,rgba(139,92,246,0.5)); }
+  .pomo-malpractice-gate--rename .rename-form .pomo-btn-primary:disabled { opacity: .75; cursor: default; }
+  .pomo-rename-gate-spinner { width: 13px; height: 13px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; animation: pomo-rename-gate-spin .7s linear infinite; }
+  @keyframes pomo-rename-gate-spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .pomo-rename-gate-spinner { animation: none; } }
   .pomo-gate-title { font-family: var(--font-nav); font-weight: 700; font-size: 14px; margin-bottom: 8px; color: var(--amber); }
   .pomo-gate-body { font-size: 13px; color: var(--ink-dim); line-height: 1.55; margin: 0 0 12px; }
   .pomo-gate-hint { font-size: 11.5px; color: var(--ink-soft); margin: 8px 0 0; }

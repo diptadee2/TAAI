@@ -141,14 +141,25 @@ async function fetchMalpracticeStatus(supabase, email) {
 // this is a brand-new, likely-not-yet-migrated column that must never be
 // able to take down malpractice status (or vice versa) just because one
 // of the two hasn't been migrated yet.
+// Also returns the student's CURRENT display_name (a stable, always-
+// migrated column, safe to combine with needs_rename here) — a real bug
+// this fixes: the rename gate used to read the name it's complaining
+// about from progress.js's own cookie-cached state.student.display_name,
+// which only updates on a real register/rename response. A student whose
+// cookie predates a later rename (their own earlier voluntary rename, or
+// an admin's direct SQL correction) would see the gate quoting a STALE,
+// already-changed name back at them — confirmed happening for real
+// ("it says karzy8 but i was using dipta for the email"), not a
+// hypothetical. The server's own fresh read is what the gate should
+// actually quote.
 async function fetchNeedsRename(supabase, email) {
   const { data, error } = await supabase
     .from('students')
-    .select('needs_rename')
+    .select('needs_rename, display_name')
     .eq('email', email)
     .maybeSingle();
   if (error) throw new Error(error.message);
-  return { needsRename: !!(data && data.needs_rename) };
+  return { needsRename: !!(data && data.needs_rename), currentDisplayName: data ? data.display_name : null };
 }
 
 async function fetchSubjectProgress(supabase, email) {

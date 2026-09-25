@@ -53,7 +53,7 @@ export async function handler(event) {
   try {
     const { data: existing } = await supabase
       .from('students')
-      .select('display_name, needs_rename')
+      .select('display_name, needs_rename, needs_rename_source')
       .eq('email', email)
       .maybeSingle();
     if (existing && !existing.needs_rename) {
@@ -151,8 +151,20 @@ export async function handler(event) {
         // existing.display_name is the name CURRENTLY causing the gate —
         // passed as context so Claude can tell whether this new attempt
         // is a genuine fix or a softened reword of the same thing (see
-        // checkNameAppropriate's own comment on last_flagged_name).
-        const result = await checkNameAppropriate(displayName, existing.display_name);
+        // checkNameAppropriate's own comment on last_flagged_name). Only
+        // when needs_rename_source is 'ai_scan' — a real, content-based
+        // Claude verdict — not 'admin', which can mean anything (a real
+        // spotted problem, but just as easily a one-off manual/test flag
+        // completely unrelated to the name's actual content, exactly
+        // what a manually-flagged real account hit here: an innocent
+        // name ("Dipta") got admin-flagged purely to test this gate's
+        // UI, and passing it as "previously flagged inappropriate"
+        // context caused Claude to read the student's own real, fine
+        // follow-up name as evasion of a problem that never existed).
+        // Getting this wrong costs a real student a genuine attempt at
+        // the 3-try cap over nothing they actually did.
+        const priorContext = existing.needs_rename_source === 'ai_scan' ? existing.display_name : null;
+        const result = await checkNameAppropriate(displayName, priorContext);
         if (!result.skipped) {
           const newCount = priorCheckCount + 1;
           const escalateNow = result.flagged && newCount >= GATE_CHECK_LIMIT;
