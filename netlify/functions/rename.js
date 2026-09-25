@@ -222,9 +222,16 @@ export async function handler(event) {
           // result.flagged can only be true when !result.skipped also ran
           // above (a skipped check never comes back flagged), so newCount
           // here is always the real, just-incremented count from that
-          // block, not the unchanged priorCheckCount fallback.
+          // block, not the unchanged priorCheckCount fallback. Kept
+          // short and generic on purpose — result.reason is Claude's own
+          // detailed linguistic explanation (which slur, why, how it
+          // relates to a prior flagged name), useful in /team for an
+          // admin, not something a student needs spelled out back at
+          // them. It's still recorded server-side (last_flagged_name's
+          // own count-patch just above, and name_check_reason on a
+          // successful resolve) — just never echoed into this response.
           return json(400, {
-            error: 'That name still isn\'t appropriate for this site — ' + (result.reason || 'please pick a different one.'),
+            error: 'That name still isn\'t appropriate for this site — please pick a different one.',
             triesLeft: Math.max(0, GATE_CHECK_LIMIT - newCount),
           });
         }
