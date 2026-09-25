@@ -1195,35 +1195,43 @@
   .live-dot { display: block; width: 7px; height: 7px; border-radius: 50%; background: #34D399; box-shadow: 0 0 5px rgba(52,211,153,0.75); }
   @keyframes live-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .5; transform: scale(0.75); } }
   .leaderboard-you { display: inline-block; font-family: var(--font-nav); font-size: 9.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--purple); background: rgba(139,92,246,0.16); border-radius: 999px; padding: 1px 7px; margin-left: 4px; vertical-align: middle; }
-  /* Each earned milestone is its own small tier-colored dot — several
+  /* Each earned milestone is its own small tier-colored badge — several
      can render side by side on one name (see effortBadgesHtml), so each
      needs its own visual boundary to read as a distinct earned badge.
-     No emoji glyph anymore — a full-color emoji crammed into a 13px
-     circle read as an illegible blur at real page-rendering sizes,
-     direct feedback: "emojis inside circle is a bad idea." A plain
-     empty circle, tier identity carried entirely by its own flat color
-     (see below), needs no internal content to size/center at all — the
-     whole glyph-centering saga this rule used to need (a canvas-pixel-
-     level measured padding-top, plus a SEPARATE, differently-tuned
-     override just for Today's Leaders' own narrower column) is gone
-     along with the emoji that made it necessary. Still flat, no
-     box-shadow/border glow — kept from an earlier direct request
-     ("can't the design of the badges be a bit more matte than glossy")
-     that predates this change but is equally true of a plain color dot.
-     box-shadow+border-radius together are never animated here (only
-     left/opacity move elsewhere on this page), so this doesn't trip the
-     Chromium DOM-leak gotcha even if that ever changes. */
-  .leaderboard-effort-badge { display: inline-block; width: 13px; height: 13px; margin-left: 7px; border-radius: 50%; vertical-align: middle; cursor: default; }
-  /* Solid, near-opaque colors — a plain dot with no emoji needs real
-     color saturation to read as "a distinct earned tier" from across a
-     leaderboard row, unlike the old translucent 45%-opacity fills tuned
-     to sit quietly UNDER an emoji glyph. Each keeps a loose thematic tie
-     to its old emoji (star=gold, flame=orange, lightning=blue, crown=
-     purple) while staying visually distinct from the streak-ball tier
-     colors just to their left in the Streak column (bronze/silver/gold/
-     diamond) — the two badge systems track different things (all-time
-     hours vs. consecutive days) and sit on the same row, so they
-     shouldn't read as the same achievement palette. */
+     A bare colorless dot (the very first fix, in response to the
+     original "emojis inside circle is a bad idea" report) turned out
+     to be an overcorrection of its own — direct follow-up: "can't we
+     have some minimal yet illustrative badges?" Holds a small inline
+     SVG silhouette now (see the EFFORT_ICON_ constants and EFFORT_TIERS in progress.js)
+     instead of either a font emoji or nothing — a hand-authored vector
+     shape stays crisp at any size, unlike the emoji glyph that broke at
+     13px in the first place, while still being genuinely illustrative
+     (a real star/flame/bolt/crown silhouette, not just a color). Grown
+     from 13px to 16px to give the icon real room to read clearly —
+     still small and minimal, just no longer AS cramped as the size that
+     caused the original emoji-legibility problem. Centered via plain
+     flex (align-items/justify-content) rather than any pixel-tuned
+     padding — an SVG scales/centers cleanly within its own box by
+     construction, unlike a font glyph, so none of the old canvas-pixel-
+     measured emoji-ink-centering hacks (a padding-top tuned per board)
+     are needed here at all. Still flat, no box-shadow/border glow —
+     kept from an earlier direct request ("can't the design of the
+     badges be a bit more matte than glossy") that predates all of this
+     but is equally true of an icon-in-a-flat-circle. box-shadow and
+     border-radius are never both animated here (only left/opacity move
+     elsewhere on this page), so this doesn't trip the Chromium DOM-leak
+     gotcha even if that ever changes. */
+  .leaderboard-effort-badge { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; margin-left: 7px; border-radius: 50%; vertical-align: middle; cursor: default; color: rgba(255,255,255,0.92); }
+  .leaderboard-effort-badge svg { width: 10px; height: 10px; }
+  /* Solid, near-opaque colors — real saturation is what lets the tier
+     read at a glance from across a leaderboard row. Each keeps a loose
+     thematic tie to its old emoji (star=gold, flame=orange, lightning=
+     blue, crown=purple) while staying visually distinct from the
+     streak-ball tier colors just to their left in the Streak column
+     (bronze/silver/gold/diamond) — the two badge systems track
+     different things (all-time hours vs. consecutive days) and sit on
+     the same row, so they shouldn't read as the same achievement
+     palette. */
   .leaderboard-effort-badge--star { background: #E0A83E; }
   .leaderboard-effort-badge--flame { background: #E2622F; }
   .leaderboard-effort-badge--lightning { background: #2FA8D9; }

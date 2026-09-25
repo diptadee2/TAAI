@@ -53,7 +53,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-26-1';
+  var CLIENT_VERSION = '2026-09-26-2';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1785,7 +1785,7 @@
     var earnedTiers = EFFORT_TIERS.filter(function (t) { return Number(hours) >= t.minHours; });
     if (earnedTiers.length) {
       html += '<div class="alltime-tooltip-badges">' + earnedTiers.map(function (t) {
-        return '<span class="alltime-tooltip-badge-row"><span class="leaderboard-effort-badge leaderboard-effort-badge--' + t.key + '"></span>' + t.name + ' · ' + t.minHours + '+ hrs</span>';
+        return '<span class="alltime-tooltip-badge-row"><span class="leaderboard-effort-badge leaderboard-effort-badge--' + t.key + '">' + t.icon + '</span>' + t.name + ' · ' + t.minHours + '+ hrs</span>';
       }).join('') + '</div>';
     }
     el.innerHTML = html;
@@ -3800,17 +3800,29 @@
   // Stored ascending (unlike STREAK_TIERS' descending order) since
   // effortBadgesHtml renders every earned tier left-to-right, smallest
   // milestone first — a collection, not just the single highest one.
-  // No emoji field anymore — see .leaderboard-effort-badge's own CSS
-  // comment for why (a full-color emoji glyph crammed into a 13px circle
-  // read as an illegible blur, "emojis inside circle is a bad idea,"
-  // direct feedback). Each tier is now identified purely by its own flat
-  // color, same as STREAK_TIERS' own streak-ball colors — `name` is kept
-  // for the title/legend text, `key` still drives the CSS class.
+  // Emoji glyphs are gone (see .leaderboard-effort-badge's own CSS
+  // comment for the original "illegible blur" problem) but a bare
+  // colorless dot went too far the other way — direct follow-up: "can't
+  // we have some minimal yet illustrative badges?" Each tier now pairs
+  // its own flat background color with a small, clean, single-color
+  // inline SVG silhouette (not a font emoji — a hand-authored vector
+  // shape stays crisp at any size, unlike a raster/font glyph, which is
+  // exactly what broke at 13px in the first place) — same shared-
+  // constant-icon pattern this file already uses for the Pomodoro
+  // button icons (POMO_ICON_PLAY etc.). Each path is kept deliberately
+  // simple (a handful of points, no fine detail) since that's what
+  // actually stays legible at badge size, not despite it.
+  var EFFORT_ICON_STAR = '<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12,3 14.06,9.17 20.56,9.22 15.33,13.08 17.29,19.28 12,15.5 6.71,19.28 8.67,13.08 3.44,9.22 9.94,9.17"/></svg>';
+  var EFFORT_ICON_FLAME = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12,2 C8,7 6,10 7,14 a5,5 0 0010,0 c1,-4 -1,-7 -5,-12z"/></svg>';
+  var EFFORT_ICON_LIGHTNING = '<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/></svg>';
+  var EFFORT_ICON_CROWN = '<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,17 3,7 9,11 12,5 15,11 21,7 19,17"/></svg>';
+  // `name` is kept for the title/legend text, `key` still drives the CSS
+  // class; `icon` is the one of the above shown inside the badge.
   var EFFORT_TIERS = [
-    { minHours: 100, name: 'Star', key: 'star' },
-    { minHours: 250, name: 'Flame', key: 'flame' },
-    { minHours: 500, name: 'Lightning', key: 'lightning' },
-    { minHours: 1000, name: 'Crown', key: 'crown' },
+    { minHours: 100, name: 'Star', key: 'star', icon: EFFORT_ICON_STAR },
+    { minHours: 250, name: 'Flame', key: 'flame', icon: EFFORT_ICON_FLAME },
+    { minHours: 500, name: 'Lightning', key: 'lightning', icon: EFFORT_ICON_LIGHTNING },
+    { minHours: 1000, name: 'Crown', key: 'crown', icon: EFFORT_ICON_CROWN },
   ];
   // Every earned tier shows, not just the highest — a real report ("all
   // the badges should show") that a student who's already passed 250h
@@ -3829,7 +3841,7 @@
     for (var i = 0; i < EFFORT_TIERS.length; i++) {
       var t = EFFORT_TIERS[i];
       if (hours < t.minHours) break; // tiers are ascending, so nothing further can match either
-      html += '<span class="leaderboard-effort-badge leaderboard-effort-badge--' + t.key + '" title="' + t.name + ' milestone — ' + t.minHours + '+ all-time focus hours"></span>';
+      html += '<span class="leaderboard-effort-badge leaderboard-effort-badge--' + t.key + '" title="' + t.name + ' milestone — ' + t.minHours + '+ all-time focus hours">' + t.icon + '</span>';
     }
     return html;
   }
@@ -3852,7 +3864,7 @@
       if (hours >= EFFORT_TIERS[i].minHours) highest = EFFORT_TIERS[i];
     }
     if (!highest) return '';
-    return '<span class="leaderboard-effort-badge leaderboard-effort-badge--' + highest.key + '" title="' + highest.name + ' milestone — ' + highest.minHours + '+ all-time focus hours"></span>';
+    return '<span class="leaderboard-effort-badge leaderboard-effort-badge--' + highest.key + '" title="' + highest.name + ' milestone — ' + highest.minHours + '+ all-time focus hours">' + highest.icon + '</span>';
   }
 
 
@@ -3870,7 +3882,7 @@
     var rows = '';
     for (var i = 0; i < EFFORT_TIERS.length; i++) {
       var t = EFFORT_TIERS[i];
-      rows += '<div class="streak-legend-row"><span class="leaderboard-effort-badge leaderboard-effort-badge--' + t.key + '"></span>' +
+      rows += '<div class="streak-legend-row"><span class="leaderboard-effort-badge leaderboard-effort-badge--' + t.key + '">' + t.icon + '</span>' +
         '<span class="streak-legend-name">' + t.name + '</span>' +
         '<span class="streak-legend-range">' + t.minHours + '+ hrs</span></div>';
     }
