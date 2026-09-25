@@ -53,7 +53,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-25-9';
+  var CLIENT_VERSION = '2026-09-25-10';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2181,7 +2181,13 @@
     // a freeze pre-empting the rename gate) this stays the ONLY way to
     // fix a gate, so it stays fully interactive below, unchanged.
     if (state.needsRename && state.focus && pomoGateState() === 'rename') {
-      return identityDisplayName() + ' &middot; <span class="rename-note">Update your name below to continue</span> &middot; <button id="not-you">Not you?</button>';
+      // No name, no note here at all — the gate box right below already
+      // says all of this itself (title, body, hint), so repeating any
+      // of it up here was pure redundant clutter once the name itself
+      // was masked out (direct follow-up: "isn't it better to remove
+      // every text except the not you button?"). "Not you?" is kept
+      // since it's the one thing here the gate box doesn't cover.
+      return '<button id="not-you">Not you?</button>';
     }
     if (state.renameLimitMessage) {
       // Only ever reachable while NOT gated (see the click handler's own
