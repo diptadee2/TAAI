@@ -53,7 +53,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-25-2';
+  var CLIENT_VERSION = '2026-09-25-3';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -659,6 +659,7 @@
     // reasoning as malpractice above. Drives pomoGateState.
     needsRename: false,
     pomoRenameGateError: null, // error text from a failed submit of the rename-gate's own form (renderPomoRenameGateHtml)
+    gateTriesLeft: null, // real attempts left this month on the gated-resolution cap (see rename.js's GATE_CHECK_LIMIT) — null until the initial tracker-data fetch sets it, so the hint doesn't show a wrong number for a flash before that
   };
 
   // Set when a signed-out visitor tries to check a task — captured so
@@ -1146,7 +1147,15 @@
   function api(path, opts) {
     return fetch('/api' + path, opts).then(function (res) {
       return res.json().then(function (data) {
-        if (!res.ok) throw new Error(data.error || 'request failed');
+        if (!res.ok) {
+          var err = new Error(data.error || 'request failed');
+          // Preserves any extra fields an error response carries beyond
+          // the plain message (e.g. rename.js's triesLeft) — purely
+          // additive, every existing .catch(function(err){...}) that
+          // only ever reads err.message is completely unaffected.
+          err.data = data;
+          throw err;
+        }
         return data;
       });
     });
@@ -1330,6 +1339,9 @@
         state.subjectProgress = state.student ? (data.subjectProgress.subjects || []) : [];
         state.malpractice = state.student ? (data.malpractice || { incidentCount: 0, frozenUntil: null, warningAckCount: 0 }) : null;
         state.needsRename = state.student ? !!(data.needsRename && data.needsRename.needsRename) : false;
+        if (state.student && data.needsRename && typeof data.needsRename.gateTriesLeft === 'number') {
+          state.gateTriesLeft = data.needsRename.gateTriesLeft;
+        }
         // Keep the cookie-cached display_name in sync with the server's
         // real current one — see fetchNeedsRename's own comment for the
         // real bug this fixes (the rename gate quoting a stale, already-
@@ -2868,6 +2880,23 @@
     return null;
   }
 
+  // Kept free of internal terms like "attempts" or "checks" throughout,
+  // per direct instruction earlier in this feature's history — showing
+  // the real number is a later, separate ask ("make the number of tries
+  // visible") and doesn't reopen that one; "tries" reads as plain,
+  // human wording, not jargon.
+  function pomoRenameGateHintText() {
+    var n = state.gateTriesLeft;
+    if (n === 0) return 'You\'re out of tries for this month — please reach out to our team on Discord for help.';
+    if (typeof n === 'number') {
+      return 'You have ' + n + ' ' + (n === 1 ? 'try' : 'tries') + ' left this month — if they don\'t work out, you\'ll need to reach out to our team on Discord for help.';
+    }
+    // gateTriesLeft not resolved yet (brief window before the tracker-
+    // data fetch returns) — same original, count-free wording as a
+    // harmless fallback rather than showing a wrong or blank number.
+    return 'Take your time picking a name — if it doesn\'t work out after a few tries, you\'ll need to reach out to our team on Discord for help.';
+  }
+
   // Please-rename gate — reuses the exact same #pomo-malpractice-gate
   // element id and hide/reveal mechanism as the malpractice notice below
   // (same box, different content depending on pomoGateState), rather
@@ -2889,15 +2918,25 @@
       // requirement that doesn't exist.
       '<p class="pomo-gate-body">"' + escapeHtml(currentName) + '" isn’t a usable display name here — please pick a different name to keep using Focus sessions.</p>' +
       '<form id="pomo-rename-gate-form" class="rename-form">' +
-      '<input id="pomo-rename-gate-input" type="text" maxlength="60" required autocomplete="name" placeholder="Pick a new name">' +
-      '<button type="submit" class="pomo-btn pomo-btn-primary"><span class="pomo-rename-gate-btn-label">Save</span></button>' +
+      '<input id="pomo-rename-gate-input" type="text" maxlength="60" required autocomplete="name" placeholder="Pick a new name"' + (state.gateTriesLeft === 0 ? ' disabled' : '') + '>' +
+      // Disabled from the very first paint once gateTriesLeft is known to
+      // be 0 (escalated — self-service is genuinely over server-side at
+      // that point, rename.js rejects unconditionally), not just after a
+      // failed submit — no point letting someone type and click into a
+      // guaranteed rejection they can't act on anyway.
+      '<button type="submit" class="pomo-btn pomo-btn-primary"' + (state.gateTriesLeft === 0 ? ' disabled' : '') + '><span class="pomo-rename-gate-btn-label">Save</span></button>' +
       '</form>' +
       // Shown every time this gate appears, not just a one-off first-use
       // flag — a plain, always-accurate note is simpler than trying to
       // detect "is this genuinely their first time," and never goes
       // stale. Deliberately avoids internal terms like "attempts" or
-      // "checks" — just a warm, human description of what happens.
-      '<p class="pomo-gate-hint">Take your time picking a name — if it doesn\'t work out after a few tries, you\'ll need to reach out to our team on Discord for help.</p>' +
+      // "checks" — just a warm, human description of what happens. Now
+      // shows the real remaining count once known (gateTriesLeft, from
+      // tracker-data.js's own GATE_CHECK_LIMIT-aware read), on direct
+      // request ("make the number of tries visible") — falls back to the
+      // original vaguer wording only for the brief window before that
+      // fetch resolves (gateTriesLeft still null).
+      '<p class="pomo-gate-hint">' + pomoRenameGateHintText() + '</p>' +
       (state.pomoRenameGateError ? '<p class="form-error">' + escapeHtml(state.pomoRenameGateError) + '</p>' : '') +
       '</div>';
   }
@@ -4436,6 +4475,13 @@
         })
         .catch(function (err) {
           state.pomoRenameGateError = err.message;
+          // Updates the visible tries-left count (and, once it hits 0,
+          // disables Save — see renderPomoRenameGateHtml) from the same
+          // rejection response, so the student sees it change in real
+          // time as they use up tries, not just on a later page reload.
+          if (err.data && typeof err.data.triesLeft === 'number') {
+            state.gateTriesLeft = err.data.triesLeft;
+          }
           renderCalendar();
         });
     });

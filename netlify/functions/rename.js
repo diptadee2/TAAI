@@ -144,7 +144,7 @@ export async function handler(event) {
 
       const HANDED_OFF_MESSAGE = 'Please reach out to our team directly on Discord — they\'ll help you sort out your name.';
       if (alreadyEscalated) {
-        return json(400, { error: HANDED_OFF_MESSAGE });
+        return json(400, { error: HANDED_OFF_MESSAGE, triesLeft: 0 });
       }
 
       try {
@@ -165,8 +165,15 @@ export async function handler(event) {
         // the 3-try cap over nothing they actually did.
         const priorContext = existing.needs_rename_source === 'ai_scan' ? existing.display_name : null;
         const result = await checkNameAppropriate(displayName, priorContext);
+        // Declared here, not inside the block below, specifically so the
+        // triesLeft calculation further down (a real bug caught by
+        // testing, not assumed away: a first version declared this with
+        // const INSIDE the !result.skipped block, throwing
+        // "newCount is not defined" the instant a real flagged result
+        // tried to read it from the sibling if-block below) can read it.
+        let newCount = priorCheckCount;
         if (!result.skipped) {
-          const newCount = priorCheckCount + 1;
+          newCount = priorCheckCount + 1;
           const escalateNow = result.flagged && newCount >= GATE_CHECK_LIMIT;
           const countPatch = { gate_name_check_count: newCount, gate_name_check_month: month, gate_escalated: escalateNow };
           // A rejected attempt is itself real evidence of what this
@@ -183,11 +190,18 @@ export async function handler(event) {
             console.error('rename.js: gate_name_check increment failed for', email, e);
           }
           if (escalateNow) {
-            return json(400, { error: HANDED_OFF_MESSAGE });
+            return json(400, { error: HANDED_OFF_MESSAGE, triesLeft: 0 });
           }
         }
         if (result.flagged) {
-          return json(400, { error: 'That name still isn\'t appropriate for this site — ' + (result.reason || 'please pick a different one.') });
+          // result.flagged can only be true when !result.skipped also ran
+          // above (a skipped check never comes back flagged), so newCount
+          // here is always the real, just-incremented count from that
+          // block, not the unchanged priorCheckCount fallback.
+          return json(400, {
+            error: 'That name still isn\'t appropriate for this site — ' + (result.reason || 'please pick a different one.'),
+            triesLeft: Math.max(0, GATE_CHECK_LIMIT - newCount),
+          });
         }
         if (!result.skipped) {
           gatedNameVerified = true;

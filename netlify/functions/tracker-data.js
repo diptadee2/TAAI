@@ -152,6 +152,13 @@ async function fetchMalpracticeStatus(supabase, email) {
 // ("it says karzy8 but i was using dipta for the email"), not a
 // hypothetical. The server's own fresh read is what the gate should
 // actually quote.
+// Matches rename.js's own GATE_CHECK_LIMIT exactly — no shared constant
+// exists across these two files (a Netlify Function boundary, same
+// reasoning already accepted elsewhere in this codebase, e.g. the
+// pomodoro-complete.js/progress.js work-minute cap), so this needs to be
+// kept in sync by hand if that cap ever changes.
+const GATE_CHECK_LIMIT = 3;
+
 async function fetchNeedsRename(supabase, email) {
   const { data, error } = await supabase
     .from('students')
@@ -159,7 +166,30 @@ async function fetchNeedsRename(supabase, email) {
     .eq('email', email)
     .maybeSingle();
   if (error) throw new Error(error.message);
-  return { needsRename: !!(data && data.needs_rename), currentDisplayName: data ? data.display_name : null };
+
+  // Own separate, best-effort query — gate_name_check_count/month are
+  // genuinely newer, less-stable columns than needs_rename/display_name
+  // above, so combining them into one select risks the exact "one
+  // missing column masks an already-working one" bug this codebase has
+  // hit before (see malpractice_warning_ack_count's writeup in
+  // CLAUDE.md). A lookup failure here just means the gate shows no tries-
+  // left count yet, never a reason to break needs_rename/display_name.
+  let triesLeft = GATE_CHECK_LIMIT;
+  try {
+    const { data: rate } = await supabase
+      .from('students')
+      .select('gate_name_check_count, gate_name_check_month, gate_escalated')
+      .eq('email', email)
+      .maybeSingle();
+    if (rate && rate.gate_name_check_month === todayIST().slice(0, 7)) {
+      triesLeft = rate.gate_escalated ? 0 : Math.max(0, GATE_CHECK_LIMIT - (rate.gate_name_check_count || 0));
+    }
+    // else: no record yet, or a stale month — fresh GATE_CHECK_LIMIT tries.
+  } catch (e) {
+    console.error('fetchNeedsRename: gate tries-left lookup failed for', email, e);
+  }
+
+  return { needsRename: !!(data && data.needs_rename), currentDisplayName: data ? data.display_name : null, gateTriesLeft: triesLeft };
 }
 
 async function fetchSubjectProgress(supabase, email) {
