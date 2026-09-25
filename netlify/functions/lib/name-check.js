@@ -156,3 +156,82 @@ export async function triggerNameCheckBackground(event, email, displayName) {
     console.error('triggerNameCheckBackground: failed to dispatch for', email, e);
   }
 }
+
+// A short list of generic function words plus a few names/phrases
+// common enough on THIS specific platform (GATE DA exam prep) that
+// they'd otherwise create noisy, meaningless matches below — e.g. two
+// totally unrelated students both using "topper" or "focused" shouldn't
+// read as a connection. Deliberately NOT including pronouns (she/he/
+// her/him) — those are exactly the short, meaningful words this check
+// exists to catch, unlike these.
+const REVIEW_NOTE_STOPWORDS = new Set([
+  'the', 'a', 'an', 'is', 'are', 'was', 'am', 'to', 'of', 'in', 'on', 'at', 'it', 'and', 'or', 'but', 'who',
+  'what', 'when', 'where', 'why', 'how', 'this', 'that', 'for', 'with', 'not', 'you', 'your',
+  'gate', 'exam', 'study', 'student', 'topper', 'focus', 'focused', 'rank', 'score', 'da',
+]);
+
+// Splits a display name into its meaningful lowercase words — handles
+// the three ways this codebase's real names actually vary: CamelCase
+// compounds ("SheSaidMore"), punctuation/spacing ("BUT WHOO IS
+// SHEEEE..."), and elongated letter-repetition ("SHEEEE" -> "she"). The
+// elongation collapse only fires on 3+ repeats specifically (not 2) —
+// English spelling already has plenty of legitimate double letters
+// ("letter", "common"); tripling is what actually signals deliberate
+// stretching ("sheeee", "whooo"), not normal spelling.
+function significantWords(name) {
+  const words = String(name || '')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/([a-z])\1{2,}/g, '$1')
+    .trim()
+    .split(/\s+/)
+    .filter((w) => w.length >= 3 && !REVIEW_NOTE_STOPWORDS.has(w));
+  return new Set(words);
+}
+
+// Cheap, no-Claude-call check: does this name share a meaningful word
+// with some OTHER student's own last_flagged_name? Never gates anyone —
+// see schema.sql's own comment on name_review_note for why this stays
+// advisory-only rather than an auto-flag, after a real cross-student
+// case (a different student's name referencing another's already-
+// flagged one) turned out to read as a genuine, unrelated meme/phrase
+// even when Claude was told about the connection directly. otherFlagged
+// is [{email, last_flagged_name}], already fetched by the caller and
+// already excluding the student being checked.
+export function crossStudentReviewNote(displayName, selfEmail, otherFlagged) {
+  const mine = significantWords(displayName);
+  if (mine.size === 0) return null;
+  for (const row of otherFlagged || []) {
+    if (!row.last_flagged_name || row.email === selfEmail) continue;
+    const theirs = significantWords(row.last_flagged_name);
+    const shared = [...mine].filter((w) => theirs.has(w));
+    if (shared.length > 0) {
+      return 'Shares "' + shared[0] + '" with a previously-flagged name on another account (' + row.email + ': "' + row.last_flagged_name + '") — may be worth a look, not auto-flagged.';
+    }
+  }
+  return null;
+}
+
+// Fetches every OTHER student's last_flagged_name — a small, bounded
+// pool (only students ever flagged at least once), so a plain select is
+// safe here without needing full pagination machinery. selfEmail is
+// optional — omit it to fetch the whole pool once for a batch (e.g.
+// name-check-scan.js checking several candidates against the same
+// pool), where each candidate's own row is instead excluded later by
+// crossStudentReviewNote itself. Passing `.neq('email', null)` would be
+// wrong here (SQL's `!= NULL` semantics don't mean "not omitted"), so
+// the exclusion is only ever applied when a real email is given.
+// Best-effort: a lookup failure just means this check is skipped for
+// this one run, not a reason to fail the whole name check.
+export async function fetchOtherFlaggedNames(supabase, selfEmail) {
+  try {
+    let query = supabase.from('students').select('email, last_flagged_name').not('last_flagged_name', 'is', null).limit(500);
+    if (selfEmail) query = query.neq('email', selfEmail);
+    const { data } = await query;
+    return data || [];
+  } catch (e) {
+    console.error('fetchOtherFlaggedNames: lookup failed', e);
+    return [];
+  }
+}

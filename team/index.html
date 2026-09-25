@@ -275,6 +275,11 @@
   /* gate_escalated — a real admin action, unlike the badge above (see
      team-clear-name-check.js) */
   .name-flag-badge--escalated { background: var(--red-soft); color: var(--red); cursor: default; }
+  /* name_review_note — a soft, non-blocking nudge (see schema.sql's own
+     comment), deliberately neutral-colored rather than amber/red so it
+     never reads as "this student did something wrong," just "worth a
+     glance." Never has its own action buttons, unlike escalated above. */
+  .name-flag-badge--review { background: var(--purple-soft); color: var(--purple); cursor: help; }
   .name-clear-actions { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
   .js-clear-rename-input { width: 130px; padding: 5px 8px; border-radius: 6px; border: 1.5px solid var(--line); background: var(--bg-soft); color: var(--ink); font-family: inherit; font-size: 12px; }
 </style>

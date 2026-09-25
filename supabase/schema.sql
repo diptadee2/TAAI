@@ -766,6 +766,26 @@ ALTER TABLE students ADD COLUMN IF NOT EXISTS voluntary_rename_month TEXT;
 -- meaning the way an actual model comparison can).
 ALTER TABLE students ADD COLUMN IF NOT EXISTS last_flagged_name TEXT;
 
+-- A soft, non-blocking nudge for /team — never sets needs_rename, never
+-- gates anyone. Added after a real report ("he is trying to reply to
+-- puneet koundal's username") that turned out to be genuinely
+-- undetectable by content alone: a DIFFERENT student's name ("BUT WHOO
+-- IS SHEEEE...") read, even with the connection spelled out directly to
+-- Claude, as a real independent meme/song reference, not an inherently
+-- suggestive name on its own — auto-flagging it (or, worse, a blanket
+-- "flag any name containing she" rule, explicitly considered and
+-- rejected — see CLAUDE.md) would misfire on every innocent use of a
+-- common word/phrase, including pronoun-declaration names like
+-- "SHE.HER". What CAN be done cheaply and safely: a plain word-overlap
+-- check (no extra Claude call) between a new name and every OTHER
+-- student's own last_flagged_name — not to auto-gate, just to surface
+-- "this shares a word with a name that was flagged before, might be
+-- worth a human glance" in /team. Recomputed fresh on every real check
+-- (see lib/name-check.js's crossStudentReviewNote) and always
+-- overwritten, including cleared to NULL when there's no match, so it
+-- never goes stale on an old name.
+ALTER TABLE students ADD COLUMN IF NOT EXISTS name_review_note TEXT;
+
 -- Actively used by name-check-scan.js (netlify.toml, every 15 minutes)
 -- to find only the students who actually need a fresh Claude check —
 -- server-side, not a fetch-everything-then-filter-in-JS pattern. That

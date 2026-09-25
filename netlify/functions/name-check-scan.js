@@ -46,7 +46,7 @@
 // that grandfathered the pre-existing roster in as unverified, by direct
 // instruction, rather than retroactively reviewing it.
 import { getSupabase, json } from './lib/supabase.js';
-import { checkNameAppropriate } from './lib/name-check.js';
+import { checkNameAppropriate, crossStudentReviewNote, fetchOtherFlaggedNames } from './lib/name-check.js';
 
 const SCAN_LIMIT = 20;
 
@@ -54,6 +54,10 @@ export async function handler() {
   const supabase = getSupabase();
 
   const { data: candidates, error } = await supabase.rpc('get_name_check_candidates', { p_limit: SCAN_LIMIT });
+  // Fetched once for the whole batch (not per-candidate) — the same
+  // pool applies to every candidate this run, each one just excludes
+  // itself when crossStudentReviewNote runs below.
+  const otherFlagged = error ? [] : await fetchOtherFlaggedNames(supabase, null);
   if (error) {
     // Pre-migration (the RPC, or the columns it reads, not added to
     // production yet) or any other lookup hiccup — a clean no-op
@@ -96,6 +100,17 @@ export async function handler() {
       }
       const { error: updateError } = await supabase.from('students').update(patch).eq('email', student.email);
       if (updateError) errors.push({ email: student.email, error: updateError.message });
+
+      // Own separate, best-effort write — never merged into patch above.
+      // See check-name-background.js's own comment for the real
+      // regression this avoids: a still-pending name_review_note
+      // migration must never take down the actual gating write too.
+      try {
+        const note = crossStudentReviewNote(student.display_name, student.email, otherFlagged);
+        await supabase.from('students').update({ name_review_note: note }).eq('email', student.email);
+      } catch (e2) {
+        errors.push({ email: student.email, error: 'name_review_note write failed: ' + e2.message });
+      }
     } catch (e) {
       // One student's check failing (API hiccup, rate limit) must never
       // stop the rest of the batch — it just stays a candidate and gets

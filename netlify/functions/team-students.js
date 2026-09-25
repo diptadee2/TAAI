@@ -54,9 +54,9 @@ export async function handler(event, context) {
 
   const today = todayForStreak();
 
-  let studentsResult, completed, sessions, weekStatsResult, totalTaskResult, malpracticeResult, nameCheckResult;
+  let studentsResult, completed, sessions, weekStatsResult, totalTaskResult, malpracticeResult, nameCheckResult, reviewNoteResult;
   try {
-    [studentsResult, completed, sessions, weekStatsResult, totalTaskResult, malpracticeResult, nameCheckResult] = await Promise.all([
+    [studentsResult, completed, sessions, weekStatsResult, totalTaskResult, malpracticeResult, nameCheckResult, reviewNoteResult] = await Promise.all([
       // needs_rename itself is included directly here, not in the
       // best-effort query below — it was already migrated in a prior
       // session (see schema.sql's own comment on it) and is stable, so
@@ -95,6 +95,17 @@ export async function handler(event, context) {
       // at the time this was added, so there's no already-stable column
       // to accidentally mask.
       supabase.from('students').select('email, needs_rename_source, name_check_reason, gate_escalated'),
+      // name_review_note is its OWN separate query, NOT combined into
+      // the one above — a real regression caught during testing: by the
+      // time this column was added, needs_rename_source/name_check_reason/
+      // gate_escalated were already migrated and stable, so bundling a
+      // still-pending column in with them would have masked all three
+      // already-working fields behind this one's own missing-column
+      // error, the exact mistake this file's own comment above already
+      // warns about (and, unlike here, that comment was already
+      // outdated the moment name_review_note landed — kept in mind for
+      // next time a "genuinely new" column joins an already-settled one).
+      supabase.from('students').select('email, name_review_note'),
     ]);
   } catch (err) {
     return json(500, { error: err.message });
@@ -116,6 +127,13 @@ export async function handler(event, context) {
   if (!nameCheckResult.error) {
     for (const row of nameCheckResult.data || []) {
       nameCheckByEmail.set(row.email, row);
+    }
+  }
+
+  const reviewNoteByEmail = new Map();
+  if (!reviewNoteResult.error) {
+    for (const row of reviewNoteResult.data || []) {
+      reviewNoteByEmail.set(row.email, row.name_review_note);
     }
   }
 
@@ -213,6 +231,10 @@ export async function handler(event, context) {
       // schema.sql's own comment on gate_escalated) — backs the
       // "Clear block" / "Rename" actions in the Students view.
       gate_escalated: nameCheck?.gate_escalated || false,
+      // Advisory-only, never gates anyone — see schema.sql's own comment
+      // on name_review_note. Shown regardless of needs_rename, since the
+      // whole point is catching a name Claude itself judged fine.
+      name_review_note: reviewNoteByEmail.get(s.email) || null,
     };
   });
 

@@ -11,7 +11,7 @@
 // correction that led here ("save the name whatever it is instantly,
 // while putting it on check").
 import { getSupabase } from './lib/supabase.js';
-import { checkNameAppropriate } from './lib/name-check.js';
+import { checkNameAppropriate, crossStudentReviewNote, fetchOtherFlaggedNames } from './lib/name-check.js';
 
 export async function handler(event) {
   if (event.httpMethod !== 'POST') return { statusCode: 405, body: '' };
@@ -81,6 +81,24 @@ export async function handler(event) {
       patch.last_flagged_name = displayName; // permanent record — see its own comment in schema.sql
     }
     await supabase.from('students').update(patch).eq('email', email);
+
+    // Deliberately its OWN separate, best-effort write, never merged
+    // into the patch above — a real regression caught during testing,
+    // not avoided by luck: name_review_note is a newer column than
+    // needs_rename/name_last_checked/etc., and a single .update() call
+    // fails ENTIRELY if even one column in it doesn't exist yet.
+    // Combining them would have meant a still-pending name_review_note
+    // migration silently breaking the actual gating write too, not just
+    // the new advisory feature — the exact mistake this codebase's own
+    // history already flags (see malpractice_warning_ack_count's
+    // writeup in CLAUDE.md).
+    try {
+      const otherFlagged = await fetchOtherFlaggedNames(supabase, email);
+      const note = crossStudentReviewNote(displayName, email, otherFlagged);
+      await supabase.from('students').update({ name_review_note: note }).eq('email', email);
+    } catch (e2) {
+      console.error('check-name-background.js: name_review_note write failed for', email, e2);
+    }
   } catch (e) {
     console.error('check-name-background.js: write failed for', email, e);
   }

@@ -5,7 +5,7 @@
 // from an explicit "Rename" action the student takes on purpose, not a
 // side effect of registering again on a new device.
 import { getSupabase, json, todayIST } from './lib/supabase.js';
-import { checkNameAppropriate, triggerNameCheckBackground } from './lib/name-check.js';
+import { checkNameAppropriate, triggerNameCheckBackground, crossStudentReviewNote, fetchOtherFlaggedNames } from './lib/name-check.js';
 
 // Both caps below are 3, but deliberately separate counters/columns (see
 // schema.sql) — a gated student resolving their flag and an ordinary
@@ -49,6 +49,7 @@ export async function handler(event) {
   // rather than blocking a legitimate rename over it.
   let voluntaryRenameCountThisMonth = null; // set only on the voluntary path, used by the final write below
   let gatedNameVerified = false; // set only when the gated branch's own synchronous Claude check actually ran and passed for this exact name
+  let gatedReviewNote; // undefined = don't touch; null/string = the gated branch's own computed name_review_note, set only alongside gatedNameVerified
   try {
     const { data: existing } = await supabase
       .from('students')
@@ -176,7 +177,15 @@ export async function handler(event) {
         if (result.flagged) {
           return json(400, { error: 'That name still isn\'t appropriate for this site — ' + (result.reason || 'please pick a different one.') });
         }
-        if (!result.skipped) gatedNameVerified = true;
+        if (!result.skipped) {
+          gatedNameVerified = true;
+          // Only computed here, on the name that's ACTUALLY about to be
+          // saved — not on a rejected attempt above, which never becomes
+          // the student's real display_name and would leave a note
+          // describing a name nobody can even see.
+          const otherFlagged = await fetchOtherFlaggedNames(supabase, email);
+          gatedReviewNote = crossStudentReviewNote(displayName, email, otherFlagged);
+        }
       } catch (e) {
         console.error('rename.js: Claude appropriateness check failed for', email, e);
       }
@@ -257,6 +266,21 @@ export async function handler(event) {
   }
   if (error) return json(500, { error: error.message });
   if (!data) return json(404, { error: 'student not found' });
+
+  // Own separate, best-effort write — deliberately never merged into
+  // fullUpdate above, even though gatedReviewNote is only ever set
+  // alongside gatedNameVerified (which already gates name_last_checked
+  // the same way). A still-pending name_review_note migration must
+  // never widen fullUpdate's own fallback chain further than necessary
+  // — name_last_checked/name_check_reason/etc. already exist and should
+  // still be written even on a day name_review_note doesn't yet.
+  if (gatedNameVerified) {
+    try {
+      await supabase.from('students').update({ name_review_note: gatedReviewNote }).eq('email', email);
+    } catch (e) {
+      console.error('rename.js: name_review_note write failed for', email, e);
+    }
+  }
 
   // Only the voluntary path needs a real check dispatched — the gated
   // path already ran its own synchronous check above (and, on success,

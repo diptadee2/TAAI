@@ -1197,6 +1197,15 @@
         '</div>';
       if (status === 'error') html += '<div class="field-hint" style="color:#f87171;">Action failed — try again.</div>';
     }
+    // Advisory-only — see schema.sql's own comment on name_review_note.
+    // Shown regardless of needs_rename/gate_escalated above, since the
+    // whole point is surfacing a name Claude itself judged fine on its
+    // own but that shares a word with another account's flagged history.
+    // No action buttons here, deliberately — nothing to clear, just a
+    // prompt to look and decide by hand.
+    if (s.name_review_note) {
+      html += '<div class="name-flag-badge name-flag-badge--review" title="' + escapeHtml(s.name_review_note) + '">👀 Worth a look</div>';
+    }
     return html;
   }
 
