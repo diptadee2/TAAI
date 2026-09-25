@@ -53,7 +53,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-25-6';
+  var CLIENT_VERSION = '2026-09-25-7';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2154,6 +2154,20 @@
   // deliberately ignores a differently-typed name (see register.js).
   function renderIdentityLine() {
     if (!state.student) return 'Browsing as guest, tick a task to save your progress';
+    // Whenever the rename GATE box itself is what's actually on screen
+    // (Focus Mode, gated, and nothing higher-priority — like a
+    // malpractice freeze — pre-empting it, see pomoGateState), it
+    // already renders its own full working rename form right below this
+    // one. Showing a second, separate form up here duplicated the exact
+    // same action twice on screen at once — direct feedback, from a
+    // real screenshot showing both open simultaneously: "that's bad
+    // design." Suppressed in that one specific case only — everywhere
+    // else (the checklist, where the gate box never renders at all; or
+    // a freeze pre-empting the rename gate) this stays the ONLY way to
+    // fix a gate, so it stays fully interactive below, unchanged.
+    if (state.needsRename && state.focus && pomoGateState() === 'rename') {
+      return escapeHtml(state.student.display_name) + ' &middot; <span class="rename-note">Update your name below to continue</span> &middot; <button id="not-you">Not you?</button>';
+    }
     if (state.renameLimitMessage) {
       return escapeHtml(state.student.display_name) + ' &middot; <span class="rename-error">' + escapeHtml(state.renameLimitMessage) + '</span> <button type="button" id="rename-limit-ok">OK</button>';
     }
