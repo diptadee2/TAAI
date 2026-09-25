@@ -53,7 +53,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-25-5';
+  var CLIENT_VERSION = '2026-09-25-6';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1849,12 +1849,26 @@
     return renameTooltipEl;
   }
   function showRenameTooltip(target) {
-    var left = target.getAttribute('data-renames-left');
-    if (left === null) return;
+    // Two mutually exclusive attributes, set by renderIdentityLine
+    // depending on whether the student is currently gated — see its own
+    // comment for why these can't share one meaning/wording. Only one is
+    // ever present on a given render.
+    var gateLeft = target.getAttribute('data-gate-tries-left');
+    var voluntaryLeft = target.getAttribute('data-renames-left');
+    if (gateLeft === null && voluntaryLeft === null) return;
     var el = getRenameTooltipEl();
-    var html = Number(left) > 0
-      ? '<span class="alltime-tooltip-value">' + left + '</span> <span class="alltime-tooltip-label">' + (left === '1' ? 'rename' : 'renames') + ' left this month</span>'
-      : '<span class="alltime-tooltip-label">No renames left — resets the 1st</span>';
+    var html;
+    if (gateLeft !== null) {
+      html = gateLeft === ''
+        ? '<span class="alltime-tooltip-label">Checking your tries…</span>' // brief window before tracker-data resolves — see state.gateTriesLeft's own comment
+        : gateLeft === '0'
+          ? '<span class="alltime-tooltip-label">Out of tries — reach out to our team on Discord</span>'
+          : '<span class="alltime-tooltip-value">' + gateLeft + '</span> <span class="alltime-tooltip-label">' + (gateLeft === '1' ? 'try' : 'tries') + ' left to fix this</span>';
+    } else {
+      html = Number(voluntaryLeft) > 0
+        ? '<span class="alltime-tooltip-value">' + voluntaryLeft + '</span> <span class="alltime-tooltip-label">' + (voluntaryLeft === '1' ? 'rename' : 'renames') + ' left this month</span>'
+        : '<span class="alltime-tooltip-label">No renames left — resets the 1st</span>';
+    }
     el.innerHTML = html;
     el.classList.add('visible');
     var rect = target.getBoundingClientRect();
@@ -1879,11 +1893,11 @@
   // on why a disabled button won't reliably dispatch mouseover.
   function setupRenameTooltip() {
     document.addEventListener('mouseover', function (e) {
-      var target = e.target.closest && e.target.closest('.rename-toggle-wrap[data-renames-left]');
+      var target = e.target.closest && e.target.closest('.rename-toggle-wrap[data-renames-left], .rename-toggle-wrap[data-gate-tries-left]');
       if (target) showRenameTooltip(target);
     });
     document.addEventListener('mouseout', function (e) {
-      var target = e.target.closest && e.target.closest('.rename-toggle-wrap[data-renames-left]');
+      var target = e.target.closest && e.target.closest('.rename-toggle-wrap[data-renames-left], .rename-toggle-wrap[data-gate-tries-left]');
       if (target && !target.contains(e.relatedTarget)) hideRenameTooltip();
     });
   }
@@ -2151,17 +2165,35 @@
         (state.renameError ? '<span class="rename-error">' + escapeHtml(state.renameError) + '</span>' : '') +
         '</form>';
     }
-    var renamesLeft = voluntaryRenamesLeft();
-    // Wrapped in its own span rather than putting data-renames-left
+    // This same button routes to the gated-resolution flow whenever the
+    // student is currently gated (rename.js branches server-side on
+    // needs_rename, not on which client form was used to submit) — so
+    // its own displayed cap/tooltip must match THAT flow's real limit
+    // (state.gateTriesLeft), not the separate voluntary-rename one, or
+    // the two end up showing two different "tries left" numbers for
+    // what reads as the exact same concept (caught directly from a real
+    // screenshot: "1 rename left" up top vs "3 tries left" in the gate
+    // below, for the same account at the same moment). Also matters
+    // functionally, not just cosmetically: a gated student who's
+    // separately exhausted their voluntary cap must still be able to
+    // open this form — it's their only way to fix a gate from outside
+    // Focus Mode, where the gate's own form isn't on screen at all.
+    var gated = !!state.needsRename;
+    var renamesLeft = gated ? state.gateTriesLeft : voluntaryRenamesLeft();
+    var disabled = gated ? renamesLeft === 0 : renamesLeft <= 0;
+    // Wrapped in its own span rather than putting the data attribute
     // directly on the button: a hover listener bound to the BUTTON
     // itself wouldn't reliably fire once it's disabled — disabled form
     // controls don't dispatch mouse events in Chrome/Firefox, by design,
     // the same way they don't dispatch click. Binding to this always-
     // enabled wrapper sidesteps that so the tooltip still works right
     // when it matters most (explaining why the button is greyed out).
+    var wrapAttr = gated
+      ? ' data-gate-tries-left="' + (typeof renamesLeft === 'number' ? renamesLeft : '') + '"'
+      : ' data-renames-left="' + renamesLeft + '"';
     return escapeHtml(state.student.display_name) + ' &middot; ' +
-      '<span class="rename-toggle-wrap" data-renames-left="' + renamesLeft + '">' +
-      '<button id="rename-toggle"' + (renamesLeft <= 0 ? ' disabled' : '') + '>Rename</button>' +
+      '<span class="rename-toggle-wrap"' + wrapAttr + '>' +
+      '<button id="rename-toggle"' + (disabled ? ' disabled' : '') + '>Rename</button>' +
       '</span>' +
       ' &middot; <button id="not-you">Not you?</button>';
   }
@@ -4251,8 +4283,14 @@
       // now that the button itself is `disabled` at 0 left (see
       // renderIdentityLine) — kept as a defensive backstop regardless,
       // same "belt and suspenders" instinct already used elsewhere on
-      // this page for a disabled control's click handler.
-      if (voluntaryRenamesLeft() <= 0) {
+      // this page for a disabled control's click handler. Only checked
+      // while NOT gated — while gated, this same click opens the
+      // identical form but the server routes it through the gated-
+      // resolution branch instead (a different, unrelated cap), so the
+      // voluntary-rename limit has nothing to say about it here; the
+      // button being disabled at state.gateTriesLeft === 0 (see
+      // renderIdentityLine) is that case's own equivalent backstop.
+      if (!state.needsRename && voluntaryRenamesLeft() <= 0) {
         state.renameLimitMessage = 'You\'ve used all your renames for this month — you can rename again from the 1st.';
         renderCalendar();
         return;
@@ -4340,6 +4378,13 @@
         })
         .catch(function (err) {
           state.renameError = err.message;
+          // A rejection here can only happen via the gated-resolution
+          // branch (the voluntary branch never rejects) — mirrors the
+          // gate's own form's identical handling so the displayed
+          // tries-left count updates live here too, not just there.
+          if (err.data && typeof err.data.triesLeft === 'number') {
+            state.gateTriesLeft = err.data.triesLeft;
+          }
           renderCalendar();
         });
     });
