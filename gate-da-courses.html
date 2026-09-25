@@ -443,7 +443,18 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
    grid is already a single column and every card already gets its own
    row regardless. */
 .combo-full-row { grid-column: 1 / -1; margin-bottom: 44px; }
-.combo-full-row .combo-featured-frame, .combo-full-row .combo-card { width: 100%; max-width: 480px; }
+/* No max-width cap here — real gap found on iPad portrait (~820px):
+   .combos-grid already collapses to a single column at max-width:1024px
+   (below), so anywhere from a phone up through ~1024px this row's own
+   grid track already IS just one card's width, wide or narrow — a fixed
+   480px cap left a large blank gap next to the card on any single-column
+   viewport wider than that (a real screenshot from a real iPad showed
+   exactly this). width:100% alone already does the right thing at every
+   size below the 1025px breakpoint below, which is the only place a cap
+   is actually needed (there the grid is back to multiple columns, so
+   this row spans all of them and DOES need capping to its own natural
+   width — see that media query's own comment). */
+.combo-full-row .combo-featured-frame, .combo-full-row .combo-card { width: 100%; }
 /* Mobile-first base for the horizontal split — stacked, matching the
    normal card layout, same as every card gets below the desktop
    breakpoint. Real bug caught from testing, not assumed: the desktop
