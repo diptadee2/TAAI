@@ -328,7 +328,9 @@
   .roadmap-emoji { display: inline-block; vertical-align: middle; position: relative; top: -2px; }
   .roadmap-sub { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; font-size: 13px; color: var(--ink-soft); margin-bottom: 18px; }
   .roadmap-sub-left button { background: none; border: none; color: var(--purple); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; padding: 0; text-decoration: underline; transition: opacity .2s; }
-  .roadmap-sub-left button:hover { opacity: .7; }
+  .roadmap-sub-left button:hover:not(:disabled) { opacity: .7; }
+  .roadmap-sub-left button:disabled { opacity: .35; cursor: not-allowed; text-decoration: none; }
+  .rename-toggle-wrap { display: inline-block; }
   .rename-form { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .rename-form input { padding: 5px 10px; border: 1.5px solid var(--line); border-radius: 8px; font-family: var(--font-body); font-size: 13px; color: var(--ink); background: var(--bg-soft); width: 160px; }
   .rename-form input:focus { outline: none; border-color: var(--purple); background: var(--bg); }

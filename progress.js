@@ -53,7 +53,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-25-3';
+  var CLIENT_VERSION = '2026-09-25-4';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -840,6 +840,7 @@
     // Mode, and correctly starts for the normal fresh-load-onto-checklist case.
     startLastWeekPoll();
     setupAllTimeTooltip();
+    setupRenameTooltip();
   }
 
   // ── Scroll progress + back-to-top — same pattern as blog.js ──────────
@@ -1120,6 +1121,19 @@
   }
   function currentMonthStr() {
     return todayIso().slice(0, 7);
+  }
+  // Mirrors rename.js's own VOLUNTARY_RENAME_LIMIT (3) — duplicated by
+  // hand, no shared constant across the client/server function boundary
+  // (same tradeoff already accepted for GATE_CHECK_LIMIT in
+  // tracker-data.js). Server is still the real enforcement point; this
+  // only ever drives the "Rename" button's hover tooltip and disabled
+  // state as a convenience, same as the click handler's own pre-existing
+  // check below.
+  var VOLUNTARY_RENAME_LIMIT_CLIENT = 3;
+  function voluntaryRenamesLeft() {
+    if (!state.student) return VOLUNTARY_RENAME_LIMIT_CLIENT;
+    var usedThisMonth = state.student.voluntary_rename_month === currentMonthStr() ? (state.student.voluntary_rename_count || 0) : 0;
+    return Math.max(0, VOLUNTARY_RENAME_LIMIT_CLIENT - usedThisMonth);
   }
   function shiftMonth(monthStr, delta) {
     var parts = monthStr.split('-').map(Number);
@@ -1803,6 +1817,67 @@
     });
   }
 
+  // Hover tooltip on the top-of-page "Rename" link, showing how many
+  // voluntary renames are left this month (see voluntaryRenamesLeft).
+  // Reuses .alltime-tooltip's own box/label/value CSS (styled in
+  // gate-da-progress-tracker.html) for visual consistency with the
+  // leaderboard's own hover tooltip, as its own separate singleton
+  // element/mechanism rather than folding into showAllTimeTooltip —
+  // that one's trigger (many repeated leaderboard rows) and content
+  // (an hours figure plus an effort-badge lookup) are both more
+  // involved than this one needs. Native `title` deliberately not used
+  // here either, same reasoning as setupAllTimeTooltip's own comment —
+  // a real prior report already showed native tooltips aren't reliably
+  // visible on this site.
+  var renameTooltipEl = null;
+  function getRenameTooltipEl() {
+    if (!renameTooltipEl) {
+      renameTooltipEl = document.createElement('div');
+      renameTooltipEl.className = 'alltime-tooltip';
+      document.body.appendChild(renameTooltipEl);
+    }
+    return renameTooltipEl;
+  }
+  function showRenameTooltip(target) {
+    var left = target.getAttribute('data-renames-left');
+    if (left === null) return;
+    var el = getRenameTooltipEl();
+    var html = Number(left) > 0
+      ? '<span class="alltime-tooltip-value">' + left + '</span> <span class="alltime-tooltip-label">' + (left === '1' ? 'rename' : 'renames') + ' left this month</span>'
+      : '<span class="alltime-tooltip-label">No renames left — resets the 1st</span>';
+    el.innerHTML = html;
+    el.classList.add('visible');
+    var rect = target.getBoundingClientRect();
+    var tipW = el.offsetWidth;
+    var tipH = el.offsetHeight;
+    var leftPos = rect.left;
+    if (leftPos + tipW > window.innerWidth - 8) leftPos = window.innerWidth - tipW - 8;
+    if (leftPos < 8) leftPos = 8;
+    var top = rect.top - tipH - 8;
+    if (top < 8) top = rect.bottom + 8; // flip below when there's no room above
+    el.style.left = leftPos + 'px';
+    el.style.top = top + 'px';
+  }
+  function hideRenameTooltip() {
+    if (renameTooltipEl) renameTooltipEl.classList.remove('visible');
+  }
+  // Delegated on document (not bound directly to the button), same
+  // reasoning as setupAllTimeTooltip: renderIdentityLine regenerates
+  // this markup on every renderCalendar() call, so a per-element
+  // listener would mean constantly re-binding. Bound to the WRAPPER
+  // span, not the button itself — see renderIdentityLine's own comment
+  // on why a disabled button won't reliably dispatch mouseover.
+  function setupRenameTooltip() {
+    document.addEventListener('mouseover', function (e) {
+      var target = e.target.closest && e.target.closest('.rename-toggle-wrap[data-renames-left]');
+      if (target) showRenameTooltip(target);
+    });
+    document.addEventListener('mouseout', function (e) {
+      var target = e.target.closest && e.target.closest('.rename-toggle-wrap[data-renames-left]');
+      if (target && !target.contains(e.relatedTarget)) hideRenameTooltip();
+    });
+  }
+
   // Split from renderTodayLeaders (below) so refreshLeaderboard can patch
   // just the rows on its smart-poll (see LEADERBOARD_POLL_MS), same reason renderLeaderboardRows is
   // split from renderLeaderboardCard — replacing the whole card would
@@ -2066,7 +2141,19 @@
         (state.renameError ? '<span class="rename-error">' + escapeHtml(state.renameError) + '</span>' : '') +
         '</form>';
     }
-    return escapeHtml(state.student.display_name) + ' &middot; <button id="rename-toggle">Rename</button> &middot; <button id="not-you">Not you?</button>';
+    var renamesLeft = voluntaryRenamesLeft();
+    // Wrapped in its own span rather than putting data-renames-left
+    // directly on the button: a hover listener bound to the BUTTON
+    // itself wouldn't reliably fire once it's disabled — disabled form
+    // controls don't dispatch mouse events in Chrome/Firefox, by design,
+    // the same way they don't dispatch click. Binding to this always-
+    // enabled wrapper sidesteps that so the tooltip still works right
+    // when it matters most (explaining why the button is greyed out).
+    return escapeHtml(state.student.display_name) + ' &middot; ' +
+      '<span class="rename-toggle-wrap" data-renames-left="' + renamesLeft + '">' +
+      '<button id="rename-toggle"' + (renamesLeft <= 0 ? ' disabled' : '') + '>Rename</button>' +
+      '</span>' +
+      ' &middot; <button id="not-you">Not you?</button>';
   }
 
   function renderCalendar() {
@@ -4150,8 +4237,12 @@
       // devices (renaming on another device isn't reflected here until
       // this one also renames or re-registers) — acceptable, since it
       // only ever saves an extra click on a form that would fail
-      // anyway, it's never the actual boundary.
-      if (state.student.voluntary_rename_month === currentMonthStr() && (state.student.voluntary_rename_count || 0) >= 3) {
+      // anyway, it's never the actual boundary. Practically unreachable
+      // now that the button itself is `disabled` at 0 left (see
+      // renderIdentityLine) — kept as a defensive backstop regardless,
+      // same "belt and suspenders" instinct already used elsewhere on
+      // this page for a disabled control's click handler.
+      if (voluntaryRenamesLeft() <= 0) {
         state.renameLimitMessage = 'You\'ve used all your renames for this month — you can rename again from the 1st.';
         renderCalendar();
         return;
