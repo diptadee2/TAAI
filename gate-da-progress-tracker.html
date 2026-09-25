@@ -1195,49 +1195,39 @@
   .live-dot { display: block; width: 7px; height: 7px; border-radius: 50%; background: #34D399; box-shadow: 0 0 5px rgba(52,211,153,0.75); }
   @keyframes live-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .5; transform: scale(0.75); } }
   .leaderboard-you { display: inline-block; font-family: var(--font-nav); font-size: 9.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--purple); background: rgba(139,92,246,0.16); border-radius: 999px; padding: 1px 7px; margin-left: 4px; vertical-align: middle; }
-  /* Each earned milestone is its own small tier-colored chip (was a
-     bare inline emoji with no background at all) — several can render
-     side by side on one name (see effortBadgesHtml), so each needs its
-     own visual boundary to read as a distinct earned badge rather than
-     a string of random emoji. box-shadow+border-radius together are
-     never animated here (only left/opacity move elsewhere on this
-     page), so this doesn't trip the Chromium DOM-leak gotcha. */
-  /* Deliberately quiet — no box-shadow glow, and no bright saturated
-     border ring either (direct feedback: "can't the design of the
-     badges be a bit more matte than glossy" — a thin high-contrast ring
-     around a bright tint is what read as glossy/glassy against the
-     page's own near-black background). Flat, no border at all, filled
-     with a desaturated/darkened version of each tier's hue at moderate
-     opacity instead of a bright thin tint — reads as a solid chalky
-     chip rather than a glowing glass bead. The emoji glyph itself still
-     carries the system font's own native shading (not something CSS
-     can restyle), but the chip it sits in no longer competes with it. */
-  /* padding-top: 1px nudges the emoji glyph down — align-items:center
-     centers the font's full line box (ascent+descent), but an emoji's
-     visible ink sits noticeably higher than that box's true middle
-     (confirmed via a zoomed screenshot: without the nudge, there's a
-     visible gap below the glyph and none above), so a plain flex-center
-     alone reads as "floating high" inside the circle. Verified with a
-     canvas-pixel-level (not just eyeballed) ink-vs-circle-center
-     measurement across every real badge on the weekly leaderboard —
-     consistently within ~0.1% of true center at this value, don't
-     re-tune it without re-measuring the same way. */
-  .leaderboard-effort-badge { display: inline-flex; align-items: center; justify-content: center; width: 13px; height: 13px; margin-left: 7px; border-radius: 50%; font-size: 8px; vertical-align: middle; cursor: default; padding-top: 1px; }
-  /* Today's Leaders needs its own, larger nudge — same badge, same CSS
-     otherwise, but the pixel-level measurement above showed this
-     context's glyphs consistently rendering higher (avg ~-4.2% of
-     diameter at padding-top:1px, worse than the weekly board's ~-0.1%)
-     — a real, reproducible sub-pixel text-rendering difference tied to
-     where this board's narrower column happens to land on the pixel
-     grid, not a CSS mistake fixable by matching the weekly board's
-     value. Tuned separately the same way (10 real badges averaged per
-     candidate value): 2px brought the average to +0.4%, the closest of
-     everything tried. */
-  #today-leaderboard-rows .leaderboard-effort-badge { padding-top: 2px; }
-  .leaderboard-effort-badge--star { background: rgba(146,116,45,0.45); }
-  .leaderboard-effort-badge--flame { background: rgba(150,79,42,0.45); }
-  .leaderboard-effort-badge--lightning { background: rgba(51,97,120,0.45); }
-  .leaderboard-effort-badge--crown { background: rgba(101,83,130,0.5); }
+  /* Each earned milestone is its own small tier-colored dot — several
+     can render side by side on one name (see effortBadgesHtml), so each
+     needs its own visual boundary to read as a distinct earned badge.
+     No emoji glyph anymore — a full-color emoji crammed into a 13px
+     circle read as an illegible blur at real page-rendering sizes,
+     direct feedback: "emojis inside circle is a bad idea." A plain
+     empty circle, tier identity carried entirely by its own flat color
+     (see below), needs no internal content to size/center at all — the
+     whole glyph-centering saga this rule used to need (a canvas-pixel-
+     level measured padding-top, plus a SEPARATE, differently-tuned
+     override just for Today's Leaders' own narrower column) is gone
+     along with the emoji that made it necessary. Still flat, no
+     box-shadow/border glow — kept from an earlier direct request
+     ("can't the design of the badges be a bit more matte than glossy")
+     that predates this change but is equally true of a plain color dot.
+     box-shadow+border-radius together are never animated here (only
+     left/opacity move elsewhere on this page), so this doesn't trip the
+     Chromium DOM-leak gotcha even if that ever changes. */
+  .leaderboard-effort-badge { display: inline-block; width: 13px; height: 13px; margin-left: 7px; border-radius: 50%; vertical-align: middle; cursor: default; }
+  /* Solid, near-opaque colors — a plain dot with no emoji needs real
+     color saturation to read as "a distinct earned tier" from across a
+     leaderboard row, unlike the old translucent 45%-opacity fills tuned
+     to sit quietly UNDER an emoji glyph. Each keeps a loose thematic tie
+     to its old emoji (star=gold, flame=orange, lightning=blue, crown=
+     purple) while staying visually distinct from the streak-ball tier
+     colors just to their left in the Streak column (bronze/silver/gold/
+     diamond) — the two badge systems track different things (all-time
+     hours vs. consecutive days) and sit on the same row, so they
+     shouldn't read as the same achievement palette. */
+  .leaderboard-effort-badge--star { background: #E0A83E; }
+  .leaderboard-effort-badge--flame { background: #E2622F; }
+  .leaderboard-effort-badge--lightning { background: #2FA8D9; }
+  .leaderboard-effort-badge--crown { background: #8B5CF6; }
   /* justify-content stays flex-start, not center — centering each row's
      ball cluster independently would make the first ball's x-position
      drift row to row depending on that row's own streak length (1 ball

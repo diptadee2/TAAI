@@ -53,7 +53,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-25-11';
+  var CLIENT_VERSION = '2026-09-26-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1785,7 +1785,7 @@
     var earnedTiers = EFFORT_TIERS.filter(function (t) { return Number(hours) >= t.minHours; });
     if (earnedTiers.length) {
       html += '<div class="alltime-tooltip-badges">' + earnedTiers.map(function (t) {
-        return '<span class="alltime-tooltip-badge-row"><span class="leaderboard-effort-badge leaderboard-effort-badge--' + t.key + '">' + t.emoji + '</span>' + t.name + ' · ' + t.minHours + '+ hrs</span>';
+        return '<span class="alltime-tooltip-badge-row"><span class="leaderboard-effort-badge leaderboard-effort-badge--' + t.key + '"></span>' + t.name + ' · ' + t.minHours + '+ hrs</span>';
       }).join('') + '</div>';
     }
     el.innerHTML = html;
@@ -3800,11 +3800,17 @@
   // Stored ascending (unlike STREAK_TIERS' descending order) since
   // effortBadgesHtml renders every earned tier left-to-right, smallest
   // milestone first — a collection, not just the single highest one.
+  // No emoji field anymore — see .leaderboard-effort-badge's own CSS
+  // comment for why (a full-color emoji glyph crammed into a 13px circle
+  // read as an illegible blur, "emojis inside circle is a bad idea,"
+  // direct feedback). Each tier is now identified purely by its own flat
+  // color, same as STREAK_TIERS' own streak-ball colors — `name` is kept
+  // for the title/legend text, `key` still drives the CSS class.
   var EFFORT_TIERS = [
-    { minHours: 100, emoji: '⭐', name: 'Star', key: 'star' },
-    { minHours: 250, emoji: '🔥', name: 'Flame', key: 'flame' },
-    { minHours: 500, emoji: '⚡', name: 'Lightning', key: 'lightning' },
-    { minHours: 1000, emoji: '👑', name: 'Crown', key: 'crown' },
+    { minHours: 100, name: 'Star', key: 'star' },
+    { minHours: 250, name: 'Flame', key: 'flame' },
+    { minHours: 500, name: 'Lightning', key: 'lightning' },
+    { minHours: 1000, name: 'Crown', key: 'crown' },
   ];
   // Every earned tier shows, not just the highest — a real report ("all
   // the badges should show") that a student who's already passed 250h
@@ -3823,7 +3829,7 @@
     for (var i = 0; i < EFFORT_TIERS.length; i++) {
       var t = EFFORT_TIERS[i];
       if (hours < t.minHours) break; // tiers are ascending, so nothing further can match either
-      html += '<span class="leaderboard-effort-badge leaderboard-effort-badge--' + t.key + '" title="' + t.name + ' milestone — ' + t.minHours + '+ all-time focus hours">' + t.emoji + '</span>';
+      html += '<span class="leaderboard-effort-badge leaderboard-effort-badge--' + t.key + '" title="' + t.name + ' milestone — ' + t.minHours + '+ all-time focus hours"></span>';
     }
     return html;
   }
@@ -3846,7 +3852,7 @@
       if (hours >= EFFORT_TIERS[i].minHours) highest = EFFORT_TIERS[i];
     }
     if (!highest) return '';
-    return '<span class="leaderboard-effort-badge leaderboard-effort-badge--' + highest.key + '" title="' + highest.name + ' milestone — ' + highest.minHours + '+ all-time focus hours">' + highest.emoji + '</span>';
+    return '<span class="leaderboard-effort-badge leaderboard-effort-badge--' + highest.key + '" title="' + highest.name + ' milestone — ' + highest.minHours + '+ all-time focus hours"></span>';
   }
 
 
@@ -3858,13 +3864,13 @@
   // that hovering would even tell them ("nobody would know what
   // achievement badge means what," direct feedback). Same collapsed-
   // by-default "?" toggle pattern as streakLegendHtml just above,
-  // built straight from EFFORT_TIERS so a future threshold/emoji change
+  // built straight from EFFORT_TIERS so a future threshold/color change
   // can't silently drift out of sync with this list.
   function effortLegendHtml() {
     var rows = '';
     for (var i = 0; i < EFFORT_TIERS.length; i++) {
       var t = EFFORT_TIERS[i];
-      rows += '<div class="streak-legend-row"><span class="leaderboard-effort-badge leaderboard-effort-badge--' + t.key + '">' + t.emoji + '</span>' +
+      rows += '<div class="streak-legend-row"><span class="leaderboard-effort-badge leaderboard-effort-badge--' + t.key + '"></span>' +
         '<span class="streak-legend-name">' + t.name + '</span>' +
         '<span class="streak-legend-range">' + t.minHours + '+ hrs</span></div>';
     }
