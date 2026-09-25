@@ -66,7 +66,16 @@ const TOOL = {
   },
 };
 
-export async function checkNameAppropriate(name) {
+// priorFlaggedName (optional) — the most recent name this SAME student
+// already had flagged (students.last_flagged_name, see schema.sql's own
+// comment for the real incident that motivated this: a name softened
+// just enough between renames to read as harmless in isolation, even
+// though a human who saw both names together would recognize it as the
+// same joke continuing). Passed as context so Claude can reason about
+// continuation/theme itself, rather than this file trying to detect the
+// pattern via string-similarity, which can't judge meaning the way an
+// actual comparison can.
+export async function checkNameAppropriate(name, priorFlaggedName) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     // No key configured yet — fail OPEN (never flagged), same
@@ -75,6 +84,15 @@ export async function checkNameAppropriate(name) {
     // this identically to "Claude looked and it's fine," not a special
     // error case to handle separately.
     return { flagged: false, reason: 'ANTHROPIC_API_KEY not configured', skipped: true };
+  }
+
+  let userContent = 'Display name to review: ' + JSON.stringify(name);
+  if (priorFlaggedName) {
+    userContent += '\n\nContext: this same student previously had the name ' + JSON.stringify(priorFlaggedName) +
+      ' flagged as inappropriate. Consider whether the new name above might be a softened continuation of the ' +
+      'same joke, theme, or issue, reworded just enough to look harmless on its own — if so, flag it and say so ' +
+      'in your reason. But judge the new name primarily on its own merits: a genuinely unrelated new name from ' +
+      'the same student should NOT be flagged just because of past history.';
   }
 
   const controller = new AbortController();
@@ -92,7 +110,7 @@ export async function checkNameAppropriate(name) {
         model: MODEL,
         max_tokens: 300,
         system: SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: 'Display name to review: ' + JSON.stringify(name) }],
+        messages: [{ role: 'user', content: userContent }],
         tools: [TOOL],
         tool_choice: { type: 'tool', name: 'classify_name' },
       }),

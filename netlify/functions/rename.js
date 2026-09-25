@@ -147,14 +147,24 @@ export async function handler(event) {
       }
 
       try {
-        const result = await checkNameAppropriate(displayName);
+        // existing.display_name is the name CURRENTLY causing the gate —
+        // passed as context so Claude can tell whether this new attempt
+        // is a genuine fix or a softened reword of the same thing (see
+        // checkNameAppropriate's own comment on last_flagged_name).
+        const result = await checkNameAppropriate(displayName, existing.display_name);
         if (!result.skipped) {
           const newCount = priorCheckCount + 1;
           const escalateNow = result.flagged && newCount >= GATE_CHECK_LIMIT;
+          const countPatch = { gate_name_check_count: newCount, gate_name_check_month: month, gate_escalated: escalateNow };
+          // A rejected attempt is itself real evidence of what this
+          // student just tried — recorded even though the gate isn't
+          // resolved yet, so a LATER attempt (this session or a future
+          // one) sees the most recent real try, not a stale one.
+          if (result.flagged) countPatch.last_flagged_name = displayName;
           try {
             await supabase
               .from('students')
-              .update({ gate_name_check_count: newCount, gate_name_check_month: month, gate_escalated: escalateNow })
+              .update(countPatch)
               .eq('email', email);
           } catch (e) {
             console.error('rename.js: gate_name_check increment failed for', email, e);

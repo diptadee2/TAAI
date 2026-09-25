@@ -744,6 +744,28 @@ ALTER TABLE students ADD COLUMN IF NOT EXISTS gate_escalated BOOLEAN NOT NULL DE
 ALTER TABLE students ADD COLUMN IF NOT EXISTS voluntary_rename_count INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS voluntary_rename_month TEXT;
 
+-- A permanent record of the most recent name that was ever flagged for
+-- this student — deliberately NEVER cleared on resolution, unlike
+-- needs_rename_source/name_check_reason (which describe the CURRENT
+-- state and reset once a student successfully renames). Added on a
+-- direct, concrete example: a real student's display name went from a
+-- flaggable "SheSaidNo" to an unflagged-in-isolation "SheSaidMore" —
+-- Claude, checking each name cold with zero memory of the other, judged
+-- the second one ambiguous/harmless, missing that a human reading both
+-- together would recognize it as the same joke, softened just enough to
+-- pass. Every place that flags a name (check-name-background.js,
+-- name-check-scan.js, rename.js's gated-resolution branch, even on a
+-- REJECTED gated attempt — not just a successful one, since a rejected
+-- attempt is itself real evidence of what this student just tried)
+-- writes the flagged name here. checkNameAppropriate() then takes this
+-- as optional context on every SUBSEQUENT check for that student, so
+-- Claude can judge for itself whether the new name looks like a
+-- continuation — the fix is giving the model the memory it was missing,
+-- not a separate fuzzy-string-similarity heuristic layered on top (which
+-- would need its own threshold-tuning and can't reason about theme/
+-- meaning the way an actual model comparison can).
+ALTER TABLE students ADD COLUMN IF NOT EXISTS last_flagged_name TEXT;
+
 -- Actively used by name-check-scan.js (netlify.toml, every 15 minutes)
 -- to find only the students who actually need a fresh Claude check —
 -- server-side, not a fetch-everything-then-filter-in-JS pattern. That
@@ -756,9 +778,17 @@ ALTER TABLE students ADD COLUMN IF NOT EXISTS voluntary_rename_month TEXT;
 -- day (the whole scan was deleted, then restored — see
 -- name-check-scan.js's own comment for the full back-and-forth), which
 -- is why an earlier version of this comment called it dead; it isn't.
+-- Also returns last_flagged_name (see its own comment above) so the
+-- daily safety-net scan can pass it to checkNameAppropriate() as context,
+-- the same as the other two check sites. The explicit DROP is required
+-- here (not just CREATE OR REPLACE) because Postgres refuses to change
+-- an existing function's RETURNS TABLE column set in place ("cannot
+-- change return type of existing function") — a real, well-known
+-- Postgres restriction, not specific to this project.
+DROP FUNCTION IF EXISTS get_name_check_candidates(INTEGER);
 CREATE OR REPLACE FUNCTION get_name_check_candidates(p_limit INTEGER)
-RETURNS TABLE(email TEXT, display_name TEXT) AS $$
-  SELECT email, display_name FROM students
+RETURNS TABLE(email TEXT, display_name TEXT, last_flagged_name TEXT) AS $$
+  SELECT email, display_name, last_flagged_name FROM students
   WHERE needs_rename = false
     AND display_name IS NOT NULL
     AND (name_last_checked IS NULL OR name_last_checked != display_name)

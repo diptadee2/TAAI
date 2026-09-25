@@ -35,9 +35,20 @@ export async function handler(event) {
 
   const supabase = getSupabase();
 
+  // Fetched before the Claude call so it can be passed AS context to it
+  // (see checkNameAppropriate's own comment on last_flagged_name) — not
+  // just used afterward for the race-guard below.
+  let priorFlaggedName = null;
+  try {
+    const { data: existing } = await supabase.from('students').select('last_flagged_name').eq('email', email).maybeSingle();
+    priorFlaggedName = existing?.last_flagged_name || null;
+  } catch (e) {
+    console.error('check-name-background.js: last_flagged_name lookup failed for', email, e);
+  }
+
   let result;
   try {
-    result = await checkNameAppropriate(displayName);
+    result = await checkNameAppropriate(displayName, priorFlaggedName);
   } catch (e) {
     console.error('check-name-background.js: Claude check failed for', email, e);
     // Deliberately no write here at all — leaving name_last_checked
@@ -67,6 +78,7 @@ export async function handler(event) {
     if (result.flagged) {
       patch.needs_rename = true;
       patch.needs_rename_source = 'ai_scan';
+      patch.last_flagged_name = displayName; // permanent record — see its own comment in schema.sql
     }
     await supabase.from('students').update(patch).eq('email', email);
   } catch (e) {
