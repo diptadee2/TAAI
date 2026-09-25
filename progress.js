@@ -53,7 +53,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-25-7';
+  var CLIENT_VERSION = '2026-09-25-8';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2213,6 +2213,21 @@
   }
 
   function renderCalendar() {
+    // A full innerHTML replace below can remove the exact element a
+    // custom tooltip (showAllTimeTooltip/showRenameTooltip) is currently
+    // anchored to without a clean mouseout ever firing on it — leaving
+    // the tooltip's own singleton element (appended to <body>, so it
+    // survives the replace untouched) stuck visibly showing stale
+    // content that no longer corresponds to anything on screen. Caught
+    // directly from a real screenshot: entering Focus Mode right after
+    // hovering the top "Rename" control left its now-irrelevant
+    // "N renames left this month" tooltip still floating on screen over
+    // the gate's own, unrelated note. Hiding both unconditionally here
+    // — safe even before either tooltip has ever shown, since both
+    // guard on their own element existing first — means neither can
+    // ever survive a re-render it wasn't part of.
+    hideAllTimeTooltip();
+    hideRenameTooltip();
     var today = todayIso();
     var todayDay = state.days.find(function (d) { return d.date === today; });
     // dayStatus() itself already only ever returns 'missed' for a
