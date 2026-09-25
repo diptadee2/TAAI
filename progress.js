@@ -53,7 +53,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-25-10';
+  var CLIENT_VERSION = '2026-09-25-11';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -3126,7 +3126,13 @@
       // request ("make the number of tries visible") — falls back to the
       // original vaguer wording only for the brief window before that
       // fetch resolves (gateTriesLeft still null).
-      '<p class="pomo-gate-hint">' + pomoRenameGateHintText() + '</p>' +
+      // Once out of tries (escalated), this line is the ONLY thing
+      // telling the student what to actually do next (reach out on
+      // Discord) — a plain muted color read as easy to miss, per direct
+      // follow-up on a screenshot. .pomo-gate-hint--urgent only applies
+      // at state.gateTriesLeft === 0, so the ordinary "N tries left"
+      // wording stays exactly as muted as before.
+      '<p class="pomo-gate-hint' + (state.gateTriesLeft === 0 ? ' pomo-gate-hint--urgent' : '') + '">' + pomoRenameGateHintText() + '</p>' +
       (state.pomoRenameGateError ? '<p class="form-error">' + escapeHtml(state.pomoRenameGateError) + '</p>' : '') +
       '</div>';
   }
