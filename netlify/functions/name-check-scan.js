@@ -1,27 +1,30 @@
 // Scheduled function (see netlify.toml, once daily) — a SAFETY NET, not
 // the primary detection path. Checks any student whose display_name
 // hasn't been run through the Claude appropriateness classifier yet
-// (lib/name-check.js). The primary path is now event-driven:
-// register.js and rename.js's voluntary-rename branch both save a name
-// instantly, then fire check-name-background.js (a Netlify Background
-// Function) to do the actual review a few seconds later — see that
-// file's own comment. This scan exists only to catch what that misses:
-// a background dispatch that never landed, a transient Claude/network
-// error mid-check (check-name-background.js deliberately leaves
-// name_last_checked unset on any failure, specifically so it still
-// reads as a real candidate here). In steady state this should find
-// ~zero candidates on a typical run. Originally the ONLY detection
-// mechanism (15-minute polling, before that 5-minute, before that once
-// a day) — moved to daily and demoted to backstop-only the same day the
-// event-driven design shipped, on direct follow-up ("how bout there is
-// a condition if there are name changes or new signups the function
-// gets called?"): polling every 15 minutes for a check that now almost
-// always already happened seconds after the fact was pure waste once
-// the background function existed. rename.js's own gated-resolution
-// branch (a student already needs_rename-gated, actively trying to fix
-// it) still calls Claude SYNCHRONOUSLY, unrelated to any of this — that
-// one stays a real reject-and-retry flow, since the whole point there is
-// confirming a fix before letting the student out of the gate.
+// (lib/name-check.js). register.js saves a name instantly, then fires
+// check-name-background.js (a Netlify Background Function) to do the
+// actual review a few seconds later — see that file's own comment. This
+// scan exists only to catch what that misses: a background dispatch
+// that never landed, a transient Claude/network error mid-check
+// (check-name-background.js deliberately leaves name_last_checked unset
+// on any failure, specifically so it still reads as a real candidate
+// here). In steady state this should find ~zero candidates on a typical
+// run. Originally the ONLY detection mechanism (15-minute polling,
+// before that 5-minute, before that once a day) — moved to daily and
+// demoted to backstop-only the same day the event-driven design
+// shipped, on direct follow-up ("how bout there is a condition if there
+// are name changes or new signups the function gets called?"): polling
+// every 15 minutes for a check that now almost always already happened
+// seconds after the fact was pure waste once the background function
+// existed. Both of rename.js's own branches call Claude SYNCHRONOUSLY,
+// unrelated to any of this and never candidates here in the normal
+// case — the gated-resolution branch (a student already needs_rename-
+// gated, actively trying to fix it) always reject-and-retries before
+// ever reaching a write that could leave name_last_checked stale, and
+// the voluntary-rename branch (direct follow-up request — see its own
+// comment) writes name_last_checked in the very same request its check
+// runs in, so this scan only ever picks either up on a genuine failure
+// (an error thrown before that write could happen).
 //
 // A student is a candidate only if BOTH: (1) they aren't already
 // needs_rename (no point re-flagging someone already gated — the gated

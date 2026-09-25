@@ -5,7 +5,7 @@
 // from an explicit "Rename" action the student takes on purpose, not a
 // side effect of registering again on a new device.
 import { getSupabase, json, todayIST } from './lib/supabase.js';
-import { checkNameAppropriate, triggerNameCheckBackground, crossStudentReviewNote, fetchOtherFlaggedNames } from './lib/name-check.js';
+import { checkNameAppropriate, crossStudentReviewNote, fetchOtherFlaggedNames } from './lib/name-check.js';
 
 // Both caps below are 3, but deliberately separate counters/columns (see
 // schema.sql) — a gated student resolving their flag and an ordinary
@@ -48,12 +48,16 @@ export async function handler(event) {
   // not existing yet pre-migration) just skips the corresponding check
   // rather than blocking a legitimate rename over it.
   let voluntaryRenameCountThisMonth = null; // set only on the voluntary path, used by the final write below
+  let voluntaryChecked = false; // true only when the voluntary branch's OWN synchronous Claude check below genuinely ran (not skipped for a missing API key)
+  let voluntaryFlagged = false; // the actual verdict, only meaningful when voluntaryChecked is true
+  let voluntaryReason = null;
+  let voluntaryReviewNote; // undefined = don't touch; null/string = the voluntary branch's own computed name_review_note, set only alongside voluntaryChecked
   let gatedNameVerified = false; // set only when the gated branch's own synchronous Claude check actually ran and passed for this exact name
   let gatedReviewNote; // undefined = don't touch; null/string = the gated branch's own computed name_review_note, set only alongside gatedNameVerified
   try {
     const { data: existing } = await supabase
       .from('students')
-      .select('display_name, needs_rename, needs_rename_source')
+      .select('display_name, needs_rename, needs_rename_source, last_flagged_name')
       .eq('email', email)
       .maybeSingle();
     if (existing && !existing.needs_rename) {
@@ -86,17 +90,38 @@ export async function handler(event) {
       }
       voluntaryRenameCountThisMonth = priorVoluntaryCount; // carried into the final write's increment
 
-      // Deliberately NOT checked here — same "save it instantly, check
-      // separately" design as register.js (see its own top comment for
-      // the direct correction that led here). The new name is saved
-      // unconditionally below; `triggerNameCheckBackground()` (called
-      // right before the final return) fires a real, separate Claude
-      // check a few seconds later and sets needs_rename=true if it's
-      // flagged. The monthly cap above still applies here, unchanged —
-      // it's not about avoiding a synchronous wait, it's about bounding
-      // how many real Claude calls a student can cause via repeated
-      // renaming, which is exactly as true regardless of when the check
-      // actually runs.
+      // Runs a real, SYNCHRONOUS Claude check right here, in the same
+      // request that saves the new name — direct follow-up request
+      // ("put it to claude check right after rename is done and then
+      // let them use the timer"), reversing the earlier "save it
+      // instantly, check separately via a background function a few
+      // seconds later" design this file used to have (see
+      // check-name-background.js's own top comment for that history —
+      // it's still the real path for register.js, just not this one
+      // anymore). The name is still saved unconditionally below either
+      // way — this never REJECTS a voluntary rename outright, it only
+      // decides whether the student walks away from this same request
+      // already gated (needs_rename=true) or not, so the client can show
+      // a genuine "Checking…" state and react immediately to the real
+      // outcome instead of finding out invisibly, later. Fail-open on
+      // any error/timeout, same as every other call site — a Claude
+      // hiccup just means this rename goes through un-gated, with the
+      // daily safety-net scan (name-check-scan.js) as the backstop.
+      // existing.last_flagged_name (if any) is passed as context so a
+      // softened reword of THIS student's own prior flagged name is
+      // still caught (see checkNameAppropriate's own comment).
+      try {
+        const result = await checkNameAppropriate(displayName, existing.last_flagged_name || null);
+        if (!result.skipped) {
+          voluntaryChecked = true;
+          voluntaryFlagged = !!result.flagged;
+          voluntaryReason = result.reason || null;
+          const otherFlagged = await fetchOtherFlaggedNames(supabase, email);
+          voluntaryReviewNote = crossStudentReviewNote(displayName, email, otherFlagged);
+        }
+      } catch (e) {
+        console.error('rename.js: voluntary synchronous Claude check failed for', email, e);
+      }
     } else if (existing && existing.needs_rename) {
       const oldNorm = normalizeForCompare(existing.display_name);
       const newNorm = normalizeForCompare(displayName);
@@ -221,33 +246,28 @@ export async function handler(event) {
   }
 
   // Clears needs_rename (see its own comment in schema.sql) as part of
-  // the same write, not a separate call — the whole point of that flag
-  // is "blocked until they rename," so the act of renaming itself is
-  // what resolves it, with no separate admin step needed. Also clears
-  // needs_rename_source, name_check_reason, and the
-  // gate_name_check_count/month/gate_escalated bookkeeping (harmless
-  // no-op for a voluntary renamer, who was never gated in the first
-  // place; for a formerly-gated one, whatever flagged them no longer
-  // applies, and a future flag should start with a clean slate rather
-  // than inheriting an old count/reason). name_check_reason is cleared
-  // unconditionally now, not just when the gated check verified it — on
-  // the voluntary path nothing here verifies the new name synchronously
-  // anymore (see the comment above), so a stale reason from BEFORE this
-  // rename is never accurate for the new name either way: if the new
-  // name also turns out bad, check-name-background.js (fired below)
-  // writes a fresh reason of its own within seconds; if it's fine,
-  // there's nothing to explain. **name_last_checked is written here
-  // ONLY on the gated path, and only when its own synchronous Claude
-  // check genuinely ran and passed** (`gatedNameVerified`) — a name that
-  // just cleared a real Claude check seconds ago shouldn't cost a
-  // second, redundant check. A voluntary rename deliberately leaves
-  // name_last_checked untouched (still whatever it was before this
-  // rename) so it stays a genuine mismatch against the NEW display_name
-  // — that mismatch is exactly what the background check (and, as a
-  // backstop, the daily safety-net scan) look for.
+  // the same write, not a separate call, UNLESS the voluntary branch's
+  // own synchronous check above just flagged this exact new name
+  // (voluntaryFlagged) — in that case the rename still SAVES (the whole
+  // point of "save it, check it, gate them if it's bad" is that the name
+  // change itself is never blocked), it just leaves the student gated
+  // right away instead of clearing the flag, exactly as if they'd been
+  // flagged any other way. needs_rename_source/name_check_reason mirror
+  // that same either/or: 'ai_scan'+Claude's real reason when flagged,
+  // cleared otherwise. gate_name_check_count/month/gate_escalated always
+  // reset to a clean slate here regardless — those track attempts to
+  // RESOLVE a gate, a different concept from how one started, so a
+  // freshly (re-)gated student always gets a full, fresh GATE_CHECK_LIMIT
+  // budget to fix it, never inheriting stale counters from an old episode.
+  // **name_last_checked is written here whenever a synchronous Claude
+  // check genuinely just ran for this exact name** — either branch's own
+  // check (gatedNameVerified, or voluntaryChecked regardless of its
+  // verdict) — so name-check-scan.js's daily safety net doesn't waste a
+  // redundant re-check on something just reviewed seconds ago.
   // voluntaryRenameCountThisMonth is only non-null on the voluntary
   // path — incremented here (not earlier) since it should only count a
-  // genuinely SUCCESSFUL rename, and this is the point where success is
+  // genuinely SUCCESSFUL rename (the name change itself, independent of
+  // whether it then gates them), and this is the point where success is
   // certain. Tries with the new fields first, falls back to
   // progressively fewer fields on a pre-migration "column does not
   // exist" error, same fallback shape already used elsewhere in this
@@ -255,14 +275,15 @@ export async function handler(event) {
   // fail outright just because a newer column doesn't exist yet.
   const fullUpdate = {
     display_name: displayName,
-    needs_rename: false,
-    needs_rename_source: null,
-    name_check_reason: null,
+    needs_rename: voluntaryFlagged,
+    needs_rename_source: voluntaryFlagged ? 'ai_scan' : null,
+    name_check_reason: voluntaryFlagged ? voluntaryReason : null,
     gate_name_check_count: 0,
     gate_name_check_month: null,
     gate_escalated: false,
   };
-  if (gatedNameVerified) { fullUpdate.name_last_checked = displayName; }
+  if (gatedNameVerified || voluntaryChecked) { fullUpdate.name_last_checked = displayName; }
+  if (voluntaryFlagged) { fullUpdate.last_flagged_name = displayName; }
   if (voluntaryRenameCountThisMonth != null) {
     fullUpdate.voluntary_rename_count = voluntaryRenameCountThisMonth + 1;
     fullUpdate.voluntary_rename_month = month;
@@ -272,14 +293,14 @@ export async function handler(event) {
     .from('students')
     .update(fullUpdate)
     .eq('email', email)
-    .select('email, display_name, voluntary_rename_count, voluntary_rename_month')
+    .select('email, display_name, needs_rename, voluntary_rename_count, voluntary_rename_month')
     .maybeSingle();
   if (error) {
     ({ data, error } = await supabase
       .from('students')
-      .update({ display_name: displayName, needs_rename: false })
+      .update({ display_name: displayName, needs_rename: voluntaryFlagged })
       .eq('email', email)
-      .select('email, display_name')
+      .select('email, display_name, needs_rename')
       .maybeSingle());
   }
   if (error) {
@@ -287,33 +308,27 @@ export async function handler(event) {
       .from('students')
       .update({ display_name: displayName })
       .eq('email', email)
-      .select('email, display_name')
+      .select('email, display_name, needs_rename')
       .maybeSingle());
   }
   if (error) return json(500, { error: error.message });
   if (!data) return json(404, { error: 'student not found' });
 
   // Own separate, best-effort write — deliberately never merged into
-  // fullUpdate above, even though gatedReviewNote is only ever set
-  // alongside gatedNameVerified (which already gates name_last_checked
-  // the same way). A still-pending name_review_note migration must
-  // never widen fullUpdate's own fallback chain further than necessary
-  // — name_last_checked/name_check_reason/etc. already exist and should
+  // fullUpdate above. Whichever branch actually ran a synchronous check
+  // (gatedNameVerified or voluntaryChecked — never both, the two
+  // branches are mutually exclusive) supplies its own already-computed
+  // note; a still-pending name_review_note migration must never widen
+  // fullUpdate's own fallback chain further than necessary —
+  // name_last_checked/name_check_reason/etc. already exist and should
   // still be written even on a day name_review_note doesn't yet.
-  if (gatedNameVerified) {
+  const reviewNoteToWrite = gatedNameVerified ? gatedReviewNote : (voluntaryChecked ? voluntaryReviewNote : undefined);
+  if (reviewNoteToWrite !== undefined) {
     try {
-      await supabase.from('students').update({ name_review_note: gatedReviewNote }).eq('email', email);
+      await supabase.from('students').update({ name_review_note: reviewNoteToWrite }).eq('email', email);
     } catch (e) {
       console.error('rename.js: name_review_note write failed for', email, e);
     }
-  }
-
-  // Only the voluntary path needs a real check dispatched — the gated
-  // path already ran its own synchronous check above (and, on success,
-  // recorded it via gatedNameVerified, so it wouldn't be a candidate for
-  // this anyway).
-  if (voluntaryRenameCountThisMonth != null) {
-    await triggerNameCheckBackground(event, email, displayName);
   }
 
   return json(200, data);

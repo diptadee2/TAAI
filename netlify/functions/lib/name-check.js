@@ -6,32 +6,42 @@
 // oversight — see each call site's own comment:
 //   - check-name-background.js (a Netlify Background Function, triggered
 //     fire-and-forget via triggerNameCheckBackground() below) is what
-//     actually reviews a brand-new registration or an ordinary voluntary
-//     rename — ASYNCHRONOUSLY, a few seconds after the name was already
-//     saved, never blocking the student's own request. register.js and
-//     rename.js's voluntary path both save instantly with zero inline
-//     call to this function at all; a flagged result gates the student
-//     (needs_rename=true) rather than rejecting anything, since there's
-//     nothing left to reject by the time the background function runs.
-//     This event-driven design replaced an earlier 15-minute polling
-//     scan the same day it shipped ("how bout there is a condition if
-//     there are name changes or new signups the function gets called?")
-//     — strictly better on both the latency this codebase cares about
-//     (seconds, not up to 15 minutes) and the resource cost ("let's save
-//     resources" — no more ~96 empty daily poll ticks).
+//     actually reviews a brand-new registration — ASYNCHRONOUSLY, a few
+//     seconds after the name was already saved, never blocking the
+//     student's own request. register.js saves instantly with zero
+//     inline call to this function at all; a flagged result gates the
+//     student (needs_rename=true) rather than rejecting anything, since
+//     there's nothing left to reject by the time the background
+//     function runs. This event-driven design replaced an earlier
+//     15-minute polling scan the same day it shipped ("how bout there is
+//     a condition if there are name changes or new signups the function
+//     gets called?") — strictly better on both the latency this
+//     codebase cares about (seconds, not up to 15 minutes) and the
+//     resource cost ("let's save resources" — no more ~96 empty daily
+//     poll ticks).
+//   - rename.js's voluntary-rename branch (an ordinary, non-gated
+//     student renaming for fun) calls this SYNCHRONOUSLY too, in the
+//     same request that saves the new name — direct follow-up request
+//     ("put it to claude check right after rename is done and then let
+//     them use the timer"), so the student sees a real "Checking…" state
+//     and finds out immediately whether they're now gated, rather than
+//     discovering it invisibly a few seconds later. The name is still
+//     saved unconditionally either way; a flagged result just means the
+//     SAME response that confirms the save also already carries
+//     needs_rename=true.
 //   - name-check-scan.js (scheduled, once daily now, see its own top
 //     comment) is a SAFETY NET, not the primary path — it only ever
-//     finds a candidate when a background check above genuinely failed
-//     to run or write (a transient Claude/network error, a dispatch that
-//     never landed), which check-name-background.js deliberately leaves
-//     unrecorded specifically so this daily run can retry it.
+//     finds a candidate when register.js's background check above
+//     genuinely failed to run or write (a transient Claude/network
+//     error, a dispatch that never landed), or when a synchronous
+//     check anywhere threw before it could record anything.
 //   - rename.js's OWN gated-resolution branch (a student who's already
-//     needs_rename=true, actively trying to fix it) still calls this
+//     needs_rename=true, actively trying to fix it) also calls this
 //     SYNCHRONOUSLY and rejects outright if still flagged — a
-//     deliberately different, stricter flow, since the whole point
-//     there is confirming the new name is actually fine before letting
-//     the student out of the gate; "save it and check later" doesn't
-//     make sense for a moment that only exists to resolve the check.
+//     deliberately different, stricter flow from the voluntary branch
+//     above, since the whole point there is confirming the new name is
+//     actually fine before letting the student out of the gate; a
+//     voluntary rename never rejects, it only gates afterward.
 // Plain fetch, no SDK — matches this codebase's existing lightweight
 // Discord/Telegram posting helpers in this same lib/ folder, no new
 // dependency for one small API call.
@@ -142,9 +152,11 @@ export async function checkNameAppropriate(name, priorFlaggedName) {
 }
 
 // Fires check-name-background.js for (email, displayName) — used by
-// register.js and rename.js's voluntary-rename branch, both of which
-// save the name unconditionally FIRST and let this run the actual Claude
-// check afterward, out of the request/response cycle entirely. Awaited
+// register.js only (rename.js's voluntary-rename branch runs its own
+// synchronous check inline now instead, see this file's top comment),
+// which saves the name unconditionally FIRST and lets this run the
+// actual Claude check afterward, out of the request/response cycle
+// entirely. Awaited
 // only long enough to confirm Netlify accepted the background invocation
 // (a near-instant 202 ack, not the real multi-second Claude round trip
 // that happens after) — failing to even dispatch it is logged, not

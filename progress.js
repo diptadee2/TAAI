@@ -53,7 +53,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-25-4';
+  var CLIENT_VERSION = '2026-09-25-5';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1130,6 +1130,16 @@
   // state as a convenience, same as the click handler's own pre-existing
   // check below.
   var VOLUNTARY_RENAME_LIMIT_CLIENT = 3;
+  // Mirrors rename.js's own GATE_CHECK_LIMIT (3) — same hand-duplicated
+  // tradeoff as above. rename.js resets gate_name_check_count to 0
+  // whenever a fresh gate starts (including a voluntary rename that just
+  // got flagged, see rename.js's own comment), so a full, fresh count is
+  // always correct the moment state.needsRename flips true from that
+  // response — used instead of leaving state.gateTriesLeft at whatever
+  // stale value (possibly null, possibly a leftover number from a prior,
+  // already-resolved gate episode) it happened to hold from the last
+  // tracker-data fetch.
+  var GATE_CHECK_LIMIT_CLIENT = 3;
   function voluntaryRenamesLeft() {
     if (!state.student) return VOLUNTARY_RENAME_LIMIT_CLIENT;
     var usedThisMonth = state.student.voluntary_rename_month === currentMonthStr() ? (state.student.voluntary_rename_count || 0) : 0;
@@ -4274,7 +4284,24 @@
       var newName = input.value.trim();
       if (!newName) return;
       var btn = renameForm.querySelector('.rename-save');
+      var cancelBtn = document.getElementById('rename-cancel');
+      // A real, visible loading state — this now runs a genuine
+      // synchronous Claude check as part of the same request (direct
+      // follow-up request: "put it to claude check right after rename is
+      // done and then let them use the timer" — see rename.js's own
+      // comment on its voluntary-rename branch), so it can take a
+      // couple of real seconds, not feel instant. Same plain-text
+      // "Checking…" treatment, direct DOM writes rather than a
+      // renderCalendar() call, as the rename GATE's own equivalent form
+      // (pomoRenameGateForm below) already established — no spinner, per
+      // earlier direct feedback that an animated one looked broken.
+      // Cancel is disabled too: the name is already committed to the
+      // server the instant this request is sent, there's nothing left
+      // to actually cancel mid-flight.
       btn.disabled = true;
+      btn.textContent = 'Checking…';
+      input.disabled = true;
+      if (cancelBtn) cancelBtn.disabled = true;
       api('/rename', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -4291,6 +4318,24 @@
           writeCookie(state.student);
           state.renaming = false;
           state.renameError = null;
+          // The rename itself always saves (see rename.js's own
+          // comment) — but the synchronous check that just ran alongside
+          // it may have flagged this exact new name, in which case the
+          // student walks away from this same click already gated.
+          // Setting this one flag is all that's needed: it's what both
+          // shows the rename gate in place of the Pomodoro clock
+          // (pomoGateState) and blocks Start (pomoToggleRun's own
+          // needsRename check) — reusing the exact same machinery every
+          // other path into this gate already relies on, nothing new.
+          state.needsRename = !!updated.needs_rename;
+          if (state.needsRename) {
+            // rename.js resets gate_name_check_count to 0 as part of
+            // this same write for a freshly-gated student, so a full,
+            // fresh count is correct here — see GATE_CHECK_LIMIT_CLIENT's
+            // own comment for why this is set explicitly rather than
+            // left at whatever stale value state.gateTriesLeft held.
+            state.gateTriesLeft = GATE_CHECK_LIMIT_CLIENT;
+          }
           renderCalendar();
         })
         .catch(function (err) {

@@ -4,12 +4,14 @@
 // real (confirmed with a disposable local test before this was built: a
 // 4-second sleep genuinely completed in the background while the caller
 // had already moved on). Triggered fire-and-forget by register.js (every
-// new signup) and rename.js's voluntary-rename branch (every successful
-// non-gated rename) the instant a name is saved — this is where the
-// actual Claude review happens, seconds later, without the student ever
+// new signup) the instant a name is saved — this is where the actual
+// Claude review happens, seconds later, without the student ever
 // waiting on it. See register.js's own top comment for the direct
 // correction that led here ("save the name whatever it is instantly,
-// while putting it on check").
+// while putting it on check"). rename.js's voluntary-rename branch used
+// to fire this too, but now runs its own synchronous check inline
+// instead (direct follow-up request — see its own comment), so a rename
+// response can tell the student right away whether they're gated.
 import { getSupabase } from './lib/supabase.js';
 import { checkNameAppropriate, crossStudentReviewNote, fetchOtherFlaggedNames } from './lib/name-check.js';
 
