@@ -53,7 +53,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-25-8';
+  var CLIENT_VERSION = '2026-09-25-9';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2152,6 +2152,21 @@
   // Explicit rename only, via the "Rename" link below — separate from
   // registration, which recognizes a returning student by email and
   // deliberately ignores a differently-typed name (see register.js).
+  // While gated, the saved display_name IS the flagged content itself —
+  // rename.js's synchronous check saves the new name unconditionally
+  // BEFORE deciding whether to gate over it (see its own comment), so a
+  // student who typed a slur has that exact slur sitting in
+  // display_name right now. Echoing it back in plain view anywhere on
+  // screen would broadcast the exact inappropriate text, the opposite
+  // of what gating exists to prevent — a real, direct report from a
+  // screenshot: "i put a slur and it's showing the slur as my name
+  // here." Used everywhere this page would otherwise show
+  // state.student.display_name while state.needsRename is true.
+  function identityDisplayName() {
+    if (state.needsRename) return 'Your name';
+    return escapeHtml(state.student.display_name);
+  }
+
   function renderIdentityLine() {
     if (!state.student) return 'Browsing as guest, tick a task to save your progress';
     // Whenever the rename GATE box itself is what's actually on screen
@@ -2166,14 +2181,22 @@
     // a freeze pre-empting the rename gate) this stays the ONLY way to
     // fix a gate, so it stays fully interactive below, unchanged.
     if (state.needsRename && state.focus && pomoGateState() === 'rename') {
-      return escapeHtml(state.student.display_name) + ' &middot; <span class="rename-note">Update your name below to continue</span> &middot; <button id="not-you">Not you?</button>';
+      return identityDisplayName() + ' &middot; <span class="rename-note">Update your name below to continue</span> &middot; <button id="not-you">Not you?</button>';
     }
     if (state.renameLimitMessage) {
+      // Only ever reachable while NOT gated (see the click handler's own
+      // guard), so the real name is always safe to show here regardless.
       return escapeHtml(state.student.display_name) + ' &middot; <span class="rename-error">' + escapeHtml(state.renameLimitMessage) + '</span> <button type="button" id="rename-limit-ok">OK</button>';
     }
     if (state.renaming) {
+      // Pre-fills with the current name to edit, same as ever, EXCEPT
+      // while gated — there the "current name" is the flagged content
+      // itself, so it starts blank instead (matching the gate's own
+      // form, which has never pre-filled at all) rather than reflecting
+      // the exact inappropriate text back into a visible input field.
+      var prefill = state.needsRename ? '' : escapeAttr(state.student.display_name);
       return '<form id="rename-form" class="rename-form">' +
-        '<input id="rename-input" type="text" value="' + escapeAttr(state.student.display_name) + '" maxlength="60" required autocomplete="name">' +
+        '<input id="rename-input" type="text" value="' + prefill + '" maxlength="60" required autocomplete="name" placeholder="Pick a new name">' +
         '<button type="submit" class="rename-save">Save</button>' +
         '<button type="button" id="rename-cancel" class="rename-cancel">Cancel</button>' +
         (state.renameError ? '<span class="rename-error">' + escapeHtml(state.renameError) + '</span>' : '') +
@@ -2205,7 +2228,7 @@
     var wrapAttr = gated
       ? ' data-gate-tries-left="' + (typeof renamesLeft === 'number' ? renamesLeft : '') + '"'
       : ' data-renames-left="' + renamesLeft + '"';
-    return escapeHtml(state.student.display_name) + ' &middot; ' +
+    return identityDisplayName() + ' &middot; ' +
       '<span class="rename-toggle-wrap"' + wrapAttr + '>' +
       '<button id="rename-toggle"' + (disabled ? ' disabled' : '') + '>Rename</button>' +
       '</span>' +
@@ -3066,15 +3089,18 @@
   // resets needs_rename server-side as part of the same write — see its
   // own comment).
   function renderPomoRenameGateHtml(show) {
-    var currentName = state.student ? state.student.display_name : '';
     return '<div class="pomo-malpractice-gate pomo-malpractice-gate--rename" id="pomo-malpractice-gate"' + (show ? '' : ' hidden') + '>' +
       '<div class="pomo-gate-title">✏️ Update your name</div>' +
       // Deliberately NOT "enter your real name" — the system never
       // actually requires real/legal identity, only that the name isn't
       // inappropriate. Framing this as "check/pick something else" is
       // both more accurate and less demanding than implying a real-name
-      // requirement that doesn't exist.
-      '<p class="pomo-gate-body">"' + escapeHtml(currentName) + '" isn’t a usable display name here — please pick a different name to keep using Focus sessions.</p>' +
+      // requirement that doesn't exist. Also deliberately doesn't quote
+      // the actual current name here — while this gate is showing, that
+      // name IS the flagged content, and quoting it back would broadcast
+      // the exact inappropriate text on screen (see identityDisplayName's
+      // own comment for the real report that caught this).
+      '<p class="pomo-gate-body">Your current name isn’t usable here — please pick a different one to keep using Focus sessions.</p>' +
       '<form id="pomo-rename-gate-form" class="rename-form">' +
       '<input id="pomo-rename-gate-input" type="text" maxlength="60" required autocomplete="name" placeholder="Pick a new name"' + (state.gateTriesLeft === 0 ? ' disabled' : '') + '>' +
       // Disabled from the very first paint once gateTriesLeft is known to
