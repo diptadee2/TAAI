@@ -53,7 +53,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-25-1';
+  var CLIENT_VERSION = '2026-09-25-2';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -4421,7 +4421,7 @@
       // sign anything was happening during that wait.
       if (btn) btn.disabled = true;
       if (input) input.disabled = true;
-      if (label) label.innerHTML = '<span class="pomo-rename-gate-spinner"></span> Checking…';
+      if (label) label.textContent = 'Checking…';
       api('/rename', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
