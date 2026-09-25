@@ -7,6 +7,13 @@
 import { getSupabase, json, weekStartIST, weekBefore, fetchTodayLeaders, fetchLiveStatusByEmail, fetchLiveCount, fetchAllTimeMinutesByEmail, fetchFlaggedEmails, notInEmailList } from './lib/supabase.js';
 
 const LIMIT = 20;
+// Extra headroom fetched beyond LIMIT specifically to absorb flagged
+// students being filtered out afterward (see the raw query below) —
+// "this whole feature is built to have very few students simultaneously
+// flagged and unresolved" (see fetchFlaggedEmails' own comment), so a
+// buffer this size should cover the realistic case comfortably without
+// needing the flagged-emails lookup to resolve BEFORE the query runs.
+const RAW_LIMIT = LIMIT + 10;
 
 export async function handler(event) {
   if (event.httpMethod !== 'GET') return json(405, { error: 'method not allowed' });
@@ -42,7 +49,7 @@ export async function handler(event) {
     // students, not (bounded) daily activity, and this endpoint is
     // polled every 60s per viewer; see the viewer-rank fix below for how
     // the tiebreak stays consistent without an unbounded fetch.
-    supabase.from('pomodoro_stats').select('email, total_minutes, total_sessions').eq('week_start', weekStart).order('total_minutes', { ascending: false }).order('email', { ascending: true }).limit(LIMIT),
+    supabase.from('pomodoro_stats').select('email, total_minutes, total_sessions').eq('week_start', weekStart).order('total_minutes', { ascending: false }).order('email', { ascending: true }).limit(RAW_LIMIT),
     fetchTodayLeaders(supabase, viewerEmail),
     // Non-critical — a live-count hiccup (or, pre-migration, the table
     // simply not existing yet) must never fail the whole leaderboard poll.
@@ -62,17 +69,24 @@ export async function handler(event) {
 
   // Filtered here (post-fetch, in JS) rather than as a DB-side NOT IN on
   // the query above, for the same latency reason as fetching flaggedEmails
-  // in parallel — the LIMIT-20 query would need flaggedEmails resolved
-  // BEFORE it could apply that filter, which would force it to wait on a
-  // sequential lookup first. Accepted tradeoff: if a currently-flagged
-  // student happens to already be within the raw top 20, the board can
-  // show fewer than 20 rows until their gate resolves or they naturally
-  // drop out of the raw top 20, rather than perfectly backfilling with
-  // whoever's actually 21st — self-corrects on the very next 60s poll
-  // regardless, and this should be a rare, momentary state by design
-  // (this whole feature is built to have very few students simultaneously
-  // flagged and unresolved).
-  const stats = rawStats.filter((s) => !flaggedEmails.has(s.email));
+  // in parallel — a NOT IN filter would need flaggedEmails resolved
+  // BEFORE the query could even be built, forcing a sequential lookup
+  // first on an endpoint polled every 60s. Fetching RAW_LIMIT (30) rows
+  // instead of exactly LIMIT (20) is what actually fixes the "can show
+  // fewer than 20" gap that used to exist here — direct follow-up
+  // question ("are you sure the leaderboard will have the 20 names
+  // readjusted?") confirmed it wouldn't have, with the old exact-LIMIT
+  // query. With this buffer, filtering flagged students out of the raw
+  // 30 and then slicing back down to 20 backfills correctly with
+  // whoever's actually 21st/22nd/etc., as long as no more than 10
+  // students within that raw top-30 happen to be simultaneously flagged
+  // — comfortably covers the realistic case this feature is built
+  // around ("very few students simultaneously flagged and unresolved"),
+  // without ever needing the sequential lookup this design avoids. Only
+  // in the genuinely rare case of MORE than 10 flagged students landing
+  // in the raw top 30 at once would this still show fewer than 20 —
+  // self-corrects on the very next 60s poll regardless, same as before.
+  const stats = rawStats.filter((s) => !flaggedEmails.has(s.email)).slice(0, LIMIT);
 
   if (!stats.length) return json(200, { leaderboard: [], viewerRank: null, todayLeaders, liveCount });
 
