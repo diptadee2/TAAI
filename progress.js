@@ -237,7 +237,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-01-7';
+  var CLIENT_VERSION = '2026-10-01-8';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2240,7 +2240,7 @@
   function renderTodayLeaders() {
     if (!state.todayLeaders.length) return '';
     return '<div class="leaderboard-card fade-in" id="today-leaderboard-card">' +
-      '<div class="leaderboard-title">Today’s Leaders</div>' +
+      '<div class="leaderboard-title-row"><div class="leaderboard-title">Today’s Leaders</div>' + aboutEditButtonHtml('about-edit-btn--inline') + '</div>' +
       '<div class="leaderboard-subtitle">Top 10 by hours logged · Today</div>' +
       '<div id="today-leaderboard-rows">' + renderTodayLeaderboardRows(true) + '</div>' +
       '</div>';
@@ -4628,7 +4628,7 @@
     });
     // Tap/click toggles — a touch device has no hover.
     document.addEventListener('click', function (e) {
-      if (e.target.closest && e.target.closest('#about-edit-btn, .leaderboard-about-add')) { openAboutEditor(); return; }
+      if (e.target.closest && e.target.closest('.about-edit-btn, .leaderboard-about-add')) { openAboutEditor(); return; }
       var t = e.target.closest && e.target.closest('.leaderboard-about-chip, .leaderboard-about-icon');
       if (t) {
         if (aboutBubbleAnchor === t && aboutBubbleEl && aboutBubbleEl.classList.contains('visible')) hideAboutBubble();
@@ -4643,17 +4643,21 @@
   function aboutEditButtonLabel() {
     return state.viewerAbout && state.viewerAbout.text ? 'Edit your About' : '+ Add your About';
   }
-  function aboutEditButtonHtml() {
+  function aboutEditButtonHtml(extraClass) {
     if (!state.student || state.needsRename) return '';
-    return '<button type="button" class="about-edit-btn" id="about-edit-btn" data-about-hint="' + escapeAttr(aboutChangeHint()) + '">' + ABOUT_ICON_SVG + '<span id="about-edit-label">' + aboutEditButtonLabel() + '</span></button>';
+    return '<button type="button" class="about-edit-btn' + (extraClass ? ' ' + extraClass : '') + '" data-about-hint="' + escapeAttr(aboutChangeHint()) + '">' + ABOUT_ICON_SVG + '<span class="about-edit-label">' + aboutEditButtonLabel() + '</span></button>';
   }
   // The card header isn't re-rendered on each poll (only #leaderboard-rows
   // is), so the label is patched in place once real data arrives.
   function updateAboutEditButton() {
-    var label = document.getElementById('about-edit-label');
-    if (label) label.textContent = aboutEditButtonLabel();
-    var btn = document.getElementById('about-edit-btn');
-    if (btn) btn.setAttribute('data-about-hint', aboutChangeHint());
+    // The button appears on both leaderboard cards (weekly + Today's
+    // Leaders), so every copy is patched, not just one.
+    var label = aboutEditButtonLabel(), hint = aboutChangeHint();
+    Array.prototype.forEach.call(document.querySelectorAll('.about-edit-btn'), function (btn) {
+      var l = btn.querySelector('.about-edit-label');
+      if (l) l.textContent = label;
+      btn.setAttribute('data-about-hint', hint);
+    });
   }
 
   // Editor is a modal on <body>, not inline in the card — the card's rows
