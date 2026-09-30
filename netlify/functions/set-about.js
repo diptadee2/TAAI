@@ -7,10 +7,14 @@
 //      (checkAboutAppropriate). Fails CLOSED — no API key, a timeout, or
 //      any Claude error refuses the save with a "try again later"
 //      message rather than letting unreviewed text onto a public board.
-//      A rejected or failed check does NOT use up the monthly change.
-//   2. One successful change per IST calendar month (about_changed_month).
+//      A rejected or failed check does NOT use up the weekly change.
+//   2. One successful change per IST week, Monday to Sunday, the same week
+//      as the weekly leaderboard (weekStartIST). Was once a month until
+//      2026-10-01. The period key lives in about_changed_month, now holding a
+//      week-start date (YYYY-MM-DD) despite the column's name; old YYYY-MM
+//      values simply never match, so nobody is locked out by the switch.
 //      Rejected attempts are separately capped at ABOUT_CHECK_LIMIT per
-//      month (about_check_count/month) so the rejection path can't be
+//      week (about_check_count/month columns, same week key) so the rejection path can't be
 //      used to burn unlimited Claude calls — same reasoning as
 //      rename.js's own gated-attempt cap.
 //
@@ -20,14 +24,14 @@
 // Trusts `email` from the body with no ownership proof, same as every
 // other student-write endpoint here (deliberate open-tier decision —
 // see CLAUDE.md).
-import { getSupabase, json, todayIST } from './lib/supabase.js';
+import { getSupabase, json, weekStartIST } from './lib/supabase.js';
 import { checkAboutAppropriate, normalizeAboutText } from './lib/name-check.js';
 
 const ABOUT_MAX_LENGTH = 80;
 const ABOUT_CHECK_LIMIT = 3;
 
-function currentMonth() {
-  return todayIST().slice(0, 7); // 'YYYY-MM'
+function currentPeriod() {
+  return weekStartIST(); // 'YYYY-MM-DD' of this IST week's Monday
 }
 
 export async function handler(event) {
@@ -45,7 +49,7 @@ export async function handler(event) {
   if (about.length > ABOUT_MAX_LENGTH) return json(400, { error: 'Keep it under ' + ABOUT_MAX_LENGTH + ' characters.' });
 
   const supabase = getSupabase();
-  const month = currentMonth();
+  const month = currentPeriod(); // named for the column it's compared against
 
   const { data: student, error: lookupError } = await supabase
     .from('students')
@@ -67,7 +71,7 @@ export async function handler(event) {
     return json(400, { error: 'Update your display name first, then you can set an About.' });
   }
   if (student.about_changed_month === month) {
-    return json(400, { error: 'You\'ve already changed your About this month. You can change it again from the 1st.', canChange: false });
+    return json(400, { error: 'You\'ve already changed your About this week. You can change it again on Monday.', canChange: false });
   }
   if (about === (student.about_text || '')) {
     return json(400, { error: 'That\'s already your About.' });
@@ -75,7 +79,7 @@ export async function handler(event) {
 
   const priorChecks = student.about_check_month === month ? (student.about_check_count || 0) : 0;
   if (priorChecks >= ABOUT_CHECK_LIMIT) {
-    return json(400, { error: 'Too many attempts this month. You can try again from the 1st.', canChange: false });
+    return json(400, { error: 'Too many attempts this week. You can try again on Monday.', canChange: false });
   }
 
   // Best-effort, its own query (a column added after the rest): the last
@@ -112,7 +116,7 @@ export async function handler(event) {
     });
   }
 
-  // Conditional on the month not already being used — closes the race
+  // Conditional on this week's change not already being used — closes the race
   // where two concurrent requests both pass the check above; only the
   // first write matches, the second updates zero rows.
   const { data: written, error: writeError } = await supabase
@@ -128,7 +132,7 @@ export async function handler(event) {
     .select('about_text');
   if (writeError) return json(500, { error: writeError.message });
   if (!written || !written.length) {
-    return json(400, { error: 'You\'ve already changed your About this month. You can change it again from the 1st.', canChange: false });
+    return json(400, { error: 'You\'ve already changed your About this week. You can change it again on Monday.', canChange: false });
   }
 
   return json(200, { about: written[0].about_text, canChange: false });

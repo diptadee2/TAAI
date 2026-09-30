@@ -4,7 +4,7 @@
 // design; no email or other identity is returned in the response. The
 // optional `email` query param (the viewer's own, if logged in) is only
 // used to flag their own row with is_me, never anyone else's.
-import { getSupabase, json, weekStartIST, weekBefore, fetchTodayLeaders, fetchLiveStatusByEmail, fetchLiveCount, fetchAllTimeMinutesByEmail, fetchFlaggedEmails, notInEmailList, todayIST } from './lib/supabase.js';
+import { getSupabase, json, weekStartIST, weekBefore, fetchTodayLeaders, fetchLiveStatusByEmail, fetchLiveCount, fetchAllTimeMinutesByEmail, fetchFlaggedEmails, notInEmailList } from './lib/supabase.js';
 
 const LIMIT = 20;
 // Extra headroom fetched beyond LIMIT specifically to absorb flagged
@@ -233,7 +233,7 @@ export async function handler(event) {
   let viewerAbout = null;
   if (viewerEmail && aboutByEmail[viewerEmail] !== undefined) {
     const mine = aboutByEmail[viewerEmail];
-    viewerAbout = { text: mine.about_text || null, canChange: mine.about_changed_month !== todayIST().slice(0, 7) };
+    viewerAbout = { text: mine.about_text || null, canChange: mine.about_changed_month !== weekStart }; // weekly limit (see set-about.js)
   }
 
   return json(200, { leaderboard, viewerRank, todayLeaders, liveCount, viewerAbout });

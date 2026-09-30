@@ -237,7 +237,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-01-8';
+  var CLIENT_VERSION = '2026-10-01-9';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -4573,8 +4573,8 @@
   // Shown on hover of anything that opens the editor — the once-a-month
   // rule, stated at the moment someone's about to use it.
   function aboutChangeHint() {
-    if (state.viewerAbout && state.viewerAbout.canChange === false) return '0 changes left this month';
-    return '1 change left this month';
+    if (state.viewerAbout && state.viewerAbout.canChange === false) return '0 changes left this week';
+    return '1 change left this week';
   }
 
   var aboutBubbleEl = null;
@@ -4680,13 +4680,13 @@
     el.innerHTML =
       '<div class="about-modal" role="dialog" aria-modal="true" aria-labelledby="about-modal-title">' +
         '<div class="about-modal-title" id="about-modal-title">Your About</div>' +
-        '<p class="about-modal-sub">Shows next to your name on the weekly leaderboard. You can change it <strong>once a month</strong>.</p>' +
+        '<p class="about-modal-sub">Shows next to your name on the weekly leaderboard. You can change it <strong>once a week</strong>.</p>' +
         (canChange
           ? '<div class="about-modal-preview"><span class="about-modal-preview-bubble" id="about-preview">' + (current ? escapeHtml(current) : 'Your About will look like this') + '</span></div>' +
             '<textarea id="about-input" class="about-modal-input" maxlength="' + ABOUT_MAX_LENGTH + '" rows="2" placeholder="e.g. 6 hrs a day till GATE 🚀">' + escapeHtml(current) + '</textarea>' +
             '<div class="about-modal-count"><span id="about-count">' + current.length + '</span>/' + ABOUT_MAX_LENGTH + '</div>'
           : (current ? '<div class="about-modal-preview"><span class="about-modal-preview-bubble">' + escapeHtml(current) + '</span></div>' : '') +
-            '<p class="about-modal-locked">You\'ve already changed your About this month. You can change it again from the 1st.</p>') +
+            '<p class="about-modal-locked">You\'ve already changed your About this week. You can change it again on Monday.</p>') +
         '<p class="about-modal-error" id="about-error" hidden></p>' +
         '<div class="about-modal-actions">' +
           (current ? '<button type="button" class="about-modal-remove" id="about-remove">Remove</button>' : '') +
