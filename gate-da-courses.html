@@ -467,7 +467,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
    above the row it introduces; "For GATE 2027" sits between that row
    and the plain 3-column grid below it. */
 .combo-group-divider { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; margin: 4px 0 20px; }
-.combo-group-divider span { flex-shrink: 0; font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,0.55); white-space: nowrap; }
+.combo-group-divider span { flex-shrink: 0; font-family: var(--font-mono); font-size: 15px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,0.55); white-space: nowrap; }
 .combo-group-divider::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(255,255,255,0.18), transparent); }
 /* No max-width cap here — real gap found on iPad portrait (~820px):
    .combos-grid already collapses to a single column at max-width:1024px
