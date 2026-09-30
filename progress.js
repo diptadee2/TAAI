@@ -186,10 +186,11 @@
       '<div class="batch-scout-text">' +
         '<div class="batch-scout-title">Previewing <strong>' + escapeHtml(scoutLabel) + '</strong></div>' +
         '<div class="batch-scout-sub">Just looking. Your progress and streak stay on <strong>' + escapeHtml(batchLabel(state.student.batch)) + '</strong>.</div>' +
+        '<div class="batch-scout-permanent">Switching is permanent and resets your checklist progress and streak.</div>' +
       '</div>' +
       '<div class="batch-scout-actions">' +
         '<button id="batch-scout-back" class="batch-scout-back" type="button">Back to my batch</button>' +
-        '<button id="batch-scout-stick" class="batch-scout-stick" type="button">Switch to this batch</button>' +
+        '<button id="batch-scout-stick" class="batch-scout-stick" type="button">Switch permanently</button>' +
       '</div>' +
       '</div>';
   }
@@ -237,7 +238,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-30-12';
+  var CLIENT_VERSION = '2026-09-30-13';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
