@@ -54,7 +54,7 @@
   // moment that batch's schedule is loaded via load-schedule.mjs.
   function scheduleComingSoonHtml() {
     var batch = effectiveScoutBatch();
-    var label = (BATCH_OPTIONS.filter(function (b) { return b.value === batch; })[0] || {}).label || ('Batch ' + batch);
+    var label = batchLabel(batch);
     return '<div class="schedule-coming-soon"><div class="schedule-coming-soon-title">Coming soon</div>' +
       '<p>The schedule for <strong>' + escapeHtml(label) + '</strong> will show up here once it\'s ready.</p></div>';
   }
@@ -64,8 +64,21 @@
   // Batch C"). Used both on the registration screen (reading
   // state.previewBatch, since there's no student yet) and the main
   // checklist (reading state.student.batch).
+  // Only the original batch keeps the "180 DAYS Batch C" wording — any
+  // other batch shows its own display label instead (direct request:
+  // "don't use the word batch d"), since its letter is an internal id,
+  // never a name students should see.
   function programTitle(batch) {
-    return PROGRAM_LENGTH_DAYS + ' DAYS Batch ' + (batch || 'C');
+    batch = batch || 'C';
+    if (batch === 'C') return PROGRAM_LENGTH_DAYS + ' DAYS Batch C';
+    return batchLabel(batch);
+  }
+
+  // The student-facing name for a batch value — BATCH_OPTIONS' label, never
+  // the raw internal letter.
+  function batchLabel(batch) {
+    var opt = BATCH_OPTIONS.filter(function (b) { return b.value === batch; })[0];
+    return opt ? opt.label : 'Batch C';
   }
 
   // The batch whose schedule a REGISTERED student is currently looking
@@ -196,7 +209,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-30-6';
+  var CLIENT_VERSION = '2026-09-30-7';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -3808,7 +3821,7 @@
   // copy was meant to stay — renderCalendar's Focus Mode call site below
   // passes showHourly=true, the plain-checklist call site doesn't.
   function renderTodayCard(day, missedBeforeCount, showHourly) {
-    var left = '<div class="today-tag">Today · Batch C</div>';
+    var left = '<div class="today-tag">Today · ' + escapeHtml(batchLabel(effectiveScoutBatch())) + '</div>';
     left += '<div class="today-date">' + dayLabel(day.date) + '</div>';
     if (missedBeforeCount > 0) {
       left += '<div class="catchup-warn">⚠️ ' + missedBeforeCount + ' day' + (missedBeforeCount === 1 ? '' : 's') +
