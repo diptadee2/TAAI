@@ -237,7 +237,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-01-6';
+  var CLIENT_VERSION = '2026-10-01-7';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2221,7 +2221,7 @@
       return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (l.is_me ? ' leaderboard-row--me' : '') + (l.is_live ? ' leaderboard-row--live' : '') + leaderboardRowEnterAttrs(animate, i) + '">' +
         '<span class="leaderboard-rank">' + rank + '</span>' +
         rankMovementHtml(i + 1) +
-        '<span class="leaderboard-name"' + allTimeTitleAttr(l.all_time_minutes) + '>' + liveDotHtml(l.is_live) + '<span class="lb-name-text">' + escapeHtml(l.display_name) + '</span>' + highestEffortBadgeHtml(l.all_time_minutes) + aboutIconHtml(l.about) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
+        '<span class="leaderboard-name"' + allTimeTitleAttr(l.all_time_minutes) + '>' + liveDotHtml(l.is_live) + '<span class="lb-name-text">' + escapeHtml(l.display_name) + '</span>' + aboutIconHtml(l.about) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
         '<span class="leaderboard-time">' + formatHoursDecimal(l.total_minutes) + '</span>' +
         '</div>';
     }).join('');
@@ -2230,7 +2230,7 @@
         '<div class="leaderboard-row leaderboard-row--me' + (state.todayViewerRank.is_live ? ' leaderboard-row--live' : '') + leaderboardRowEnterAttrs(animate, leaders.length) + '">' +
         '<span class="leaderboard-rank">' + state.todayViewerRank.rank + '</span>' +
         rankMovementHtml(state.todayViewerRank.rank) +
-        '<span class="leaderboard-name"' + allTimeTitleAttr(state.todayViewerRank.all_time_minutes) + '>' + liveDotHtml(state.todayViewerRank.is_live) + 'You' + highestEffortBadgeHtml(state.todayViewerRank.all_time_minutes) + aboutIconHtml(state.todayViewerRank.about) + '</span>' +
+        '<span class="leaderboard-name"' + allTimeTitleAttr(state.todayViewerRank.all_time_minutes) + '>' + liveDotHtml(state.todayViewerRank.is_live) + 'You' + aboutIconHtml(state.todayViewerRank.about) + '</span>' +
         '<span class="leaderboard-time">' + formatHoursDecimal(state.todayViewerRank.total_minutes) + '</span>' +
         '</div>';
     }
@@ -4204,26 +4204,9 @@
     return html;
   }
 
-  // Single-highest-badge variant, for #today-leaderboard-card specifically
-  // (see renderTodayLeaderboardRows) — that board doesn't have the room
-  // effortBadgesHtml assumes. It's a fixed-width companion card sitting
-  // beside the 340px Pomodoro ring (.pomo-today-row), not the weekly
-  // board's own wide, capped-but-generous Name column — there's no
-  // equivalent "shrink an underused neighboring column" move available
-  // here to free up room for a stack of badges, so stacking them read as
-  // congested again on this specific board ("looks too congested and
-  // messy again") even though the identical markup looked fine on the
-  // weekly board once IT got more room. Same matte styling either way,
-  // just capped to the one tier that matters most.
-  function highestEffortBadgeHtml(allTimeMinutes) {
-    var hours = (allTimeMinutes || 0) / 60;
-    var highest = null;
-    for (var i = 0; i < EFFORT_TIERS.length; i++) {
-      if (hours >= EFFORT_TIERS[i].minHours) highest = EFFORT_TIERS[i];
-    }
-    if (!highest) return '';
-    return '<span class="leaderboard-effort-badge leaderboard-effort-badge--' + highest.key + '" title="' + highest.name + ' milestone — ' + highest.minHours + '+ all-time focus hours">' + highest.icon + '</span>';
-  }
+  // (Today's Leaders used to show a single highest badge via
+  // highestEffortBadgeHtml; removed 2026-10-01 at direct request, so that
+  // board shows no badges at all. The weekly board keeps effortBadgesHtml.)
 
 
   // Per-badge title attributes are real but not discoverable — the
