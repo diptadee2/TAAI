@@ -53,7 +53,7 @@ export async function handler(event) {
     .maybeSingle();
   // Pre-migration (the about_* columns don't exist yet) lands here too —
   // a clean "not available yet" rather than a raw Postgres error.
-  if (lookupError) return json(503, { error: 'About isn\'t available just yet — try again later.' });
+  if (lookupError) return json(503, { error: 'About isn\'t available just yet. Try again later.' });
   if (!student) return json(404, { error: 'student not found' });
 
   if (!about) {
@@ -66,7 +66,7 @@ export async function handler(event) {
     return json(400, { error: 'Update your display name first, then you can set an About.' });
   }
   if (student.about_changed_month === month) {
-    return json(400, { error: 'You\'ve already changed your About this month — you can change it again from the 1st.', canChange: false });
+    return json(400, { error: 'You\'ve already changed your About this month. You can change it again from the 1st.', canChange: false });
   }
   if (about === (student.about_text || '')) {
     return json(400, { error: 'That\'s already your About.' });
@@ -74,7 +74,7 @@ export async function handler(event) {
 
   const priorChecks = student.about_check_month === month ? (student.about_check_count || 0) : 0;
   if (priorChecks >= ABOUT_CHECK_LIMIT) {
-    return json(400, { error: 'Too many attempts this month — you can try again from the 1st.', canChange: false });
+    return json(400, { error: 'Too many attempts this month. You can try again from the 1st.', canChange: false });
   }
 
   let result;
@@ -82,10 +82,10 @@ export async function handler(event) {
     result = await checkAboutAppropriate(about);
   } catch (e) {
     console.error('set-about: Claude check failed for', email, e);
-    return json(503, { error: 'Couldn\'t check that right now — please try again in a bit.' });
+    return json(503, { error: 'Couldn\'t check that right now. Please try again in a bit.' });
   }
   if (result.skipped) {
-    return json(503, { error: 'Couldn\'t check that right now — please try again in a bit.' });
+    return json(503, { error: 'Couldn\'t check that right now. Please try again in a bit.' });
   }
 
   const checksUsed = priorChecks + 1;
@@ -96,7 +96,7 @@ export async function handler(event) {
       .update({ about_check_count: checksUsed, about_check_month: month })
       .eq('email', email);
     return json(400, {
-      error: 'That About isn\'t allowed here — please try something different.',
+      error: 'That About isn\'t allowed here. Please try something different.',
       triesLeft: Math.max(0, ABOUT_CHECK_LIMIT - checksUsed),
     });
   }
@@ -117,7 +117,7 @@ export async function handler(event) {
     .select('about_text');
   if (writeError) return json(500, { error: writeError.message });
   if (!written || !written.length) {
-    return json(400, { error: 'You\'ve already changed your About this month — you can change it again from the 1st.', canChange: false });
+    return json(400, { error: 'You\'ve already changed your About this month. You can change it again from the 1st.', canChange: false });
   }
 
   return json(200, { about: written[0].about_text, canChange: false });

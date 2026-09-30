@@ -4575,7 +4575,7 @@
           Array.prototype.forEach.call(buttons, function (b) { b.disabled = false; });
           btn.textContent = originalLabel;
           if (err.data && err.data.canChange === false && state.viewerAbout) state.viewerAbout.canChange = false;
-          showError(err.message || 'Something went wrong — please try again.');
+          showError(err.message || 'Something went wrong. Please try again.');
         });
     }
 
