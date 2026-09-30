@@ -1266,7 +1266,7 @@
      behind a hover icon), and Streak moved right into a fixed track
      beside Status — sized for its worst case (5 balls + overflow badge).
      Must match .leaderboard-columns below exactly. */
-  #leaderboard-card .leaderboard-row { grid-template-columns: 40px 16px minmax(150px,220px) minmax(0,1fr) 140px 76px 60px 58px; }
+  #leaderboard-card .leaderboard-row { grid-template-columns: 40px 16px minmax(150px,220px) minmax(0,1fr) 140px 76px 60px 44px; }
   .leaderboard-row:last-child { border-bottom: none; }
   .leaderboard-row--top { padding-top: 14px; padding-bottom: 14px; }
   .leaderboard-row--me { background: rgba(139,92,246,0.1); border-bottom-color: transparent; }
@@ -1638,7 +1638,7 @@
      .leaderboard-row above (including its 180px Name cap, see that
      rule's own comment), so every label lands exactly above its column
      on every row, not just approximately near it. */
-  .leaderboard-columns { display: grid; grid-template-columns: 40px 16px minmax(150px,220px) minmax(0,1fr) 140px 76px 60px 58px; align-items: center; gap: 16px; padding: 0 14px 6px; font-family: var(--font-nav); font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
+  .leaderboard-columns { display: grid; grid-template-columns: 40px 16px minmax(150px,220px) minmax(0,1fr) 140px 76px 60px 44px; align-items: center; gap: 16px; padding: 0 14px 6px; font-family: var(--font-nav); font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
   .leaderboard-col-rank { text-align: center; min-width: 0; }
   /* Was centered per an earlier request ("center align all the column
      names according to their content within") — held up fine while

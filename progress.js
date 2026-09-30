@@ -183,7 +183,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-30-4';
+  var CLIENT_VERSION = '2026-09-30-5';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -4619,7 +4619,7 @@
       return '<p class="center-note" style="padding:14px 0;">No focus sessions logged yet. Be the first!</p>';
     }
     var rows = state.leaderboard.map(function (r, i) {
-      var timeLabel = r.total_minutes + 'm';
+      var timeLabel = String(r.total_minutes);
       var rankLabel = LEADERBOARD_MEDALS[i] || (i + 1);
       // Session count isn't shown — it's not a comparable stat once session
       // length is customizable per student (pomoSettings.work, 1-120min);
@@ -4651,7 +4651,7 @@
         streakBallsHtml(state.viewerRank.streak) +
         weeklyPaceStatusHtml(state.viewerRank.total_minutes) +
         pomoTimerHtml(null, null, null) +
-        '<span class="leaderboard-time">' + state.viewerRank.total_minutes + 'm</span>' +
+        '<span class="leaderboard-time">' + state.viewerRank.total_minutes + '</span>' +
         '</div>';
     }
     return rows;
@@ -4688,7 +4688,7 @@
       '<span class="leaderboard-col-name">Name<button type="button" class="streak-legend-toggle" id="effort-legend-toggle" aria-label="What do the badges beside names mean?">?</button>' + effortLegendHtml() + '</span>' +
       '<span class="leaderboard-col-about">About</span>' +
       '<span class="leaderboard-col-streak">Streak<button type="button" class="streak-legend-toggle" id="streak-legend-toggle" aria-label="What do the streak colors mean?">?</button>' + streakLegendHtml() + '</span>' +
-      '<span class="leaderboard-col-status">Status</span><span class="leaderboard-col-timer">Timer</span><span class="leaderboard-col-time">Minutes</span></div>' +
+      '<span class="leaderboard-col-status">Status</span><span class="leaderboard-col-timer">Timer</span><span class="leaderboard-col-time">Mins</span></div>' +
       '<div id="leaderboard-rows">' + renderLeaderboardRows(animateNow) + '</div>' +
       '</div>';
   }
