@@ -427,6 +427,15 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 #combos h2 { color: #fff; }
 #combos .section-sub { color: rgba(255,255,255,0.62); }
 .combos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: stretch; }
+/* align-items:stretch only equalizes the direct grid children (each a
+   .fade-in wrapper, since every card gets its own scroll-reveal) — it
+   does NOT reach the .combo-card/.combo-featured-frame inside them, so
+   cards with different "what's included" list lengths used to end up
+   at 3 different heights with CTAs landing at 3 different vertical
+   positions. .combo-card/.combo-featured-frame's own height:100% (below)
+   fills that stretched .fade-in box, and .combo-includes' existing
+   flex:1 then absorbs the leftover space, pinning price/CTA to a
+   shared bottom edge across the row regardless of list length. */
 /* 2028 gets its own row above the other three, on request — spans the
    full 3-column width (pushing the other three onto row 2 automatically,
    plain grid auto-flow, no extra markup needed for that part) but keeps
@@ -443,6 +452,23 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
    grid is already a single column and every card already gets its own
    row regardless. */
 .combo-full-row { grid-column: 1 / -1; margin-bottom: 44px; }
+/* A labeled boundary between the two exam-year groups — spans the grid
+   the same way .combo-full-row does. Plain text (no pill/border/
+   background box around it) plus a thin line filling the rest of the
+   row — a boxed badge here read as generic template chrome (direct
+   feedback: "pills look too vibe coded"), the exact same category of
+   thing this codebase has stripped back out before (see the dot-grid
+   background's own "AI-template" removal). Matches .section-eyebrow's
+   OWN base treatment (a colored dash + plain uppercase text, no box) —
+   the #combos-specific pill variant on that element exists only because
+   IT needs to stand out against a busy dotted background on its own;
+   this divider already has its own line doing that job, so it doesn't
+   need the box too. The "For GATE 2027 and 2028" instance sits right
+   above the row it introduces; "For GATE 2027" sits between that row
+   and the plain 3-column grid below it. */
+.combo-group-divider { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; margin: 4px 0 20px; }
+.combo-group-divider span { flex-shrink: 0; font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,0.55); white-space: nowrap; }
+.combo-group-divider::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(255,255,255,0.18), transparent); }
 /* No max-width cap here — real gap found on iPad portrait (~820px):
    .combos-grid already collapses to a single column at max-width:1024px
    (below), so anywhere from a phone up through ~1024px this row's own
@@ -531,9 +557,22 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   content: ''; position: absolute; inset: 0; border-radius: inherit;
   background: linear-gradient(105deg, transparent 38%, rgba(255,255,255,0.22) 50%, transparent 62%);
   transform: translateX(-130%) skewX(-15deg);
-  animation: combo-shimmer-sweep 3.4s ease-in-out 1s infinite;
+  /* Bounded to 3 plays, not infinite — a shimmer that never stops reads
+     as generic template motion (a real design-taste call, not a
+     detector finding: perpetual decorative motion with no purpose is
+     exactly the kind of thing "make this less AI-generated" is about).
+     Three passes still catches the eye on first reveal, then the chip
+     settles into stillness like everything else on the page.
+     Paused by default and only released once this card's own .fade-in
+     ancestor gets .visible (the site's existing scroll-reveal system —
+     see .fade-in.visible below) — otherwise this plays out at raw page-
+     load time, finished long before anyone scrolls down far enough to
+     actually see it. */
+  animation: combo-shimmer-sweep 3.4s ease-in-out 1s 3;
+  animation-play-state: paused;
   pointer-events: none;
 }
+.fade-in.visible .combo-coming-soon-overlay-inner::after { animation-play-state: running; }
 @keyframes combo-coming-soon-bell-wiggle {
   0%, 50%, 100% { transform: rotate(0deg); }
   10% { transform: rotate(-12deg); }
@@ -606,7 +645,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 .combo-featured-frame {
   border-radius: calc(var(--radius-xl) + 2px); padding: 2px;
-  position: relative; overflow: hidden;
+  position: relative; overflow: hidden; height: 100%;
   background: conic-gradient(from 0deg, #8b5cf6, #6366f1 33%, #38bdf8 55%, #a78bfa 75%, #8b5cf6 100%);
   box-shadow: 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12);
   transition: transform .3s cubic-bezier(.34,1.05,.64,1), box-shadow .3s ease;
@@ -655,6 +694,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .combo-card {
   border-radius: var(--radius-xl); padding: 36px;
   display: flex; flex-direction: column;
+  height: 100%;
   position: relative; overflow: hidden;
   transition: transform .3s cubic-bezier(.34,1.05,.64,1), box-shadow .3s ease, border-color .22s ease;
   border: 1px solid rgba(255,255,255,0.09);
@@ -695,7 +735,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
    already sit, so the warmth reads as deliberate lighting rather than a
    flat color wash. */
 .combo-card.featured.coming-soon { background: radial-gradient(circle at var(--mx,-200%) var(--my,-200%), rgba(251,191,36,0.34) 0%, transparent 55%), radial-gradient(ellipse 140% 90% at 85% -10%, rgba(245,158,11,0.32) 0%, transparent 60%), linear-gradient(160deg, #241207 0%, #1a1210 40%, #120e12 100%); border-color: rgba(251,191,36,0.4); }
-.combo-card.featured::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(105deg, transparent 38%, rgba(255,255,255,0.045) 50%, transparent 62%); transform: translateX(-130%) skewX(-15deg); animation: combo-shimmer-sweep 5s ease-in-out 1.5s infinite; pointer-events: none; z-index: 1; }
+/* Bounded to 3 plays and reveal-gated, not infinite — see the
+   coming-soon-overlay shimmer's own comment for why. */
+.combo-card.featured::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(105deg, transparent 38%, rgba(255,255,255,0.045) 50%, transparent 62%); transform: translateX(-130%) skewX(-15deg); animation: combo-shimmer-sweep 5s ease-in-out 1.5s 3; animation-play-state: paused; pointer-events: none; z-index: 1; }
+.fade-in.visible .combo-card.featured::after { animation-play-state: running; }
 /* A plain white shimmer (the rule right above, shared with 2027) reads
    as a stray rendering artifact against a warm amber card instead of an
    intentional shine — retinted gold here specifically so it looks like
@@ -703,7 +746,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .combo-card.featured.coming-soon::after { background: linear-gradient(105deg, transparent 38%, rgba(252,211,77,0.1) 50%, transparent 62%); }
 .combo-card:not(.featured)::before { content: ''; position: absolute; top: -60px; right: -60px; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 70%); pointer-events: none; }
 .combo-accent { display: none; }
-.combo-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 13px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; align-self: flex-start; margin-bottom: 22px; position: relative; z-index: 1; }
+.combo-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 13px; border-radius: 8px; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; align-self: flex-start; margin-bottom: 22px; position: relative; z-index: 1; }
 .combo-badge.best { background: linear-gradient(135deg, var(--pink), var(--purple)); color: #fff; box-shadow: 0 4px 14px rgba(139,92,246,0.4); }
 .combo-badge.soon { background: linear-gradient(135deg, #FCD34D 0%, #F59E0B 55%, #FB7185 100%); color: #2a1608; box-shadow: 0 4px 16px rgba(245,158,11,0.5); }
 .combo-badge.combo { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.72); border: 1px solid rgba(255,255,255,0.14); }
@@ -808,9 +851,15 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   content: ''; position: absolute; inset: 0; width: 50%;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
   transform: translateX(-130%) skewX(-15deg);
-  animation: combo-btn-shimmer 4s ease-in-out infinite;
+  /* Bounded to 3 plays and reveal-gated — this one is the widest-reaching
+     of the three shimmers (unscoped to .featured, so every combo card's
+     own Enrol button on the page shimmered forever, all at once). See
+     the coming-soon-overlay shimmer's own comment for the full reasoning. */
+  animation: combo-btn-shimmer 4s ease-in-out 3;
+  animation-play-state: paused;
   pointer-events: none;
 }
+.fade-in.visible .combo-card .btn-primary::before { animation-play-state: running; }
 .combo-card .btn-primary svg { transition: transform .28s ease-out; flex-shrink: 0; }
 .combo-card .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 16px 40px rgba(139,92,246,0.5), 0 4px 12px rgba(236,72,153,0.3); }
 .combo-card .btn-primary:hover svg { transform: translateX(3px); }
@@ -833,7 +882,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .combo-countdown-corner-badge {
   position: absolute; top: 20px; right: 24px; z-index: 1;
   display: inline-flex; align-items: center; gap: 5px;
-  padding: 5px 10px; border-radius: 999px;
+  padding: 5px 10px; border-radius: 8px;
   background: rgba(245,158,11,0.14); border: 1px solid rgba(245,158,11,0.35);
   color: #FCD34D; font-size: 11.5px; font-weight: 700; white-space: nowrap;
 }
@@ -852,7 +901,11 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .combo-title-badge-spacer { float: right; width: 88px; height: 32px; }
 
 /* Individual courses, redesigned */
-.courses-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+/* 3 columns, not a fixed 5 — INDIVIDUAL currently has 6 items, and repeat(5,1fr)
+   stranded the 6th card alone on a near-empty second row. 3 divides 6 evenly into
+   2 full rows and stays robust if more subjects are added later, rather than a
+   fix tied to exactly 6 items. */
+.courses-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .course-card {
   border-radius: var(--radius-xl); padding: 28px 24px 24px;
   display: flex; flex-direction: column;
@@ -906,27 +959,29 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   position: relative; z-index: 1; transition: color .28s ease;
 }
 .course-card:hover .course-validity { color: rgba(255,255,255,0.45); }
+/* Topics are shown at rest now, not hidden behind hover — a wide card
+   with nothing but icon/title/price read as mostly empty (real report:
+   "the single subjects texts are very small and a lot of negative
+   space"). Text/dot default to dark ink (same as the touch-device
+   resting state below) since the resting card background is plain
+   white; both transition to a near-white tint on hover, when the
+   gradient overlay behind them (.course-card::before) darkens. This
+   piece applies at every width — mobile/iPad already showed topics at
+   rest this same way via the touch/(hover:none) overrides below, so
+   nothing changes for them; only min-width:1025px (below) enlarges
+   type/spacing for the genuinely wider desktop card. */
 .course-topics {
   position: relative; z-index: 1;
-  display: flex; flex-direction: column; gap: 7px; margin-bottom: 0;
-  max-height: 0; overflow: hidden; opacity: 0;
-  transition: max-height .32s ease, opacity .2s ease, margin-bottom .32s ease;
-}
-.course-card:hover .course-topics {
-  max-height: 120px; opacity: 1; margin-bottom: 16px;
-  transition: max-height .5s cubic-bezier(.22,1,.36,1), opacity .38s ease .08s, margin-bottom .5s cubic-bezier(.22,1,.36,1);
+  display: flex; flex-direction: column; gap: 7px; margin-bottom: 16px;
 }
 .course-topic {
   display: flex; align-items: center; gap: 7px;
-  font-size: 12px; color: rgba(255,255,255,0.82); line-height: 1.35;
-  transform: translateY(6px); opacity: 0;
-  transition: transform .22s ease, opacity .22s ease;
+  font-size: 12px; color: var(--ink-dim); line-height: 1.35;
+  transition: color .28s ease;
 }
-.course-card:hover .course-topic {
-  transform: translateY(0); opacity: 1;
-  transition: transform .44s cubic-bezier(.22,1,.36,1) var(--td, 0ms), opacity .36s ease var(--td, 0ms);
-}
-.course-topic::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: rgba(255,255,255,0.55); flex-shrink: 0; }
+.course-card:hover .course-topic { color: rgba(255,255,255,0.82); }
+.course-topic::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--purple); flex-shrink: 0; transition: background .28s ease; }
+.course-card:hover .course-topic::before { background: rgba(255,255,255,0.55); }
 .course-price-row {
   display: flex; align-items: baseline; gap: 8px;
   margin-top: auto; margin-bottom: 18px; position: relative; z-index: 1;
@@ -938,6 +993,27 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .course-card:hover .course-price { color: #fff; }
 .course-price-old { font-size: 13px; color: var(--ink-soft); text-decoration: line-through; transition: color .28s ease; }
 .course-card:hover .course-price-old { color: rgba(255,255,255,0.42); }
+/* Desktop only (min-width:1025px, this page's own established "true
+   desktop, not tablet" cutoff — see .combo-horizontal-left/-right)
+   — the individual-course cards get noticeably wider at this width
+   once .courses-grid settles into 3 real columns of real page width,
+   so the type/icon/padding scale up to match; mobile and iPad
+   portrait keep the original sizes above, which were already a good
+   fit for their own narrower card width. */
+@media (min-width: 1025px) {
+  .course-card { padding: 32px 28px 28px; }
+  .ticket-notch { margin: 18px -28px; }
+  .course-icon { width: 56px; height: 56px; border-radius: 16px; margin-bottom: 22px; }
+  .course-icon svg { width: 24px; height: 24px; }
+  .course-title { font-size: 23px; margin-bottom: 8px; }
+  .course-validity { font-size: 12.5px; margin-bottom: 18px; }
+  .course-topics { gap: 9px; margin-bottom: 22px; }
+  .course-topic { gap: 8px; font-size: 13.5px; line-height: 1.4; }
+  .course-topic::before { width: 5px; height: 5px; }
+  .course-price-row { gap: 9px; margin-bottom: 20px; }
+  .course-price { font-size: 30px; }
+  .course-price-old { font-size: 14px; }
+}
 .course-card .btn-ghost {
   position: relative; z-index: 1; overflow: hidden;
   transition: background .3s ease, color .3s ease, border-color .3s ease, transform .32s cubic-bezier(.34,1.15,.64,1), box-shadow .3s ease;
@@ -976,11 +1052,17 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .placement-left { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 0; }
 .placement-badge {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 5px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 600;
+  padding: 5px 12px; border-radius: 8px; font-size: 11.5px; font-weight: 600;
   background: rgba(139,92,246,0.14); border: 1px solid rgba(139,92,246,0.3);
   color: var(--lilac); margin-bottom: 18px; align-self: flex-start;
 }
-.placement-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lilac); animation: live-blink 2s ease-in-out infinite; }
+/* Static, not pulsing — this dot sits beside a "Coming Soon" label, which
+   isn't live/changing data. A pulse there would fake liveness that isn't
+   real, exactly the same principle this site already applies deliberately
+   to its actual live indicators elsewhere (the progress tracker's "live
+   now" dots, reserved for genuinely live pomodoro sessions). Caught by
+   the impeccable detector's pulsing-dot anti-pattern check. */
+.placement-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lilac); }
 .placement-title {
   font-family: var(--font-display); font-size: clamp(26px,2.8vw,38px); font-weight: 600;
   letter-spacing: -0.03em; line-height: 1.1; color: #fff; margin-bottom: 14px;
@@ -1094,7 +1176,13 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 .footer-socials a:hover { background: var(--purple); color: #fff; border-color: var(--purple); transform: translateY(-3px); }
 .footer-socials a svg { display: block; width: 22px; height: 22px; }
-.footer-copy { font-size: 12px; color: var(--ink-soft); letter-spacing: .02em; }
+/* Scoped to this one element, not the shared --ink-soft token (#857CAE,
+   used broadly elsewhere at sizes/weights that pass contrast fine) —
+   #857CAE on this footer's white background measures 3.82:1 at 12px,
+   below the 4.5:1 WCAG AA minimum for normal text. #6A6094 keeps the
+   same purple-grey hue, darkened just enough to clear it (5.65:1,
+   computed, not eyeballed). */
+.footer-copy { font-size: 12px; color: #6A6094; letter-spacing: .02em; }
 .footer-email { font-size: 12px; color: var(--ink-dim); text-decoration: none; letter-spacing: .02em; transition: color .2s; }
 .footer-email:hover { color: var(--purple); }
 .scroll-progress { position: fixed; top: 0; left: 0; z-index: 100; height: 3px; background: linear-gradient(90deg, var(--pink), var(--purple)); pointer-events: none; transition: width 120ms linear; }
@@ -1163,7 +1251,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 
 @media (max-width: 1024px) {
   .combos-grid { grid-template-columns: 1fr; }
-  .courses-grid { grid-template-columns: repeat(3, 1fr); }
   .included-grid { grid-template-columns: repeat(2, 1fr); }
 }
 /* Mobile accordion for "every course includes" */
@@ -1277,9 +1364,13 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .course-card:active .btn-ghost { background: transparent !important; color: var(--ink) !important; border-color: var(--line) !important; }
   .course-card:hover .btn-ghost svg,
   .course-card:active .btn-ghost svg { transform: none !important; }
-  /* Topics are visible in resting state on touch */
-  .course-card:hover .course-topics,
-  .course-card:active .course-topics { max-height: 200px !important; opacity: 1 !important; }
+  /* Topics are visible at rest on every device now — this just locks
+     their color against a tap-triggered :hover flash, same as every
+     other .course-card element above. */
+  .course-card:hover .course-topic,
+  .course-card:active .course-topic { color: var(--ink-dim) !important; }
+  .course-card:hover .course-topic::before,
+  .course-card:active .course-topic::before { background: var(--purple) !important; }
   /* Combo includes — always visible, hover/active locked to resting */
   .combo-includes li { opacity: 1; transform: translateX(0); }
   .combo-check svg path { stroke-dashoffset: 0; }
@@ -1312,8 +1403,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   }
   .course-card:active,
   .course-card:hover { transform: none; }
-  .course-topics { max-height: none !important; opacity: 1 !important; margin-bottom: 14px !important; overflow: visible !important; }
-  .course-topic { transform: none !important; opacity: 1 !important; color: var(--ink-dim) !important; }
 }
 
 /* YouTube link wiggle */
@@ -1343,7 +1432,6 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 .nav-hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
 .nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 .mobile-menu { position: fixed; top: 86px; left: 0; right: 0; z-index: 49; background: rgba(248,246,255,0.72); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px); border-bottom: 1px solid rgba(139,92,246,0.15); padding: 8px 12px 20px; display: flex; flex-direction: column; gap: 2px; transform: translateY(-10px); opacity: 0; pointer-events: none; transition: transform .3s cubic-bezier(.4,0,.2,1), opacity .22s ease; box-shadow: 0 8px 40px rgba(20,16,43,0.12); overflow: hidden; }
-.mobile-menu::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--purple), rgba(139,92,246,0.15)); pointer-events: none; }
 .mobile-menu.open { transform: translateY(0); opacity: 1; pointer-events: auto; }
 @keyframes menuItemIn { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: translateX(0); } }
 .mobile-menu-link { font-family: var(--font-nav); display: flex; align-items: center; gap: 11px; padding: 12px 14px; border-radius: 12px; font-size: 14px; font-weight: 700; color: var(--ink-dim); text-decoration: none; letter-spacing: .05em; text-transform: uppercase; transition: background .18s, color .18s, transform .12s ease; position: relative; }
@@ -1399,9 +1487,8 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   .course-card:hover .course-icon { transform: none; box-shadow: none; }
   .course-card:hover .ticket-notch-line { border-color: rgba(0,0,0,0.1); }
   .course-card:hover .btn-ghost { background: transparent; color: var(--ink); border-color: var(--ink); }
-  .course-topics { max-height: 200px; opacity: 1; margin-bottom: 14px; }
-  .course-topic { transform: none; opacity: 1; color: var(--ink-dim); }
-  .course-topic::before { background: var(--purple); }
+  .course-card:hover .course-topic { color: var(--ink-dim); }
+  .course-card:hover .course-topic::before { background: var(--purple); }
   .combo-card:hover { transform: none; }
   .combo-featured-frame:hover { transform: none; box-shadow: 0 0 0 2px #8b5cf6, 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12); }
   .combo-featured-frame { background: none; padding: 0; box-shadow: 0 0 0 2px #8b5cf6, 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12); transition: none; -webkit-tap-highlight-color: transparent; }
@@ -1426,7 +1513,29 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 }
 .why-strip-h2 em { font-style: normal; background: linear-gradient(120deg, var(--pink) 0%, var(--purple) 50%, var(--blue) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .why-strip-sub { font-size: 17px; color: var(--ink-dim); line-height: 1.5; max-width: 560px; margin-bottom: 48px; }
-.why-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+/* Asymmetric bento, not the flagged "three equal columns" — a full-width
+   horizontal banner on top, the other two side by side below. The
+   featured pillar was first tried as a tall stretched card in this same
+   grid; real feedback ("too generic and negative space") caught two
+   real problems with that: centering short copy in a taller box just
+   splits the empty space top/bottom instead of removing it, and a
+   bigger version of the same icon-badge-on-dark-card shape reads as the
+   same generic template, just resized. A wide banner is a genuinely
+   different silhouette — its own natural (short) height holds its
+   content without stretching, no artificial centering needed. */
+.why-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+/* Compound selector (.why-pillar.why-pillar--featured), not a lone
+   .why-pillar--featured class — real bug caught from a screenshot, not
+   assumed: at equal specificity, .why-pillar's own later flex-direction:
+   column declaration (further down this file) was silently winning over
+   this rule's row regardless of which class list order this button's
+   own className string put them in, so the icon and text were stacking
+   vertically instead of sitting side by side. The compound selector's
+   higher specificity makes this immune to source order from here on. */
+.why-pillar.why-pillar--featured {
+  grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 40px;
+  padding: 44px 52px;
+}
 .why-pillar {
   border-radius: var(--radius-xl); padding: 40px 36px 36px;
   display: flex; flex-direction: column; gap: 0; align-items: flex-start;
@@ -1445,6 +1554,11 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   opacity: 0.18; filter: blur(72px); transition: opacity .5s;
 }
 .why-pillar:hover::after { opacity: 0.32; }
+/* Repositioned for the banner's own short, wide shape — centered against
+   the right edge rather than the corner-anchored placement that suited
+   a tall card, so the glow reads as ambient lighting across the whole
+   bar instead of pooling in one corner of a much shorter box. */
+.why-pillar--featured::after { width: 420px; height: 420px; top: 50%; right: -140px; transform: translateY(-50%); }
 .why-bd-1::after { background: rgb(139,92,246); }
 .why-bd-2::after { background: rgb(236,72,153); }
 .why-bd-3::after { background: rgb(6,182,212); }
@@ -1457,12 +1571,38 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 .why-bd-1 .why-icon-wrap { background: linear-gradient(135deg, #8b5cf6, #6366f1); }
 .why-bd-2 .why-icon-wrap { background: linear-gradient(135deg, #ec4899, #c45fcf); }
 .why-bd-3 .why-icon-wrap { background: linear-gradient(135deg, #06b6d4, #4da8ff); }
+/* Scaled up to match the featured pillar's own bigger footprint, and
+   sitting beside the text now (row layout) rather than above it, so no
+   bottom margin is needed here.
+   Every featured size below is the base size × 1.4 — one consistent
+   scale factor, not each element getting its own arbitrary bump. Caught
+   directly: icon (48→68, ×1.417) and heading (20→28, ×1.4) happened to
+   already land close to this by coincidence, but sub (14→16 was only
+   ×1.143) and the chips (10px unscaled at all, ×1.0) didn't — no shared
+   ratio, just ad-hoc jumps. Formalized on ×1.4 throughout so the
+   featured pillar reads as one deliberate "zoom," not several
+   independent size decisions. */
+.why-pillar--featured .why-icon-wrap { width: 68px; height: 68px; border-radius: 18px; margin-bottom: 0; flex-shrink: 0; }
+.why-pillar--featured .why-icon-wrap svg { width: 39px; height: 39px; }
 .why-heading {
   font-family: var(--font-display); font-size: 20px; font-weight: 600;
   letter-spacing: -0.02em; line-height: 1.2; color: #fff;
   position: relative; z-index: 2; margin-bottom: 12px;
 }
+.why-pillar--featured .why-heading { font-size: 28px; margin-bottom: 12px; }
 .why-sub { font-size: 14px; color: rgba(255,255,255,0.50); line-height: 1.65; position: relative; z-index: 2; margin-bottom: 24px; flex: 1; }
+/* Wide banner, not a narrow tall card — the sub-copy gets real width to
+   sit on one or two lines instead of the earlier version's artificially
+   narrowed 34ch column, and margin-bottom only matters when chips
+   actually follow (every other pillar's own last child keeps its
+   margin, this is featured-specific since chips sit right after it here). */
+.why-pillar--featured .why-sub { font-size: 20px; flex: none; max-width: 58ch; margin-bottom: 14px; }
+/* Flex column so .why-sub's own flex:1 still pushes chips to the card's
+   bottom edge (unchanged behavior from before heading/sub/chips were
+   wrapped together) — flex:1 on .why-text itself fills the remaining
+   space along whichever axis the parent .why-pillar is using (height in
+   the normal column cards, width in the featured row banner). */
+.why-text { position: relative; z-index: 2; display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .why-chips { display: flex; flex-wrap: wrap; gap: 6px; position: relative; z-index: 2; }
 .why-chip {
   font-family: var(--font-mono); font-size: 10px; padding: 4px 10px;
@@ -1471,6 +1611,33 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   transition: background .2s, color .2s, border-color .2s;
 }
 .why-pillar:hover .why-chip { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.6); border-color: rgba(255,255,255,0.2); }
+/* Same ×1.4 scale as the icon/heading/sub above — chips were the one
+   piece left completely unscaled (10px in both variants), the most
+   glaring gap in the old ad-hoc sizing. Padding scales with it so the
+   pill shape itself stays proportional, not just the text inside it. */
+.why-pillar--featured .why-chip { font-size: 14px; padding: 6px 14px; }
+/* Text cascade, on request — the icon/heading/sub/chips inside each
+   pillar used to just appear all at once as part of the card's own
+   .fade-in reveal (one flat block). Now they arrive in sequence within
+   that same reveal moment instead: icon first, heading, then sub-copy,
+   then chips one by one. Same paused-until-.fade-in.visible technique
+   already proven on this page's shimmer animations (see the
+   coming-soon-overlay's own comment), and the site's own signature
+   overshoot-and-settle curve rather than a plain ease, so the arrival
+   has a touch of bounce instead of just fading flatly into place. */
+@keyframes why-text-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+.why-icon-wrap, .why-heading, .why-sub, .why-chip {
+  opacity: 0;
+  animation: why-text-in .6s cubic-bezier(.34,1.56,.64,1) both;
+  animation-play-state: paused;
+}
+.fade-in.visible .why-icon-wrap { animation-play-state: running; }
+.fade-in.visible .why-heading { animation-play-state: running; animation-delay: .09s; }
+.fade-in.visible .why-sub { animation-play-state: running; animation-delay: .17s; }
+.fade-in.visible .why-chip { animation-play-state: running; }
+@media (prefers-reduced-motion: reduce) {
+  .why-icon-wrap, .why-heading, .why-sub, .why-chip { animation: none; opacity: 1; }
+}
 @media (max-width: 768px) { .why-strip { display: none; } }
 
 /* ── Sticky contact buttons ───────────────────────────── */
@@ -2999,6 +3166,27 @@ const WHY_PILLARS = [
     icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5"/><circle cx="12" cy="12" r="4.5" stroke="currentColor" strokeWidth="1.5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>,
     heading: 'GATE DA–Specific',
     sub: 'Not repurposed CSE content. Built ground-up for the exact topics GATE DA tests, from scratch.',
+    // Featured/dominant pillar, not an arbitrary pick — this is the one
+    // claim that directly echoes the hero's own headline pitch ("Not
+    // repurposed CSE content" appears verbatim in both places), so
+    // giving it real visual weight reinforces the page's main thread
+    // instead of treating all three pillars as interchangeable. Breaks
+    // the flagged "three equal card columns" pattern with a reason tied
+    // to this page's own content, not just layout variety for its own sake.
+    //
+    // Shipped once as a tall stretched card first — real feedback ("too
+    // generic and negative space") called that out correctly: centering
+    // two lines of text in a much taller box just splits the dead space
+    // between top and bottom instead of removing it, and a bigger
+    // version of the same icon-badge-on-dark-card shape is still that
+    // same generic shape. Rebuilt as a full-width horizontal banner
+    // instead — a genuinely different silhouette, not a resize — with
+    // real subject chips (its own actual specificity claim made
+    // concrete, same real subjects the Individual-courses section below
+    // already lists, not invented filler) giving the wider box real
+    // content to hold instead of empty space.
+    featured: true,
+    chips: ['Linear Algebra', 'Probability', 'Statistics', 'Calculus', 'ML'],
   },
   {
     rgb: '236,72,153',
@@ -3024,7 +3212,7 @@ function WhyStrip() {
         <p className="why-strip-sub fade-in">Every choice we made, from content to pedagogy, was made with one exam in mind.</p>
         <div className="why-grid">
           {WHY_PILLARS.map((p, i) => (
-            <div key={i} className={`why-pillar why-bd-${i+1} fade-in`} style={{ transitionDelay: i * 60 + 'ms', '--card-rgb': p.rgb }}
+            <div key={i} className={`why-pillar why-bd-${i+1}${p.featured ? ' why-pillar--featured' : ''} fade-in`} style={{ transitionDelay: i * 60 + 'ms', '--card-rgb': p.rgb }}
               onMouseMove={e => {
                 const r = e.currentTarget.getBoundingClientRect();
                 e.currentTarget.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
@@ -3036,13 +3224,15 @@ function WhyStrip() {
               }}
             >
               <div className="why-icon-wrap">{p.icon}</div>
-              <div className="why-heading">{p.heading}</div>
-              <p className="why-sub">{p.sub}</p>
-              {p.chips && (
-                <div className="why-chips">
-                  {p.chips.map((c, j) => <span key={j} className="why-chip">{c}</span>)}
-                </div>
-              )}
+              <div className="why-text">
+                <div className="why-heading">{p.heading}</div>
+                <p className="why-sub">{p.sub}</p>
+                {p.chips && (
+                  <div className="why-chips">
+                    {p.chips.map((c, j) => <span key={j} className="why-chip" style={{ animationDelay: (0.25 + j * 0.05) + 's' }}>{c}</span>)}
+                  </div>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -3069,11 +3259,11 @@ function handleCallTap(e) {
 function MobileContactBar() {
   return (
     <div className="mobile-contact-bar">
-      <a href="https://wa.me/9088553305" className="mcb-wa" target="_blank" rel="noopener noreferrer" data-label="WhatsApp">
+      <a href="https://wa.me/9088553305" className="mcb-wa" target="_blank" rel="noopener noreferrer" data-label="WhatsApp" aria-label="Chat on WhatsApp">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.106.549 4.09 1.508 5.813L0 24l6.335-1.491A11.93 11.93 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.012-1.374l-.359-.214-3.761.986.999-3.666-.234-.376A9.818 9.818 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182c5.43 0 9.818 4.388 9.818 9.818 0 5.43-4.388 9.818-9.818 9.818z"/></svg>
         <span className="mcb-label">WhatsApp</span>
       </a>
-      <a href="tel:+919088553305" className="mcb-call" data-label="Call Us (11 AM – 7 PM)" onClick={handleCallTap}>
+      <a href="tel:+919088553305" className="mcb-call" data-label="Call Us (11 AM – 7 PM)" aria-label="Call us, 11 AM to 7 PM" onClick={handleCallTap}>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
         <span className="mcb-label">Call Us</span>
       </a>
@@ -3214,6 +3404,17 @@ function App() {
       <MobileContactBar />
       <Nav />
       <div className="nav-spacer" />
+      {/* Wraps every content section (hero through the last section below)
+          in a real <main> landmark, excluding Nav/Footer/the floating
+          contact buttons — a screen reader had no way to jump straight to
+          page content before this (confirmed via a real accessibility
+          scan: "Page has no main landmark"). Same gap, same one-line-idea
+          fix already made on the progress tracker page — but #root here
+          wraps the ENTIRE app (nav, content, footer) rather than just the
+          content area the way #app does there, so the fix has to be a
+          new element around just the content sections, not a tag swap on
+          an existing wrapper. */}
+      <main>
       {/* Page hero */}
       <section className="page-hero">
         <div className="container page-hero-inner">
@@ -3303,34 +3504,64 @@ function App() {
             </a>
           </div>
           <div className="combos-grid">
-            {sortedCombos.map((c, i) => {
-              const comboPrice = parseInt((effectivePricingMap[c.id] || {}).price) || 0;
-              const saving = c.bundleOf && comboPrice
-                ? (() => {
-                    const total = c.bundleOf.reduce((s, id) => s + (parseInt((effectivePricingMap[id] || {}).price) || 0), 0);
-                    const diff = total - comboPrice;
-                    if (diff <= 0) return null;
-                    return `Save ₹${diff.toLocaleString('en-IN')} vs buying ${c.bundleOf.length === 5 ? 'all 5' : 'all 4'} courses individually`;
-                  })()
-                : null;
-              // Purely positional, not tied to comingSoon (direct
-              // correction: "the first card should be horizontal no
-              // matter what and coming soon doesn't matter" — the 2028
-              // card only ever got this by happening to also be first;
-              // reordering via /team now genuinely moves which card
-              // gets the spotlight, not just which card LOOKS like it
-              // does). i is the index within sortedCombos, i.e. after
-              // live reordering, not COMBOS' own hardcoded order.
-              //
-              // Still only makes sense once there's a 4th card to share
-              // the row with the other three — at exactly 3 they
-              // already fill one 3-column row on their own, so forcing
-              // one onto its own row would just leave two empty grid
-              // cells beside it instead of reverting cleanly to the
-              // plain grid every other combo card uses.
-              const getsOwnRow = i === 0 && COMBOS.length > 3;
-              return <div key={i} className={'fade-in' + (getsOwnRow ? ' combo-full-row' : '')}><ComboCard c={{ ...c, saving }} pricing={effectivePricingMap[c.id] || null} /></div>;
-            })}
+            {(() => {
+              // Two labeled boundaries, on request ("make two
+              // demarcations... draw boundaries") — the GATE 2028 preview
+              // expires on its own 2028 validity, everything else on this
+              // page is a 2027 course. Deliberately keyed off the card's
+              // own id (full-course-2028), not its position in
+              // sortedCombos — the "own row" spotlight treatment right
+              // below is intentionally purely positional (see its own
+              // comment: a /team reorder should genuinely move which card
+              // gets the spotlight), but THIS label is a claim about a
+              // specific course's real expiry, which must stay attached
+              // to that course regardless of where a future reorder
+              // happens to put it.
+              let shown2027Heading = false;
+              return sortedCombos.map((c, i) => {
+                const comboPrice = parseInt((effectivePricingMap[c.id] || {}).price) || 0;
+                const saving = c.bundleOf && comboPrice
+                  ? (() => {
+                      const total = c.bundleOf.reduce((s, id) => s + (parseInt((effectivePricingMap[id] || {}).price) || 0), 0);
+                      const diff = total - comboPrice;
+                      if (diff <= 0) return null;
+                      return `Save ₹${diff.toLocaleString('en-IN')} vs buying ${c.bundleOf.length === 5 ? 'all 5' : 'all 4'} courses individually`;
+                    })()
+                  : null;
+                const is2028 = c.id === 'full-course-2028';
+                let heading = null;
+                // "Expires" read as too strong a word (direct feedback)
+                // for what's really "which exam year(s) this course is
+                // good for" — the 2028 preview covers both cycles since
+                // its validity runs through Feb 2028, past the 2027 exam
+                // itself, so it's framed as serving both years rather
+                // than a single hard cutoff.
+                if (is2028) heading = 'For GATE 2027 and 2028';
+                else if (!shown2027Heading) { heading = 'For GATE 2027'; shown2027Heading = true; }
+                // Purely positional, not tied to comingSoon (direct
+                // correction: "the first card should be horizontal no
+                // matter what and coming soon doesn't matter" — the 2028
+                // card only ever got this by happening to also be first;
+                // reordering via /team now genuinely moves which card
+                // gets the spotlight, not just which card LOOKS like it
+                // does). i is the index within sortedCombos, i.e. after
+                // live reordering, not COMBOS' own hardcoded order.
+                //
+                // Still only makes sense once there's a 4th card to share
+                // the row with the other three — at exactly 3 they
+                // already fill one 3-column row on their own, so forcing
+                // one onto its own row would just leave two empty grid
+                // cells beside it instead of reverting cleanly to the
+                // plain grid every other combo card uses.
+                const getsOwnRow = i === 0 && COMBOS.length > 3;
+                return (
+                  <React.Fragment key={i}>
+                    {heading && <div className="combo-group-divider"><span>{heading}</span></div>}
+                    <div className={'fade-in' + (getsOwnRow ? ' combo-full-row' : '')}><ComboCard c={{ ...c, saving }} pricing={effectivePricingMap[c.id] || null} /></div>
+                  </React.Fragment>
+                );
+              });
+            })()}
           </div>
         </div>
       </section>
@@ -3453,6 +3684,7 @@ function App() {
           </div>
         </div>
       </section>
+      </main>
 
       {/* Footer */}
       <footer className="footer">
