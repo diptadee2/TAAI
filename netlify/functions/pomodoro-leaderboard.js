@@ -233,7 +233,11 @@ export async function handler(event) {
   let viewerAbout = null;
   if (viewerEmail && aboutByEmail[viewerEmail] !== undefined) {
     const mine = aboutByEmail[viewerEmail];
-    viewerAbout = { text: mine.about_text || null, canChange: mine.about_changed_month !== weekStart }; // weekly limit (see set-about.js)
+    // Locked for the week either by a successful change or by using up the
+    // 2 tries (mirrors ABOUT_CHECK_LIMIT in set-about.js by hand).
+    const changed = mine.about_changed_month === weekStart;
+    const outOfTries = mine.about_check_month === weekStart && (mine.about_check_count || 0) >= 2;
+    viewerAbout = { text: mine.about_text || null, canChange: !changed && !outOfTries, lockReason: changed ? 'changed' : (outOfTries ? 'tries' : null) };
   }
 
   return json(200, { leaderboard, viewerRank, todayLeaders, liveCount, viewerAbout });
@@ -246,7 +250,7 @@ async function fetchAboutByEmail(supabase, emails) {
   try {
     const { data, error } = await supabase
       .from('students')
-      .select('email, about_text, about_changed_month')
+      .select('email, about_text, about_changed_month, about_check_count, about_check_month')
       .in('email', emails);
     if (error) return {};
     return Object.fromEntries((data || []).map((r) => [r.email, r]));

@@ -237,7 +237,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-01-12';
+  var CLIENT_VERSION = '2026-10-01-13';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -4669,7 +4669,9 @@
             '<textarea id="about-input" class="about-modal-input" maxlength="' + ABOUT_MAX_LENGTH + '" rows="2" placeholder="e.g. 6 hrs a day till GATE 🚀">' + escapeHtml(current) + '</textarea>' +
             '<div class="about-modal-count"><span id="about-count">' + current.length + '</span>/' + ABOUT_MAX_LENGTH + '</div>'
           : (current ? '<div class="about-modal-preview"><span class="about-modal-preview-bubble">' + escapeHtml(current) + '</span></div>' : '') +
-            '<p class="about-modal-locked">You\'ve already changed your About this week. You can change it again on Monday.</p>') +
+            '<p class="about-modal-locked">' + (state.viewerAbout && state.viewerAbout.lockReason === 'tries'
+              ? 'You\'re out of tries for this week. You can post an About again on Monday.'
+              : 'You\'ve already changed your About this week. You can change it again on Monday.') + '</p>') +
         '<p class="about-modal-error" id="about-error" hidden></p>' +
         '<div class="about-modal-actions">' +
           (current ? '<button type="button" class="about-modal-remove" id="about-remove">Remove</button>' : '') +
@@ -4722,8 +4724,15 @@
         .catch(function (err) {
           Array.prototype.forEach.call(buttons, function (b) { b.disabled = false; });
           btn.textContent = originalLabel;
-          if (err.data && err.data.canChange === false && state.viewerAbout) state.viewerAbout.canChange = false;
           showError(err.message || 'Something went wrong. Please try again.');
+          if (err.data && err.data.canChange === false) {
+            // Out of tries (or already changed): lock the editor right here
+            // instead of letting them keep typing into a form that will refuse.
+            state.viewerAbout = Object.assign({}, state.viewerAbout || {}, { canChange: false, lockReason: err.data.lockReason || 'changed' });
+            updateAboutEditButton();
+            var sb = document.getElementById('about-save'); if (sb) sb.disabled = true;
+            var inp = document.getElementById('about-input'); if (inp) inp.disabled = true;
+          }
         });
     }
 

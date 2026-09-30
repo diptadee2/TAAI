@@ -28,7 +28,10 @@ import { getSupabase, json, weekStartIST } from './lib/supabase.js';
 import { checkAboutAppropriate, normalizeAboutText } from './lib/name-check.js';
 
 const ABOUT_MAX_LENGTH = 80;
-const ABOUT_CHECK_LIMIT = 3;
+// 2 tries a week (direct request 2026-10-01, was 3): after 2 rejections the
+// student can't post an About until Monday. Every check counts, so at most
+// 2 Claude calls per student per week.
+const ABOUT_CHECK_LIMIT = 2;
 
 function currentPeriod() {
   return weekStartIST(); // 'YYYY-MM-DD' of this IST week's Monday
@@ -79,7 +82,7 @@ export async function handler(event) {
 
   const priorChecks = student.about_check_month === month ? (student.about_check_count || 0) : 0;
   if (priorChecks >= ABOUT_CHECK_LIMIT) {
-    return json(400, { error: 'Too many attempts this week. You can try again on Monday.', canChange: false });
+    return json(400, { error: 'You\'re out of tries for this week. You can post an About again on Monday.', canChange: false, lockReason: 'tries' });
   }
 
   // Best-effort, its own query (a column added after the rest): the last
@@ -110,10 +113,10 @@ export async function handler(event) {
       .eq('email', email);
     // Separate write, so a not-yet-migrated column can't block the count above.
     try { await supabase.from('students').update({ about_last_flagged: about }).eq('email', email); } catch (e) { /* non-critical */ }
-    return json(400, {
-      error: 'That About isn\'t allowed here. Please try something different.',
-      triesLeft: Math.max(0, ABOUT_CHECK_LIMIT - checksUsed),
-    });
+    const triesLeft = Math.max(0, ABOUT_CHECK_LIMIT - checksUsed);
+    return json(400, triesLeft > 0
+      ? { error: 'That About isn\'t allowed here. You have ' + triesLeft + ' more try this week.', triesLeft }
+      : { error: 'That About isn\'t allowed here, and you\'re out of tries. You can post an About again on Monday.', triesLeft: 0, canChange: false, lockReason: 'tries' });
   }
 
   // Conditional on this week's change not already being used — closes the race
