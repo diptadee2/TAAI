@@ -237,7 +237,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-01-3';
+  var CLIENT_VERSION = '2026-10-01-4';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1630,7 +1630,7 @@
         state.latestScheduledMonth = data.schedule.latestMonth || null;
         state.lastWeekLeaders = data.lastWeekLeaders.leaders || [];
         state.lastWeekViewerRank = data.lastWeekLeaders.viewerRank || null;
-        state.todayLeaders = data.todayLeaders.leaders || [];
+        state.todayLeaders = devMockAbouts(data.todayLeaders.leaders || []);
         state.todayViewerRank = data.todayLeaders.viewerRank || null;
         state.hourlyActivity = (data.hourlyActivity && data.hourlyActivity.hours) || [];
         state.liveCount = (data.liveCount && data.liveCount.count) || 0;
@@ -4550,6 +4550,31 @@
     return '<span class="leaderboard-about"></span>';
   }
 
+  // Localhost-only preview: open the tracker with ?mockabout to fill
+  // leaderboard rows that have no About with sample texts, so the bubbles
+  // can be seen before real students have set any. Purely client-side,
+  // never written anywhere (local dev reads the real production data), and
+  // inert on any real host. Remembered for the tab via sessionStorage.
+  var DEV_MOCK_ABOUT = (function () {
+    if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') return false;
+    try {
+      if (/[?&]mockabout\b/.test(location.search)) sessionStorage.setItem('taai_mock_about', '1');
+      return sessionStorage.getItem('taai_mock_about') === '1';
+    } catch (e) { return /[?&]mockabout\b/.test(location.search); }
+  })();
+  var DEV_MOCK_ABOUT_TEXTS = [
+    '6 hrs a day till GATE 🚀', 'Probability is my enemy 😭', 'Luffy mode on. IIT or nothing',
+    'ML > sleep', 'Linear algebra supremacy', 'One more pomodoro, then chai ☕',
+    'Sleep is for the weak 💀 6 hrs a day till GATE, no excuses, IIT or nothing',
+    'bhai padh le', 'Consistency > motivation', 'Calculus is just vibes',
+  ];
+  function devMockAbouts(rows) {
+    if (!DEV_MOCK_ABOUT) return rows;
+    return rows.map(function (r, i) {
+      return r.about ? r : Object.assign({}, r, { about: DEV_MOCK_ABOUT_TEXTS[i % DEV_MOCK_ABOUT_TEXTS.length] });
+    });
+  }
+
   // Compact form for Today's Leaders (a narrow card with no room for an
   // About column): a small chat icon after the name; hovering or tapping
   // it shows the text in the same bubble the weekly board uses.
@@ -4834,7 +4859,7 @@
     api('/pomodoro-leaderboard' + q)
       .then(function (r) {
         applyLiveCountUpdate(r.liveCount);
-        state.leaderboard = r.leaderboard || [];
+        state.leaderboard = devMockAbouts(r.leaderboard || []);
         state.viewerRank = r.viewerRank || null;
         if (r.viewerAbout !== undefined) state.viewerAbout = r.viewerAbout;
         updateAboutEditButton();
@@ -4858,7 +4883,7 @@
           state.leaderboard.some(function (l) { return l.is_me; }) || !!state.viewerRank);
 
         if (r.todayLeaders) {
-          state.todayLeaders = r.todayLeaders.leaders || [];
+          state.todayLeaders = devMockAbouts(r.todayLeaders.leaders || []);
           state.todayViewerRank = r.todayLeaders.viewerRank || null;
           var todayRows = document.getElementById('today-leaderboard-rows');
           if (todayRows) todayRows.innerHTML = renderTodayLeaderboardRows();
