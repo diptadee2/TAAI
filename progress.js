@@ -183,7 +183,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-30-2';
+  var CLIENT_VERSION = '2026-09-30-3';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -4434,8 +4434,8 @@
   // Shown on hover of anything that opens the editor — the once-a-month
   // rule, stated at the moment someone's about to use it.
   function aboutChangeHint() {
-    if (state.viewerAbout && state.viewerAbout.canChange === false) return 'Already changed this month. You can change your About again from the 1st.';
-    return 'You can change your About once a month. Claude checks it before it\'s saved.';
+    if (state.viewerAbout && state.viewerAbout.canChange === false) return '0 changes left this month';
+    return '1 change left this month';
   }
 
   var aboutBubbleEl = null;
