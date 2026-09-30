@@ -1359,7 +1359,15 @@
   .schedule-coming-soon-title { font-family: var(--font-nav); font-size: 18px; font-weight: 700; letter-spacing: .01em; color: var(--pomo-g2, var(--purple)); margin-bottom: 6px; }
   .schedule-coming-soon p { margin: 0; font-size: 13.5px; color: var(--ink-dim); }
   .schedule-coming-soon strong { color: var(--ink); }
-  .leaderboard-about-chip { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: #2a2a33; border: 1px solid var(--line); border-radius: 10px 10px 10px 3px; padding: 4px 10px; font-size: 12.5px; font-weight: 500; color: var(--ink-dim); line-height: 1.35; cursor: default; }
+  /* Thought bubble: a big rounded bubble plus two small trailing circles
+     off its lower-left, leading back toward the name. The circles reach at
+     most 15px left of the bubble, which lands inside the grid's 16px column
+     gap, so they cost the text no width and never touch the Name column. */
+  .leaderboard-about-chip { position: relative; display: inline-flex; max-width: 100%; background: #2a2a33; border: 1px solid var(--line); border-radius: 16px; padding: 4px 10px; font-size: 12.5px; font-weight: 500; color: var(--ink-dim); line-height: 1.35; cursor: default; }
+  .leaderboard-about-chip::before, .leaderboard-about-chip::after { content: ''; position: absolute; background: #2a2a33; border: 1px solid var(--line); border-radius: 50%; }
+  .leaderboard-about-chip::before { width: 7px; height: 7px; left: -9px; bottom: 0; }
+  .leaderboard-about-chip::after { width: 4px; height: 4px; left: -15px; bottom: -3px; }
+  .leaderboard-about-chip-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .leaderboard-about-chip:focus-visible { outline: 1px solid var(--pomo-g2, var(--purple)); outline-offset: 1px; }
   .leaderboard-row--me .leaderboard-about-chip { color: var(--ink); }
   /* Today's Leaders: only the name text itself truncates, so a long name

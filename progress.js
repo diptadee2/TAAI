@@ -237,7 +237,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-01-9';
+  var CLIENT_VERSION = '2026-10-01-10';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -4529,7 +4529,10 @@
   // never just dead on their own row.
   function aboutCellHtml(text, isMe) {
     if (text) {
-      return '<span class="leaderboard-about"><span class="leaderboard-about-chip" tabindex="0" data-about="' + escapeAttr(text) + '">' + escapeHtml(text) + '</span></span>';
+      // Thought-bubble shape: the big bubble is the chip, the two trailing
+      // circles are its ::before/::after (CSS). The text truncates in its own
+      // inner span so the chip itself can let those circles sit outside it.
+      return '<span class="leaderboard-about"><span class="leaderboard-about-chip" tabindex="0" data-about="' + escapeAttr(text) + '"><span class="leaderboard-about-chip-text">' + escapeHtml(text) + '</span></span></span>';
     }
     if (isMe && state.student && !state.needsRename) {
       return '<span class="leaderboard-about"><button type="button" class="leaderboard-about-add" data-about-hint="' + escapeAttr(aboutChangeHint()) + '">+ Add About</button></span>';
@@ -4583,7 +4586,8 @@
     var text = target.getAttribute('data-about') || target.getAttribute('data-about-hint');
     if (!text) return;
     // A chip whose full text is already visible needs no bubble repeating it.
-    if (target.classList.contains('leaderboard-about-chip') && target.scrollWidth <= target.clientWidth) return;
+    var chipText = target.classList.contains('leaderboard-about-chip') && target.querySelector('.leaderboard-about-chip-text');
+    if (chipText && chipText.scrollWidth <= chipText.clientWidth) return;
     if (!aboutBubbleEl) {
       aboutBubbleEl = document.createElement('div');
       aboutBubbleEl.className = 'about-bubble';
