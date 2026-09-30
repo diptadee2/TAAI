@@ -237,7 +237,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-30-15';
+  var CLIENT_VERSION = '2026-10-01-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -812,6 +812,7 @@
     // Purely a display/fetch choice, never touches state.student.batch —
     // see effectiveScoutBatch's own comment for the full reasoning.
     scoutBatch: null,
+    focusReturnMonth: null, // the month being browsed before Focus Mode switched to the current one (see enterFocus); restored on exit
     // Set only once a registered student clicks "switch for real" in
     // renderBatchScoutBanner (never by the dropdown itself) — renders
     // the "this will delete your progress" warning until they Confirm or
@@ -1051,11 +1052,18 @@
     if (state.student && !state.student.batch) state.student.batch = 'C';
     applyBatchFromUrl();
     restorePomoActiveState();
+    var restoringFocus = wasHardReload() && loadFocusActive();
+    if (restoringFocus) {
+      // Set before loadMonth so it fetches TODAY's month, not a stale
+      // browsed one (see enterFocus). Also covers the midnight reload
+      // across a month boundary.
+      state.focus = true;
+      if (state.month !== currentMonthStr()) { state.focusReturnMonth = state.month; state.month = currentMonthStr(); }
+    }
     loadMonth(state.month);
     setInterval(checkClientVersion, VERSION_CHECK_MS);
     scheduleMidnightReload();
-    if (wasHardReload() && loadFocusActive()) {
-      state.focus = true;
+    if (restoringFocus) {
       // replaceState, not enterFocus()'s pushState — a correct {focus:true}
       // entry already exists from before the reload (reload re-executes
       // the current entry in place, it doesn't create a new one), so
@@ -1570,7 +1578,9 @@
   // ── Calendar ────────────────────────────────────────────────────────
   function loadMonth(monthStr) {
     state.month = monthStr;
-    saveStoredMonth(monthStr);
+    // Focus Mode always shows the current month (see enterFocus), which
+    // isn't a month the student chose to browse, so it isn't remembered.
+    if (!state.focus) saveStoredMonth(monthStr);
     // The skeleton below is much shorter than real content (7 placeholder
     // blocks vs. a full week list + heatmap + subject breakdown, often
     // well past one viewport) — swapping #app's innerHTML to it makes the
@@ -2641,11 +2651,11 @@
       // day with no data yet), flex doesn't need a second item to lay out.
       html += '<div class="pomo-today-row">' + renderPomodoro() + renderTodayLeaders() + '</div>';
       html += '<div class="focus-divider"></div>';
-      if (todayDay) {
-        html += renderTodayCard(todayDay, missedBefore.length, true);
-      } else {
-        html += state.latestScheduledMonth ? '<p class="center-note">Nothing scheduled for today.</p>' : scheduleComingSoonHtml();
-      }
+      // Always rendered, even with no tasks today — the hourly bar graph
+      // and busy meter live on this card's right half and are batch-wide
+      // data, not about today's checklist, so they shouldn't vanish on an
+      // empty day (direct report: "where is the bar graph and busy meter").
+      html += renderTodayCard(todayDay || null, missedBefore.length, true);
       html += '<div class="focus-divider"></div>';
       html += renderLeaderboardCard();
       html += '</div>'; // focus-card
@@ -3888,12 +3898,16 @@
   // passes showHourly=true, the plain-checklist call site doesn't.
   function renderTodayCard(day, missedBeforeCount, showHourly) {
     var left = '<div class="today-tag">Today · ' + escapeHtml(batchLabel(effectiveScoutBatch())) + '</div>';
-    left += '<div class="today-date">' + dayLabel(day.date) + '</div>';
-    if (missedBeforeCount > 0) {
+    left += '<div class="today-date">' + dayLabel(day ? day.date : realTodayIso()) + '</div>';
+    if (!day) {
+      left += state.latestScheduledMonth
+        ? '<p class="today-empty">Nothing scheduled for today.</p>'
+        : '<p class="today-empty">The schedule for <strong>' + escapeHtml(batchLabel(effectiveScoutBatch())) + '</strong> is coming soon.</p>';
+    } else if (missedBeforeCount > 0) {
       left += '<div class="catchup-warn">⚠️ ' + missedBeforeCount + ' day' + (missedBeforeCount === 1 ? '' : 's') +
         ' incomplete before today. Today’s content builds on those, so consider catching up first.</div>';
     }
-    day.tasks.forEach(function (t) {
+    if (day) day.tasks.forEach(function (t) {
       left += taskRowHtml(day.date, t);
     });
     if (!showHourly) {
@@ -3944,7 +3958,18 @@
     state.focus = true;
     saveFocusActive(true);
     history.pushState({ focus: true }, '');
-    renderCalendar();
+    // Focus Mode is about today, so it always shows the current month's
+    // data. Real bug, 2026-10-01: the tracker remembers the last-browsed
+    // month (MONTH_STORAGE_KEY), so on the first day of a new month a
+    // student still on September got "Nothing scheduled for today" in
+    // Focus Mode even though today had tasks. The browsed month comes back
+    // on exit (see the popstate handler).
+    if (state.month !== currentMonthStr()) {
+      state.focusReturnMonth = state.month;
+      loadMonth(currentMonthStr());
+    } else {
+      renderCalendar();
+    }
     refreshLeaderboard();
     startLeaderboardTimerTick();
     startLeaderboardPoll();
@@ -4905,7 +4930,13 @@
         saveFocusActive(false);
         stopLeaderboardTimerTick();
         stopLeaderboardPoll();
-        renderCalendar();
+        if (state.focusReturnMonth) {
+          var back = state.focusReturnMonth;
+          state.focusReturnMonth = null;
+          loadMonth(back);
+        } else {
+          renderCalendar();
+        }
         startLastWeekPoll(); // champions card is back on screen — resume its own poll
       }
     });
