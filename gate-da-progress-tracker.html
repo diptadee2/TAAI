@@ -1367,15 +1367,21 @@
   #today-leaderboard-card .leaderboard-name { display: flex; align-items: center; }
   #today-leaderboard-card .lb-name-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #today-leaderboard-card .leaderboard-about-icon, #today-leaderboard-card .leaderboard-effort-badge { flex-shrink: 0; }
-  .leaderboard-about-icon { display: inline-flex; align-items: center; justify-content: center; vertical-align: -1px; margin-left: 4px; color: var(--pomo-g2, var(--purple)); opacity: .85; cursor: pointer; border-radius: 4px; transition: opacity .15s ease; }
-  .leaderboard-about-icon:hover, .leaderboard-about-icon:focus-visible { opacity: 1; outline: none; }
+  .leaderboard-about-icon { display: inline-flex; align-items: center; justify-content: center; vertical-align: -2px; margin-left: 7px; color: #fff; opacity: .32; cursor: pointer; border-radius: 4px; transition: opacity .15s ease; }
+  .leaderboard-about-icon:hover, .leaderboard-about-icon:focus-visible { opacity: .75; outline: none; }
   .leaderboard-about-add { background: transparent; border: 1px dashed var(--line); border-radius: 10px 10px 10px 3px; padding: 4px 10px; font-family: inherit; font-size: 12px; font-weight: 600; color: var(--ink-soft); cursor: pointer; transition: border-color .15s ease, color .15s ease; }
   .leaderboard-about-add:hover { border-color: var(--pomo-g2, var(--purple)); color: var(--ink); }
   .about-bubble { position: fixed; z-index: 9000; max-width: 260px; background: #2a2a33; color: var(--ink); border: 1px solid var(--line); border-radius: 12px 12px 12px 4px; padding: 8px 12px; font-size: 13px; line-height: 1.4; white-space: normal; overflow-wrap: anywhere; box-shadow: 0 8px 24px rgba(0,0,0,0.45); opacity: 0; pointer-events: none; transform: translateY(4px); transition: opacity .15s ease, transform .15s ease; }
   .about-bubble.visible { opacity: 1; transform: translateY(0); }
-  .about-bubble::after { content: ''; position: absolute; left: var(--tail-x, 12px); bottom: -6px; width: 10px; height: 10px; background: #2a2a33; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); transform: rotate(45deg); }
-  .about-bubble--below { border-radius: 4px 12px 12px 12px; }
-  .about-bubble--below::after { bottom: auto; top: -6px; transform: rotate(225deg); }
+  /* Thought-bubble tail: two small trailing circles instead of a pointed
+     speech tail, matching the thought-bubble icon. */
+  .about-bubble { border-radius: 14px; }
+  .about-bubble::before, .about-bubble::after { content: ''; position: absolute; background: #2a2a33; border: 1px solid var(--line); border-radius: 50%; }
+  .about-bubble::before { width: 9px; height: 9px; left: var(--tail-x, 12px); bottom: -12px; }
+  .about-bubble::after { width: 5px; height: 5px; left: calc(var(--tail-x, 12px) - 5px); bottom: -19px; }
+  .about-bubble--below { border-radius: 14px; }
+  .about-bubble--below::before { bottom: auto; top: -12px; }
+  .about-bubble--below::after { bottom: auto; top: -19px; }
   .about-edit-btn { display: inline-flex; align-items: center; gap: 6px; margin: -4px 0 12px 10px; padding: 5px 10px; background: transparent; border: 1px solid var(--line); border-radius: 8px; color: var(--ink-dim); font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer; transition: border-color .15s ease, color .15s ease; }
   .about-edit-btn svg { color: var(--pomo-g2, var(--purple)); }
   .about-edit-btn:hover { border-color: var(--pomo-g2, var(--purple)); color: var(--ink); }

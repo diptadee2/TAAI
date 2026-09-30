@@ -237,7 +237,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-01-4';
+  var CLIENT_VERSION = '2026-10-01-6';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2221,7 +2221,7 @@
       return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (l.is_me ? ' leaderboard-row--me' : '') + (l.is_live ? ' leaderboard-row--live' : '') + leaderboardRowEnterAttrs(animate, i) + '">' +
         '<span class="leaderboard-rank">' + rank + '</span>' +
         rankMovementHtml(i + 1) +
-        '<span class="leaderboard-name"' + allTimeTitleAttr(l.all_time_minutes) + '>' + liveDotHtml(l.is_live) + '<span class="lb-name-text">' + escapeHtml(l.display_name) + '</span>' + aboutIconHtml(l.about) + highestEffortBadgeHtml(l.all_time_minutes) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
+        '<span class="leaderboard-name"' + allTimeTitleAttr(l.all_time_minutes) + '>' + liveDotHtml(l.is_live) + '<span class="lb-name-text">' + escapeHtml(l.display_name) + '</span>' + highestEffortBadgeHtml(l.all_time_minutes) + aboutIconHtml(l.about) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
         '<span class="leaderboard-time">' + formatHoursDecimal(l.total_minutes) + '</span>' +
         '</div>';
     }).join('');
@@ -2230,7 +2230,7 @@
         '<div class="leaderboard-row leaderboard-row--me' + (state.todayViewerRank.is_live ? ' leaderboard-row--live' : '') + leaderboardRowEnterAttrs(animate, leaders.length) + '">' +
         '<span class="leaderboard-rank">' + state.todayViewerRank.rank + '</span>' +
         rankMovementHtml(state.todayViewerRank.rank) +
-        '<span class="leaderboard-name"' + allTimeTitleAttr(state.todayViewerRank.all_time_minutes) + '>' + liveDotHtml(state.todayViewerRank.is_live) + 'You' + aboutIconHtml(state.todayViewerRank.about) + highestEffortBadgeHtml(state.todayViewerRank.all_time_minutes) + '</span>' +
+        '<span class="leaderboard-name"' + allTimeTitleAttr(state.todayViewerRank.all_time_minutes) + '>' + liveDotHtml(state.todayViewerRank.is_live) + 'You' + highestEffortBadgeHtml(state.todayViewerRank.all_time_minutes) + aboutIconHtml(state.todayViewerRank.about) + '</span>' +
         '<span class="leaderboard-time">' + formatHoursDecimal(state.todayViewerRank.total_minutes) + '</span>' +
         '</div>';
     }
@@ -4531,6 +4531,10 @@
   // init() — same reasoning as setupAllTimeTooltip: rows are regenerated
   // on every poll, and .leaderboard-name's own overflow:hidden would clip
   // anything positioned inside it.
+  // A thought bubble (cloud + two trailing dots), not a chat bubble: used
+  // after the badge on Today's Leaders rows (direct request: bigger, more
+  // transparent, not colourful, reads as a thought).
+  var THOUGHT_ICON_SVG = '<svg viewBox="0 0 22 20" width="18" height="16" aria-hidden="true"><path fill="currentColor" d="M7.2 12.6c-2.6 0-4.7-1.7-4.7-3.9 0-1.8 1.4-3.3 3.3-3.8C6.4 2.7 8.5 1 11 1c2.2 0 4.1 1.3 4.8 3.2 2.3.2 4.2 2 4.2 4.3 0 2.3-2 4.1-4.5 4.1H7.2z"/><circle fill="currentColor" cx="5.6" cy="15.4" r="1.6"/><circle fill="currentColor" cx="2.9" cy="18.1" r="1"/></svg>';
   var ABOUT_MAX_LENGTH = 80; // mirrors set-about.js's own cap
   var ABOUT_ICON_SVG = '<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path fill="currentColor" d="M8 1.5c-3.6 0-6.5 2.5-6.5 5.6 0 1.7.9 3.2 2.3 4.2L3.3 14l3-1.6c.5.1 1.1.2 1.7.2 3.6 0 6.5-2.5 6.5-5.6S11.6 1.5 8 1.5z"/></svg>';
 
@@ -4580,7 +4584,7 @@
   // it shows the text in the same bubble the weekly board uses.
   function aboutIconHtml(text) {
     if (!text) return '';
-    return ' <span class="leaderboard-about-icon" role="button" tabindex="0" aria-label="About: ' + escapeAttr(text) + '" data-about="' + escapeAttr(text) + '">' + ABOUT_ICON_SVG + '</span>';
+    return ' <span class="leaderboard-about-icon" role="button" tabindex="0" aria-label="About: ' + escapeAttr(text) + '" data-about="' + escapeAttr(text) + '">' + THOUGHT_ICON_SVG + '</span>';
   }
 
   // Shown on hover of anything that opens the editor — the once-a-month
@@ -4613,8 +4617,8 @@
     var left = rect.left + rect.width / 2 - 14;
     if (left + w > window.innerWidth - 8) left = window.innerWidth - w - 8;
     if (left < 8) left = 8;
-    var top = rect.top - h - 10;
-    if (top < 8) { top = rect.bottom + 10; aboutBubbleEl.classList.add('about-bubble--below'); }
+    var top = rect.top - h - 22;
+    if (top < 8) { top = rect.bottom + 22; aboutBubbleEl.classList.add('about-bubble--below'); }
     aboutBubbleEl.style.left = left + 'px';
     aboutBubbleEl.style.top = top + 'px';
     aboutBubbleEl.style.setProperty('--tail-x', Math.max(10, Math.min(w - 18, rect.left + rect.width / 2 - left - 6)) + 'px');
