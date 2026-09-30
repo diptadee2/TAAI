@@ -481,6 +481,32 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
    this row spans all of them and DOES need capping to its own natural
    width — see that media query's own comment). */
 .combo-full-row .combo-featured-frame, .combo-full-row .combo-card { width: 100%; }
+/* "120 Days - 70 Marks" study-plan button beside the 2028 card. Stacked
+   under the card below 1025px (phones and iPad portrait, where the combos
+   grid is already a single column), side by side from 1025px up, filling
+   the space the 920px-capped card leaves on the row. Flat dark card in the
+   #combos palette; hover only shifts border/background (no transform on an
+   element with both box-shadow and border-radius, see CLAUDE.md gotcha). */
+.combo-with-side { display: flex; flex-direction: column; gap: 16px; }
+.plan120-cta {
+  display: flex; flex-direction: column; gap: 10px; text-decoration: none;
+  padding: 24px 22px; border-radius: 22px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12);
+  color: #fff; transition: background-color .2s ease, border-color .2s ease;
+}
+.plan120-cta:hover { background: rgba(255,255,255,0.07); border-color: rgba(196,176,255,0.55); }
+.plan120-cta:focus-visible { outline: 2px solid var(--lilac); outline-offset: 3px; }
+.plan120-eyebrow { font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--lilac); }
+.plan120-title { font-size: 26px; font-weight: 800; line-height: 1.1; letter-spacing: -.01em; }
+.plan120-sub { font-size: 14px; line-height: 1.5; color: rgba(255,255,255,0.65); }
+.plan120-go { margin-top: 4px; font-size: 14px; font-weight: 700; color: var(--lilac); display: inline-flex; align-items: center; gap: 6px; }
+.plan120-go span { transition: transform .2s ease; }
+.plan120-cta:hover .plan120-go span { transform: translateX(3px); }
+@media (min-width: 1025px) {
+  .combo-with-side { flex-direction: row; align-items: stretch; gap: 20px; }
+  .combo-with-side > .combo-featured-frame, .combo-with-side > .combo-card { flex: 1 1 auto; min-width: 0; }
+  .plan120-cta { flex: 0 0 260px; justify-content: center; }
+}
 /* Mobile-first base for the horizontal split — stacked, matching the
    normal card layout, same as every card gets below the desktop
    breakpoint. Real bug caught from testing, not assumed: the desktop
@@ -3557,7 +3583,28 @@ function App() {
                 return (
                   <React.Fragment key={i}>
                     {heading && <div className="combo-group-divider"><span>{heading}</span></div>}
-                    <div className={'fade-in' + (getsOwnRow ? ' combo-full-row' : '')}><ComboCard c={{ ...c, saving }} pricing={effectivePricingMap[c.id] || null} /></div>
+                    <div className={'fade-in' + (getsOwnRow ? ' combo-full-row' : '')}>
+                      {c.id === 'full-course-2028' ? (
+                        // The "120 Days - 70 Marks" study-plan button sits
+                        // beside the 2028 card on desktop and stacks below
+                        // it on mobile/iPad portrait (.combo-with-side).
+                        // Keyed to this specific card's id, not position,
+                        // same reasoning as the "For GATE 2027 and 2028"
+                        // divider above: it's about this card, wherever a
+                        // reorder puts it.
+                        <div className="combo-with-side">
+                          <ComboCard c={{ ...c, saving }} pricing={effectivePricingMap[c.id] || null} />
+                          <a className="plan120-cta" href="/gate-da-progress-tracker?batch=D">
+                            <span className="plan120-eyebrow">New study plan</span>
+                            <span className="plan120-title">120 Days<br />70 Marks</span>
+                            <span className="plan120-sub">A day-by-day plan for the last 120 days before GATE, free on the progress tracker.</span>
+                            <span className="plan120-go">View the plan <span aria-hidden="true">&rarr;</span></span>
+                          </a>
+                        </div>
+                      ) : (
+                        <ComboCard c={{ ...c, saving }} pricing={effectivePricingMap[c.id] || null} />
+                      )}
+                    </div>
                   </React.Fragment>
                 );
               });

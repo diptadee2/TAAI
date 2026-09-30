@@ -237,7 +237,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-30-14';
+  var CLIENT_VERSION = '2026-09-30-15';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1021,6 +1021,25 @@
     } catch (e) { return false; }
   }
 
+  // ?batch=D (e.g. the "120 Days - 70 Marks" button on the courses page)
+  // lands straight on that batch's schedule: a guest previews it, a
+  // registered student on a different batch scouts it (never switches;
+  // see renderBatchScoutBanner). Stripped from the URL afterwards so a
+  // later reload doesn't keep re-applying it over the student's own choice.
+  function applyBatchFromUrl() {
+    var m = /[?&]batch=([^&#]+)/.exec(location.search);
+    if (!m) return;
+    var batch = decodeURIComponent(m[1]).toUpperCase();
+    if (BATCH_OPTIONS.some(function (b) { return b.value === batch; })) {
+      if (!state.student) state.previewBatch = batch;
+      else if (batch !== state.student.batch) state.scoutBatch = batch;
+    }
+    try {
+      var clean = location.pathname + location.search.replace(/([?&])batch=[^&#]*&?/, '$1').replace(/[?&]$/, '') + location.hash;
+      history.replaceState(history.state, '', clean);
+    } catch (e) { /* non-critical */ }
+  }
+
   function init() {
     state.student = readCookie();
     // A cookie written before batch support existed (2026-09-28) has no
@@ -1030,6 +1049,7 @@
     // destructive "switch for real" button) to students on their own
     // batch. loadMonth also re-syncs this from the server (studentBatch).
     if (state.student && !state.student.batch) state.student.batch = 'C';
+    applyBatchFromUrl();
     restorePomoActiveState();
     loadMonth(state.month);
     setInterval(checkClientVersion, VERSION_CHECK_MS);
