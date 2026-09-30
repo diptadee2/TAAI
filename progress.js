@@ -10,24 +10,20 @@
   var PROGRAM_START_DATE = '2026-08-01';
   var PROGRAM_LENGTH_DAYS = 180;
 
-  // Per-batch "Day X of N" program. The newer "120 Days - 70 Marks" batch
-  // starts its own Day 1 the day the original 180-day program has exactly
-  // 120 days left (counting that day), direct request: "start the
-  // countdown when the original count down reaches 120 days and the
-  // denominator should be 120". Derived from the original's start
-  // rather than hardcoded, so both programs always end on the same final
-  // day (Day 180 = Day 120 = 2027-01-27).
+  // Per-batch "Day X of N" program. The original batch counts up from
+  // its Aug 1 start. The newer "120 Days - 70 Marks" batch is tied to the
+  // "days till GATE" countdown instead (direct request: "it goes up from
+  // when there are exactly 120 days, remember we are following a counter
+  // already"): it sits at Day 0 until GATE is exactly 120 days away,
+  // then counts up, reaching Day 120 on exam day. It reads the SAME
+  // daysTillExam() the countdown chip uses, so the two can never disagree.
   var BATCH_PROGRAMS = {
     C: { start: PROGRAM_START_DATE, length: PROGRAM_LENGTH_DAYS },
-    // zeroBased: this batch's start day itself reads "Day 0 of 120", then
-    // counts up from the next day (direct follow-up: "keep it day 0 of 120
-    // and then countup"). The original batch stays 1-based.
-    D: { start: addDaysIso(PROGRAM_START_DATE, PROGRAM_LENGTH_DAYS - 120), length: 120, zeroBased: true },
+    D: { length: 120, countsToExam: true },
   };
-  function addDaysIso(iso, n) {
-    var d = new Date(iso + 'T00:00:00Z');
-    d.setUTCDate(d.getUTCDate() + n);
-    return d.toISOString().slice(0, 10);
+
+  function daysTillExam() {
+    return Math.max(0, Math.ceil((new Date(EXAM_DATE) - new Date(realTodayIso())) / 864e5));
   }
 
   // Launch floor — the schedule starts Aug 1, so "today" (and the default
@@ -229,7 +225,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-30-9';
+  var CLIENT_VERSION = '2026-09-30-10';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2246,8 +2242,7 @@
       // Real date, not the Aug-1-floored todayIso() — this countdown has no
       // reason to sit frozen just because the demo schedule clamp hasn't
       // expired yet; it should tick down every actual calendar day.
-      var today = realTodayIso();
-      var daysLeft = Math.max(0, Math.ceil((new Date(EXAM_DATE) - new Date(today)) / 864e5));
+      var daysLeft = daysTillExam();
       html += '<div class="exam-countdown-wrap">' +
         '<div class="exam-countdown fade-in">' +
         // Stops read the same --pomo-g1/g2/g3 vars as the Pomodoro ring
@@ -2313,8 +2308,9 @@
   function renderProgramDayBadge() {
     var today = realTodayIso();
     var program = BATCH_PROGRAMS[effectiveScoutBatch()] || BATCH_PROGRAMS.C;
-    var elapsed = Math.round((new Date(today) - new Date(program.start)) / 864e5);
-    var dayNum = program.zeroBased ? Math.max(0, elapsed) : Math.max(1, elapsed + 1);
+    var dayNum = program.countsToExam
+      ? Math.max(0, program.length - daysTillExam())
+      : Math.max(1, Math.round((new Date(today) - new Date(program.start)) / 864e5) + 1);
     dayNum = Math.min(dayNum, program.length);
     return '<div class="program-day-badge fade-in">' +
       '<div class="program-day-num">' + dayNum + '</div>' +
