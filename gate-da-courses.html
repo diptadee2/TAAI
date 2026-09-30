@@ -491,10 +491,14 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .plan120-cta {
   display: flex; flex-direction: column; gap: 10px; text-decoration: none;
   padding: 24px 22px; border-radius: 22px;
-  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12);
+  /* Frosted rather than see-through: a dark tint plus a blur so the
+     section's dot-grid texture doesn't show through behind the text
+     (direct request: "more translucent background for better readability"). */
+  background: rgba(22,18,40,0.62); border: 1px solid rgba(255,255,255,0.14);
+  -webkit-backdrop-filter: blur(12px) saturate(140%); backdrop-filter: blur(12px) saturate(140%);
   color: #fff; transition: background-color .2s ease, border-color .2s ease;
 }
-.plan120-cta:hover { background: rgba(255,255,255,0.07); border-color: rgba(196,176,255,0.55); }
+.plan120-cta:hover { background: rgba(30,24,54,0.72); border-color: rgba(196,176,255,0.55); }
 .plan120-cta:focus-visible { outline: 2px solid var(--lilac); outline-offset: 3px; }
 .plan120-eyebrow { font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--lilac); }
 .plan120-title { font-size: 26px; font-weight: 800; line-height: 1.1; letter-spacing: -.01em; }
