@@ -52,8 +52,15 @@ export async function handler(event) {
   // worth losing their actual checkbox click over.
   try {
     const today = todayForStreak();
+    // Batch-scoped (added 2026-09-28) — the streak walk below must only
+    // ever consider THIS student's own batch's scheduled dates, or a
+    // second batch's schedule would silently corrupt everyone's streak.
+    // Best-effort like the rest of this block: a lookup failure (e.g.
+    // pre-migration) just falls back to 'C', matching the schema default.
+    const { data: studentRow, error: studentErr } = await supabase.from('students').select('batch').eq('email', email).maybeSingle();
+    const batch = (!studentErr && studentRow && studentRow.batch) || 'C';
     const [{ data: scheduled, error: schedErr }, completedRows] = await Promise.all([
-      supabase.from('schedule_tasks').select('date').lte('date', today).order('date', { ascending: false }),
+      supabase.from('schedule_tasks').select('date').eq('batch', batch).lte('date', today).order('date', { ascending: false }),
       fetchAllRows(() => supabase.from('task_progress').select('date').eq('email', email).eq('completed', true).lte('date', today)),
     ]);
     if (!schedErr) {

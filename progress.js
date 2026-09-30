@@ -24,8 +24,138 @@
   // Earliest month with any schedule content — unlike DEMO_TODAY_FLOOR
   // above, this doesn't self-expire with the real date; July has no data
   // and never will, so month-nav's "previous" arrow stays disabled on
-  // this month regardless of what today's date is.
+  // this month regardless of what today's date is. Deliberately left as
+  // one global value even after second-batch support (see BATCH_OPTIONS
+  // below) — the real start date for a later batch isn't known yet, and
+  // worst case a student just sees an empty calendar navigating before
+  // their own batch's schedule begins, not a data-integrity problem.
   var SCHEDULE_START_MONTH = '2026-08';
+
+  // The batches a guest can preview before registering (see
+  // state.previewBatch) — hand-duplicated in register.js's own
+  // VALID_BATCHES, same small-constant-across-the-client/server-boundary
+  // tradeoff already accepted elsewhere in this codebase (e.g.
+  // POMO_WORK_MAX_MINUTES). 'C' is the original, only batch this project
+  // assumed until now; 'D' is the new one, given its own real name
+  // ("120 Days - 70 Marks") on direct request — 'C' keeps its plain
+  // "Batch C" label unchanged. The underlying value ('C'/'D') is what's
+  // actually stored/validated everywhere else; only this display label
+  // changed.
+  var BATCH_OPTIONS = [
+    { value: 'C', label: 'Batch C' },
+    { value: 'D', label: '120 Days - 70 Marks' },
+  ];
+
+  // Replaces the old hardcoded "TAAI BATCH C - MISSION IIT" <h1> — now
+  // genuinely per-batch, on request ("make the current name - 180 DAYS
+  // Batch C"). Used both on the registration screen (reading
+  // state.previewBatch, since there's no student yet) and the main
+  // checklist (reading state.student.batch).
+  function programTitle(batch) {
+    return PROGRAM_LENGTH_DAYS + ' DAYS Batch ' + (batch || 'C');
+  }
+
+  // The batch whose schedule a REGISTERED student is currently looking
+  // at — defaults to their own real batch (state.student.batch) whenever
+  // they haven't picked anything else via the dropdown. Kept as its own
+  // state field (state.scoutBatch, null until they actually pick a
+  // different option) rather than eagerly synced to state.student.batch
+  // on every login/migration, so there's exactly one place that resolves
+  // the default instead of needing to remember to reset it everywhere
+  // state.student changes.
+  //
+  // Picking a batch here — "scouting" — is deliberately non-destructive:
+  // it only changes which calendar is fetched/displayed (see loadMonth's
+  // previewBatch param and tracker-data.js's own isScouting handling),
+  // never state.student.batch itself, never task_progress, never streak.
+  // The only thing that can actually change a student's real batch is
+  // the separate "switch for real" action in renderBatchScoutBanner,
+  // which is what sets state.pendingBatchMigration and shows the
+  // destructive-confirm warning below.
+  function effectiveScoutBatch() {
+    if (!state.student) return state.previewBatch;
+    return state.scoutBatch || state.student.batch;
+  }
+
+  // Small icon-badge glyph for the batch picker (a stacked-layers shape,
+  // reading as "cohort/group") — shares its exact gradient-tint badge
+  // recipe with .exam-countdown-icon (this page's own established "small
+  // chip that must be noticed" pattern), reused rather than invented, per
+  // the bolder-pass guidance to amplify what the system already owns.
+  var BATCH_PICKER_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>';
+
+  // Shared by guests (previewing, via state.previewBatch) and registered
+  // students (scouting, via effectiveScoutBatch()) — same control either
+  // way, a plain <select>. For a registered student this is always a
+  // free look, never itself destructive — see effectiveScoutBatch's own
+  // comment for why the actual switch is a separate action entirely.
+  // Styled as a compact bordered tag (icon + value) sitting inline right
+  // next to the h1 (see renderRoadmap) — it used to be small, var(--ink-
+  // soft) muted text that was easy to miss beside the bold page title,
+  // even though picking the wrong batch here has real consequences (see
+  // effectiveScoutBatch/renderBatchScoutBanner); a bigger, bolder, fully
+  // centered chip on its own line was tried next ("make the batch
+  // selector easily visible to the eye"), but landed poorly ("the
+  // position feels off" / "it just doesn't feel right") — it read as an
+  // orphaned floating box with nothing connecting it to its neighbors,
+  // regardless of exactly how it was sized or centered. This compact
+  // inline version keeps the visibility fix (a real bordered/colored
+  // control, not plain muted text) while anchoring it to the title
+  // instead of floating alone. The "Previewing"/"Viewing" caption is
+  // still here for a screen reader (a real <label>, not decorative) but
+  // visually hidden — redundant once the tag sits directly beside the
+  // page's own title, which already establishes what it's labeling.
+  function renderBatchPicker() {
+    var isGuest = !state.student;
+    var selectedValue = effectiveScoutBatch();
+    var options = BATCH_OPTIONS.map(function (b) {
+      return '<option value="' + escapeAttr(b.value) + '"' + (b.value === selectedValue ? ' selected' : '') + '>' + escapeHtml(b.label) + '</option>';
+    }).join('');
+    return '<div class="batch-picker">' +
+      '<span class="batch-picker-icon">' + BATCH_PICKER_ICON + '</span>' +
+      '<label for="batch-picker-select" class="sr-only">' + (isGuest ? 'Previewing' : 'Viewing') + ' batch</label>' +
+      '<select id="batch-picker-select">' + options + '</select>' +
+      '</div>';
+  }
+
+  // Shown only for a REGISTERED student currently scouting a batch other
+  // than their own real one (effectiveScoutBatch() !== state.student.batch)
+  // — a plain, reassuring heads-up plus the one button that actually
+  // starts the destructive switch flow (renderBatchMigrationWarning,
+  // triggered by its own click handler in bindCalendarEvents, never by
+  // the dropdown's change event itself). Scouting alone never reaches
+  // the server's idea of which batch this student is really on.
+  function renderBatchScoutBanner() {
+    if (!state.student) return '';
+    var scoutBatch = effectiveScoutBatch();
+    if (scoutBatch === state.student.batch) return '';
+    var scoutLabel = (BATCH_OPTIONS.filter(function (b) { return b.value === scoutBatch; })[0] || {}).label || scoutBatch;
+    // "…looking around X's schedule" reads fine for a plain name like
+    // "Batch D" but turns awkward once a label is a title-like phrase
+    // (e.g. "120 Days - 70 Marks") — phrased as "the schedule for X"
+    // instead, which reads naturally regardless of the label's shape.
+    return '<div class="batch-scout-banner">' +
+      '<p>You’re just looking around the schedule for <strong>' + escapeHtml(scoutLabel) + '</strong> — your real progress and streak stay exactly as they are until you say otherwise.</p>' +
+      '<button id="batch-scout-stick" class="batch-scout-stick" type="button">Switch to ' + escapeHtml(scoutLabel) + ' for real</button>' +
+      '</div>';
+  }
+
+  // Shown in place of nothing (a plain inline block, right under the
+  // header) once a REGISTERED student has clicked "switch for real" in
+  // renderBatchScoutBanner — see state.pendingBatchMigration. Nothing
+  // happens server-side until Confirm is actually clicked; this can
+  // still be backed out of via Cancel with zero consequence.
+  function renderBatchMigrationWarning() {
+    if (!state.pendingBatchMigration) return '';
+    var targetLabel = (BATCH_OPTIONS.filter(function (b) { return b.value === state.pendingBatchMigration; })[0] || {}).label || state.pendingBatchMigration;
+    return '<div class="batch-migration-warning">' +
+      '<p>Switching to <strong>' + escapeHtml(targetLabel) + '</strong> will permanently delete your checklist progress and streak on your current batch — completed tasks won’t carry over, and this can’t be undone. Your Focus/Pomodoro history is unaffected.</p>' +
+      (state.batchMigrationError ? '<p class="batch-migration-error">' + escapeHtml(state.batchMigrationError) + '</p>' : '') +
+      '<div class="batch-migration-actions">' +
+      '<button id="batch-migration-cancel" class="batch-migration-cancel" type="button">Cancel</button>' +
+      '<button id="batch-migration-confirm" class="batch-migration-confirm" type="button">Yes, switch to ' + escapeHtml(targetLabel) + '</button>' +
+      '</div></div>';
+  }
 
   var COOKIE_NAME = 'taai_user';
   var COOKIE_DAYS = 365;
@@ -53,7 +183,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-26-2';
+  var CLIENT_VERSION = '2026-09-28-3';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -615,6 +745,25 @@
   var app = document.getElementById('app');
   var state = {
     student: null,
+    // Which batch's schedule a GUEST (no student yet) is currently
+    // previewing via the batch dropdown. Locked in for real the moment a
+    // guest's first tick/Start triggers registration (see
+    // renderRegisterForm) — that's what actually assigns their batch,
+    // not this preview state itself. Unused once state.student exists —
+    // see scoutBatch below for the registered-student equivalent.
+    previewBatch: 'C',
+    // Which batch's schedule a REGISTERED student is currently scouting
+    // — null (meaning "their own real batch", see effectiveScoutBatch())
+    // until they actually pick something different in the dropdown.
+    // Purely a display/fetch choice, never touches state.student.batch —
+    // see effectiveScoutBatch's own comment for the full reasoning.
+    scoutBatch: null,
+    // Set only once a registered student clicks "switch for real" in
+    // renderBatchScoutBanner (never by the dropdown itself) — renders
+    // the "this will delete your progress" warning until they Confirm or
+    // Cancel (see renderBatchMigrationWarning). null the rest of the time.
+    pendingBatchMigration: null,
+    batchMigrationError: null, // set only if a /migrate-batch call actually fails — cleared on any fresh pick or Cancel
     // Restores whichever month the student last viewed (see
     // MONTH_STORAGE_KEY above) instead of always defaulting to the
     // current real month — clamped to SCHEDULE_START_MONTH so a stale
@@ -1224,7 +1373,7 @@
         : 'Enter your details once. We’ll remember you on this browser.';
     app.innerHTML =
       '<div class="reg-card fade-in">' +
-      '<h1>TAAI BATCH C - MISSION IIT <span class="roadmap-emoji">🎯</span></h1>' +
+      '<h1>' + escapeHtml(programTitle(state.previewBatch)) + ' <span class="roadmap-emoji">🎯</span></h1>' +
       '<p>' + promptText + '</p>' +
       '<form id="reg-form">' +
       '<div class="reg-field"><label for="reg-email">Your email</label>' +
@@ -1246,7 +1395,10 @@
       api('/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email, display_name: name }),
+        // batch: whatever this guest was previewing on the checklist is
+        // what locks in as their real, permanent batch — see
+        // state.previewBatch's own comment.
+        body: JSON.stringify({ email: email, display_name: name, batch: state.previewBatch }),
       })
         .then(function (student) {
           writeCookie(student);
@@ -1336,6 +1488,21 @@
   function loadMonth(monthStr) {
     state.month = monthStr;
     saveStoredMonth(monthStr);
+    // The skeleton below is much shorter than real content (7 placeholder
+    // blocks vs. a full week list + heatmap + subject breakdown, often
+    // well past one viewport) — swapping #app's innerHTML to it makes the
+    // document briefly far shorter, and the browser clamps window.scrollY
+    // down to fit. Nothing then scrolled back afterward, so a student
+    // scrolled down to the month-nav (a very ordinary place to be, since
+    // that's exactly where the prev/next buttons that trigger this live)
+    // got silently dumped near the top once the real, tall content came
+    // back in. Direct report: "the page might refresh but it should land
+    // on the same spot, not on top." Captured/restored here rather than
+    // only in the month-nav click handlers — every loadMonth() caller hits
+    // the same skeleton swap, so the same jump could happen from any of
+    // them (scouting a batch, resolving a rename, a migration), not just
+    // month nav.
+    var scrollBefore = window.scrollY;
     app.innerHTML = loadingSkeletonHtml();
 
     // Guests (no student yet) only need the public schedule/leaders piece —
@@ -1345,7 +1512,24 @@
     // instead of up to 7 separate Netlify Functions, each of which was its
     // own independent Lambda paying its own cold-start cost — see
     // tracker-data.js for why that mattered.
-    var url = '/tracker-data?month=' + monthStr + (state.student ? '&email=' + encodeURIComponent(state.student.email) : '');
+    // A guest's request tells the server which batch they're previewing
+    // (state.previewBatch, param `batch`). A registered student's real
+    // batch is always resolved authoritatively server-side from their
+    // own row — never trusted from the client — but they can still ask
+    // to SEE a different batch's calendar while scouting (param
+    // `previewBatch`, only sent when it actually differs from their real
+    // one, matching tracker-data.js's own isScouting check). Sending it
+    // unconditionally would be harmless too (the server no-ops when it
+    // matches their real batch already) but omitting it keeps the common
+    // "not scouting" case's URL identical to before this feature existed.
+    var url = '/tracker-data?month=' + monthStr;
+    if (state.student) {
+      url += '&email=' + encodeURIComponent(state.student.email);
+      var scoutBatch = effectiveScoutBatch();
+      if (scoutBatch !== state.student.batch) url += '&previewBatch=' + encodeURIComponent(scoutBatch);
+    } else {
+      url += '&batch=' + encodeURIComponent(state.previewBatch);
+    }
 
     api(url)
       .then(function (data) {
@@ -1519,6 +1703,13 @@
         });
 
         renderCalendar();
+        // behavior: 'instant', not the page's default scroll-behavior:
+        // smooth (html { scroll-behavior: smooth }) — a smooth scroll here
+        // would visibly animate from wherever the skeleton's shorter
+        // height left the browser clamped to, back up to scrollBefore,
+        // which reads as a jump-then-crawl-back rather than just staying
+        // put. Restoring instantly is what "land on the same spot" means.
+        window.scrollTo({ top: scrollBefore, left: 0, behavior: 'instant' });
       })
       .catch(function (err) {
         app.innerHTML = '<p class="center-note">Couldn’t load your roadmap: ' + escapeHtml(err.message) + '</p>';
@@ -2265,7 +2456,27 @@
     var missedBefore = state.days.filter(function (d) { return d.date < today && dayStatus(d) === 'missed'; });
 
     var html = '';
-    html += '<div class="roadmap-head"><h1>TAAI BATCH C - MISSION IIT <span class="roadmap-emoji">🎯</span></h1></div>';
+    // Reflects whichever batch's calendar is actually being shown below
+    // it (effectiveScoutBatch() for a registered student, who may be
+    // scouting something other than their own real batch) — not
+    // necessarily state.student.batch itself.
+    //
+    // The picker sits inline right next to the title, not as its own
+    // centered block below it — that centered-chip version (and an even
+    // smaller centered variant) were both tried and rejected ("still the
+    // position feels off" / "it just doesn't feel right"). Once actually
+    // screenshotted side by side, the real problem was visible: a
+    // centered chip has nothing connecting it to anything else on the
+    // page — it just floats alone in the gap between the title and the
+    // day-streak number, regardless of how it's sized. Inline with the
+    // h1 (a small context tag beside a page title, the same shape as an
+    // "environment switcher" next to a dashboard heading) reads as
+    // belonging to the title instead of orphaned in empty space. Not
+    // shown at all in Focus Mode — see the comment on batch-picker-wrap
+    // below for why.
+    html += '<div class="roadmap-head"><h1>' + escapeHtml(programTitle(effectiveScoutBatch())) + ' <span class="roadmap-emoji">🎯</span></h1>' +
+      (state.focus ? '' : renderBatchPicker()) +
+      '</div>';
     // Exit Focus sits in the same row as the identity line (not floating
     // alone in the blank space above the timer card) — .roadmap-sub is
     // already a space-between flex row, so it lands opposite the name/
@@ -2281,6 +2492,12 @@
         '<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M5 12L11 6M5 12L11 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
         ' Exit focus</button>' : '') +
       '</div>';
+    // Not shown at all in Focus Mode — Focus Mode has no calendar/
+    // schedule content whatsoever (see the state.focus branch below), so
+    // there's nothing for "which batch am I viewing" to apply to; every
+    // lookup in bindCalendarEvents is already null-guarded, so simply not
+    // rendering these is safe.
+    if (!state.focus) html += renderBatchScoutBanner() + renderBatchMigrationWarning();
 
     if (!state.focus) html += '<div class="page-grid"><div class="main-col">';
 
@@ -2602,6 +2819,15 @@
       var frac = pomo.totalSeconds > 0 ? pomo.secondsLeft / pomo.totalSeconds : 0;
       ring.style.strokeDashoffset = String(POMO_RING_CIRCUMFERENCE * (1 - frac));
     }
+    // Skip forfeits a Focus session entirely (no credit either way — see
+    // pomoSkip's own comment) with nothing to show for it, so it's greyed
+    // out whenever mode is 'work' — running or not, since even skipping a
+    // not-yet-started work phase gains nothing. Synced here, not just at
+    // render time, because a work<->break transition (a natural tick-to-
+    // zero finish, or pomoAdvance from a Skip itself) calls this without a
+    // full renderPomodoro() re-render.
+    var skipBtn = document.getElementById('pomo-skip');
+    if (skipBtn) skipBtn.disabled = pomo.mode === 'work';
   }
 
   function pomoAdvance(fromNow) {
@@ -2896,6 +3122,13 @@
   }
 
   function pomoSkip() {
+    // A disabled button already suppresses the click that would reach here
+    // (see updatePomoDisplay/renderPomodoro), but this mirrors the same
+    // belt-and-suspenders discipline pomoToggleRun already applies for its
+    // own gates (pomoIsFrozen/state.needsRename) — never trust the DOM
+    // alone to be the only thing enforcing a rule the underlying function
+    // itself can check for free.
+    if (pomo.mode === 'work') return;
     ensurePomoAudioCtx(); // real click — Skip can fire a chime even if Start was never pressed
     clearTimeout(pomo.timerId);
     flashPomoRing();
@@ -3289,7 +3522,7 @@
       '<span class="pomo-btn-label">' + (pomo.running ? 'Pause' : 'Start') + '</span></button>' +
       '<button id="pomo-reset" class="pomo-btn pomo-btn-secondary">' +
       '<span class="pomo-btn-icon">' + POMO_ICON_RESET + '</span><span class="pomo-btn-label">Reset</span></button>' +
-      '<button id="pomo-skip" class="pomo-btn pomo-btn-secondary">' +
+      '<button id="pomo-skip" class="pomo-btn pomo-btn-secondary"' + (pomo.mode === 'work' ? ' disabled title="Skipping a Focus session forfeits it — no credit either way. Only available during breaks."' : '') + '>' +
       '<span class="pomo-btn-icon">' + POMO_ICON_SKIP + '</span><span class="pomo-btn-label">Skip</span></button>' +
       '</div>' +
       '</div>' + // .pomo-clock-wrap
@@ -3933,11 +4166,22 @@
   // checking the board, so this never replaces pomoStatusHtml's idle
   // branch for anyone but the viewer's own row (see the two call sites in
   // renderLeaderboardRows, both gated on r.is_me / this always being the
-  // viewer's own gap row). Only swapped when idle, not live — "Focus"/
-  // "Break" during an active phase is still more useful than a static
-  // weekly average even on your own row. Weekly board only, same
-  // reasoning weeklyDaysElapsed's own comment gives — a daily/last-week
-  // total doesn't need a "per day" conversion at all.
+  // viewer's own gap row). Weekly board only, same reasoning
+  // weeklyDaysElapsed's own comment gives — a daily/last-week total
+  // doesn't need a "per day" conversion at all.
+  //
+  // Originally shown ONLY while idle — "Focus"/"Break" during an active
+  // phase was judged more useful than a static average, even on your own
+  // row. Reversed on direct follow-up ("while using the user knows
+  // whether it is focus or break, so why not show the average still?") —
+  // a live Focus/Break status for the VIEWER'S OWN row is exactly as
+  // redundant as the last-seen time was: they're looking at their own
+  // real, live Pomodoro clock on the same page, so this leaderboard row
+  // telling them the same fact twice was never adding information. Now
+  // shown unconditionally on your own row, live or not — the timer bar
+  // is skipped alongside it for the same row (see its call sites), since
+  // a live countdown next to a static weekly average would read as two
+  // contradicting signals rather than one coherent one.
   function weeklyPaceStatusHtml(totalMinutes) {
     if (!Number.isFinite(totalMinutes)) return '<span class="leaderboard-status"></span>';
     var hoursPerDay = (totalMinutes / 60 / weeklyDaysElapsed()).toFixed(1);
@@ -4169,8 +4413,8 @@
         rankMovementHtml(i + 1, r.previous_week_rank) +
         '<span class="leaderboard-name"' + allTimeTitleAttr(r.all_time_minutes) + '>' + liveDotHtml(r.is_live) + escapeHtml(r.display_name) + effortBadgesHtml(r.all_time_minutes) + (r.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
         streakBallsHtml(r.streak) +
-        (r.is_me && !r.pomo_status ? weeklyPaceStatusHtml(r.total_minutes) : pomoStatusHtml(r.pomo_status, r.pomo_last_seen_at)) +
-        pomoTimerHtml(r.pomo_phase_end_at, r.pomo_phase_total_seconds, r.pomo_status) +
+        (r.is_me ? weeklyPaceStatusHtml(r.total_minutes) : pomoStatusHtml(r.pomo_status, r.pomo_last_seen_at)) +
+        (r.is_me ? pomoTimerHtml(null, null, null) : pomoTimerHtml(r.pomo_phase_end_at, r.pomo_phase_total_seconds, r.pomo_status)) +
         '<span class="leaderboard-time">' + timeLabel + '</span>' +
         '</div>';
     }).join('');
@@ -4186,8 +4430,8 @@
         rankMovementHtml(state.viewerRank.rank, state.viewerRank.previous_week_rank) +
         '<span class="leaderboard-name"' + allTimeTitleAttr(state.viewerRank.all_time_minutes) + '>' + liveDotHtml(state.viewerRank.is_live) + 'You' + effortBadgesHtml(state.viewerRank.all_time_minutes) + '</span>' +
         streakBallsHtml(state.viewerRank.streak) +
-        (state.viewerRank.pomo_status ? pomoStatusHtml(state.viewerRank.pomo_status, state.viewerRank.pomo_last_seen_at) : weeklyPaceStatusHtml(state.viewerRank.total_minutes)) +
-        pomoTimerHtml(state.viewerRank.pomo_phase_end_at, state.viewerRank.pomo_phase_total_seconds, state.viewerRank.pomo_status) +
+        weeklyPaceStatusHtml(state.viewerRank.total_minutes) +
+        pomoTimerHtml(null, null, null) +
         '<span class="leaderboard-time">' + state.viewerRank.total_minutes + 'm</span>' +
         '</div>';
     }
@@ -4348,6 +4592,81 @@
   }
 
   function bindCalendarEvents() {
+    var batchPicker = document.getElementById('batch-picker-select');
+    if (batchPicker) batchPicker.addEventListener('change', function () {
+      if (!state.student) {
+        // Guest — just browsing, nothing to confirm.
+        state.previewBatch = batchPicker.value;
+        loadMonth(state.month);
+        return;
+      }
+      // A registered student: picking here is ALWAYS just scouting —
+      // free, reversible, zero effect on their real batch/progress/
+      // streak, whether they land back on their own batch or a
+      // different one. It never sets pendingBatchMigration itself —
+      // only the scout banner's own "switch for real" button (below)
+      // can start that destructive flow. Clearing any stale pending
+      // migration here too, so switching the dropdown again after
+      // clicking "switch for real" (but before Confirm/Cancel) correctly
+      // drops the now-mismatched warning instead of leaving it pointing
+      // at whatever was picked before.
+      state.scoutBatch = batchPicker.value;
+      state.pendingBatchMigration = null;
+      state.batchMigrationError = null;
+      loadMonth(state.month);
+    });
+
+    var batchScoutStick = document.getElementById('batch-scout-stick');
+    if (batchScoutStick) batchScoutStick.addEventListener('click', function () {
+      // The one real trigger for the destructive flow — never the
+      // dropdown itself. Holds the currently-scouted batch for
+      // confirmation rather than migrating immediately.
+      state.pendingBatchMigration = effectiveScoutBatch();
+      state.batchMigrationError = null;
+      renderCalendar();
+    });
+
+    var batchMigrationCancel = document.getElementById('batch-migration-cancel');
+    if (batchMigrationCancel) batchMigrationCancel.addEventListener('click', function () {
+      state.pendingBatchMigration = null;
+      state.batchMigrationError = null;
+      renderCalendar();
+    });
+
+    var batchMigrationConfirm = document.getElementById('batch-migration-confirm');
+    if (batchMigrationConfirm) batchMigrationConfirm.addEventListener('click', function () {
+      var target = state.pendingBatchMigration;
+      if (!target) return;
+      batchMigrationConfirm.disabled = true;
+      batchMigrationConfirm.textContent = 'Switching…';
+      api('/migrate-batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: state.student.email, batch: target }),
+      })
+        .then(function (updated) {
+          writeCookie(updated);
+          state.student = updated;
+          // Their real batch now IS what was just scouted — back to "not
+          // scouting" rather than leaving scoutBatch pointing at a value
+          // that's now redundant with state.student.batch.
+          state.scoutBatch = null;
+          state.pendingBatchMigration = null;
+          // Everything schedule-derived changed — a full reload of this
+          // month's data, not a patch, same as any other batch switch.
+          loadMonth(state.month);
+        })
+        .catch(function () {
+          // Re-render rather than manually patching the button's text
+          // back — state.pendingBatchMigration is still set, so this
+          // redraws the exact same warning (correctly labeled, via
+          // renderBatchMigrationWarning/BATCH_OPTIONS) with the error
+          // line now showing, ready to retry.
+          state.batchMigrationError = 'Couldn’t switch batches — please try again.';
+          renderCalendar();
+        });
+    });
+
     var notYou = document.getElementById('not-you');
     if (notYou) notYou.addEventListener('click', function () {
       clearCookie();

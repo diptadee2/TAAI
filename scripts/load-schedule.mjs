@@ -1,11 +1,17 @@
 // Loads sheets/schedule.csv into Supabase (schedule_days + schedule_tasks).
 // Run after updating that file with a new/changed schedule:
 //   npm run load-schedule
+//   npm run load-schedule -- --batch=D   (a second/later batch's schedule)
 //
 // Schedule data is provided directly (as PDFs, etc.), converted to this CSV
 // format by hand, and loaded with this script — deliberately no automatic
 // fetch from Google Sheets or anywhere else. Uses whichever Supabase
 // SUPABASE_URL/SUPABASE_SERVICE_KEY are set in .env (local or production).
+//
+// --batch defaults to 'C' — the original, only batch this project assumed
+// until second-batch support was added (2026-09-28). Every insert/upsert/
+// delete below is scoped to the given batch, so loading one batch's
+// schedule never touches another batch's rows even on overlapping dates.
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -25,8 +31,14 @@ function loadEnvFile() {
   }
 }
 
+function parseBatchArg() {
+  const arg = process.argv.find(a => a.startsWith('--batch='));
+  return arg ? arg.slice('--batch='.length).trim() || 'C' : 'C';
+}
+
 async function main() {
   loadEnvFile();
+  const batch = parseBatchArg();
 
   if (!fs.existsSync(CSV_PATH)) {
     console.error(`No schedule found at ${CSV_PATH} — nothing to load.`);
@@ -56,7 +68,7 @@ async function main() {
     for (const { name: subject, col } of subjectColumns) {
       const taskText = (row[col] || '').trim();
       if (!taskText) continue;
-      tasks.push({ date: isoDate, subject, task_text: taskText, position: col });
+      tasks.push({ date: isoDate, subject, task_text: taskText, position: col, batch });
     }
   }
 
@@ -70,12 +82,14 @@ async function main() {
 
   const { error: daysError } = await supabase
     .from('schedule_days')
-    .upsert(dateList.map(date => ({ date })), { onConflict: 'date' });
+    .upsert(dateList.map(date => ({ date, batch })), { onConflict: 'date,batch' });
   if (daysError) { console.error('schedule_days upsert failed:', daysError.message); process.exit(1); }
 
   // Full replace for every date the CSV covers, so a cell cleared in a
-  // re-exported schedule actually disappears instead of lingering.
-  const { error: deleteError } = await supabase.from('schedule_tasks').delete().in('date', dateList);
+  // re-exported schedule actually disappears instead of lingering — scoped
+  // to this batch only, so re-loading batch D's schedule can never delete
+  // batch C's rows even on a shared date.
+  const { error: deleteError } = await supabase.from('schedule_tasks').delete().eq('batch', batch).in('date', dateList);
   if (deleteError) { console.error('schedule_tasks delete failed:', deleteError.message); process.exit(1); }
 
   if (tasks.length) {
@@ -83,7 +97,7 @@ async function main() {
     if (insertError) { console.error('schedule_tasks insert failed:', insertError.message); process.exit(1); }
   }
 
-  console.log(`Loaded ${dateList.length} days, ${tasks.length} tasks from sheets/schedule.csv into Supabase (${process.env.SUPABASE_URL}).`);
+  console.log(`Loaded ${dateList.length} days, ${tasks.length} tasks for batch ${batch} from sheets/schedule.csv into Supabase (${process.env.SUPABASE_URL}).`);
 }
 
 main();

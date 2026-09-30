@@ -54,9 +54,9 @@ export async function handler(event, context) {
 
   const today = todayForStreak();
 
-  let studentsResult, completed, sessions, weekStatsResult, totalTaskResult, malpracticeResult, nameCheckResult, reviewNoteResult;
+  let studentsResult, completed, sessions, weekStatsResult, taskBatchRows, malpracticeResult, nameCheckResult, reviewNoteResult, batchResult;
   try {
-    [studentsResult, completed, sessions, weekStatsResult, totalTaskResult, malpracticeResult, nameCheckResult, reviewNoteResult] = await Promise.all([
+    [studentsResult, completed, sessions, weekStatsResult, taskBatchRows, malpracticeResult, nameCheckResult, reviewNoteResult, batchResult] = await Promise.all([
       // needs_rename itself is included directly here, not in the
       // best-effort query below — it was already migrated in a prior
       // session (see schema.sql's own comment on it) and is stable, so
@@ -67,20 +67,35 @@ export async function handler(event, context) {
       // already-migrated value behind the two not-yet-migrated ones'
       // failure — the exact mistake this codebase's own history already
       // flags (see malpractice_warning_ack_count's writeup in CLAUDE.md).
+      // batch is NOT added here for the exact same reason — see its own
+      // best-effort query below instead.
       supabase.from('students').select('email, display_name, notes, created_at, current_streak, needs_rename'),
       fetchAllRows(() => supabase.from('task_progress').select('email, date').eq('completed', true).lte('date', today)),
       fetchAllRows(() => supabase.from('pomo_daily_sessions').select('email, date, total_minutes')),
       supabase.from('pomodoro_stats').select('email, total_minutes').eq('week_start', weekStartIST()),
-      // Whole-schedule task count (not date-limited), the same denominator
-      // subject-progress.js uses for its per-subject done/total — here
-      // rolled into one overall "how much of the course" percentage instead
-      // of a per-subject breakdown, which wouldn't fit a table with 300
-      // rows. schedule_tasks only ever holds months already loaded (see
-      // "Schedule data flow" in CLAUDE.md), so this is naturally "tasks
-      // assigned so far", not some far-future total. A count-only HEAD
-      // request, not a real row fetch, so it isn't subject to the same
-      // 1,000-row response cap the two fetchAllRows queries above are.
-      supabase.from('schedule_tasks').select('*', { count: 'exact', head: true }),
+      // Whole-schedule task count, per batch (not date-limited) — the same
+      // denominator subject-progress.js uses for its per-subject done/
+      // total, here rolled into one overall "how much of the course"
+      // percentage instead of a per-subject breakdown, which wouldn't fit
+      // a table with 300 rows. schedule_tasks only ever holds months
+      // already loaded (see "Schedule data flow" in CLAUDE.md), so this is
+      // naturally "tasks assigned so far", not some far-future total.
+      // Was a count-only HEAD request (one shared total, no batch
+      // dimension) until second-batch support — supabase-js can't GROUP BY
+      // in a head-count query, so this is now a real (paginated, via
+      // fetchAllRows for the same >1,000-row reason task_progress/
+      // pomo_daily_sessions above already need it) fetch of just `batch`,
+      // counted client-side per batch below. Wrapped in its own try/catch,
+      // NOT left to fetchAllRows' own throw-on-error — that throw is
+      // exactly right for completed/sessions above (a real failure there
+      // should fail this whole view), but a still-new `batch` column
+      // missing pre-migration must degrade to "no totals yet" instead of
+      // taking down the entire Students view the way an actually-broken
+      // schedule_tasks table would.
+      (async () => {
+        try { return await fetchAllRows(() => supabase.from('schedule_tasks').select('batch')); }
+        catch { return []; }
+      })(),
       // Best-effort, deliberately its own query rather than added to the
       // main students select above — see record_malpractice_incident in
       // schema.sql. A pre-migration "column does not exist" error here
@@ -106,15 +121,37 @@ export async function handler(event, context) {
       // outdated the moment name_review_note landed — kept in mind for
       // next time a "genuinely new" column joins an already-settled one).
       supabase.from('students').select('email, name_review_note'),
+      // batch (added 2026-09-28) — its own best-effort query, same
+      // discipline as malpractice/nameCheck/reviewNote above: a
+      // pre-migration missing-column error here must never fail the
+      // whole Students view, it just leaves every student defaulting to
+      // 'C' below (batchByEmail) until the migration runs.
+      supabase.from('students').select('email, batch'),
     ]);
   } catch (err) {
     return json(500, { error: err.message });
   }
   const { data: students, error: studentsErr } = studentsResult;
   const { data: weekStats, error: weekErr } = weekStatsResult;
-  const { count: totalTaskCount, error: totalErr } = totalTaskResult;
-  const err = studentsErr || weekErr || totalErr;
+  const err = studentsErr || weekErr;
   if (err) return json(500, { error: err.message });
+
+  // Per batch, replacing the old single shared totalTaskCount — see
+  // taskBatchRows' own comment above for why this is a best-effort,
+  // already-fault-tolerant fetch (empty array on failure, not a thrown
+  // error), so no additional error-checking is needed here.
+  const taskCountByBatch = new Map();
+  for (const row of taskBatchRows) {
+    const batch = row.batch || 'C';
+    taskCountByBatch.set(batch, (taskCountByBatch.get(batch) || 0) + 1);
+  }
+
+  const batchByEmail = new Map();
+  if (!batchResult.error) {
+    for (const row of batchResult.data || []) {
+      batchByEmail.set(row.email, row.batch);
+    }
+  }
 
   const malpracticeByEmail = new Map();
   if (!malpracticeResult.error) {
@@ -199,6 +236,11 @@ export async function handler(event, context) {
     const lastActive = lastActiveByEmail.get(s.email) || null;
     const malpractice = malpracticeByEmail.get(s.email);
     const nameCheck = nameCheckByEmail.get(s.email);
+    // Each student's own batch's total, not one shared number across
+    // batches — see taskCountByBatch above. batchByEmail (not s.batch —
+    // see its own query above for why) falls back to 'C' the same way
+    // the schema itself does.
+    const batchTaskTotal = taskCountByBatch.get(batchByEmail.get(s.email) || 'C') || 0;
     return {
       email: s.email,
       display_name: s.display_name,
@@ -208,7 +250,7 @@ export async function handler(event, context) {
       week_minutes: weekMinutesByEmail.get(s.email) || 0,
       streak: s.current_streak || 0,
       tasks_completed: taskCountByEmail.get(s.email) || 0,
-      progress_pct: totalTaskCount > 0 ? Math.round(((taskCountByEmail.get(s.email) || 0) / totalTaskCount) * 100) : 0,
+      progress_pct: batchTaskTotal > 0 ? Math.round(((taskCountByEmail.get(s.email) || 0) / batchTaskTotal) * 100) : 0,
       consistency_minutes: consistencyFor(s.email),
       last_active: lastActive,
       days_inactive: daysInactiveFor(lastActive),

@@ -1,7 +1,16 @@
-// POST /api/register  { email, display_name }
+// POST /api/register  { email, display_name, batch }
 // First-visit registration. If the email already exists, returns the
 // existing record as-is (the student is "recognised", not renamed) —
 // re-registering on a new device shouldn't silently overwrite their name.
+//
+// batch (added 2026-09-28) is only ever meaningful for a genuinely NEW
+// student — it's how a guest's first real action (ticking a task /
+// starting Focus while previewing a batch's schedule via progress.js's
+// batch dropdown) locks in which batch they belong to. Validated against
+// a small allowlist, defaulting to 'C' (the original batch) for a
+// missing/invalid value so a malformed or stale-client request can never
+// create a batch-less row. An EXISTING student's batch is never
+// re-assigned here — see the `if (existing) return` branch below.
 //
 // Deliberately does NOT call Claude inline — saves the submitted name
 // instantly, no synchronous check, no rejection path. This went through
@@ -26,6 +35,11 @@
 import { getSupabase, json } from './lib/supabase.js';
 import { triggerNameCheckBackground } from './lib/name-check.js';
 
+// Hand-duplicated in progress.js (its batch-preview dropdown options) —
+// same small-constant-across-the-client/server-boundary tradeoff already
+// accepted elsewhere in this codebase (e.g. POMO_WORK_MAX_MINUTES).
+const VALID_BATCHES = ['C', 'D'];
+
 export async function handler(event) {
   if (event.httpMethod !== 'POST') return json(405, { error: 'method not allowed' });
 
@@ -34,6 +48,7 @@ export async function handler(event) {
 
   const email = String(body.email || '').trim().toLowerCase();
   const displayName = String(body.display_name || '').trim();
+  const batch = VALID_BATCHES.includes(body.batch) ? body.batch : 'C';
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json(400, { error: 'valid email is required' });
   if (!displayName) return json(400, { error: 'display_name is required' });
 
@@ -41,7 +56,7 @@ export async function handler(event) {
 
   const { data: existing, error: fetchError } = await supabase
     .from('students')
-    .select('email, display_name')
+    .select('email, display_name, batch')
     .eq('email', email)
     .maybeSingle();
   if (fetchError) return json(500, { error: fetchError.message });
@@ -49,8 +64,8 @@ export async function handler(event) {
 
   const { data: created, error: insertError } = await supabase
     .from('students')
-    .insert({ email, display_name: displayName })
-    .select('email, display_name')
+    .insert({ email, display_name: displayName, batch })
+    .select('email, display_name, batch')
     .single();
   if (insertError) return json(500, { error: insertError.message });
 

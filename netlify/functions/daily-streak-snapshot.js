@@ -33,8 +33,11 @@ export async function handler() {
   let studentsResult, scheduledResult, completed;
   try {
     [studentsResult, scheduledResult, completed] = await Promise.all([
-      supabase.from('students').select('email'),
-      supabase.from('schedule_tasks').select('date').lte('date', today).order('date', { ascending: false }),
+      // batch added 2026-09-28 — each student's own scheduledDates walk
+      // below now comes from THEIR batch specifically, not one shared
+      // global set (see the grouping right below).
+      supabase.from('students').select('email, batch'),
+      supabase.from('schedule_tasks').select('date, batch').lte('date', today).order('date', { ascending: false }),
       fetchAllRows(() => supabase.from('task_progress').select('email, date').eq('completed', true).lte('date', today)),
     ]);
   } catch (err) {
@@ -45,7 +48,17 @@ export async function handler() {
   const err = studentsErr || schedErr;
   if (err) return json(500, { error: err.message });
 
-  const scheduledDates = [...new Set(scheduled.map(r => r.date))];
+  // Grouped per batch — a student's streak must only ever be walked
+  // against their OWN batch's scheduled dates, or a second batch's
+  // schedule would silently corrupt everyone's streak the moment it
+  // exists. batch on a row may be missing pre-migration; falls back to
+  // 'C', matching the schema's own default.
+  const scheduledDatesByBatch = new Map();
+  for (const row of scheduled) {
+    const batch = row.batch || 'C';
+    if (!scheduledDatesByBatch.has(batch)) scheduledDatesByBatch.set(batch, new Set());
+    scheduledDatesByBatch.get(batch).add(row.date);
+  }
 
   const completedByEmail = new Map();
   for (const row of completed) {
@@ -54,16 +67,17 @@ export async function handler() {
   }
 
   const emails = students.map(s => s.email);
-  // Union each student's OWN completed dates into their own scheduledDates
-  // walk, not just the global schedule_tasks-derived list — see
-  // streakScheduledDatesFor()'s own comment for why this matters (a
+  // Union each student's OWN completed dates into their own batch's
+  // scheduledDates walk, not just the global schedule_tasks-derived list
+  // — see streakScheduledDatesFor()'s own comment for why this matters (a
   // schedule content edit that removes an already-past, already-
   // completed date must never silently erase real, already-earned
   // streak days, without needing schedule_tasks to carry stale content
   // just to keep the checklist UI in sync).
   const streaks = students.map(s => {
+    const scheduledDates = scheduledDatesByBatch.get(s.batch || 'C') || new Set();
     const personal = completedByEmail.get(s.email) || new Set();
-    const merged = streakScheduledDatesFor(scheduledDates, personal);
+    const merged = streakScheduledDatesFor([...scheduledDates], personal);
     return computeStreak(merged, personal, today);
   });
 

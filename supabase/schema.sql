@@ -36,6 +36,29 @@ CREATE TABLE IF NOT EXISTS schedule_tasks (
   UNIQUE (date, subject, position)
 );
 
+-- Second-batch support, added 2026-09-28 — every student and every
+-- schedule row now carries a batch letter ('C' is the original, only
+-- batch this whole project assumed until now). DEFAULT 'C' on all three
+-- ALTERs backfills every existing row for free — the current batch's
+-- students/schedule are unaffected by this migration, no separate
+-- UPDATE needed. task_progress deliberately does NOT get a batch column
+-- — it's keyed by (email, date, subject, task_text), and a student only
+-- ever interacts with their own batch's schedule, so email->batch (via
+-- students.batch) is sufficient disambiguation without duplicating the
+-- column onto every table that touches a student.
+ALTER TABLE students ADD COLUMN IF NOT EXISTS batch TEXT NOT NULL DEFAULT 'C';
+ALTER TABLE schedule_days ADD COLUMN IF NOT EXISTS batch TEXT NOT NULL DEFAULT 'C';
+ALTER TABLE schedule_tasks ADD COLUMN IF NOT EXISTS batch TEXT NOT NULL DEFAULT 'C';
+-- Both tables' existing UNIQUE constraints (auto-named by Postgres from
+-- their original inline UNIQUE(...) declarations above) would collide
+-- across two batches that happen to share a date (schedule_days) or a
+-- date+subject+position (schedule_tasks) — replaced with versions that
+-- include batch, so two batches' schedules can genuinely coexist.
+ALTER TABLE schedule_days DROP CONSTRAINT IF EXISTS schedule_days_date_key;
+ALTER TABLE schedule_days ADD CONSTRAINT schedule_days_date_batch_key UNIQUE (date, batch);
+ALTER TABLE schedule_tasks DROP CONSTRAINT IF EXISTS schedule_tasks_date_subject_position_key;
+ALTER TABLE schedule_tasks ADD CONSTRAINT schedule_tasks_date_subject_position_batch_key UNIQUE (date, subject, position, batch);
+
 -- Student task completion
 CREATE TABLE IF NOT EXISTS task_progress (
   email         TEXT REFERENCES students(email),

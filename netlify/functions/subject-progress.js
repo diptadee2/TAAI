@@ -13,9 +13,18 @@ export async function handler(event) {
 
   const supabase = getSupabase();
 
+  // Batch-scoped (added 2026-09-28) so a subject's total isn't computed
+  // against a second batch's schedule too — best-effort: a pre-migration
+  // "column does not exist" just leaves batch at its default 'C' rather
+  // than failing this whole endpoint.
+  let batch = 'C';
+  const { data: studentRow, error: studentErr } = await supabase.from('students').select('batch').eq('email', email).maybeSingle();
+  if (!studentErr && studentRow && studentRow.batch) batch = studentRow.batch;
+
   const { data: scheduled, error: schedErr } = await supabase
     .from('schedule_tasks')
-    .select('date, subject, task_text');
+    .select('date, subject, task_text')
+    .eq('batch', batch);
   if (schedErr) return json(500, { error: schedErr.message });
 
   const { data: completed, error: progErr } = await supabase

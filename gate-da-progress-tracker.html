@@ -320,12 +320,137 @@
   .reg-cancel-link:hover { color: var(--purple); }
 
   /* Header / stats */
-  .roadmap-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 4px; }
+  /* flex-start, not space-between — the batch picker now sits inline
+     right after the h1 (see its own comment below), not pinned to the
+     row's far edge, so it should sit right beside the title instead of
+     drifting away from it as the row grows. */
+  .roadmap-head { display: flex; align-items: center; justify-content: flex-start; flex-wrap: wrap; gap: 10px; margin-bottom: 4px; }
   .roadmap-head h1 { font-family: var(--font-nav); font-size: 19px; font-weight: 700; }
   /* Emoji glyphs render with extra bottom padding baked into their own
      metrics, so inline with text they visually sit low against the cap
      height rather than actually centering — nudged up to compensate. */
   .roadmap-emoji { display: inline-block; vertical-align: middle; position: relative; top: -2px; }
+  /* Screen-reader-only utility — for the batch picker's real <label>
+     (see .batch-picker below), kept in the accessibility tree without
+     taking any visual space, rather than display:none (which would drop
+     it from the tree entirely and break the label/select association for
+     assistive tech). Standard clip-based recipe, not project-specific. */
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+  /* Batch picker (see renderBatchPicker in progress.js) — a small bordered
+     tag (icon + value) sitting inline right next to the h1 in
+     .roadmap-head, not a separate block. Went through two rounds first:
+     originally plain var(--ink-soft) label + bare select that blended
+     into the page ("make the batch selector easily visible to the eye");
+     then a bigger, bordered chip centered on its own line below the
+     title, matching .exam-countdown's "small chip that must be noticed"
+     idiom. That version was reported twice as not feeling right —
+     screenshotting it side by side against this inline version made the
+     actual problem visible: centered alone, it had nothing connecting it
+     to its neighbors, just floating in the gap above the day-streak
+     number regardless of how it was sized. Inline with the title (the
+     same shape as a workspace/environment switcher beside a dashboard
+     heading) reads as belonging to it instead. Still a real bordered/
+     colored control (keeps the original visibility fix), just anchored
+     rather than orphaned. Shared by guests (previewing,
+     state.previewBatch) and registered students (scouting,
+     effectiveScoutBatch()) — same control, different underlying label;
+     picking here is always non-destructive for both (see
+     .batch-scout-banner/.batch-migration-warning below for the one
+     actually destructive action, reached only from there). Not a custom
+     dropdown — still a real <select>, just tag-styled. */
+  .batch-picker { display: inline-flex; align-items: center; gap: 6px; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px 4px 4px; flex-shrink: 0; }
+  .batch-picker-icon { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(135deg,rgba(255,127,183,0.16),rgba(139,92,246,0.16),rgba(77,139,255,0.16)); color: var(--purple); flex-shrink: 0; }
+  .batch-picker-icon svg { width: 12px; height: 12px; }
+  .batch-picker select { background: none; border: none; color: var(--purple); font-family: inherit; font-size: 13px; font-weight: 700; padding: 0; margin: 0; cursor: pointer; }
+  /* A registered student currently scouting a batch other than their own
+     real one (see renderBatchScoutBanner) — a plain, reassuring flat card
+     (var(--card)/var(--line), the same idiom every other card on this
+     page uses), deliberately NOT the --red destructive styling below —
+     scouting itself has no consequence, only the button inside it does. */
+  .batch-scout-banner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; margin-bottom: 18px; }
+  .batch-scout-banner p { font-size: 13px; color: var(--ink-soft); line-height: 1.5; margin: 0; }
+  .batch-scout-banner strong { color: var(--ink); }
+  /* Restyled to shadcn/ui's real Button recipe (registry: @shadcn/button —
+     pulled the actual source, not guessed) rather than this page's own
+     pill treatment — a trial run, on request ("try shadcn once we will
+     revert if we don't feel right"). shadcn's Button is pure CSS (only
+     optional Radix Slot for asChild polymorphism, unused for a plain
+     <button>), so this ports cleanly with zero new runtime dependency —
+     unlike shadcn's Select/Dialog/etc., which are real Radix React
+     components and would need a bundler this project deliberately
+     doesn't have (see "Tech stack": no bundler, and this tracker page's
+     own content is plain vanilla JS, not React at all). Scoped to these
+     three buttons only, not a page-wide reskin — a small, self-contained,
+     easily-revertible pilot. Ported values: rounded-md (8px, not this
+     page's own 999px pill — shadcn never uses a full pill for a regular
+     button), h-9/px-4 sizing, font-medium (not this page's heavier 700),
+     a real focus-visible ring (shadcn's own accessibility default, which
+     these buttons didn't have before), and hover states that shift the
+     fill color itself (shadcn's hover:bg-X/90) instead of just fading the
+     whole button's opacity. Colors mapped onto this page's existing
+     tokens (--purple/--red/--card/--line) rather than shadcn's own
+     default palette, since the brief is "try shadcn," not "re-theme the
+     page" — shadcn's own docs describe swapping the CSS variables under
+     its component recipes as the normal way to fit an existing brand. */
+  .batch-scout-stick {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 34px; padding: 0 16px; border-radius: 8px;
+    background: var(--purple); border: none; color: #fff;
+    font-family: inherit; font-size: 13px; font-weight: 500; white-space: nowrap;
+    cursor: pointer; outline: none; flex-shrink: 0;
+    transition: background-color .15s ease, box-shadow .15s ease;
+  }
+  /* rgba, not a hand-picked hex — the real port of shadcn's own
+     hover:bg-primary/90 is a literal 90%-opacity blend of the accent
+     color, which lets CSS do the compositing correctly against whatever
+     sits behind the button instead of a guessed flat color. */
+  .batch-scout-stick:hover { background: rgba(167,139,250,0.9); }
+  .batch-scout-stick:focus-visible { box-shadow: 0 0 0 3px rgba(167,139,250,0.5); }
+  /* The destructive-migration confirmation (see
+     renderBatchMigrationWarning) — a real --red border/background tint
+     (the same token .pomo-gate-hint--urgent already uses), not just a
+     plain card, since this is a genuinely irreversible action and should
+     read as one at a glance, not blend in with an ordinary notice. */
+  .batch-migration-warning { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.35); border-radius: 12px; padding: 14px 16px; margin-bottom: 18px; }
+  .batch-migration-warning p { font-size: 13px; color: var(--ink); line-height: 1.5; margin: 0 0 12px; }
+  .batch-migration-warning strong { color: var(--red); }
+  /* Higher specificity than the plain ".batch-migration-warning p" rule
+     above, deliberately — not !important — so this actually wins rather
+     than losing to that rule's own --ink color. */
+  .batch-migration-warning p.batch-migration-error { color: var(--red); font-weight: 600; }
+  .batch-migration-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  /* shadcn's "outline" variant (real source, same trial as
+     .batch-scout-stick above): border + a faint background tint, not
+     bare/transparent — shadcn's own dark-mode value is dark:bg-input/30,
+     approximated here since this page has no --input token. Hover
+     deepens the tint (shadcn's hover:bg-accent) instead of only
+     recoloring the border/text like the pill version did. */
+  .batch-migration-cancel {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 34px; padding: 0 16px; border-radius: 8px;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--line); color: var(--ink-soft);
+    font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; outline: none;
+    transition: background-color .15s ease, color .15s ease, box-shadow .15s ease;
+  }
+  .batch-migration-cancel:hover { background: rgba(255,255,255,0.08); color: var(--ink); }
+  .batch-migration-cancel:focus-visible { box-shadow: 0 0 0 3px rgba(255,255,255,0.15); }
+  /* shadcn's "destructive" variant — same 90%-alpha-blend hover as the
+     primary button above (hover:bg-destructive/90), not a flat opacity
+     fade on the whole button. */
+  .batch-migration-confirm {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 34px; padding: 0 16px; border-radius: 8px;
+    background: var(--red); border: none; color: #fff;
+    font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; outline: none;
+    transition: background-color .15s ease, box-shadow .15s ease;
+  }
+  .batch-migration-confirm:hover { background: rgba(248,113,113,0.9); }
+  .batch-migration-confirm:focus-visible { box-shadow: 0 0 0 3px rgba(248,113,113,0.4); }
+  /* shadcn's disabled:pointer-events-none disabled:opacity-50 — real
+     state this button actually has (progress.js disables it and swaps
+     the label to "Switching…" while the migrate-batch request is in
+     flight), which the old pill version never styled at all. */
+  .batch-migration-confirm:disabled { pointer-events: none; opacity: .5; }
   .roadmap-sub { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; font-size: 13px; color: var(--ink-soft); margin-bottom: 18px; }
   .roadmap-sub-left button { background: none; border: none; color: var(--purple); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; padding: 0; text-decoration: underline; transition: opacity .2s; }
   .roadmap-sub-left button:hover:not(:disabled) { opacity: .7; }
@@ -614,11 +739,34 @@
   .heatmap-cell.is-today { box-shadow: 0 0 0 1.5px var(--purple); }
 
   .month-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
-  .month-nav button { background: var(--card); border: 1px solid var(--line); border-radius: 10px; width: 34px; height: 34px; font-size: 16px; cursor: pointer; color: var(--ink-dim); transition: transform .28s cubic-bezier(.34,1.1,.64,1), border-color .2s, color .2s, box-shadow .22s; }
-  .month-nav button:hover { border-color: var(--purple); color: var(--purple); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(139,92,246,0.18); }
+  /* Same shadcn/ui Button pilot as the batch-migration buttons above,
+     widened here specifically because those only show up in a rare,
+     buried flow (scouting a different batch, then "switch for real") —
+     direct report, "i see no difference," since nothing there is visible
+     on a normal page load. This pair is on screen every time. Real port
+     of shadcn's outline + icon-size recipe: size-9 (36px square, was
+     34px), rounded-md (8px, was 10px), a real focus-visible ring (had
+     none before). The one deliberate departure from the pilot's
+     otherwise-faithful port: shadcn's own hover:bg-accent is a flat,
+     motionless background tint — dropping this page's existing
+     translateY(-2px) lift + purple accent entirely would trade a proven,
+     lively interaction for a flatter one purely to match the recipe
+     exactly, which isn't the point of trying it. Kept the lift/scale-
+     press choreography, changed only the static values (size/radius/
+     focus ring) and the resting/hover fill (a neutral tint instead of
+     transparent-then-purple-border) to actually be shadcn's outline
+     recipe rather than this page's original bespoke one. */
+  .month-nav button {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: 8px;
+    width: 36px; height: 36px; font-size: 16px; cursor: pointer; color: var(--ink-dim); outline: none;
+    transition: transform .28s cubic-bezier(.34,1.1,.64,1), background-color .2s, color .2s, box-shadow .22s;
+  }
+  .month-nav button:hover { background: rgba(255,255,255,0.08); color: var(--ink); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.24); }
+  .month-nav button:focus-visible { box-shadow: 0 0 0 3px rgba(255,255,255,0.15); }
   .month-nav button:active { transform: scale(0.92); }
-  .month-nav button:disabled { opacity: .35; cursor: not-allowed; }
-  .month-nav button:disabled:hover { border-color: var(--line); color: var(--ink-dim); transform: none; box-shadow: none; }
+  .month-nav button:disabled { opacity: .5; cursor: not-allowed; pointer-events: none; }
+  .month-nav button:disabled:hover { background: rgba(255,255,255,0.03); color: var(--ink-dim); transform: none; box-shadow: none; }
   .month-nav .month-label { font-family: var(--font-nav); font-weight: 700; font-size: 18px; }
 
   .week { margin-bottom: 4px; }
@@ -779,6 +927,11 @@
      perceive as jumpy the way an idle, continuously-rendered hover lift
      does. */
   .pomo-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 10px 24px; border-radius: 999px; border: none; font-family: var(--font-nav); font-weight: 700; font-size: 13px; cursor: pointer; transition: transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .2s, background .2s; }
+  /* Skip, greyed out mid-Focus-session (see pomo-skip's own disabled
+     attribute/updatePomoDisplay) — same opacity/cursor recipe
+     .month-nav button:disabled already established elsewhere on this
+     page, not a new one. */
+  .pomo-btn:disabled { opacity: .35; cursor: not-allowed; }
   .pomo-btn-icon { display: inline-flex; }
   /* Reads the same --pomo-g1/g2/g3/--pomo-glow custom properties the ring
      uses (set on #pomo-card by applyPomoGradient — see the ring-color
@@ -794,10 +947,10 @@
      preset — only the icon glyph picks up the theme color, a lighter
      touch than a full recolor for a "secondary" action. */
   .pomo-btn-secondary { background: rgba(255,255,255,0.06); color: var(--ink-dim); border: 1px solid rgba(255,255,255,0.1); }
-  .pomo-btn-secondary:hover { background: rgba(255,255,255,0.11); color: var(--ink); }
-  .pomo-btn-secondary:active { transform: scale(0.93); }
+  .pomo-btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,0.11); color: var(--ink); }
+  .pomo-btn-secondary:active:not(:disabled) { transform: scale(0.93); }
   .pomo-btn-secondary .pomo-btn-icon { color: var(--pomo-g2, var(--ink-dim)); }
-  .pomo-btn-secondary:hover .pomo-btn-icon { color: var(--pomo-g1, var(--ink)); }
+  .pomo-btn-secondary:hover:not(:disabled) .pomo-btn-icon { color: var(--pomo-g1, var(--ink)); }
   /* Fires once whenever Start/Pause actually toggles (see
      updatePomoDisplay) — a small overshoot bounce on just the icon (not
      the whole button, which already has its own press animation) so
@@ -1221,8 +1374,12 @@
      border-radius are never both animated here (only left/opacity move
      elsewhere on this page), so this doesn't trip the Chromium DOM-leak
      gotcha even if that ever changes. */
-  .leaderboard-effort-badge { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; margin-left: 7px; border-radius: 50%; vertical-align: middle; cursor: default; color: rgba(255,255,255,0.92); }
-  .leaderboard-effort-badge svg { width: 10px; height: 10px; }
+  /* Shrunk 16px->13px/icon 10px->8px on direct feedback ("wish they were
+     a bit smaller") — back near the original plain-dot era's 13px
+     footprint, just with the SVG icon scaling down proportionally
+     with it rather than needing its own separate re-tuning. */
+  .leaderboard-effort-badge { display: inline-flex; align-items: center; justify-content: center; width: 13px; height: 13px; margin-left: 6px; border-radius: 50%; vertical-align: middle; cursor: default; color: rgba(255,255,255,0.92); }
+  .leaderboard-effort-badge svg { width: 8px; height: 8px; }
   /* Solid, near-opaque colors — real saturation is what lets the tier
      read at a glance from across a leaderboard row. Each keeps a loose
      thematic tie to its old emoji (star=gold, flame=orange, lightning=
@@ -1411,6 +1568,21 @@
   #today-leaderboard-card .leaderboard-row--live .leaderboard-name,
   #leaderboard-card .leaderboard-row--live .leaderboard-time,
   #today-leaderboard-card .leaderboard-row--live .leaderboard-time { color: var(--ink); }
+  /* Effort badges and streak balls both carry their own fixed tier
+     colors (gold/orange/blue/purple, bronze/silver/gold/diamond) rather
+     than reading --ink, so the name/time dim rule above — a plain color
+     swap — has nothing to hook into for them; opacity is the equivalent
+     dim here instead. Same scope as that rule (the two "right now"
+     boards, not #champions-card — see its own comment just above) and
+     same live/not-live split, direct follow-up to the name/time dim
+     ("also the badges... also the streak balls?"). Streak balls only
+     ever render on #leaderboard-card (the weekly board) — see
+     streakBallsHtml's own call sites — so the #today-leaderboard-card
+     half of that pair is harmless dead weight there, not a bug. */
+  #leaderboard-card .leaderboard-row:not(.leaderboard-row--live) .leaderboard-effort-badge,
+  #today-leaderboard-card .leaderboard-row:not(.leaderboard-row--live) .leaderboard-effort-badge,
+  #leaderboard-card .leaderboard-row:not(.leaderboard-row--live) .streak-ball,
+  #leaderboard-card .leaderboard-row:not(.leaderboard-row--live) .streak-flame-badge { opacity: .45; }
   /* Column header row — identical grid-template-columns to
      .leaderboard-row above (including its 180px Name cap, see that
      rule's own comment), so every label lands exactly above its column
@@ -1732,7 +1904,7 @@
 <div id="nav-root"></div>
 
 <div class="wrap">
-  <div id="app"><div class="skeleton-wrap">
+  <main id="app"><div class="skeleton-wrap">
     <div class="skeleton-block skeleton-hero"></div>
     <div class="skeleton-block skeleton-nav"></div>
     <div class="skeleton-block skeleton-card"></div>
@@ -1748,7 +1920,7 @@
         <div class="skeleton-block skeleton-card"></div>
       </div>
     </div>
-  </div></div>
+  </div></main>
 </div>
 
 <button class="back-to-top" id="back-to-top" aria-label="Back to top">

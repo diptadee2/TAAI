@@ -32,10 +32,18 @@
 // fetchPomoActive below and pomo-active.js (the write side).
 import { getSupabase, json, monthRange, todayIST, fetchLastWeekLeaders, fetchTodayLeaders, fetchHourlyActivity, fetchLiveCount } from './lib/supabase.js';
 
-async function fetchSchedule(supabase, range) {
+// batch (added 2026-09-28) scopes both queries below to one batch's own
+// schedule — without this, once a second batch's schedule_tasks rows
+// exist, a student would see a calendar mixing both batches' content,
+// and latestMonth (which caps the month-nav "next" arrow) could point
+// past the end of THEIR OWN batch's real schedule. See handler() for how
+// batch is resolved (student's own students.batch, or a guest's
+// previewed batch).
+async function fetchSchedule(supabase, range, batch) {
   const { data, error } = await supabase
     .from('schedule_tasks')
     .select('date, subject, task_text, position')
+    .eq('batch', batch)
     .gte('date', range.start)
     .lt('date', range.end)
     .order('date', { ascending: true })
@@ -52,6 +60,7 @@ async function fetchSchedule(supabase, range) {
   const { data: latestRow, error: latestError } = await supabase
     .from('schedule_tasks')
     .select('date')
+    .eq('batch', batch)
     .order('date', { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -192,10 +201,20 @@ async function fetchNeedsRename(supabase, email) {
   return { needsRename: !!(data && data.needs_rename), currentDisplayName: data ? data.display_name : null, gateTriesLeft: triesLeft };
 }
 
-async function fetchSubjectProgress(supabase, email) {
+// batch (added 2026-09-28) — this is a genuine second copy of
+// subject-progress.js's own logic, embedded here for the page-load
+// batch fetch; it was missed in the first batch-scoping pass (only the
+// standalone subject-progress.js file, called separately after a task
+// toggle, was scoped) — a real gap, caught on review, not by design.
+// Always the student's REAL batch (never a scouted preview one, see
+// handler()'s own scheduleBatch/realBatch split) — subject progress is
+// real, earned progress, not something that should shift just because
+// a student is currently browsing a different batch's calendar.
+async function fetchSubjectProgress(supabase, email, batch) {
   const { data: scheduled, error: schedErr } = await supabase
     .from('schedule_tasks')
-    .select('date, subject, task_text');
+    .select('date, subject, task_text')
+    .eq('batch', batch);
   if (schedErr) throw new Error(schedErr.message);
 
   const { data: completed, error: progErr } = await supabase
@@ -275,25 +294,78 @@ export async function handler(event) {
 
   const supabase = getSupabase();
 
+  // realBatch: the student's own actual, assigned batch — authoritative
+  // for streak/subjectProgress/task-completion, resolved server-side
+  // from their own row, never trusted from the client (a student's real
+  // batch only ever changes via migrate-batch.js's own explicit,
+  // confirmed action). A guest has no row to resolve from, so realBatch
+  // is meaningless for them — it's just set equal to scheduleBatch.
+  //
+  // scheduleBatch: which batch's CALENDAR to actually render — normally
+  // the same as realBatch, but a REGISTERED student can "scout" a
+  // different batch's schedule read-only (progress.js's batch dropdown,
+  // sent as previewBatch) without that touching anything about their
+  // real account. A guest has no realBatch to differ from, so their own
+  // `batch` param (unchanged from before) IS the schedule batch.
+  //
+  // Best-effort, wrapped in its own try/catch rather than failing the
+  // whole request — a pre-migration "column does not exist" (batch not
+  // added to students yet) must never 500 this endpoint, the single
+  // biggest one on the page, just to resolve a value that safely
+  // defaults to 'C' anyway.
+  let realBatch = 'C';
+  let scheduleBatch = 'C';
+  if (email) {
+    // supabase-js returns { data, error } rather than throwing, so the
+    // fault-tolerance here is a plain error check, not try/catch.
+    const { data: studentRow, error: batchErr } = await supabase.from('students').select('batch').eq('email', email).maybeSingle();
+    if (!batchErr && studentRow && studentRow.batch) realBatch = studentRow.batch;
+    scheduleBatch = realBatch;
+    const previewBatch = String(event.queryStringParameters?.previewBatch || '').trim();
+    if (previewBatch) scheduleBatch = previewBatch;
+  } else {
+    const previewBatch = String(event.queryStringParameters?.batch || '').trim();
+    if (previewBatch) scheduleBatch = previewBatch;
+    realBatch = scheduleBatch;
+  }
+  // Only a registered student can genuinely "scout" — a guest's
+  // scheduleBatch and realBatch are set equal above by construction.
+  const isScouting = !!email && scheduleBatch !== realBatch;
+
   let schedule, progress;
   try {
     // schedule and (if applicable) progress must still fail the whole
     // request on error — no client-side .catch() covered these before.
     [schedule, progress] = await Promise.all([
-      fetchSchedule(supabase, range),
-      email ? fetchProgress(supabase, email, range) : Promise.resolve(null),
+      fetchSchedule(supabase, range, scheduleBatch),
+      // Suppressed while scouting a different batch — task_progress has
+      // no batch column (see schema.sql's own comment on it: email ->
+      // students.batch was meant to be sufficient disambiguation for a
+      // student who only ever sees their OWN batch's schedule). Showing
+      // it against a scouted, different batch risks a coincidental
+      // date/subject/task_text match rendering as falsely "completed" —
+      // scouting is meant to be a genuinely read-only look, never
+      // something that can show an inaccurate checkmark. Still shaped
+      // like fetchProgress's own real return value ({ progress: [] }),
+      // not bare null — progress.js's data.progress.progress read
+      // assumes that shape whenever state.student is truthy (which it
+      // still is while scouting), so a bare null here would throw.
+      email && !isScouting ? fetchProgress(supabase, email, range) : Promise.resolve(email ? { progress: [] } : null),
     ]);
   } catch (err) {
     return json(500, { error: err.message });
   }
 
   // Everything else degrades to its old client-side .catch() fallback
-  // instead of failing the whole response.
+  // instead of failing the whole response. streak/subjectProgress
+  // always use realBatch, never scheduleBatch — a student's actual,
+  // earned progress must never shift just because they're currently
+  // browsing a different batch's calendar.
   const [lastWeekLeaders, todayLeaders, streak, subjectProgress, pomoSettings, pomoSessions, pomoActive, hourlyActivity, liveCount, malpractice, needsRename] = await Promise.all([
     fetchLastWeekLeaders(supabase, email).catch(() => ({ leaders: [] })),
     fetchTodayLeaders(supabase, email).catch(() => ({ leaders: [] })),
     email ? fetchStreak(supabase, email).catch(() => ({ streak: null })) : Promise.resolve(null),
-    email ? fetchSubjectProgress(supabase, email).catch(() => ({ subjects: [] })) : Promise.resolve(null),
+    email ? fetchSubjectProgress(supabase, email, realBatch).catch(() => ({ subjects: [] })) : Promise.resolve(null),
     email ? fetchPomoSettings(supabase, email).catch(() => null) : Promise.resolve(null),
     email ? fetchPomoSessions(supabase, email).catch(() => null) : Promise.resolve(null),
     email ? fetchPomoActive(supabase, email).catch(() => null) : Promise.resolve(null),
