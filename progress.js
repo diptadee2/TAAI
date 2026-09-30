@@ -46,6 +46,19 @@
     { value: 'D', label: '120 Days - 70 Marks' },
   ];
 
+  // Shown in place of the schedule when the batch being viewed has no
+  // schedule loaded at all yet (tracker-data's latestMonth is null for
+  // it, e.g. "120 Days - 70 Marks" before its schedule arrives), rather
+  // than the month-specific "Nothing scheduled for <month> yet", which
+  // reads like a gap in an existing schedule. Disappears on its own the
+  // moment that batch's schedule is loaded via load-schedule.mjs.
+  function scheduleComingSoonHtml() {
+    var batch = effectiveScoutBatch();
+    var label = (BATCH_OPTIONS.filter(function (b) { return b.value === batch; })[0] || {}).label || ('Batch ' + batch);
+    return '<div class="schedule-coming-soon"><div class="schedule-coming-soon-title">Coming soon</div>' +
+      '<p>The schedule for <strong>' + escapeHtml(label) + '</strong> will show up here once it\'s ready.</p></div>';
+  }
+
   // Replaces the old hardcoded "TAAI BATCH C - MISSION IIT" <h1> — now
   // genuinely per-batch, on request ("make the current name - 180 DAYS
   // Batch C"). Used both on the registration screen (reading
@@ -183,7 +196,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-30-5';
+  var CLIENT_VERSION = '2026-09-30-6';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2552,7 +2565,7 @@
       if (todayDay) {
         html += renderTodayCard(todayDay, missedBefore.length, true);
       } else {
-        html += '<p class="center-note">Nothing scheduled for today.</p>';
+        html += state.latestScheduledMonth ? '<p class="center-note">Nothing scheduled for today.</p>' : scheduleComingSoonHtml();
       }
       html += '<div class="focus-divider"></div>';
       html += renderLeaderboardCard();
@@ -2588,7 +2601,9 @@
       });
 
       if (!state.days.length) {
-        html += '<p class="center-note">Nothing scheduled for ' + monthLabel(state.month) + ' yet.</p>';
+        html += state.latestScheduledMonth
+          ? '<p class="center-note">Nothing scheduled for ' + monthLabel(state.month) + ' yet.</p>'
+          : scheduleComingSoonHtml();
       }
 
       html += '</div>'; // main-col
