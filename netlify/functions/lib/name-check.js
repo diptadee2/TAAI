@@ -166,7 +166,7 @@ async function classifyWithClaude(apiKey, systemPrompt, userContent, tool = TOOL
 // matching, while an About is a short free-text sentence with its own
 // failure modes (targeting another student by name, self-promotion,
 // contact details). The Indian-language slur rules carry over in spirit.
-const ABOUT_SYSTEM_PROMPT = 'You review short "About" status texts (like a WhatsApp About line, max 80 characters) that students show beside their name on a public GATE exam-prep leaderboard used by students in India, mostly in their early-to-mid 20s. Keep it fun: motivational lines, jokes, memes, song/anime/movie quotes, study moods, emojis, and playful banter are all completely fine and must NOT be flagged. Flag the text only if it is genuinely inappropriate for a public educational site any student\'s parent or teacher might see: sexually explicit or suggestive content, hateful or slur-based content, harassment, insults or mockery aimed at another student or a real identifiable person, threats, encouragement of self-harm, promotion of cheating or piracy, or advertising/spam - including phone numbers, email addresses, social media handles, invite links, or any URL. This applies in ANY language: actively watch for offensive words in Hindi and other Indian languages, including Roman-script/Hinglish spellings, leetspeak, spacing tricks, and near-miss misspellings of a known slur - and never let capitalization or a casual style make a slur look more innocent. Common Hindi abuse abbreviations such as bsdk, bc, mc, bkl, mkc, tmkc, bhenchod/bsdk variants, and the like are abuse, not friendly banter - flag them even when mixed into an otherwise-motivational line like "bsdk padh le"; never invent an innocent expansion for such an abbreviation. When genuinely in doubt about harmless text, do NOT flag it.';
+const ABOUT_SYSTEM_PROMPT = 'You review short "About" status texts (like a WhatsApp About line, max 80 characters) that students show beside their name on a public GATE exam-prep leaderboard used by students in India, mostly in their early-to-mid 20s. Keep it fun: motivational lines, jokes, memes, song/anime/movie quotes, study moods, emojis, and playful banter are all completely fine and must NOT be flagged. Flag the text only if it is genuinely inappropriate for a public educational site any student\'s parent or teacher might see: sexually explicit or suggestive content, hateful or slur-based content, harassment, insults or mockery aimed at another student or a real identifiable person, threats, encouragement of self-harm, promotion of cheating or piracy, or advertising/spam - including phone numbers, email addresses, social media handles, invite links, or any URL. This applies in ANY language: actively watch for offensive words in Hindi and other Indian languages, including Roman-script/Hinglish spellings, leetspeak, spacing tricks, and near-miss misspellings of a known slur - and never let capitalization or a casual style make a slur look more innocent. Common Hindi abuse abbreviations such as bsdk, bc, mc, bkl, mkc, tmkc, bhenchod/bsdk variants, and the like are abuse, not friendly banter - flag them even when mixed into an otherwise-motivational line like "bsdk padh le"; never invent an innocent expansion for such an abbreviation. Also read the text backwards: a slur or abuse spelled in reverse (e.g. "ayituhc") is the same slur and must be flagged. When genuinely in doubt about harmless text, do NOT flag it.';
 
 const ABOUT_TOOL = {
   name: 'classify_name',
@@ -180,10 +180,30 @@ const ABOUT_TOOL = {
 // unlike every name path: an About is purely optional flair, so "can't
 // verify right now, try later" costs nothing, while the whole point of
 // this feature is that nothing reaches the board unreviewed.
-export async function checkAboutAppropriate(text) {
+// priorFlaggedAbout: the student's most recently rejected About, if any.
+// Same "give Claude the memory it's missing" idea as the name check's
+// priorFlaggedName: a softened re-try of a rejected joke can look harmless
+// on its own but isn't, given what came right before it.
+export async function checkAboutAppropriate(text, priorFlaggedAbout) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return { flagged: false, reason: 'ANTHROPIC_API_KEY not configured', skipped: true };
-  return classifyWithClaude(apiKey, ABOUT_SYSTEM_PROMPT, 'About text to review: ' + JSON.stringify(text), ABOUT_TOOL);
+  let userContent = 'About text to review: ' + JSON.stringify(text);
+  if (priorFlaggedAbout) {
+    userContent += '\n\nContext: this same student\'s previous About ' + JSON.stringify(priorFlaggedAbout) +
+      ' was rejected as inappropriate. If the new text is a softened or reworded continuation of the same joke, ' +
+      'theme, or target, flag it and say so. Otherwise judge it on its own merits; an unrelated new text should ' +
+      'not be flagged just because of that history.';
+  }
+  return classifyWithClaude(apiKey, ABOUT_SYSTEM_PROMPT, userContent, ABOUT_TOOL);
+}
+
+// What's checked must be exactly what's displayed: NFKC folds fullwidth
+// and other compatibility characters to plain ones, and invisible format
+// characters (zero-width spaces/joiners, direction marks, soft hyphens)
+// are removed, so they can't hide a word from the check or ride along
+// invisibly into the leaderboard.
+export function normalizeAboutText(s) {
+  return String(s || '').normalize('NFKC').replace(/[\p{Cf}\u00AD]/gu, '').replace(/\s+/g, ' ').trim();
 }
 
 // Fires check-name-background.js for (email, displayName) — used by

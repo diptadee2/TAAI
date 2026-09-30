@@ -1362,6 +1362,13 @@
   .leaderboard-about-chip { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: #2a2a33; border: 1px solid var(--line); border-radius: 10px 10px 10px 3px; padding: 4px 10px; font-size: 12.5px; font-weight: 500; color: var(--ink-dim); line-height: 1.35; cursor: default; }
   .leaderboard-about-chip:focus-visible { outline: 1px solid var(--pomo-g2, var(--purple)); outline-offset: 1px; }
   .leaderboard-row--me .leaderboard-about-chip { color: var(--ink); }
+  /* Today's Leaders: only the name text itself truncates, so a long name
+     can't clip the About icon or badge that follow it. */
+  #today-leaderboard-card .leaderboard-name { display: flex; align-items: center; }
+  #today-leaderboard-card .lb-name-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #today-leaderboard-card .leaderboard-about-icon, #today-leaderboard-card .leaderboard-effort-badge { flex-shrink: 0; }
+  .leaderboard-about-icon { display: inline-flex; align-items: center; justify-content: center; vertical-align: -1px; margin-left: 4px; color: var(--pomo-g2, var(--purple)); opacity: .85; cursor: pointer; border-radius: 4px; transition: opacity .15s ease; }
+  .leaderboard-about-icon:hover, .leaderboard-about-icon:focus-visible { opacity: 1; outline: none; }
   .leaderboard-about-add { background: transparent; border: 1px dashed var(--line); border-radius: 10px 10px 10px 3px; padding: 4px 10px; font-family: inherit; font-size: 12px; font-weight: 600; color: var(--ink-soft); cursor: pointer; transition: border-color .15s ease, color .15s ease; }
   .leaderboard-about-add:hover { border-color: var(--pomo-g2, var(--purple)); color: var(--ink); }
   .about-bubble { position: fixed; z-index: 9000; max-width: 260px; background: #2a2a33; color: var(--ink); border: 1px solid var(--line); border-radius: 12px 12px 12px 4px; padding: 8px 12px; font-size: 13px; line-height: 1.4; white-space: normal; overflow-wrap: anywhere; box-shadow: 0 8px 24px rgba(0,0,0,0.45); opacity: 0; pointer-events: none; transform: translateY(4px); transition: opacity .15s ease, transform .15s ease; }

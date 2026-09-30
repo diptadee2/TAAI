@@ -64,7 +64,7 @@ export async function fetchAllRows(buildQuery, pageSize = 1000) {
 // (old JS silently sending a request shape the new server no longer
 // accepts) doesn't stay stuck indefinitely waiting for someone to notice
 // and manually refresh.
-export const CLIENT_VERSION = '2026-10-01-2';
+export const CLIENT_VERSION = '2026-10-01-3';
 
 export function json(statusCode, body) {
   return {
@@ -496,6 +496,20 @@ export async function fetchAllTimeMinutesByEmail(supabase, emails) {
 // and reuses it here rather than querying it twice per poll); omitted,
 // this fetches its own, so every other caller stays a simple one-arg-
 // shorter call.
+// Best-effort About texts ({ email: text }) for leaderboard rows — its own
+// query, swallowing errors, so a missing column or hiccup only ever costs
+// the About bubbles, never the board (same pattern as the all-time lookup).
+export async function fetchAboutTextByEmail(supabase, emails) {
+  if (!emails || !emails.length) return {};
+  try {
+    const { data, error } = await supabase.from('students').select('email, about_text').in('email', emails).not('about_text', 'is', null);
+    if (error) return {};
+    return Object.fromEntries((data || []).map((r) => [r.email, r.about_text]));
+  } catch {
+    return {};
+  }
+}
+
 export async function fetchTodayLeaders(supabase, email, date, flaggedEmails) {
   const today = date || todayIST();
   const flagged = flaggedEmails || (await fetchFlaggedEmails(supabase));
@@ -541,12 +555,16 @@ export async function fetchTodayLeaders(supabase, email, date, flaggedEmails) {
   if (studentsError) throw new Error(studentsError.message);
 
   const nameByEmail = Object.fromEntries(students.map(s => [s.email, s.display_name]));
-  const allTimeMinutesByEmail = await fetchAllTimeMinutesByEmail(supabase, stats.map(s => s.email));
-  const liveStatusByEmail = await fetchLiveStatusByEmail(supabase, stats.map(s => s.email));
+  const [allTimeMinutesByEmail, liveStatusByEmail, aboutTextByEmail] = await Promise.all([
+    fetchAllTimeMinutesByEmail(supabase, stats.map(s => s.email)),
+    fetchLiveStatusByEmail(supabase, stats.map(s => s.email)),
+    fetchAboutTextByEmail(supabase, email ? stats.map(s => s.email).concat([email]) : stats.map(s => s.email)),
+  ]);
   const leaders = stats.map(s => ({
     display_name: nameByEmail[s.email] || 'Anonymous',
     total_minutes: s.total_minutes,
     all_time_minutes: allTimeMinutesByEmail[s.email] || 0,
+    about: aboutTextByEmail[s.email] || null,
     is_me: !!email && s.email === email,
     ...liveStatusByEmail[s.email],
   }));
@@ -560,7 +578,7 @@ export async function fetchTodayLeaders(supabase, email, date, flaggedEmails) {
     if (viewerIndex !== -1) {
       const viewerLiveStatus = await fetchLiveStatusByEmail(supabase, [email]);
       const viewerAllTime = await fetchAllTimeMinutesByEmail(supabase, [email]);
-      viewerRank = { rank: viewerIndex + 1, total_minutes: sorted[viewerIndex].total_minutes, all_time_minutes: viewerAllTime[email] || 0, ...viewerLiveStatus[email] };
+      viewerRank = { rank: viewerIndex + 1, total_minutes: sorted[viewerIndex].total_minutes, all_time_minutes: viewerAllTime[email] || 0, about: aboutTextByEmail[email] || null, ...viewerLiveStatus[email] };
     }
   }
 

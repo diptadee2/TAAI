@@ -21,7 +21,7 @@
 // other student-write endpoint here (deliberate open-tier decision —
 // see CLAUDE.md).
 import { getSupabase, json, todayIST } from './lib/supabase.js';
-import { checkAboutAppropriate } from './lib/name-check.js';
+import { checkAboutAppropriate, normalizeAboutText } from './lib/name-check.js';
 
 const ABOUT_MAX_LENGTH = 80;
 const ABOUT_CHECK_LIMIT = 3;
@@ -37,9 +37,10 @@ export async function handler(event) {
   try { body = JSON.parse(event.body || '{}'); } catch { return json(400, { error: 'invalid JSON' }); }
 
   const email = String(body.email || '').trim().toLowerCase();
-  // Collapse runs of whitespace/newlines — this renders on one short
-  // bubble line, never as multi-line text.
-  const about = String(body.about || '').replace(/\s+/g, ' ').trim();
+  // Normalized (whitespace collapsed, invisible characters stripped,
+  // compatibility characters folded) BEFORE the check, and this exact
+  // string is what gets saved, so Claude reviews precisely what shows.
+  const about = normalizeAboutText(body.about);
   if (!email) return json(400, { error: 'email is required' });
   if (about.length > ABOUT_MAX_LENGTH) return json(400, { error: 'Keep it under ' + ABOUT_MAX_LENGTH + ' characters.' });
 
@@ -77,9 +78,17 @@ export async function handler(event) {
     return json(400, { error: 'Too many attempts this month. You can try again from the 1st.', canChange: false });
   }
 
+  // Best-effort, its own query (a column added after the rest): the last
+  // rejected About, so a softened re-try of it is judged in context.
+  let priorFlagged = null;
+  try {
+    const { data: prior } = await supabase.from('students').select('about_last_flagged').eq('email', email).maybeSingle();
+    priorFlagged = (prior && prior.about_last_flagged) || null;
+  } catch (e) { /* column not migrated yet: no context, still checked */ }
+
   let result;
   try {
-    result = await checkAboutAppropriate(about);
+    result = await checkAboutAppropriate(about, priorFlagged);
   } catch (e) {
     console.error('set-about: Claude check failed for', email, e);
     return json(503, { error: 'Couldn\'t check that right now. Please try again in a bit.' });
@@ -95,6 +104,8 @@ export async function handler(event) {
       .from('students')
       .update({ about_check_count: checksUsed, about_check_month: month })
       .eq('email', email);
+    // Separate write, so a not-yet-migrated column can't block the count above.
+    try { await supabase.from('students').update({ about_last_flagged: about }).eq('email', email); } catch (e) { /* non-critical */ }
     return json(400, {
       error: 'That About isn\'t allowed here. Please try something different.',
       triesLeft: Math.max(0, ABOUT_CHECK_LIMIT - checksUsed),

@@ -237,7 +237,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-01-2';
+  var CLIENT_VERSION = '2026-10-01-3';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2113,7 +2113,7 @@
       var target = e.target.closest && e.target.closest('.leaderboard-name[data-alltime]');
       // The About bubble icon sits inside the name span — hovering it
       // shows its own bubble instead, never both stacked on top of each other.
-      if (target && e.target.closest('.leaderboard-about-chip, [data-about-hint]')) { hideAllTimeTooltip(); return; }
+      if (target && e.target.closest('.leaderboard-about-chip, .leaderboard-about-icon, [data-about-hint]')) { hideAllTimeTooltip(); return; }
       if (target) showAllTimeTooltip(target);
     });
     document.addEventListener('mouseout', function (e) {
@@ -2221,7 +2221,7 @@
       return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (l.is_me ? ' leaderboard-row--me' : '') + (l.is_live ? ' leaderboard-row--live' : '') + leaderboardRowEnterAttrs(animate, i) + '">' +
         '<span class="leaderboard-rank">' + rank + '</span>' +
         rankMovementHtml(i + 1) +
-        '<span class="leaderboard-name"' + allTimeTitleAttr(l.all_time_minutes) + '>' + liveDotHtml(l.is_live) + escapeHtml(l.display_name) + highestEffortBadgeHtml(l.all_time_minutes) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
+        '<span class="leaderboard-name"' + allTimeTitleAttr(l.all_time_minutes) + '>' + liveDotHtml(l.is_live) + '<span class="lb-name-text">' + escapeHtml(l.display_name) + '</span>' + aboutIconHtml(l.about) + highestEffortBadgeHtml(l.all_time_minutes) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
         '<span class="leaderboard-time">' + formatHoursDecimal(l.total_minutes) + '</span>' +
         '</div>';
     }).join('');
@@ -2230,7 +2230,7 @@
         '<div class="leaderboard-row leaderboard-row--me' + (state.todayViewerRank.is_live ? ' leaderboard-row--live' : '') + leaderboardRowEnterAttrs(animate, leaders.length) + '">' +
         '<span class="leaderboard-rank">' + state.todayViewerRank.rank + '</span>' +
         rankMovementHtml(state.todayViewerRank.rank) +
-        '<span class="leaderboard-name"' + allTimeTitleAttr(state.todayViewerRank.all_time_minutes) + '>' + liveDotHtml(state.todayViewerRank.is_live) + 'You' + highestEffortBadgeHtml(state.todayViewerRank.all_time_minutes) + '</span>' +
+        '<span class="leaderboard-name"' + allTimeTitleAttr(state.todayViewerRank.all_time_minutes) + '>' + liveDotHtml(state.todayViewerRank.is_live) + 'You' + aboutIconHtml(state.todayViewerRank.about) + highestEffortBadgeHtml(state.todayViewerRank.all_time_minutes) + '</span>' +
         '<span class="leaderboard-time">' + formatHoursDecimal(state.todayViewerRank.total_minutes) + '</span>' +
         '</div>';
     }
@@ -4550,6 +4550,14 @@
     return '<span class="leaderboard-about"></span>';
   }
 
+  // Compact form for Today's Leaders (a narrow card with no room for an
+  // About column): a small chat icon after the name; hovering or tapping
+  // it shows the text in the same bubble the weekly board uses.
+  function aboutIconHtml(text) {
+    if (!text) return '';
+    return ' <span class="leaderboard-about-icon" role="button" tabindex="0" aria-label="About: ' + escapeAttr(text) + '" data-about="' + escapeAttr(text) + '">' + ABOUT_ICON_SVG + '</span>';
+  }
+
   // Shown on hover of anything that opens the editor — the once-a-month
   // rule, stated at the moment someone's about to use it.
   function aboutChangeHint() {
@@ -4592,24 +4600,24 @@
   }
   function setupAboutBubble() {
     document.addEventListener('mouseover', function (e) {
-      var t = e.target.closest && e.target.closest('.leaderboard-about-chip, [data-about-hint]');
+      var t = e.target.closest && e.target.closest('.leaderboard-about-chip, .leaderboard-about-icon, [data-about-hint]');
       if (t) showAboutBubble(t);
     });
     document.addEventListener('mouseout', function (e) {
-      var t = e.target.closest && e.target.closest('.leaderboard-about-chip, [data-about-hint]');
+      var t = e.target.closest && e.target.closest('.leaderboard-about-chip, .leaderboard-about-icon, [data-about-hint]');
       if (t && !t.contains(e.relatedTarget)) hideAboutBubble();
     });
     document.addEventListener('focusin', function (e) {
-      var t = e.target.closest && e.target.closest('.leaderboard-about-chip, [data-about-hint]');
+      var t = e.target.closest && e.target.closest('.leaderboard-about-chip, .leaderboard-about-icon, [data-about-hint]');
       if (t) showAboutBubble(t);
     });
     document.addEventListener('focusout', function (e) {
-      if (e.target.closest && e.target.closest('.leaderboard-about-chip, [data-about-hint]')) hideAboutBubble();
+      if (e.target.closest && e.target.closest('.leaderboard-about-chip, .leaderboard-about-icon, [data-about-hint]')) hideAboutBubble();
     });
     // Tap/click toggles — a touch device has no hover.
     document.addEventListener('click', function (e) {
       if (e.target.closest && e.target.closest('#about-edit-btn, .leaderboard-about-add')) { openAboutEditor(); return; }
-      var t = e.target.closest && e.target.closest('.leaderboard-about-chip');
+      var t = e.target.closest && e.target.closest('.leaderboard-about-chip, .leaderboard-about-icon');
       if (t) {
         if (aboutBubbleAnchor === t && aboutBubbleEl && aboutBubbleEl.classList.contains('visible')) hideAboutBubble();
         else showAboutBubble(t);

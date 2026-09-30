@@ -988,3 +988,7 @@ ALTER TABLE students ADD COLUMN IF NOT EXISTS about_text          TEXT;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS about_changed_month TEXT;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS about_check_count   INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS about_check_month   TEXT;
+-- The student's most recently rejected About text, passed to Claude as
+-- context on their next attempt so a softened re-try of the same joke is
+-- caught (mirrors last_flagged_name for display names). Never cleared.
+ALTER TABLE students ADD COLUMN IF NOT EXISTS about_last_flagged TEXT;
