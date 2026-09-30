@@ -10,6 +10,23 @@
   var PROGRAM_START_DATE = '2026-08-01';
   var PROGRAM_LENGTH_DAYS = 180;
 
+  // Per-batch "Day X of N" program. The newer "120 Days - 70 Marks" batch
+  // starts its own Day 1 the day the original 180-day program has exactly
+  // 120 days left (counting that day), direct request: "start the
+  // countdown when the original count down reaches 120 days and the
+  // denominator should be 120". Derived from the original's start
+  // rather than hardcoded, so both programs always end on the same final
+  // day (Day 180 = Day 120 = 2027-01-27).
+  var BATCH_PROGRAMS = {
+    C: { start: PROGRAM_START_DATE, length: PROGRAM_LENGTH_DAYS },
+    D: { start: addDaysIso(PROGRAM_START_DATE, PROGRAM_LENGTH_DAYS - 120), length: 120 },
+  };
+  function addDaysIso(iso, n) {
+    var d = new Date(iso + 'T00:00:00Z');
+    d.setUTCDate(d.getUTCDate() + n);
+    return d.toISOString().slice(0, 10);
+  }
+
   // Launch floor — the schedule starts Aug 1, so "today" (and the default
   // opening month) is clamped up to Aug 1 for anyone visiting before then,
   // instead of showing a real "today" with nothing scheduled yet. Self-
@@ -209,7 +226,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-30-7';
+  var CLIENT_VERSION = '2026-09-30-8';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2292,10 +2309,12 @@
   // the schedule technically starts.
   function renderProgramDayBadge() {
     var today = realTodayIso();
-    var dayNum = Math.max(1, Math.round((new Date(today) - new Date(PROGRAM_START_DATE)) / 864e5) + 1);
+    var program = BATCH_PROGRAMS[effectiveScoutBatch()] || BATCH_PROGRAMS.C;
+    var dayNum = Math.max(1, Math.round((new Date(today) - new Date(program.start)) / 864e5) + 1);
+    dayNum = Math.min(dayNum, program.length);
     return '<div class="program-day-badge fade-in">' +
       '<div class="program-day-num">' + dayNum + '</div>' +
-      '<div class="program-day-label">Day of ' + PROGRAM_LENGTH_DAYS + '</div></div>';
+      '<div class="program-day-label">Day of ' + program.length + '</div></div>';
   }
 
   // Re-fetches the global per-subject totals (a tick anywhere in the
