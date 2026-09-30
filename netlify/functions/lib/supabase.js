@@ -294,8 +294,32 @@ export function notInEmailList(emails) {
 // tradeoff already accepted for the daily post's fetchTodayLeaders call.
 export async function fetchLastWeekLeaders(supabase, email) {
   const weekStart = weekBefore(weekStartIST());
-  const flaggedEmails = await fetchFlaggedEmails(supabase);
+  const prevWeekStart = weekBefore(weekStart);
+  // Parallelized 2026-10-01: this used to run up to ~10 Supabase round
+  // trips strictly one after another, and each one is expensive from a
+  // Netlify Function (the functions run far from the database), so this
+  // single helper was most of tracker-data's 3-5s. Now three waves, each a
+  // Promise.all of queries that don't depend on each other. Output is
+  // byte-identical to the sequential version (verified side by side
+  // against production data before shipping).
+  //
+  // Wave 1: nothing here depends on anything else.
+  const [flaggedEmails, prevWeekResult, viewerStatsResult] = await Promise.all([
+    fetchFlaggedEmails(supabase),
+    supabase
+      .from('pomodoro_stats')
+      .select('email, total_minutes')
+      .eq('week_start', prevWeekStart)
+      .order('total_minutes', { ascending: false }),
+    email
+      ? supabase.from('pomodoro_stats').select('total_minutes').eq('email', email).eq('week_start', weekStart).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+  ]);
   const flaggedFilter = notInEmailList(flaggedEmails);
+  if (prevWeekResult.error) throw new Error(prevWeekResult.error.message);
+  const prevRankByEmail = Object.fromEntries(prevWeekResult.data.map((s, i) => [s.email, i + 1]));
+
+  // Wave 2: needs the flagged filter (and the viewer's own minutes).
   let statsQuery = supabase
     .from('pomodoro_stats')
     .select('email, total_minutes')
@@ -303,39 +327,39 @@ export async function fetchLastWeekLeaders(supabase, email) {
     .order('total_minutes', { ascending: false })
     .limit(5);
   if (flaggedFilter) statsQuery = statsQuery.not('email', 'in', flaggedFilter);
-  const { data: stats, error: statsError } = await statsQuery;
+  const viewerEligible = !!email && !flaggedEmails.has(email);
+  const viewerStats = viewerEligible ? viewerStatsResult.data : null;
+  let countQuery = null;
+  if (viewerStats) {
+    countQuery = supabase
+      .from('pomodoro_stats')
+      .select('*', { count: 'exact', head: true })
+      .eq('week_start', weekStart)
+      .gt('total_minutes', viewerStats.total_minutes);
+    if (flaggedFilter) countQuery = countQuery.not('email', 'in', flaggedFilter);
+  }
+  const [statsResult, countResult] = await Promise.all([
+    statsQuery,
+    countQuery || Promise.resolve({ count: null, error: null }),
+  ]);
+  const { data: stats, error: statsError } = statsResult;
   if (statsError) throw new Error(statsError.message);
   if (!stats.length) return { weekStart, leaders: [], viewerRank: null };
+  if (viewerEligible && viewerStatsResult.error) throw new Error(viewerStatsResult.error.message);
 
-  const { data: students, error: studentsError } = await supabase
-    .from('students')
-    .select('email, display_name')
-    .in('email', stats.map(s => s.email));
-  if (studentsError) throw new Error(studentsError.message);
+  // Wave 3: per-row details for the top 5, plus the viewer in the same
+  // lookups (no extra round trips for their own gap row).
+  const topEmails = stats.map(s => s.email);
+  const lookupEmails = email && !topEmails.includes(email) ? topEmails.concat([email]) : topEmails;
+  const [studentsResult, allTimeMinutesByEmail, liveStatusByEmail] = await Promise.all([
+    supabase.from('students').select('email, display_name').in('email', topEmails),
+    fetchAllTimeMinutesByEmail(supabase, lookupEmails),
+    fetchLiveStatusByEmail(supabase, lookupEmails),
+  ]);
+  if (studentsResult.error) throw new Error(studentsResult.error.message);
+  const nameByEmail = Object.fromEntries(studentsResult.data.map(s => [s.email, s.display_name]));
 
-  // Previous-week rank, for the same up/down arrow the top-20 board
-  // shows (rankMovementHtml in progress.js, reused as-is here) — except
-  // "previous" means the week before *this* week's top-5 snapshot,
-  // rather than the last poll. A full ranked snapshot of that earlier
-  // week (not just these 5 emails' own rows), since a leader's previous
-  // rank can be well outside that week's own top 5 — someone who jumped
-  // from #12 to #3 should still show as a big rise, not "no data".
-  // Computed in JS from one query rather than a per-leader rank-count
-  // query, since this whole function only ever runs on page load / an
-  // explicit champions-card refresh, not on a poll.
-  const prevWeekStart = weekBefore(weekStart);
-  const { data: prevWeekStats, error: prevWeekError } = await supabase
-    .from('pomodoro_stats')
-    .select('email, total_minutes')
-    .eq('week_start', prevWeekStart)
-    .order('total_minutes', { ascending: false });
-  if (prevWeekError) throw new Error(prevWeekError.message);
-  const prevRankByEmail = Object.fromEntries(prevWeekStats.map((s, i) => [s.email, i + 1]));
-
-  const nameByEmail = Object.fromEntries(students.map(s => [s.email, s.display_name]));
-  const allTimeMinutesByEmail = await fetchAllTimeMinutesByEmail(supabase, stats.map(s => s.email));
-  const liveStatusByEmail = await fetchLiveStatusByEmail(supabase, stats.map(s => s.email));
-  const leaders = stats.map((s, i) => ({
+  const leaders = stats.map((s) => ({
     display_name: nameByEmail[s.email] || 'Anonymous',
     total_minutes: s.total_minutes,
     all_time_minutes: allTimeMinutesByEmail[s.email] || 0,
@@ -344,39 +368,13 @@ export async function fetchLastWeekLeaders(supabase, email) {
     ...liveStatusByEmail[s.email],
   }));
 
-  // Same idea as pomodoro-leaderboard.js's viewerRank — a student outside
-  // last week's top 5 otherwise has no way to see where they actually
-  // stood, since this query never fetches their row at all.
+  // A student outside last week's top 5 otherwise has no way to see where
+  // they actually stood.
   let viewerRank = null;
   const viewerInTop = leaders.some(l => l.is_me);
-  // A flagged viewer sees no pinned rank of their own either, not just
-  // exclusion from the visible rows — same "hidden until resolved,
-  // including from themselves" rule applied consistently, matching the
-  // simplest reading of the original ask rather than carving out a
-  // private-only exception.
-  if (email && !viewerInTop && !flaggedEmails.has(email)) {
-    const { data: viewerStats, error: viewerError } = await supabase
-      .from('pomodoro_stats')
-      .select('total_minutes')
-      .eq('email', email)
-      .eq('week_start', weekStart)
-      .maybeSingle();
-    if (viewerError) throw new Error(viewerError.message);
-
-    if (viewerStats) {
-      let countQuery = supabase
-        .from('pomodoro_stats')
-        .select('*', { count: 'exact', head: true })
-        .eq('week_start', weekStart)
-        .gt('total_minutes', viewerStats.total_minutes);
-      if (flaggedFilter) countQuery = countQuery.not('email', 'in', flaggedFilter);
-      const { count, error: countError } = await countQuery;
-      if (countError) throw new Error(countError.message);
-
-      const viewerLiveStatus = await fetchLiveStatusByEmail(supabase, [email]);
-      const viewerAllTime = await fetchAllTimeMinutesByEmail(supabase, [email]);
-      viewerRank = { rank: (count || 0) + 1, total_minutes: viewerStats.total_minutes, all_time_minutes: viewerAllTime[email] || 0, previous_week_rank: prevRankByEmail[email] ?? null, ...viewerLiveStatus[email] };
-    }
+  if (viewerStats && !viewerInTop) {
+    if (countResult.error) throw new Error(countResult.error.message);
+    viewerRank = { rank: (countResult.count || 0) + 1, total_minutes: viewerStats.total_minutes, all_time_minutes: allTimeMinutesByEmail[email] || 0, previous_week_rank: prevRankByEmail[email] ?? null, ...liveStatusByEmail[email] };
   }
 
   return { weekStart, leaders, viewerRank };
@@ -512,33 +510,13 @@ export async function fetchAboutTextByEmail(supabase, emails) {
 
 export async function fetchTodayLeaders(supabase, email, date, flaggedEmails) {
   const today = date || todayIST();
-  const flagged = flaggedEmails || (await fetchFlaggedEmails(supabase));
-  // Fetches every row for today (not just LIMIT 10) and ranks in JS —
-  // real bug this replaced, caught by direct report (a student's own
-  // pinned rank showed the same number already visible on someone else
-  // in the top 10): the old query took the top 10 with no secondary
-  // sort, then separately gave a viewer outside the top 10 a rank of
-  // "how many people have STRICTLY more minutes, plus 1" — a tie-aware
-  // formula that hands every tied student the identical rank number
-  // (confirmed against production: 8 students tied at exactly 120
-  // minutes all outside the literal top 2 of that tie would all have
-  // computed to "rank 9"), while the visible list's own rank numbers
-  // were just its untied array position (9, 10, ...). Two different
-  // ranking conventions for the same leaderboard, guaranteed to collide
-  // whenever a tie spans the top-10 cutoff. Sorting all of today's rows
-  // once, with a deterministic secondary tiebreak (email, so two
-  // students on equal minutes always land in the same fixed order
-  // instead of whatever unspecified order Postgres happened to return),
-  // and using that ONE array's index for both what's shown in the top
-  // 10 and the viewer's own pinned rank guarantees the two can never
-  // disagree again. pomo_daily_sessions is naturally bounded to (active
-  // students today) — small enough to fetch in full regardless of total
-  // student count, and actually fewer round-trips than the two extra
-  // queries (a single-row lookup, then a count) this replaced.
-  const { data: allStats, error: statsError } = await supabase
-    .from('pomo_daily_sessions')
-    .select('email, total_minutes')
-    .eq('date', today);
+  // Parallelized 2026-10-01 (see fetchLastWeekLeaders for why): two waves
+  // instead of up to six sequential round trips. Output unchanged.
+  const [flagged, statsResult] = await Promise.all([
+    flaggedEmails ? Promise.resolve(flaggedEmails) : fetchFlaggedEmails(supabase),
+    supabase.from('pomo_daily_sessions').select('email, total_minutes').eq('date', today),
+  ]);
+  const { data: allStats, error: statsError } = statsResult;
   if (statsError) throw new Error(statsError.message);
   if (!allStats.length) return { date: today, leaders: [], viewerRank: null };
 
@@ -548,18 +526,19 @@ export async function fetchTodayLeaders(supabase, email, date, flaggedEmails) {
     .sort((a, b) => b.total_minutes - a.total_minutes || (a.email < b.email ? -1 : a.email > b.email ? 1 : 0));
   const stats = sorted.slice(0, 10);
 
-  const { data: students, error: studentsError } = await supabase
-    .from('students')
-    .select('email, display_name')
-    .in('email', stats.map(s => s.email));
-  if (studentsError) throw new Error(studentsError.message);
-
-  const nameByEmail = Object.fromEntries(students.map(s => [s.email, s.display_name]));
-  const [allTimeMinutesByEmail, liveStatusByEmail, aboutTextByEmail] = await Promise.all([
-    fetchAllTimeMinutesByEmail(supabase, stats.map(s => s.email)),
-    fetchLiveStatusByEmail(supabase, stats.map(s => s.email)),
-    fetchAboutTextByEmail(supabase, email ? stats.map(s => s.email).concat([email]) : stats.map(s => s.email)),
+  // One wave for every per-row lookup, the viewer's own included, so their
+  // gap row needs no extra round trips.
+  const topEmails = stats.map(s => s.email);
+  const lookupEmails = email && !topEmails.includes(email) ? topEmails.concat([email]) : topEmails;
+  const [studentsResult, allTimeMinutesByEmail, liveStatusByEmail, aboutTextByEmail] = await Promise.all([
+    supabase.from('students').select('email, display_name').in('email', topEmails),
+    fetchAllTimeMinutesByEmail(supabase, lookupEmails),
+    fetchLiveStatusByEmail(supabase, lookupEmails),
+    fetchAboutTextByEmail(supabase, lookupEmails),
   ]);
+  if (studentsResult.error) throw new Error(studentsResult.error.message);
+  const nameByEmail = Object.fromEntries(studentsResult.data.map(s => [s.email, s.display_name]));
+
   const leaders = stats.map(s => ({
     display_name: nameByEmail[s.email] || 'Anonymous',
     total_minutes: s.total_minutes,
@@ -576,9 +555,7 @@ export async function fetchTodayLeaders(supabase, email, date, flaggedEmails) {
   if (email && !viewerInTop) {
     const viewerIndex = sorted.findIndex(s => s.email === email);
     if (viewerIndex !== -1) {
-      const viewerLiveStatus = await fetchLiveStatusByEmail(supabase, [email]);
-      const viewerAllTime = await fetchAllTimeMinutesByEmail(supabase, [email]);
-      viewerRank = { rank: viewerIndex + 1, total_minutes: sorted[viewerIndex].total_minutes, all_time_minutes: viewerAllTime[email] || 0, about: aboutTextByEmail[email] || null, ...viewerLiveStatus[email] };
+      viewerRank = { rank: viewerIndex + 1, total_minutes: sorted[viewerIndex].total_minutes, all_time_minutes: allTimeMinutesByEmail[email] || 0, about: aboutTextByEmail[email] || null, ...liveStatusByEmail[email] };
     }
   }
 

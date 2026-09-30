@@ -313,6 +313,23 @@ export async function handler(event) {
   // added to students yet) must never 500 this endpoint, the single
   // biggest one on the page, just to resolve a value that safely
   // defaults to 'C' anyway.
+  // Everything that doesn't depend on the student's batch starts right
+  // away, in parallel with the batch lookup below (2026-10-01). It used to
+  // wait for the batch lookup AND the schedule load first, which added two
+  // extra round trips to the critical path of every page load.
+  const independentP = Promise.all([
+    fetchLastWeekLeaders(supabase, email).catch(() => ({ leaders: [] })),
+    fetchTodayLeaders(supabase, email).catch(() => ({ leaders: [] })),
+    email ? fetchStreak(supabase, email).catch(() => ({ streak: null })) : Promise.resolve(null),
+    email ? fetchPomoSettings(supabase, email).catch(() => null) : Promise.resolve(null),
+    email ? fetchPomoSessions(supabase, email).catch(() => null) : Promise.resolve(null),
+    email ? fetchPomoActive(supabase, email).catch(() => null) : Promise.resolve(null),
+    fetchHourlyActivity(supabase).catch(() => ({ hours: [] })),
+    fetchLiveCount(supabase).catch(() => ({ count: 0, maxCount: 0 })),
+    email ? fetchMalpracticeStatus(supabase, email).catch(() => ({ incidentCount: 0, frozenUntil: null, warningAckCount: 0 })) : Promise.resolve(null),
+    email ? fetchNeedsRename(supabase, email).catch(() => ({ needsRename: false })) : Promise.resolve(null),
+  ]);
+
   let realBatch = 'C';
   let scheduleBatch = 'C';
   if (email) {
@@ -332,11 +349,11 @@ export async function handler(event) {
   // scheduleBatch and realBatch are set equal above by construction.
   const isScouting = !!email && scheduleBatch !== realBatch;
 
-  let schedule, progress;
+  let schedule, progress, subjectProgress;
   try {
     // schedule and (if applicable) progress must still fail the whole
     // request on error — no client-side .catch() covered these before.
-    [schedule, progress] = await Promise.all([
+    [schedule, progress, subjectProgress] = await Promise.all([
       fetchSchedule(supabase, range, scheduleBatch),
       // Suppressed while scouting a different batch — task_progress has
       // no batch column (see schema.sql's own comment on it: email ->
@@ -351,6 +368,7 @@ export async function handler(event) {
       // assumes that shape whenever state.student is truthy (which it
       // still is while scouting), so a bare null here would throw.
       email && !isScouting ? fetchProgress(supabase, email, range) : Promise.resolve(email ? { progress: [] } : null),
+      email ? fetchSubjectProgress(supabase, email, realBatch).catch(() => ({ subjects: [] })) : Promise.resolve(null),
     ]);
   } catch (err) {
     return json(500, { error: err.message });
@@ -361,31 +379,8 @@ export async function handler(event) {
   // always use realBatch, never scheduleBatch — a student's actual,
   // earned progress must never shift just because they're currently
   // browsing a different batch's calendar.
-  const [lastWeekLeaders, todayLeaders, streak, subjectProgress, pomoSettings, pomoSessions, pomoActive, hourlyActivity, liveCount, malpractice, needsRename] = await Promise.all([
-    fetchLastWeekLeaders(supabase, email).catch(() => ({ leaders: [] })),
-    fetchTodayLeaders(supabase, email).catch(() => ({ leaders: [] })),
-    email ? fetchStreak(supabase, email).catch(() => ({ streak: null })) : Promise.resolve(null),
-    email ? fetchSubjectProgress(supabase, email, realBatch).catch(() => ({ subjects: [] })) : Promise.resolve(null),
-    email ? fetchPomoSettings(supabase, email).catch(() => null) : Promise.resolve(null),
-    email ? fetchPomoSessions(supabase, email).catch(() => null) : Promise.resolve(null),
-    email ? fetchPomoActive(supabase, email).catch(() => null) : Promise.resolve(null),
-    // Batch-wide, not per-student — fetched unconditionally regardless of
-    // guest/student, same as schedule/lastWeekLeaders/todayLeaders above.
-    fetchHourlyActivity(supabase).catch(() => ({ hours: [] })),
-    // Just the initial value — live-count.js is polled separately for
-    // updates after this (see startLiveCountPoll in progress.js).
-    fetchLiveCount(supabase).catch(() => ({ count: 0, maxCount: 0 })),
-    // Non-critical — a hiccup here (or, pre-migration, the columns simply
-    // not existing yet) must never block the rest of the page; a guest
-    // has no account to freeze, hence null rather than a fetch at all.
-    email ? fetchMalpracticeStatus(supabase, email).catch(() => ({ incidentCount: 0, frozenUntil: null, warningAckCount: 0 })) : Promise.resolve(null),
-    // A guest has no account to flag, hence null rather than a fetch —
-    // same reasoning as malpractice just above.
-    email ? fetchNeedsRename(supabase, email).catch(() => ({ needsRename: false })) : Promise.resolve(null),
-  ]);
+  const [lastWeekLeaders, todayLeaders, streak, pomoSettings, pomoSessions, pomoActive, hourlyActivity, liveCount, malpractice, needsRename] = await independentP;
 
-  // studentBatch: the registered student's real batch, so the client can
-  // correct a stale or missing batch in its cookie (null for a guest).
   const studentBatch = email ? realBatch : null;
   return json(200, { schedule, lastWeekLeaders, todayLeaders, progress, streak, subjectProgress, pomoSettings, pomoSessions, pomoActive, hourlyActivity, liveCount, malpractice, needsRename, studentBatch });
 }
