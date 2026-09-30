@@ -384,5 +384,8 @@ export async function handler(event) {
     email ? fetchNeedsRename(supabase, email).catch(() => ({ needsRename: false })) : Promise.resolve(null),
   ]);
 
-  return json(200, { schedule, lastWeekLeaders, todayLeaders, progress, streak, subjectProgress, pomoSettings, pomoSessions, pomoActive, hourlyActivity, liveCount, malpractice, needsRename });
+  // studentBatch: the registered student's real batch, so the client can
+  // correct a stale or missing batch in its cookie (null for a guest).
+  const studentBatch = email ? realBatch : null;
+  return json(200, { schedule, lastWeekLeaders, todayLeaders, progress, streak, subjectProgress, pomoSettings, pomoSessions, pomoActive, hourlyActivity, liveCount, malpractice, needsRename, studentBatch });
 }

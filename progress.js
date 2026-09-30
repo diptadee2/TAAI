@@ -177,7 +177,7 @@
     // (e.g. "120 Days - 70 Marks") — phrased as "the schedule for X"
     // instead, which reads naturally regardless of the label's shape.
     return '<div class="batch-scout-banner">' +
-      '<p>You’re just looking around the schedule for <strong>' + escapeHtml(scoutLabel) + '</strong> — your real progress and streak stay exactly as they are until you say otherwise.</p>' +
+      '<p>You’re just looking around the schedule for <strong>' + escapeHtml(scoutLabel) + '</strong>. Your real progress and streak stay exactly as they are until you say otherwise.</p>' +
       '<button id="batch-scout-stick" class="batch-scout-stick" type="button">Switch to ' + escapeHtml(scoutLabel) + ' for real</button>' +
       '</div>';
   }
@@ -191,7 +191,7 @@
     if (!state.pendingBatchMigration) return '';
     var targetLabel = (BATCH_OPTIONS.filter(function (b) { return b.value === state.pendingBatchMigration; })[0] || {}).label || state.pendingBatchMigration;
     return '<div class="batch-migration-warning">' +
-      '<p>Switching to <strong>' + escapeHtml(targetLabel) + '</strong> will permanently delete your checklist progress and streak on your current batch — completed tasks won’t carry over, and this can’t be undone. Your Focus/Pomodoro history is unaffected.</p>' +
+      '<p>Switching to <strong>' + escapeHtml(targetLabel) + '</strong> will permanently delete your checklist progress and streak on your current batch. Completed tasks won’t carry over, and this can’t be undone. Your Focus/Pomodoro history is unaffected.</p>' +
       (state.batchMigrationError ? '<p class="batch-migration-error">' + escapeHtml(state.batchMigrationError) + '</p>' : '') +
       '<div class="batch-migration-actions">' +
       '<button id="batch-migration-cancel" class="batch-migration-cancel" type="button">Cancel</button>' +
@@ -225,7 +225,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-30-10';
+  var CLIENT_VERSION = '2026-09-30-11';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1011,6 +1011,13 @@
 
   function init() {
     state.student = readCookie();
+    // A cookie written before batch support existed (2026-09-28) has no
+    // batch at all — and every student registered before then IS on the
+    // original batch. Without this, effectiveScoutBatch() saw 'C' vs
+    // undefined and showed "you're just looking around Batch C" (plus a
+    // destructive "switch for real" button) to students on their own
+    // batch. loadMonth also re-syncs this from the server (studentBatch).
+    if (state.student && !state.student.batch) state.student.batch = 'C';
     restorePomoActiveState();
     loadMonth(state.month);
     setInterval(checkClientVersion, VERSION_CHECK_MS);
@@ -1599,6 +1606,14 @@
         // real bug this fixes (the rename gate quoting a stale, already-
         // changed name back at a student). Only ever moves the cookie
         // toward what the server actually has, never the reverse.
+        // Same idea for batch: the server's students.batch is the truth
+        // (e.g. a switch made on another device), the cookie only a cache.
+        if (state.student && data.studentBatch && state.student.batch !== data.studentBatch) {
+          state.student.batch = data.studentBatch;
+          if (state.scoutBatch === data.studentBatch) state.scoutBatch = null;
+          writeCookie(state.student);
+        }
+
         var freshName = state.student && data.needsRename && data.needsRename.currentDisplayName;
         if (freshName && state.student.display_name !== freshName) {
           state.student.display_name = freshName;
