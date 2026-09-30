@@ -183,7 +183,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-30-3';
+  var CLIENT_VERSION = '2026-09-30-4';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -4537,7 +4537,7 @@
     el.innerHTML =
       '<div class="about-modal" role="dialog" aria-modal="true" aria-labelledby="about-modal-title">' +
         '<div class="about-modal-title" id="about-modal-title">Your About</div>' +
-        '<p class="about-modal-sub">Shows as a chat bubble beside your name on the weekly leaderboard. Checked by Claude before it\'s saved, and you can change it <strong>once a month</strong>.</p>' +
+        '<p class="about-modal-sub">Shows next to your name on the weekly leaderboard. You can change it <strong>once a month</strong>.</p>' +
         (canChange
           ? '<div class="about-modal-preview"><span class="about-modal-preview-bubble" id="about-preview">' + (current ? escapeHtml(current) : 'Your About will look like this') + '</span></div>' +
             '<textarea id="about-input" class="about-modal-input" maxlength="' + ABOUT_MAX_LENGTH + '" rows="2" placeholder="e.g. 6 hrs a day till GATE 🚀">' + escapeHtml(current) + '</textarea>' +
