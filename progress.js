@@ -124,6 +124,7 @@
   // recipe with .exam-countdown-icon (this page's own established "small
   // chip that must be noticed" pattern), reused rather than invented, per
   // the bolder-pass guidance to amplify what the system already owns.
+  var BATCH_SCOUT_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
   var BATCH_PICKER_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>';
 
   // Shared by guests (previewing, via state.previewBatch) and registered
@@ -176,9 +177,20 @@
     // "Batch D" but turns awkward once a label is a title-like phrase
     // (e.g. "120 Days - 70 Marks") — phrased as "the schedule for X"
     // instead, which reads naturally regardless of the label's shape.
+    // Laid out as icon / title+reassurance / actions. "Back to my batch"
+    // is the obvious primary exit; the real switch (destructive, see
+    // renderBatchMigrationWarning) is deliberately the quieter outline
+    // button so it never reads as the thing you're expected to click.
     return '<div class="batch-scout-banner">' +
-      '<p>You’re just looking around the schedule for <strong>' + escapeHtml(scoutLabel) + '</strong>. Your real progress and streak stay exactly as they are until you say otherwise.</p>' +
-      '<button id="batch-scout-stick" class="batch-scout-stick" type="button">Switch to ' + escapeHtml(scoutLabel) + ' for real</button>' +
+      '<span class="batch-scout-icon">' + BATCH_SCOUT_ICON + '</span>' +
+      '<div class="batch-scout-text">' +
+        '<div class="batch-scout-title">Previewing <strong>' + escapeHtml(scoutLabel) + '</strong></div>' +
+        '<div class="batch-scout-sub">Just looking. Your progress and streak stay on <strong>' + escapeHtml(batchLabel(state.student.batch)) + '</strong>.</div>' +
+      '</div>' +
+      '<div class="batch-scout-actions">' +
+        '<button id="batch-scout-back" class="batch-scout-back" type="button">Back to my batch</button>' +
+        '<button id="batch-scout-stick" class="batch-scout-stick" type="button">Switch to this batch</button>' +
+      '</div>' +
       '</div>';
   }
 
@@ -225,7 +237,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-30-11';
+  var CLIENT_VERSION = '2026-09-30-12';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -4899,6 +4911,14 @@
       // drops the now-mismatched warning instead of leaving it pointing
       // at whatever was picked before.
       state.scoutBatch = batchPicker.value;
+      state.pendingBatchMigration = null;
+      state.batchMigrationError = null;
+      loadMonth(state.month);
+    });
+
+    var batchScoutBack = document.getElementById('batch-scout-back');
+    if (batchScoutBack) batchScoutBack.addEventListener('click', function () {
+      state.scoutBatch = null;
       state.pendingBatchMigration = null;
       state.batchMigrationError = null;
       loadMonth(state.month);
