@@ -71,7 +71,7 @@
   function scheduleComingSoonHtml() {
     var batch = effectiveScoutBatch();
     var label = batchLabel(batch);
-    return '<div class="schedule-coming-soon"><div class="schedule-coming-soon-title">Coming soon</div>' +
+    return '<div class="schedule-coming-soon"><div class="schedule-coming-soon-title">We are cooking...</div>' +
       '<p>The schedule for <strong>' + escapeHtml(label) + '</strong> will show up here once it\'s ready.</p></div>';
   }
 
@@ -237,7 +237,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-01-1';
+  var CLIENT_VERSION = '2026-10-01-2';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -3902,7 +3902,7 @@
     if (!day) {
       left += state.latestScheduledMonth
         ? '<p class="today-empty">Nothing scheduled for today.</p>'
-        : '<p class="today-empty">The schedule for <strong>' + escapeHtml(batchLabel(effectiveScoutBatch())) + '</strong> is coming soon.</p>';
+        : '<p class="today-empty"><strong>We are cooking...</strong> The schedule for <strong>' + escapeHtml(batchLabel(effectiveScoutBatch())) + '</strong> will show up here once it\'s ready.</p>';
     } else if (missedBeforeCount > 0) {
       left += '<div class="catchup-warn">⚠️ ' + missedBeforeCount + ' day' + (missedBeforeCount === 1 ? '' : 's') +
         ' incomplete before today. Today’s content builds on those, so consider catching up first.</div>';
