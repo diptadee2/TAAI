@@ -183,7 +183,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-30-1';
+  var CLIENT_VERSION = '2026-09-30-2';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2014,7 +2014,7 @@
       var target = e.target.closest && e.target.closest('.leaderboard-name[data-alltime]');
       // The About bubble icon sits inside the name span — hovering it
       // shows its own bubble instead, never both stacked on top of each other.
-      if (target && e.target.closest('.about-bubble-icon')) { hideAllTimeTooltip(); return; }
+      if (target && e.target.closest('.leaderboard-about-chip, [data-about-hint]')) { hideAllTimeTooltip(); return; }
       if (target) showAllTimeTooltip(target);
     });
     document.addEventListener('mouseout', function (e) {
@@ -4415,16 +4415,36 @@
   var ABOUT_MAX_LENGTH = 80; // mirrors set-about.js's own cap
   var ABOUT_ICON_SVG = '<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path fill="currentColor" d="M8 1.5c-3.6 0-6.5 2.5-6.5 5.6 0 1.7.9 3.2 2.3 4.2L3.3 14l3-1.6c.5.1 1.1.2 1.7.2 3.6 0 6.5-2.5 6.5-5.6S11.6 1.5 8 1.5z"/></svg>';
 
-  function aboutBubbleHtml(text) {
-    if (!text) return '';
-    return ' <span class="about-bubble-icon" role="button" tabindex="0" aria-label="About: ' + escapeAttr(text) + '" data-about="' + escapeAttr(text) + '">' + ABOUT_ICON_SVG + '</span>';
+  // The About column's cell: the text itself, permanently visible as a
+  // small chat-bubble chip (truncated with an ellipsis if it doesn't fit;
+  // hovering a truncated one shows the full text in the floating bubble).
+  // The viewer's own row with no About yet gets a muted "+ Add About"
+  // chip instead, which opens the editor — so the column's space is
+  // never just dead on their own row.
+  function aboutCellHtml(text, isMe) {
+    if (text) {
+      return '<span class="leaderboard-about"><span class="leaderboard-about-chip" tabindex="0" data-about="' + escapeAttr(text) + '">' + escapeHtml(text) + '</span></span>';
+    }
+    if (isMe && state.student && !state.needsRename) {
+      return '<span class="leaderboard-about"><button type="button" class="leaderboard-about-add" data-about-hint="' + escapeAttr(aboutChangeHint()) + '">+ Add About</button></span>';
+    }
+    return '<span class="leaderboard-about"></span>';
+  }
+
+  // Shown on hover of anything that opens the editor — the once-a-month
+  // rule, stated at the moment someone's about to use it.
+  function aboutChangeHint() {
+    if (state.viewerAbout && state.viewerAbout.canChange === false) return 'Already changed this month. You can change your About again from the 1st.';
+    return 'You can change your About once a month. Claude checks it before it\'s saved.';
   }
 
   var aboutBubbleEl = null;
   var aboutBubbleAnchor = null;
   function showAboutBubble(target) {
-    var text = target.getAttribute('data-about');
+    var text = target.getAttribute('data-about') || target.getAttribute('data-about-hint');
     if (!text) return;
+    // A chip whose full text is already visible needs no bubble repeating it.
+    if (target.classList.contains('leaderboard-about-chip') && target.scrollWidth <= target.clientWidth) return;
     if (!aboutBubbleEl) {
       aboutBubbleEl = document.createElement('div');
       aboutBubbleEl.className = 'about-bubble';
@@ -4453,29 +4473,29 @@
   }
   function setupAboutBubble() {
     document.addEventListener('mouseover', function (e) {
-      var t = e.target.closest && e.target.closest('.about-bubble-icon');
+      var t = e.target.closest && e.target.closest('.leaderboard-about-chip, [data-about-hint]');
       if (t) showAboutBubble(t);
     });
     document.addEventListener('mouseout', function (e) {
-      var t = e.target.closest && e.target.closest('.about-bubble-icon');
+      var t = e.target.closest && e.target.closest('.leaderboard-about-chip, [data-about-hint]');
       if (t && !t.contains(e.relatedTarget)) hideAboutBubble();
     });
     document.addEventListener('focusin', function (e) {
-      var t = e.target.closest && e.target.closest('.about-bubble-icon');
+      var t = e.target.closest && e.target.closest('.leaderboard-about-chip, [data-about-hint]');
       if (t) showAboutBubble(t);
     });
     document.addEventListener('focusout', function (e) {
-      if (e.target.closest && e.target.closest('.about-bubble-icon')) hideAboutBubble();
+      if (e.target.closest && e.target.closest('.leaderboard-about-chip, [data-about-hint]')) hideAboutBubble();
     });
     // Tap/click toggles — a touch device has no hover.
     document.addEventListener('click', function (e) {
-      var t = e.target.closest && e.target.closest('.about-bubble-icon');
+      if (e.target.closest && e.target.closest('#about-edit-btn, .leaderboard-about-add')) { openAboutEditor(); return; }
+      var t = e.target.closest && e.target.closest('.leaderboard-about-chip');
       if (t) {
         if (aboutBubbleAnchor === t && aboutBubbleEl && aboutBubbleEl.classList.contains('visible')) hideAboutBubble();
         else showAboutBubble(t);
         return;
       }
-      if (e.target.closest && e.target.closest('#about-edit-btn')) { openAboutEditor(); return; }
       if (aboutBubbleAnchor) hideAboutBubble();
     });
     window.addEventListener('scroll', hideAboutBubble, { passive: true });
@@ -4486,13 +4506,15 @@
   }
   function aboutEditButtonHtml() {
     if (!state.student || state.needsRename) return '';
-    return '<button type="button" class="about-edit-btn" id="about-edit-btn">' + ABOUT_ICON_SVG + '<span id="about-edit-label">' + aboutEditButtonLabel() + '</span></button>';
+    return '<button type="button" class="about-edit-btn" id="about-edit-btn" data-about-hint="' + escapeAttr(aboutChangeHint()) + '">' + ABOUT_ICON_SVG + '<span id="about-edit-label">' + aboutEditButtonLabel() + '</span></button>';
   }
   // The card header isn't re-rendered on each poll (only #leaderboard-rows
   // is), so the label is patched in place once real data arrives.
   function updateAboutEditButton() {
     var label = document.getElementById('about-edit-label');
     if (label) label.textContent = aboutEditButtonLabel();
+    var btn = document.getElementById('about-edit-btn');
+    if (btn) btn.setAttribute('data-about-hint', aboutChangeHint());
   }
 
   // Editor is a modal on <body>, not inline in the card — the card's rows
@@ -4606,7 +4628,8 @@
       return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (r.is_me ? ' leaderboard-row--me' : '') + (r.is_live ? ' leaderboard-row--live' : '') + leaderboardRowEnterAttrs(animate, i) + '">' +
         '<span class="leaderboard-rank">' + rankLabel + '</span>' +
         rankMovementHtml(i + 1, r.previous_week_rank) +
-        '<span class="leaderboard-name"' + allTimeTitleAttr(r.all_time_minutes) + '>' + liveDotHtml(r.is_live) + escapeHtml(r.display_name) + aboutBubbleHtml(r.about) + effortBadgesHtml(r.all_time_minutes) + (r.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
+        '<span class="leaderboard-name"' + allTimeTitleAttr(r.all_time_minutes) + '>' + liveDotHtml(r.is_live) + escapeHtml(r.display_name) + effortBadgesHtml(r.all_time_minutes) + (r.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
+        aboutCellHtml(r.about, r.is_me) +
         streakBallsHtml(r.streak) +
         (r.is_me ? weeklyPaceStatusHtml(r.total_minutes) : pomoStatusHtml(r.pomo_status, r.pomo_last_seen_at)) +
         (r.is_me ? pomoTimerHtml(null, null, null) : pomoTimerHtml(r.pomo_phase_end_at, r.pomo_phase_total_seconds, r.pomo_status)) +
@@ -4623,7 +4646,8 @@
         '<div class="leaderboard-row leaderboard-row--me' + (state.viewerRank.is_live ? ' leaderboard-row--live' : '') + leaderboardRowEnterAttrs(animate, state.leaderboard.length) + '">' +
         '<span class="leaderboard-rank">' + state.viewerRank.rank + '</span>' +
         rankMovementHtml(state.viewerRank.rank, state.viewerRank.previous_week_rank) +
-        '<span class="leaderboard-name"' + allTimeTitleAttr(state.viewerRank.all_time_minutes) + '>' + liveDotHtml(state.viewerRank.is_live) + 'You' + aboutBubbleHtml(state.viewerRank.about) + effortBadgesHtml(state.viewerRank.all_time_minutes) + '</span>' +
+        '<span class="leaderboard-name"' + allTimeTitleAttr(state.viewerRank.all_time_minutes) + '>' + liveDotHtml(state.viewerRank.is_live) + 'You' + effortBadgesHtml(state.viewerRank.all_time_minutes) + '</span>' +
+        aboutCellHtml(state.viewerRank.about, true) +
         streakBallsHtml(state.viewerRank.streak) +
         weeklyPaceStatusHtml(state.viewerRank.total_minutes) +
         pomoTimerHtml(null, null, null) +
@@ -4662,6 +4686,7 @@
       // approximately near it.
       '<div class="leaderboard-columns"><span class="leaderboard-col-rank">Rank</span><span></span>' +
       '<span class="leaderboard-col-name">Name<button type="button" class="streak-legend-toggle" id="effort-legend-toggle" aria-label="What do the badges beside names mean?">?</button>' + effortLegendHtml() + '</span>' +
+      '<span class="leaderboard-col-about">About</span>' +
       '<span class="leaderboard-col-streak">Streak<button type="button" class="streak-legend-toggle" id="streak-legend-toggle" aria-label="What do the streak colors mean?">?</button>' + streakLegendHtml() + '</span>' +
       '<span class="leaderboard-col-status">Status</span><span class="leaderboard-col-timer">Timer</span><span class="leaderboard-col-time">Minutes</span></div>' +
       '<div id="leaderboard-rows">' + renderLeaderboardRows(animateNow) + '</div>' +

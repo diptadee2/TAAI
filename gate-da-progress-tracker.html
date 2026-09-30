@@ -1260,7 +1260,13 @@
      content is kept centered within that space rather than pinned to
      its own left edge, which is what actually reads as "the streak
      column sitting in the middle of the negative space." */
-  #leaderboard-card .leaderboard-row { grid-template-columns: 40px 16px minmax(160px,300px) minmax(75px,1fr) 76px 60px 58px; }
+  /* 8 columns since the About column (2026-09-30): Name keeps a capped
+     width, About is now the ONE flexible column (so a student's About
+     stays permanently visible in the middle space instead of hidden
+     behind a hover icon), and Streak moved right into a fixed track
+     beside Status — sized for its worst case (5 balls + overflow badge).
+     Must match .leaderboard-columns below exactly. */
+  #leaderboard-card .leaderboard-row { grid-template-columns: 40px 16px minmax(150px,220px) minmax(0,1fr) 140px 76px 60px 58px; }
   .leaderboard-row:last-child { border-bottom: none; }
   .leaderboard-row--top { padding-top: 14px; padding-bottom: 14px; }
   .leaderboard-row--me { background: rgba(139,92,246,0.1); border-bottom-color: transparent; }
@@ -1328,6 +1334,13 @@
      clip it. */
   .about-bubble-icon { display: inline-flex; align-items: center; justify-content: center; vertical-align: -1px; margin-left: 2px; color: var(--pomo-g2, var(--purple)); opacity: .8; cursor: pointer; border-radius: 4px; transition: opacity .15s ease; }
   .about-bubble-icon:hover, .about-bubble-icon:focus-visible { opacity: 1; outline: none; }
+  .leaderboard-col-about { min-width: 0; text-align: left; }
+  .leaderboard-about { min-width: 0; display: flex; align-items: center; }
+  .leaderboard-about-chip { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: #2a2a33; border: 1px solid var(--line); border-radius: 10px 10px 10px 3px; padding: 4px 10px; font-size: 12.5px; font-weight: 500; color: var(--ink-dim); line-height: 1.35; cursor: default; }
+  .leaderboard-about-chip:focus-visible { outline: 1px solid var(--pomo-g2, var(--purple)); outline-offset: 1px; }
+  .leaderboard-row--me .leaderboard-about-chip { color: var(--ink); }
+  .leaderboard-about-add { background: transparent; border: 1px dashed var(--line); border-radius: 10px 10px 10px 3px; padding: 4px 10px; font-family: inherit; font-size: 12px; font-weight: 600; color: var(--ink-soft); cursor: pointer; transition: border-color .15s ease, color .15s ease; }
+  .leaderboard-about-add:hover { border-color: var(--pomo-g2, var(--purple)); color: var(--ink); }
   .about-bubble { position: fixed; z-index: 9000; max-width: 260px; background: #2a2a33; color: var(--ink); border: 1px solid var(--line); border-radius: 12px 12px 12px 4px; padding: 8px 12px; font-size: 13px; line-height: 1.4; white-space: normal; overflow-wrap: anywhere; box-shadow: 0 8px 24px rgba(0,0,0,0.45); opacity: 0; pointer-events: none; transform: translateY(4px); transition: opacity .15s ease, transform .15s ease; }
   .about-bubble.visible { opacity: 1; transform: translateY(0); }
   .about-bubble::after { content: ''; position: absolute; left: var(--tail-x, 12px); bottom: -6px; width: 10px; height: 10px; background: #2a2a33; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); transform: rotate(45deg); }
@@ -1625,7 +1638,7 @@
      .leaderboard-row above (including its 180px Name cap, see that
      rule's own comment), so every label lands exactly above its column
      on every row, not just approximately near it. */
-  .leaderboard-columns { display: grid; grid-template-columns: 40px 16px minmax(160px,300px) minmax(75px,1fr) 76px 60px 58px; align-items: center; gap: 16px; padding: 0 14px 6px; font-family: var(--font-nav); font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
+  .leaderboard-columns { display: grid; grid-template-columns: 40px 16px minmax(150px,220px) minmax(0,1fr) 140px 76px 60px 58px; align-items: center; gap: 16px; padding: 0 14px 6px; font-family: var(--font-nav); font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
   .leaderboard-col-rank { text-align: center; min-width: 0; }
   /* Was centered per an earlier request ("center align all the column
      names according to their content within") — held up fine while
