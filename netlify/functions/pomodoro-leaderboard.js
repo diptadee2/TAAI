@@ -4,7 +4,7 @@
 // design; no email or other identity is returned in the response. The
 // optional `email` query param (the viewer's own, if logged in) is only
 // used to flag their own row with is_me, never anyone else's.
-import { getSupabase, json, weekStartIST, weekBefore, fetchTodayLeaders, fetchLiveStatusByEmail, fetchLiveCount, fetchAllTimeMinutesByEmail, fetchFlaggedEmails, notInEmailList } from './lib/supabase.js';
+import { getSupabase, json, weekStartIST, weekBefore, fetchTodayLeaders, fetchLiveStatusByEmail, fetchLiveCount, fetchAllTimeMinutesByEmail, fetchFlaggedEmails, notInEmailList, todayIST } from './lib/supabase.js';
 
 const LIMIT = 20;
 // Extra headroom fetched beyond LIMIT specifically to absorb flagged
@@ -101,9 +101,9 @@ export async function handler(event) {
   // daily-streak-snapshot.js's daily sweep — see CLAUDE.md) instead of
   // recomputing it from schedule_tasks + task_progress on every single
   // 60s poll.
-  let studentsResult, liveStatusByEmail, lastWeekRankResult, allTimeMinutesByEmail;
+  let studentsResult, liveStatusByEmail, lastWeekRankResult, allTimeMinutesByEmail, aboutByEmail;
   try {
-    [studentsResult, liveStatusByEmail, lastWeekRankResult, allTimeMinutesByEmail] = await Promise.all([
+    [studentsResult, liveStatusByEmail, lastWeekRankResult, allTimeMinutesByEmail, aboutByEmail] = await Promise.all([
       supabase.from('students').select('email, display_name, current_streak').in('email', streakEmails),
       fetchLiveStatusByEmail(supabase, streakEmails),
       // Rank-movement arrow, compared to where each student stood at the
@@ -127,6 +127,7 @@ export async function handler(event) {
       // whole leaderboard poll the way a missing display_name/
       // current_streak legitimately would.
       fetchAllTimeMinutesByEmail(supabase, streakEmails),
+      fetchAboutByEmail(supabase, streakEmails),
     ]);
   } catch (err) {
     return json(500, { error: err.message });
@@ -154,6 +155,7 @@ export async function handler(event) {
     total_sessions: s.total_sessions,
     streak: streakByEmail[s.email] || 0,
     all_time_minutes: allTimeMinutesByEmail[s.email] || 0,
+    about: aboutByEmail[s.email]?.about_text || null,
     previous_week_rank: lastWeekRankByEmail[s.email] ?? null,
     ...pomoFieldsFor(s.email),
     is_me: !!viewerEmail && s.email === viewerEmail,
@@ -211,6 +213,7 @@ export async function handler(event) {
         total_sessions: viewerStats.total_sessions,
         streak: streakByEmail[viewerEmail] || 0,
         all_time_minutes: allTimeMinutesByEmail[viewerEmail] || 0,
+        about: aboutByEmail[viewerEmail]?.about_text || null,
         previous_week_rank: lastWeekRankByEmail[viewerEmail] ?? null,
         ...pomoFieldsFor(viewerEmail),
       };
@@ -223,5 +226,31 @@ export async function handler(event) {
   // every 60s — no extra network round-trip, just a modest amount of
   // extra JSON on an existing one. See refreshLeaderboard in progress.js
   // for the client side.
-  return json(200, { leaderboard, viewerRank, todayLeaders, liveCount });
+  // The viewer's own About + whether they can still change it this month,
+  // for the "Your About" editor on the card — returned even when the
+  // viewer isn't on the board at all (viewerEmail is always in
+  // streakEmails above), so they can set one ahead of time.
+  let viewerAbout = null;
+  if (viewerEmail && aboutByEmail[viewerEmail] !== undefined) {
+    const mine = aboutByEmail[viewerEmail];
+    viewerAbout = { text: mine.about_text || null, canChange: mine.about_changed_month !== todayIST().slice(0, 7) };
+  }
+
+  return json(200, { leaderboard, viewerRank, todayLeaders, liveCount, viewerAbout });
+}
+
+// Best-effort, its own query — never folded into the main students
+// select above, so a pre-migration "column does not exist" (or any
+// hiccup) can only ever cost the About bubbles, never the leaderboard.
+async function fetchAboutByEmail(supabase, emails) {
+  try {
+    const { data, error } = await supabase
+      .from('students')
+      .select('email, about_text, about_changed_month')
+      .in('email', emails);
+    if (error) return {};
+    return Object.fromEntries((data || []).map((r) => [r.email, r]));
+  } catch {
+    return {};
+  }
 }

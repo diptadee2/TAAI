@@ -1319,6 +1319,44 @@
      outright, and `position: fixed` off <body> also sidesteps
      .streak-champions-card's own `overflow: hidden` clipping #champions-card's
      rows near either edge. */
+  /* Leaderboard "About" (WhatsApp-style status) — a small chat icon
+     beside the name on the weekly top-20 board, the text itself in a
+     chat bubble on hover/tap (progress.js, aboutBubbleHtml/
+     showAboutBubble). Flat, same --card/--line idiom as every other
+     card on this page, no glow. The bubble is a <body>-level singleton
+     like .alltime-tooltip, so .leaderboard-name's overflow:hidden can't
+     clip it. */
+  .about-bubble-icon { display: inline-flex; align-items: center; justify-content: center; vertical-align: -1px; margin-left: 2px; color: var(--pomo-g2, var(--purple)); opacity: .8; cursor: pointer; border-radius: 4px; transition: opacity .15s ease; }
+  .about-bubble-icon:hover, .about-bubble-icon:focus-visible { opacity: 1; outline: none; }
+  .about-bubble { position: fixed; z-index: 9000; max-width: 260px; background: #2a2a33; color: var(--ink); border: 1px solid var(--line); border-radius: 12px 12px 12px 4px; padding: 8px 12px; font-size: 13px; line-height: 1.4; white-space: normal; overflow-wrap: anywhere; box-shadow: 0 8px 24px rgba(0,0,0,0.45); opacity: 0; pointer-events: none; transform: translateY(4px); transition: opacity .15s ease, transform .15s ease; }
+  .about-bubble.visible { opacity: 1; transform: translateY(0); }
+  .about-bubble::after { content: ''; position: absolute; left: var(--tail-x, 12px); bottom: -6px; width: 10px; height: 10px; background: #2a2a33; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); transform: rotate(45deg); }
+  .about-bubble--below { border-radius: 4px 12px 12px 12px; }
+  .about-bubble--below::after { bottom: auto; top: -6px; transform: rotate(225deg); }
+  .about-edit-btn { display: inline-flex; align-items: center; gap: 6px; margin: -4px 0 12px 10px; padding: 5px 10px; background: transparent; border: 1px solid var(--line); border-radius: 8px; color: var(--ink-dim); font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer; transition: border-color .15s ease, color .15s ease; }
+  .about-edit-btn svg { color: var(--pomo-g2, var(--purple)); }
+  .about-edit-btn:hover { border-color: var(--pomo-g2, var(--purple)); color: var(--ink); }
+  .about-modal-backdrop { position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; padding: 16px; animation: about-fade .15s ease; }
+  .about-modal { width: min(420px, 100%); background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 22px 22px 18px; text-align: left; }
+  .about-modal-title { font-family: var(--font-nav); font-size: 15px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--ink); }
+  .about-modal-sub { font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; margin: 6px 0 16px; }
+  .about-modal-sub strong { color: var(--ink-dim); }
+  .about-modal-preview { margin-bottom: 12px; }
+  .about-modal-preview-bubble { display: inline-block; max-width: 100%; background: #2a2a33; border: 1px solid var(--line); border-radius: 12px 12px 12px 4px; padding: 8px 12px; font-size: 13px; line-height: 1.4; color: var(--ink); overflow-wrap: anywhere; }
+  .about-modal-input { width: 100%; box-sizing: border-box; resize: none; background: var(--bg-soft, #1b1b20); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; color: var(--ink); font-family: inherit; font-size: 14px; line-height: 1.4; }
+  .about-modal-input:focus { outline: none; border-color: var(--pomo-g2, var(--purple)); }
+  .about-modal-count { text-align: right; font-size: 11px; color: var(--ink-soft); margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .about-modal-locked { font-size: 13px; color: var(--ink-dim); margin: 0 0 4px; }
+  .about-modal-error { font-size: 12.5px; color: var(--red); font-weight: 600; margin: 8px 0 0; }
+  .about-modal-actions { display: flex; align-items: center; gap: 8px; margin-top: 16px; }
+  .about-modal-spacer { flex: 1; }
+  .about-modal-cancel, .about-modal-remove { background: transparent; border: none; color: var(--ink-soft); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; padding: 8px 6px; }
+  .about-modal-cancel:hover { color: var(--ink); }
+  .about-modal-remove:hover { color: var(--red); }
+  .about-modal-save { padding: 9px 20px; }
+  .about-modal button:disabled, .about-modal textarea:disabled { opacity: .5; cursor: not-allowed; }
+  @keyframes about-fade { from { opacity: 0; } to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .about-modal-backdrop { animation: none; } .about-bubble { transition: none; } }
   .alltime-tooltip { position: fixed; z-index: 200; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 6px 11px; font-size: 12px; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,0.45); opacity: 0; pointer-events: none; transform: translateY(4px); transition: opacity .15s ease, transform .15s ease; }
   .alltime-tooltip-label { color: var(--ink-soft); font-weight: 500; }
   .alltime-tooltip-value { color: var(--pomo-g2, var(--purple)); font-weight: 700; }

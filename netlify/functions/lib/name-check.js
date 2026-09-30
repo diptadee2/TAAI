@@ -105,6 +105,14 @@ export async function checkNameAppropriate(name, priorFlaggedName) {
       'the same student should NOT be flagged just because of past history.';
   }
 
+  return classifyWithClaude(apiKey, SYSTEM_PROMPT, userContent);
+}
+
+// The one shared Claude round trip behind every classifier in this file
+// (display names above, leaderboard About text below) — same model,
+// same forced classify_name tool call, same timeout/temperature, so the
+// two checks can never drift apart on anything but their own prompt.
+async function classifyWithClaude(apiKey, systemPrompt, userContent, tool = TOOL) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
   let res;
@@ -129,9 +137,9 @@ export async function checkNameAppropriate(name, priorFlaggedName) {
         // the default temperature — the same exact input, no other
         // change, landing on opposite verdicts.
         temperature: 0,
-        system: SYSTEM_PROMPT,
+        system: systemPrompt,
         messages: [{ role: 'user', content: userContent }],
-        tools: [TOOL],
+        tools: [tool],
         tool_choice: { type: 'tool', name: 'classify_name' },
       }),
       signal: controller.signal,
@@ -149,6 +157,33 @@ export async function checkNameAppropriate(name, priorFlaggedName) {
   const toolUse = (data.content || []).find((c) => c.type === 'tool_use' && c.name === 'classify_name');
   if (!toolUse) throw new Error('Claude did not return a classify_name tool call');
   return { flagged: !!toolUse.input.flagged, reason: toolUse.input.reason || '' };
+}
+
+// Leaderboard "About" text (the short WhatsApp-style status a student can
+// show as a chat bubble beside their name on the weekly top-20 board —
+// see set-about.js). A separate prompt from SYSTEM_PROMPT rather than
+// reusing it: that one is tuned hard for single-word/username slur
+// matching, while an About is a short free-text sentence with its own
+// failure modes (targeting another student by name, self-promotion,
+// contact details). The Indian-language slur rules carry over in spirit.
+const ABOUT_SYSTEM_PROMPT = 'You review short "About" status texts (like a WhatsApp About line, max 80 characters) that students show beside their name on a public GATE exam-prep leaderboard used by students in India, mostly in their early-to-mid 20s. Keep it fun: motivational lines, jokes, memes, song/anime/movie quotes, study moods, emojis, and playful banter are all completely fine and must NOT be flagged. Flag the text only if it is genuinely inappropriate for a public educational site any student\'s parent or teacher might see: sexually explicit or suggestive content, hateful or slur-based content, harassment, insults or mockery aimed at another student or a real identifiable person, threats, encouragement of self-harm, promotion of cheating or piracy, or advertising/spam - including phone numbers, email addresses, social media handles, invite links, or any URL. This applies in ANY language: actively watch for offensive words in Hindi and other Indian languages, including Roman-script/Hinglish spellings, leetspeak, spacing tricks, and near-miss misspellings of a known slur - and never let capitalization or a casual style make a slur look more innocent. Common Hindi abuse abbreviations such as bsdk, bc, mc, bkl, mkc, tmkc, bhenchod/bsdk variants, and the like are abuse, not friendly banter - flag them even when mixed into an otherwise-motivational line like "bsdk padh le"; never invent an innocent expansion for such an abbreviation. When genuinely in doubt about harmless text, do NOT flag it.';
+
+const ABOUT_TOOL = {
+  name: 'classify_name',
+  description: 'Classify whether a short About/status text is inappropriate for a public educational leaderboard.',
+  input_schema: TOOL.input_schema,
+};
+
+// checkAboutAppropriate(text) -> { flagged, reason, skipped? }
+// Same "skipped" contract as checkNameAppropriate for a missing API key —
+// but set-about.js deliberately fails CLOSED on it (refuses to save),
+// unlike every name path: an About is purely optional flair, so "can't
+// verify right now, try later" costs nothing, while the whole point of
+// this feature is that nothing reaches the board unreviewed.
+export async function checkAboutAppropriate(text) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return { flagged: false, reason: 'ANTHROPIC_API_KEY not configured', skipped: true };
+  return classifyWithClaude(apiKey, ABOUT_SYSTEM_PROMPT, 'About text to review: ' + JSON.stringify(text), ABOUT_TOOL);
 }
 
 // Fires check-name-background.js for (email, displayName) — used by

@@ -976,3 +976,15 @@ CREATE TABLE IF NOT EXISTS site_settings (
 );
 GRANT SELECT, INSERT, UPDATE, DELETE ON site_settings TO service_role;
 INSERT INTO site_settings (id) VALUES ('main') ON CONFLICT (id) DO NOTHING;
+
+-- Leaderboard "About" text — a short WhatsApp-style status shown as a
+-- chat bubble beside a student's name on the weekly top-20 board.
+-- Written only by netlify/functions/set-about.js, which runs a
+-- synchronous Claude check before saving and allows one successful
+-- change per IST calendar month (about_changed_month = 'YYYY-MM').
+-- about_check_count/about_check_month separately cap rejected attempts
+-- per month so the rejection path can't burn unlimited Claude calls.
+ALTER TABLE students ADD COLUMN IF NOT EXISTS about_text          TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS about_changed_month TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS about_check_count   INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS about_check_month   TEXT;

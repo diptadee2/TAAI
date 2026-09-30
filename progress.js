@@ -183,7 +183,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-28-3';
+  var CLIENT_VERSION = '2026-09-30-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -793,6 +793,7 @@
     focus: false,
     leaderboard: [], // [{ display_name, total_minutes, total_sessions }] — Focus Mode only
     viewerRank: null, // { rank, total_minutes, total_sessions } — set only when the viewer is logged in but didn't make the top 20
+    viewerAbout: null, // { text, canChange } — the viewer's own leaderboard About (see set-about.js), from the weekly leaderboard poll; null until first fetched
     renaming: false, // showing the inline rename form in place of the name + Rename/Not you? line
     renameError: null,
     renameLimitMessage: null, // set instead of opening the rename form when voluntary_rename_count/month (in state.student, from the cookie) show this month's 3 are already used
@@ -990,6 +991,7 @@
     startLastWeekPoll();
     setupAllTimeTooltip();
     setupRenameTooltip();
+    setupAboutBubble();
   }
 
   // ── Scroll progress + back-to-top — same pattern as blog.js ──────────
@@ -2010,6 +2012,9 @@
   function setupAllTimeTooltip() {
     document.addEventListener('mouseover', function (e) {
       var target = e.target.closest && e.target.closest('.leaderboard-name[data-alltime]');
+      // The About bubble icon sits inside the name span — hovering it
+      // shows its own bubble instead, never both stacked on top of each other.
+      if (target && e.target.closest('.about-bubble-icon')) { hideAllTimeTooltip(); return; }
       if (target) showAllTimeTooltip(target);
     });
     document.addEventListener('mouseout', function (e) {
@@ -2448,6 +2453,7 @@
     // ever survive a re-render it wasn't part of.
     hideAllTimeTooltip();
     hideRenameTooltip();
+    hideAboutBubble();
     var today = todayIso();
     var todayDay = state.days.find(function (d) { return d.date === today; });
     // dayStatus() itself already only ever returns 'missed' for a
@@ -4397,6 +4403,195 @@
       .catch(function () { /* non-critical — champions card just stays stale */ });
   }
 
+  // ---- Leaderboard "About" bubble (WhatsApp-style status) ----------------
+  // A student's short About (max ABOUT_MAX_LENGTH chars, set via
+  // set-about.js, Claude-reviewed before it's ever saved, one change per
+  // month) shows as a small chat icon beside their name on the weekly
+  // top-20 board; hovering (or tapping) it pops a chat-bubble with the
+  // text. Singleton bubble on <body>, delegated listeners bound once from
+  // init() — same reasoning as setupAllTimeTooltip: rows are regenerated
+  // on every poll, and .leaderboard-name's own overflow:hidden would clip
+  // anything positioned inside it.
+  var ABOUT_MAX_LENGTH = 80; // mirrors set-about.js's own cap
+  var ABOUT_ICON_SVG = '<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path fill="currentColor" d="M8 1.5c-3.6 0-6.5 2.5-6.5 5.6 0 1.7.9 3.2 2.3 4.2L3.3 14l3-1.6c.5.1 1.1.2 1.7.2 3.6 0 6.5-2.5 6.5-5.6S11.6 1.5 8 1.5z"/></svg>';
+
+  function aboutBubbleHtml(text) {
+    if (!text) return '';
+    return ' <span class="about-bubble-icon" role="button" tabindex="0" aria-label="About: ' + escapeAttr(text) + '" data-about="' + escapeAttr(text) + '">' + ABOUT_ICON_SVG + '</span>';
+  }
+
+  var aboutBubbleEl = null;
+  var aboutBubbleAnchor = null;
+  function showAboutBubble(target) {
+    var text = target.getAttribute('data-about');
+    if (!text) return;
+    if (!aboutBubbleEl) {
+      aboutBubbleEl = document.createElement('div');
+      aboutBubbleEl.className = 'about-bubble';
+      document.body.appendChild(aboutBubbleEl);
+    }
+    aboutBubbleAnchor = target;
+    aboutBubbleEl.textContent = text; // plain text — never innerHTML for student-written content
+    aboutBubbleEl.classList.remove('about-bubble--below');
+    aboutBubbleEl.classList.add('visible');
+    var rect = target.getBoundingClientRect();
+    var w = aboutBubbleEl.offsetWidth;
+    var h = aboutBubbleEl.offsetHeight;
+    // Tail sits at the bubble's bottom-left corner, pointing at the icon.
+    var left = rect.left + rect.width / 2 - 14;
+    if (left + w > window.innerWidth - 8) left = window.innerWidth - w - 8;
+    if (left < 8) left = 8;
+    var top = rect.top - h - 10;
+    if (top < 8) { top = rect.bottom + 10; aboutBubbleEl.classList.add('about-bubble--below'); }
+    aboutBubbleEl.style.left = left + 'px';
+    aboutBubbleEl.style.top = top + 'px';
+    aboutBubbleEl.style.setProperty('--tail-x', Math.max(10, Math.min(w - 18, rect.left + rect.width / 2 - left - 6)) + 'px');
+  }
+  function hideAboutBubble() {
+    aboutBubbleAnchor = null;
+    if (aboutBubbleEl) aboutBubbleEl.classList.remove('visible');
+  }
+  function setupAboutBubble() {
+    document.addEventListener('mouseover', function (e) {
+      var t = e.target.closest && e.target.closest('.about-bubble-icon');
+      if (t) showAboutBubble(t);
+    });
+    document.addEventListener('mouseout', function (e) {
+      var t = e.target.closest && e.target.closest('.about-bubble-icon');
+      if (t && !t.contains(e.relatedTarget)) hideAboutBubble();
+    });
+    document.addEventListener('focusin', function (e) {
+      var t = e.target.closest && e.target.closest('.about-bubble-icon');
+      if (t) showAboutBubble(t);
+    });
+    document.addEventListener('focusout', function (e) {
+      if (e.target.closest && e.target.closest('.about-bubble-icon')) hideAboutBubble();
+    });
+    // Tap/click toggles — a touch device has no hover.
+    document.addEventListener('click', function (e) {
+      var t = e.target.closest && e.target.closest('.about-bubble-icon');
+      if (t) {
+        if (aboutBubbleAnchor === t && aboutBubbleEl && aboutBubbleEl.classList.contains('visible')) hideAboutBubble();
+        else showAboutBubble(t);
+        return;
+      }
+      if (e.target.closest && e.target.closest('#about-edit-btn')) { openAboutEditor(); return; }
+      if (aboutBubbleAnchor) hideAboutBubble();
+    });
+    window.addEventListener('scroll', hideAboutBubble, { passive: true });
+  }
+
+  function aboutEditButtonLabel() {
+    return state.viewerAbout && state.viewerAbout.text ? 'Edit your About' : '+ Add your About';
+  }
+  function aboutEditButtonHtml() {
+    if (!state.student || state.needsRename) return '';
+    return '<button type="button" class="about-edit-btn" id="about-edit-btn">' + ABOUT_ICON_SVG + '<span id="about-edit-label">' + aboutEditButtonLabel() + '</span></button>';
+  }
+  // The card header isn't re-rendered on each poll (only #leaderboard-rows
+  // is), so the label is patched in place once real data arrives.
+  function updateAboutEditButton() {
+    var label = document.getElementById('about-edit-label');
+    if (label) label.textContent = aboutEditButtonLabel();
+  }
+
+  // Editor is a modal on <body>, not inline in the card — the card's rows
+  // are regenerated every poll tick, which would wipe a half-typed draft.
+  var aboutEditorEl = null;
+  function closeAboutEditor() {
+    if (aboutEditorEl) { aboutEditorEl.remove(); aboutEditorEl = null; }
+    document.removeEventListener('keydown', aboutEditorKeydown);
+  }
+  function aboutEditorKeydown(e) { if (e.key === 'Escape') closeAboutEditor(); }
+
+  function openAboutEditor() {
+    if (!state.student) return;
+    closeAboutEditor();
+    hideAboutBubble();
+    var current = (state.viewerAbout && state.viewerAbout.text) || '';
+    var canChange = !state.viewerAbout || state.viewerAbout.canChange !== false;
+    var el = document.createElement('div');
+    el.className = 'about-modal-backdrop';
+    el.innerHTML =
+      '<div class="about-modal" role="dialog" aria-modal="true" aria-labelledby="about-modal-title">' +
+        '<div class="about-modal-title" id="about-modal-title">Your About</div>' +
+        '<p class="about-modal-sub">Shows as a chat bubble beside your name on the weekly leaderboard. Checked by Claude before it\'s saved, and you can change it <strong>once a month</strong>.</p>' +
+        (canChange
+          ? '<div class="about-modal-preview"><span class="about-modal-preview-bubble" id="about-preview">' + (current ? escapeHtml(current) : 'Your About will look like this') + '</span></div>' +
+            '<textarea id="about-input" class="about-modal-input" maxlength="' + ABOUT_MAX_LENGTH + '" rows="2" placeholder="e.g. 6 hrs a day till GATE 🚀">' + escapeHtml(current) + '</textarea>' +
+            '<div class="about-modal-count"><span id="about-count">' + current.length + '</span>/' + ABOUT_MAX_LENGTH + '</div>'
+          : (current ? '<div class="about-modal-preview"><span class="about-modal-preview-bubble">' + escapeHtml(current) + '</span></div>' : '') +
+            '<p class="about-modal-locked">You\'ve already changed your About this month. You can change it again from the 1st.</p>') +
+        '<p class="about-modal-error" id="about-error" hidden></p>' +
+        '<div class="about-modal-actions">' +
+          (current ? '<button type="button" class="about-modal-remove" id="about-remove">Remove</button>' : '') +
+          '<span class="about-modal-spacer"></span>' +
+          '<button type="button" class="about-modal-cancel" id="about-cancel">' + (canChange ? 'Cancel' : 'Close') + '</button>' +
+          (canChange ? '<button type="button" class="pomo-btn pomo-btn-primary about-modal-save" id="about-save">Save</button>' : '') +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(el);
+    aboutEditorEl = el;
+    document.addEventListener('keydown', aboutEditorKeydown);
+    el.addEventListener('mousedown', function (e) { if (e.target === el) closeAboutEditor(); });
+    document.getElementById('about-cancel').addEventListener('click', closeAboutEditor);
+
+    var input = document.getElementById('about-input');
+    var errEl = document.getElementById('about-error');
+    function showError(msg) { errEl.textContent = msg; errEl.hidden = false; }
+
+    if (input) {
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+      input.addEventListener('input', function () {
+        // Single line only, same as the server's own whitespace collapse.
+        if (/\n/.test(input.value)) input.value = input.value.replace(/\n+/g, ' ');
+        document.getElementById('about-count').textContent = input.value.length;
+        document.getElementById('about-preview').textContent = input.value.trim() || 'Your About will look like this';
+        errEl.hidden = true;
+      });
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); document.getElementById('about-save').click(); }
+      });
+    }
+
+    function submit(about, btn, busyLabel) {
+      var buttons = el.querySelectorAll('button, textarea');
+      Array.prototype.forEach.call(buttons, function (b) { b.disabled = true; });
+      var originalLabel = btn.textContent;
+      btn.textContent = busyLabel;
+      api('/set-about', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: state.student.email, about: about }),
+      })
+        .then(function (r) {
+          state.viewerAbout = { text: r.about || null, canChange: r.canChange !== false };
+          updateAboutEditButton();
+          closeAboutEditor();
+          refreshLeaderboard();
+        })
+        .catch(function (err) {
+          Array.prototype.forEach.call(buttons, function (b) { b.disabled = false; });
+          btn.textContent = originalLabel;
+          if (err.data && err.data.canChange === false && state.viewerAbout) state.viewerAbout.canChange = false;
+          showError(err.message || 'Something went wrong — please try again.');
+        });
+    }
+
+    var saveBtn = document.getElementById('about-save');
+    if (saveBtn) saveBtn.addEventListener('click', function () {
+      var value = input.value.replace(/\s+/g, ' ').trim();
+      if (!value) { showError(current ? 'Use Remove to clear your About.' : 'Type something first.'); return; }
+      if (value === current) { closeAboutEditor(); return; }
+      submit(value, saveBtn, 'Checking…');
+    });
+    var removeBtn = document.getElementById('about-remove');
+    if (removeBtn) removeBtn.addEventListener('click', function () {
+      submit('', removeBtn, 'Removing…');
+    });
+  }
+
   function renderLeaderboardRows(animate) {
     if (!state.leaderboard.length) {
       return '<p class="center-note" style="padding:14px 0;">No focus sessions logged yet. Be the first!</p>';
@@ -4411,7 +4606,7 @@
       return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (r.is_me ? ' leaderboard-row--me' : '') + (r.is_live ? ' leaderboard-row--live' : '') + leaderboardRowEnterAttrs(animate, i) + '">' +
         '<span class="leaderboard-rank">' + rankLabel + '</span>' +
         rankMovementHtml(i + 1, r.previous_week_rank) +
-        '<span class="leaderboard-name"' + allTimeTitleAttr(r.all_time_minutes) + '>' + liveDotHtml(r.is_live) + escapeHtml(r.display_name) + effortBadgesHtml(r.all_time_minutes) + (r.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
+        '<span class="leaderboard-name"' + allTimeTitleAttr(r.all_time_minutes) + '>' + liveDotHtml(r.is_live) + escapeHtml(r.display_name) + aboutBubbleHtml(r.about) + effortBadgesHtml(r.all_time_minutes) + (r.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
         streakBallsHtml(r.streak) +
         (r.is_me ? weeklyPaceStatusHtml(r.total_minutes) : pomoStatusHtml(r.pomo_status, r.pomo_last_seen_at)) +
         (r.is_me ? pomoTimerHtml(null, null, null) : pomoTimerHtml(r.pomo_phase_end_at, r.pomo_phase_total_seconds, r.pomo_status)) +
@@ -4428,7 +4623,7 @@
         '<div class="leaderboard-row leaderboard-row--me' + (state.viewerRank.is_live ? ' leaderboard-row--live' : '') + leaderboardRowEnterAttrs(animate, state.leaderboard.length) + '">' +
         '<span class="leaderboard-rank">' + state.viewerRank.rank + '</span>' +
         rankMovementHtml(state.viewerRank.rank, state.viewerRank.previous_week_rank) +
-        '<span class="leaderboard-name"' + allTimeTitleAttr(state.viewerRank.all_time_minutes) + '>' + liveDotHtml(state.viewerRank.is_live) + 'You' + effortBadgesHtml(state.viewerRank.all_time_minutes) + '</span>' +
+        '<span class="leaderboard-name"' + allTimeTitleAttr(state.viewerRank.all_time_minutes) + '>' + liveDotHtml(state.viewerRank.is_live) + 'You' + aboutBubbleHtml(state.viewerRank.about) + effortBadgesHtml(state.viewerRank.all_time_minutes) + '</span>' +
         streakBallsHtml(state.viewerRank.streak) +
         weeklyPaceStatusHtml(state.viewerRank.total_minutes) +
         pomoTimerHtml(null, null, null) +
@@ -4461,6 +4656,7 @@
     return '<div class="leaderboard-card fade-in" id="leaderboard-card">' +
       '<div class="leaderboard-title">Weekly Leaderboard</div>' +
       '<div class="leaderboard-subtitle">Top 20 by minutes logged · Resets every Monday</div>' +
+      aboutEditButtonHtml() +
       // Mirrors each row's exact rank/name/streak/time widths so every
       // label sits directly above its column on every row, not just
       // approximately near it.
@@ -4488,6 +4684,11 @@
         applyLiveCountUpdate(r.liveCount);
         state.leaderboard = r.leaderboard || [];
         state.viewerRank = r.viewerRank || null;
+        if (r.viewerAbout !== undefined) state.viewerAbout = r.viewerAbout;
+        updateAboutEditButton();
+        // Rows are about to be regenerated — a bubble anchored to one of
+        // them would otherwise be left floating over nothing.
+        hideAboutBubble();
         var rows = document.getElementById('leaderboard-rows');
         // See leaderboardRowsAnimatedThisVisit's own comment — this is what
         // actually catches the top-20 board's *first* real population,
