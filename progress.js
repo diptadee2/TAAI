@@ -19,7 +19,10 @@
   // day (Day 180 = Day 120 = 2027-01-27).
   var BATCH_PROGRAMS = {
     C: { start: PROGRAM_START_DATE, length: PROGRAM_LENGTH_DAYS },
-    D: { start: addDaysIso(PROGRAM_START_DATE, PROGRAM_LENGTH_DAYS - 120), length: 120 },
+    // zeroBased: this batch's start day itself reads "Day 0 of 120", then
+    // counts up from the next day (direct follow-up: "keep it day 0 of 120
+    // and then countup"). The original batch stays 1-based.
+    D: { start: addDaysIso(PROGRAM_START_DATE, PROGRAM_LENGTH_DAYS - 120), length: 120, zeroBased: true },
   };
   function addDaysIso(iso, n) {
     var d = new Date(iso + 'T00:00:00Z');
@@ -226,7 +229,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-09-30-8';
+  var CLIENT_VERSION = '2026-09-30-9';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2310,7 +2313,8 @@
   function renderProgramDayBadge() {
     var today = realTodayIso();
     var program = BATCH_PROGRAMS[effectiveScoutBatch()] || BATCH_PROGRAMS.C;
-    var dayNum = Math.max(1, Math.round((new Date(today) - new Date(program.start)) / 864e5) + 1);
+    var elapsed = Math.round((new Date(today) - new Date(program.start)) / 864e5);
+    var dayNum = program.zeroBased ? Math.max(0, elapsed) : Math.max(1, elapsed + 1);
     dayNum = Math.min(dayNum, program.length);
     return '<div class="program-day-badge fade-in">' +
       '<div class="program-day-num">' + dayNum + '</div>' +
