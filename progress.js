@@ -46,6 +46,12 @@
   // worst case a student just sees an empty calendar navigating before
   // their own batch's schedule begins, not a data-integrity problem.
   var SCHEDULE_START_MONTH = '2026-08';
+  // First month each batch's schedule covers. Nothing before it exists for
+  // that batch, so the calendar never opens on or navigates to an earlier
+  // month (direct report 2026-10-01: "120 Days - 70 Marks" opened on an
+  // empty September because the remembered month is shared across batches).
+  var BATCH_SCHEDULE_START = { C: '2026-08', D: '2026-10' };
+  function batchStartMonth(batch) { return BATCH_SCHEDULE_START[batch] || SCHEDULE_START_MONTH; }
 
   // The batches a guest can preview before registering (see
   // state.previewBatch) — hand-duplicated in register.js's own
@@ -237,7 +243,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-01-20';
+  var CLIENT_VERSION = '2026-10-01-21';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1070,6 +1076,10 @@
     // batch. loadMonth also re-syncs this from the server (studentBatch).
     if (state.student && !state.student.batch) state.student.batch = 'C';
     applyBatchFromUrl();
+    // The remembered month is only for students catching up on an earlier
+    // month of their own. A visitor without an account always starts on the
+    // current month (direct request 2026-10-01).
+    if (!state.student) state.month = currentMonthStr();
     restorePomoActiveState();
     var restoringFocus = wasHardReload() && loadFocusActive();
     if (restoringFocus) {
@@ -1701,6 +1711,10 @@
 
   var loadMonthSeq = 0;
   function loadMonth(monthStr) {
+    // Never before the viewed batch's own first month (e.g. switching the
+    // dropdown to "120 Days - 70 Marks" while on September).
+    var batchStart = batchStartMonth(effectiveScoutBatch());
+    if (monthStr < batchStart) monthStr = currentMonthStr() >= batchStart ? currentMonthStr() : batchStart;
     state.month = monthStr;
     // Focus Mode always shows the current month (see enterFocus), which
     // isn't a month the student chose to browse, so it isn't remembered.
@@ -1771,6 +1785,7 @@
   // not (still below the fold), the fresh render lets it play normally on scroll.
   var hourlyAlreadyRevealed = false;
 
+  var initialMonthChecked = false;
   function applyTrackerData(data, isStale, swapQuietly) {
     state.stale = !!isStale;
     var scheduleDays = data.schedule.days || [];
@@ -1950,6 +1965,17 @@
       if (wk !== todayWk) state.collapsedWeeks.add(wk);
     });
 
+    // A signed-up student who hasn't ticked a single task yet has nothing to
+    // catch up on, so they start on the current month too (checked once, on
+    // the first fresh response).
+    if (!isStale && !initialMonthChecked) {
+      initialMonthChecked = true;
+      var notStarted = state.student && state.subjectProgress.every(function (s) { return !s.done; });
+      if (notStarted && state.month !== currentMonthStr() && !state.focus) {
+        loadMonth(currentMonthStr());
+        return;
+      }
+    }
     quietRender = !!swapQuietly;
     hourlyAlreadyRevealed = !!document.querySelector('.hourly-activity.in-view');
     try { renderCalendar(); } finally { quietRender = false; }
@@ -2783,7 +2809,7 @@
         '</div>';
 
       html += '<div class="month-nav"><button id="prev-month" aria-label="Previous month"' +
-        (state.month <= SCHEDULE_START_MONTH ? ' disabled' : '') + '>&larr;</button>' +
+        (state.month <= batchStartMonth(effectiveScoutBatch()) ? ' disabled' : '') + '>&larr;</button>' +
         '<span class="month-label">' + monthLabel(state.month) + '</span>' +
         '<button id="next-month" aria-label="Next month"' +
         (state.latestScheduledMonth && state.month >= state.latestScheduledMonth ? ' disabled' : '') + '>&rarr;</button></div>';
