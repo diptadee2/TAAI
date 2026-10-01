@@ -243,7 +243,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-02-5';
+  var CLIENT_VERSION = '2026-10-02-6';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -363,13 +363,14 @@
   // Schedule subject names that count toward a canonical subject's row in
   // "Progress by subject": their done/total are added into that row.
   var SUBJECT_ALIASES = { 'AI (Logic)': 'AI' };
-  // Parts of a subject a batch's plan never teaches, as a task count added
-  // to that row's total so the bar can't reach 100% on the batch's own
-  // tasks alone. "120 Days - 70 Marks" (D) gets AI lectures later but no
-  // Logic portion; 14 = batch C's "AI (Logic)" task count (2026-10-02).
-  // Only applies once the batch actually has AI tasks scheduled, so the
-  // row isn't changed while there's nothing to do.
-  var UNTAUGHT_TASKS = { D: { 'AI': 14 } };
+  // Share of a subject a batch's plan never teaches, so the bar tops out
+  // below 100% on the batch's own tasks alone. "120 Days - 70 Marks" (D)
+  // gets AI lectures later but no Logic, and Logic counts as 30% of AI
+  // (user's call, 2026-10-02), so D's AI bar maxes out at 70%. Done by
+  // scaling the row's total (total / (1 - share)), which every percentage
+  // computed from done/total then picks up. Only once the batch actually
+  // has AI tasks scheduled.
+  var UNTAUGHT_SHARE = { D: { 'AI': 0.3 } };
   function mergeSubjectAliases(list, batch) {
     var out = [], byName = {};
     (list || []).forEach(function (s) {
@@ -378,9 +379,9 @@
       byName[name].done += s.done || 0;
       byName[name].total += s.total || 0;
     });
-    var missing = UNTAUGHT_TASKS[batch] || {};
+    var missing = UNTAUGHT_SHARE[batch] || {};
     Object.keys(missing).forEach(function (name) {
-      if (byName[name] && byName[name].total > 0) byName[name].total += missing[name];
+      if (byName[name] && byName[name].total > 0) byName[name].total = byName[name].total / (1 - missing[name]);
     });
     return out;
   }
