@@ -4,7 +4,8 @@
 // Each link opens the lesson the task's range STARTS with: a lesson titled
 // "Lecture N" when one exists for "Lec N" (exercises sit between lectures);
 // in modules with no "Lecture N" titles (Counting, Basic Prob, Sampling, ...)
-// the Nth item in that module's list.
+// the Nth VIDEO in that module's list (PDFs - notes, homework, corrections -
+// are not lectures and are never counted). LA links are all title-matched.
 //
 // Built 2026-10-02 from the GATE 2027 bundle (https://learn.taai.live/learn/batch/GATE-2027/content):
 // Linear Algebra, Probability and Statistics courses, plus the quizzes in
@@ -52,8 +53,8 @@ window.SCHEDULE_TASK_LINKS = {
       "Mod 1: Counting Lec 1-5": 'https://learn.taai.live/learn/home/GATE-2027/Probability/section/624017/lesson/3901884',
       // Counting / Practice Problems - III
       "Mod 1: Counting Lec 6-10": 'https://learn.taai.live/learn/home/GATE-2027/Probability/section/624017/lesson/3933701',
-      // Counting / Grouping & Distribution -I
-      "Mod 1: Counting Lec 11-14 (Done)": 'https://learn.taai.live/learn/home/GATE-2027/Probability/section/624017/lesson/3933796',
+      // Counting / Grouping & Distribution -II
+      "Mod 1: Counting Lec 11-14 (Done)": 'https://learn.taai.live/learn/home/GATE-2027/Probability/section/624017/lesson/3933818',
       // Basic Probability / Basics - 1
       "Mod 2: Basic Prob Lec 1-6": 'https://learn.taai.live/learn/home/GATE-2027/Probability/section/629214/lesson/3970233',
       // Basic Probability / Conditional Probability - III
@@ -78,8 +79,8 @@ window.SCHEDULE_TASK_LINKS = {
       "Mod 6: Special RV Lec 7-13 (Done)": 'https://learn.taai.live/learn/home/GATE-2027/Probability/section/641647/lesson/4018777',
       // Conditional Expectation and Variance / Lecture 1
       "Mod 7: Cond Exp Lec 1-6": 'https://learn.taai.live/learn/home/GATE-2027/Probability/section/641643/lesson/3998208',
-      // Conditional Expectation and Variance / Homework - 1
-      "Mod 7: Cond Exp Lec 7-13 (Done)": 'https://learn.taai.live/learn/home/GATE-2027/Probability/section/641643/lesson/4502017',
+      // Conditional Expectation and Variance / Lecture 5
+      "Mod 7: Cond Exp Lec 7-13 (Done)": 'https://learn.taai.live/learn/home/GATE-2027/Probability/section/641643/lesson/4077432',
     },
     "Statistics": {
       // Sampling Distribution / Building intuition-I
@@ -94,10 +95,10 @@ window.SCHEDULE_TASK_LINKS = {
       "Mod 2: Estimation 12-16 (Done)": 'https://learn.taai.live/learn/home/GATE-2027/Statistics/section/674931/lesson/4260548',
       // Hypothesis Testing / Introduction -I
       "Mod 3: Hypothesis Lec 1-6": 'https://learn.taai.live/learn/home/GATE-2027/Statistics/section/677339/lesson/4291168',
-      // Hypothesis Testing / Z test
-      "Mod 3: Hypothesis Lec 7-11": 'https://learn.taai.live/learn/home/GATE-2027/Statistics/section/677339/lesson/4297295',
-      // Hypothesis Testing / Problems
-      "Mod 3: Hypothesis 12-17 (Done)": 'https://learn.taai.live/learn/home/GATE-2027/Statistics/section/677339/lesson/4304024',
+      // Hypothesis Testing / Examples
+      "Mod 3: Hypothesis Lec 7-11": 'https://learn.taai.live/learn/home/GATE-2027/Statistics/section/677339/lesson/4303621',
+      // Hypothesis Testing / Z test of proportion
+      "Mod 3: Hypothesis 12-17 (Done)": 'https://learn.taai.live/learn/home/GATE-2027/Statistics/section/677339/lesson/4304033',
     },
     "Quiz & Test Series": {
       // Linear Algebra / Basics of Linear Algebra and System of Linear Equations
