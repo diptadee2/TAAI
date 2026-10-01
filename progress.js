@@ -237,7 +237,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-01-16';
+  var CLIENT_VERSION = '2026-10-01-18';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -4703,7 +4703,34 @@
 
   // Shown on hover of anything that opens the editor — the once-a-month
   // rule, stated at the moment someone's about to use it.
+  // Team penalty (set-about.js / about_banned_until): the About was removed
+  // and a new one can't be set for two weeks. The student stays on the
+  // leaderboards; only the About is affected.
+  function aboutBannedUntilLabel() {
+    var v = state.viewerAbout;
+    if (!v || v.lockReason !== 'banned' || !v.bannedUntil) return null;
+    try { return new Date(v.bannedUntil).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short' }); } catch (e) { return null; }
+  }
+  // Countdown in whole days (direct request: "show them a countdown of the
+  // number of days later they can set it up").
+  function aboutBanDaysLeft() {
+    var v = state.viewerAbout;
+    if (!v || v.lockReason !== 'banned' || !v.bannedUntil) return 0;
+    return Math.max(1, Math.ceil((new Date(v.bannedUntil).getTime() - Date.now()) / 86400000));
+  }
+  function aboutBanNote() {
+    var until = aboutBannedUntilLabel();
+    if (!until) return '';
+    var days = aboutBanDaysLeft();
+    return 'Your About was removed by the team. You can set a new one in ' + days + ' day' + (days === 1 ? '' : 's') + ' (' + until + ').';
+  }
+  // First team removal: they may set a new one now; a repeat means a ban.
+  var ABOUT_REMOVED_NOTE = 'Your About was removed by the team. You can set a new one now, but if it’s removed again you won’t be able to set an About for 2 weeks.';
+  function aboutRemovedByTeam() { return !!(state.viewerAbout && state.viewerAbout.removedByTeam); }
+  function aboutNotice() { return aboutBanNote() || (aboutRemovedByTeam() ? ABOUT_REMOVED_NOTE : ''); }
   function aboutChangeHint() {
+    if (aboutBannedUntilLabel()) return aboutBanNote();
+    if (aboutRemovedByTeam()) return 'Removed by the team. You can set a new one now.';
     if (state.viewerAbout && state.viewerAbout.canChange === false) return '0 changes left this week';
     return '1 change left this week';
   }
@@ -4777,7 +4804,11 @@
   }
   function aboutEditButtonHtml(extraClass) {
     if (!state.student || state.needsRename) return '';
-    return '<button type="button" class="about-edit-btn' + (extraClass ? ' ' + extraClass : '') + '" data-about-hint="' + escapeAttr(aboutChangeHint()) + '">' + ABOUT_ICON_SVG + '<span class="about-edit-label">' + aboutEditButtonLabel() + '</span></button>';
+    var note = aboutNotice();
+    return '<button type="button" class="about-edit-btn' + (extraClass ? ' ' + extraClass : '') + '" data-about-hint="' + escapeAttr(aboutChangeHint()) + '">' + ABOUT_ICON_SVG + '<span class="about-edit-label">' + aboutEditButtonLabel() + '</span></button>' +
+      // Always rendered (hidden unless banned) so updateAboutEditButton can
+      // reveal it once the leaderboard poll reports the ban.
+      '<div class="about-flag-note"' + (note ? '' : ' hidden') + '>' + escapeHtml(note) + '</div>';
   }
   // The card header isn't re-rendered on each poll (only #leaderboard-rows
   // is), so the label is patched in place once real data arrives.
@@ -4785,11 +4816,13 @@
     // The button appears on both leaderboard cards (weekly + Today's
     // Leaders), so every copy is patched, not just one.
     var label = aboutEditButtonLabel(), hint = aboutChangeHint();
+    var note = aboutNotice();
     Array.prototype.forEach.call(document.querySelectorAll('.about-edit-btn'), function (btn) {
       var l = btn.querySelector('.about-edit-label');
       if (l) l.textContent = label;
       btn.setAttribute('data-about-hint', hint);
     });
+    Array.prototype.forEach.call(document.querySelectorAll('.about-flag-note'), function (n) { n.textContent = note; n.hidden = !note; });
   }
 
   // Editor is a modal on <body>, not inline in the card — the card's rows
@@ -4812,13 +4845,14 @@
     el.innerHTML =
       '<div class="about-modal" role="dialog" aria-modal="true" aria-labelledby="about-modal-title">' +
         '<div class="about-modal-title" id="about-modal-title">Your About</div>' +
+        (aboutRemovedByTeam() ? '<p class="about-modal-removed">' + ABOUT_REMOVED_NOTE + '</p>' : '') +
         '<p class="about-modal-sub">Shows next to your name on the weekly leaderboard. You can change it <strong>once a week</strong>.</p>' +
         (canChange
           ? '<div class="about-modal-preview"><span class="about-modal-preview-bubble" id="about-preview">' + (current ? escapeHtml(current) : 'Your About will look like this') + '</span></div>' +
             '<textarea id="about-input" class="about-modal-input" maxlength="' + ABOUT_MAX_LENGTH + '" rows="2" placeholder="e.g. 6 hrs a day till GATE 🚀">' + escapeHtml(current) + '</textarea>' +
             '<div class="about-modal-count"><span id="about-count">' + current.length + '</span>/' + ABOUT_MAX_LENGTH + '</div>'
           : (current ? '<div class="about-modal-preview"><span class="about-modal-preview-bubble">' + escapeHtml(current) + '</span></div>' : '') +
-            '<p class="about-modal-locked">' + (state.viewerAbout && state.viewerAbout.lockReason === 'tries'
+            '<p class="about-modal-locked">' + (aboutBanNote() ? escapeHtml(aboutBanNote()) : state.viewerAbout && state.viewerAbout.lockReason === 'tries'
               ? 'You\'re out of tries for this week. You can post an About again on Monday.'
               : 'You\'ve already changed your About this week. You can change it again on Monday.') + '</p>') +
         '<p class="about-modal-error" id="about-error" hidden></p>' +

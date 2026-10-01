@@ -1009,3 +1009,14 @@ CREATE TABLE IF NOT EXISTS edge_shadow_log (
 );
 GRANT SELECT, INSERT, UPDATE, DELETE ON edge_shadow_log TO service_role;
 GRANT USAGE, SELECT ON SEQUENCE edge_shadow_log_id_seq TO service_role;
+
+-- Team moderation for an About that got past the Claude check, applied by
+-- scripts/flag-about.mjs and enforced in set-about.js. The student stays on
+-- the leaderboards either way.
+--   1st flag: About removed, about_reset_allowed = true (may set a new one
+--             right away, even past the weekly limit; cleared once they do).
+--   2nd+ flag (circumventing): About removed, about_banned_until = +14 days.
+-- about_flag_count is a permanent count of manual flags.
+ALTER TABLE students ADD COLUMN IF NOT EXISTS about_flag_count    INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS about_reset_allowed BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS about_banned_until  TIMESTAMPTZ;

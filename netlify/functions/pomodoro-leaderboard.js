@@ -238,6 +238,18 @@ export async function handler(event) {
     const changed = mine.about_changed_month === weekStart;
     const outOfTries = mine.about_check_month === weekStart && (mine.about_check_count || 0) >= 2;
     viewerAbout = { text: mine.about_text || null, canChange: !changed && !outOfTries, lockReason: changed ? 'changed' : (outOfTries ? 'tries' : null) };
+    // Team moderation (see set-about.js): a removed About the student may
+    // replace now, or a two-week ban after a repeat.
+    try {
+      const { data: b, error: bErr } = await supabase.from('students').select('about_banned_until, about_reset_allowed').eq('email', viewerEmail).maybeSingle();
+      if (!bErr && b) {
+        if (b.about_banned_until && new Date(b.about_banned_until) > new Date()) {
+          viewerAbout = Object.assign(viewerAbout, { canChange: false, lockReason: 'banned', bannedUntil: b.about_banned_until });
+        } else if (b.about_reset_allowed) {
+          viewerAbout = Object.assign(viewerAbout, { canChange: true, lockReason: null, removedByTeam: true });
+        }
+      }
+    } catch (e) { /* not migrated yet */ }
   }
 
   return json(200, { leaderboard, viewerRank, todayLeaders, liveCount, viewerAbout });
