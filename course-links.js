@@ -1,7 +1,9 @@
 // Links from schedule tasks to the matching lesson on the LMS
 // (learn.taai.live). Keyed batch -> subject -> exact task_text, so the task
 // text itself (which task_progress is keyed on) never has to change.
-// Each link opens the FIRST lesson of the range the task covers.
+// Each link opens the lesson whose TITLE the task names first ("Lec 6" ->
+// the lesson titled "Lecture 6", not the 6th item: exercises/animations
+// sit between lectures in the syllabus).
 //
 // Built 2026-10-02 from the public Linear Algebra syllabus at
 // https://learn.taai.live/learn/GATE-2027/Linear-Algebra--Mathematics-
@@ -14,8 +16,8 @@ window.SCHEDULE_TASK_LINKS = {
     'Linear Algebra': {
       // Basics of Linear Algebra & System of linear Equations / Lecture 1
       "Mod 1: Lec 1 to 5": 'https://learn.taai.live/learn/home/GATE-2027/Linear-Algebra--Mathematics-/section/605683/lesson/3783559',
-      // Basics of Linear Algebra & System of linear Equations / Solution Existence-2
-      "Mod 1: Lec 6 to 10 (Done)": 'https://learn.taai.live/learn/home/GATE-2027/Linear-Algebra--Mathematics-/section/605683/lesson/3789074',
+      // Basics of Linear Algebra & System of linear Equations / Lecture 6
+      "Mod 1: Lec 6 to 10 (Done)": 'https://learn.taai.live/learn/home/GATE-2027/Linear-Algebra--Mathematics-/section/605683/lesson/3783695',
       // Matrix Algebra / Basics of Matrix Algebra
       "Mod 2: All 6 Lessons (Done)": 'https://learn.taai.live/learn/home/GATE-2027/Linear-Algebra--Mathematics-/section/606888/lesson/3791650',
       // Vector Space / Basics
@@ -32,8 +34,8 @@ window.SCHEDULE_TASK_LINKS = {
       "Mod 6: Rank to Prac 2": 'https://learn.taai.live/learn/home/GATE-2027/Linear-Algebra--Mathematics-/section/618712/lesson/3886019',
       // Eigen Value and Eigen Vector / Similar matrices
       "Mod 6: Similar to Pos Def (Done)": 'https://learn.taai.live/learn/home/GATE-2027/Linear-Algebra--Mathematics-/section/618712/lesson/3892215',
-      // SVD / Let's Start
-      "Mod 7: SVD Intro to Examples": 'https://learn.taai.live/learn/home/GATE-2027/Linear-Algebra--Mathematics-/section/622425/lesson/3892599',
+      // SVD / Introduction to SVD - I
+      "Mod 7: SVD Intro to Examples": 'https://learn.taai.live/learn/home/GATE-2027/Linear-Algebra--Mathematics-/section/622425/lesson/3892954',
       // SVD / Imp Properties on SVD
       "Mod 7: Imp Prop to HW 2": 'https://learn.taai.live/learn/home/GATE-2027/Linear-Algebra--Mathematics-/section/622425/lesson/3895896',
       // SVD / Vector and Matrix Norms
