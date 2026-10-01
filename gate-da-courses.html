@@ -3424,8 +3424,29 @@ function App() {
       }, opts);
       return obs;
     };
-    const io = makeObserver({ threshold: 0.1, rootMargin: '0px 0px 200px 0px' });
-    document.querySelectorAll('.fade-in:not(.combo-full-row)').forEach((el) => { markInitialVisibility(el); io.observe(el); });
+    // Phones and tablets (<=1024px) reveal only once an element is actually
+    // ON screen (its top inside the upper ~88% of the viewport). The 200px
+    // early margin desktop uses meant, measured on a 390px phone, 30 of 32
+    // elements got revealed while still ~190px BELOW the visible screen, so
+    // their 0.58s animation finished before anyone could see it ("the
+    // scroll animations have disappeared" on mobile, 2026-10-01).
+    const touchLayout = window.matchMedia('(max-width: 1024px)').matches;
+    const io = makeObserver(touchLayout
+      ? { threshold: 0, rootMargin: '0px 0px -12% 0px' }
+      : { threshold: 0.1, rootMargin: '0px 0px 200px 0px' });
+    const pendingReveal = new Set();
+    document.querySelectorAll('.fade-in:not(.combo-full-row)').forEach((el) => { markInitialVisibility(el); io.observe(el); pendingReveal.add(el); });
+    // Safety net for the negative margin: something sitting in the last
+    // ~12% of the page could otherwise never reach the trigger line once
+    // the page can't scroll any further. At the very bottom, reveal
+    // whatever is still waiting.
+    const revealRestAtBottom = () => {
+      if (window.innerHeight + window.scrollY < document.documentElement.scrollHeight - 4) return;
+      pendingReveal.forEach((el) => { if (!el.classList.contains('visible')) { io.unobserve(el); show(el); } });
+      pendingReveal.clear();
+      window.removeEventListener('scroll', revealRestAtBottom);
+    };
+    if (touchLayout) window.addEventListener('scroll', revealRestAtBottom, { passive: true });
 
     // Real feedback: "the animation happens too early" — the shared 200px
     // early rootMargin above barely registers on the ordinary fade-in's
@@ -3440,7 +3461,7 @@ function App() {
     const ioRow = makeObserver({ threshold: 0.1 });
     document.querySelectorAll('.fade-in.combo-full-row').forEach((el) => { markInitialVisibility(el); ioRow.observe(el); });
 
-    return () => { io.disconnect(); ioRow.disconnect(); };
+    return () => { io.disconnect(); ioRow.disconnect(); window.removeEventListener('scroll', revealRestAtBottom); };
   }, []);
 
   return (
