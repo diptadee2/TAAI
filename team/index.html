@@ -4,7 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex">
-<meta name="theme-color" content="#17171b">
+<meta name="theme-color" content="#0a0a0a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="icon" href="/favicon.ico?v=6" sizes="any">
 <title>Team Console | TAAI</title>
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
@@ -294,6 +297,99 @@
   .name-flag-badge--review { background: var(--purple-soft); color: var(--purple); cursor: help; }
   .name-clear-actions { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
   .js-clear-rename-input { width: 130px; padding: 5px 8px; border-radius: 6px; border: 1.5px solid var(--line); background: var(--bg-soft); color: var(--ink); font-family: inherit; font-size: 12px; }
+
+  /* ===================== shadcn/ui layer (2026-10-01) =====================
+     Direct request: "apply shadcn to the team page". This page is plain JS
+     with no React/Tailwind/bundler, so shadcn's components can't be used
+     as-is; instead its actual design values are ported to CSS, the same
+     approach the tracker's batch-switch buttons already use: the default
+     dark theme tokens (neutral), Geist, and the Button / Input / Card /
+     Tabs / Badge / Table / Alert recipes. Everything is in this one block,
+     after the original styles, so removing it restores the old look. */
+  :root {
+    --bg: #0a0a0a;          /* --background  oklch(0.145 0 0) */
+    --bg-soft: #0a0a0a;
+    --card: #171717;        /* --card        oklch(0.205 0 0) */
+    --ink: #fafafa;         /* --foreground  oklch(0.985 0 0) */
+    --ink-dim: #d4d4d4;
+    --ink-soft: #a1a1a1;    /* --muted-foreground oklch(0.708 0 0) */
+    --line: rgba(255,255,255,0.10);   /* --border oklch(1 0 0 / 10%) */
+    --sc-input: rgba(255,255,255,0.15); /* --input oklch(1 0 0 / 15%) */
+    --sc-muted: #262626;    /* --muted / --secondary / --accent oklch(0.269 0 0) */
+    --sc-primary: #e5e5e5;  /* --primary     oklch(0.922 0 0) */
+    --sc-primary-fg: #171717;
+    --sc-destructive: #ff6467; /* oklch(0.704 0.191 22.216) */
+    --sc-ring: #737373;     /* --ring        oklch(0.556 0 0) */
+    --radius-md: 8px; --radius-lg: 14px; /* --radius 0.625rem: md = radius-2px, xl = radius+4px */
+    --font-body: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+  body { background: var(--bg); font-size: 14px; letter-spacing: -0.005em; }
+  h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
+  .post-body-snippet, .pricing-card-id, .chip, code { font-family: 'Geist Mono', ui-monospace, 'SF Mono', Consolas, monospace; }
+
+  /* Button: inline-flex, h-9 px-4, rounded-md, text-sm font-medium, focus ring 3px */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 36px; padding: 0 16px; border-radius: var(--radius-md); font-size: 14px; font-weight: 500; white-space: nowrap; background: rgba(255,255,255,0.045); color: var(--ink); border: 1px solid var(--sc-input); box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: background-color .15s, color .15s, box-shadow .15s, border-color .15s; outline: none; }
+  .btn:hover { background: rgba(255,255,255,0.08); border-color: var(--sc-input); }
+  .btn:focus-visible, .tab-btn:focus-visible, .btn-order:focus-visible { box-shadow: 0 0 0 3px rgba(115,115,115,0.5); border-color: var(--sc-ring); }
+  .btn:disabled { opacity: .5; pointer-events: none; }
+  .btn-primary { background: var(--sc-primary); color: var(--sc-primary-fg); border-color: transparent; }
+  .btn-primary:hover { background: rgba(229,229,229,0.9); filter: none; }
+  .btn-danger { background: rgba(255,100,103,0.6); color: #fff; border-color: transparent; }  /* destructive: dark:bg-destructive/60 */
+  .btn-danger:hover { background: rgba(255,100,103,0.75); }
+  .btn-test { background: transparent; color: var(--amber); border-color: rgba(251,191,36,0.35); }
+  .btn-small { height: 32px; padding: 0 12px; gap: 6px; font-size: 13px; border-radius: var(--radius-md); } /* size sm: h-8 px-3 */
+  .btn-order { border-radius: 6px; border-color: var(--sc-input); background: rgba(255,255,255,0.045); }
+
+  /* Tabs: muted pill track, active trigger raised */
+  .tabs { display: inline-flex; gap: 0; padding: 3px; border-radius: 10px; background: var(--sc-muted); border-bottom: none; margin-bottom: 22px; }
+  .tab-btn { height: 30px; margin: 0; padding: 0 12px; border-radius: var(--radius-md); border: 1px solid transparent; color: var(--ink-soft); font-size: 13.5px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; transition: color .15s, background-color .15s; }
+  .tab-btn:hover { color: var(--ink); }
+  .tab-btn.active { color: var(--ink); background: rgba(255,255,255,0.15); border-color: var(--sc-input); border-bottom-color: var(--sc-input); box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+
+  /* Card: bg-card, rounded-xl, border, shadow-sm */
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+  .pricing-card { background: var(--bg); border-color: var(--line); border-radius: 12px; }
+
+  /* Input / Select / Textarea: h-9, rounded-md, border-input, bg-input/30, focus ring */
+  .field label { font-size: 13px; font-weight: 500; color: var(--ink); }
+  .field input, .field select, .field textarea,
+  .students-filters input[type="text"], .students-filters input[type="number"], .students-filters select,
+  .students-notes-cell textarea, .rename-input {
+    border-radius: var(--radius-md); border: 1px solid var(--sc-input); background: rgba(255,255,255,0.045); color: var(--ink); font-family: var(--font-body); font-size: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: border-color .15s, box-shadow .15s;
+  }
+  .field input:not([type="color"]):not([type="checkbox"]), .field select, .students-filters input[type="text"], .students-filters input[type="number"], .students-filters select { min-height: 36px; padding: 4px 12px; }
+  .field input::placeholder, .field textarea::placeholder, .students-filters input::placeholder { color: var(--ink-soft); }
+  .field input:focus, .field select:focus, .field textarea:focus,
+  .students-filters input:focus, .students-filters select:focus, .students-notes-cell textarea:focus, .rename-input:focus {
+    outline: none; border-color: var(--sc-ring); box-shadow: 0 0 0 3px rgba(115,115,115,0.5);
+  }
+  .field-hint { color: var(--ink-soft); }
+
+  /* Badge: rounded-md border px-2 py-0.5 text-xs font-medium */
+  .tag { border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: 500; border: 1px solid transparent; }
+  .tag-custom { background: var(--sc-muted); color: var(--ink); }                       /* secondary */
+  .tag-builtin { background: transparent; color: var(--ink-dim); border-color: var(--line); } /* outline */
+  .tag-disabled { background: rgba(255,100,103,0.6); color: #fff; }                    /* destructive */
+  .pricing-status { border-radius: 6px; font-weight: 500; font-size: 12px; padding: 2px 8px; }
+  .chip { border-radius: 6px; border-color: var(--line); background: var(--sc-muted); color: var(--ink); }
+  .chip:hover { border-color: var(--sc-input); background: rgba(255,255,255,0.12); }
+
+  /* Table: header h-10 font-medium, rows border-b, hover:bg-muted/50 */
+  .students-table { font-size: 13.5px; }
+  .students-table th { height: 40px; color: var(--ink); font-weight: 500; font-size: 13px; vertical-align: middle; }
+  .students-table th, .students-table td { border-bottom-color: var(--line); }
+  .students-table tbody tr { transition: background-color .15s; }
+  .students-table tbody tr:hover { background: rgba(38,38,38,0.5); }
+
+  /* Alert: rounded-lg border px-4 py-3 text-sm */
+  .msg { border-radius: 10px; border: 1px solid var(--line); background: var(--card); padding: 12px 16px; font-size: 14px; }
+  .msg-error { color: var(--sc-destructive); border-color: rgba(255,100,103,0.35); background: var(--card); }
+  .msg-ok { color: var(--ink); border-color: var(--line); background: var(--card); }
+
+  a { color: var(--ink); text-decoration: none; text-underline-offset: 4px; }
+  a:hover { text-decoration: underline; }
+  .form-section-heading { color: var(--ink-soft); }
+  /* ===================== end shadcn/ui layer ===================== */
 </style>
 </head>
 <body>
