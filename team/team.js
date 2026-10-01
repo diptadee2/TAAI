@@ -403,7 +403,6 @@
     var tagHtml = isBuiltIn
       ? '<span class="tag tag-builtin">' + escapeHtml(SOURCE_LABELS[p.source] || p.source) + '</span>'
       : '<span class="tag tag-custom">Custom</span>';
-    var disabledTag = p.enabled ? '' : '<span class="tag tag-disabled">Paused</span>';
     var title = p.title || (isBuiltIn ? SOURCE_LABELS[p.source] : '(untitled)');
     var scheduleDesc = SCHEDULE_LABELS[p.schedule_type] + ' at ' + escapeHtml(p.schedule_time) + ' IST';
     if (p.schedule_type === 'weekly') scheduleDesc = DAY_NAMES[p.schedule_day_of_week] + 's, ' + scheduleDesc;
@@ -412,21 +411,41 @@
     var bodySnippet = bodySnippetText(p);
     var truncated = bodySnippet.length > 160 ? bodySnippet.slice(0, 160) + '…' : bodySnippet;
 
+    // A built-in post with no custom title would show its source name twice
+    // (as the title and as the tag), so its tag just says Built-in.
+    if (isBuiltIn && !p.title) tagHtml = '<span class="tag tag-builtin">Built-in</span>';
+    // Card layout (2026-10-01, direct request: "in the form of cards like
+    // the product page"), reusing the Site data > Pricing card styling
+    // (.pricing-card*) so both tabs share one visual language. The next send
+    // time takes the spot the price has on a course card. ◀/▶ replace the
+    // old ▲/▼ since cards read left to right; same movePost behavior.
+    var statusHtml = p.enabled
+      ? '<span class="pricing-status pricing-status-live">● Active</span>'
+      : '<span class="pricing-status pricing-status-soon">Paused</span>';
+    var extras = [];
+    if (p.tag_everyone) extras.push('📣 @everyone');
+    if (p.extra_mentions) extras.push(escapeHtml(p.extra_mentions));
     return (
-      '<div class="post-row" data-id="' + p.id + '">' +
-        '<div class="post-order-buttons">' +
-          '<button class="btn-order js-move-up" data-id="' + p.id + '" title="Fire earlier than the post below it, when both are due at the same time"' + (isFirst ? ' disabled' : '') + '>▲</button>' +
-          '<button class="btn-order js-move-down" data-id="' + p.id + '" title="Fire later than the post above it, when both are due at the same time"' + (isLast ? ' disabled' : '') + '>▼</button>' +
+      '<div class="pricing-card post-card' + (p.enabled ? '' : ' post-card--paused') + '" data-id="' + p.id + '">' +
+        '<div class="pricing-card-head">' +
+          '<div class="post-card-titlewrap"><div class="pricing-card-name">' + escapeHtml(title) + '</div>' +
+            '<div class="post-card-tags">' + tagHtml + '</div></div>' +
+          statusHtml +
         '</div>' +
-        '<div class="post-main">' +
-          '<div class="post-title">' + tagHtml + disabledTag + ' ' + escapeHtml(title) + (p.tag_everyone ? ' 📣' : '') + '</div>' +
-          '<div class="post-meta">' + scheduleDesc + ' — next: ' + formatNextFire(p.next_fire_at) + '</div>' +
-          '<div class="post-body-snippet" title="' + escapeHtml(bodySnippet) + '">' + escapeHtml(truncated) + '</div>' +
+        '<div class="post-card-next"><span class="post-card-next-label">Next send</span>' +
+          '<span class="post-card-next-time">' + (p.enabled ? escapeHtml(formatNextFire(p.next_fire_at)) : 'Paused') + '</span></div>' +
+        '<div class="pricing-card-meta"><div><b>Schedule</b> ' + scheduleDesc + '</div>' +
+          (extras.length ? '<div><b>Mentions</b> ' + extras.join(' · ') + '</div>' : '') +
         '</div>' +
-        '<div class="post-actions">' +
+        '<div class="post-body-snippet" title="' + escapeHtml(bodySnippet) + '">' + escapeHtml(truncated) + '</div>' +
+        '<div class="pricing-card-actions">' +
           '<button class="btn btn-small js-edit" data-id="' + p.id + '">Edit</button>' +
           '<button class="btn btn-small js-toggle" data-id="' + p.id + '">' + (p.enabled ? 'Pause' : 'Resume') + '</button>' +
           '<button class="btn btn-small btn-danger js-delete" data-id="' + p.id + '">Delete</button>' +
+          '<span class="post-card-order">' +
+            '<button class="btn-order js-move-up" data-id="' + p.id + '" title="Send earlier than the card before it, when both are due at the same time"' + (isFirst ? ' disabled' : '') + '>◀</button>' +
+            '<button class="btn-order js-move-down" data-id="' + p.id + '" title="Send later than the card after it, when both are due at the same time"' + (isLast ? ' disabled' : '') + '>▶</button>' +
+          '</span>' +
         '</div>' +
       '</div>'
     );
@@ -543,7 +562,7 @@
         '<div class="card channel-group">' +
           '<div class="channel-group-heading">' + headingHtml + '</div>' +
           (state.renameStatus && state.renameStatus.webhookUrl === key ? renderRenameStatus() : '') +
-          rows.map(function (p, i) { return renderPostRow(p, i === 0, i === rows.length - 1); }).join('') +
+          '<div class="pricing-cards post-cards">' + rows.map(function (p, i) { return renderPostRow(p, i === 0, i === rows.length - 1); }).join('') + '</div>' +
         '</div>'
       );
     }).join('');
