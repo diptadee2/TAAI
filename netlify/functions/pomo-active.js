@@ -85,7 +85,19 @@ export async function handler(event) {
   // session naturally completes/expires/changes, rather than losing to
   // whichever device's sync happens to land last.
   const existingStillActive = !!(existing && existing.running && Number.isFinite(existing.phase_end_at) && existing.phase_end_at > Date.now());
-  if (isNewPhase && existingStillActive && existingOwnerToken && deviceToken && existingOwnerToken !== deviceToken) {
+  // While a phase is running and unexpired, ONLY the tab/device that started
+  // it (owner_token) may change it. Widened 2026-10-01 from "new phases
+  // only, and only when a token is present": a stale tab's pagehide beacon
+  // (running:false, its own hours-old state, and no deviceToken at all on
+  // older clients) was overwriting students' real running sessions, so
+  // their completion was then rejected as phase_end_mismatch and the session
+  // never counted. Seen in production right after the 2026-10-01 deploy
+  // reloaded every open tab: one rejected row's server state was a paused
+  // session started at 01:39, overwriting a live one ending at 14:02. A
+  // tokenless write counts as "not the owner". The owner's own writes
+  // (pause/skip/reset, its own beacon) are unaffected, and once the phase
+  // ends or isn't running, any tab may write as before.
+  if (existingStillActive && existingOwnerToken && existingOwnerToken !== deviceToken) {
     return json(200, { ok: true, ignored: 'another device owns the active session' });
   }
 

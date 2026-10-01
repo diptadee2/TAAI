@@ -237,7 +237,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-01-19';
+  var CLIENT_VERSION = '2026-10-01-20';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -744,6 +744,9 @@
       totalSeconds: pomo.totalSeconds,
       phaseEndAt: pomo.phaseEndAt,
       completedSessions: pomo.completedSessions,
+      // Identifies this tab, so the server can ignore the beacon if another
+      // tab/device owns the running session (see pomo-active.js).
+      deviceToken: getPomoDeviceToken(),
     });
     navigator.sendBeacon('/api/pomo-active', new Blob([body], { type: 'application/json' }));
   }
@@ -996,7 +999,13 @@
   }
 
   function restorePomoActiveState() {
-    applyPomoActiveState(loadPomoActiveState());
+    var saved = loadPomoActiveState();
+    applyPomoActiveState(saved);
+    // A reload's pagehide beacon told the server this session stopped; if it
+    // is in fact still running here, say so again, so the server's record
+    // (live dot, and the session the completion is checked against) matches.
+    // From a tab that doesn't own the session, the server ignores this.
+    if (saved && saved.running && state.student) savePomoActiveRemote(buildPomoActivePayload());
   }
 
   // Focus Mode is intentionally NOT restored on a fresh visit or a real
