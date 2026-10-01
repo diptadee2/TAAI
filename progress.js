@@ -243,7 +243,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-02-4';
+  var CLIENT_VERSION = '2026-10-02-5';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -363,13 +363,24 @@
   // Schedule subject names that count toward a canonical subject's row in
   // "Progress by subject": their done/total are added into that row.
   var SUBJECT_ALIASES = { 'AI (Logic)': 'AI' };
-  function mergeSubjectAliases(list) {
+  // Parts of a subject a batch's plan never teaches, as a task count added
+  // to that row's total so the bar can't reach 100% on the batch's own
+  // tasks alone. "120 Days - 70 Marks" (D) gets AI lectures later but no
+  // Logic portion; 14 = batch C's "AI (Logic)" task count (2026-10-02).
+  // Only applies once the batch actually has AI tasks scheduled, so the
+  // row isn't changed while there's nothing to do.
+  var UNTAUGHT_TASKS = { D: { 'AI': 14 } };
+  function mergeSubjectAliases(list, batch) {
     var out = [], byName = {};
     (list || []).forEach(function (s) {
       var name = SUBJECT_ALIASES[s.subject] || s.subject;
       if (!byName[name]) { byName[name] = { subject: name, done: 0, total: 0 }; out.push(byName[name]); }
       byName[name].done += s.done || 0;
       byName[name].total += s.total || 0;
+    });
+    var missing = UNTAUGHT_TASKS[batch] || {};
+    Object.keys(missing).forEach(function (name) {
+      if (byName[name] && byName[name].total > 0) byName[name].total += missing[name];
     });
     return out;
   }
@@ -2131,7 +2142,7 @@
     // those show at 0% until a schedule with that subject gets uploaded
     // and synced, at which point they start progressing with each tick
     // like any other row.
-    var subjects = mergeSubjectAliases(state.subjectProgress);
+    var subjects = mergeSubjectAliases(state.subjectProgress, state.student && state.student.batch);
     var byName = {};
     subjects.forEach(function (s) { byName[s.subject] = s; });
     CANONICAL_SUBJECTS.forEach(function (name) {
@@ -2631,7 +2642,7 @@
     return api('/subject-progress?email=' + encodeURIComponent(state.student.email))
       .then(function (r) {
         state.subjectProgress = r.subjects || [];
-        mergeSubjectAliases(state.subjectProgress).forEach(function (s) {
+        mergeSubjectAliases(state.subjectProgress, state.student && state.student.batch).forEach(function (s) {
           var row = document.querySelector('.subject-row[data-subject="' + CSS.escape(s.subject) + '"]');
           if (!row) return;
           var pct = s.total ? Math.round((s.done / s.total) * 100) : 0;
