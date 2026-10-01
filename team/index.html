@@ -389,6 +389,19 @@
   a { color: var(--ink); text-decoration: none; text-underline-offset: 4px; }
   a:hover { text-decoration: underline; }
   .form-section-heading { color: var(--ink-soft); }
+  /* Tab switching shouldn't move anything (direct request: "keep the
+     switch between the tabs consistent"). Measured before this: the whole
+     tab bar shifted 7px sideways whenever a tab was tall enough to need a
+     scrollbar, and "Students" -> "Students (345)" widened its tab by 36px,
+     pushing "Site data" along. scrollbar-gutter keeps the scrollbar's
+     space reserved on every tab; the main tab triggers get equal, fixed
+     widths (shadcn's own TabsList/TabsTrigger flex-1 layout), so a count
+     appearing never resizes a neighbour. Site data's sub-tabs (a .tabs
+     nested inside the page) keep their natural widths. */
+  html { scrollbar-gutter: stable; }
+  .tabs-main { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 176px; }
+  .tabs-main .tab-btn { justify-content: center; }
+  @media (max-width: 600px) { .tabs-main { display: grid; width: 100%; grid-auto-columns: 1fr; align-items: stretch; } .tabs-main .tab-btn { height: auto; min-height: 36px; padding: 5px 6px; font-size: 12.5px; line-height: 1.25; white-space: normal; text-align: center; } }
   /* ===================== end shadcn/ui layer ===================== */
 </style>
 </head>

@@ -965,7 +965,7 @@
     var postsCountLabel = state.posts.length ? ' (' + state.posts.length + ')' : '';
     var studentsCountLabel = state.students ? ' (' + state.students.length + ')' : '';
     var tabsHtml =
-      '<div class="tabs">' +
+      '<div class="tabs tabs-main">' +
         '<button class="tab-btn' + (isAnnouncements ? ' active' : '') + '" data-tab="announcements">📣 Announcements' + postsCountLabel + '</button>' +
         '<button class="tab-btn' + (isStudents ? ' active' : '') + '" data-tab="students">👥 Students' + studentsCountLabel + '</button>' +
         '<button class="tab-btn' + (isSiteData ? ' active' : '') + '" data-tab="site-data">🗂️ Site data</button>' +
