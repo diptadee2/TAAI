@@ -678,7 +678,6 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 .nav-hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
 .nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 .mobile-menu { position: fixed; top: 86px; left: 0; right: 0; z-index: 49; background: rgba(248,246,255,0.72); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px); border-bottom: 1px solid rgba(139,92,246,0.15); padding: 8px 12px 20px; display: flex; flex-direction: column; gap: 2px; transform: translateY(-10px); opacity: 0; pointer-events: none; transition: transform .3s cubic-bezier(.4,0,.2,1), opacity .22s ease; box-shadow: 0 8px 40px rgba(20,16,43,0.12); overflow: hidden; }
-.mobile-menu::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--purple), rgba(139,92,246,0.15)); pointer-events: none; }
 .mobile-menu.open { transform: translateY(0); opacity: 1; pointer-events: auto; }
 @keyframes menuItemIn { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: translateX(0); } }
 .mobile-menu-link { font-family: var(--font-nav); display: flex; align-items: center; gap: 11px; padding: 12px 14px; border-radius: 12px; font-size: 14px; font-weight: 700; color: var(--ink-dim); text-decoration: none; letter-spacing: .05em; text-transform: uppercase; transition: background .18s, color .18s, transform .12s ease; position: relative; }
