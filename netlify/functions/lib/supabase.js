@@ -17,6 +17,15 @@ export const SITE_DATA_SUBJECT_IDS = [
 
 let client = null;
 
+// Reads an environment variable in both runtimes this code runs in: a
+// regular Netlify Function (Node: process.env) and the Edge Function
+// wrapper (netlify/edge-functions/tracker-data-edge.js, Deno: Netlify.env).
+function envVar(name) {
+  const edge = globalThis.Netlify && globalThis.Netlify.env && globalThis.Netlify.env.get(name);
+  if (edge) return edge;
+  return typeof process !== 'undefined' && process.env ? process.env[name] : undefined;
+}
+
 export function getSupabase() {
   if (!client) {
     // supabase-js constructs a Realtime client eagerly even though these
@@ -24,7 +33,7 @@ export function getSupabase() {
     // do that, which isn't a guaranteed global across every Lambda/Node
     // runtime a Netlify Function might execute on. Supplying `ws` avoids a
     // hard crash on every single request in environments without one.
-    client = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY, {
+    client = createClient(envVar('SUPABASE_URL'), envVar('SUPABASE_SERVICE_KEY'), {
       realtime: { transport: ws },
     });
   }
@@ -64,7 +73,7 @@ export async function fetchAllRows(buildQuery, pageSize = 1000) {
 // (old JS silently sending a request shape the new server no longer
 // accepts) doesn't stay stuck indefinitely waiting for someone to notice
 // and manually refresh.
-export const CLIENT_VERSION = '2026-10-01-15';
+export const CLIENT_VERSION = '2026-10-01-16';
 
 export function json(statusCode, body) {
   return {

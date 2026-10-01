@@ -237,7 +237,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-01-15';
+  var CLIENT_VERSION = '2026-10-01-16';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1617,6 +1617,65 @@
     } catch (e) { /* storage full or unavailable: just no instant load next time */ }
   }
 
+  // Edge Function rollout for tracker-data (netlify/edge-functions/
+  // tracker-data-edge.js, same handler running near the visitor):
+  //   'off'    - only /api/tracker-data.
+  //   'shadow' - only /api/tracker-data is used, but ~1 in 10 page loads
+  //              also fetches /edge/tracker-data in the background AFTER the
+  //              page has rendered, compares the two responses, and logs the
+  //              result (edge-shadow-log). Nothing on screen depends on it.
+  //   'on'     - /edge/tracker-data is used, falling back to
+  //              /api/tracker-data on any error or a response slower than
+  //              TRACKER_EDGE_TIMEOUT_MS.
+  var TRACKER_EDGE_MODE = 'shadow';
+  var TRACKER_EDGE_SHADOW_RATE = 0.1;
+  var TRACKER_EDGE_TIMEOUT_MS = 6000;
+  var trackerShadowDone = false; // at most one comparison per page load
+
+  function fetchTrackerData(url) {
+    if (TRACKER_EDGE_MODE !== 'on') return api(url);
+    var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, TRACKER_EDGE_TIMEOUT_MS) : null;
+    return fetch('/edge' + url, ctrl ? { signal: ctrl.signal } : undefined)
+      .then(function (res) {
+        if (!res.ok) throw new Error('edge ' + res.status);
+        return res.json();
+      })
+      .then(function (data) { if (timer) clearTimeout(timer); return data; })
+      .catch(function () { if (timer) clearTimeout(timer); return api(url); });
+  }
+
+  // Fields that legitimately change second to second between two requests
+  // made a moment apart, so they're excluded from the shadow comparison.
+  var TRACKER_SHADOW_VOLATILE = { is_live: 1, pomo_status: 1, pomo_phase_end_at: 1, pomo_phase_total_seconds: 1, pomo_last_seen_at: 1, liveCount: 1, hourlyActivity: 1, pomoActive: 1 };
+  function trackerShadowCompare(url, apiData, apiMs) {
+    if (trackerShadowDone || TRACKER_EDGE_MODE !== 'shadow' || Math.random() >= TRACKER_EDGE_SHADOW_RATE) return;
+    trackerShadowDone = true;
+    var strip = function (o) { return JSON.parse(JSON.stringify(o, function (k, v) { return TRACKER_SHADOW_VOLATILE[k] ? undefined : v; })); };
+    var started = Date.now();
+    var edgeServerMs = null;
+    var report = function (body) {
+      try {
+        fetch('/api/edge-shadow-log', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).catch(function () {});
+      } catch (e) { /* non-critical */ }
+    };
+    fetch('/edge' + url)
+      .then(function (res) {
+        edgeServerMs = res.headers.get('x-edge-ms');
+        if (!res.ok) throw new Error('edge ' + res.status);
+        return res.json();
+      })
+      .then(function (edgeData) {
+        var a = strip(apiData), b = strip(edgeData);
+        var keys = Object.keys(a).concat(Object.keys(b)).filter(function (k, i, arr) { return arr.indexOf(k) === i; });
+        var diffKeys = keys.filter(function (k) { return JSON.stringify(a[k]) !== JSON.stringify(b[k]); });
+        report({ match: diffKeys.length === 0, diffKeys: diffKeys, oldMs: apiMs, edgeMs: Date.now() - started, edgeServerMs: edgeServerMs, isStudent: !!state.student });
+      })
+      .catch(function (err) {
+        report({ match: false, oldMs: apiMs, edgeMs: Date.now() - started, edgeServerMs: edgeServerMs, isStudent: !!state.student, error: (err && err.message) || 'edge fetch failed' });
+      });
+  }
+
   var loadMonthSeq = 0;
   function loadMonth(monthStr) {
     state.month = monthStr;
@@ -1649,15 +1708,19 @@
     }
     if (!showedStale) app.innerHTML = loadingSkeletonHtml();
 
-    api(url)
+    var fetchStarted = Date.now();
+    fetchTrackerData(url)
       .then(function (data) {
         if (seq !== loadMonthSeq) return; // a newer loadMonth superseded this one
+        var fetchMs = Date.now() - fetchStarted;
         writeTrackerCache(url, data);
         // After a cached render, keep wherever the student has scrolled to
         // since, rather than jumping back to the pre-load position.
         var keepY = showedStale ? window.scrollY : scrollBefore;
         applyTrackerData(data, false, showedStale);
         window.scrollTo({ top: keepY, left: 0, behavior: 'instant' });
+        // After render, in the background: never delays or changes the page.
+        setTimeout(function () { trackerShadowCompare(url, data, fetchMs); }, 1500);
       })
       .catch(function (err) {
         if (seq !== loadMonthSeq) return;

@@ -992,3 +992,20 @@ ALTER TABLE students ADD COLUMN IF NOT EXISTS about_check_month   TEXT;
 -- context on their next attempt so a softened re-try of the same joke is
 -- caught (mirrors last_flagged_name for display names). Never cleared.
 ALTER TABLE students ADD COLUMN IF NOT EXISTS about_last_flagged TEXT;
+
+-- Shadow-comparison log for the tracker-data Edge Function rollout
+-- (netlify/functions/edge-shadow-log.js). Temporary: drop it once the
+-- edge version is switched on and verified.
+CREATE TABLE IF NOT EXISTS edge_shadow_log (
+  id             BIGSERIAL PRIMARY KEY,
+  created_at     TIMESTAMPTZ DEFAULT now(),
+  match          BOOLEAN,
+  diff_keys      TEXT[],
+  old_ms         INTEGER,
+  edge_ms        INTEGER,
+  edge_server_ms INTEGER,
+  is_student     BOOLEAN,
+  error          TEXT
+);
+GRANT SELECT, INSERT, UPDATE, DELETE ON edge_shadow_log TO service_role;
+GRANT USAGE, SELECT ON SEQUENCE edge_shadow_log_id_seq TO service_role;
