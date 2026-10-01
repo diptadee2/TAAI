@@ -1515,6 +1515,7 @@ const Icon = {
   Target: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.5" /><circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.5" /><circle cx="12" cy="12" r="1.5" fill="currentColor" /></svg>,
   Users: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="8" cy="9" r="3" stroke="currentColor" strokeWidth="1.5" /><circle cx="16" cy="9" r="3" stroke="currentColor" strokeWidth="1.5" /><path d="M3 19C3 16 5 14 8 14C11 14 13 16 13 19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /><path d="M13 19C13 16 15 14 18 14C19 14 20 14.3 21 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>,
   Discord: ({ size=24 }={}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.01.043.026.057a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .026-.055c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>,
+  Book: ({ size = 15 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v15H5.5C4.7 19 4 19.7 4 20.5V5.5Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" /><path d="M20 5.5C20 4.7 19.3 4 18.5 4H13v15h5.5c.8 0 1.5.7 1.5 1.5V5.5Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" /></svg>,
   Code: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8 6L3 12L8 18M16 6L21 12L16 18M14 4L10 20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>,
   Video: ({ size = 14 }) => <svg width={size} height={size} viewBox="0 0 14 14" fill="none"><rect x="1.5" y="3.5" width="8" height="7" rx="1.2" stroke="currentColor" strokeWidth="1.3" /><path d="M9.5 6L12.5 4V10L9.5 8" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" /></svg>,
   Sparkle: ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 16 16" fill="none"><path d="M8 1L9.5 6.5L15 8L9.5 9.5L8 15L6.5 9.5L1 8L6.5 6.5L8 1Z" fill="currentColor" /></svg>,
@@ -1773,7 +1774,7 @@ function Hero() {
               <span className="swap-hover">Machine Learning</span>
             </a>
           </div>
-          <a href="/blogs/gate-da-syllabus-2027" className="hero-guide-link">📘 New: Free GATE DA Syllabus 2027 guide <Icon.ArrowRight size={13} /></a>
+          <a href="/blogs/gate-da-syllabus-2027" className="hero-guide-link"><Icon.Book size={15} /> New: Free GATE DA Syllabus 2027 guide <Icon.ArrowRight size={13} /></a>
           <div className="hero-meta">
             <div className="hero-meta-item">
               <div className="hero-avatars">
@@ -1842,7 +1843,7 @@ function Hero() {
                 <circle cx="33" cy="38" r="4.5" fill="rgba(255,255,255,0.95)" />
                 <circle cx="33" cy="38" r="4.5" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="1.8" className="cal-ping" />
                 <circle cx="33" cy="38" r="4.5" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="1.8" className="cal-ping-2" />
-                <text x="33" y="41" textAnchor="middle" fill="#9333ea" fontSize="5.5" fontWeight="700" fontFamily="sans-serif">★</text>
+                <polygon points="33.00,35.10 33.71,37.03 35.76,37.10 34.14,38.37 34.70,40.35 33.00,39.20 31.30,40.35 31.86,38.37 30.24,37.10 32.29,37.03" fill="#9333ea" strokeLinejoin="round" />
               </svg>
             </div>
             <div className="bento-num" style={{ marginTop: 'auto' }}>Guidance</div>
