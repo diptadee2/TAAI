@@ -305,16 +305,6 @@ body {
 [data-hero="bento"] .hero-bento-1 { grid-column: 2; grid-row: 2; }
 [data-hero="bento"] .hero-bento-2 { grid-column: 3; grid-row: 2; }
 
-.hero-eyebrow {
-  display: inline-flex; align-items: center; gap: 10px;
-  padding: 7px 16px; border-radius: 999px;
-  background: linear-gradient(90deg, rgba(255,127,183,0.1) 0%, rgba(139,92,246,0.13) 100%);
-  color: var(--ink); font-size: 13px; font-weight: 500; margin-bottom: 28px;
-  border: 1px solid rgba(139,92,246,0.22);
-  box-shadow: 0 2px 12px rgba(139,92,246,0.08);
-}
-.hero-eyebrow-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--purple); animation: pulse 2s ease infinite; }
-@keyframes pulse { 0%,100%{transform:scale(1); opacity:1} 50%{transform:scale(1.4); opacity:.55} }
 
 .hero h1 {
   font-family: var(--font-display); font-weight: 600;
@@ -654,17 +644,6 @@ body {
 .section + .section { border-top: 1px solid transparent; border-image: linear-gradient(90deg, transparent, rgba(139,92,246,0.2) 35%, rgba(236,72,153,0.2) 65%, transparent) 1; }
 .section-head { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 56px; gap: 24px; flex-wrap: wrap; }
 .section-head-left { max-width: 720px; }
-.section-eyebrow {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-family: var(--font-mono); font-size: 14px; letter-spacing: .14em;
-  text-transform: uppercase; color: var(--purple);
-  margin-bottom: 16px;
-}
-.section-eyebrow::before {
-  content: ''; display: inline-block; width: 20px; height: 2px;
-  background: linear-gradient(90deg, var(--pink), var(--purple));
-  border-radius: 2px;
-}
 .section h2 { font-family: var(--font-display); font-size: clamp(34px, 4.3vw, 60px); font-weight: 600; letter-spacing: -0.035em; line-height: 1; margin-bottom: 16px; }
 .section h2 em {
   font-style: normal;
@@ -794,7 +773,6 @@ body {
   50%       { background-position: 100% 50%; }
 }
 .whyus-content { position: relative; z-index: 1; animation: wyIn .38s cubic-bezier(.34,1.1,.64,1) both; }
-.whyus-eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .15em; text-transform: uppercase; color: rgba(255,255,255,0.38); margin-bottom: 14px; }
 .whyus-ptitle { font-family: var(--font-display); font-size: clamp(26px,3vw,40px); font-weight: 600; letter-spacing: -0.035em; line-height: 1.06; color: #fff; margin-bottom: 16px; }
 .whyus-pdesc { font-size: 14px; color: rgba(255,255,255,0.56); line-height: 1.6; margin-bottom: 26px; max-width: 400px; }
 .whyus-pstat { display: flex; align-items: baseline; gap: 10px; }
@@ -874,7 +852,6 @@ body {
   display: flex; align-items: center; justify-content: center;
 }
 .instructor-text { color: #fff; }
-.instructor-eyebrow { font-family: var(--font-mono); font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--lilac); margin-bottom: 18px; }
 .instructor-name { font-family: var(--font-display); font-size: clamp(36px,4.5vw,62px); font-weight: 600; letter-spacing: -0.01em; line-height: 0.95; margin-bottom: 20px; }
 .instructor-name span { background: linear-gradient(120deg, var(--pink), var(--lilac)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .instructor-bio { font-size: 16px; color: rgba(255,255,255,0.65); line-height: 1.7; margin-bottom: 32px; }
@@ -2054,7 +2031,6 @@ function Offer() {
       <div className="container">
         <div className="section-head fade-in">
           <div className="section-head-left">
-            <div className="section-eyebrow">What we offer</div>
             <h2>Three ways to<br /><em>level up.</em></h2>
             <p className="section-sub">Pick the entry point that fits where you are.</p>
           </div>
@@ -2098,8 +2074,7 @@ const WHY_FEATURES = [
     sub: 'Visual, intuition-first teaching',
     title: <>Understand the <em style={{color:'var(--pink)'}}>why,</em><br />not just the formulas.</>,
     desc: 'Every concept taught visually and intuitively. Builds the thinking ability that carries you through exams and IIT interviews, not just pattern matching.',
-    stat: null,
-    eyebrow: 'Visual learning'
+    stat: null
   },
   {
     icon: <Icon.Target />,
@@ -2109,8 +2084,7 @@ const WHY_FEATURES = [
     sub: '1,000+ weekly quiz questions',
     title: <>Quality over<br /><em style={{color:'var(--lilac)'}}>quantity.</em></>,
     desc: 'Conceptual, exam-relevant questions with solutions. Every question earns its place, no filler, no repetition.',
-    stat: { num: '1,000+', lbl: 'weekly quiz questions' },
-    eyebrow: 'Practice Sets'
+    stat: { num: '1,000+', lbl: 'weekly quiz questions' }
   },
   {
     icon: <Icon.Users />,
@@ -2119,8 +2093,7 @@ const WHY_FEATURES = [
     label: 'End-to-end guidance.',
     sub: 'From prep to IIT admission',
     title: <>With you until<br /><em style={{color:'#7EB3FF'}}>IIT admission.</em></>,
-    desc: 'From your first concept to your final interview, guidance through GATE, institute selection, and written tests at top IITs.',
-    eyebrow: 'Full journey'
+    desc: 'From your first concept to your final interview, guidance through GATE, institute selection, and written tests at top IITs.'
   },
   {
     icon: <Icon.Discord />,
@@ -2130,8 +2103,7 @@ const WHY_FEATURES = [
     sub: 'Discord · any hour',
     title: <>Real help at<br /><em style={{color:'var(--pink)'}}>any hour.</em></>,
     desc: 'Late-night doubt? Tricky question? A real community of mentors and toppers, not a bot. Instant resolution on Discord.',
-    stat: { num: '24/7', lbl: 'community support' },
-    eyebrow: 'Discord community'
+    stat: { num: '24/7', lbl: 'community support' }
   },
 ];
 
@@ -2162,7 +2134,6 @@ function WhyUs() {
 
   const PanelContent = ({ feat }) => (
     <>
-      <div className="whyus-eyebrow">{feat.eyebrow}</div>
       <div className="whyus-ptitle">{feat.title}</div>
       <div className="whyus-pdesc">{feat.desc}</div>
       {feat.stat && <div className="whyus-pstat">
@@ -2175,7 +2146,6 @@ function WhyUs() {
   const header = (
     <div className="section-head fade-in">
       <div className="section-head-left">
-        <div className="section-eyebrow">Why TAAI</div>
         <h2>Not coaching.<br />Your <em>unfair advantage.</em></h2>
       </div>
     </div>
@@ -2261,7 +2231,6 @@ function Instructor() {
     <section className="instructor-section">
       <div className="container">
         <div className="instructor-section-head fade-in">
-          <div className="instructor-eyebrow" style={{ marginBottom: 14 }}>Faculty</div>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 12, color: '#fff' }}>
             Know Your <em style={{ background: 'linear-gradient(120deg,var(--pink),var(--lilac))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', fontStyle: 'normal' }}>Mentor</em>
           </h2>
@@ -2333,7 +2302,6 @@ function Testimonials() {
       <div className="container">
         <div className="section-head fade-in">
           <div className="section-head-left">
-            <div className="section-eyebrow">Stories</div>
             <h2>Hear what our<br /><em>students say.</em></h2>
             <p className="section-sub">Testimonials and feedback from TAAI students, candid thoughts on programs, mentorship, and the ranks that followed.</p>
           </div>
@@ -2429,7 +2397,6 @@ function FAQ() {
       <div className="container">
         <div className="faq-layout">
           <div className="fade-in">
-            <div className="section-eyebrow">FAQ Hub</div>
             <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(34px,4.3vw,54px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 16 }}>Frequently asked<br /><em style={{ fontStyle: 'normal', background: 'linear-gradient(120deg,var(--pink),var(--purple),var(--blue))', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>questions.</em></h2>
             <p className="section-sub" style={{ marginBottom: 18 }}>We are happy to help you!<br /><b>Email:</b> <a href="mailto:support@taai.live" style={{ color: 'var(--purple)', textDecoration: 'underline' }}>support@taai.live</a></p>
             <a href="/contact" className="btn btn-primary">Contact us <Icon.ArrowRight /></a>
