@@ -237,7 +237,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-01-18';
+  var CLIENT_VERSION = '2026-10-01-19';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1156,7 +1156,21 @@
   }, { threshold: 0.05, rootMargin: '0px 0px -40px 0px' });
   function observeHourlyActivityReveal() {
     var el = document.querySelector('.hourly-activity');
-    if (el) hourlyRevealObserver.observe(el);
+    if (!el) return;
+    if (quietRender && hourlyAlreadyRevealed) {
+      // Already shown once from the cache: final bar heights and knob
+      // position, no grow-in or slide.
+      el.classList.add('in-view', 'no-anim');
+      var marker = el.querySelector('.hourly-busy-meter-marker') || document.querySelector('.hourly-busy-meter-marker');
+      if (marker && marker.getAttribute('data-meter-pct') !== null) {
+        marker.style.transition = 'none';
+        marker.style.left = marker.getAttribute('data-meter-pct') + '%';
+        void marker.offsetHeight;
+        marker.style.transition = '';
+      }
+      return;
+    }
+    hourlyRevealObserver.observe(el);
   }
 
   // ── Leaderboard confetti — once per student per week, only for someone
@@ -1738,6 +1752,16 @@
   // readTrackerCache). swapQuietly: this fresh render replaces a cached
   // one already on screen, so its fade-in reveals are skipped rather than
   // replaying the whole page's entrance a second time.
+  // True only for the render that swaps fresh data in over a cached view:
+  // entrance animations (exam count-up, hourly bars, busy-meter knob) jump
+  // straight to their final state instead of replaying a second time
+  // (direct report: the countdown "animates for the cache first and then
+  // reanimates when the live data is loaded").
+  var quietRender = false;
+  // Whether the cached render had already played the hourly bars' reveal; if
+  // not (still below the fold), the fresh render lets it play normally on scroll.
+  var hourlyAlreadyRevealed = false;
+
   function applyTrackerData(data, isStale, swapQuietly) {
     state.stale = !!isStale;
     var scheduleDays = data.schedule.days || [];
@@ -1917,7 +1941,9 @@
       if (wk !== todayWk) state.collapsedWeeks.add(wk);
     });
 
-    renderCalendar();
+    quietRender = !!swapQuietly;
+    hourlyAlreadyRevealed = !!document.querySelector('.hourly-activity.in-view');
+    try { renderCalendar(); } finally { quietRender = false; }
     if (swapQuietly) {
       Array.prototype.forEach.call(app.querySelectorAll('.fade-in:not(.visible)'), function (el) {
         el.style.transition = 'none';
@@ -2439,7 +2465,7 @@
     if (!el) return;
     var target = parseInt(el.getAttribute('data-days'), 10);
     if (isNaN(target)) return;
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (quietRender || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) {
       el.textContent = target;
       return;
     }

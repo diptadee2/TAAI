@@ -1886,6 +1886,7 @@
      off-screen first. */
   .hourly-bar-fill { width: 100%; height: 0; opacity: var(--intensity); background: linear-gradient(180deg, var(--pomo-g1, #C99CFB), var(--pomo-g2, var(--purple))); box-shadow: inset 0 1px 0 rgba(255,255,255,0.22); border-radius: 3px 3px 0 0; animation: hourly-bar-grow .7s cubic-bezier(.34,1.56,.64,1) both; animation-delay: var(--grow-delay); animation-play-state: paused; transition: filter .18s ease; }
   .hourly-activity.in-view .hourly-bar-fill { animation-play-state: running; }
+  .hourly-activity.no-anim .hourly-bar-fill { animation: none; height: var(--bar-h); }
   .hourly-bar-fill:hover { filter: brightness(1.18); }
   @keyframes hourly-bar-grow { to { height: var(--bar-h); } }
   @media (prefers-reduced-motion: reduce) { .hourly-bar-fill { animation: none; height: var(--bar-h); } }
