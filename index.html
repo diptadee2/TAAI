@@ -675,37 +675,54 @@ body {
 }
 .section-sub { font-size: 18px; color: var(--ink-dim); line-height: 1.5; max-width: 580px; }
 
-/* Three ways, offer cards. Quiet by design (2026-10-02, "less vibecoded"):
-   plain surface + one hairline border, no eyebrow, no 01/02/03 numerals,
-   no gradient icon tiles or hover color-flood. Hover only tints the
-   border and nudges the arrow. */
-.offer-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+/* Three ways, offer cards. Restyled 2026-10-02: first "less vibecoded"
+   (no eyebrow, no 01/02/03 numerals, no gradient tiles / hover color-flood,
+   readable bullets), then "too bland", so each card gets its own accent
+   (--ac / --ac-rgb, set inline per card): a line icon on a flat tint,
+   accent check marks, accent link, and a lift + accent shadow on hover.
+   The hover shadow lives on ::after and only fades (opacity), and the card
+   itself has no box-shadow, so the lift's transform never animates on an
+   element carrying both box-shadow and border-radius (the Chromium
+   detached-node leak noted in CLAUDE.md). */
+.offer-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
 .offer-card {
-  border-radius: 16px; padding: 30px 28px 26px;
+  --ac: var(--purple); --ac-rgb: 139,92,246;
+  position: relative; border-radius: 18px; padding: 28px 28px 26px;
   background: #fff; border: 1px solid var(--line);
   display: flex; flex-direction: column;
   color: var(--ink); text-decoration: none;
-  transition: border-color .25s cubic-bezier(.25,1,.5,1), background-color .25s cubic-bezier(.25,1,.5,1);
+  transition: transform .35s cubic-bezier(.22,1,.36,1), border-color .35s cubic-bezier(.22,1,.36,1);
 }
-.offer-card:hover { border-color: rgba(139,92,246,0.38); background-color: #FDFCFF; }
-.offer-card:focus-visible { outline: 2px solid var(--purple); outline-offset: 3px; }
-.offer-status { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 500; color: var(--ink-soft); margin-bottom: 18px; }
-.offer-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .7; }
+.offer-card::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: -1;
+  box-shadow: 0 22px 44px -20px rgba(var(--ac-rgb), .45), 0 2px 6px rgba(20,16,43,.04);
+  opacity: 0; transition: opacity .35s cubic-bezier(.22,1,.36,1);
+}
+/* .offer-grid prefix: beats the shared .fade-in / .fade-in.visible rules
+   (declared later, same specificity) for transform and transition. */
+.offer-grid .offer-card { transition: opacity .7s cubic-bezier(.4,0,.2,1), transform .35s cubic-bezier(.22,1,.36,1), border-color .35s cubic-bezier(.22,1,.36,1); }
+.offer-grid .offer-card:hover { transform: translateY(-5px); border-color: rgba(var(--ac-rgb), .4); }
+.offer-card:hover::after { opacity: 1; }
+.offer-card:focus-visible { outline: 2px solid var(--ac); outline-offset: 3px; }
+.offer-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 22px; }
+.offer-icon { width: 46px; height: 46px; border-radius: 13px; display: grid; place-items: center; color: var(--ac); background: rgba(var(--ac-rgb), .1); }
+.offer-status { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600; color: var(--ink-soft); }
+.offer-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .offer-status-live { color: #0F7A55; }
-.offer-status-live::before { opacity: 1; }
-.offer-status-hot { color: #8A5A00; }
+.offer-status-hot { color: #9A6200; }
 .offer-body { flex: 1; }
-.offer-title { font-family: var(--font-display); font-size: clamp(22px, 4vw, 26px); font-weight: 600; letter-spacing: -0.015em; line-height: 1.15; margin: 0 0 10px; text-wrap: balance; }
+.offer-title { font-family: var(--font-display); font-size: clamp(23px, 4vw, 28px); font-weight: 600; letter-spacing: -0.02em; line-height: 1.12; margin: 0 0 10px; text-wrap: balance; }
 .offer-desc { font-size: 15px; color: var(--ink-dim); line-height: 1.55; margin: 0; }
-.offer-bullets { list-style: none; margin: 20px 0 0; padding: 18px 0 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 9px; }
-.offer-bullets li { font-size: 14px; color: var(--ink-dim); display: flex; align-items: baseline; gap: 10px; line-height: 1.4; }
-.offer-bullets li::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--purple); flex-shrink: 0; transform: translateY(-2px); }
+.offer-bullets { list-style: none; margin: 20px 0 0; padding: 18px 0 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
+.offer-bullets li { font-size: 14px; color: var(--ink); display: flex; align-items: flex-start; gap: 10px; line-height: 1.4; }
+.offer-bullets li svg { flex-shrink: 0; color: var(--ac); margin-top: 1px; }
 @keyframes offerValidityIn { from { opacity: 0; } to { opacity: 1; } }
 .offer-validity { animation: offerValidityIn 0.4s ease forwards; }
 .offer-footer { margin-top: 26px; }
-.offer-link { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; font-size: 14.5px; color: var(--purple); }
-.offer-link svg { transition: transform .25s cubic-bezier(.25,1,.5,1); }
-/* Line the cards' rows up across the grid (status, title, description,
+.offer-link { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14.5px; color: var(--ac); }
+.offer-link svg { transition: transform .35s cubic-bezier(.22,1,.36,1); }
+.offer-card:hover .offer-link svg { transform: translateX(4px); }
+/* Line the cards' rows up across the grid (top row, title, description,
    bullets, link) so a longer description doesn't push one card's divider
    below its neighbours'. Falls back to the plain flex column. */
 @supports (grid-template-rows: subgrid) {
@@ -715,7 +732,6 @@ body {
   .offer-bullets { align-self: start; }
   .offer-footer { align-self: end; }
 }
-.offer-card:hover .offer-link svg { transform: translateX(3px); }
 
 /* Why TAAI, interactive tabs */
 .whyus-layout {
@@ -1241,8 +1257,9 @@ body {
 
 /* Touch device offer-card overrides */
 @media (hover: none) {
-  /* Offer cards: no sticky hover tint on touch */
-  .offer-card:hover { border-color: var(--line); background-color: #fff; }
+  /* Offer cards: no sticky lift/shadow on touch */
+  .offer-grid .offer-card:hover { transform: none; border-color: var(--line); }
+  .offer-card:hover::after { opacity: 0; }
   .offer-card:hover .offer-link svg { transform: none; }
   /* btn-stories' nice look is a :hover reveal, which touch devices never trigger -
      show the gradient fill by default instead of leaving it permanently plain */
@@ -1995,6 +2012,7 @@ const _siteSettingsFetch = fetch('/api/site-settings-public').then(r => r.json()
 // ============ OFFER STRIP ============
 const OFFERS = [
   {
+    icon: <Icon.Brain />, accent: '#D6427F', accentRgb: '214,66,127',
     badge: { label: 'Most enrolled', type: 'hot' },
     title: 'GATE DA Courses',
     desc: 'Conceptual, visualized, GATE-relevant. Learn the "why", not just the formulas.',
@@ -2003,6 +2021,7 @@ const OFFERS = [
     link: 'Explore courses', href: '/gate-da-courses',
   },
   {
+    icon: <Icon.Target />, accent: '#7C4DEB', accentRgb: '124,77,235',
     badge: { label: 'Live now', type: 'live' },
     title: 'Test Series',
     desc: '31 topic-wise + 10 subject-wise + 10 full-length + 6 mini full-length (mixed subject) tests. GATE-like interface.',
@@ -2010,6 +2029,7 @@ const OFFERS = [
     link: 'Browse tests', href: '/gate-da-test-series',
   },
   {
+    icon: <Icon.Code />, accent: '#2F6FE4', accentRgb: '47,111,228',
     badge: { label: 'Coming soon', type: 'cs' },
     title: 'Interview Preparation',
     desc: 'Career prep for AI and Data Science roles. Preview on YouTube now.',
@@ -2036,13 +2056,16 @@ function Offer() {
             const validity = c.validityId ? _fmtDate((pricingMap[c.validityId] || {}).validity) : null;
             const bullets = validity ? [...c.bullets, `Valid till ${validity}`] : c.bullets;
             return (
-              <a key={i} href={c.href} className="offer-card fade-in" style={{ '--delay': `${i * 90}ms` }} {...(c.newTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
-                {c.badge && <div className={`offer-status offer-status-${c.badge.type}`}>{c.badge.label}</div>}
+              <a key={i} href={c.href} className="offer-card fade-in" style={{ '--delay': `${i * 90}ms`, '--ac': c.accent, '--ac-rgb': c.accentRgb }} {...(c.newTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+                <div className="offer-top">
+                  <div className="offer-icon" aria-hidden="true">{c.icon}</div>
+                  {c.badge && <div className={`offer-status offer-status-${c.badge.type}`}>{c.badge.label}</div>}
+                </div>
                 <div className="offer-body">
                   <h3 className="offer-title">{c.title}</h3>
                   <p className="offer-desc">{c.desc}</p>
                   <ul className="offer-bullets">
-                    {bullets.map((b, j) => <li key={j} className={validity && j === bullets.length - 1 ? 'offer-validity' : undefined}>{b}</li>)}
+                    {bullets.map((b, j) => <li key={j} className={validity && j === bullets.length - 1 ? 'offer-validity' : undefined}><Icon.Check size={15} />{b}</li>)}
                   </ul>
                 </div>
                 <div className="offer-footer">
