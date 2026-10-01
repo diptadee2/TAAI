@@ -825,6 +825,12 @@
   .task-row .task-subject { font-weight: 600; color: var(--purple); }
   .task-row .task-text { transition: color .25s ease; }
   .task-row.done .task-text { text-decoration: line-through; color: var(--ink-soft); }
+  /* Task text that links to its lesson on the LMS (course-links.js) */
+  .task-row .task-link { color: inherit; text-decoration: underline; text-decoration-color: rgba(167,139,250,0.55); text-underline-offset: 3px; transition: color .2s ease, text-decoration-color .2s ease; }
+  .task-row .task-link:hover { color: var(--purple); text-decoration-color: var(--purple); }
+  .task-row .task-link-tail { white-space: nowrap; }
+  .task-row .task-link-icon { display: inline-block; vertical-align: -1px; margin-left: 4px; opacity: .7; }
+  .task-row.done .task-link { text-decoration: line-through; }
 
   /* Pomodoro timer — Focus Mode only */
   .pomodoro-card { position: relative; overflow: hidden; text-align: center; padding: 26px 20px 22px; border-radius: var(--radius-lg); margin-bottom: 20px; background: var(--card); border: 1px solid var(--line); }
@@ -2217,6 +2223,7 @@
   );
 </script>
 <script src="/gate-da-subjects.js"></script>
+<script src="/course-links.js"></script>
 <script async src="progress.js"></script>
 </body>
 </html>

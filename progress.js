@@ -243,7 +243,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-01-21';
+  var CLIENT_VERSION = '2026-10-02-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -4127,11 +4127,36 @@
       '</div>';
   }
 
+  // A task can link to its lesson on the LMS (course-links.js, keyed by
+  // batch -> subject -> exact task text). The link sits inside the row's
+  // <label>, which browsers don't treat as a checkbox click, so following
+  // it never ticks the task.
+  var TASK_LINK_ICON = '<svg class="task-link-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  function taskLinkFor(t) {
+    var all = window.SCHEDULE_TASK_LINKS || {};
+    var byBatch = all[effectiveScoutBatch() || 'C'] || {};
+    var bySubject = byBatch[t.subject] || {};
+    var url = bySubject[t.task_text];
+    return (typeof url === 'string' && /^https:\/\/learn\.taai\.live\//.test(url)) ? url : null;
+  }
+
+  // Keeps the icon glued to the last word so it never wraps onto a line alone.
+  function taskLinkTextHtml(text) {
+    var cut = text.lastIndexOf(' ');
+    var head = cut >= 0 ? text.slice(0, cut + 1) : '';
+    var tail = cut >= 0 ? text.slice(cut + 1) : text;
+    return escapeHtml(head) + '<span class="task-link-tail">' + escapeHtml(tail) + TASK_LINK_ICON + '</span>';
+  }
+
   function taskRowHtml(date, t) {
     var id = 'task-' + date + '-' + hashKey(t.subject + '|' + t.task_text);
+    var link = taskLinkFor(t);
+    var textHtml = link
+      ? '<a class="task-link" href="' + escapeAttr(link) + '" target="_blank" rel="noopener" title="Open this lesson on the course">' + taskLinkTextHtml(t.task_text) + '</a>'
+      : escapeHtml(t.task_text);
     return '<label class="task-row' + (t.completed ? ' done' : '') + '" for="' + id + '">' +
       '<input type="checkbox" id="' + id + '" data-date="' + date + '" data-subject="' + escapeAttr(t.subject) + '" data-task="' + escapeAttr(t.task_text) + '"' + (t.completed ? ' checked' : '') + '>' +
-      '<span class="task-text"><span class="task-subject">' + escapeHtml(t.subject) + ':</span> ' + escapeHtml(t.task_text) + '</span>' +
+      '<span class="task-text"><span class="task-subject">' + escapeHtml(t.subject) + ':</span> ' + textHtml + '</span>' +
       '</label>';
   }
 
