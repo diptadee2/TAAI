@@ -243,7 +243,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-02-7';
+  var CLIENT_VERSION = '2026-10-02-8';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2093,8 +2093,9 @@
   // blog post (content/blog/gate-da-syllabus-2027.md). Keep both in sync by
   // hand if the analysis is updated. "Progress by subject" groups the
   // tracker's subjects (window.GATE_DA_SUBJECTS names) under these sections,
-  // heaviest first. trend colors the marks figure: rising green, falling
-  // red, steady purple, matching the post's chart. General Aptitude has no
+  // heaviest first. Marks only, no rising/falling indicator (removed at
+  // the user's request 2026-10-02: the weightage is treated as fixed for
+  // this exam year). trend is kept as data only. General Aptitude has no
   // tracker subject, so it's mentioned in the card's footer instead.
   var GATE_DA_WEIGHTAGE = [
     { label: 'Probability & Statistics', value: 18.3, trend: 'rising', subjects: ['Probability', 'Statistics'] },
@@ -2106,13 +2107,11 @@
     { label: 'Calculus & Optimization', value: 6.3, trend: 'falling', subjects: ['Calculus'] }
   ];
   var GA_AVG_MARKS = 15;
-  var WEIGHTAGE_TREND = { rising: { arrow: '\u25B2', label: 'Rising' }, falling: { arrow: '\u25BC', label: 'Falling' }, steady: { arrow: '\u2013', label: 'Steady' } };
 
   function weightageMarksHtml(w) {
-    var t = WEIGHTAGE_TREND[w.trend];
-    return '<span class="weightage-marks weightage-marks--' + w.trend + '" title="' + escapeAttr('Avg ' + w.value + ' marks in GATE DA 2024-2026, ' + t.label.toLowerCase()) + '">' +
-      w.value + ' marks <span class="weightage-arrow">' + t.arrow + '</span></span>';
+    return '<span class="weightage-marks" title="' + escapeAttr('Avg ' + w.value + ' marks in GATE DA 2024-2026') + '">' + w.value + ' marks</span>';
   }
+
 
   // The desktop sidebar is position:sticky (top 24px). Once it's taller
   // than the window (heatmap + subject progress + marks card), a fixed top
