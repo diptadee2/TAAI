@@ -719,31 +719,32 @@
   .progress-fill { height: 100%; background: linear-gradient(90deg, var(--purple), #a78bfa); border-radius: 999px; transition: width .5s cubic-bezier(.34,1.1,.64,1); }
 
   /* Per-subject breakdown */
-  .subject-breakdown { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 16px 18px; margin-top: 20px; max-height: 360px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) transparent; }
+  .subject-breakdown { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 16px 18px; margin-top: 20px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) transparent; }
   .subject-breakdown::-webkit-scrollbar { width: 6px; }
   .subject-breakdown::-webkit-scrollbar-track { background: transparent; }
   .subject-breakdown::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 999px; }
   .subject-breakdown::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
   .subject-breakdown-title { font-family: var(--font-nav); font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 14px; }
-  /* "Average marks per subject" card (renderWeightageCard in progress.js),
-     the blog post's Fig 4 in this page's flat card idiom. */
-  .weightage-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 16px 18px; margin-top: 20px; }
-  .weightage-card .subject-breakdown-title { margin-bottom: 4px; }
-  .weightage-sub { font-size: 11.5px; color: var(--ink-soft); margin-bottom: 14px; }
-  .weightage-row { margin-bottom: 10px; }
-  .weightage-name { font-size: 12.5px; font-weight: 600; color: var(--ink-dim); line-height: 1.35; margin-bottom: 4px; }
-  .weightage-line { display: flex; align-items: center; gap: 10px; }
-  .weightage-track { flex: 1; height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
-  .weightage-fill { height: 100%; border-radius: 999px; }
-  .weightage-row--rising .weightage-fill, .weightage-key--rising { background: var(--green); }
-  .weightage-row--falling .weightage-fill, .weightage-key--falling { background: var(--red); }
-  .weightage-row--steady .weightage-fill, .weightage-key--steady { background: var(--purple); }
-  .weightage-val { font-family: var(--font-nav); font-size: 12px; font-weight: 700; color: var(--ink); text-align: right; flex-shrink: 0; width: 34px; }
-  .weightage-legend { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 11px; color: var(--ink-soft); margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.1); }
-  .weightage-key { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-left: 6px; }
-  .weightage-key:first-child { margin-left: 0; }
-  .weightage-more { display: inline-block; margin-top: 10px; font-size: 12px; font-weight: 600; color: var(--purple); text-decoration: none; }
-  .weightage-more:hover { text-decoration: underline; }
+  /* Exam weight inside "Progress by subject" (renderSubjectBreakdown in
+     progress.js): subjects grouped by GATE section, each section's average
+     marks (blog post Fig 4) colored by trend. */
+  .subject-breakdown .subject-breakdown-title { margin-bottom: 3px; }
+  .subject-breakdown-sub { font-size: 11px; color: var(--ink-soft); margin-bottom: 14px; }
+  .subject-group { margin-bottom: 14px; }
+  .subject-group .subject-row { margin-bottom: 0; }
+  .subject-group--multi .subject-row { margin-bottom: 8px; padding-left: 10px; }
+  .subject-group--multi .subject-row:last-child { margin-bottom: 0; }
+  .subject-group-head, .subject-group .subject-row-name { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .subject-group-head { font-size: 12.5px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+  .subject-group--multi .subject-row-name { font-weight: 500; }
+  .weightage-marks { font-family: var(--font-nav); font-size: 11px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+  .weightage-arrow { font-size: 9px; }
+  .weightage-marks--rising { color: var(--green); }
+  .weightage-marks--falling { color: var(--red); }
+  .weightage-marks--steady { color: var(--purple); }
+  .subject-breakdown-foot { font-size: 11px; color: var(--ink-soft); margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.1); }
+  .subject-breakdown-foot a { color: var(--purple); font-weight: 600; text-decoration: none; white-space: nowrap; }
+  .subject-breakdown-foot a:hover { text-decoration: underline; }
   .subject-row { margin-bottom: 14px; }
   .subject-row:last-child { margin-bottom: 0; }
   .subject-row-name { font-size: 12.5px; font-weight: 600; color: var(--ink-dim); line-height: 1.35; margin-bottom: 5px; }
