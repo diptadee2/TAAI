@@ -688,7 +688,11 @@ body {
 .offer-card {
   --ac: var(--purple); --ac-rgb: 139,92,246;
   position: relative; border-radius: 18px; padding: 28px 28px 26px;
-  background: #fff; border: 1px solid var(--line);
+  /* Same structure on all three; each card is told apart by its own
+     accent running through the surface: a faint flat tint (two equal
+     stops, so no gradient), the border and the divider. */
+  background: linear-gradient(rgba(var(--ac-rgb), .045), rgba(var(--ac-rgb), .045)), #fff;
+  border: 1px solid rgba(var(--ac-rgb), .2);
   display: flex; flex-direction: column;
   color: var(--ink); text-decoration: none;
   transition: transform .35s cubic-bezier(.22,1,.36,1), border-color .35s cubic-bezier(.22,1,.36,1);
@@ -701,11 +705,11 @@ body {
 /* .offer-grid prefix: beats the shared .fade-in / .fade-in.visible rules
    (declared later, same specificity) for transform and transition. */
 .offer-grid .offer-card { transition: opacity .7s cubic-bezier(.4,0,.2,1), transform .35s cubic-bezier(.22,1,.36,1), border-color .35s cubic-bezier(.22,1,.36,1); }
-.offer-grid .offer-card:hover { transform: translateY(-5px); border-color: rgba(var(--ac-rgb), .4); }
+.offer-grid .offer-card:hover { transform: translateY(-5px); border-color: rgba(var(--ac-rgb), .45); }
 .offer-card:hover::after { opacity: 1; }
 .offer-card:focus-visible { outline: 2px solid var(--ac); outline-offset: 3px; }
 .offer-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 22px; }
-.offer-icon { width: 46px; height: 46px; border-radius: 13px; display: grid; place-items: center; color: var(--ac); background: rgba(var(--ac-rgb), .1); }
+.offer-icon { width: 46px; height: 46px; border-radius: 13px; display: grid; place-items: center; color: var(--ac); background: rgba(var(--ac-rgb), .12); }
 .offer-status { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600; color: var(--ink-soft); }
 .offer-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .offer-status-live { color: #0F7A55; }
@@ -713,7 +717,7 @@ body {
 .offer-body { flex: 1; }
 .offer-title { font-family: var(--font-display); font-size: clamp(23px, 4vw, 28px); font-weight: 600; letter-spacing: -0.02em; line-height: 1.12; margin: 0 0 10px; text-wrap: balance; }
 .offer-desc { font-size: 15px; color: var(--ink-dim); line-height: 1.55; margin: 0; }
-.offer-bullets { list-style: none; margin: 20px 0 0; padding: 18px 0 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
+.offer-bullets { list-style: none; margin: 20px 0 0; padding: 18px 0 0; border-top: 1px solid rgba(var(--ac-rgb), .18); display: flex; flex-direction: column; gap: 10px; }
 .offer-bullets li { font-size: 14px; color: var(--ink); display: flex; align-items: flex-start; gap: 10px; line-height: 1.4; }
 .offer-bullets li svg { flex-shrink: 0; color: var(--ac); margin-top: 1px; }
 @keyframes offerValidityIn { from { opacity: 0; } to { opacity: 1; } }
@@ -1258,7 +1262,7 @@ body {
 /* Touch device offer-card overrides */
 @media (hover: none) {
   /* Offer cards: no sticky lift/shadow on touch */
-  .offer-grid .offer-card:hover { transform: none; border-color: var(--line); }
+  .offer-grid .offer-card:hover { transform: none; border-color: rgba(var(--ac-rgb), .2); }
   .offer-card:hover::after { opacity: 0; }
   .offer-card:hover .offer-link svg { transform: none; }
   /* btn-stories' nice look is a :hover reveal, which touch devices never trigger -
