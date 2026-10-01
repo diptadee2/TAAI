@@ -243,7 +243,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-02-1';
+  var CLIENT_VERSION = '2026-10-02-2';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2063,6 +2063,55 @@
     return /quiz|test series/i.test(name);
   }
 
+  // "Where the marks are": average marks per subject across the 2024-2026
+  // GATE DA papers, the same numbers as Fig 4 of the gate-da-syllabus-2027
+  // blog post (content/blog/gate-da-syllabus-2027.md). Keep both in sync by
+  // hand if the analysis is updated. trend colors the bar: rising green,
+  // falling red, steady purple, matching the post's own chart.
+  var GATE_DA_WEIGHTAGE = [
+    { label: 'Probability & Statistics', value: 18.3, trend: 'rising' },
+    { label: 'Programming & DSA', value: 16, trend: 'falling' },
+    { label: 'General Aptitude', value: 15, trend: 'steady' },
+    { label: 'Machine Learning', value: 14.7, trend: 'falling' },
+    { label: 'DBMS & Databases', value: 11.7, trend: 'rising' },
+    { label: 'Linear Algebra', value: 10, trend: 'falling' },
+    { label: 'Artificial Intelligence', value: 8, trend: 'falling' },
+    { label: 'Calculus & Optimization', value: 6.3, trend: 'falling' }
+  ];
+  var WEIGHTAGE_TREND_LABEL = { rising: 'Rising', falling: 'Falling', steady: 'Steady' };
+
+  // The desktop sidebar is position:sticky (top 24px). Once it's taller
+  // than the window (heatmap + subject progress + marks card), a fixed top
+  // would hide its bottom until the very end of the page, so the top
+  // becomes negative instead: the sidebar scrolls through normally and
+  // then pins with its bottom edge 24px above the window's bottom.
+  var SIDE_COL_GAP = 24;
+  function fitSideColSticky() {
+    var side = document.querySelector('.side-col');
+    if (!side) return;
+    side.style.top = Math.min(SIDE_COL_GAP, window.innerHeight - side.offsetHeight - SIDE_COL_GAP) + 'px';
+  }
+  window.addEventListener('resize', fitSideColSticky);
+
+  function renderWeightageCard() {
+    var max = GATE_DA_WEIGHTAGE.reduce(function (m, r) { return Math.max(m, r.value); }, 0) || 1;
+    var rows = GATE_DA_WEIGHTAGE.map(function (r) {
+      var pct = Math.round((r.value / max) * 100);
+      return '<div class="weightage-row weightage-row--' + r.trend + '" title="' + escapeAttr(WEIGHTAGE_TREND_LABEL[r.trend] + ' across 2024-2026') + '">' +
+        '<div class="weightage-name">' + escapeHtml(r.label) + '</div>' +
+        '<div class="weightage-line"><div class="weightage-track"><div class="weightage-fill" style="width:' + pct + '%"></div></div>' +
+        '<div class="weightage-val">' + r.value + '</div></div>' +
+        '</div>';
+    }).join('');
+    return '<div class="weightage-card fade-in">' +
+      '<div class="subject-breakdown-title">Average marks per subject</div>' +
+      '<div class="weightage-sub">GATE DA 2024 to 2026 papers, out of 100</div>' +
+      rows +
+      '<div class="weightage-legend"><span class="weightage-key weightage-key--rising"></span>Rising<span class="weightage-key weightage-key--falling"></span>Falling<span class="weightage-key weightage-key--steady"></span>Steady</div>' +
+      '<a class="weightage-more" href="/blogs/gate-da-syllabus-2027/" target="_blank" rel="noopener">Full analysis &rarr;</a>' +
+      '</div>';
+  }
+
   function renderSubjectBreakdown() {
     // Keep whatever's already come back from real schedule data, then
     // append any canonical GATE DA subject not already represented —
@@ -2878,6 +2927,7 @@
       html += '<div class="side-col">' +
         '<div id="heatmap-panel">' + renderHeatmap() + '</div>' +
         '<div id="subject-panel">' + renderSubjectBreakdown() + '</div>' +
+        renderWeightageCard() +
         '</div>'; // side-col
       html += '</div>'; // page-grid
     }
@@ -2888,6 +2938,7 @@
     if (staleRetry) staleRetry.addEventListener('click', function () { loadMonth(state.month); });
     bindCalendarEvents();
     observeFadeIns();
+    fitSideColSticky();
     animateExamCountdown();
     observeHourlyActivityReveal();
     // Ancestor-level fallback for the very first paint of a saved
