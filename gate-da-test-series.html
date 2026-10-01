@@ -1359,7 +1359,6 @@ function daysUntilExam() {
 
 // ── Pricing CSV ───────────────────────────────────────────────────
 // Valid IDs — test-series | weekly-quizzes | test-series-quizzes
-const PRICING_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSVYXQcKli0NtjXf93cxRwx3A15WiNcETEw26MubPYIihLyMQs2rfZjXKm85fNsOxxlUWkoyR89DKCK/pub?gid=0&single=true&output=csv';
 
 const parseCSV = text => {
   const parseLine = line => {
@@ -2406,11 +2405,16 @@ function App() {
   const [pricingMap, setPricingMap] = React.useState({});
 
   React.useEffect(() => {
-    fetch(PRICING_CSV_URL)
-      .then(r => r.text())
-      .then(text => {
+    // Prices come from /team (site_pricing) since 2026-10-01, not the old
+    // published Google Sheet, which had drifted out of date. Mapped to the
+    // camelCase shape planPricing() already reads.
+    fetch('/api/site-pricing-public')
+      .then(r => r.json())
+      .then(d => {
         const map = {};
-        parseCSV(text).forEach(r => { if (r.id) map[r.id] = r; });
+        Object.values((d && d.rows) || {}).forEach(r => {
+          map[r.id] = { id: r.id, price: r.price, priceOld: r.price_old, discount: r.discount, validity: r.validity };
+        });
         setPricingMap(map);
       })
       .catch(() => {});

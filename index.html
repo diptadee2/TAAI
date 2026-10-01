@@ -2018,11 +2018,12 @@ function Stats() {
 }
 
 // ============ PRICING CSV ============
-const PRICING_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSVYXQcKli0NtjXf93cxRwx3A15WiNcETEw26MubPYIihLyMQs2rfZjXKm85fNsOxxlUWkoyR89DKCK/pub?gid=0&single=true&output=csv';
 const _parseCSV = text => { const parseLine = line => { const out = []; let cur = '', inQ = false; for (let i = 0; i < line.length; i++) { const ch = line[i]; if (ch === '"') { if (inQ && line[i+1] === '"') { cur += '"'; i++; } else inQ = !inQ; } else if (ch === ',' && !inQ) { out.push(cur.trim()); cur = ''; } else cur += ch; } out.push(cur.trim()); return out; }; const rows = text.trim().split('\n'); const headers = parseLine(rows[0]); return rows.slice(1).filter(r => r.trim()).map(r => Object.fromEntries(headers.map((h, i) => [h, parseLine(r)[i] || '']))); };
 const _fmtDate = d => { if (!d) return ''; const dt = new Date(d + 'T00:00:00'); return dt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); };
 let _pricingCache = null;
-const _pricingFetch = fetch(PRICING_CSV_URL).then(r => r.text()).then(text => { const map = {}; _parseCSV(text).forEach(r => { if (r.id) map[r.id] = r; }); _pricingCache = map; return map; }).catch(() => { _pricingCache = {}; return {}; });
+// From /team (site_pricing) since 2026-10-01, not the old Google Sheet.
+// Only `validity` is read on this page (the "Valid till" line).
+const _pricingFetch = fetch('/api/site-pricing-public').then(r => r.json()).then(d => { const map = {}; Object.values((d && d.rows) || {}).forEach(r => { map[r.id] = { id: r.id, validity: r.validity }; }); _pricingCache = map; return map; }).catch(() => { _pricingCache = {}; return {}; });
 
 // ============ SITE SETTINGS (admin toggles, /team > Site data > Settings) ============
 // Public, unauthenticated (netlify/functions/site-settings-public.js) —

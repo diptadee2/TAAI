@@ -33,5 +33,11 @@ export async function handler(event) {
 
   const rows = {};
   (data || []).forEach((row) => { rows[row.id] = row; });
-  return json(200, { rows });
+  // Cached at Netlify's edge for 60s (browsers always revalidate), so pages
+  // get prices from a nearby edge instead of waiting on this function, which
+  // runs far from India. A /team price edit shows up within about a minute.
+  const res = json(200, { rows });
+  res.headers['Netlify-CDN-Cache-Control'] = 'public, s-maxage=60, stale-while-revalidate=300';
+  res.headers['Cache-Control'] = 'public, max-age=0, must-revalidate';
+  return res;
 }
