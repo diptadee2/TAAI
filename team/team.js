@@ -707,19 +707,15 @@
   function renderForm(p) {
     var isNew = !p.id;
     var source = p.source || 'custom';
+    // Built-in (auto leaderboard) posts: their message content and what data
+    // they fetch are managed by the developers, not from /team (direct
+    // request 2026-10-01: "editing the text body or the fetch functions ...
+    // be removed, the dev can do it" - things should be simple for
+    // non-technical people). Channel, mentions, schedule, enable/pause and
+    // delete stay editable. readFormPayload sends the stored content back
+    // unchanged for these, since a save replaces the whole row.
+    var lockedContent = !isNew && source !== 'custom';
     var scheduleType = p.schedule_type || 'daily';
-
-    // Grouped into the same two buckets the post list itself already uses
-    // (Custom announcements vs. recurring leaderboards) — the dropdown
-    // used to list all 6 flat, so "Custom" (the one someone actually wants
-    // most weeks) sat visually equal to 5 built-in options it has nothing
-    // in common with, no hint that it's the odd one out.
-    function sourceOptionHtml(key) { return '<option value="' + key + '"' + (key === source ? ' selected' : '') + '>' + SOURCE_LABELS[key] + '</option>'; }
-    var sourceOptions =
-      '<optgroup label="Custom">' + sourceOptionHtml('custom') + '</optgroup>' +
-      '<optgroup label="Recurring leaderboards">' +
-        Object.keys(SOURCE_LABELS).filter(function (key) { return key !== 'custom'; }).map(sourceOptionHtml).join('') +
-      '</optgroup>';
 
     var scheduleOptions = Object.keys(SCHEDULE_LABELS).map(function (key) {
       return '<option value="' + key + '"' + (key === scheduleType ? ' selected' : '') + '>' + SCHEDULE_LABELS[key] + '</option>';
@@ -798,7 +794,7 @@
     return (
       '<div class="card">' +
         '<h2 style="font-size:16px;margin-bottom:16px;">' + (isNew ? 'New scheduled post' : 'Edit scheduled post') + '</h2>' +
-        '<form id="post-form">' +
+        '<form id="post-form"' + (lockedContent ? ' data-locked-content="1"' : '') + '>' +
 
           '<div class="form-section">' +
             '<div class="form-section-heading">Destination</div>' +
@@ -808,15 +804,20 @@
             destinationHtml +
           '</div>' +
 
-          '<div class="form-section">' +
-            '<div class="form-section-heading">Content</div>' +
-            '<div class="field"><label>Source</label><select name="source" id="f-source">' + sourceOptions + '</select></div>' +
-            '<div class="field"><label>Title (optional' + (source !== 'custom' ? ' — overrides the default' : '') + ')</label><input type="text" name="title" value="' + escapeHtml(titleValue) + '"' + (titlePlaceholder ? ' placeholder="' + escapeHtml(titlePlaceholder) + '"' : '') + '></div>' +
-            bodyField +
-            (platform === 'telegram' ? '' : '<div class="field"><label>Card color</label><input type="color" name="color" value="' + colorToHex(p.color) + '"></div>') +
-          '</div>' +
+          (lockedContent
+            ? '<div class="form-section">' +
+                '<div class="form-section-heading">Content</div>' +
+                '<div class="locked-content-note"><b>' + escapeHtml(SOURCE_LABELS[source] || source) + '</b><br>This message is generated automatically. Its content is managed by the developers.</div>' +
+              '</div>'
+            : '<div class="form-section">' +
+                '<div class="form-section-heading">Content</div>' +
+                '<input type="hidden" name="source" value="custom">' +
+                '<div class="field"><label>Title (optional)</label><input type="text" name="title" value="' + escapeHtml(titleValue) + '"></div>' +
+                bodyField +
+                (platform === 'telegram' ? '' : '<div class="field"><label>Card color</label><input type="color" name="color" value="' + colorToHex(p.color) + '"></div>') +
+              '</div>') +
 
-          renderSectionsEditor(p) +
+          (lockedContent ? '' : renderSectionsEditor(p)) +
 
           (platform === 'telegram' ? '' :
           '<div class="form-section">' +
@@ -2584,8 +2585,10 @@
   // through, and neither has any other way to know the post's order.
   function readFormPayload(form) {
     var fd = new FormData(form);
-    return {
-      source: fd.get('source'),
+    var locked = form.getAttribute('data-locked-content') === '1';
+    var e = state.editing || {};
+    var payload = {
+      source: fd.get('source') || 'custom',
       dispatch_order: state.editing.dispatch_order || 0,
       platform: fd.get('platform') === 'telegram' ? 'telegram' : 'discord',
       channel_name: (fd.get('channel_name') || '').trim(),
@@ -2606,6 +2609,16 @@
       schedule_day_of_month: fd.get('schedule_day_of_month') != null ? Number(fd.get('schedule_day_of_month')) : null,
       enabled: fd.get('enabled') === 'on',
     };
+    if (locked) {
+      // Content isn't in the form for built-in posts (see renderForm), so
+      // carry the stored values through unchanged.
+      payload.source = e.source;
+      payload.title = e.title || '';
+      payload.body = e.body || '';
+      payload.color = e.color;
+      payload.sections = e.sections || null;
+    }
+    return payload;
   }
 
   // Merges every current field's value from the live DOM into
