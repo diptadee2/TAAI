@@ -237,7 +237,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-01-14';
+  var CLIENT_VERSION = '2026-10-01-15';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -820,6 +820,8 @@
     // Purely a display/fetch choice, never touches state.student.batch —
     // see effectiveScoutBatch's own comment for the full reasoning.
     scoutBatch: null,
+    stale: false, // true while the page is drawn from the local tracker-data cache (see readTrackerCache)
+    staleError: null, // set if the fresh request failed while a cached view is showing
     focusReturnMonth: null, // the month being browsed before Focus Mode switched to the current one (see enterFocus); restored on exit
     // Set only once a registered student clicks "switch for real" in
     // renderBatchScoutBanner (never by the dropdown itself) — renders
@@ -1584,45 +1586,48 @@
   }
 
   // ── Calendar ────────────────────────────────────────────────────────
+  // Last good tracker-data response per request (student + month + batch),
+  // so a repeat visit can draw the page instantly from it while the real
+  // request is still in flight (2026-10-01: the live request takes ~1-4s
+  // because the functions run far from the database). Purely a display
+  // shortcut: while it's showing, state.stale blocks ticking tasks and
+  // starting a session, and none of the one-time side effects (cookie
+  // sync, saving Pomodoro settings, restoring an active session) run until
+  // the fresh response arrives. At most TRACKER_CACHE_MAX entries are kept.
+  var TRACKER_CACHE_PREFIX = 'taai_td_v1:';
+  var TRACKER_CACHE_INDEX = 'taai_td_v1_index';
+  var TRACKER_CACHE_MAX = 4;
+  var TRACKER_CACHE_MAX_AGE_MS = 3 * 24 * 3600 * 1000;
+  function readTrackerCache(url) {
+    try {
+      var raw = localStorage.getItem(TRACKER_CACHE_PREFIX + url);
+      if (!raw) return null;
+      var entry = JSON.parse(raw);
+      if (!entry || !entry.data || Date.now() - entry.at > TRACKER_CACHE_MAX_AGE_MS) return null;
+      return entry;
+    } catch (e) { return null; }
+  }
+  function writeTrackerCache(url, data) {
+    try {
+      localStorage.setItem(TRACKER_CACHE_PREFIX + url, JSON.stringify({ at: Date.now(), data: data }));
+      var index = JSON.parse(localStorage.getItem(TRACKER_CACHE_INDEX) || '[]').filter(function (k) { return k !== url; });
+      index.unshift(url);
+      index.slice(TRACKER_CACHE_MAX).forEach(function (k) { localStorage.removeItem(TRACKER_CACHE_PREFIX + k); });
+      localStorage.setItem(TRACKER_CACHE_INDEX, JSON.stringify(index.slice(0, TRACKER_CACHE_MAX)));
+    } catch (e) { /* storage full or unavailable: just no instant load next time */ }
+  }
+
+  var loadMonthSeq = 0;
   function loadMonth(monthStr) {
     state.month = monthStr;
     // Focus Mode always shows the current month (see enterFocus), which
     // isn't a month the student chose to browse, so it isn't remembered.
     if (!state.focus) saveStoredMonth(monthStr);
-    // The skeleton below is much shorter than real content (7 placeholder
-    // blocks vs. a full week list + heatmap + subject breakdown, often
-    // well past one viewport) — swapping #app's innerHTML to it makes the
-    // document briefly far shorter, and the browser clamps window.scrollY
-    // down to fit. Nothing then scrolled back afterward, so a student
-    // scrolled down to the month-nav (a very ordinary place to be, since
-    // that's exactly where the prev/next buttons that trigger this live)
-    // got silently dumped near the top once the real, tall content came
-    // back in. Direct report: "the page might refresh but it should land
-    // on the same spot, not on top." Captured/restored here rather than
-    // only in the month-nav click handlers — every loadMonth() caller hits
-    // the same skeleton swap, so the same jump could happen from any of
-    // them (scouting a batch, resolving a rename, a migration), not just
-    // month nav.
+    // Swapping #app to the much shorter skeleton clamps window.scrollY
+    // down, so the position is captured first and restored after render.
     var scrollBefore = window.scrollY;
-    app.innerHTML = loadingSkeletonHtml();
+    var seq = ++loadMonthSeq;
 
-    // Guests (no student yet) only need the public schedule/leaders piece —
-    // tracker-data.js omits the per-student pieces server-side when email
-    // is absent, same effective behavior as before when those endpoints
-    // were separate and simply weren't called for a guest. One request
-    // instead of up to 7 separate Netlify Functions, each of which was its
-    // own independent Lambda paying its own cold-start cost — see
-    // tracker-data.js for why that mattered.
-    // A guest's request tells the server which batch they're previewing
-    // (state.previewBatch, param `batch`). A registered student's real
-    // batch is always resolved authoritatively server-side from their
-    // own row — never trusted from the client — but they can still ask
-    // to SEE a different batch's calendar while scouting (param
-    // `previewBatch`, only sent when it actually differs from their real
-    // one, matching tracker-data.js's own isScouting check). Sending it
-    // unconditionally would be harmless too (the server no-ops when it
-    // matches their real batch already) but omitting it keeps the common
-    // "not scouting" case's URL identical to before this feature existed.
     var url = '/tracker-data?month=' + monthStr;
     if (state.student) {
       url += '&email=' + encodeURIComponent(state.student.email);
@@ -1632,198 +1637,235 @@
       url += '&batch=' + encodeURIComponent(state.previewBatch);
     }
 
+    var cached = readTrackerCache(url);
+    var showedStale = false;
+    state.staleError = null;
+    if (cached) {
+      try {
+        applyTrackerData(cached.data, true);
+        window.scrollTo({ top: scrollBefore, left: 0, behavior: 'instant' });
+        showedStale = true;
+      } catch (e) { showedStale = false; }
+    }
+    if (!showedStale) app.innerHTML = loadingSkeletonHtml();
+
     api(url)
       .then(function (data) {
-        var scheduleDays = data.schedule.days || [];
-        state.latestScheduledMonth = data.schedule.latestMonth || null;
-        state.lastWeekLeaders = data.lastWeekLeaders.leaders || [];
-        state.lastWeekViewerRank = data.lastWeekLeaders.viewerRank || null;
-        state.todayLeaders = data.todayLeaders.leaders || [];
-        state.todayViewerRank = data.todayLeaders.viewerRank || null;
-        state.hourlyActivity = (data.hourlyActivity && data.hourlyActivity.hours) || [];
-        state.liveCount = (data.liveCount && data.liveCount.count) || 0;
-        state.liveCountMax = (data.liveCount && data.liveCount.maxCount) || 0;
-        var progressRows = state.student ? (data.progress.progress || []) : [];
-        state.streak = state.student ? data.streak.streak : null;
-        state.subjectProgress = state.student ? (data.subjectProgress.subjects || []) : [];
-        state.malpractice = state.student ? (data.malpractice || { incidentCount: 0, frozenUntil: null, warningAckCount: 0 }) : null;
-        state.needsRename = state.student ? !!(data.needsRename && data.needsRename.needsRename) : false;
-        if (state.student && data.needsRename && typeof data.needsRename.gateTriesLeft === 'number') {
-          state.gateTriesLeft = data.needsRename.gateTriesLeft;
-        }
-        // Keep the cookie-cached display_name in sync with the server's
-        // real current one — see fetchNeedsRename's own comment for the
-        // real bug this fixes (the rename gate quoting a stale, already-
-        // changed name back at a student). Only ever moves the cookie
-        // toward what the server actually has, never the reverse.
-        // Same idea for batch: the server's students.batch is the truth
-        // (e.g. a switch made on another device), the cookie only a cache.
-        if (state.student && data.studentBatch && state.student.batch !== data.studentBatch) {
-          state.student.batch = data.studentBatch;
-          if (state.scoutBatch === data.studentBatch) state.scoutBatch = null;
-          writeCookie(state.student);
-        }
-
-        var freshName = state.student && data.needsRename && data.needsRename.currentDisplayName;
-        if (freshName && state.student.display_name !== freshName) {
-          state.student.display_name = freshName;
-          writeCookie(state.student);
-        }
-
-        // Only present once a student has actually saved custom durations
-        // somewhere before (see applyPomoSettings) — merge in place of
-        // whatever localStorage/defaults loaded at module-init time, so a
-        // student's setup follows them to a new device/browser instead of
-        // only living in the one that saved it.
-        var savedPomo = state.student ? data.pomoSettings : null;
-        if (savedPomo && savedPomo.work != null) {
-          // clampMinutes, not a raw copy — a partial row (e.g. pomo_work_min
-          // set but pomo_long_break_min still null) used to assign `null`
-          // straight into pomoSettings.longBreak. null * 60 is 0, not NaN,
-          // so pomoDurationFor silently produced a genuine 0-second break:
-          // phaseEndAt landed at-or-before "now" the instant it started, and
-          // the very next tick saw it as already finished and advanced
-          // straight back to work — a break that visibly flashed for about
-          // one tick before converting to a running work session. Falls
-          // back to whatever's already loaded (localStorage or defaults),
-          // same safety net loadPomoSettings() already uses.
-          pomoSettings = {
-            work: clampPomoWork(savedPomo.work, pomoSettings.work),
-            shortBreak: clampMinutes(savedPomo.shortBreak, pomoSettings.shortBreak, 1, 60),
-            longBreak: clampMinutes(savedPomo.longBreak, pomoSettings.longBreak, 1, 90),
-            cycle: clampMinutes(savedPomo.cycle, pomoSettings.cycle, 1, 12),
-            // gradient never syncs remotely (see saveRemotePomoSettings —
-            // deliberately per-device only), so it's not in savedPomo at
-            // all — carried over from whatever loadPomoSettings() already
-            // read out of localStorage, same fix as applyPomoSettings'
-            // identical rebuild-drops-gradient bug just above. Without
-            // this, a signed-in student's picked ring color got silently
-            // reset to the default on every single page load, not just
-            // after clicking Save.
-            gradient: pomoSettings.gradient,
-          };
-          savePomoSettings(); // cache locally too, so a later guest-mode reload isn't stuck back on defaults
-          // clampPomoWork() above only ever corrects the in-memory value —
-          // students.pomo_work_min itself was never written back, so a
-          // student who'd saved e.g. 178 (legal before the 120-min cap
-          // shipped) kept reading 178 from the server forever, silently
-          // reclamped to 120 on every load with nothing to show for it in
-          // the database. Caught via a real student's report ("miscalc"):
-          // their pomo_daily_sessions showed a clean 178.0-min/session
-          // history right up to the cap's ship date, then 120.0 exactly
-          // from the next day on — the credited math was always correct,
-          // but the stored setting silently disagreed with what actually
-          // ran, forever. Persisting the corrected value here means this
-          // only ever fires once per affected student (the very next load
-          // already sees a server value of 120, so the condition goes
-          // false) — this doesn't add a work fetch, saveRemotePomoSettings
-          // already POSTs whatever's currently in pomoSettings.
-          if (savedPomo.work > POMO_WORK_MAX_MINUTES) saveRemotePomoSettings();
-          // Real bug, caught by a full end-to-end verification pass before
-          // shipping: this block runs on EVERY loadMonth() call (i.e. every
-          // page load) for any signed-in student who has ever saved
-          // duration settings from any device — completely unconditional
-          // on whether the timer is actually idle. restorePomoActiveState()
-          // (called earlier in init(), before loadMonth ever fires) already
-          // correctly restores a genuinely paused mid-session countdown's
-          // real secondsLeft — this block then ran anyway and blew it away
-          // back to a fresh full duration, on literally every reload, not
-          // just an unlucky race. `secondsLeft === totalSeconds` is the
-          // right guard: a paused session that's actually consumed any
-          // time always has secondsLeft < totalSeconds, so this only ever
-          // recomputes for a timer that's genuinely idle/fresh (nothing to
-          // lose either way) or has just been Reset, never one mid-way
-          // through a real paused countdown.
-          if (!pomo.running && pomo.secondsLeft === pomo.totalSeconds) {
-            pomo.totalSeconds = pomoDurationFor(pomo.mode);
-            pomo.secondsLeft = pomo.totalSeconds;
-          }
-        }
-
-        // Math.max, not a straight overwrite: loadMonth can re-run mid-Focus-
-        // session (e.g. a guest registers via the pending-task flow while a
-        // pomodoro they started as a guest is still running) — a lower
-        // server count in that moment (a fresh account has no history yet)
-        // shouldn't erase sessions already completed earlier in this same
-        // page load.
-        var dailySessions = state.student ? data.pomoSessions : null;
-        if (dailySessions) {
-          pomo.completedSessions = Math.max(pomo.completedSessions, dailySessions.sessionsCompleted || 0);
-          // dailySessions.sessionsCompleted is always correctly day-scoped
-          // (pomo_daily_sessions, keyed by todayIST() server-side) — this
-          // merge adopts a value genuinely known to be today's, so keep
-          // completedSessionsDate in sync rather than leaving it at
-          // whatever applyPomoActiveState's own restore set it to.
-          pomo.completedSessionsDate = todayIso();
-        }
-
-        // Cross-device pomodoro sync: if a session was started on a
-        // different browser/device, this device's own localStorage (used
-        // by the synchronous restore at init()) knows nothing about it —
-        // pomoActive is that session's server-side mirror (see
-        // pomo-active.js). Only adopt it if it's actually newer than
-        // whatever's already applied here (pomoStateAsOf), so a slightly
-        // stale response doesn't undo a fresh local action (e.g. clicking
-        // Start right as this request was in flight).
-        var remoteActive = state.student ? data.pomoActive : null;
-        if (remoteActive && remoteActive.updatedAt) {
-          var remoteAsOf = parseUtcTimestamp(remoteActive.updatedAt).getTime();
-          if (remoteAsOf > pomoStateAsOf) applyPomoActiveState(remoteActive);
-        }
-
-        var completedSet = new Set(
-          progressRows.filter(function (r) { return r.completed; })
-            .map(function (r) { return r.date + '|' + r.subject + '|' + r.task_text; })
-        );
-
-        state.days = scheduleDays
-          .map(function (day) {
-            var tasks = day.tasks.map(function (t) {
-              return {
-                subject: t.subject,
-                task_text: t.task_text,
-                completed: completedSet.has(day.date + '|' + t.subject + '|' + t.task_text),
-              };
-            });
-            return { date: day.date, tasks: tasks };
-          })
-          .sort(function (a, b) { return a.date < b.date ? -1 : 1; });
-
-        // Any day with something left to tick starts expanded, not just past
-        // ones — with pre-ticking allowed, a fully-future month (nothing
-        // "missed" yet) would otherwise render with every checkbox hidden
-        // behind a collapsed row, which just looks like nothing is clickable.
-        state.days.forEach(function (d) {
-          var allDone = d.tasks.length > 0 && d.tasks.every(function (t) { return t.completed; });
-          if (!allDone) state.expanded.add(d.date);
-        });
-
-        // Every week collapses by default except the one containing today,
-        // so the page isn't a huge wall of past/future weeks on load — but
-        // only the first time a given week is ever seen, so a week the
-        // student has manually expanded/collapsed stays that way across
-        // month navigation and reloads instead of resetting.
-        var todayWk = mondayOf(todayIso());
-        state.days.forEach(function (d) {
-          var wk = mondayOf(d.date);
-          if (state.initializedWeeks.has(wk)) return;
-          state.initializedWeeks.add(wk);
-          if (wk !== todayWk) state.collapsedWeeks.add(wk);
-        });
-
-        renderCalendar();
-        // behavior: 'instant', not the page's default scroll-behavior:
-        // smooth (html { scroll-behavior: smooth }) — a smooth scroll here
-        // would visibly animate from wherever the skeleton's shorter
-        // height left the browser clamped to, back up to scrollBefore,
-        // which reads as a jump-then-crawl-back rather than just staying
-        // put. Restoring instantly is what "land on the same spot" means.
-        window.scrollTo({ top: scrollBefore, left: 0, behavior: 'instant' });
+        if (seq !== loadMonthSeq) return; // a newer loadMonth superseded this one
+        writeTrackerCache(url, data);
+        // After a cached render, keep wherever the student has scrolled to
+        // since, rather than jumping back to the pre-load position.
+        var keepY = showedStale ? window.scrollY : scrollBefore;
+        applyTrackerData(data, false, showedStale);
+        window.scrollTo({ top: keepY, left: 0, behavior: 'instant' });
       })
       .catch(function (err) {
+        if (seq !== loadMonthSeq) return;
+        if (showedStale) {
+          // Keep the saved view on screen with a retry, not an error page.
+          state.staleError = err.message || 'network error';
+          renderCalendar();
+          return;
+        }
         app.innerHTML = '<p class="center-note">Couldn’t load your roadmap: ' + escapeHtml(err.message) + '</p>';
       });
   }
+
+  // isStale: data came from the local cache, not the server (see
+  // readTrackerCache). swapQuietly: this fresh render replaces a cached
+  // one already on screen, so its fade-in reveals are skipped rather than
+  // replaying the whole page's entrance a second time.
+  function applyTrackerData(data, isStale, swapQuietly) {
+    state.stale = !!isStale;
+    var scheduleDays = data.schedule.days || [];
+    state.latestScheduledMonth = data.schedule.latestMonth || null;
+    state.lastWeekLeaders = data.lastWeekLeaders.leaders || [];
+    state.lastWeekViewerRank = data.lastWeekLeaders.viewerRank || null;
+    state.todayLeaders = data.todayLeaders.leaders || [];
+    state.todayViewerRank = data.todayLeaders.viewerRank || null;
+    state.hourlyActivity = (data.hourlyActivity && data.hourlyActivity.hours) || [];
+    state.liveCount = (data.liveCount && data.liveCount.count) || 0;
+    state.liveCountMax = (data.liveCount && data.liveCount.maxCount) || 0;
+    var progressRows = state.student ? (data.progress.progress || []) : [];
+    state.streak = state.student ? data.streak.streak : null;
+    state.subjectProgress = state.student ? (data.subjectProgress.subjects || []) : [];
+    state.malpractice = state.student ? (data.malpractice || { incidentCount: 0, frozenUntil: null, warningAckCount: 0 }) : null;
+    state.needsRename = state.student ? !!(data.needsRename && data.needsRename.needsRename) : false;
+    if (state.student && data.needsRename && typeof data.needsRename.gateTriesLeft === 'number') {
+      state.gateTriesLeft = data.needsRename.gateTriesLeft;
+    }
+    // Keep the cookie-cached display_name in sync with the server's
+    // real current one — see fetchNeedsRename's own comment for the
+    // real bug this fixes (the rename gate quoting a stale, already-
+    // changed name back at a student). Only ever moves the cookie
+    // toward what the server actually has, never the reverse.
+    // Same idea for batch: the server's students.batch is the truth
+    // (e.g. a switch made on another device), the cookie only a cache.
+    if (!isStale && state.student && data.studentBatch && state.student.batch !== data.studentBatch) {
+      state.student.batch = data.studentBatch;
+      if (state.scoutBatch === data.studentBatch) state.scoutBatch = null;
+      writeCookie(state.student);
+    }
+
+    var freshName = state.student && data.needsRename && data.needsRename.currentDisplayName;
+    if (!isStale && freshName && state.student.display_name !== freshName) {
+      state.student.display_name = freshName;
+      writeCookie(state.student);
+    }
+
+    // Only present once a student has actually saved custom durations
+    // somewhere before (see applyPomoSettings) — merge in place of
+    // whatever localStorage/defaults loaded at module-init time, so a
+    // student's setup follows them to a new device/browser instead of
+    // only living in the one that saved it.
+    var savedPomo = state.student && !isStale ? data.pomoSettings : null;
+    if (savedPomo && savedPomo.work != null) {
+      // clampMinutes, not a raw copy — a partial row (e.g. pomo_work_min
+      // set but pomo_long_break_min still null) used to assign `null`
+      // straight into pomoSettings.longBreak. null * 60 is 0, not NaN,
+      // so pomoDurationFor silently produced a genuine 0-second break:
+      // phaseEndAt landed at-or-before "now" the instant it started, and
+      // the very next tick saw it as already finished and advanced
+      // straight back to work — a break that visibly flashed for about
+      // one tick before converting to a running work session. Falls
+      // back to whatever's already loaded (localStorage or defaults),
+      // same safety net loadPomoSettings() already uses.
+      pomoSettings = {
+        work: clampPomoWork(savedPomo.work, pomoSettings.work),
+        shortBreak: clampMinutes(savedPomo.shortBreak, pomoSettings.shortBreak, 1, 60),
+        longBreak: clampMinutes(savedPomo.longBreak, pomoSettings.longBreak, 1, 90),
+        cycle: clampMinutes(savedPomo.cycle, pomoSettings.cycle, 1, 12),
+        // gradient never syncs remotely (see saveRemotePomoSettings —
+        // deliberately per-device only), so it's not in savedPomo at
+        // all — carried over from whatever loadPomoSettings() already
+        // read out of localStorage, same fix as applyPomoSettings'
+        // identical rebuild-drops-gradient bug just above. Without
+        // this, a signed-in student's picked ring color got silently
+        // reset to the default on every single page load, not just
+        // after clicking Save.
+        gradient: pomoSettings.gradient,
+      };
+      savePomoSettings(); // cache locally too, so a later guest-mode reload isn't stuck back on defaults
+      // clampPomoWork() above only ever corrects the in-memory value —
+      // students.pomo_work_min itself was never written back, so a
+      // student who'd saved e.g. 178 (legal before the 120-min cap
+      // shipped) kept reading 178 from the server forever, silently
+      // reclamped to 120 on every load with nothing to show for it in
+      // the database. Caught via a real student's report ("miscalc"):
+      // their pomo_daily_sessions showed a clean 178.0-min/session
+      // history right up to the cap's ship date, then 120.0 exactly
+      // from the next day on — the credited math was always correct,
+      // but the stored setting silently disagreed with what actually
+      // ran, forever. Persisting the corrected value here means this
+      // only ever fires once per affected student (the very next load
+      // already sees a server value of 120, so the condition goes
+      // false) — this doesn't add a work fetch, saveRemotePomoSettings
+      // already POSTs whatever's currently in pomoSettings.
+      if (savedPomo.work > POMO_WORK_MAX_MINUTES) saveRemotePomoSettings();
+      // Real bug, caught by a full end-to-end verification pass before
+      // shipping: this block runs on EVERY loadMonth() call (i.e. every
+      // page load) for any signed-in student who has ever saved
+      // duration settings from any device — completely unconditional
+      // on whether the timer is actually idle. restorePomoActiveState()
+      // (called earlier in init(), before loadMonth ever fires) already
+      // correctly restores a genuinely paused mid-session countdown's
+      // real secondsLeft — this block then ran anyway and blew it away
+      // back to a fresh full duration, on literally every reload, not
+      // just an unlucky race. `secondsLeft === totalSeconds` is the
+      // right guard: a paused session that's actually consumed any
+      // time always has secondsLeft < totalSeconds, so this only ever
+      // recomputes for a timer that's genuinely idle/fresh (nothing to
+      // lose either way) or has just been Reset, never one mid-way
+      // through a real paused countdown.
+      if (!pomo.running && pomo.secondsLeft === pomo.totalSeconds) {
+        pomo.totalSeconds = pomoDurationFor(pomo.mode);
+        pomo.secondsLeft = pomo.totalSeconds;
+      }
+    }
+
+    // Math.max, not a straight overwrite: loadMonth can re-run mid-Focus-
+    // session (e.g. a guest registers via the pending-task flow while a
+    // pomodoro they started as a guest is still running) — a lower
+    // server count in that moment (a fresh account has no history yet)
+    // shouldn't erase sessions already completed earlier in this same
+    // page load.
+    var dailySessions = state.student && !isStale ? data.pomoSessions : null;
+    if (dailySessions) {
+      pomo.completedSessions = Math.max(pomo.completedSessions, dailySessions.sessionsCompleted || 0);
+      // dailySessions.sessionsCompleted is always correctly day-scoped
+      // (pomo_daily_sessions, keyed by todayIST() server-side) — this
+      // merge adopts a value genuinely known to be today's, so keep
+      // completedSessionsDate in sync rather than leaving it at
+      // whatever applyPomoActiveState's own restore set it to.
+      pomo.completedSessionsDate = todayIso();
+    }
+
+    // Cross-device pomodoro sync: if a session was started on a
+    // different browser/device, this device's own localStorage (used
+    // by the synchronous restore at init()) knows nothing about it —
+    // pomoActive is that session's server-side mirror (see
+    // pomo-active.js). Only adopt it if it's actually newer than
+    // whatever's already applied here (pomoStateAsOf), so a slightly
+    // stale response doesn't undo a fresh local action (e.g. clicking
+    // Start right as this request was in flight).
+    var remoteActive = state.student && !isStale ? data.pomoActive : null;
+    if (remoteActive && remoteActive.updatedAt) {
+      var remoteAsOf = parseUtcTimestamp(remoteActive.updatedAt).getTime();
+      if (remoteAsOf > pomoStateAsOf) applyPomoActiveState(remoteActive);
+    }
+
+    var completedSet = new Set(
+      progressRows.filter(function (r) { return r.completed; })
+        .map(function (r) { return r.date + '|' + r.subject + '|' + r.task_text; })
+    );
+
+    state.days = scheduleDays
+      .map(function (day) {
+        var tasks = day.tasks.map(function (t) {
+          return {
+            subject: t.subject,
+            task_text: t.task_text,
+            completed: completedSet.has(day.date + '|' + t.subject + '|' + t.task_text),
+          };
+        });
+        return { date: day.date, tasks: tasks };
+      })
+      .sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+
+    // Any day with something left to tick starts expanded, not just past
+    // ones — with pre-ticking allowed, a fully-future month (nothing
+    // "missed" yet) would otherwise render with every checkbox hidden
+    // behind a collapsed row, which just looks like nothing is clickable.
+    state.days.forEach(function (d) {
+      var allDone = d.tasks.length > 0 && d.tasks.every(function (t) { return t.completed; });
+      if (!allDone) state.expanded.add(d.date);
+    });
+
+    // Every week collapses by default except the one containing today,
+    // so the page isn't a huge wall of past/future weeks on load — but
+    // only the first time a given week is ever seen, so a week the
+    // student has manually expanded/collapsed stays that way across
+    // month navigation and reloads instead of resetting.
+    var todayWk = mondayOf(todayIso());
+    state.days.forEach(function (d) {
+      var wk = mondayOf(d.date);
+      if (state.initializedWeeks.has(wk)) return;
+      state.initializedWeeks.add(wk);
+      if (wk !== todayWk) state.collapsedWeeks.add(wk);
+    });
+
+    renderCalendar();
+    if (swapQuietly) {
+      Array.prototype.forEach.call(app.querySelectorAll('.fade-in:not(.visible)'), function (el) {
+        el.style.transition = 'none';
+        el.classList.add('visible');
+        fadeObserver.unobserve(el);
+        void el.offsetHeight;
+        el.style.transition = '';
+      });
+    }
+  }
+
 
   function dayStatus(day) {
     var today = todayIso();
@@ -2572,6 +2614,11 @@
     var missedBefore = state.days.filter(function (d) { return d.date < today && dayStatus(d) === 'missed'; });
 
     var html = '';
+    if (state.stale) {
+      html += state.staleError
+        ? '<div class="stale-note stale-note--err">Couldn’t refresh, showing saved data. <button type="button" id="stale-retry">Retry</button></div>'
+        : '<div class="stale-note">Updating…</div>';
+    }
     // Reflects whichever batch's calendar is actually being shown below
     // it (effectiveScoutBatch() for a registered student, who may be
     // scouting something other than their own real batch) — not
@@ -2712,6 +2759,9 @@
     }
 
     app.innerHTML = html;
+    app.classList.toggle('is-stale', !!state.stale);
+    var staleRetry = document.getElementById('stale-retry');
+    if (staleRetry) staleRetry.addEventListener('click', function () { loadMonth(state.month); });
     bindCalendarEvents();
     observeFadeIns();
     animateExamCountdown();
@@ -3155,6 +3205,9 @@
   }
 
   function pomoToggleRun() {
+    // Starting (not pausing) waits for fresh data: the rename / freeze
+    // gates and synced settings come from the server response.
+    if (!pomo.running && state.stale) return;
     if (pomo.running) {
       clearTimeout(pomo.timerId);
       pomo.running = false;
@@ -5529,6 +5582,9 @@
   function onTaskToggle(e) {
     var cb = e.target;
     var completed = cb.checked;
+    // Never act on a view drawn from the local cache: the server may know
+    // something newer (e.g. the same task ticked on another device).
+    if (state.stale) { cb.checked = !completed; return; }
     var date = cb.dataset.date, subject = cb.dataset.subject, taskText = cb.dataset.task;
     var row = cb.closest('.task-row');
 
