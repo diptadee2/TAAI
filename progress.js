@@ -243,7 +243,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-02-6';
+  var CLIENT_VERSION = '2026-10-02-7';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2131,7 +2131,7 @@
     var pct = s.total ? Math.round((s.done / s.total) * 100) : 0;
     var rowClass = 'subject-row' + (isAssessment(s.subject) ? ' subject-row--assessment' : '');
     return '<div class="' + rowClass + '" data-subject="' + escapeAttr(s.subject) + '">' +
-      '<div class="subject-row-name">' + (nameHtml || escapeHtml(s.subject)) + '</div>' +
+      (nameHtml === '' ? '' : '<div class="subject-row-name">' + (nameHtml || escapeHtml(s.subject)) + '</div>') +
       '<div class="subject-row-line"><div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
       '<div class="subject-row-pct">' + pct + '%</div></div>' +
       '</div>';
@@ -2157,12 +2157,12 @@
     var html = GATE_DA_WEIGHTAGE.map(function (w) {
       var rows = w.subjects.filter(function (n) { return byName[n]; }).map(function (n) { used[n] = true; return byName[n]; });
       if (!rows.length) return '';
-      if (rows.length === 1) {
-        return '<div class="subject-group">' + subjectRowHtml(rows[0], '<span>' + escapeHtml(rows[0].subject) + '</span>' + weightageMarksHtml(w)) + '</div>';
-      }
-      return '<div class="subject-group subject-group--multi">' +
-        '<div class="subject-group-head"><span>' + escapeHtml(w.label) + '</span>' + weightageMarksHtml(w) + '</div>' +
-        rows.map(function (r) { return subjectRowHtml(r); }).join('') +
+      var single = rows.length === 1;
+      // One-subject section: the header already names it, so the row is
+      // just the bar. Multi-subject: each row keeps its own name.
+      return '<div class="subject-group' + (single ? '' : ' subject-group--multi') + '">' +
+        '<div class="subject-group-head"><span>' + escapeHtml(single ? rows[0].subject : w.label) + '</span>' + weightageMarksHtml(w) + '</div>' +
+        rows.map(function (r) { return subjectRowHtml(r, single ? '' : null); }).join('') +
         '</div>';
     }).join('');
 
@@ -2170,7 +2170,7 @@
     // spelled subject), then quizzes/test series last.
     var rest = subjects.filter(function (s) { return !used[s.subject] && !isAssessment(s.subject); });
     var assessments = subjects.filter(function (s) { return isAssessment(s.subject); });
-    html += rest.map(function (s) { return '<div class="subject-group">' + subjectRowHtml(s) + '</div>'; }).join('');
+    html += rest.map(function (s) { return '<div class="subject-group"><div class="subject-group-head"><span>' + escapeHtml(s.subject) + '</span></div>' + subjectRowHtml(s, '') + '</div>'; }).join('');
     html += assessments.map(function (s) { return subjectRowHtml(s); }).join('');
 
     return '<div class="subject-breakdown fade-in"><div class="subject-breakdown-title">Progress by subject</div>' +
