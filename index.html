@@ -675,77 +675,47 @@ body {
 }
 .section-sub { font-size: 18px; color: var(--ink-dim); line-height: 1.5; max-width: 580px; }
 
-/* Three ways, offer cards */
+/* Three ways, offer cards. Quiet by design (2026-10-02, "less vibecoded"):
+   plain surface + one hairline border, no eyebrow, no 01/02/03 numerals,
+   no gradient icon tiles or hover color-flood. Hover only tints the
+   border and nudges the arrow. */
 .offer-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
 .offer-card {
-  border-radius: var(--radius-xl); min-height: 400px;
-  padding: 36px; position: relative; overflow: hidden;
+  border-radius: 16px; padding: 30px 28px 26px;
+  background: #fff; border: 1px solid var(--line);
   display: flex; flex-direction: column;
-  transition: transform .32s cubic-bezier(.4,0,.2,1), box-shadow .32s ease;
   color: var(--ink); text-decoration: none;
+  transition: border-color .25s cubic-bezier(.25,1,.5,1), background-color .25s cubic-bezier(.25,1,.5,1);
 }
-.offer-card:hover { transform: translateY(-8px); box-shadow: 0 32px 72px rgba(107,75,255,0.18); }
-.offer-1 { background: linear-gradient(160deg, var(--pink-soft) 0%, #fff 60%); border: 1px solid rgba(255,127,183,0.2); }
-.offer-2 { background: linear-gradient(160deg, var(--purple-soft) 0%, #fff 60%); border: 1px solid rgba(139,92,246,0.18); }
-.offer-3 { background: linear-gradient(160deg, var(--blue-soft) 0%, #fff 60%); border: 1px solid rgba(77,139,255,0.18); }
-.offer-card::before {
-  content: ''; position: absolute; inset: 0; border-radius: inherit;
-  opacity: 0; transition: opacity .38s ease; z-index: 0;
-}
-.offer-1::before { background: linear-gradient(160deg, #FF7FB7 0%, #9333ea 100%); }
-.offer-2::before { background: linear-gradient(160deg, #8B5CF6 0%, #3B82F6 100%); }
-.offer-3::before { background: linear-gradient(160deg, #06b6d4 0%, #0ea5e9 55%, #6366f1 100%); }
-.offer-card:hover::before { opacity: 1; }
-.offer-num {
-  position: absolute; bottom: -8px; right: 22px; z-index: 0;
-  font-family: 'Fraunces', ui-serif, serif; font-size: clamp(56px, 12vw, 88px); font-weight: 700;
-  letter-spacing: -0.03em; line-height: 1; pointer-events: none;
-  opacity: 0.07; transition: opacity .32s ease, color .32s ease;
-}
-.offer-card:hover .offer-num { opacity: 0.14; color: #fff; }
-.offer-icon {
-  width: 52px; height: 52px; border-radius: 14px;
-  display: grid; place-items: center; color: #fff;
-  position: relative; z-index: 1;
-  transition: transform .28s cubic-bezier(.4,0,.2,1), box-shadow .28s ease;
-}
-.offer-card:hover .offer-icon { transform: scale(1.12) rotate(-4deg); box-shadow: 0 8px 24px rgba(0,0,0,0.22); }
-.offer-1 .offer-icon { background: linear-gradient(135deg, var(--pink), var(--purple)); }
-.offer-2 .offer-icon { background: linear-gradient(135deg, var(--purple), var(--blue)); }
-.offer-3 .offer-icon { background: linear-gradient(135deg, #06b6d4, #3b82f6); }
-.offer-body { flex: 1; position: relative; z-index: 1; margin-top: 22px; }
-.offer-tagline { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 10px; color: var(--ink-soft); transition: color .28s ease; }
-.offer-card:hover .offer-tagline { color: rgba(255,255,255,0.6); }
-.offer-title { font-family: var(--font-display); font-size: clamp(22px, 5vw, 30px); font-weight: 600; letter-spacing: -0.01em; line-height: 1.05; margin-bottom: 12px; transition: color .28s ease; }
-.offer-card:hover .offer-title { color: #fff; }
-.offer-desc { font-size: 14px; color: var(--ink-dim); line-height: 1.55; transition: color .28s ease; }
-.offer-card:hover .offer-desc { color: rgba(255,255,255,0.65); }
-.offer-detail { max-height: 200px; overflow: hidden; opacity: 1; position: relative; z-index: 1; }
-.offer-bullets { list-style: none; margin: 14px 0 0; display: flex; flex-direction: column; gap: 7px; }
-.offer-bullets li { font-size: 13px; color: rgba(255,255,255,0.78); display: flex; align-items: center; gap: 9px; }
-.offer-bullets li::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.55); flex-shrink: 0; }
-@keyframes offerValidityIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+.offer-card:hover { border-color: rgba(139,92,246,0.38); background-color: #FDFCFF; }
+.offer-card:focus-visible { outline: 2px solid var(--purple); outline-offset: 3px; }
+.offer-status { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 500; color: var(--ink-soft); margin-bottom: 18px; }
+.offer-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .7; }
+.offer-status-live { color: #0F7A55; }
+.offer-status-live::before { opacity: 1; }
+.offer-status-hot { color: #8A5A00; }
+.offer-body { flex: 1; }
+.offer-title { font-family: var(--font-display); font-size: clamp(22px, 4vw, 26px); font-weight: 600; letter-spacing: -0.015em; line-height: 1.15; margin: 0 0 10px; text-wrap: balance; }
+.offer-desc { font-size: 15px; color: var(--ink-dim); line-height: 1.55; margin: 0; }
+.offer-bullets { list-style: none; margin: 20px 0 0; padding: 18px 0 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 9px; }
+.offer-bullets li { font-size: 14px; color: var(--ink-dim); display: flex; align-items: baseline; gap: 10px; line-height: 1.4; }
+.offer-bullets li::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--purple); flex-shrink: 0; transform: translateY(-2px); }
+@keyframes offerValidityIn { from { opacity: 0; } to { opacity: 1; } }
 .offer-validity { animation: offerValidityIn 0.4s ease forwards; }
-.offer-footer { position: relative; z-index: 1; margin-top: 24px; }
-.offer-link { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; font-size: 14px; color: var(--purple); transition: color .28s ease, gap .2s ease; }
-.offer-card:hover .offer-link { color: #fff; gap: 12px; }
-.offer-top { display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1; }
-.offer-badge {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-  padding: 5px 11px; border-radius: 999px;
-  transition: background .28s ease, color .28s ease, border-color .28s ease;
+.offer-footer { margin-top: 26px; }
+.offer-link { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; font-size: 14.5px; color: var(--purple); }
+.offer-link svg { transition: transform .25s cubic-bezier(.25,1,.5,1); }
+/* Line the cards' rows up across the grid (status, title, description,
+   bullets, link) so a longer description doesn't push one card's divider
+   below its neighbours'. Falls back to the plain flex column. */
+@supports (grid-template-rows: subgrid) {
+  .offer-grid { grid-auto-rows: auto; }
+  .offer-card { display: grid; grid-row: span 5; grid-template-rows: subgrid; row-gap: 0; }
+  .offer-body { display: contents; }
+  .offer-bullets { align-self: start; }
+  .offer-footer { align-self: end; }
 }
-.offer-badge-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
-.offer-badge-hot { background: #FFF3D0; color: #92640A; border: 1px solid rgba(180,120,0,0.15); }
-.offer-badge-hot .offer-badge-dot { background: #E8A000; }
-.offer-badge-cs { background: var(--purple-soft); color: var(--purple); border: 1px solid rgba(139,92,246,0.18); }
-.offer-badge-cs .offer-badge-dot { background: var(--purple); }
-.offer-badge-live { background: #ecfdf5; color: #065f46; border: 1px solid rgba(16,185,129,0.22); }
-.offer-badge-live .offer-badge-dot { background: #10b981; animation: badge-pulse 1.8s ease-in-out infinite; }
-@keyframes badge-pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.45; transform: scale(1.5); } }
-.offer-card:hover .offer-badge { background: rgba(255,255,255,0.16); color: rgba(255,255,255,0.9); border-color: rgba(255,255,255,0.2); }
-.offer-card:hover .offer-badge-dot { background: rgba(255,255,255,0.7); }
+.offer-card:hover .offer-link svg { transform: translateX(3px); }
 
 /* Why TAAI, interactive tabs */
 .whyus-layout {
@@ -1271,22 +1241,9 @@ body {
 
 /* Touch device offer-card overrides */
 @media (hover: none) {
-  /* Show bullets */
-  .offer-detail { max-height: 200px; opacity: 1; }
-  .offer-bullets li { color: var(--ink-dim); }
-  .offer-bullets li::before { background: var(--purple); }
-  /* Disable stuck hover states */
-  .offer-card:hover { transform: none; box-shadow: var(--shadow-md); }
-  .offer-card:hover::before { opacity: 0; }
-  .offer-card:hover .offer-num { opacity: 0.07; color: inherit; }
-  .offer-card:hover .offer-tagline,
-  .offer-card:hover .offer-title,
-  .offer-card:hover .offer-desc { color: inherit; }
-  .offer-card:hover .offer-link { color: var(--purple); gap: 7px; }
-  .offer-card:hover .offer-badge { background: revert; color: revert; border-color: revert; }
-  .offer-card:hover .offer-badge-dot { background: revert; }
-  /* Tap feedback */
-  .offer-card:active { transform: scale(0.975); transition-duration: .12s; }
+  /* Offer cards: no sticky hover tint on touch */
+  .offer-card:hover { border-color: var(--line); background-color: #fff; }
+  .offer-card:hover .offer-link svg { transform: none; }
   /* btn-stories' nice look is a :hover reveal, which touch devices never trigger -
      show the gradient fill by default instead of leaving it permanently plain */
   .btn-stories::before { transform: translateX(0); }
@@ -2038,10 +1995,7 @@ const _siteSettingsFetch = fetch('/api/site-settings-public').then(r => r.json()
 // ============ OFFER STRIP ============
 const OFFERS = [
   {
-    num: '01', cls: 'offer-1',
-    icon: <Icon.Brain />,
     badge: { label: 'Most enrolled', type: 'hot' },
-    tagline: 'Visual · Conceptual · GATE-relevant',
     title: 'GATE DA Courses',
     desc: 'Conceptual, visualized, GATE-relevant. Learn the "why", not just the formulas.',
     bullets: ['Recorded + GATE mentorship', '1,000+ weekly quiz questions'],
@@ -2049,20 +2003,14 @@ const OFFERS = [
     link: 'Explore courses', href: '/gate-da-courses',
   },
   {
-    num: '02', cls: 'offer-2',
-    icon: <Icon.Target />,
     badge: { label: 'Live now', type: 'live' },
-    tagline: 'GATE-like · 57 Tests · DA 2027',
     title: 'Test Series',
     desc: '31 topic-wise + 10 subject-wise + 10 full-length + 6 mini full-length (mixed subject) tests. GATE-like interface.',
     bullets: ['GATE DA 2027 syllabus', 'Detailed solutions for every test'],
     link: 'Browse tests', href: '/gate-da-test-series',
   },
   {
-    num: '03', cls: 'offer-3',
-    icon: <Icon.Code />,
     badge: { label: 'Coming soon', type: 'cs' },
-    tagline: 'DS & AI · Interview prep',
     title: 'Interview Preparation',
     desc: 'Career prep for AI and Data Science roles. Preview on YouTube now.',
     bullets: ['Live + recorded sessions', '6 real-world projects', 'Interview mentorship'],
@@ -2088,26 +2036,14 @@ function Offer() {
             const validity = c.validityId ? _fmtDate((pricingMap[c.validityId] || {}).validity) : null;
             const bullets = validity ? [...c.bullets, `Valid till ${validity}`] : c.bullets;
             return (
-              <a key={i} href={c.href} className={`offer-card card fade-in ${c.cls}`} style={{ '--delay': `${i * 90}ms` }} {...(c.newTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
-                <div className="offer-num">{c.num}</div>
-                <div className="offer-top">
-                  <div className="offer-icon">{c.icon}</div>
-                  {c.badge && (
-                    <div className={`offer-badge offer-badge-${c.badge.type}`}>
-                      <span className="offer-badge-dot" />
-                      {c.badge.label}
-                    </div>
-                  )}
-                </div>
+              <a key={i} href={c.href} className="offer-card fade-in" style={{ '--delay': `${i * 90}ms` }} {...(c.newTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+                {c.badge && <div className={`offer-status offer-status-${c.badge.type}`}>{c.badge.label}</div>}
                 <div className="offer-body">
-                  <div className="offer-tagline">{c.tagline}</div>
-                  <div className="offer-title">{c.title}</div>
-                  <div className="offer-desc">{c.desc}</div>
-                  <div className="offer-detail">
-                    <ul className="offer-bullets">
-                      {bullets.map((b, j) => <li key={j} className={validity && j === bullets.length - 1 ? 'offer-validity' : undefined}>{b}</li>)}
-                    </ul>
-                  </div>
+                  <h3 className="offer-title">{c.title}</h3>
+                  <p className="offer-desc">{c.desc}</p>
+                  <ul className="offer-bullets">
+                    {bullets.map((b, j) => <li key={j} className={validity && j === bullets.length - 1 ? 'offer-validity' : undefined}>{b}</li>)}
+                  </ul>
                 </div>
                 <div className="offer-footer">
                   {c.link && <span className="offer-link">{c.link} <Icon.ArrowRight size={14} /></span>}
