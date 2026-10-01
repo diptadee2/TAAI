@@ -1369,6 +1369,10 @@
   #today-leaderboard-card .leaderboard-about-icon, #today-leaderboard-card .leaderboard-effort-badge { flex-shrink: 0; }
   .leaderboard-about-icon { display: inline-flex; align-items: center; justify-content: center; vertical-align: -2px; margin-left: 7px; color: #fff; opacity: .32; cursor: pointer; border-radius: 4px; transition: opacity .15s ease; }
   .leaderboard-about-icon:hover, .leaderboard-about-icon:focus-visible { opacity: .75; outline: none; }
+  /* Unread (outline) sits a little brighter than read (filled), so a new
+     About catches the eye without adding any color. */
+  .leaderboard-about-icon:not(.is-read) { opacity: .6; }
+  .leaderboard-about-icon:not(.is-read):hover { opacity: .9; }
   .leaderboard-about-add { background: transparent; border: 1px dashed var(--line); border-radius: 10px 10px 10px 3px; padding: 4px 10px; font-family: inherit; font-size: 12px; font-weight: 600; color: var(--ink-soft); cursor: pointer; transition: border-color .15s ease, color .15s ease; }
   .leaderboard-about-add:hover { border-color: var(--pomo-g2, var(--purple)); color: var(--ink); }
   .about-bubble { position: fixed; z-index: 9000; max-width: 260px; background: #2a2a33; color: var(--ink); border: 1px solid var(--line); border-radius: 12px 12px 12px 4px; padding: 8px 12px; font-size: 13px; line-height: 1.4; white-space: normal; overflow-wrap: anywhere; box-shadow: 0 8px 24px rgba(0,0,0,0.45); opacity: 0; pointer-events: none; transform: translateY(4px); transition: opacity .15s ease, transform .15s ease; }

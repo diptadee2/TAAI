@@ -237,7 +237,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-01-13';
+  var CLIENT_VERSION = '2026-10-01-14';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2229,7 +2229,7 @@
       return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (l.is_me ? ' leaderboard-row--me' : '') + (l.is_live ? ' leaderboard-row--live' : '') + leaderboardRowEnterAttrs(animate, i) + '">' +
         '<span class="leaderboard-rank">' + rank + '</span>' +
         rankMovementHtml(i + 1) +
-        '<span class="leaderboard-name"' + allTimeTitleAttr(l.all_time_minutes) + '>' + liveDotHtml(l.is_live) + '<span class="lb-name-text">' + escapeHtml(l.display_name) + '</span>' + aboutIconHtml(l.about) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
+        '<span class="leaderboard-name"' + allTimeTitleAttr(l.all_time_minutes) + '>' + liveDotHtml(l.is_live) + '<span class="lb-name-text">' + escapeHtml(l.display_name) + '</span>' + aboutIconHtml(l.about, l.display_name, l.is_me) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
         '<span class="leaderboard-time">' + formatHoursDecimal(l.total_minutes) + '</span>' +
         '</div>';
     }).join('');
@@ -2238,7 +2238,7 @@
         '<div class="leaderboard-row leaderboard-row--me' + (state.todayViewerRank.is_live ? ' leaderboard-row--live' : '') + leaderboardRowEnterAttrs(animate, leaders.length) + '">' +
         '<span class="leaderboard-rank">' + state.todayViewerRank.rank + '</span>' +
         rankMovementHtml(state.todayViewerRank.rank) +
-        '<span class="leaderboard-name"' + allTimeTitleAttr(state.todayViewerRank.all_time_minutes) + '>' + liveDotHtml(state.todayViewerRank.is_live) + 'You' + aboutIconHtml(state.todayViewerRank.about) + '</span>' +
+        '<span class="leaderboard-name"' + allTimeTitleAttr(state.todayViewerRank.all_time_minutes) + '>' + liveDotHtml(state.todayViewerRank.is_live) + 'You' + aboutIconHtml(state.todayViewerRank.about, null, true) + '</span>' +
         '<span class="leaderboard-time">' + formatHoursDecimal(state.todayViewerRank.total_minutes) + '</span>' +
         '</div>';
     }
@@ -4526,6 +4526,7 @@
   // after the badge on Today's Leaders rows (direct request: bigger, more
   // transparent, not colourful, reads as a thought).
   var THOUGHT_ICON_SVG = '<svg viewBox="0 0 22 20" width="18" height="16" aria-hidden="true"><path fill="currentColor" d="M7.2 12.6c-2.6 0-4.7-1.7-4.7-3.9 0-1.8 1.4-3.3 3.3-3.8C6.4 2.7 8.5 1 11 1c2.2 0 4.1 1.3 4.8 3.2 2.3.2 4.2 2 4.2 4.3 0 2.3-2 4.1-4.5 4.1H7.2z"/><circle fill="currentColor" cx="5.6" cy="15.4" r="1.6"/><circle fill="currentColor" cx="2.9" cy="18.1" r="1"/></svg>';
+  var THOUGHT_ICON_OUTLINE_SVG = '<svg viewBox="0 0 22 20" width="18" height="16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.5" d="M7.2 12.6c-2.6 0-4.7-1.7-4.7-3.9 0-1.8 1.4-3.3 3.3-3.8C6.4 2.7 8.5 1 11 1c2.2 0 4.1 1.3 4.8 3.2 2.3.2 4.2 2 4.2 4.3 0 2.3-2 4.1-4.5 4.1H7.2z"/><circle fill="none" stroke="currentColor" stroke-width="1.3" cx="5.6" cy="15.4" r="1.4"/><circle fill="currentColor" cx="2.9" cy="18.1" r="1"/></svg>';
   var ABOUT_MAX_LENGTH = 80; // mirrors set-about.js's own cap
   var ABOUT_ICON_SVG = '<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path fill="currentColor" d="M8 1.5c-3.6 0-6.5 2.5-6.5 5.6 0 1.7.9 3.2 2.3 4.2L3.3 14l3-1.6c.5.1 1.1.2 1.7.2 3.6 0 6.5-2.5 6.5-5.6S11.6 1.5 8 1.5z"/></svg>';
 
@@ -4548,9 +4549,40 @@
   // Compact form for Today's Leaders (a narrow card with no room for an
   // About column): a small chat icon after the name; hovering or tapping
   // it shows the text in the same bubble the weekly board uses.
-  function aboutIconHtml(text) {
+  // Read / unread: an About this viewer hasn't opened yet shows as an
+  // OUTLINE cloud; once opened (hover or tap) it becomes FILLED. If that
+  // student later posts a different About, it's unread (outline) again.
+  // Tracked per browser in localStorage as { displayName: hashOfText }:
+  // rows carry no email, and keying by name means a rename simply shows
+  // as unread once, which is harmless. The viewer's own About is always
+  // filled.
+  var ABOUT_SEEN_KEY = 'taai_about_seen_v1';
+  function aboutSeenMap() {
+    try { return JSON.parse(localStorage.getItem(ABOUT_SEEN_KEY) || '{}') || {}; } catch (e) { return {}; }
+  }
+  function aboutTextHash(text) {
+    var h = 5381;
+    for (var i = 0; i < text.length; i++) h = ((h << 5) + h + text.charCodeAt(i)) | 0;
+    return (h >>> 0).toString(36);
+  }
+  function aboutIsRead(name, text) {
+    return !!name && aboutSeenMap()[name] === aboutTextHash(text);
+  }
+  function markAboutRead(el) {
+    var name = el.getAttribute('data-about-name');
+    var text = el.getAttribute('data-about');
+    if (!name || !text || el.classList.contains('is-read')) return;
+    var map = aboutSeenMap();
+    map[name] = aboutTextHash(text);
+    try { localStorage.setItem(ABOUT_SEEN_KEY, JSON.stringify(map)); } catch (e) { /* private mode: just won't persist */ }
+    el.classList.add('is-read');
+    el.innerHTML = THOUGHT_ICON_SVG;
+  }
+
+  function aboutIconHtml(text, name, isMe) {
     if (!text) return '';
-    return ' <span class="leaderboard-about-icon" role="button" tabindex="0" aria-label="About: ' + escapeAttr(text) + '" data-about="' + escapeAttr(text) + '">' + THOUGHT_ICON_SVG + '</span>';
+    var read = isMe || aboutIsRead(name, text);
+    return ' <span class="leaderboard-about-icon' + (read ? ' is-read' : '') + '" role="button" tabindex="0" aria-label="About: ' + escapeAttr(text) + (read ? '' : ' (new)') + '" data-about="' + escapeAttr(text) + '"' + (name && !isMe ? ' data-about-name="' + escapeAttr(name) + '"' : '') + '>' + (read ? THOUGHT_ICON_SVG : THOUGHT_ICON_OUTLINE_SVG) + '</span>';
   }
 
   // Shown on hover of anything that opens the editor — the once-a-month
@@ -4565,6 +4597,7 @@
   function showAboutBubble(target) {
     var text = target.getAttribute('data-about') || target.getAttribute('data-about-hint');
     if (!text) return;
+    if (target.classList.contains('leaderboard-about-icon')) markAboutRead(target);
     // A chip whose full text is already visible needs no bubble repeating it.
     if (target.classList.contains('leaderboard-about-chip') && target.scrollWidth <= target.clientWidth) return;
     if (!aboutBubbleEl) {
