@@ -243,7 +243,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-02-3';
+  var CLIENT_VERSION = '2026-10-02-4';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -343,10 +343,9 @@
   }
 
   // Full GATE DA syllabus — shown in "Progress by subject" even before a
-  // schedule for that subject has been uploaded (0% until then). "AI" is
-  // deliberately separate from "AI (Logic)" — Logic is just the portion
-  // of AI already scheduled, not the whole subject, so they're two
-  // distinct rows, not one to merge. Names that already appear in real
+  // schedule for that subject has been uploaded (0% until then). The
+  // schedule's "AI (Logic)" counts toward the "AI" row (SUBJECT_ALIASES),
+  // merged at the user's request 2026-10-02; it used to be its own row. Names that already appear in real
   // schedule data ("Linear Algebra") match that data's exact spelling so
   // they merge into one row instead of duplicating; the rest are
   // best-guess names — if a future month's sheet uses a different header
@@ -360,6 +359,20 @@
     'Linear Algebra', 'Probability', 'Statistics', 'Calculus',
     'Machine Learning', 'AI', 'DBMS', 'Python', 'Data Structures', 'Algorithms',
   ];
+
+  // Schedule subject names that count toward a canonical subject's row in
+  // "Progress by subject": their done/total are added into that row.
+  var SUBJECT_ALIASES = { 'AI (Logic)': 'AI' };
+  function mergeSubjectAliases(list) {
+    var out = [], byName = {};
+    (list || []).forEach(function (s) {
+      var name = SUBJECT_ALIASES[s.subject] || s.subject;
+      if (!byName[name]) { byName[name] = { subject: name, done: 0, total: 0 }; out.push(byName[name]); }
+      byName[name].done += s.done || 0;
+      byName[name].total += s.total || 0;
+    });
+    return out;
+  }
 
   // ── Pomodoro timer (Focus Mode only) ──────────────────────────────
   var POMO_SETTINGS_KEY = 'taai_pomo_settings';
@@ -2118,7 +2131,7 @@
     // those show at 0% until a schedule with that subject gets uploaded
     // and synced, at which point they start progressing with each tick
     // like any other row.
-    var subjects = (state.subjectProgress || []).slice();
+    var subjects = mergeSubjectAliases(state.subjectProgress);
     var byName = {};
     subjects.forEach(function (s) { byName[s.subject] = s; });
     CANONICAL_SUBJECTS.forEach(function (name) {
@@ -2618,7 +2631,7 @@
     return api('/subject-progress?email=' + encodeURIComponent(state.student.email))
       .then(function (r) {
         state.subjectProgress = r.subjects || [];
-        state.subjectProgress.forEach(function (s) {
+        mergeSubjectAliases(state.subjectProgress).forEach(function (s) {
           var row = document.querySelector('.subject-row[data-subject="' + CSS.escape(s.subject) + '"]');
           if (!row) return;
           var pct = s.total ? Math.round((s.done / s.total) * 100) : 0;
