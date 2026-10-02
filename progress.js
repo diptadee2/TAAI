@@ -19,7 +19,7 @@
   // daysTillExam() the countdown chip uses, so the two can never disagree.
   var BATCH_PROGRAMS = {
     C: { start: PROGRAM_START_DATE, length: PROGRAM_LENGTH_DAYS },
-    D: { length: 120, countsToExam: true, overallBar: true },
+    D: { length: 120, countsToExam: true, overallBar: true, targetMarks: 70 },
   };
 
   function daysTillExam() {
@@ -243,7 +243,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-02-10';
+  var CLIENT_VERSION = '2026-10-02-11';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2645,7 +2645,14 @@
   function planProgressTotals() {
     var done = 0, total = 0;
     (state.subjectProgress || []).forEach(function (s) { done += s.done || 0; total += s.total || 0; });
-    return { done: done, total: total, pct: total ? Math.round((done / total) * 100) : 0 };
+    var frac = total ? done / total : 0;
+    var program = BATCH_PROGRAMS[state.student && state.student.batch] || {};
+    // Marks covered: the plan aims at targetMarks (70), so finishing a
+    // share of it covers that share of the target. Fixed denominator.
+    return { done: done, total: total, pct: Math.round(frac * 100), target: program.targetMarks || 0, marks: Math.round(frac * (program.targetMarks || 0)) };
+  }
+  function planMarksHtml(t) {
+    return t.target ? '<span class="plan-marks" id="plan-progress-marks">\u2248 <b>' + t.marks + '</b> / ' + t.target + ' marks</span>' : '';
   }
   // No task counts on screen: the plan's total grows as more of the
   // schedule gets loaded, so "N of M" would keep shifting under the
@@ -2671,7 +2678,7 @@
     return '<div class="plan-progress" id="plan-progress" data-pct="' + t.pct + '">' +
       '<div class="plan-progress-line"><span class="plan-progress-label">Plan progress</span><span class="plan-progress-pct" id="plan-progress-pct">' + t.pct + '%</span></div>' +
       '<div class="plan-track"><div class="plan-fill" id="plan-progress-fill" style="width:' + t.pct + '%"></div>' + planMilestonesHtml(t.pct) + '</div>' +
-      '<div class="plan-progress-msg" id="plan-progress-msg">' + planProgressMessage(t.pct, t.done) + '</div>' +
+      '<div class="plan-progress-foot"><span class="plan-progress-msg" id="plan-progress-msg">' + planProgressMessage(t.pct, t.done) + '</span>' + planMarksHtml(t) + '</div>' +
       '</div>';
   }
   function refreshPlanProgress() {
@@ -2684,6 +2691,12 @@
     var pctEl = document.getElementById('plan-progress-pct');
     pctEl.textContent = t.pct + '%';
     document.getElementById('plan-progress-msg').textContent = planProgressMessage(t.pct, t.done);
+    var marksEl = document.getElementById('plan-progress-marks');
+    if (marksEl) {
+      var prevMarks = parseInt(marksEl.querySelector('b').textContent, 10) || 0;
+      marksEl.querySelector('b').textContent = t.marks;
+      if (t.marks > prevMarks) { marksEl.classList.remove('bump'); void marksEl.offsetWidth; marksEl.classList.add('bump'); }
+    }
     Array.prototype.forEach.call(box.querySelectorAll('.plan-ms'), function (m) {
       m.classList.toggle('reached', t.pct >= parseInt(m.getAttribute('data-ms'), 10));
     });
