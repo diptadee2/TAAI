@@ -39,6 +39,23 @@ import { getSupabase, json, monthRange, todayIST, fetchLastWeekLeaders, fetchTod
 // past the end of THEIR OWN batch's real schedule. See handler() for how
 // batch is resolved (student's own students.batch, or a guest's
 // previewed batch).
+// Task -> lesson links for the batch being viewed (schedule_task_links),
+// as { subject: { task_text: url } }. Best-effort: any error (including
+// the table not existing yet) returns null, and the page falls back to
+// the static /course-links.js map.
+async function fetchTaskLinks(supabase, batch) {
+  try {
+    const { data, error } = await supabase.from('schedule_task_links').select('subject, task_text, url').eq('batch', batch);
+    if (error) return null;
+    const out = {};
+    for (const r of data || []) {
+      if (!/^https:\/\/learn\.taai\.live\//.test(r.url)) continue;
+      (out[r.subject] = out[r.subject] || {})[r.task_text] = r.url;
+    }
+    return out;
+  } catch { return null; }
+}
+
 async function fetchSchedule(supabase, range, batch) {
   const { data, error } = await supabase
     .from('schedule_tasks')
@@ -349,6 +366,7 @@ export async function handler(event) {
   // scheduleBatch and realBatch are set equal above by construction.
   const isScouting = !!email && scheduleBatch !== realBatch;
 
+  const taskLinksP = fetchTaskLinks(supabase, scheduleBatch);
   let schedule, progress, subjectProgress;
   try {
     // schedule and (if applicable) progress must still fail the whole
@@ -382,5 +400,6 @@ export async function handler(event) {
   const [lastWeekLeaders, todayLeaders, streak, pomoSettings, pomoSessions, pomoActive, hourlyActivity, liveCount, malpractice, needsRename] = await independentP;
 
   const studentBatch = email ? realBatch : null;
-  return json(200, { schedule, lastWeekLeaders, todayLeaders, progress, streak, subjectProgress, pomoSettings, pomoSessions, pomoActive, hourlyActivity, liveCount, malpractice, needsRename, studentBatch });
+  const taskLinks = await taskLinksP;
+  return json(200, { schedule, lastWeekLeaders, todayLeaders, progress, streak, subjectProgress, pomoSettings, pomoSessions, pomoActive, hourlyActivity, liveCount, malpractice, needsRename, studentBatch, taskLinks });
 }

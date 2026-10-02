@@ -448,9 +448,9 @@
   .batch-migration-actions { justify-content: flex-end; }
   .batch-migration-actions button { white-space: nowrap; }
   @media (max-width: 520px) { .batch-migration-cols { grid-template-columns: 1fr; } .batch-migration-actions { flex-direction: column-reverse; } .batch-migration-actions button { width: 100%; height: 40px; } }
-  /* "+N mark earned" inside the ticked task's own row (refreshPlanProgress),
-     pushed to the row's right end; pops in, holds, fades up. */
-  .task-gain { margin-left: auto; align-self: center; flex-shrink: 0; white-space: nowrap; padding: 2px 9px; border-radius: 999px; font-family: var(--font-nav); font-size: 12px; font-weight: 800; color: #F5C451; background: rgba(245,196,81,0.12); pointer-events: none; animation: task-gain 1.9s cubic-bezier(.22,1,.36,1) forwards; }
+  /* "+N credit earned" right after the ticked task's own text
+     (refreshPlanProgress); pops in, holds, fades up. */
+  .task-gain { display: inline-block; margin-left: 10px; vertical-align: 1px; white-space: nowrap; padding: 2px 9px; text-decoration: none; border-radius: 999px; font-family: var(--font-nav); font-size: 12px; font-weight: 800; color: #F5C451; background: rgba(245,196,81,0.12); pointer-events: none; animation: task-gain 1.9s cubic-bezier(.22,1,.36,1) forwards; }
   @keyframes task-gain { 0% { opacity: 0; transform: translateY(6px) scale(.9); } 15% { opacity: 1; transform: translateY(0) scale(1.06); } 25% { transform: scale(1); } 75% { opacity: 1; } 100% { opacity: 0; transform: translateY(-8px); } }
   /* Locked task rows while previewing another batch (isPreviewingOtherBatch). */
   .task-row.locked { cursor: not-allowed; }

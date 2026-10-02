@@ -1020,3 +1020,23 @@ GRANT USAGE, SELECT ON SEQUENCE edge_shadow_log_id_seq TO service_role;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS about_flag_count    INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS about_reset_allowed BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS about_banned_until  TIMESTAMPTZ;
+
+
+-- Task -> LMS lesson links, editable without a redeploy (2026-10-02).
+-- Keyed by batch + subject + the exact task_text (the same key
+-- task_progress effectively uses), in its own table rather than a column
+-- on schedule_tasks, so reloading a schedule (load-schedule.mjs does a
+-- full delete-and-replace per date) never wipes the links. tracker-data
+-- returns the links for the batch being viewed; progress.js turns a
+-- matching task's text into a link. Load/update with
+-- `npm run load-task-links -- --batch=D <csv>` (Subject,Task,URL).
+CREATE TABLE IF NOT EXISTS schedule_task_links (
+  batch      TEXT NOT NULL,
+  subject    TEXT NOT NULL,
+  task_text  TEXT NOT NULL,
+  url        TEXT NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (batch, subject, task_text)
+);
+ALTER TABLE schedule_task_links ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON schedule_task_links TO service_role;

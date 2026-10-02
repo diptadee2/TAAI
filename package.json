@@ -7,7 +7,8 @@
     "watch": "node build.mjs --watch",
     "load-schedule": "node scripts/load-schedule.mjs",
     "seed-scheduled-posts": "node scripts/seed-scheduled-posts.mjs",
-    "seed-site-data": "node scripts/seed-site-data.mjs"
+    "seed-site-data": "node scripts/seed-site-data.mjs",
+    "load-task-links": "node scripts/load-task-links.mjs"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",

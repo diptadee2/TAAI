@@ -266,7 +266,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-02-16';
+  var CLIENT_VERSION = '2026-10-02-17';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1838,6 +1838,7 @@
     state.stale = !!isStale;
     var scheduleDays = data.schedule.days || [];
     state.latestScheduledMonth = data.schedule.latestMonth || null;
+    state.taskLinks = data.taskLinks || null;
     state.lastWeekLeaders = data.lastWeekLeaders.leaders || [];
     state.lastWeekViewerRank = data.lastWeekLeaders.viewerRank || null;
     state.todayLeaders = data.todayLeaders.leaders || [];
@@ -2683,7 +2684,7 @@
   var PLAN_MEDAL_SVG = '<svg class="plan-marks-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 3h8l-2.2 5.2M8 3l2.2 5.2" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="14.5" r="6" stroke="currentColor" stroke-width="1.7"/><path d="M12 11.6l.9 1.8 2 .3-1.45 1.4.35 2-1.8-.95-1.8.95.35-2-1.45-1.4 2-.3z" fill="currentColor"/></svg>';
   // The marks number counts up from 0 once per page visit (not on every
   // re-render, and not on the quiet cached-to-fresh swap), then pops; a
-  // gold "+N mark(s) earned" pops up in the ticked task's row on a gain.
+  // gold "+N credit(s) earned" pops up in the ticked task's row on a gain.
   var planMarksCounted = false;
   function planMarksHtml(t) {
     if (!t.target) return '';
@@ -2752,8 +2753,8 @@
       numEl.textContent = t.marks;
       if (t.marks > prevMarks) {
         marksEl.classList.remove('bump'); void marksEl.offsetWidth; marksEl.classList.add('bump');
-        // The "+N mark(s) earned" appears inside the ticked task's own row
-        // (right end), where the student's attention already is, then
+        // The "+N credit(s) earned" appears inside the ticked task's own row
+        // (right after its text), where the student's attention already is, then
         // fades; the plan card above just pops its numbers.
         var gained = t.marks - prevMarks;
         var row = lastTickedRow;
@@ -2763,8 +2764,10 @@
           if (old) old.parentNode.removeChild(old);
           var gain = document.createElement('span');
           gain.className = 'task-gain';
-          gain.textContent = '+' + gained + (gained === 1 ? ' mark earned' : ' marks earned');
-          row.appendChild(gain);
+          gain.textContent = '+' + gained + (gained === 1 ? ' credit earned' : ' credits earned');
+          // Right after the task's own text (inside .task-text), not
+          // pushed to the far edge of the row.
+          (row.querySelector('.task-text') || row).appendChild(gain);
           setTimeout(function () { if (gain.parentNode) gain.parentNode.removeChild(gain); }, 2000);
         }
       }
@@ -4370,8 +4373,14 @@
   // it never ticks the task.
   var TASK_LINK_ICON = '<svg class="task-link-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   function taskLinkFor(t) {
-    var all = window.SCHEDULE_TASK_LINKS || {};
-    var byBatch = all[effectiveScoutBatch() || 'C'] || {};
+    // Links come from the database (schedule_task_links, via tracker-data)
+    // so they change without a redeploy. The static /course-links.js map
+    // is only a fallback while the server has none for this batch (e.g.
+    // before the table existed).
+    var server = state.taskLinks;
+    var byBatch = server && Object.keys(server).length
+      ? server
+      : ((window.SCHEDULE_TASK_LINKS || {})[effectiveScoutBatch() || 'C'] || {});
     var bySubject = byBatch[t.subject] || {};
     var url = bySubject[t.task_text];
     return (typeof url === 'string' && /^https:\/\/learn\.taai\.live\//.test(url)) ? url : null;
