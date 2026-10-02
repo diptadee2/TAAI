@@ -243,7 +243,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-02-11';
+  var CLIENT_VERSION = '2026-10-02-12';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2651,8 +2651,32 @@
     // share of it covers that share of the target. Fixed denominator.
     return { done: done, total: total, pct: Math.round(frac * 100), target: program.targetMarks || 0, marks: Math.round(frac * (program.targetMarks || 0)) };
   }
+  var PLAN_MEDAL_SVG = '<svg class="plan-marks-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 3h8l-2.2 5.2M8 3l2.2 5.2" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="14.5" r="6" stroke="currentColor" stroke-width="1.7"/><path d="M12 11.6l.9 1.8 2 .3-1.45 1.4.35 2-1.8-.95-1.8.95.35-2-1.45-1.4 2-.3z" fill="currentColor"/></svg>';
+  // The marks number counts up from 0 once per page visit (not on every
+  // re-render, and not on the quiet cached-to-fresh swap), then pops; a
+  // "+N" floats up from the chip whenever ticking earns more marks.
+  var planMarksCounted = false;
   function planMarksHtml(t) {
-    return t.target ? '<span class="plan-marks" id="plan-progress-marks">\u2248 <b>' + t.marks + '</b> / ' + t.target + ' marks</span>' : '';
+    if (!t.target) return '';
+    var start = planMarksCounted || quietRender ? t.marks : 0;
+    return '<span class="plan-marks" id="plan-progress-marks">' + PLAN_MEDAL_SVG +
+      '<span class="plan-marks-text"><b id="plan-marks-num" data-marks="' + t.marks + '">' + start + '</b><span class="plan-marks-of">/ ' + t.target + ' marks</span></span></span>';
+  }
+  function animatePlanMarks() {
+    var el = document.getElementById('plan-marks-num');
+    if (!el || planMarksCounted) return;
+    planMarksCounted = true;
+    var target = parseInt(el.getAttribute('data-marks'), 10) || 0;
+    if (!target || quietRender || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) { el.textContent = target; return; }
+    var duration = 1100, start = null;
+    function tick(ts) {
+      if (start === null) start = ts;
+      var p = Math.min(1, (ts - start) / duration);
+      el.textContent = Math.round((p >= 1 ? 1 : 1 - Math.pow(2, -10 * p)) * target);
+      if (p < 1) requestAnimationFrame(tick);
+      else { el.textContent = target; var chip = document.getElementById('plan-progress-marks'); if (chip) { chip.classList.remove('bump'); void chip.offsetWidth; chip.classList.add('bump'); } }
+    }
+    requestAnimationFrame(tick);
   }
   // No task counts on screen: the plan's total grows as more of the
   // schedule gets loaded, so "N of M" would keep shifting under the
@@ -2692,10 +2716,19 @@
     pctEl.textContent = t.pct + '%';
     document.getElementById('plan-progress-msg').textContent = planProgressMessage(t.pct, t.done);
     var marksEl = document.getElementById('plan-progress-marks');
-    if (marksEl) {
-      var prevMarks = parseInt(marksEl.querySelector('b').textContent, 10) || 0;
-      marksEl.querySelector('b').textContent = t.marks;
-      if (t.marks > prevMarks) { marksEl.classList.remove('bump'); void marksEl.offsetWidth; marksEl.classList.add('bump'); }
+    var numEl = document.getElementById('plan-marks-num');
+    if (marksEl && numEl) {
+      var prevMarks = parseInt(numEl.getAttribute('data-marks'), 10) || 0;
+      numEl.setAttribute('data-marks', t.marks);
+      numEl.textContent = t.marks;
+      if (t.marks > prevMarks) {
+        marksEl.classList.remove('bump'); void marksEl.offsetWidth; marksEl.classList.add('bump');
+        var gain = document.createElement('span');
+        gain.className = 'plan-marks-gain';
+        gain.textContent = '+' + (t.marks - prevMarks) + (t.marks - prevMarks === 1 ? ' mark' : ' marks');
+        marksEl.appendChild(gain);
+        setTimeout(function () { if (gain.parentNode) gain.parentNode.removeChild(gain); }, 1600);
+      }
     }
     Array.prototype.forEach.call(box.querySelectorAll('.plan-ms'), function (m) {
       m.classList.toggle('reached', t.pct >= parseInt(m.getAttribute('data-ms'), 10));
@@ -3053,6 +3086,7 @@
     observeFadeIns();
     fitSideColSticky();
     animateExamCountdown();
+    animatePlanMarks();
     observeHourlyActivityReveal();
     // Ancestor-level fallback for the very first paint of a saved
     // non-default preset — #pomo-card's own inline style (see
