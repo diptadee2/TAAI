@@ -266,7 +266,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-02-18';
+  var CLIENT_VERSION = '2026-10-02-19';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1104,9 +1104,12 @@
     var m = /[?&]batch=([^&#]+)/.exec(location.search);
     if (!m) return;
     var batch = decodeURIComponent(m[1]).toUpperCase();
-    if (BATCH_OPTIONS.some(function (b) { return b.value === batch; })) {
-      if (!state.student) state.previewBatch = batch;
-      else if (batch !== state.student.batch) state.scoutBatch = batch;
+    // Only for visitors without an account. A signed-in student always
+    // lands on their own batch, even from a link like the courses page's
+    // "View the roadmap" (?batch=D); they can still preview other batches
+    // from the dropdown.
+    if (!state.student && BATCH_OPTIONS.some(function (b) { return b.value === batch; })) {
+      state.previewBatch = batch;
     }
     try {
       var clean = location.pathname + location.search.replace(/([?&])batch=[^&#]*&?/, '$1').replace(/[?&]$/, '') + location.hash;
