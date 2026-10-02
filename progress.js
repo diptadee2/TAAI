@@ -266,7 +266,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-02-20';
+  var CLIENT_VERSION = '2026-10-02-21';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1859,6 +1859,7 @@
     var progressRows = state.student ? (data.progress.progress || []) : [];
     state.streak = state.student ? data.streak.streak : null;
     state.subjectProgress = state.student ? (data.subjectProgress.subjects || []) : [];
+    lastPlanMarks = state.student ? planProgressTotals().marks : null;
     state.malpractice = state.student ? (data.malpractice || { incidentCount: 0, frozenUntil: null, warningAckCount: 0 }) : null;
     state.needsRename = state.student ? !!(data.needsRename && data.needsRename.needsRename) : false;
     if (state.student && data.needsRename && typeof data.needsRename.gateTriesLeft === 'number') {
@@ -2745,10 +2746,34 @@
       '<div class="plan-progress-foot">' + planMarksHtml(t) + '<span class="plan-progress-msg" id="plan-progress-msg">' + planProgressMessage(t.pct, t.done) + '</span></div>' +
       '</div>';
   }
+  // Marks as of the last data the page has shown, tracked here rather than
+  // read off the plan card so the "+N credit earned" pill also works in
+  // Focus Mode, where that card isn't rendered. Set from applyTrackerData.
+  var lastPlanMarks = null;
+  function showCreditGain(gained) {
+    var row = lastTickedRow;
+    lastTickedRow = null;
+    if (!row || !document.body.contains(row)) return;
+    var old = row.querySelector('.task-gain');
+    if (old) old.parentNode.removeChild(old);
+    var gain = document.createElement('span');
+    gain.className = 'task-gain';
+    gain.textContent = '+' + gained + (gained === 1 ? ' credit earned' : ' credits earned');
+    // Right after the task's own text (inside .task-text), not pushed to
+    // the far edge of the row; the plan card (if shown) just pops numbers.
+    (row.querySelector('.task-text') || row).appendChild(gain);
+    setTimeout(function () { if (gain.parentNode) gain.parentNode.removeChild(gain); }, 2000);
+  }
   function refreshPlanProgress() {
+    var program = BATCH_PROGRAMS[state.student && state.student.batch] || {};
+    var t = planProgressTotals();
+    var prevMarks = lastPlanMarks;
+    lastPlanMarks = t.marks;
+    var gained = prevMarks === null ? 0 : t.marks - prevMarks;
+    if (program.overallBar && gained > 0 && !isPreviewingOtherBatch()) showCreditGain(gained);
+    else lastTickedRow = null;
     var box = document.getElementById('plan-progress');
     if (!box) return;
-    var t = planProgressTotals();
     var prev = parseInt(box.getAttribute('data-pct'), 10) || 0;
     box.setAttribute('data-pct', t.pct);
     document.getElementById('plan-progress-fill').style.width = t.pct + '%';
@@ -2758,29 +2783,9 @@
     var marksEl = document.getElementById('plan-progress-marks');
     var numEl = document.getElementById('plan-marks-num');
     if (marksEl && numEl) {
-      var prevMarks = parseInt(numEl.getAttribute('data-marks'), 10) || 0;
       numEl.setAttribute('data-marks', t.marks);
       numEl.textContent = t.marks;
-      if (t.marks > prevMarks) {
-        marksEl.classList.remove('bump'); void marksEl.offsetWidth; marksEl.classList.add('bump');
-        // The "+N credit(s) earned" appears inside the ticked task's own row
-        // (right after its text), where the student's attention already is, then
-        // fades; the plan card above just pops its numbers.
-        var gained = t.marks - prevMarks;
-        var row = lastTickedRow;
-        lastTickedRow = null;
-        if (row && document.body.contains(row)) {
-          var old = row.querySelector('.task-gain');
-          if (old) old.parentNode.removeChild(old);
-          var gain = document.createElement('span');
-          gain.className = 'task-gain';
-          gain.textContent = '+' + gained + (gained === 1 ? ' credit earned' : ' credits earned');
-          // Right after the task's own text (inside .task-text), not
-          // pushed to the far edge of the row.
-          (row.querySelector('.task-text') || row).appendChild(gain);
-          setTimeout(function () { if (gain.parentNode) gain.parentNode.removeChild(gain); }, 2000);
-        }
-      }
+      if (gained > 0) { marksEl.classList.remove('bump'); void marksEl.offsetWidth; marksEl.classList.add('bump'); }
     }
     Array.prototype.forEach.call(box.querySelectorAll('.plan-ms'), function (m) {
       m.classList.toggle('reached', t.pct >= parseInt(m.getAttribute('data-ms'), 10));
