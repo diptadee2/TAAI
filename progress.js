@@ -266,7 +266,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-02-15';
+  var CLIENT_VERSION = '2026-10-02-16';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2683,7 +2683,7 @@
   var PLAN_MEDAL_SVG = '<svg class="plan-marks-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 3h8l-2.2 5.2M8 3l2.2 5.2" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="14.5" r="6" stroke="currentColor" stroke-width="1.7"/><path d="M12 11.6l.9 1.8 2 .3-1.45 1.4.35 2-1.8-.95-1.8.95.35-2-1.45-1.4 2-.3z" fill="currentColor"/></svg>';
   // The marks number counts up from 0 once per page visit (not on every
   // re-render, and not on the quiet cached-to-fresh swap), then pops; a
-  // gold "+N mark(s) earned" briefly replaces the message on a gain.
+  // gold "+N mark(s) earned" pops up in the ticked task's row on a gain.
   var planMarksCounted = false;
   function planMarksHtml(t) {
     if (!t.target) return '';
@@ -2743,10 +2743,7 @@
     document.getElementById('plan-progress-fill').style.width = t.pct + '%';
     var pctEl = document.getElementById('plan-progress-pct');
     pctEl.textContent = t.pct + '%';
-    var msgEl = document.getElementById('plan-progress-msg');
-    var msgText = planProgressMessage(t.pct, t.done);
-    if (!msgEl.classList.contains('gain')) msgEl.textContent = msgText;
-    msgEl.setAttribute('data-msg', msgText);
+    document.getElementById('plan-progress-msg').textContent = planProgressMessage(t.pct, t.done);
     var marksEl = document.getElementById('plan-progress-marks');
     var numEl = document.getElementById('plan-marks-num');
     if (marksEl && numEl) {
@@ -2755,16 +2752,21 @@
       numEl.textContent = t.marks;
       if (t.marks > prevMarks) {
         marksEl.classList.remove('bump'); void marksEl.offsetWidth; marksEl.classList.add('bump');
-        // The gain briefly takes the message's place (gold), then the
-        // message comes back. Nothing floats over the bar or the chip.
+        // The "+N mark(s) earned" appears inside the ticked task's own row
+        // (right end), where the student's attention already is, then
+        // fades; the plan card above just pops its numbers.
         var gained = t.marks - prevMarks;
-        msgEl.textContent = '+' + gained + (gained === 1 ? ' mark earned' : ' marks earned');
-        msgEl.classList.remove('gain'); void msgEl.offsetWidth; msgEl.classList.add('gain');
-        clearTimeout(refreshPlanProgress.gainTimer);
-        refreshPlanProgress.gainTimer = setTimeout(function () {
-          msgEl.classList.remove('gain');
-          msgEl.textContent = msgEl.getAttribute('data-msg') || '';
-        }, 1800);
+        var row = lastTickedRow;
+        lastTickedRow = null;
+        if (row && document.body.contains(row)) {
+          var old = row.querySelector('.task-gain');
+          if (old) old.parentNode.removeChild(old);
+          var gain = document.createElement('span');
+          gain.className = 'task-gain';
+          gain.textContent = '+' + gained + (gained === 1 ? ' mark earned' : ' marks earned');
+          row.appendChild(gain);
+          setTimeout(function () { if (gain.parentNode) gain.parentNode.removeChild(gain); }, 2000);
+        }
       }
     }
     Array.prototype.forEach.call(box.querySelectorAll('.plan-ms'), function (m) {
@@ -4383,6 +4385,7 @@
     return escapeHtml(head) + '<span class="task-link-tail">' + escapeHtml(tail) + TASK_LINK_ICON + '</span>';
   }
 
+  var lastTickedRow = null;
   function isPreviewingOtherBatch() {
     return !!(state.student && effectiveScoutBatch() !== state.student.batch);
   }
@@ -6035,6 +6038,9 @@
         var task = day && day.tasks.find(function (t) { return t.subject === subject && t.task_text === taskText; });
         if (task) task.completed = completed;
         cb.disabled = false;
+        // Where a "+N mark earned" should appear if this tick raises the
+        // plan's marks (see refreshPlanProgress): next to the ticked task.
+        lastTickedRow = completed ? row : null;
         refreshSubjectProgress();
         patchHeatmapCell(date);
         patchDayStatus(date);
