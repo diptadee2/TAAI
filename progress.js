@@ -243,7 +243,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-02-12';
+  var CLIENT_VERSION = '2026-10-02-13';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2628,10 +2628,16 @@
       ? Math.max(0, program.length - daysTillExam())
       : Math.max(1, Math.round((new Date(today) - new Date(program.start)) / 864e5) + 1);
     dayNum = Math.min(dayNum, program.length);
-    return '<div class="program-day-badge fade-in">' +
-      '<div class="program-day-num">' + dayNum + '</div>' +
-      '<div class="program-day-label">Day of ' + program.length + '</div>' +
-      planProgressHtml(program) + '</div>';
+    var plan = planProgressHtml(program);
+    var day = '<div class="program-day-num">' + dayNum + '</div>' +
+      '<div class="program-day-label">Day of ' + program.length + '</div>';
+    // With a plan bar ("120 Days - 70 Marks"), day and plan progress share
+    // one card side by side instead of stacking six centred pieces.
+    if (plan) {
+      return '<div class="program-day-badge program-card fade-in">' +
+        '<div class="program-card-day">' + day + '</div>' + plan + '</div>';
+    }
+    return '<div class="program-day-badge fade-in">' + day + '</div>';
   }
 
   // Overall plan progress, for batches flagged overallBar in
@@ -2654,7 +2660,7 @@
   var PLAN_MEDAL_SVG = '<svg class="plan-marks-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 3h8l-2.2 5.2M8 3l2.2 5.2" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="14.5" r="6" stroke="currentColor" stroke-width="1.7"/><path d="M12 11.6l.9 1.8 2 .3-1.45 1.4.35 2-1.8-.95-1.8.95.35-2-1.45-1.4 2-.3z" fill="currentColor"/></svg>';
   // The marks number counts up from 0 once per page visit (not on every
   // re-render, and not on the quiet cached-to-fresh swap), then pops; a
-  // "+N" floats up from the chip whenever ticking earns more marks.
+  // gold "+N mark(s) earned" briefly replaces the message on a gain.
   var planMarksCounted = false;
   function planMarksHtml(t) {
     if (!t.target) return '';
@@ -2702,7 +2708,7 @@
     return '<div class="plan-progress" id="plan-progress" data-pct="' + t.pct + '">' +
       '<div class="plan-progress-line"><span class="plan-progress-label">Plan progress</span><span class="plan-progress-pct" id="plan-progress-pct">' + t.pct + '%</span></div>' +
       '<div class="plan-track"><div class="plan-fill" id="plan-progress-fill" style="width:' + t.pct + '%"></div>' + planMilestonesHtml(t.pct) + '</div>' +
-      '<div class="plan-progress-foot"><span class="plan-progress-msg" id="plan-progress-msg">' + planProgressMessage(t.pct, t.done) + '</span>' + planMarksHtml(t) + '</div>' +
+      '<div class="plan-progress-foot">' + planMarksHtml(t) + '<span class="plan-progress-msg" id="plan-progress-msg">' + planProgressMessage(t.pct, t.done) + '</span></div>' +
       '</div>';
   }
   function refreshPlanProgress() {
@@ -2714,7 +2720,10 @@
     document.getElementById('plan-progress-fill').style.width = t.pct + '%';
     var pctEl = document.getElementById('plan-progress-pct');
     pctEl.textContent = t.pct + '%';
-    document.getElementById('plan-progress-msg').textContent = planProgressMessage(t.pct, t.done);
+    var msgEl = document.getElementById('plan-progress-msg');
+    var msgText = planProgressMessage(t.pct, t.done);
+    if (!msgEl.classList.contains('gain')) msgEl.textContent = msgText;
+    msgEl.setAttribute('data-msg', msgText);
     var marksEl = document.getElementById('plan-progress-marks');
     var numEl = document.getElementById('plan-marks-num');
     if (marksEl && numEl) {
@@ -2723,11 +2732,16 @@
       numEl.textContent = t.marks;
       if (t.marks > prevMarks) {
         marksEl.classList.remove('bump'); void marksEl.offsetWidth; marksEl.classList.add('bump');
-        var gain = document.createElement('span');
-        gain.className = 'plan-marks-gain';
-        gain.textContent = '+' + (t.marks - prevMarks) + (t.marks - prevMarks === 1 ? ' mark' : ' marks');
-        marksEl.appendChild(gain);
-        setTimeout(function () { if (gain.parentNode) gain.parentNode.removeChild(gain); }, 1600);
+        // The gain briefly takes the message's place (gold), then the
+        // message comes back. Nothing floats over the bar or the chip.
+        var gained = t.marks - prevMarks;
+        msgEl.textContent = '+' + gained + (gained === 1 ? ' mark earned' : ' marks earned');
+        msgEl.classList.remove('gain'); void msgEl.offsetWidth; msgEl.classList.add('gain');
+        clearTimeout(refreshPlanProgress.gainTimer);
+        refreshPlanProgress.gainTimer = setTimeout(function () {
+          msgEl.classList.remove('gain');
+          msgEl.textContent = msgEl.getAttribute('data-msg') || '';
+        }, 1800);
       }
     }
     Array.prototype.forEach.call(box.querySelectorAll('.plan-ms'), function (m) {

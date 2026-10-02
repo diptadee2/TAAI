@@ -629,42 +629,52 @@
      as .streak-number, so it reads as a real stat, not a control. */
   .program-day-num { font-family: var(--font-body); font-size: 44px; font-weight: 800; line-height: 1; text-align: center; background: linear-gradient(120deg,#FF7FB7,var(--purple),#4D8BFF); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: streak-grad 6s ease infinite; }
   .program-day-label { margin-top: 6px; font-family: var(--font-nav); font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); text-align: center; }
-  /* Overall plan progress under the Day X badge (planProgressHtml in
-     progress.js), "120 Days - 70 Marks" students only. Built to feel like
-     a reward: big gradient percentage, a flowing gradient fill, milestone
-     marks at 25/50/75% that light up, a pop when it goes up and a flash
-     on crossing a milestone. No task counts (the plan total shifts). */
-  .plan-progress { width: min(360px, 84vw); margin: 18px auto 0; }
-  .plan-progress-line { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-  .plan-progress-label { font-family: var(--font-nav); font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-dim); }
-  .plan-progress-pct { font-family: var(--font-body); font-size: 28px; font-weight: 800; line-height: 1; background: linear-gradient(120deg,#FF7FB7,var(--purple),#4D8BFF); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: streak-grad 6s ease infinite; display: inline-block; }
+  /* "120 Days - 70 Marks": day + overall plan progress in ONE card, side
+     by side (renderProgramDayBadge / planProgressHtml in progress.js),
+     replacing a column of six separately centred pieces ("looks very
+     cluttered", 2026-10-02). Reward touches kept: gradient percentage that
+     pops on a rise, flowing gradient fill, 25/50/75% milestones that light
+     up, a glow flash on crossing one, a marks chip with a count-up, and a
+     gold "+N mark earned" that briefly replaces the message. No task
+     counts (the plan total shifts as schedule loads). */
+  .program-card { display: flex; align-items: stretch; gap: 22px; width: min(560px, 100%); min-width: 0; box-sizing: border-box; padding: 18px 22px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); }
+  .program-card-day { display: flex; flex-direction: column; justify-content: center; align-items: center; padding-right: 22px; border-right: 1px solid var(--line); flex-shrink: 0; }
+  .program-card .program-day-num { font-size: 40px; }
+  .program-card .program-day-label { font-size: 11.5px; white-space: nowrap; }
+  .plan-progress { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+  .plan-progress-line { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 9px; }
+  .plan-progress-label { font-family: var(--font-nav); font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); }
+  .plan-progress-pct { font-family: var(--font-body); font-size: 24px; font-weight: 800; line-height: 1; background: linear-gradient(120deg,#FF7FB7,var(--purple),#4D8BFF); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: streak-grad 6s ease infinite; display: inline-block; }
   .plan-progress-pct.bump { animation: streak-grad 6s ease infinite, plan-bump .5s cubic-bezier(.34,1.56,.64,1); }
   @keyframes plan-bump { 0% { transform: scale(1); } 40% { transform: scale(1.22); } 100% { transform: scale(1); } }
-  .plan-track { position: relative; height: 14px; border-radius: 999px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.06); }
-  .plan-fill { position: absolute; inset: 0 auto 0 0; min-width: 14px; border-radius: 999px; background: linear-gradient(90deg,#FF7FB7,var(--purple),#4D8BFF,#FF7FB7); background-size: 300% 100%; animation: plan-flow 5s linear infinite; transition: width .8s cubic-bezier(.22,1,.36,1); }
+  .plan-track { position: relative; height: 12px; border-radius: 999px; background: rgba(255,255,255,0.07); }
+  .plan-fill { position: absolute; inset: 0 auto 0 0; min-width: 12px; border-radius: 999px; background: linear-gradient(90deg,#FF7FB7,var(--purple),#4D8BFF,#FF7FB7); background-size: 300% 100%; animation: plan-flow 5s linear infinite; transition: width .8s cubic-bezier(.22,1,.36,1); }
   .plan-progress[data-pct="0"] .plan-fill { min-width: 0; }
   @keyframes plan-flow { from { background-position: 0% 0; } to { background-position: 150% 0; } }
-  .plan-ms { position: absolute; top: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: rgba(255,255,255,0.18); transition: background .4s ease, transform .4s cubic-bezier(.34,1.56,.64,1); }
-  .plan-ms.reached { background: #fff; transform: scale(1.15); }
-  .plan-progress-foot { display: flex; flex-direction: column; align-items: center; gap: 9px; margin-top: 14px; }
-  .plan-progress-msg { order: 2; font-size: 13.5px; font-weight: 600; color: var(--ink-dim); text-align: center; }
-  /* Marks covered (planMarksHtml): its own small reward chip. Flat tint +
-     hairline border, a drawn medal icon, the number in the brand gradient,
-     a count-up on first view, and a "+N mark(s)" that floats up on gains. */
-  .plan-marks { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 9px; border-radius: 12px; background: rgba(167,139,250,0.12); border: 1px solid rgba(167,139,250,0.3); white-space: nowrap; }
+  .plan-ms { position: absolute; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: rgba(255,255,255,0.2); transition: background .4s ease, transform .4s cubic-bezier(.34,1.56,.64,1); }
+  .plan-ms.reached { background: #fff; transform: scale(1.2); }
+  .plan-progress-foot { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin-top: 12px; min-width: 0; }
+  .plan-progress-msg { font-size: 13px; font-weight: 600; color: var(--ink-soft); min-width: 0; line-height: 1.35; }
+  .plan-progress-msg.gain { color: #F5C451; font-weight: 800; animation: plan-bump .5s cubic-bezier(.34,1.56,.64,1); display: inline-block; }
+  /* Marks chip: flat tint, hairline border, drawn gold medal, gradient number. */
+  .plan-marks { display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px 5px 8px; border-radius: 10px; background: rgba(167,139,250,0.12); border: 1px solid rgba(167,139,250,0.28); white-space: nowrap; flex-shrink: 0; }
   .plan-marks-icon { color: #F5C451; flex-shrink: 0; }
   .plan-marks-text { display: inline-flex; align-items: baseline; gap: 5px; font-family: var(--font-nav); }
-  .plan-marks b { font-family: var(--font-body); font-size: 22px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; background: linear-gradient(120deg,#FF7FB7,var(--purple),#4D8BFF); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: streak-grad 6s ease infinite; }
-  .plan-marks-of { font-size: 12.5px; font-weight: 600; color: var(--ink-soft); }
+  .plan-marks b { font-family: var(--font-body); font-size: 19px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; background: linear-gradient(120deg,#FF7FB7,var(--purple),#4D8BFF); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: streak-grad 6s ease infinite; }
+  .plan-marks-of { font-size: 12px; font-weight: 600; color: var(--ink-soft); }
   .plan-marks.bump { animation: plan-bump .5s cubic-bezier(.34,1.56,.64,1); }
-  .plan-marks-gain { position: absolute; left: calc(100% + 10px); top: 50%; margin-top: -9px; line-height: 18px; font-family: var(--font-nav); font-size: 13px; font-weight: 800; color: #F5C451; white-space: nowrap; pointer-events: none; animation: plan-gain 1.5s cubic-bezier(.22,1,.36,1) forwards; }
-  @keyframes plan-gain { 0% { opacity: 0; transform: translateY(8px); } 20% { opacity: 1; transform: translateY(0); } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-10px); } }
   /* Milestone flash: a static glow on ::after whose opacity alone animates
      (animating box-shadow on a rounded element is the Chromium leak gotcha). */
-  .plan-track::after { content: ''; position: absolute; inset: -1px; border-radius: inherit; box-shadow: 0 6px 22px -2px rgba(167,139,250,.8); opacity: 0; pointer-events: none; }
+  .plan-track::after { content: ''; position: absolute; inset: 0; border-radius: inherit; box-shadow: 0 4px 18px -2px rgba(167,139,250,.8); opacity: 0; pointer-events: none; }
   .plan-progress.milestone .plan-track::after { animation: plan-flash 1.1s ease-out; }
   @keyframes plan-flash { 0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0; } }
-  @media (prefers-reduced-motion: reduce) { .plan-fill, .plan-progress-pct, .plan-progress-pct.bump, .plan-marks.bump, .plan-marks b, .plan-marks-gain, .plan-progress.milestone .plan-track::after { animation: none; } }
+  @media (max-width: 480px) {
+    .program-card { gap: 14px; padding: 14px 16px; }
+    .program-card-day { padding-right: 14px; }
+    .program-card .program-day-num { font-size: 34px; }
+    .program-card .program-day-label { font-size: 10.5px; letter-spacing: .05em; }
+  }
+  @media (prefers-reduced-motion: reduce) { .plan-fill, .plan-progress-pct, .plan-progress-pct.bump, .plan-marks.bump, .plan-marks b, .plan-progress-msg.gain, .plan-progress.milestone .plan-track::after { animation: none; } }
   .progress-track { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
   .progress-fill { height: 100%; background: linear-gradient(90deg, var(--purple), #a78bfa); border-radius: 999px; transition: width .5s cubic-bezier(.34,1.1,.64,1); }
 
