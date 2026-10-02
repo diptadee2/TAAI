@@ -241,8 +241,9 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
    Delay sits between .ph-cta's .42s and .hero-proof-row's .54s, next
    in the visual/DOM order. */
 .page-hero .hero-guide-link { animation: pageHeroIn .55s cubic-bezier(.34,1.12,.64,1) .50s both; }
-.hero-guide-link { display: inline-block; margin-top: 34px; font-size: 14.5px; font-weight: 500; color: var(--purple); text-decoration: none; }
-.hero-guide-link:hover { text-decoration: underline; }
+.hero-guide-link { display: inline-block; margin-top: 34px; font-size: 14.5px; font-weight: 500; line-height: 1.5; color: var(--purple); text-decoration: none; }
+.hero-guide-link svg { display: inline-block; vertical-align: -2px; }
+.hero-guide-link:hover span { text-decoration: underline; text-underline-offset: 3px; }
 .page-hero .hero-proof-row  { animation: pageHeroIn .65s cubic-bezier(.34,1.12,.64,1) .54s both; }
 .page-hero .hero-proof-link { animation: pageHeroIn .58s cubic-bezier(.34,1.12,.64,1) .72s both; }
 @keyframes proof-float1 {
@@ -1987,6 +1988,7 @@ body.buttons-visible .mcb-wa:hover { transform: scale(1.12); transition-delay: 0
 <script type="text/babel" data-presets="react">
 
 const Icon = {
+  Book: ({ size = 15 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v15H5.5C4.7 19 4 19.7 4 20.5V5.5Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" /><path d="M20 5.5C20 4.7 19.3 4 18.5 4H13v15h5.5c.8 0 1.5.7 1.5 1.5V5.5Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" /></svg>,
   ArrowRight: ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 16 16" fill="none"><path d="M3 8H13M13 8L8 3M13 8L8 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>,
   Sparkle: ({ size = 14 }) => <svg width={size} height={size} viewBox="0 0 16 16" fill="none"><path d="M8 1L9.5 6.5L15 8L9.5 9.5L8 15L6.5 9.5L1 8L6.5 6.5L8 1Z" fill="currentColor" /></svg>,
   Book:  () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 5C4 4 4.5 3 6 3H11V20H6C4.5 20 4 19 4 18V5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="M20 5C20 4 19.5 3 18 3H13V20H18C19.5 20 20 19 20 18V5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg>,
@@ -3499,7 +3501,7 @@ function App() {
               <a href="#combos" className="btn btn-primary btn-lg">Bundled courses</a>
               <a href="#individual" className="btn btn-ghost btn-lg btn-stories"><span>Individual courses</span></a>
             </div>
-            <a href="/blogs/gate-da-syllabus-2027" className="hero-guide-link">📘 New: Free GATE DA Syllabus 2027 guide →</a>
+            <a href="/blogs/gate-da-syllabus-2027" className="hero-guide-link"><Icon.Book size={15} /> <span>New: Free GATE DA Syllabus 2027 guide</span> <Icon.ArrowRight size={13} /></a>
           </div>
           <div className="page-hero-right">
             <div className="hero-proof-row">
