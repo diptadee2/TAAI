@@ -299,10 +299,11 @@ async function fetchPomoActive(supabase, email) {
     totalSeconds: data.total_seconds,
     completedSessions: data.completed_sessions,
     updatedAt: data.updated_at,
-    // When the server first heard of this phase (what pomodoro-complete.js
-    // measures elapsed time from). The client won't claim a completion
-    // before this much real time has passed (see pomoPhaseRanFully).
-    phaseStartedAt: data.phase_started_at || null,
+    // How long ago the server first heard of this phase (what
+    // pomodoro-complete.js measures elapsed time from), as an age so client
+    // clock skew doesn't matter. The client won't claim a completion
+    // before the full phase length has passed since then (pomoPhaseRanFully).
+    phaseStartedAgeMs: data.phase_started_at ? Math.max(0, Date.now() - data.phase_started_at) : null,
   };
 }
 

@@ -190,5 +190,11 @@ export async function handler(event) {
   }
   if (error) return json(500, { error: error.message });
 
-  return json(200, { ok: true });
+  // How long ago the server considers this phase to have started. The
+  // client adopts it if it's later than its own start (e.g. the server
+  // reset the start because this device's earlier write was ignored or
+  // overwritten), so it never claims a completion the server would reject
+  // as insufficient_elapsed. An age, not a timestamp, so client clock skew
+  // doesn't matter.
+  return json(200, { ok: true, phaseAgeMs: Math.max(0, Date.now() - phaseStartedAt) });
 }

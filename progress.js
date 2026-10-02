@@ -266,7 +266,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-03-1';
+  var CLIENT_VERSION = '2026-10-03-2';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -729,6 +729,19 @@
     });
     function attempt(retriesLeft) {
       api('/pomo-active', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body })
+        .then(function (r) {
+          // The server may date this phase later than we do (it resets the
+          // start when an earlier write from this device was ignored or
+          // overwritten by another tab/device). Adopt the later start so we
+          // never claim before the server will accept it (pomoPhaseRanFully).
+          if (!r || r.phaseAgeMs == null || r.ignored) return;
+          if (pomo.phaseEndAt !== payload.phaseEndAt || pomo.mode !== payload.mode) return;
+          var serverStart = Date.now() - r.phaseAgeMs;
+          if (!pomo.phaseStartedAt || serverStart > pomo.phaseStartedAt) {
+            pomo.phaseStartedAt = serverStart;
+            savePomoActiveLocalOnly();
+          }
+        })
         .catch(function () {
           if (retriesLeft > 0) setTimeout(function () { attempt(retriesLeft - 1); }, 800);
         });
@@ -1027,10 +1040,15 @@
     if (savedCompletedSessions > POMO_SESSIONS_SANITY_CAP) savedCompletedSessions = 0;
     pomo.completedSessions = Math.max(pomo.completedSessions, savedCompletedSessions);
     pomo.completedSessionsDate = todayIso();
-    // When this phase really started (for pomoPhaseRanFully). Older saved
-    // blobs don't carry it: fall back to end minus duration, i.e. assume it
-    // ran normally, which is what every claim did before this existed.
-    pomo.phaseStartedAt = saved.phaseStartedAt || (saved.phaseEndAt ? saved.phaseEndAt - saved.totalSeconds * 1000 : null);
+    // When this phase really started, for pomoPhaseRanFully: the local
+    // blob carries it as a timestamp, server state (another device) as an
+    // age. Anything older that carries neither starts its clock now rather
+    // than assuming it ran normally: that assumption is exactly how a
+    // month-old saved timer, restored and re-announced, produced an instant
+    // claim and a false malpractice incident (Vivek Pradhan, 2026-09-25).
+    // At worst one legacy phase goes uncredited.
+    pomo.phaseStartedAt = saved.phaseStartedAt
+      || (saved.phaseStartedAgeMs != null ? Date.now() - saved.phaseStartedAgeMs : Date.now());
     if (saved.running) {
       pomo.phaseEndAt = saved.phaseEndAt;
       pomo.running = true;
