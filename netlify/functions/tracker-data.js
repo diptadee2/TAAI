@@ -286,7 +286,7 @@ async function fetchPomoSessions(supabase, email) {
 async function fetchPomoActive(supabase, email) {
   const { data, error } = await supabase
     .from('pomo_active_session')
-    .select('mode, running, phase_end_at, seconds_left, total_seconds, completed_sessions, updated_at')
+    .select('mode, running, phase_end_at, seconds_left, total_seconds, completed_sessions, updated_at, phase_started_at')
     .eq('email', email)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -299,6 +299,10 @@ async function fetchPomoActive(supabase, email) {
     totalSeconds: data.total_seconds,
     completedSessions: data.completed_sessions,
     updatedAt: data.updated_at,
+    // When the server first heard of this phase (what pomodoro-complete.js
+    // measures elapsed time from). The client won't claim a completion
+    // before this much real time has passed (see pomoPhaseRanFully).
+    phaseStartedAt: data.phase_started_at || null,
   };
 }
 

@@ -266,7 +266,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-02-21';
+  var CLIENT_VERSION = '2026-10-03-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -667,6 +667,7 @@
       secondsLeft: pomo.secondsLeft,
       totalSeconds: pomo.totalSeconds,
       phaseEndAt: pomo.phaseEndAt,
+      phaseStartedAt: pomo.phaseStartedAt || null,
       completedSessions: pomo.completedSessions,
       savedAt: Date.now(),
     };
@@ -1026,6 +1027,10 @@
     if (savedCompletedSessions > POMO_SESSIONS_SANITY_CAP) savedCompletedSessions = 0;
     pomo.completedSessions = Math.max(pomo.completedSessions, savedCompletedSessions);
     pomo.completedSessionsDate = todayIso();
+    // When this phase really started (for pomoPhaseRanFully). Older saved
+    // blobs don't carry it: fall back to end minus duration, i.e. assume it
+    // ran normally, which is what every claim did before this existed.
+    pomo.phaseStartedAt = saved.phaseStartedAt || (saved.phaseEndAt ? saved.phaseEndAt - saved.totalSeconds * 1000 : null);
     if (saved.running) {
       pomo.phaseEndAt = saved.phaseEndAt;
       pomo.running = true;
@@ -3417,6 +3422,10 @@
       pomo.phaseEndAt = Math.min(Date.now(), oldPhaseEndAt) + pomo.totalSeconds * 1000;
     }
     pomo.secondsLeft = Math.max(0, Math.round((pomo.phaseEndAt - Date.now()) / 1000));
+    // The next phase is announced to the server now, so its real clock
+    // starts now, even when its nominal deadline was anchored in the past
+    // by the catch-up cascade above (see pomoPhaseRanFully).
+    pomo.phaseStartedAt = Date.now();
     playPomoChime(finishedMode);
     updatePomoDisplay();
     savePomoActiveState();
@@ -3470,6 +3479,23 @@
   // multiple already-elapsed phases after a long gap. The recursive call
   // deliberately bypasses the guard: it's a continuation of the SAME
   // logical tick pomoTick() already claimed, not a new overlapping one.
+  // Only claim a Focus session the server can actually verify: at least
+  // the phase's full length of real time since it started (the server
+  // allows 15s of slack and measures from when it first heard of the
+  // phase). Without this, the catch-up cascade in pomoAdvance (a tab that
+  // slept or was closed past several phases) rolled into a work phase whose
+  // nominal deadline was already in the past, "finished" it instantly and
+  // sent a claim the server rejected as insufficient_elapsed, which counts
+  // as a malpractice incident against an honest student (seen on
+  // dipta.taai@gmail.com, 2026-10-02 13:20 IST: a 2h phase claimed 1.7s
+  // after it started). A genuinely tampered clock still passes this check
+  // locally, sends the claim, and is still caught by the server.
+  var POMO_CLAIM_SLACK_MS = 15000;
+  function pomoPhaseRanFully() {
+    if (!pomo.phaseStartedAt) return true;
+    return Date.now() - pomo.phaseStartedAt >= pomo.totalSeconds * 1000 - POMO_CLAIM_SLACK_MS;
+  }
+
   function pomoTickCore() {
     if (!pomo.running) { updatePomoDisplay(); return Promise.resolve(); }
     pomo.secondsLeft = Math.max(0, Math.round((pomo.phaseEndAt - Date.now()) / 1000));
@@ -3501,7 +3527,7 @@
     // guaranteed server-side processing order, even sent in the "right"
     // JS order — genuinely awaiting this one before firing the next is
     // what actually guarantees it.
-    var creditPromise = finishedMode === 'work'
+    var creditPromise = finishedMode === 'work' && pomoPhaseRanFully()
       ? recordPomodoroCompletion(pomoSettings.work, pomo.phaseEndAt)
       : Promise.resolve();
 
@@ -3576,6 +3602,10 @@
   // prompt below) paths in pomoToggleRun share it instead of duplicating it.
   function pomoActuallyStart() {
     ensurePomoAudioCtx(); // real click — unlocks audio for the chime that fires later, unattended
+    // A fresh phase starts its real clock now (the server stamps the same
+    // moment as phase_started_at); resuming after a pause keeps the
+    // original start, since the server's elapsed time includes pauses.
+    if (pomo.secondsLeft === pomo.totalSeconds || !pomo.phaseStartedAt) pomo.phaseStartedAt = Date.now();
     pomo.phaseEndAt = Date.now() + pomo.secondsLeft * 1000;
     pomo.running = true;
     flashPomoRing();
