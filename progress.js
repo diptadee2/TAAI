@@ -266,7 +266,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-02-17';
+  var CLIENT_VERSION = '2026-10-02-18';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1588,6 +1588,12 @@
           var task = pendingTask;
           pendingTask = null;
           pendingPomoStart = false;
+          // Replay the tick that opened this form only if the account's
+          // batch is the one the visitor was looking at. An existing
+          // student from another batch signing in here (register.js never
+          // reassigns their batch) must not get this batch's task saved
+          // to their account; they land on their own batch instead.
+          if (task && (student.batch || 'C') !== state.previewBatch) task = null;
           if (task) {
             api('/complete-task', {
               method: 'POST',
