@@ -19,7 +19,7 @@
   // daysTillExam() the countdown chip uses, so the two can never disagree.
   var BATCH_PROGRAMS = {
     C: { start: PROGRAM_START_DATE, length: PROGRAM_LENGTH_DAYS },
-    D: { length: 120, countsToExam: true },
+    D: { length: 120, countsToExam: true, overallBar: true },
   };
 
   function daysTillExam() {
@@ -243,7 +243,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-02-8';
+  var CLIENT_VERSION = '2026-10-02-9';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2630,7 +2630,40 @@
     dayNum = Math.min(dayNum, program.length);
     return '<div class="program-day-badge fade-in">' +
       '<div class="program-day-num">' + dayNum + '</div>' +
-      '<div class="program-day-label">Day of ' + program.length + '</div></div>';
+      '<div class="program-day-label">Day of ' + program.length + '</div>' +
+      planProgressHtml(program) + '</div>';
+  }
+
+  // Overall plan progress, for batches flagged overallBar in
+  // BATCH_PROGRAMS ("120 Days - 70 Marks", a focused plan aiming for 70
+  // marks rather than the whole syllabus). Every task in the student's own
+  // batch schedule counts equally, quizzes included, from the raw
+  // subject-progress totals (not the "Progress by subject" view, which
+  // merges aliases and scales AI). Only for a signed-in student viewing
+  // their own batch: a guest or a student previewing another batch has no
+  // real progress there to show.
+  function planProgressTotals() {
+    var done = 0, total = 0;
+    (state.subjectProgress || []).forEach(function (s) { done += s.done || 0; total += s.total || 0; });
+    return { done: done, total: total, pct: total ? Math.round((done / total) * 100) : 0 };
+  }
+  function planProgressHtml(program) {
+    if (!program.overallBar || !state.student || effectiveScoutBatch() !== state.student.batch) return '';
+    var t = planProgressTotals();
+    if (!t.total) return '';
+    return '<div class="plan-progress" id="plan-progress">' +
+      '<div class="plan-progress-line"><span class="plan-progress-label">Plan progress</span><span class="plan-progress-pct" id="plan-progress-pct">' + t.pct + '%</span></div>' +
+      '<div class="progress-track"><div class="progress-fill" id="plan-progress-fill" style="width:' + t.pct + '%"></div></div>' +
+      '<div class="plan-progress-sub" id="plan-progress-sub">' + t.done + ' of ' + t.total + ' tasks done</div>' +
+      '</div>';
+  }
+  function refreshPlanProgress() {
+    var fill = document.getElementById('plan-progress-fill');
+    if (!fill) return;
+    var t = planProgressTotals();
+    fill.style.width = t.pct + '%';
+    document.getElementById('plan-progress-pct').textContent = t.pct + '%';
+    document.getElementById('plan-progress-sub').textContent = t.done + ' of ' + t.total + ' tasks done';
   }
 
   // Re-fetches the global per-subject totals (a tick anywhere in the
@@ -2651,6 +2684,7 @@
           if (fill) fill.style.width = pct + '%';
           if (label) label.textContent = pct + '%';
         });
+        refreshPlanProgress();
       })
       .catch(function () { /* non-critical — leave last known values on screen */ });
   }
