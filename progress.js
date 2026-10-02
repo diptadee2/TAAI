@@ -243,7 +243,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-02-9';
+  var CLIENT_VERSION = '2026-10-02-10';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2647,23 +2647,54 @@
     (state.subjectProgress || []).forEach(function (s) { done += s.done || 0; total += s.total || 0; });
     return { done: done, total: total, pct: total ? Math.round((done / total) * 100) : 0 };
   }
+  // No task counts on screen: the plan's total grows as more of the
+  // schedule gets loaded, so "N of M" would keep shifting under the
+  // student. A short line keyed to the milestone reached instead.
+  var PLAN_MILESTONES = [25, 50, 75];
+  function planProgressMessage(pct, done) {
+    if (pct >= 100) return 'Plan complete. Every task done!';
+    if (pct >= 75) return 'Final stretch. Keep it going';
+    if (pct >= 50) return 'Halfway there';
+    if (pct >= 25) return 'A quarter of the plan done';
+    if (done > 0) return 'Off the mark. Keep ticking';
+    return 'Tick your first task to get moving';
+  }
+  function planMilestonesHtml(pct) {
+    return PLAN_MILESTONES.map(function (m) {
+      return '<span class="plan-ms' + (pct >= m ? ' reached' : '') + '" data-ms="' + m + '" style="left:' + m + '%"></span>';
+    }).join('');
+  }
   function planProgressHtml(program) {
     if (!program.overallBar || !state.student || effectiveScoutBatch() !== state.student.batch) return '';
     var t = planProgressTotals();
     if (!t.total) return '';
-    return '<div class="plan-progress" id="plan-progress">' +
+    return '<div class="plan-progress" id="plan-progress" data-pct="' + t.pct + '">' +
       '<div class="plan-progress-line"><span class="plan-progress-label">Plan progress</span><span class="plan-progress-pct" id="plan-progress-pct">' + t.pct + '%</span></div>' +
-      '<div class="progress-track"><div class="progress-fill" id="plan-progress-fill" style="width:' + t.pct + '%"></div></div>' +
-      '<div class="plan-progress-sub" id="plan-progress-sub">' + t.done + ' of ' + t.total + ' tasks done</div>' +
+      '<div class="plan-track"><div class="plan-fill" id="plan-progress-fill" style="width:' + t.pct + '%"></div>' + planMilestonesHtml(t.pct) + '</div>' +
+      '<div class="plan-progress-msg" id="plan-progress-msg">' + planProgressMessage(t.pct, t.done) + '</div>' +
       '</div>';
   }
   function refreshPlanProgress() {
-    var fill = document.getElementById('plan-progress-fill');
-    if (!fill) return;
+    var box = document.getElementById('plan-progress');
+    if (!box) return;
     var t = planProgressTotals();
-    fill.style.width = t.pct + '%';
-    document.getElementById('plan-progress-pct').textContent = t.pct + '%';
-    document.getElementById('plan-progress-sub').textContent = t.done + ' of ' + t.total + ' tasks done';
+    var prev = parseInt(box.getAttribute('data-pct'), 10) || 0;
+    box.setAttribute('data-pct', t.pct);
+    document.getElementById('plan-progress-fill').style.width = t.pct + '%';
+    var pctEl = document.getElementById('plan-progress-pct');
+    pctEl.textContent = t.pct + '%';
+    document.getElementById('plan-progress-msg').textContent = planProgressMessage(t.pct, t.done);
+    Array.prototype.forEach.call(box.querySelectorAll('.plan-ms'), function (m) {
+      m.classList.toggle('reached', t.pct >= parseInt(m.getAttribute('data-ms'), 10));
+    });
+    if (t.pct > prev) {
+      // Restart the one-shot pop (remove, reflow, re-add); a milestone
+      // crossing also flashes the bar.
+      pctEl.classList.remove('bump'); void pctEl.offsetWidth; pctEl.classList.add('bump');
+      if (PLAN_MILESTONES.some(function (m) { return prev < m && t.pct >= m; }) || t.pct >= 100) {
+        box.classList.remove('milestone'); void box.offsetWidth; box.classList.add('milestone');
+      }
+    }
   }
 
   // Re-fetches the global per-subject totals (a tick anywhere in the
