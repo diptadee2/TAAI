@@ -205,15 +205,35 @@
   // renderBatchScoutBanner — see state.pendingBatchMigration. Nothing
   // happens server-side until Confirm is actually clicked; this can
   // still be backed out of via Cancel with zero consequence.
+  var WARN_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.5 2.8 19.5h18.4L12 3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 10v4.2" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><circle cx="12" cy="17" r="1.1" fill="currentColor"/></svg>';
+  // The irreversible-switch confirmation. Laid out as: warning icon +
+  // question, then what goes vs what stays (with the student's own real
+  // numbers on the "goes" side so the cost is concrete), then Cancel /
+  // Switch permanently.
   function renderBatchMigrationWarning() {
     if (!state.pendingBatchMigration) return '';
     var targetLabel = (BATCH_OPTIONS.filter(function (b) { return b.value === state.pendingBatchMigration; })[0] || {}).label || state.pendingBatchMigration;
-    return '<div class="batch-migration-warning">' +
-      '<p>Switching to <strong>' + escapeHtml(targetLabel) + '</strong> will permanently delete your checklist progress and streak on your current batch. Completed tasks won’t carry over, and this can’t be undone. Your Focus/Pomodoro history is unaffected.</p>' +
+    var fromLabel = batchLabel(state.student && state.student.batch);
+    var ticked = (state.subjectProgress || []).reduce(function (n, s) { return n + (s.done || 0); }, 0);
+    var streak = state.streak || 0;
+    var lose = [
+      ticked ? '<b>' + ticked + '</b> ticked ' + (ticked === 1 ? 'task' : 'tasks') + ' on ' + escapeHtml(fromLabel) : 'Your checklist on ' + escapeHtml(fromLabel),
+      streak ? 'Your <b>' + streak + '-day</b> streak' : 'Your streak (back to 0)'
+    ];
+    var keep = ['Focus hours and leaderboard rank', 'Your name and About'];
+    var li = function (items) { return items.map(function (t) { return '<li>' + t + '</li>'; }).join(''); };
+    return '<div class="batch-migration-warning" role="alertdialog" aria-labelledby="batch-migration-title">' +
+      '<div class="batch-migration-head"><span class="batch-migration-icon">' + WARN_ICON + '</span>' +
+        '<div><div class="batch-migration-title" id="batch-migration-title">Switch to ' + escapeHtml(targetLabel) + ' for good?</div>' +
+        '<div class="batch-migration-sub">This can\u2019t be undone.</div></div></div>' +
+      '<div class="batch-migration-cols">' +
+        '<div class="batch-migration-col batch-migration-col--lose"><div class="batch-migration-col-title">You\u2019ll lose</div><ul>' + li(lose) + '</ul></div>' +
+        '<div class="batch-migration-col batch-migration-col--keep"><div class="batch-migration-col-title">You\u2019ll keep</div><ul>' + li(keep) + '</ul></div>' +
+      '</div>' +
       (state.batchMigrationError ? '<p class="batch-migration-error">' + escapeHtml(state.batchMigrationError) + '</p>' : '') +
       '<div class="batch-migration-actions">' +
       '<button id="batch-migration-cancel" class="batch-migration-cancel" type="button">Cancel</button>' +
-      '<button id="batch-migration-confirm" class="batch-migration-confirm" type="button">Yes, switch to ' + escapeHtml(targetLabel) + '</button>' +
+      '<button id="batch-migration-confirm" class="batch-migration-confirm" type="button">Switch permanently</button>' +
       '</div></div>';
   }
 
@@ -243,7 +263,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-02-13';
+  var CLIENT_VERSION = '2026-10-02-14';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -4360,14 +4380,22 @@
     return escapeHtml(head) + '<span class="task-link-tail">' + escapeHtml(tail) + TASK_LINK_ICON + '</span>';
   }
 
+  function isPreviewingOtherBatch() {
+    return !!(state.student && effectiveScoutBatch() !== state.student.batch);
+  }
+
   function taskRowHtml(date, t) {
     var id = 'task-' + date + '-' + hashKey(t.subject + '|' + t.task_text);
     var link = taskLinkFor(t);
+    // A signed-in student previewing another batch can look but not tick:
+    // a tick would record progress on a batch they aren't in. (Guests can
+    // still tick; that starts sign-up into the batch they're previewing.)
+    var locked = isPreviewingOtherBatch();
     var textHtml = link
       ? '<a class="task-link" href="' + escapeAttr(link) + '" target="_blank" rel="noopener" title="Open this lesson on the course">' + taskLinkTextHtml(t.task_text) + '</a>'
       : escapeHtml(t.task_text);
-    return '<label class="task-row' + (t.completed ? ' done' : '') + '" for="' + id + '">' +
-      '<input type="checkbox" id="' + id + '" data-date="' + date + '" data-subject="' + escapeAttr(t.subject) + '" data-task="' + escapeAttr(t.task_text) + '"' + (t.completed ? ' checked' : '') + '>' +
+    return '<label class="task-row' + (t.completed ? ' done' : '') + (locked ? ' locked' : '') + '" for="' + id + '"' + (locked ? ' title="Switch to this batch to tick tasks"' : '') + '>' +
+      '<input type="checkbox" id="' + id + '" data-date="' + date + '" data-subject="' + escapeAttr(t.subject) + '" data-task="' + escapeAttr(t.task_text) + '"' + (t.completed ? ' checked' : '') + (locked ? ' disabled' : '') + '>' +
       '<span class="task-text"><span class="task-subject">' + escapeHtml(t.subject) + ':</span> ' + textHtml + '</span>' +
       '</label>';
   }
@@ -5980,6 +6008,7 @@
     // Never act on a view drawn from the local cache: the server may know
     // something newer (e.g. the same task ticked on another device).
     if (state.stale) { cb.checked = !completed; return; }
+    if (isPreviewingOtherBatch()) { cb.checked = !completed; return; }
     var date = cb.dataset.date, subject = cb.dataset.subject, taskText = cb.dataset.task;
     var row = cb.closest('.task-row');
 
