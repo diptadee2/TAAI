@@ -4,9 +4,10 @@
 // listener, so links rendered later by React or progress.js are covered too.
 // "Continue to Discord" opens the invite in a new tab.
 // It also sets body.footer-in-view while the page footer is on screen (each
-// page's floating Email/Discord stack hides on it), and on pages without
-// that stack (<body data-float-stack> marks the ones with it: the progress
-// tracker and the blog) adds its own floating Discord button.
+// page's floating Email/Discord stack hides on it), and adds its own
+// floating Discord button on pages not marked <body data-float-stack> (the
+// progress tracker and the blog). The contact page is marked too: its
+// channel cards already cover Email and Discord, so it has no floating stack.
 (function () {
   if (window.__discordNotice) return;
   window.__discordNotice = true;

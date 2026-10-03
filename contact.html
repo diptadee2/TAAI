@@ -222,7 +222,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .contact-hero-sub { font-size: 19px; color: var(--ink-dim); max-width: 520px; line-height: 1.55; margin-bottom: 48px; }
 
 /* ── Channel cards ───────────────────────────────────── */
-.channel-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+.channel-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .channel-card {
   border-radius: var(--radius-xl); padding: 36px 28px;
   background-color: var(--ink);
@@ -241,6 +241,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .ch-discord:hover  { border-color: rgba(139,92,246,0.35); }
 .ch-telegram:hover { border-color: rgba(77,139,255,0.35); }
 .ch-linkedin:hover { border-color: rgba(10,102,194,0.45); }
+.ch-call:hover     { border-color: rgba(232,89,12,0.4); }
 
 /* Orb per card, drifts continuously */
 @keyframes orb-drift {
@@ -264,6 +265,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .ch-discord::after  { background: var(--purple);  animation-delay: -3.2s; }
 .ch-telegram::after { background: var(--blue);    animation-delay: -4.8s; }
 .ch-linkedin::after { background: #0A66C2;        animation-delay: -6.4s; }
+.ch-call::after     { background: #E8590C;        animation-delay: -8s; }
 
 .channel-icon {
   width: 48px; height: 48px; border-radius: 14px;
@@ -278,6 +280,28 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .ch-discord  .channel-icon { background: linear-gradient(135deg, var(--purple), var(--blue)); }
 .ch-telegram .channel-icon { background: linear-gradient(135deg, var(--blue), #32A8E0); }
 .ch-linkedin .channel-icon { background: linear-gradient(135deg, #0A66C2, #0D87E9); }
+.ch-call     .channel-icon { background: linear-gradient(135deg, #F97316, #E8590C); }
+/* "Show more" tile: same footprint as a channel card, quieter look. */
+.channel-more { font: inherit; text-align: left; cursor: pointer; background-image: none; background-color: #fff; border: 1.5px dashed rgba(107,75,255,0.35); box-shadow: none; }
+.channel-more::after { display: none; }
+.channel-more:hover { border-color: rgba(107,75,255,0.7); box-shadow: 0 12px 32px rgba(20,16,43,0.08); }
+.channel-more:focus-visible { outline: 2px solid var(--purple); outline-offset: 3px; }
+.channel-more .channel-name { color: var(--ink); }
+.channel-more:hover .channel-name { text-shadow: none; }
+.channel-more .channel-detail { color: rgba(20,16,43,0.55); }
+.channel-more .channel-cta { color: var(--purple); }
+.channel-more:hover .channel-cta { color: var(--purple); }
+.channel-more-icons { display: flex; margin-bottom: 24px; }
+/* Phones hide card descriptions, so WhatsApp/Call carry their hours on a
+   separate line there; on wider screens the description already says it. */
+.channel-hours { display: none; }
+.channel-more-icons span { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: #fff; border: 2px solid #fff; margin-left: -8px; }
+.channel-more-icons span:first-child { margin-left: 0; }
+.channel-more-icons span svg { width: 16px; height: 16px; }
+.channel-more-icons .ch-whatsapp { background: #25D366; }
+.channel-more-icons .ch-call { background: #E8590C; }
+.channel-more-icons .ch-telegram { background: #32A8E0; }
+.channel-more-icons .ch-linkedin { background: #0A66C2; }
 
 .channel-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 6px; position: relative; z-index: 2; }
 .channel-name { font-family: var(--font-display); font-size: clamp(13px, 1.4vw, 18px); font-weight: 600; letter-spacing: -0.01em; color: #fff; margin-bottom: 10px; position: relative; z-index: 2; transition: text-shadow .35s ease; }
@@ -439,34 +463,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .back-to-top:hover { box-shadow: 0 6px 28px rgba(107,75,255,0.6); transform: translateY(-2px) scale(1.06); }
 .back-to-top:active { transform: scale(0.93); }
 
-/* Contact page floating stack (2026-10-03): Email + Discord by default;
-   "Show more" reveals WhatsApp + Call with the hours as a visible caption
-   (not just a hover label) so touch users see them too. */
-.contact-float { position: fixed; right: 24px; bottom: 88px; z-index: 200; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
-.contact-float a { position: relative; width: 50px; height: 50px; border-radius: 50%; display: grid; place-items: center; color: #fff; text-decoration: none; transition: transform .2s ease, filter .18s ease; }
-.contact-float a:hover { filter: brightness(1.08); }
-.contact-float a:active { transform: scale(0.94); }
-.cf-wa { background: #25D366; }
-.cf-call { background: #E8590C; }
-.cf-mail { background: #6B4BFF; }
-.cf-discord { background: #5865F2; }
-.cf-extra { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; animation: cf-extra-in .2s ease both; }
-@keyframes cf-extra-in { from { opacity: 0; } to { opacity: 1; } }
-.cf-more { font: inherit; font-size: 12px; font-weight: 600; color: var(--ink); background: #fff; border: 1px solid rgba(20,16,43,0.14); border-radius: 999px; padding: 6px 12px; cursor: pointer; transition: background .15s ease, border-color .15s ease; }
-.cf-more:hover { background: #F6F2FF; border-color: rgba(107,75,255,0.35); }
-.cf-more:focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; }
-.contact-float { transition: opacity .25s ease; }
-body.footer-in-view .contact-float { opacity: 0; pointer-events: none; }
-@media (prefers-reduced-motion: reduce) { .cf-extra { animation: none; } }
-.contact-float a::after { content: attr(data-label); position: absolute; right: calc(100% + 12px); top: 50%; transform: translateY(-50%); background: #14102B; color: #fff; font-size: 12px; font-weight: 600; padding: 6px 10px; border-radius: 8px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .15s ease; }
-.contact-float a:hover::after { opacity: 1; }
-.cf-hours { background: #14102B; color: #fff; font-size: 11.5px; font-weight: 600; padding: 5px 10px; border-radius: 8px; white-space: nowrap; }
-@media (max-width: 768px) {
-  .contact-float { right: 26px; bottom: 84px; gap: 8px; }
-  .contact-float a { width: 46px; height: 46px; }
-  .contact-float a::after { display: none; }
-}
-
 /* Responsive */
 @media (max-width: 1024px) {
   .channel-grid { grid-template-columns: repeat(3, 1fr); }
@@ -486,6 +482,17 @@ body.footer-in-view .contact-float { opacity: 0; pointer-events: none; }
   .channel-label { display: none; }
   .channel-name { margin-bottom: 0; font-size: 15px; flex: 1; }
   .channel-detail { display: none; }
+  .channel-more-icons { margin-bottom: 0; flex-shrink: 0; }
+  .channel-more .channel-name { white-space: nowrap; }
+  .channel-more-cta-text { display: none; }
+  .ch-whatsapp, .ch-call { display: grid; grid-template-columns: auto 1fr auto; column-gap: 14px; row-gap: 2px; }
+  .ch-whatsapp .channel-icon, .ch-call .channel-icon { grid-row: 1 / 3; }
+  .ch-whatsapp .channel-name, .ch-call .channel-name { grid-column: 2; align-self: end; }
+  .ch-whatsapp .channel-hours, .ch-call .channel-hours { display: block; grid-column: 2; font-size: 12px; color: rgba(255,255,255,0.55); position: relative; z-index: 2; }
+  .ch-whatsapp .channel-cta, .ch-call .channel-cta { grid-column: 3; grid-row: 1 / 3; align-self: center; font-size: 0; gap: 0; }
+  .ch-whatsapp .channel-hours, .ch-call .channel-hours { white-space: nowrap; }
+  .channel-more-icons span { width: 28px; height: 28px; }
+  .channel-more-icons span svg { width: 13px; height: 13px; }
   .channel-cta { margin-left: auto; white-space: nowrap; flex-shrink: 0; }
   .offer-grid { grid-template-columns: 1fr; }
   .cta-banner { flex-direction: column; align-items: flex-start; padding: 40px 28px; }
@@ -577,6 +584,7 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   .ch-discord:active  { border-color: rgba(139,92,246,0.55) !important; }
   .ch-telegram:active { border-color: rgba(77,139,255,0.55) !important; }
   .ch-linkedin:active { border-color: rgba(10,102,194,0.65) !important; }
+  .ch-call:active     { border-color: rgba(232,89,12,0.6) !important; }
   .channel-card:active .channel-cta svg { transform: translateX(4px) !important; transition-duration: .08s; }
   .channel-card:active::after { opacity: 0.42 !important; }
 
@@ -629,6 +637,7 @@ const Icon = {
   BookOpen: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>,
   Target: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
   Briefcase: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="12"/></svg>,
+  PhoneLg: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   Phone: () => <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
 };
 
@@ -882,10 +891,13 @@ function Footer() {
   );
 }
 
+// Shown up front; the rest sit behind the grid's "Show more" tile.
+const PRIMARY_CHANNELS = ['ch-email', 'ch-discord'];
 const CHANNELS = [
   { cls: 'ch-email',    icon: <Icon.Mail />,     label: 'Email',     name: 'support@taai.live',   detail: 'For detailed queries, billing, or anything that needs a paper trail.',                   cta: 'Send an email',   href: 'mailto:support@taai.live' },
-  { cls: 'ch-whatsapp', icon: <Icon.WhatsApp />, label: 'WhatsApp',  name: '+91 90885 53305',     detail: "Message or call us. Available from 11 AM to 7 PM.",  cta: 'Chat now',        href: 'https://wa.me/9088553305' },
+  { cls: 'ch-whatsapp', icon: <Icon.WhatsApp />, label: 'WhatsApp',  name: '+91 90885 53305',     detail: "Message us anytime. Available from 11 AM to 7 PM.", hours: 'Available from 11 AM to 7 PM',  cta: 'Chat now',        href: 'https://wa.me/9088553305' },
   { cls: 'ch-discord',  icon: <Icon.Discord />,  label: 'Discord',   name: 'Discord',             detail: 'Join 1K+ GATE aspirants. Mentors are active around the clock.',                       cta: 'Join server',     href: 'https://discord.com/invite/AwZqYz9wvK' },
+  { cls: 'ch-call',     icon: <Icon.PhoneLg />,  label: 'Call',      name: '+91 90885 53305',     detail: 'Available from 11 AM to 7 PM.', hours: 'Available from 11 AM to 7 PM',                                                       cta: 'Call now',        href: 'tel:+919088553305' },
   { cls: 'ch-telegram', icon: <Icon.Telegram />, label: 'Telegram',  name: 'Telegram',            detail: 'Announcements, free resources, and study material drops.',                             cta: 'Open channel',    href: 'https://t.me/ManojGateDA' },
   { cls: 'ch-linkedin', icon: <Icon.LinkedIn />, label: 'LinkedIn',  name: 'LinkedIn',            detail: 'Follow us for updates, GATE success stories, and AI industry news.',         cta: 'Follow us',       href: 'https://www.linkedin.com/company/taai-gate-da-placements/?viewAsMember=true' },
 ];
@@ -918,25 +930,12 @@ function ScrollProgress() {
   return <div id="scroll-progress-bar" className="scroll-progress" style={{ width: '0%' }} />;
 }
 
-function ContactFloat() {
-  const [more, setMore] = React.useState(false);
-  return (
-    <div className="contact-float">
-      {more && (
-        <div className="cf-extra">
-          <a href="https://wa.me/9088553305" className="cf-wa" target="_blank" rel="noopener noreferrer" data-label="WhatsApp us" aria-label="WhatsApp us, available from 11 AM to 7 PM"><Icon.WhatsApp /></a>
-          <a href="tel:+919088553305" className="cf-call" data-label="Call us" aria-label="Call us, available from 11 AM to 7 PM"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg></a>
-          <span className="cf-hours">Available from 11 AM to 7 PM</span>
-        </div>
-      )}
-      <button type="button" className="cf-more" aria-expanded={more} onClick={() => setMore(m => !m)}>{more ? 'Show less' : 'Show more'}</button>
-      <a href="mailto:support@taai.live" className="cf-mail" data-label="Email us" aria-label="Email us at support@taai.live"><Icon.Mail /></a>
-      <a href="https://discord.com/invite/AwZqYz9wvK" className="cf-discord" target="_blank" rel="noopener noreferrer" data-label="Join our Discord" aria-label="Join our Discord"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.031.057a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg></a>
-    </div>
-  );
-}
-
 function App() {
+  const [showAllChannels, setShowAllChannels] = React.useState(false);
+  const primary = CHANNELS.filter(c => PRIMARY_CHANNELS.includes(c.cls));
+  const shownChannels = showAllChannels ? primary.concat(CHANNELS.filter(c => !PRIMARY_CHANNELS.includes(c.cls))) : primary;
+  // First load cascades in after the hero; cards revealed by "Show more" come in quickly.
+  const delay = i => showAllChannels ? i * 0.05 : 0.44 + i * 0.08;
   React.useEffect(() => {
     const mobile = window.matchMedia('(max-width: 1024px)').matches;
     const io = new IntersectionObserver(entries => {
@@ -956,7 +955,6 @@ function App() {
     <>
       <ScrollProgress />
       <BackToTop />
-      <ContactFloat />
       <Nav />
       <div className="nav-spacer" />
       {/* Hero */}
@@ -968,19 +966,34 @@ function App() {
             Whether it's a course question, a doubt, or just a hello, reach out through any channel and we'll get back to you fast.
           </p>
           <div className="channel-grid" style={{ marginTop: 48 }}>
-            {CHANNELS.map((c, i) => (
-              <a key={i} href={c.href} target="_blank" rel="noopener noreferrer"
+            {shownChannels.map((c, i) => (
+              <a key={c.cls} href={c.href} target={c.href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer"
                  className={`channel-card ${c.cls}`}
-                 style={{ animation: `heroIn .62s cubic-bezier(.34,1.12,.64,1) ${0.44 + i * 0.08}s both` }}
+                 style={{ animation: `heroIn .62s cubic-bezier(.34,1.12,.64,1) ${delay(i)}s both` }}
                  onMouseMove={e=>{const r=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');e.currentTarget.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%');}}
                  onMouseLeave={e=>{e.currentTarget.style.setProperty('--mx','-200%');e.currentTarget.style.setProperty('--my','-200%');}}>
                 <div className="channel-icon">{c.icon}</div>
                 <div className="channel-label">{c.label}</div>
                 <div className="channel-name">{c.name}</div>
+                {c.hours && <div className="channel-hours">{c.hours}</div>}
                 <div className="channel-detail">{c.detail}</div>
                 <div className="channel-cta">{c.cta} <Icon.ArrowRight /></div>
               </a>
             ))}
+            {!showAllChannels && (
+              <button type="button" className="channel-card channel-more" aria-expanded="false" onClick={() => setShowAllChannels(true)}
+                      style={{ animation: 'heroIn .62s cubic-bezier(.34,1.12,.64,1) .6s both' }}>
+                <div className="channel-more-icons" aria-hidden="true">
+                  <span className="ch-whatsapp"><Icon.WhatsApp /></span>
+                  <span className="ch-call"><Icon.PhoneLg /></span>
+                  <span className="ch-telegram"><Icon.Telegram /></span>
+                  <span className="ch-linkedin"><Icon.LinkedIn /></span>
+                </div>
+                <div className="channel-name">Show more</div>
+                <div className="channel-detail">WhatsApp, call, Telegram and LinkedIn.</div>
+                <div className="channel-cta"><span className="channel-more-cta-text">See all channels</span> <Icon.ArrowRight /></div>
+              </button>
+            )}
           </div>
           <div className="trust-strip" style={{ animation: 'heroIn .62s cubic-bezier(.34,1.12,.64,1) .62s both' }}>
             <div className="trust-item">
