@@ -18,7 +18,10 @@
   // then counts up, reaching Day 120 on exam day. It reads the SAME
   // daysTillExam() the countdown chip uses, so the two can never disagree.
   var BATCH_PROGRAMS = {
-    C: { start: PROGRAM_START_DATE, length: PROGRAM_LENGTH_DAYS },
+    // overallBar/targetMarks: the plan progress card (Day N of 180, %, marks)
+    // and the "+N credit earned" note on ticks. Batch C covers the technical
+    // syllabus, 85 marks (General Aptitude's 15 isn't scheduled). 2026-10-03.
+    C: { start: PROGRAM_START_DATE, length: PROGRAM_LENGTH_DAYS, overallBar: true, targetMarks: 85 },
     D: { length: 120, countsToExam: true, overallBar: true, targetMarks: 70 },
   };
 
@@ -272,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-03-7';
+  var CLIENT_VERSION = '2026-10-03-8';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
