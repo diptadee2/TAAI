@@ -943,6 +943,37 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
    one word per line on a narrow card. */
 .combo-title-badge-spacer { float: right; width: 88px; height: 32px; }
 
+/* ── Bundle cards de-slopped, 2026-10-03 ("change the bundle cards") ──
+   One override layer, kept together so it's easy to see what changed:
+   no ghost "03/04" numerals, no corner glow orbs or shimmer sweeps, no
+   lift-and-glow hovers (border only), plain check marks always shown
+   (were empty grey circles that only drew a tick on hover), sentence-case
+   validity / "What's included" instead of monospace caps, quieter badges
+   without the sparkle, plain white price, and a solid white Enrol button
+   instead of the gradient pill with shimmer and glow. The featured ring,
+   card colours and the 2028 coming-soon blur/overlay are unchanged. */
+.combo-num { display: none; }
+.combo-featured-frame, .combo-featured-frame:hover,
+.combo-featured-frame.coming-soon, .combo-featured-frame.coming-soon:hover { box-shadow: none; transform: none; }
+.combo-card { box-shadow: none; transition: border-color .2s ease; }
+.combo-card::before, .combo-card.featured::after { display: none; }
+.combo-card.combo-blue:hover, .combo-card.combo-pink:hover { transform: none; box-shadow: none; }
+.combo-badge { font-size: 12px; font-weight: 600; letter-spacing: .01em; text-transform: none; padding: 4px 10px; box-shadow: none; }
+.combo-badge svg { display: none; }
+.combo-badge.best { background: rgba(167,139,250,0.18); color: #DDD6FE; box-shadow: none; }
+.combo-badge.soon { background: rgba(245,158,11,0.16); color: #FCD34D; border: 1px solid rgba(245,158,11,0.35); box-shadow: none; }
+.combo-badge.combo { background: transparent; color: rgba(255,255,255,0.62); border-color: rgba(255,255,255,0.16); }
+.combo-validity { font-family: var(--font-body); font-size: 13px; letter-spacing: 0; color: rgba(255,255,255,0.5); }
+.combo-includes-label { font-size: 12.5px; font-weight: 600; letter-spacing: 0; text-transform: none; color: rgba(255,255,255,0.45); }
+.combo-check, .combo-card.featured .combo-check { width: 16px; height: 18px; border-radius: 0; background: none; }
+.combo-check svg { width: 12px; height: 10px; }
+.combo-check svg path, .combo-card.featured .combo-check svg path { stroke: #C4B5FD; stroke-dashoffset: 0; transition: none; }
+.combo-card.featured .combo-price { background: none; -webkit-text-fill-color: #fff; color: #fff; }
+.combo-discount { background: rgba(167,139,250,0.18); color: #DDD6FE; font-weight: 600; }
+.combo-card .btn-primary { background: #fff; color: #14102B; box-shadow: none; font-weight: 600; }
+.combo-card .btn-primary::before { display: none; }
+.combo-card .btn-primary:hover { background: #EDE9FE; transform: none; box-shadow: none; }
+
 /* Individual courses, redesigned */
 /* 3 columns, not a fixed 5 — INDIVIDUAL currently has 6 items, and repeat(5,1fr)
    stranded the 6th card alone on a near-empty second row. 3 divides 6 evenly into
@@ -1370,11 +1401,11 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
     user-select: none !important; touch-action: manipulation !important;
   }
   .combo-card:hover, .combo-card:active,
-  .combo-card.card:hover { transform: none !important; box-shadow: 0 4px 32px rgba(0,0,0,0.35) !important; border-color: rgba(255,255,255,0.09) !important; }
+  .combo-card.card:hover { transform: none !important; box-shadow: none !important; border-color: rgba(255,255,255,0.09) !important; }
   .combo-card.combo-blue:hover, .combo-card.combo-blue:active { border-color: rgba(77,139,255,0.22) !important; }
   .combo-card.combo-pink:hover, .combo-card.combo-pink:active { border-color: rgba(255,65,108,0.22) !important; }
-  .combo-featured-frame:hover, .combo-featured-frame:active,
-  .combo-card.featured:active { transform: none !important; box-shadow: 0 0 0 2px #8b5cf6, 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12) !important; }
+  .combo-featured-frame:hover, .combo-featured-frame:active { transform: none !important; }
+  .combo-card.featured:active { transform: none !important; box-shadow: none !important; }
   /* Course cards — pointer-events:none on the card div; only <a> button is tappable */
   .course-card { pointer-events: none !important; }
   .course-card .btn-ghost, .course-card .btn-ghost * { pointer-events: auto !important; }
@@ -1539,9 +1570,9 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   .course-card:hover .course-topic { color: var(--ink-dim); }
   .course-card:hover .course-topic::before { background: var(--purple); }
   .combo-card:hover { transform: none; }
-  .combo-featured-frame:hover { transform: none; box-shadow: 0 0 0 2px #8b5cf6, 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12); }
-  .combo-featured-frame { background: none; padding: 0; box-shadow: 0 0 0 2px #8b5cf6, 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12); transition: none; -webkit-tap-highlight-color: transparent; }
-  .combo-featured-frame.coming-soon:hover, .combo-featured-frame.coming-soon { box-shadow: 0 0 0 2px #FCD34D, 0 24px 80px rgba(245,158,11,0.45), 0 0 60px rgba(251,191,36,0.18); }
+  .combo-featured-frame:hover { transform: none; box-shadow: 0 0 0 2px #8b5cf6; }
+  .combo-featured-frame { background: none; padding: 0; box-shadow: 0 0 0 2px #8b5cf6; transition: none; -webkit-tap-highlight-color: transparent; }
+  .combo-featured-frame.coming-soon:hover, .combo-featured-frame.coming-soon { box-shadow: 0 0 0 2px #FCD34D; }
   .combo-featured-frame, .combo-card.featured { -webkit-tap-highlight-color: transparent; }
   .combo-card.featured::after { animation: none; }
   .combo-card .btn-primary::before { animation: none; }
@@ -2024,7 +2055,7 @@ const parseCSV = text => {
 };
 
 const fmtPrice    = n => n ? '₹' + Number(n).toLocaleString('en-IN') : '';
-const fmtValidity = d => { if (!d) return ''; const dt = new Date(d + 'T00:00:00'); return 'VALID UNTIL ' + dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase(); };
+const fmtValidity = d => { if (!d) return ''; const dt = new Date(d + 'T00:00:00'); return 'Valid until ' + dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); };
 const fmtDate     = d => { if (!d) return ''; const dt = new Date(d + 'T00:00:00'); return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); };
 const fmtDeadline = d => { if (!d) return ''; const dt = new Date(d + 'T00:00:00'); return 'Offer ends ' + dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };
 
