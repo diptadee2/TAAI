@@ -956,126 +956,54 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
    wrapper, and grid-auto-rows:1fr makes both rows match the tallest card. */
 .courses-grid > .fade-in > .course-card { height: 100%; }
 .course-card {
-  border-radius: var(--radius-xl); padding: 28px 24px 24px;
+  border-radius: 18px; padding: 26px 24px 24px;
   display: flex; flex-direction: column;
-  position: relative; overflow: hidden;
-  border: 1.5px solid var(--line); background: var(--card);
-  transition: transform .5s cubic-bezier(.25,.46,.45,.94), box-shadow .5s cubic-bezier(.25,.46,.45,.94), border-color .35s ease;
+  position: relative;
+  border: 1px solid rgba(20,16,43,0.1); background: #fff;
+  transition: border-color .2s ease;
 }
-.ticket-notch {
-  position: relative; height: 0;
-  margin: 16px -24px; z-index: 3;
-}
-.ticket-notch::before, .ticket-notch::after {
-  content: ''; position: absolute;
-  width: 22px; height: 22px; border-radius: 50%;
-  background: var(--bg);
-  top: 0;
-}
-.ticket-notch::before { left: 0; transform: translate(-50%, -50%); }
-.ticket-notch::after  { right: 0; transform: translate(50%, -50%); }
-.ticket-notch-line {
-  position: absolute; top: 0; left: 11px; right: 11px;
-  transform: translateY(-50%);
-  border-top: 1.5px dashed rgba(0,0,0,0.1);
-  transition: border-color .28s ease;
-}
-.course-card:hover .ticket-notch-line { border-color: rgba(255,255,255,0.22); }
-.course-card::before {
-  content: ''; position: absolute; inset: 0; border-radius: inherit;
-  background: var(--course-grad); opacity: 0.14;
-  transition: opacity .5s ease;
-}
-.course-card:hover { transform: translateY(-10px); box-shadow: 0 28px 60px var(--course-shadow, rgba(107,75,255,0.28)); border-color: transparent; }
-.course-card:hover::before { opacity: 0.9; }
+/* Individual course cards de-slopped 2026-10-03 ("make the course cards
+   look less ai slop"): plain white card with a hairline border; hover only
+   darkens the border and fills the button. Removed: the per-subject pastel
+   gradient wash that flooded the card on hover, the 10px lift and coloured
+   glow, gradient icon tiles, the ticket-stub dashed line with punched
+   notches, and the monospace caps validity line. */
+/* Scoped to the grid so [data-cards="shadowed"] .card (transparent border +
+   shadow) doesn't win. */
+.courses-grid .course-card { border: 1px solid rgba(20,16,43,0.1); box-shadow: none; }
+.courses-grid .course-card:hover { border-color: rgba(20,16,43,0.28); }
 .course-accent { display: none; }
 .course-icon {
-  width: 48px; height: 48px; border-radius: 14px;
-  display: grid; place-items: center; color: #fff; margin-bottom: 20px;
-  position: relative; z-index: 1;
-  transition: transform .5s cubic-bezier(.25,.46,.45,.94), box-shadow .5s ease;
+  width: 40px; height: 40px; border-radius: 10px;
+  display: grid; place-items: center; margin-bottom: 18px;
+  background: #F2EFFA; color: #4B3FA0;
 }
-.course-card:hover .course-icon { transform: scale(1.14) translateY(-3px); box-shadow: 0 10px 28px rgba(0,0,0,0.28); }
+.course-icon svg { width: 18px; height: 18px; }
 .course-title {
   font-family: var(--font-display); font-size: 20px; font-weight: 600;
-  letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 6px;
-  position: relative; z-index: 1; transition: color .28s ease;
+  letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 4px; color: var(--ink);
 }
-.course-card:hover .course-title { color: #fff; }
-.course-validity {
-  font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-soft);
-  margin-bottom: 14px; letter-spacing: .02em; white-space: nowrap;
-  position: relative; z-index: 1; transition: color .28s ease;
-}
-.course-card:hover .course-validity { color: rgba(255,255,255,0.45); }
-/* Topics are shown at rest now, not hidden behind hover — a wide card
-   with nothing but icon/title/price read as mostly empty (real report:
-   "the single subjects texts are very small and a lot of negative
-   space"). Text/dot default to dark ink (same as the touch-device
-   resting state below) since the resting card background is plain
-   white; both transition to a near-white tint on hover, when the
-   gradient overlay behind them (.course-card::before) darkens. This
-   piece applies at every width — mobile/iPad already showed topics at
-   rest this same way via the touch/(hover:none) overrides below, so
-   nothing changes for them; only min-width:1025px (below) enlarges
-   type/spacing for the genuinely wider desktop card. */
-.course-topics {
-  position: relative; z-index: 1;
-  display: flex; flex-direction: column; gap: 7px; margin-bottom: 16px;
-}
-.course-topic {
-  display: flex; align-items: center; gap: 7px;
-  font-size: 12px; color: var(--ink-dim); line-height: 1.35;
-  transition: color .28s ease;
-}
-.course-card:hover .course-topic { color: rgba(255,255,255,0.82); }
-.course-topic::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--purple); flex-shrink: 0; transition: background .28s ease; }
-.course-card:hover .course-topic::before { background: rgba(255,255,255,0.55); }
+.course-validity { font-size: 12.5px; color: var(--ink-dim); margin-bottom: 16px; }
+.course-topics { display: flex; flex-direction: column; gap: 7px; margin-bottom: 20px; }
+.course-topic { display: flex; align-items: baseline; gap: 8px; font-size: 13.5px; color: var(--ink-dim); line-height: 1.4; }
+.course-topic::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: rgba(20,16,43,0.3); flex-shrink: 0; position: relative; top: -2px; }
 .course-price-row {
   display: flex; align-items: baseline; gap: 8px;
-  margin-top: auto; margin-bottom: 18px; position: relative; z-index: 1;
+  margin-top: auto; margin-bottom: 16px; padding-top: 16px; border-top: 1px solid rgba(20,16,43,0.08);
 }
-.course-price {
-  font-family: var(--font-display); font-size: 26px; font-weight: 600;
-  letter-spacing: -0.03em; transition: color .28s ease;
-}
-.course-card:hover .course-price { color: #fff; }
-.course-price-old { font-size: 13px; color: var(--ink-soft); text-decoration: line-through; transition: color .28s ease; }
-.course-card:hover .course-price-old { color: rgba(255,255,255,0.42); }
-/* Desktop only (min-width:1025px, this page's own established "true
-   desktop, not tablet" cutoff — see .combo-horizontal-left/-right)
-   — the individual-course cards get noticeably wider at this width
-   once .courses-grid settles into 3 real columns of real page width,
-   so the type/icon/padding scale up to match; mobile and iPad
-   portrait keep the original sizes above, which were already a good
-   fit for their own narrower card width. */
+.course-price { font-family: var(--font-display); font-size: 26px; font-weight: 600; letter-spacing: -0.03em; color: var(--ink); }
+.course-price-old { font-size: 13px; color: var(--ink-soft); text-decoration: line-through; }
 @media (min-width: 1025px) {
-  .course-card { padding: 32px 28px 28px; }
-  .ticket-notch { margin: 18px -28px; }
-  .course-icon { width: 56px; height: 56px; border-radius: 16px; margin-bottom: 22px; }
-  .course-icon svg { width: 24px; height: 24px; }
-  .course-title { font-size: 23px; margin-bottom: 8px; }
-  .course-validity { font-size: 12.5px; margin-bottom: 18px; }
-  .course-topics { gap: 9px; margin-bottom: 22px; }
-  .course-topic { gap: 8px; font-size: 13.5px; line-height: 1.4; }
-  .course-topic::before { width: 5px; height: 5px; }
-  .course-price-row { gap: 9px; margin-bottom: 20px; }
-  .course-price { font-size: 30px; }
-  .course-price-old { font-size: 14px; }
+  .course-card { padding: 30px 28px 28px; }
+  .course-title { font-size: 22px; }
+  .course-validity { margin-bottom: 18px; }
+  .course-topic { font-size: 14px; }
+  .course-price { font-size: 28px; }
 }
-.course-card .btn-ghost {
-  position: relative; z-index: 1; overflow: hidden;
-  transition: background .3s ease, color .3s ease, border-color .3s ease, transform .32s cubic-bezier(.34,1.15,.64,1), box-shadow .3s ease;
-}
-.course-card:hover .btn-ghost { background: rgba(255,255,255,0.14); color: #fff; border-color: rgba(255,255,255,0.38); }
-.course-card .btn-ghost:hover {
-  background: rgba(255,255,255,0.92); color: var(--ink);
-  border-color: transparent; transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.22);
-}
-.course-card .btn-ghost svg { transition: transform .3s cubic-bezier(.34,1.2,.64,1); flex-shrink: 0; }
-.course-card:hover .btn-ghost svg { transform: translateX(3px); }
-.course-card .btn-ghost:hover svg { transform: translateX(6px); }
+.course-card .btn-ghost { border: 1px solid rgba(20,16,43,0.2); color: var(--ink); transition: background .2s ease, color .2s ease, border-color .2s ease; }
+.course-card .btn-ghost svg { flex-shrink: 0; transition: transform .2s ease; }
+.course-card .btn-ghost:hover { background: var(--ink); color: #fff; border-color: var(--ink); }
+.course-card .btn-ghost:hover svg { transform: translateX(3px); }
 
 /* Coming soon card */
 .placement-card {
@@ -1395,22 +1323,20 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .course-card,
   .course-card:hover,
   .course-card:active,
-  .course-card:focus { transform: none !important; box-shadow: 0 2px 12px rgba(0,0,0,0.05) !important; border-color: var(--line) !important; }
+  .course-card:focus { transform: none !important; box-shadow: none !important; border-color: rgba(20,16,43,0.1) !important; }
   .course-card:hover::before, .course-card:active::before { opacity: 0.18 !important; }
   .course-card:hover .course-icon,
   .course-card:active .course-icon { transform: none !important; box-shadow: none !important; }
   .course-card:hover .course-title,
   .course-card:active .course-title { color: inherit !important; }
   .course-card:hover .course-validity,
-  .course-card:active .course-validity { color: var(--ink-soft) !important; }
+  .course-card:active .course-validity { color: var(--ink-dim) !important; }
   .course-card:hover .course-price,
   .course-card:active .course-price { color: var(--ink) !important; }
   .course-card:hover .course-price-old,
   .course-card:active .course-price-old { color: var(--ink-soft) !important; }
-  .course-card:hover .ticket-notch-line,
-  .course-card:active .ticket-notch-line { border-color: var(--line) !important; }
   .course-card:hover .btn-ghost,
-  .course-card:active .btn-ghost { background: transparent !important; color: var(--ink) !important; border-color: var(--line) !important; }
+  .course-card:active .btn-ghost { background: transparent !important; color: var(--ink) !important; border-color: rgba(20,16,43,0.2) !important; }
   .course-card:hover .btn-ghost svg,
   .course-card:active .btn-ghost svg { transform: none !important; }
   /* Topics are visible at rest on every device now — this just locks
@@ -1419,7 +1345,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .course-card:hover .course-topic,
   .course-card:active .course-topic { color: var(--ink-dim) !important; }
   .course-card:hover .course-topic::before,
-  .course-card:active .course-topic::before { background: var(--purple) !important; }
+  .course-card:active .course-topic::before { background: rgba(20,16,43,0.3) !important; }
   /* Combo includes — always visible, hover/active locked to resting */
   .combo-includes li { opacity: 1; transform: translateX(0); }
   .combo-check svg path { stroke-dashoffset: 0; }
@@ -1444,7 +1370,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .course-card .course-price-old,
   .course-card .btn-ghost,
   .course-card .btn-ghost svg,
-  .course-card .ticket-notch-line,
   .course-card .course-topics,
   .course-card .course-topic {
     transition: none !important;
@@ -1526,18 +1451,17 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 
 /* ── Disable hover animations on touch devices ──────── */
 @media (hover: none) {
-  .course-card:hover { transform: none; box-shadow: var(--shadow-sm); }
+  .course-card:hover { transform: none; box-shadow: none; }
   .course-card::before { opacity: 0.35; }
   .course-card:hover::before { opacity: 0.35; }
   .course-card:hover .course-title { color: var(--ink); }
-  .course-card:hover .course-validity { color: var(--ink-soft); }
+  .course-card:hover .course-validity { color: var(--ink-dim); }
   .course-card:hover .course-price { color: var(--ink); }
   .course-card:hover .course-price-old { color: var(--ink-soft); }
   .course-card:hover .course-icon { transform: none; box-shadow: none; }
-  .course-card:hover .ticket-notch-line { border-color: rgba(0,0,0,0.1); }
-  .course-card:hover .btn-ghost { background: transparent; color: var(--ink); border-color: var(--ink); }
+  .course-card:hover .btn-ghost { background: transparent; color: var(--ink); border-color: rgba(20,16,43,0.2); }
   .course-card:hover .course-topic { color: var(--ink-dim); }
-  .course-card:hover .course-topic::before { background: var(--purple); }
+  .course-card:hover .course-topic::before { background: rgba(20,16,43,0.3); }
   .combo-card:hover { transform: none; }
   .combo-featured-frame:hover { transform: none; box-shadow: 0 0 0 2px #8b5cf6, 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12); }
   .combo-featured-frame { background: none; padding: 0; box-shadow: 0 0 0 2px #8b5cf6, 0 24px 80px rgba(139,92,246,0.4), 0 0 50px rgba(139,92,246,0.12); transition: none; -webkit-tap-highlight-color: transparent; }
@@ -2024,6 +1948,8 @@ const parseCSV = text => {
 };
 
 const fmtPrice    = n => n ? '₹' + Number(n).toLocaleString('en-IN') : '';
+// Sentence-case version for the individual course cards.
+const fmtValidityPlain = d => { if (!d) return ''; const dt = new Date(d + 'T00:00:00'); return 'Valid until ' + dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); };
 const fmtValidity = d => { if (!d) return ''; const dt = new Date(d + 'T00:00:00'); return 'VALID UNTIL ' + dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase(); };
 const fmtDate     = d => { if (!d) return ''; const dt = new Date(d + 'T00:00:00'); return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); };
 const fmtDeadline = d => { if (!d) return ''; const dt = new Date(d + 'T00:00:00'); return 'Offer ends ' + dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };
@@ -3065,13 +2991,12 @@ const CourseCard = React.memo(function CourseCard({ c, pricing }) {
   const p        = pricing || {};
   const price    = p.price    ? fmtPrice(p.price)    : '-';
   const priceOld = p.priceOld ? fmtPrice(p.priceOld) : null;
-  const validity = p.validity ? fmtValidity(p.validity) : '-';
+  const validity = p.validity ? fmtValidityPlain(p.validity) : '-';
   return (
-    <div id={c.id} className="course-card card" style={{ '--course-grad': c.grad, '--course-shadow': c.shadow }}>
-      <div className="course-accent" style={{ background: c.grad }} />
-      <div className="course-icon" style={{ background: c.grad }}>{c.icon}</div>
+    <div id={c.id} className="course-card card">
+      <div className="course-icon" aria-hidden="true">{c.icon}</div>
       <div className="course-title">{c.title}</div>
-      <div className={`course-validity mono${p.validity ? ' data-fade-in' : ''}`}>{validity}</div>
+      <div className={`course-validity${p.validity ? ' data-fade-in' : ''}`}>{validity}</div>
       <div className="course-topics">
         {c.topics.map((t, i) => (
           <div key={i} className="course-topic" style={{ '--td': `${i * 55}ms` }}>{t}</div>
@@ -3081,7 +3006,6 @@ const CourseCard = React.memo(function CourseCard({ c, pricing }) {
         <div className="course-price">{price}</div>
         {priceOld && <div className="course-price-old">{priceOld}</div>}
       </div>
-      <div className="ticket-notch"><div className="ticket-notch-line" /></div>
       <a target="_blank" rel="noopener noreferrer" href={p.enrollUrl || c.href} className="btn btn-ghost btn-full">Get course <Icon.ArrowRight /></a>
     </div>
   );
