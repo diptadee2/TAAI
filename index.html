@@ -891,6 +891,42 @@ body {
 .instructor-tags { display: flex; flex-wrap: wrap; gap: 7px; }
 .instructor-tag { font-size: 12.5px; font-weight: 500; padding: 5px 13px; border-radius: 999px; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.82); border: 1px solid rgba(255,255,255,0.12); transition: background .18s ease, border-color .18s ease, transform .18s ease; animation: tag-pop .4s cubic-bezier(.34,1.3,.64,1) both; }
 .instructor-tag:hover { background: rgba(255,255,255,0.16); border-color: rgba(255,255,255,0.28); transform: scale(1.09); }
+/* Mentor section de-slopped 2026-10-04: plain dark background (no dot
+   grid or purple glow), no photo zoom, a quiet static "watch" pill
+   instead of the pulsing red circle that expanded on hover, a plain white
+   name, and the credentials as three facts in a row instead of hover-lift
+   cards with a gradient "AIR 13". */
+.instructor-section { background-image: none; }
+.instructor-section::before { display: none; }
+.instructor-photo, .instructor-photo-wrap:hover .instructor-photo { transform: none; transition: none; }
+.instructor-play-btn, .instructor-play-btn:hover {
+  left: auto; right: 16px; bottom: 16px; width: auto; max-width: none; height: 40px;
+  padding: 0 16px 0 6px; gap: 10px; justify-content: flex-start;
+  background: rgba(15,12,30,0.78); border: 1px solid rgba(255,255,255,0.18);
+  box-shadow: none; animation: none; transition: background .2s ease;
+}
+.instructor-play-btn:hover { background: rgba(15,12,30,0.92); }
+.instructor-play-icon { width: 28px; height: 28px; border-radius: 50%; background: #FF0033; color: #fff; }
+.instructor-play-label, .instructor-play-btn:hover .instructor-play-label { opacity: 1; transform: none; padding: 0; font-size: 13.5px; font-weight: 500; transition: none; animation: none; }
+.instructor-name { font-size: clamp(32px,3.6vw,46px); letter-spacing: -0.025em; line-height: 1.05; margin: 0 0 16px; color: #fff; }
+.instructor-bio { color: rgba(255,255,255,0.62); margin-bottom: 32px; }
+.instructor-facts { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); margin: 0 0 28px; border-top: 1px solid rgba(255,255,255,0.12); border-bottom: 1px solid rgba(255,255,255,0.12); }
+.instructor-fact { padding: 18px 20px; }
+.instructor-fact + .instructor-fact { border-left: 1px solid rgba(255,255,255,0.12); }
+.instructor-fact:first-child { padding-left: 0; }
+.instructor-fact dt { font-size: 15px; font-weight: 600; color: #fff; line-height: 1.3; }
+.instructor-fact:first-child dt { font-family: var(--font-display); font-size: 24px; letter-spacing: -0.02em; line-height: 1.05; }
+.instructor-fact dd { margin: 4px 0 0; font-size: 13px; color: rgba(255,255,255,0.5); line-height: 1.4; }
+.instructor-subjects { font-size: 14.5px; color: rgba(255,255,255,0.62); line-height: 1.6; margin: 0; }
+.instructor-subjects span { color: rgba(255,255,255,0.9); font-weight: 600; margin-right: 4px; }
+@media (max-width: 600px) {
+  .instructor-play-btn, .instructor-play-btn:hover { right: 10px; bottom: 10px; height: 34px; padding: 0 12px 0 4px; gap: 8px; }
+  .instructor-play-icon { width: 26px; height: 26px; }
+  .instructor-play-label, .instructor-play-btn:hover .instructor-play-label { font-size: 12.5px; }
+  .instructor-facts { grid-template-columns: minmax(0,1fr); }
+  .instructor-fact, .instructor-fact:first-child { padding: 14px 0; }
+  .instructor-fact + .instructor-fact { border-left: none; border-top: 1px solid rgba(255,255,255,0.12); }
+}
 
 /* Faculty cards */
 .faculty-grid { display: grid; grid-template-columns: 1.42fr 1fr; gap: 20px; align-items: start; }
@@ -1261,17 +1297,6 @@ a[href*="youtube"]:not(.offer-card):hover svg, a[href*="youtu.be"]:not(.offer-ca
   50%       { box-shadow: 0 4px 20px rgba(139,92,246,0.32); transform: scale(1.04); }
 }
 @media (hover: none) {
-  .instructor-play-btn {
-    left: 16px; right: 16px; width: auto;
-    justify-content: space-between;
-    padding-left: 20px;
-    animation: play-pulse-ring 2.2s ease-out infinite;
-  }
-  .instructor-play-label {
-    opacity: 1; transform: translateX(0);
-    transition: none; animation: none;
-    letter-spacing: -.01em;
-  }
   /* Make testi-watch always visible + in normal flow on ALL touch devices.
      On real iPads iOS sticky-hover briefly fires :hover, making the absolute-
      positioned button appear over the author name. Static positioning fixes both. */
@@ -2209,40 +2234,30 @@ function Instructor() {
             <div className="instructor-photo-wrap" style={{ marginBottom: 36 }}>
               <img src="manoj-kumar.webp" alt="Manoj Kumar, TAAI" className="instructor-photo" loading="lazy" width="1000" height="586" />
               <a href="https://www.youtube.com/watch?v=Rppm3LrbLOI&t=5372s" target="_blank" rel="noopener noreferrer" className="instructor-play-btn">
-                <span className="instructor-play-label">Free Probability Crash Course</span>
                 <span className="instructor-play-icon">
-                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M4 2.5L12.5 7.5L4 12.5V2.5Z" fill="white"/></svg>
+                  <svg width="12" height="12" viewBox="0 0 15 15" fill="none"><path d="M4 2.5L12.5 7.5L4 12.5V2.5Z" fill="currentColor"/></svg>
                 </span>
+                <span className="instructor-play-label">Free probability crash course</span>
               </a>
             </div>
             <div className="instructor-text">
-              <div className="instructor-name">Manoj <span>Kumar.</span></div>
+              <h3 className="instructor-name">Manoj Kumar</h3>
               <p className="instructor-bio">Known for visual, intuition-first teaching across every GATE DA subject. Started TAAI with one goal, give serious aspirants the clearest possible path to an IIT. No shortcuts, no fluff, just the depth that actually gets you ranked.</p>
-              <div className="instructor-creds">
-                <div className="instructor-cred-card instructor-cred-card-air">
-                  <div className="instructor-cred-air-num">AIR 13</div>
-                  <div className="instructor-cred-air-text">
-                    <div className="instructor-cred-air-label">GATE</div>
-                    <div className="instructor-cred-air-sub">All India Rank</div>
-                  </div>
+              <dl className="instructor-facts">
+                <div className="instructor-fact">
+                  <dt>AIR 13</dt>
+                  <dd>GATE, All India Rank</dd>
                 </div>
-                <div className="instructor-cred-card">
-                  <div className="instructor-cred-card-title">M.Tech Data Science</div>
-                  <div className="instructor-cred-card-sub">IIT Guwahati</div>
+                <div className="instructor-fact">
+                  <dt>M.Tech Data Science</dt>
+                  <dd>IIT Guwahati</dd>
                 </div>
-                <div className="instructor-cred-card">
-                  <div className="instructor-cred-card-title">M.Tech Machine Design</div>
-                  <div className="instructor-cred-card-sub">IIT Bombay · Dropout</div>
+                <div className="instructor-fact">
+                  <dt>M.Tech Machine Design</dt>
+                  <dd>IIT Bombay, dropped out</dd>
                 </div>
-              </div>
-              <div style={{ marginTop: 28 }}>
-                <div className="instructor-subjects-label">Subjects</div>
-                <div className="instructor-tags">
-                  {MANOJ_SUBJECTS.map((s, i) => (
-                    <span key={s} className="instructor-tag" style={{ animationDelay: i * 52 + 'ms' }}>{s}</span>
-                  ))}
-                </div>
-              </div>
+              </dl>
+              <p className="instructor-subjects"><span>Teaches</span> {MANOJ_SUBJECTS.join(', ')}</p>
             </div>
           </div>
 
