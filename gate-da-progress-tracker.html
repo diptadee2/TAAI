@@ -516,8 +516,16 @@
   /* Focus Mode is desktop-only, same breakpoint as .side-col below —
      phone and iPad-portrait get the task checklist only. */
   @media (max-width: 1080px) { .focus-toggle-wrap { display: none; } }
-  .focus-toggle { display: inline-flex; align-items: center; gap: 8px; padding: 13px 30px; border-radius: 999px; border: none; background: linear-gradient(135deg,#FF7FB7,var(--purple),#4D8BFF); color: #fff; font-family: var(--font-nav); font-size: 13.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; cursor: pointer; box-shadow: 0 8px 24px rgba(139,92,246,0.4); transition: transform .28s cubic-bezier(.34,1.1,.64,1), box-shadow .22s, background .22s, color .22s, border-color .22s; }
-  .focus-toggle:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 12px 30px rgba(139,92,246,0.5); }
+  /* Restyled 2026-10-03 ("the focus mode button can be better"): same
+     language as the Pomodoro Start button (solid accent, dark text, drawn
+     timer icon, sentence case) instead of an uppercase gradient pill with
+     a glow and a lift-and-scale hover. No box-shadow, so the press scale
+     is safe from the box-shadow + border-radius leak. */
+  .focus-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 9px; height: 48px; padding: 0 26px; border-radius: 14px; border: none; background: var(--purple); color: #121016; font-family: var(--font-nav); font-size: 15px; font-weight: 700; letter-spacing: .01em; cursor: pointer; transition: transform .16s cubic-bezier(.34,1.56,.64,1), filter .18s ease, background .22s, color .22s, border-color .22s; }
+  .focus-toggle:not(.active):hover { filter: brightness(1.08); }
+  .focus-toggle:not(.active):active { transform: scale(0.97); }
+  .focus-toggle:not(.active):focus-visible { outline: 2px solid var(--purple); outline-offset: 3px; }
+  .focus-toggle-icon { display: inline-flex; }
   /* Deliberately quieter than the "Enter Focus mode" CTA above, not a
      smaller version of the same pill — this is genuinely the least-used
      control on the whole screen (most students just leave the tab open
@@ -527,7 +535,7 @@
      row with, and only picks up a background/border on hover/focus — so
      it's unmistakably clickable the moment someone looks for it, without
      competing for attention the rest of the time. */
-  .focus-toggle.active { padding: 8px 14px; background: none; color: var(--ink-soft); border: 1.5px solid transparent; box-shadow: none; font-size: 12.5px; letter-spacing: .04em; }
+  .focus-toggle.active { height: auto; padding: 8px 14px; border-radius: 999px; background: none; color: var(--ink-soft); border: 1.5px solid transparent; box-shadow: none; font-size: 12.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
   .focus-toggle.active svg { opacity: .8; transition: transform .22s cubic-bezier(.34,1.1,.64,1); }
   /* transform:none overrides the base .focus-toggle:hover lift/scale on
      purpose — a rarely-used ghost control doesn't need the same "reward"
