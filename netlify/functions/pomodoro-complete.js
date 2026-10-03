@@ -138,10 +138,25 @@ export async function handler(event) {
     await logCreditFailure(supabase, { email, reason: 'wrong_mode', claimedPhaseEndAt: phaseEndAt, session });
     return json(400, { error: 'could not verify this session' });
   }
-  if (session.phase_end_at !== phaseEndAt) {
+  // The claimed end may be LATER than the server's record when this device
+  // paused/resumed again and that sync never landed (or was blocked by
+  // another tab/device): the client's deadline moved, the server's didn't.
+  // Real report, Puneet Koundal 2026-10-03: a genuine 2h session (server
+  // start 11:59:30, server end 14:13:13, claim end 14:17:24 at 14:17:27)
+  // got zero credit. That's still the same phase, so accept it when the
+  // claimed end is later than the stored one and not in the future; the
+  // elapsed-time check below (measured by the server from its own start)
+  // is what actually guards against cheating, and crediting uses the
+  // stored end so it stays claim-once. An EARLIER claimed end (a stale tab
+  // claiming a previous phase) is still rejected.
+  const laterEndSamePhase = Number.isFinite(session.phase_end_at)
+    && phaseEndAt > session.phase_end_at
+    && phaseEndAt <= Date.now() + GRACE_MS;
+  if (session.phase_end_at !== phaseEndAt && !laterEndSamePhase) {
     await logCreditFailure(supabase, { email, reason: 'phase_end_mismatch', claimedPhaseEndAt: phaseEndAt, session });
     return json(400, { error: 'could not verify this session' });
   }
+  const creditPhaseEndAt = session.phase_end_at;
   if (!session.phase_started_at) {
     await logCreditFailure(supabase, { email, reason: 'no_phase_started_at', claimedPhaseEndAt: phaseEndAt, session });
     return json(400, { error: 'could not verify this session' });
@@ -175,7 +190,7 @@ export async function handler(event) {
   // so it's treated as an idempotent no-op below rather than double-
   // crediting.
   const { data: claim, error: claimError } = await supabase
-    .rpc('credit_pomodoro_phase', { p_email: email, p_phase_end_at: phaseEndAt })
+    .rpc('credit_pomodoro_phase', { p_email: email, p_phase_end_at: creditPhaseEndAt })
     .maybeSingle();
   if (claimError) {
     await logCreditFailure(supabase, { email, reason: 'claim_rpc_error: ' + claimError.message, claimedPhaseEndAt: phaseEndAt, session });
