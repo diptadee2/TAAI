@@ -329,44 +329,26 @@ body {
 
 .hero-sub { font-size: 18px; color: rgba(255,255,255,0.62); max-width: 500px; margin-bottom: 24px; line-height: 1.55; }
 .hero-checks { display: flex; flex-direction: column; gap: 10px; margin-bottom: 32px; }
-.hero-check { display: flex; align-items: center; gap: 11px; font-size: 14.5px; color: rgba(255,255,255,0.86); font-weight: 450; }
-.hero-check-icon { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; transition: transform .2s cubic-bezier(.34,1.4,.64,1); }
-.hero-check:hover .hero-check-icon { transform: scale(1.12); }
+/* Hero restyled 2026-10-03 ("less ai slop"): plain check marks instead of
+   glowing gradient badges, a solid white primary button instead of the
+   gradient glow pill, and one line of plain proof instead of an initials
+   avatar stack plus five animated stars. */
+.hero-check { display: flex; align-items: flex-start; gap: 12px; line-height: 1.5; font-size: 15px; color: rgba(255,255,255,0.86); font-weight: 450; }
+.hero-check-icon { display: inline-flex; flex-shrink: 0; color: #C4B5FD; margin-top: .2em; }
+.hero .btn-primary { background: #fff; color: #14102B; box-shadow: none; font-weight: 600; }
+.hero .btn-primary:hover { background: #EDE9FE; transform: none; box-shadow: none; }
+.hero .btn-ghost { border-color: rgba(255,255,255,0.32); }
+.hero .btn-ghost:hover { border-color: #fff; }
 [data-hero="centered"] .hero-sub { margin-left: auto; margin-right: auto; }
 .hero-cta { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 32px; }
 .hero-guide-link { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.7); text-decoration: none; margin: -18px 0 28px; transition: color .2s, gap .2s; }
 .hero-guide-link:hover { color: #fff; gap: 10px; }
 [data-hero="centered"] .hero-guide-link { margin-left: auto; margin-right: auto; }
-.hero-meta { display: flex; gap: 32px; align-items: center; font-size: 16px; color: rgba(255,255,255,0.62); flex-wrap: wrap; }
-.hero-meta-item { display: flex; align-items: center; gap: 8px; }
-.hero-avatars { display: flex; }
-.hero-avatar {
-  width: 38px; height: 38px; border-radius: 50%; border: 2px solid #fff;
-  margin-left: -10px; display: grid; place-items: center;
-  font-size: 14px; font-weight: 600; color: var(--ink);
-}
-.hero-avatar:first-child { margin-left: 0; }
-.hero-rating { display: flex; flex-direction: column; gap: 4px; cursor: default; }
-.hero-rating-top { display: flex; align-items: center; gap: 8px; }
-.hero-rating-num {
-  font-family: var(--font-display); font-size: 22px; font-weight: 600;
-  letter-spacing: -0.03em; color: #fff; line-height: 1;
-}
-.hero-rating-stars { display: flex; gap: 2px; }
-.hero-rating-star {
-  color: #F59E0B; display: flex; align-items: center;
-  animation: starIn .42s cubic-bezier(.34,1.3,.64,1) calc(var(--i) * 70ms + 900ms) both;
-  transition: transform .18s cubic-bezier(.34,1.3,.64,1), filter .18s;
-}
-.hero-rating-star:hover {
-  transform: scale(1.45) translateY(-2px);
-  filter: drop-shadow(0 2px 6px rgba(245,158,11,0.75));
-}
-@keyframes starIn {
-  from { opacity: 0; transform: scale(0.2) rotate(-30deg); }
-  to   { opacity: 1; transform: scale(1)   rotate(0deg);   }
-}
-.hero-rating-label { font-size: 13px; color: rgba(255,255,255,0.62); letter-spacing: .01em; white-space: nowrap; }
+.hero-meta { display: flex; gap: 14px 28px; align-items: center; font-size: 14.5px; color: rgba(255,255,255,0.62); flex-wrap: wrap; padding-top: 22px; border-top: 1px solid rgba(255,255,255,0.1); max-width: 560px; }
+.hero-proof { display: flex; align-items: center; gap: 7px; }
+.hero-proof-num { font-family: var(--font-display); font-size: 17px; font-weight: 600; color: #fff; }
+.hero-proof-star { display: inline-flex; color: #F5B83D; }
+.hero-proof-text b { font-weight: 600; color: rgba(255,255,255,0.9); }
 
 /* Hero visual card */
 .hero-visual { position: relative; aspect-ratio: 4 / 5; max-width: 460px; justify-self: end; width: 100%; }
@@ -1732,50 +1714,34 @@ function Hero() {
           </p>
           <div className="hero-checks">
             <div className="hero-check">
-              <span className="hero-check-icon" style={{ background: 'linear-gradient(135deg, var(--purple), #6D3FE0)', boxShadow: '0 2px 10px rgba(139,92,246,0.55)' }}><Icon.Check size={12} style={{ color: '#fff' }} /></span>
+              <span className="hero-check-icon"><Icon.Check size={16} /></span>
               Built for GATE DA, not a repurposed CSE course
             </div>
             <div className="hero-check">
-              <span className="hero-check-icon" style={{ background: 'linear-gradient(135deg, var(--pink), #E85A9A)', boxShadow: '0 2px 10px rgba(255,127,183,0.55)' }}><Icon.Check size={12} style={{ color: '#fff' }} /></span>
+              <span className="hero-check-icon"><Icon.Check size={16} /></span>
               Visual, conceptual teaching, understand the why, not just formulas
             </div>
             <div className="hero-check">
-              <span className="hero-check-icon" style={{ background: 'linear-gradient(135deg, var(--blue), #2D6BE0)', boxShadow: '0 2px 10px rgba(77,139,255,0.55)' }}><Icon.Check size={12} style={{ color: '#fff' }} /></span>
+              <span className="hero-check-icon"><Icon.Check size={16} /></span>
               End-to-end: GATE prep, IIT admission, and AI/ML interview prep
             </div>
           </div>
           <div className="hero-cta">
-            <a href="#why" className="btn btn-primary btn-lg">Learn More <Icon.ArrowRight /></a>
+            <a href="#why" className="btn btn-primary btn-lg">Learn more <Icon.ArrowRight /></a>
             <a target="_blank" rel="noopener noreferrer" href="https://youtube.com/playlist?list=PLZvuMBNC5r0XN-Q0IvRt6wMWVajlDYbyX&si=9znNwIgCzbAElQaI" className="btn btn-ghost btn-lg btn-swap">
-              <span className="swap-default">Free Lectures!</span>
+              <span className="swap-default">Free lectures</span>
               <span className="swap-hover">Machine Learning</span>
             </a>
           </div>
           <a href="/blogs/gate-da-syllabus-2027" className="hero-guide-link"><Icon.Book size={15} /> New: Free GATE DA Syllabus 2027 guide <Icon.ArrowRight size={13} /></a>
           <div className="hero-meta">
-            <div className="hero-meta-item">
-              <div className="hero-avatars">
-                <div className="hero-avatar" style={{ background: 'var(--pink-soft)' }}>AR</div>
-                <div className="hero-avatar" style={{ background: 'var(--purple-soft)' }}>SK</div>
-                <div className="hero-avatar" style={{ background: 'var(--blue-soft)' }}>NP</div>
-                <div className="hero-avatar" style={{ background: 'linear-gradient(135deg,var(--pink),var(--purple))', color: '#fff' }}>+</div>
-              </div>
-              
-              <span>IIT / IISc / IIIT / NIT students</span>
+            <div className="hero-proof">
+              <span className="hero-proof-num">4.8</span>
+              <span className="hero-proof-star" aria-hidden="true"><Icon.Star size={15} /></span>
+              <span className="hero-proof-text">rated by Tier 1 institute toppers</span>
             </div>
-            <div className="hero-rating">
-              <div className="hero-rating-top">
-                <span className="hero-rating-num">4.8</span>
-                <div className="hero-rating-stars">
-                  {[0,1,2,3,4].map(i => (
-                    <span key={i} className="hero-rating-star" style={{ '--i': i }}>
-                      <Icon.Star size={17} />
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <div className="hero-rating-label">Rated by Tier 1 institute
-                 toppers</div>
+            <div className="hero-proof">
+              <span className="hero-proof-text">Students from <b>IIT, IISc, IIIT and NIT</b></span>
             </div>
           </div>
         </div>
