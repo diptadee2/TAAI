@@ -1038,31 +1038,29 @@
      "compare against my own previous frame" continuity for a viewer to
      perceive as jumpy the way an idle, continuously-rendered hover lift
      does. */
-  .pomo-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 10px 24px; border-radius: 999px; border: none; font-family: var(--font-nav); font-weight: 700; font-size: 13px; cursor: pointer; transition: transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .2s, background .2s; }
+  /* Redesigned 2026-10-03 ("the pomodoro buttons look too ai slop"): the
+     gradient pill with a colored glow and three equal-weight pills read as
+     template chrome. Now one solid primary in the picked theme's middle
+     color (dark text, so every preset stays legible), with Reset/Skip as
+     quiet round icon buttons either side, like a media player. No
+     box-shadow anywhere here, so the :active scale is safe from the
+     box-shadow + border-radius leak; no hover movement (see the snap
+     history in CLAUDE.md), only color changes. */
+  .pomo-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 46px; padding: 0 26px; border-radius: 14px; border: none; font-family: var(--font-nav); font-weight: 700; font-size: 14px; letter-spacing: .01em; cursor: pointer; transition: transform .16s cubic-bezier(.34,1.56,.64,1), background-color .18s ease, color .18s ease, border-color .18s ease, filter .18s ease; }
   /* Skip, greyed out mid-Focus-session (see pomo-skip's own disabled
-     attribute/updatePomoDisplay) — same opacity/cursor recipe
-     .month-nav button:disabled already established elsewhere on this
-     page, not a new one. */
-  .pomo-btn:disabled { opacity: .35; cursor: not-allowed; }
+     attribute/updatePomoDisplay). */
+  .pomo-btn:disabled { opacity: .3; cursor: not-allowed; }
+  .pomo-btn:focus-visible { outline: 2px solid var(--pomo-g2, var(--purple)); outline-offset: 3px; }
   .pomo-btn-icon { display: inline-flex; }
-  /* Reads the same --pomo-g1/g2/g3/--pomo-glow custom properties the ring
-     uses (set on #pomo-card by applyPomoGradient — see the ring-color
-     picker below), with fallbacks equal to the original hardcoded
-     Sunset-matching values, so Start/Save changes stay byte-identical to
-     today's look at the default preset and only actually shift color once
-     a different swatch is picked. Covers Save changes too, since it
-     shares this same class. */
-  .pomo-btn-primary { background: linear-gradient(135deg,var(--pomo-g1,#FF7FB7),var(--pomo-g2,var(--purple)),var(--pomo-g3,#4D8BFF)); color: #fff; box-shadow: 0 8px 24px var(--pomo-glow,rgba(139,92,246,0.35)); min-width: 84px; }
-  .pomo-btn-primary:hover { box-shadow: 0 12px 30px var(--pomo-glow,rgba(139,92,246,0.5)); }
-  .pomo-btn-primary:active { transform: scale(0.93); }
-  /* Background/border stay the original neutral look regardless of
-     preset — only the icon glyph picks up the theme color, a lighter
-     touch than a full recolor for a "secondary" action. */
-  .pomo-btn-secondary { background: rgba(255,255,255,0.06); color: var(--ink-dim); border: 1px solid rgba(255,255,255,0.1); }
-  .pomo-btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,0.11); color: var(--ink); }
-  .pomo-btn-secondary:active:not(:disabled) { transform: scale(0.93); }
-  .pomo-btn-secondary .pomo-btn-icon { color: var(--pomo-g2, var(--ink-dim)); }
-  .pomo-btn-secondary:hover:not(:disabled) .pomo-btn-icon { color: var(--pomo-g1, var(--ink)); }
+  .pomo-btn-primary { background: var(--pomo-g2, #A78BFA); color: #121016; min-width: 128px; }
+  .pomo-btn-primary:hover:not(:disabled) { filter: brightness(1.08); }
+  .pomo-btn-primary:active:not(:disabled) { transform: scale(0.96); }
+  .pomodoro-card.on-break .pomodoro-controls .pomo-btn-primary { background: var(--pomo-break-g2, #4ADE80); }
+  .pomo-btn-secondary { width: 46px; padding: 0; border-radius: 50%; background: transparent; color: var(--ink-dim); border: 1px solid rgba(255,255,255,0.14); }
+  .pomo-btn-secondary .pomo-btn-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .pomo-btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,0.06); color: var(--ink); border-color: rgba(255,255,255,0.28); }
+  .pomo-btn-secondary:active:not(:disabled) { transform: scale(0.92); }
+  .pomodoro-controls { align-items: center; gap: 14px; }
   /* Fires once whenever Start/Pause actually toggles (see
      updatePomoDisplay) — a small overshoot bounce on just the icon (not
      the whole button, which already has its own press animation) so
@@ -1153,7 +1151,7 @@
   .pomo-test-sound { flex: 1; padding: 8px 10px; font-size: 12px; font-family: var(--font-body); border-radius: 10px; border: 1px solid rgba(255,255,255,0.12); background: var(--card); color: var(--ink-dim); cursor: pointer; transition: background .2s, color .2s, border-color .2s; }
   .pomo-test-sound:hover { background: rgba(139,92,246,0.14); border-color: rgba(139,92,246,0.4); color: var(--ink); }
   .pomo-notify-tip { font-size: 11.5px; color: var(--ink-soft); text-align: center; line-height: 1.5; max-width: 280px; margin: 10px auto 0; }
-  .pomo-settings-save { display: block; width: 100%; margin-top: 14px; padding: 11px 24px; font-size: 13px; }
+  .pomo-settings-save { display: flex; width: 100%; margin-top: 14px; height: 44px; padding: 0 24px; font-size: 13px; }
 
   /* Inline notice shown below Start/Reset/Skip only after Start actually
      needed notification permission and didn't get it — see
@@ -1224,12 +1222,11 @@
      restores it explicitly, at higher specificity, rather than fighting
      the cascade a different way. */
   .pomo-malpractice-gate--rename .rename-form .pomo-btn-primary {
-    background: linear-gradient(135deg,var(--pomo-g1,#FF7FB7),var(--pomo-g2,var(--purple)),var(--pomo-g3,#4D8BFF));
-    color: #fff; text-decoration: none; padding: 11px 26px; border-radius: 12px;
-    box-shadow: 0 8px 24px var(--pomo-glow,rgba(139,92,246,0.35));
+    background: var(--pomo-g2, #A78BFA); color: #121016; text-decoration: none;
+    padding: 0 24px; height: 42px; border-radius: 12px;
     display: inline-flex; align-items: center; gap: 6px; min-width: 0;
   }
-  .pomo-malpractice-gate--rename .rename-form .pomo-btn-primary:hover:not(:disabled) { opacity: 1; box-shadow: 0 12px 30px var(--pomo-glow,rgba(139,92,246,0.5)); }
+  .pomo-malpractice-gate--rename .rename-form .pomo-btn-primary:hover:not(:disabled) { opacity: 1; filter: brightness(1.08); }
   .pomo-malpractice-gate--rename .rename-form .pomo-btn-primary:disabled { opacity: .75; cursor: default; }
   .pomo-gate-title { font-family: var(--font-nav); font-weight: 700; font-size: 14px; margin-bottom: 8px; color: var(--amber); }
   .pomo-gate-body { font-size: 13px; color: var(--ink-dim); line-height: 1.55; margin: 0 0 12px; }
@@ -1238,7 +1235,7 @@
   .pomo-gate-steps { padding-left: 20px; font-size: 13px; color: var(--ink-dim); line-height: 1.6; margin: 0 0 14px; }
   .pomo-gate-steps li { margin-bottom: 6px; }
   .pomo-gate-steps strong { color: var(--ink); }
-  .pomo-notify-notice .pomo-btn { min-width: auto; padding: 9px 20px; }
+  .pomo-notify-notice .pomo-btn { min-width: auto; height: 40px; padding: 0 20px; }
   /* Always visible, not conditional on any permission state — most people
      never open the settings panel where this used to be the only place
      explaining that a browser's own "allow notifications" isn't the same

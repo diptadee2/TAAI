@@ -266,7 +266,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-03-4';
+  var CLIENT_VERSION = '2026-10-03-5';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -3403,7 +3403,10 @@
     // zero finish, or pomoAdvance from a Skip itself) calls this without a
     // full renderPomodoro() re-render.
     var skipBtn = document.getElementById('pomo-skip');
-    if (skipBtn) skipBtn.disabled = pomo.mode === 'work';
+    if (skipBtn) {
+      skipBtn.disabled = pomo.mode === 'work';
+      skipBtn.title = skipBtn.disabled ? 'Skipping a Focus session forfeits it, no credit either way. Only available during breaks.' : 'Skip';
+    }
   }
 
   function pomoAdvance(fromNow) {
@@ -4121,12 +4124,12 @@
       '<div class="pomodoro-dots" id="pomo-dots">' + pomoDotsText() + '</div>' +
       '<div class="pomodoro-session-label" id="pomo-session-label">' + pomoSessionLabel() + '</div>' +
       '<div class="pomodoro-controls">' +
+      '<button id="pomo-reset" class="pomo-btn pomo-btn-secondary" aria-label="Reset" title="Reset">' +
+      '<span class="pomo-btn-icon">' + POMO_ICON_RESET + '</span><span class="pomo-btn-label">Reset</span></button>' +
       '<button id="pomo-toggle" class="pomo-btn pomo-btn-primary">' +
       '<span class="pomo-btn-icon" id="pomo-toggle-icon" data-state="' + (pomo.running ? 'pause' : 'play') + '">' + (pomo.running ? POMO_ICON_PAUSE : POMO_ICON_PLAY) + '</span>' +
       '<span class="pomo-btn-label">' + (pomo.running ? 'Pause' : 'Start') + '</span></button>' +
-      '<button id="pomo-reset" class="pomo-btn pomo-btn-secondary">' +
-      '<span class="pomo-btn-icon">' + POMO_ICON_RESET + '</span><span class="pomo-btn-label">Reset</span></button>' +
-      '<button id="pomo-skip" class="pomo-btn pomo-btn-secondary"' + (pomo.mode === 'work' ? ' disabled title="Skipping a Focus session forfeits it — no credit either way. Only available during breaks."' : '') + '>' +
+      '<button id="pomo-skip" class="pomo-btn pomo-btn-secondary" aria-label="Skip"' + (pomo.mode === 'work' ? ' disabled title="Skipping a Focus session forfeits it, no credit either way. Only available during breaks."' : ' title="Skip"') + '>' +
       '<span class="pomo-btn-icon">' + POMO_ICON_SKIP + '</span><span class="pomo-btn-label">Skip</span></button>' +
       '</div>' +
       '</div>' + // .pomo-clock-wrap
