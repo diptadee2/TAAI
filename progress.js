@@ -160,8 +160,14 @@
     var options = BATCH_OPTIONS.map(function (b) {
       return '<option value="' + escapeAttr(b.value) + '"' + (b.value === selectedValue ? ' selected' : '') + '>' + escapeHtml(b.label) + '</option>';
     }).join('');
+    // Shows "Switch batch" rather than the selected name (2026-10-03: the
+    // name already sits right beside it in the h1, so it read twice). The
+    // real <select> is stretched invisibly over the chip, so tapping
+    // anywhere on it opens the native list.
     return '<div class="batch-picker">' +
       '<span class="batch-picker-icon">' + BATCH_PICKER_ICON + '</span>' +
+      '<span class="batch-picker-text" aria-hidden="true">Switch batch</span>' +
+      '<svg class="batch-picker-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>' +
       '<label for="batch-picker-select" class="sr-only">' + (isGuest ? 'Previewing' : 'Viewing') + ' batch</label>' +
       '<select id="batch-picker-select">' + options + '</select>' +
       '</div>';
@@ -266,7 +272,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-03-5';
+  var CLIENT_VERSION = '2026-10-03-6';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1582,7 +1588,7 @@
         : 'Enter your details once. We’ll remember you on this browser.';
     app.innerHTML =
       '<div class="reg-card fade-in">' +
-      '<h1>' + escapeHtml(programTitle(state.previewBatch)) + ' <span class="roadmap-emoji">🎯</span></h1>' +
+      '<h1>' + escapeHtml(programTitle(state.previewBatch)) + '</h1>' +
       '<p>' + promptText + '</p>' +
       '<form id="reg-form">' +
       '<div class="reg-field"><label for="reg-email">Your email</label>' +
@@ -2686,14 +2692,13 @@
       ? Math.max(0, program.length - daysTillExam())
       : Math.max(1, Math.round((new Date(today) - new Date(program.start)) / 864e5) + 1);
     dayNum = Math.min(dayNum, program.length);
-    var plan = planProgressHtml(program);
+    var plan = planProgressHtml(program, dayNum);
     var day = '<div class="program-day-num">' + dayNum + '</div>' +
       '<div class="program-day-label">Day of ' + program.length + '</div>';
-    // With a plan bar ("120 Days - 70 Marks"), day and plan progress share
-    // one card side by side instead of stacking six centred pieces.
+    // With a plan bar ("120 Days - 70 Marks"), the day count, progress and
+    // marks live in one plain card (simplified 2026-10-03: "too clumsy").
     if (plan) {
-      return '<div class="program-day-badge program-card fade-in">' +
-        '<div class="program-card-day">' + day + '</div>' + plan + '</div>';
+      return '<div class="program-day-badge program-card fade-in">' + plan + '</div>';
     }
     return '<div class="program-day-badge fade-in">' + day + '</div>';
   }
@@ -2715,7 +2720,6 @@
     // share of it covers that share of the target. Fixed denominator.
     return { done: done, total: total, pct: Math.round(frac * 100), target: program.targetMarks || 0, marks: Math.round(frac * (program.targetMarks || 0)) };
   }
-  var PLAN_MEDAL_SVG = '<svg class="plan-marks-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 3h8l-2.2 5.2M8 3l2.2 5.2" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="14.5" r="6" stroke="currentColor" stroke-width="1.7"/><path d="M12 11.6l.9 1.8 2 .3-1.45 1.4.35 2-1.8-.95-1.8.95.35-2-1.45-1.4 2-.3z" fill="currentColor"/></svg>';
   // The marks number counts up from 0 once per page visit (not on every
   // re-render, and not on the quiet cached-to-fresh swap), then pops; a
   // gold "+N credit(s) earned" pops up in the ticked task's row on a gain.
@@ -2723,8 +2727,7 @@
   function planMarksHtml(t) {
     if (!t.target) return '';
     var start = planMarksCounted || quietRender ? t.marks : 0;
-    return '<span class="plan-marks" id="plan-progress-marks">' + PLAN_MEDAL_SVG +
-      '<span class="plan-marks-text"><b id="plan-marks-num" data-marks="' + t.marks + '">' + start + '</b><span class="plan-marks-of">/ ' + t.target + ' marks</span></span></span>';
+    return '<span class="plan-marks" id="plan-progress-marks"><b id="plan-marks-num" data-marks="' + t.marks + '">' + start + '</b> / ' + t.target + ' marks</span>';
   }
   function animatePlanMarks() {
     var el = document.getElementById('plan-marks-num');
@@ -2759,12 +2762,12 @@
       return '<span class="plan-ms' + (pct >= m ? ' reached' : '') + '" data-ms="' + m + '" style="left:' + m + '%"></span>';
     }).join('');
   }
-  function planProgressHtml(program) {
+  function planProgressHtml(program, dayNum) {
     if (!program.overallBar || !state.student || effectiveScoutBatch() !== state.student.batch) return '';
     var t = planProgressTotals();
     if (!t.total) return '';
     return '<div class="plan-progress" id="plan-progress" data-pct="' + t.pct + '">' +
-      '<div class="plan-progress-line"><span class="plan-progress-label">Plan progress</span><span class="plan-progress-pct" id="plan-progress-pct">' + t.pct + '%</span></div>' +
+      '<div class="plan-progress-line"><span class="plan-day">Day <b>' + dayNum + '</b> of ' + program.length + '</span><span class="plan-progress-pct" id="plan-progress-pct">' + t.pct + '%</span></div>' +
       '<div class="plan-track"><div class="plan-fill" id="plan-progress-fill" style="width:' + t.pct + '%"></div>' + planMilestonesHtml(t.pct) + '</div>' +
       '<div class="plan-progress-foot">' + planMarksHtml(t) + '<span class="plan-progress-msg" id="plan-progress-msg">' + planProgressMessage(t.pct, t.done) + '</span></div>' +
       '</div>';
@@ -3037,7 +3040,7 @@
     // belonging to the title instead of orphaned in empty space. Not
     // shown at all in Focus Mode — see the comment on batch-picker-wrap
     // below for why.
-    html += '<div class="roadmap-head"><h1>' + escapeHtml(programTitle(effectiveScoutBatch())) + ' <span class="roadmap-emoji">🎯</span></h1>' +
+    html += '<div class="roadmap-head"><h1>' + escapeHtml(programTitle(effectiveScoutBatch())) + '</h1>' +
       (state.focus ? '' : renderBatchPicker()) +
       '</div>';
     // Exit Focus sits in the same row as the identity line (not floating
