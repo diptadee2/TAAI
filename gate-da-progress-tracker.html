@@ -324,6 +324,11 @@
      row's far edge, so it should sit right beside the title instead of
      drifting away from it as the row grows. */
   .roadmap-head { display: flex; align-items: center; justify-content: flex-start; flex-wrap: wrap; gap: 10px; margin-bottom: 4px; }
+  /* "Join Discord" at the right of the identity row (progress.js). */
+  .roadmap-sub-right { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+  .discord-join { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 8px; font-family: var(--font-nav); font-size: 13px; font-weight: 600; color: #C7CBFF; background: rgba(88,101,242,0.14); border: 1px solid rgba(88,101,242,0.38); text-decoration: none; transition: background-color .2s ease, border-color .2s ease, color .2s ease; white-space: nowrap; }
+  .discord-join:hover { background: rgba(88,101,242,0.26); border-color: rgba(88,101,242,0.6); color: #fff; }
+  .discord-join:focus-visible { outline: 2px solid #5865F2; outline-offset: 2px; }
   .roadmap-head h1 { font-family: var(--font-nav); font-size: 19px; font-weight: 700; }
   /* Emoji glyphs render with extra bottom padding baked into their own
      metrics, so inline with text they visually sit low against the cap
