@@ -3,8 +3,10 @@
 // footer). Loaded as a plain <script> on every page; one delegated click
 // listener, so links rendered later by React or progress.js are covered too.
 // "Continue to Discord" opens the invite in a new tab.
-// It also adds a floating "Join our Discord" button (bottom-left) to every
-// page that loads it, which goes through the same notice.
+// It also sets body.footer-in-view while the page footer is on screen (each
+// page's floating Email/Discord stack hides on it), and on pages without
+// that stack (<body data-float-stack> marks the ones with it: the progress
+// tracker and the blog) adds its own floating Discord button.
 (function () {
   if (window.__discordNotice) return;
   window.__discordNotice = true;
@@ -28,14 +30,14 @@
     '.dn-go:hover{background:#4752C4}' +
     '.dn-btn:focus-visible{outline:2px solid #5865F2;outline-offset:2px}' +
     '@media (max-width:420px){.dn-actions{flex-direction:column-reverse}.dn-btn{width:100%}}' +
-    '.dn-fab{position:fixed;left:24px;bottom:24px;z-index:45;width:50px;height:50px;border-radius:50%;display:grid;place-items:center;background:#5865F2;color:#fff;text-decoration:none;box-shadow:0 6px 18px rgba(88,101,242,.35);opacity:0;transition:opacity .35s ease,background-color .18s ease}' +
+    '.dn-fab{position:fixed;right:24px;bottom:88px;z-index:45;width:50px;height:50px;border-radius:50%;display:grid;place-items:center;background:#5865F2;color:#fff;text-decoration:none;box-shadow:0 6px 18px rgba(88,101,242,.35);opacity:0;transition:opacity .35s ease,background-color .18s ease}' +
     '.dn-fab.dn-fab-in{opacity:1}' +
     '.dn-fab.dn-fab-in.dn-fab-away{opacity:0;pointer-events:none}' +
     '.dn-fab:hover{background:#4752C4}' +
     '.dn-fab:focus-visible{outline:2px solid #5865F2;outline-offset:3px}' +
-    '.dn-fab-label{position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);background:#14102B;color:#fff;font-size:12px;font-weight:600;padding:6px 10px;border-radius:8px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s ease}' +
+    '.dn-fab-label{position:absolute;right:calc(100% + 10px);top:50%;transform:translateY(-50%);background:#14102B;color:#fff;font-size:12px;font-weight:600;padding:6px 10px;border-radius:8px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s ease}' +
     '.dn-fab:hover .dn-fab-label,.dn-fab:focus-visible .dn-fab-label{opacity:1}' +
-    '@media (max-width:768px){.dn-fab{left:16px;bottom:16px;width:44px;height:44px}.dn-fab-label{display:none}}' +
+    '@media (max-width:768px){.dn-fab{right:27px;bottom:86px;width:44px;height:44px}.dn-fab-label{display:none}}' +
     '@media print{.dn-fab{display:none}}' +
     '@media (prefers-reduced-motion:reduce){.dn-backdrop,.dn-card,.dn-fab{transition:none}}';
 
@@ -87,28 +89,20 @@
   }
 
   var INVITE = 'https://discord.com/invite/AwZqYz9wvK';
-  // Keeps the button clear of a page's own full-width bottom bar on phones
-  // (home page "Take a Trial", free notes "Enrol" bar).
-  function placeFab(fab) {
-    var lift = 0;
-    var bars = document.querySelectorAll('.mobile-sticky-cta, .mobile-enroll-bar');
-    for (var i = 0; i < bars.length; i++) {
-      var r = bars[i].getBoundingClientRect();
-      if (r.height && getComputedStyle(bars[i]).display !== 'none' && r.top < innerHeight) lift = Math.max(lift, innerHeight - r.top);
-    }
-    fab.style.bottom = lift ? (lift + 12) + 'px' : '';
-  }
-  function hideAtFooter(fab) {
+  function footerInView() {
     var f = document.querySelector('footer');
     var doc = document.documentElement;
-    // Pages without a footer (the progress tracker) hide at the very end.
+    // Pages without a footer (the progress tracker) count the very end.
     var away = f ? f.getBoundingClientRect().top < innerHeight
                  : doc.scrollHeight > innerHeight + 200 && scrollY + innerHeight >= doc.scrollHeight - 40;
-    fab.classList.toggle('dn-fab-away', away);
-    if (away && document.activeElement === fab) fab.blur();
+    document.body.classList.toggle('footer-in-view', away);
+    var fab = document.querySelector('.dn-fab');
+    if (fab) fab.classList.toggle('dn-fab-away', away);
+    if (away && document.activeElement && document.activeElement.closest &&
+        document.activeElement.closest('.dn-fab, .mobile-contact-bar, .contact-float')) document.activeElement.blur();
   }
   function addFab() {
-    if (document.querySelector('.dn-fab')) return;
+    if (document.querySelector('.dn-fab') || document.body.hasAttribute('data-float-stack')) return;
     addStyle();
     var a = document.createElement('a');
     a.className = 'dn-fab';
@@ -118,24 +112,25 @@
     a.setAttribute('aria-label', 'Join our Discord');
     a.innerHTML = ICON.replace('width="20" height="20"', 'width="22" height="22"') + '<span class="dn-fab-label">Join our Discord</span>';
     document.body.appendChild(a);
-    placeFab(a);
     requestAnimationFrame(function () { a.classList.add('dn-fab-in'); });
-    window.addEventListener('resize', function () { placeFab(a); hideAtFooter(a); });
-    // Hide once the page footer scrolls into view (it already carries a
-    // Discord icon), show again when scrolling back up.
+    footerInView();
+  }
+  function start() {
+    addFab();
     var ticking = false;
-    window.addEventListener('scroll', function () {
+    function onScroll() {
       if (ticking) return;
       ticking = true;
-      requestAnimationFrame(function () { ticking = false; hideAtFooter(a); });
-    }, { passive: true });
-    hideAtFooter(a);
-    // React pages render their bottom bars after this runs.
-    setTimeout(function () { placeFab(a); }, 1200);
-    setTimeout(function () { placeFab(a); }, 3500);
+      requestAnimationFrame(function () { ticking = false; footerInView(); });
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    footerInView();
+    // React pages render their footer after this runs.
+    setTimeout(footerInView, 1500);
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addFab);
-  else addFab();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
 
   document.addEventListener('click', function (e) {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
