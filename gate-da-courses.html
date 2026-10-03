@@ -405,7 +405,6 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 .combos-header-text { flex: 1; min-width: 0; }
 .combos-header .btn-swap::before { content: none; }
-.placement-btns .btn-swap::before { content: none; }
 @media (max-width: 600px) {
   .combos-header { flex-direction: column; align-items: flex-start; gap: 16px; margin-bottom: 32px; }
   .combos-header .btn { align-self: flex-start; margin-bottom: 0 !important; }
@@ -1108,64 +1107,43 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .course-card:hover .btn-ghost svg { transform: translateX(3px); }
 .course-card .btn-ghost:hover svg { transform: translateX(6px); }
 
-/* Coming soon card */
+/* Coming soon card. De-slopped 2026-10-04: one flat dark surface with a
+   hairline border (no cursor spotlight, dot grid, glow blobs or hover
+   glow), plain status text, a white title with no gradient word, a solid
+   white button with no pulse or text swap, and plain lists instead of
+   rows of hover-scaling pills. */
 .placement-card {
-  background: radial-gradient(circle at var(--mx, -200%) var(--my, -200%), rgba(139,92,246,0.28) 0%, transparent 55%), radial-gradient(circle, rgba(255,255,255,0.08) 1.5px, transparent 1.5px), linear-gradient(150deg, #14102B 0%, #1c1255 55%, #0a1020 100%);
-  background-size: 100% 100%, 28px 28px, 100% 100%;
+  background: #14102B; border: 1px solid rgba(255,255,255,0.1);
   border-radius: var(--radius-xl); padding: 56px 64px;
-  display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center;
-  border: 1.5px solid rgba(139,92,246,0.24);
-  position: relative; overflow: hidden;
-  transition: border-color .3s ease, box-shadow .3s ease;
+  display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.15fr); gap: 64px; align-items: start;
 }
-.placement-card:hover { border-color: rgba(139,92,246,0.42); box-shadow: 0 32px 80px rgba(139,92,246,0.18); }
-.placement-card::before {
-  content: ''; position: absolute; width: 560px; height: 480px; border-radius: 50%; pointer-events: none;
-  background: radial-gradient(ellipse, rgba(139,92,246,0.14) 0%, transparent 70%);
-  top: -200px; right: -80px;
-}
-.placement-card::after {
-  content: ''; position: absolute; width: 320px; height: 280px; border-radius: 50%; pointer-events: none;
-  background: radial-gradient(ellipse, rgba(255,65,108,0.1) 0%, transparent 70%);
-  bottom: -100px; left: 80px;
-}
-.placement-left { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 0; }
-.placement-badge {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 5px 12px; border-radius: 8px; font-size: 11.5px; font-weight: 600;
-  background: rgba(139,92,246,0.14); border: 1px solid rgba(139,92,246,0.3);
-  color: var(--lilac); margin-bottom: 18px; align-self: flex-start;
-}
-/* Static, not pulsing — this dot sits beside a "Coming Soon" label, which
-   isn't live/changing data. A pulse there would fake liveness that isn't
-   real, exactly the same principle this site already applies deliberately
-   to its actual live indicators elsewhere (the progress tracker's "live
-   now" dots, reserved for genuinely live pomodoro sessions). Caught by
-   the impeccable detector's pulsing-dot anti-pattern check. */
-.placement-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--lilac); }
+.placement-left { display: flex; flex-direction: column; }
+.placement-badge { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: #FCD34D; margin-bottom: 16px; }
+.placement-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: #FCD34D; }
 .placement-title {
-  font-family: var(--font-display); font-size: clamp(26px,2.8vw,38px); font-weight: 600;
-  letter-spacing: -0.03em; line-height: 1.1; color: #fff; margin-bottom: 14px;
+  font-family: var(--font-display); font-size: clamp(26px,2.6vw,36px); font-weight: 600;
+  letter-spacing: -0.025em; line-height: 1.15; color: #fff; margin: 0 0 14px; max-width: 20ch;
 }
-.placement-title em { background: linear-gradient(120deg, var(--purple), var(--lilac)); -webkit-background-clip: text; background-clip: text; color: transparent; font-style: normal; }
-.placement-desc { font-size: 14.5px; color: rgba(255,255,255,0.48); line-height: 1.65; margin-bottom: 28px; }
+.placement-desc { font-size: 15px; color: rgba(255,255,255,0.6); line-height: 1.65; margin-bottom: 28px; max-width: 46ch; }
 .placement-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+.placement-cta { background: #fff; color: #14102B; font-weight: 600; gap: 8px; }
+.placement-cta svg { transition: transform .2s ease; }
+.placement-cta:hover { background: #EDE9FE; }
+.placement-cta:hover svg { transform: translateX(3px); }
 .btn-ghost-light { background: transparent; color: rgba(255,255,255,0.7); border: 1.5px solid rgba(255,255,255,0.22); }
 .btn-ghost-light:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.4); }
-.placement-right { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 20px; }
-.placement-cat-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,0.28); margin-bottom: 7px; }
-.placement-chips { display: flex; flex-wrap: wrap; gap: 7px; }
-.placement-chip {
-  padding: 6px 13px; border-radius: 999px; font-size: 12px; font-weight: 500;
-  border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.5);
-  background: rgba(255,255,255,0.05);
-  transition: background .22s ease, border-color .22s ease, color .22s ease, transform .22s cubic-bezier(.34,1.3,.64,1);
-  cursor: default;
+.placement-right { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 32px; padding-top: 4px; }
+.placement-cat-label { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.9); padding-bottom: 10px; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.placement-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+.placement-list li { font-size: 14px; line-height: 1.4; color: rgba(255,255,255,0.6); }
+@media (max-width: 1024px) {
+  .placement-card { grid-template-columns: minmax(0,1fr); gap: 40px; padding: 44px 40px; }
 }
-.placement-chip.chip-purple:hover { background: rgba(139,92,246,0.22); border-color: rgba(139,92,246,0.45); color: var(--lilac); transform: scale(1.07); }
-.placement-chip.chip-blue:hover   { background: rgba(77,139,255,0.18);  border-color: rgba(77,139,255,0.4);  color: #8FC8FF; transform: scale(1.07); }
-.placement-chip.chip-pink:hover   { background: rgba(255,127,183,0.18); border-color: rgba(255,127,183,0.4); color: var(--pink); transform: scale(1.07); }
-.placement-divider { height: 1px; background: rgba(255,255,255,0.07); }
+/* 2028 card's visible projects list, under its blurred price. */
+.combo-projects { margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.08); position: relative; z-index: 1; }
+.combo-projects ol { margin: 0; padding: 0 0 0 18px; display: flex; flex-direction: column; gap: 7px; }
+.combo-projects li { font-size: 13.5px; line-height: 1.45; color: rgba(255,255,255,0.72); padding-left: 2px; }
+.combo-projects li::marker { color: #FCD34D; font-weight: 600; }
 
 /* Every course includes, tab showcase (mirrors Why TAAI on landing page) */
 .incl-layout {
@@ -1361,13 +1339,9 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   :root { --section-pad: 56px; }
   .courses-grid { grid-template-columns: 1fr; }
   .included-grid { grid-template-columns: 1fr; }
-  .placement-card { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 32px 24px 36px; align-items: start; overflow: hidden; }
-  .placement-card::before, .placement-card::after { display: none; }
-  .placement-left, .placement-right { min-width: 0; }
-  .placement-right { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 28px; margin-top: 4px; gap: 16px; }
-  .placement-btns { flex-direction: column; }
+  .placement-card { gap: 32px; padding: 32px 24px 36px; }
+  .placement-right { grid-template-columns: minmax(0,1fr); gap: 24px; }
   .placement-btns .btn { justify-content: center; width: 100%; }
-  .placement-btns .btn-swap::before { content: none; }
   .footer-inner { flex-direction: column; align-items: center; text-align: center; }
   .footer-socials a { width: 44px; height: 44px; }
   .footer-socials a svg { width: 18px; height: 18px; }
@@ -2337,6 +2311,15 @@ const COMBOS = [
     featured: true,
     comingSoon: true,
     tagline: '300+ hours of content, the most concise, no-fluff GATE DA course out there.',
+    // Shown in plain sight (not blurred like the includes list), on
+    // request: five industry-style projects the 2028 batch builds.
+    projects: [
+      'Credit card fraud detection on imbalanced data',
+      'Movie recommendation engine',
+      'Churn prediction model served as an API',
+      'Retail sales demand forecasting',
+      'RAG chatbot over your own documents',
+    ],
     validityDate: '2028-02-15',
     accent: 'linear-gradient(90deg, #F59E0B, #EC4899, var(--purple))',
     title: 'GATE 2028 Full Course',
@@ -3049,6 +3032,14 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
         </div>
         <div className="combo-horizontal-right">
           {priceRowEl}
+          {c.projects && (
+            <div className="combo-projects">
+              <div className="combo-includes-label">{c.projects.length} industry projects</div>
+              <ol>
+                {c.projects.map((p, i) => <li key={i}>{p}</li>)}
+              </ol>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -3754,41 +3745,33 @@ function App() {
             From GATE to your <em>dream job</em>
           </h2>
           <p className="section-sub fade-in">GATE gets you the IIT tag. We'll help you convert it into a career in DS and AI.</p>
-          <div className="placement-card fade-in"
-            onMouseMove={e=>{const r=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');e.currentTarget.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%');}}
-            onMouseLeave={e=>{e.currentTarget.style.setProperty('--mx','-200%');e.currentTarget.style.setProperty('--my','-200%');}}>
+          <div className="placement-card fade-in">
             <div className="placement-left">
               <div className="placement-badge">
                 <span className="placement-badge-dot" />
-                Coming Soon
+                Coming soon
               </div>
-              <div className="placement-title">
-                Interview Preparation<br /><em>DS / AI</em>
-              </div>
+              <h3 className="placement-title">Interview preparation for DS and AI roles</h3>
               <p className="placement-desc">
-                Career prep for AI and Data Science roles, end-to-end projects, practice interviews, resume reviews, and industry mentorship. Preview available on YouTube now.
+                Career prep for AI and Data Science roles: end-to-end projects, practice interviews, resume reviews and industry mentorship. A preview is on YouTube now.
               </p>
               <div className="placement-btns">
-                <a href="https://www.youtube.com/watch?v=iobgxxTluUc&list=PLZvuMBNC5r0UEjm31D56LdoYzd4L-vtaF" target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-swap btn-attract" style={{ justifyContent: 'center', minWidth: 270 }}>
-                  <span className="swap-default" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>Watch preview <Icon.ArrowRight /></span>
-                  <span className="swap-hover">ML Algorithms from Scratch</span>
+                <a href="https://www.youtube.com/watch?v=iobgxxTluUc&list=PLZvuMBNC5r0UEjm31D56LdoYzd4L-vtaF" target="_blank" rel="noopener noreferrer" className="btn placement-cta">
+                  Watch the preview <Icon.ArrowRight />
                 </a>
               </div>
             </div>
             <div className="placement-right">
               {[
-                { label: 'Technical', color: 'purple', chips: ['ML Algorithms', 'Deep Learning', 'LLMs & Fine-tuning', 'System Design', 'SQL', 'Python'] },
-                { label: 'Projects',  color: 'blue',   chips: ['End-to-End Pipelines', 'GitHub Portfolio', 'Kaggle Competitions', 'Paper Implementation'] },
-                { label: 'Career',    color: 'pink',   chips: ['Practice Interviews', 'Resume Review', 'Industry Mentorship', 'Offer Strategy'] },
+                { label: 'Technical', items: ['ML algorithms', 'Deep learning', 'LLMs and fine-tuning', 'System design', 'SQL', 'Python'] },
+                { label: 'Projects',  items: ['End-to-end pipelines', 'GitHub portfolio', 'Kaggle competitions', 'Paper implementation'] },
+                { label: 'Career',    items: ['Practice interviews', 'Resume review', 'Industry mentorship', 'Offer strategy'] },
               ].map((cat, ci) => (
-                <div key={ci}>
-                  {ci > 0 && <div className="placement-divider" style={{ marginBottom: 20 }} />}
+                <div key={ci} className="placement-col">
                   <div className="placement-cat-label">{cat.label}</div>
-                  <div className="placement-chips">
-                    {cat.chips.map((chip, i) => (
-                      <span key={i} className={`placement-chip chip-${cat.color}`}>{chip}</span>
-                    ))}
-                  </div>
+                  <ul className="placement-list">
+                    {cat.items.map((item, i) => <li key={i}>{item}</li>)}
+                  </ul>
                 </div>
               ))}
             </div>
