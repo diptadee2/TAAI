@@ -30,6 +30,7 @@
     '@media (max-width:420px){.dn-actions{flex-direction:column-reverse}.dn-btn{width:100%}}' +
     '.dn-fab{position:fixed;left:24px;bottom:24px;z-index:45;width:50px;height:50px;border-radius:50%;display:grid;place-items:center;background:#5865F2;color:#fff;text-decoration:none;box-shadow:0 6px 18px rgba(88,101,242,.35);opacity:0;transition:opacity .35s ease,background-color .18s ease}' +
     '.dn-fab.dn-fab-in{opacity:1}' +
+    '.dn-fab.dn-fab-in.dn-fab-away{opacity:0;pointer-events:none}' +
     '.dn-fab:hover{background:#4752C4}' +
     '.dn-fab:focus-visible{outline:2px solid #5865F2;outline-offset:3px}' +
     '.dn-fab-label{position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);background:#14102B;color:#fff;font-size:12px;font-weight:600;padding:6px 10px;border-radius:8px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s ease}' +
@@ -97,6 +98,15 @@
     }
     fab.style.bottom = lift ? (lift + 12) + 'px' : '';
   }
+  function hideAtFooter(fab) {
+    var f = document.querySelector('footer');
+    var doc = document.documentElement;
+    // Pages without a footer (the progress tracker) hide at the very end.
+    var away = f ? f.getBoundingClientRect().top < innerHeight
+                 : doc.scrollHeight > innerHeight + 200 && scrollY + innerHeight >= doc.scrollHeight - 40;
+    fab.classList.toggle('dn-fab-away', away);
+    if (away && document.activeElement === fab) fab.blur();
+  }
   function addFab() {
     if (document.querySelector('.dn-fab')) return;
     addStyle();
@@ -110,7 +120,16 @@
     document.body.appendChild(a);
     placeFab(a);
     requestAnimationFrame(function () { a.classList.add('dn-fab-in'); });
-    window.addEventListener('resize', function () { placeFab(a); });
+    window.addEventListener('resize', function () { placeFab(a); hideAtFooter(a); });
+    // Hide once the page footer scrolls into view (it already carries a
+    // Discord icon), show again when scrolling back up.
+    var ticking = false;
+    window.addEventListener('scroll', function () {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function () { ticking = false; hideAtFooter(a); });
+    }, { passive: true });
+    hideAtFooter(a);
     // React pages render their bottom bars after this runs.
     setTimeout(function () { placeFab(a); }, 1200);
     setTimeout(function () { placeFab(a); }, 3500);
