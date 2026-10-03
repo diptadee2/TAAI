@@ -266,7 +266,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-03-3';
+  var CLIENT_VERSION = '2026-10-03-4';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -3074,7 +3074,10 @@
       // both constrained to .main-col's narrower width. Centering here
       // instead actually lines it up with them.
       html += '<div class="program-day-badge-wrap">' + renderProgramDayBadge() + '</div>';
-      html += '<div class="focus-toggle-wrap"><button id="focus-toggle" class="focus-toggle">◎ Focus mode</button></div>';
+      // .fade-in on the wrapper (not the button, which carries box-shadow +
+      // border-radius and its own hover transform) so it enters with the
+      // rest of the page instead of just appearing.
+      html += '<div class="focus-toggle-wrap fade-in"><button id="focus-toggle" class="focus-toggle">◎ Focus mode</button></div>';
       // One shared card, not two side by side — same pattern as Focus
       // Mode's own unified card (countdown/timer/today/leaderboard as
       // sections with a divider, not stacked separate floating cards).
