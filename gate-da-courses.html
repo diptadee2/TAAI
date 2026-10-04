@@ -2422,7 +2422,7 @@ const COMBOS = [
       'Core DA subjects: Machine Learning and AI',
       'Programming and data: Python, DSA, DBMS',
       'A bank of 1,000+ practice questions, added weekly',
-      '300+ quality questions for every subject, and even more for the maths',
+      '300+ quality questions for every subject, and even more for the maths subjects, if you also enrol in the test series',
       'Personal guidance from Manoj Kumar',
       'A clear study plan for every week and month',
       'Weekly tests, by topic and by full subject',
@@ -3103,7 +3103,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
         </div>
         <div className="combo-horizontal-right">
           {priceRowEl}
-          {c.priceNote && <div className="combo-price-note">{c.priceNote}</div>}
+          {c.priceNote && <div className={'combo-price-note' + (comingSoon ? ' combo-includes-blurred' : '')} aria-hidden={comingSoon || undefined}>{c.priceNote}</div>}
           {comingSoon ? (
             <span className="btn btn-full combo-soon-btn" aria-disabled="true">{launchUpcoming ? (daysUntilLaunch === 0 ? 'Launching today' : `Launching ${launchShort}`) : 'Coming soon'}</span>
           ) : (
