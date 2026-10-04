@@ -275,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-04-2';
+  var CLIENT_VERSION = '2026-10-04-3';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -3564,7 +3564,12 @@
     // guaranteed server-side processing order, even sent in the "right"
     // JS order — genuinely awaiting this one before firing the next is
     // what actually guarantees it.
-    var creditPromise = finishedMode === 'work' && pomoPhaseRanFully()
+    var ranFully = finishedMode !== 'work' || pomoPhaseRanFully();
+    // A work phase the guard won't claim used to vanish without a trace;
+    // report the skip so it shows up in pomodoro_credit_failures as
+    // 'client_skipped' (see pomo-claim-skipped.js). Never credits anything.
+    if (!ranFully) reportPomoClaimSkipped();
+    var creditPromise = finishedMode === 'work' && ranFully
       ? recordPomodoroCompletion(pomoSettings.work, pomo.phaseEndAt)
       : Promise.resolve();
 
@@ -5509,6 +5514,24 @@
   // (an unverifiable session) just fails identically again, wastefully
   // but harmlessly, since api() doesn't preserve status codes to tell
   // the two apart.
+  function reportPomoClaimSkipped() {
+    if (!state.student) return;
+    try {
+      fetch('/api/pomo-claim-skipped', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        keepalive: true,
+        body: JSON.stringify({
+          email: state.student.email,
+          phaseEndAt: pomo.phaseEndAt,
+          phaseStartedAt: pomo.phaseStartedAt,
+          totalSeconds: pomo.totalSeconds,
+          clientNow: Date.now(),
+        }),
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
   function recordPomodoroCompletion(minutes, phaseEndAt) {
     if (!state.student) return Promise.resolve(); // guests aren't tracked — no identity to credit
     function attempt(retriesLeft) {
