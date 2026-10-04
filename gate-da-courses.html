@@ -1770,7 +1770,7 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 .why-examples b { font-weight: 600; color: #F9A8D4; }
 .why-examples span { color: rgba(255,255,255,0.62); }
 .why-examples span::before { content: '→'; margin-right: 8px; color: rgba(255,255,255,0.35); }
-.why-examples--results b { color: #7DD3FC; min-width: 64px; font-variant-numeric: tabular-nums; }
+.why-examples--results b { color: #7DD3FC; min-width: 84px; }
 .why-examples--results span::before { content: none; }
 .why-contrast .why-contrast-label { color: #FBCFE8; margin-bottom: 0; }
 .why-contrast-note { margin: 0; font-size: 14.5px; line-height: 1.55; color: rgba(255,255,255,0.68); }
@@ -3363,13 +3363,14 @@ const WHY_PILLARS = [
     icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M4 4V20H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M7 15L11 10L14 13L19 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><circle cx="19" cy="6" r="1.5" fill="currentColor"/></svg>,
     heading: 'Proven Results',
     sub: 'Every batch, students reach top institutions. Consistent outcomes, year after year.',
-    // Real ranks from this page's own testimonials (JSON-LD reviews and
-    // the course testimonial cards), replacing the IIT/IISc/IIIT/NIT
-    // pills (2026-10-04, "now fix this as well").
+    // Where students got in, from this page's own testimonials (JSON-LD
+    // reviews and the course testimonial cards), replacing the
+    // IIT/IISc/IIIT/NIT pills (2026-10-04). Ranks deliberately not shown
+    // (direct request: "don't include the airs").
     examples: [
-      ['AIR 38', 'IIT Madras, M.Tech DS & AI'],
-      ['AIR 91', 'IIT Delhi, MINDS'],
-      ['AIR 125', 'IISc, M.Tech AI'],
+      ['IIT Madras', 'M.Tech Data Science & AI'],
+      ['IIT Delhi', 'MINDS'],
+      ['IISc', 'M.Tech AI'],
     ],
     examplesStyle: 'results',
   },
