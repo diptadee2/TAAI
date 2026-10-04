@@ -1144,6 +1144,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .combo-projects ul { margin: 0; padding: 0 0 0 16px; display: flex; flex-direction: column; gap: 7px; }
 .combo-projects li { font-size: 13.5px; line-height: 1.45; color: rgba(255,255,255,0.72); padding-left: 2px; }
 .combo-projects li::marker { color: #FCD34D; }
+.combo-projects-note { margin: 12px 0 0; font-size: 13px; color: #FCD34D; }
 
 /* Every course includes, tab showcase (mirrors Why TAAI on landing page) */
 .incl-layout {
@@ -2345,12 +2346,13 @@ const COMBOS = [
     tagline: '300+ hours of content, the most concise, no-fluff GATE DA course out there.',
     // The 2028 batch's project plan, by category (specific projects not
     // final yet), on request 2026-10-04.
-    projectsLabel: '5 real-world projects',
+    projectsLabel: '5 portfolio projects that solve real problems',
     projects: [
-      '2 classic machine learning projects on real business data',
-      '1 deep learning project on images',
-      '2 projects built with large language models',
+      '2 machine learning projects on real business data, from raw dataset to working model',
+      '1 deep learning project in computer vision',
+      '2 projects with large language models, the skill AI teams are hiring for now',
     ],
+    projectsNote: 'Each one is resume-ready and lives on your GitHub.',
     validityDate: '2028-02-15',
     accent: 'linear-gradient(90deg, #F59E0B, #EC4899, var(--purple))',
     title: 'GATE 2028 Full Course',
@@ -3063,6 +3065,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
               <ul>
                 {c.projects.map((p, i) => <li key={i}>{p}</li>)}
               </ul>
+              {c.projectsNote && <p className="combo-projects-note">{c.projectsNote}</p>}
             </div>
           )}
         </div>
