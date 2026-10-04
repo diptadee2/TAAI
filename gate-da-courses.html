@@ -1306,6 +1306,11 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .compare-price.best { color: var(--purple); }
 
 .compare-row.zebra { background: rgba(0,0,0,0.018); }
+.compare-row.compare-group, .compare-row.compare-group:hover { background: #f1eefe; animation: none; }
+.compare-row.compare-group .compare-cell { padding-top: 14px; padding-bottom: 8px; font-size: 12px; font-weight: 700; color: var(--ink); }
+.compare-row.compare-group .compare-cell.feat-name { background: #f1eefe; color: var(--ink); text-transform: uppercase; letter-spacing: .05em; font-size: 11px; box-shadow: none; }
+.compare-row.compare-group .compare-cell.featured { background: rgba(139,92,246,0.12); color: var(--purple); }
+.compare-row.compare-group .compare-cell:not(.feat-name):not(.featured) { color: var(--ink-dim); font-weight: 600; }
 .compare-row.zebra .compare-cell.feat-name { background: #f9f9fc; }
 .compare-row.zebra .compare-cell.featured { background: rgba(139,92,246,0.065); }
 .compare-enroll-btn { display: inline-flex; align-items: center; justify-content: center; padding: 9px 20px; border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-decoration: none; background: var(--ink); color: #fff; transition: opacity .18s, transform .18s, box-shadow .18s; white-space: nowrap; }
@@ -2825,25 +2830,35 @@ const INCLUDED = [
 ];
 
 function BundleComparison({ pricingMap }) {
+  // Rebuilt 2026-10-04 ("make the what's included in each bundle better"):
+  // grouped (subjects, practice, live classes and support), subject counts
+  // per bundle in the group heading, and rows matched to what each bundle's
+  // own card lists (Python, weekly quizzes and live weekend revision were
+  // missing). Keep in sync with the COMBOS includes lists above.
   const features = [
-    { label: 'Machine Learning',                      full: true,  ml: true,  maths: false, group: 'Subjects'        },
-    { label: 'Artificial Intelligence',               full: true,  ml: false, maths: false, group: 'Subjects'        },
-    { label: 'DBMS',                                  full: true,  ml: false, maths: false, group: 'Subjects'        },
-    { label: 'Data Structures',                       full: true,  ml: false, maths: false, group: 'Subjects'        },
-    { label: 'Algorithms',                            full: true,  ml: false, maths: false, group: 'Subjects'        },
-    { label: 'GATE mentorship with Manoj Kumar',      full: true,  ml: false, maths: false, group: 'Support'         },
-    { label: 'Weekly & subject wise monthly schedules',       full: true,  ml: false, maths: false, group: 'Study Materials' },
-    { label: 'Linear Algebra',                        full: true,  ml: true,  maths: true,  group: 'Subjects'        },
-    { label: 'Probability',                           full: true,  ml: true,  maths: true,  group: 'Subjects'        },
-    { label: 'Statistics',                            full: true,  ml: true,  maths: true,  group: 'Subjects'        },
-    { label: 'Calculus',                              full: true,  ml: true,  maths: true,  group: 'Subjects'        },
-    { label: '1,000+ quiz questions',                 full: true,  ml: true,  maths: true,  group: 'Study Materials' },
-    { label: 'Discord community support',             full: true,  ml: true,  maths: true,  group: 'Support'         },
+    { heading: 'Subjects', fullText: '10 subjects', mlText: '5 subjects', mathsText: '4 subjects' },
+    { label: 'Linear Algebra',            full: true, ml: true,  maths: true  },
+    { label: 'Probability',               full: true, ml: true,  maths: true  },
+    { label: 'Statistics',                full: true, ml: true,  maths: true  },
+    { label: 'Calculus',                  full: true, ml: true,  maths: true  },
+    { label: 'Machine Learning',          full: true, ml: true,  maths: false },
+    { label: 'Artificial Intelligence',   full: true, ml: false, maths: false },
+    { label: 'Python',                    full: true, ml: false, maths: false },
+    { label: 'Data Structures',           full: true, ml: false, maths: false },
+    { label: 'Algorithms',                full: true, ml: false, maths: false },
+    { label: 'DBMS',                      full: true, ml: false, maths: false },
+    { heading: 'Practice' },
+    { label: 'Topic-wise & full-subject weekly quizzes', full: true, ml: true, maths: true },
+    { label: '1,000+ quiz questions',     full: true, ml: true,  maths: true  },
+    { heading: 'Classes & support' },
+    { label: 'Live revision lectures every weekend', full: true, ml: true, maths: true },
+    { label: 'Discord community support', full: true, ml: true,  maths: true  },
+    { label: 'GATE mentorship with Manoj Kumar', full: true, ml: false, maths: false },
+    { label: 'Weekly & monthly study schedules', full: true, ml: false, maths: false },
     { label: 'Course valid until',
       fullText:  fmtDate((pricingMap['full-course']    || {}).validity) || '-',
       mlText:    fmtDate((pricingMap['maths-ml-bundle']|| {}).validity) || '-',
-      mathsText: fmtDate((pricingMap['maths-bundle']   || {}).validity) || '-',
-      group: 'Support' },
+      mathsText: fmtDate((pricingMap['maths-bundle']   || {}).validity) || '-' },
   ];
   const loaded = Object.keys(pricingMap).length > 0;
   const Yes = () => (
@@ -2883,7 +2898,14 @@ function BundleComparison({ pricingMap }) {
               <div className="compare-head-cell">Maths &amp; ML<br/>Bundle</div>
               <div className="compare-head-cell">Maths<br/>Bundle</div>
             </div>
-            {features.map((f, i) => (
+            {features.map((f, i) => f.heading ? (
+              <div key={i} className="compare-row compare-group">
+                <div className="compare-cell feat-name">{f.heading}</div>
+                <div className="compare-cell featured">{f.fullText || ''}</div>
+                <div className="compare-cell">{f.mlText || ''}</div>
+                <div className="compare-cell">{f.mathsText || ''}</div>
+              </div>
+            ) : (
               <div key={i} className={`compare-row${i % 2 === 0 ? ' zebra' : ''}`}>
                 <div className="compare-cell feat-name">{f.label}</div>
                 <div className="compare-cell featured">{f.fullText ? <span className={`compare-val-text${loaded ? ' data-fade-in' : ''}`}>{f.fullText}{f.fullNote && <span className="compare-val-note">{f.fullNote}</span>}</span> : (f.full ? <Yes /> : <No />)}</div>
