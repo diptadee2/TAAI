@@ -2446,6 +2446,7 @@ const COMBOS = [
     launchDate: '2026-10-06',
     // Shown right under the price, this card only (direct request 2026-10-04).
     priceNote: '+ 18% GST, calculated at checkout',
+    liveOffer: 'Super early bird offer',
     accent: 'linear-gradient(90deg, #F59E0B, #EC4899, var(--purple))',
     title: 'GATE 2028 Full Course',
     includes: [
@@ -2995,7 +2996,9 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   const discountRaw      = pd.discount || null;
   const discount         = discountRaw ? (isNaN(discountRaw) ? discountRaw : discountRaw + '% off') : null;
   const discountDeadline = pd.discountDeadline ? fmtDeadline(pd.discountDeadline) : null;
-  const discountReason   = pd.discountReason  || null;
+  // The 2028 card defaults to 'Super early bird offer' once live (2026-10-05,
+  // direct request); a discount reason set in /team still wins.
+  const discountReason   = pd.discountReason  || (c.comingSoon && pd.price && pd.enrollUrl ? c.liveOffer : null) || null;
   const saving           = c.saving;
   // A preview card (the 2028 course) keeps its own layout and amber look
   // for good, but its "coming soon" state switches off by itself once
