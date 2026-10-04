@@ -1765,6 +1765,11 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 .why-pillar.why-pillar--featured { grid-template-columns: auto minmax(0,1fr) minmax(0,1fr); column-gap: 14px; }
 .why-contrast { grid-column: 3; grid-row: 1; margin-left: 28px; padding-left: 28px; border-left: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 4px; }
 .why-contrast-label { font-size: 12.5px; font-weight: 600; margin-bottom: 3px; }
+.why-examples { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.why-examples li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; font-size: 13.5px; line-height: 1.45; }
+.why-examples b { font-weight: 600; color: #F9A8D4; }
+.why-examples span { color: rgba(255,255,255,0.62); }
+.why-examples span::before { content: '→'; margin-right: 8px; color: rgba(255,255,255,0.35); }
 .why-contrast .why-contrast-label { color: #FBCFE8; margin-bottom: 0; }
 .why-contrast-note { margin: 0; font-size: 14.5px; line-height: 1.55; color: rgba(255,255,255,0.68); }
 @media (max-width: 1024px) {
@@ -3339,9 +3344,17 @@ const WHY_PILLARS = [
   },
   {
     rgb: '236,72,153',
-    icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 3a6 6 0 0 1 6 6c0 3-1.8 5.4-3.6 7.2L12 18l-2.4-1.8C7.8 14.4 6 12 6 9a6 6 0 0 1 6-6z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/><circle cx="12" cy="9" r="2" stroke="currentColor" strokeWidth="1.5"/><path d="M9 21h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
+    // Eye icon (was a map pin, which didn't say "visual"), 2026-10-04.
+    icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5"/></svg>,
     heading: 'Visual & Conceptual',
     sub: 'Mathematics taught for understanding, not memorisation, intuition-first with clear, grounded visuals.',
+    // Concrete examples of the "visual" claim, filling what was an empty
+    // lower half (2026-10-04, "make this card better").
+    examples: [
+      ['Eigenvectors', 'directions a matrix only stretches'],
+      ["Bayes' theorem", 'a tree of outcomes'],
+      ['Gradient descent', 'walking downhill on a loss surface'],
+    ],
   },
   {
     rgb: '6,182,212',
@@ -3375,6 +3388,11 @@ function WhyStrip() {
               <div className="why-text">
                 <div className="why-heading">{p.heading}</div>
                 <p className="why-sub">{p.sub}</p>
+                {p.examples && (
+                  <ul className="why-examples">
+                    {p.examples.map(([term, picture], j) => <li key={j}><b>{term}</b><span>{picture}</span></li>)}
+                  </ul>
+                )}
                 {p.chips && (
                   <div className="why-chips">
                     {p.chips.map((c, j) => <span key={j} className="why-chip" style={{ animationDelay: (0.25 + j * 0.05) + 's' }}>{c}</span>)}
