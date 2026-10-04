@@ -2430,7 +2430,7 @@ const COMBOS = [
       'Programming and data: Python, DSA, DBMS',
       'A bank of 1,000+ practice questions, added weekly',
       '300+ quality questions for every subject, and even more for the maths subjects, if you also enrol in the test series',
-      'Personal guidance from Manoj Kumar',
+      'Personal guidance from Manoj Kumar over Zoom sessions',
       'A clear study plan for every week and month',
       'Weekly tests, by topic and by full subject',
       'Live classes to revise what you learnt',
@@ -2847,7 +2847,10 @@ function BundleComparison({ pricingMap }) {
     { label: 'Weekly & monthly study schedules',          full: true, ml: false, maths: false },
     { label: 'Discord community support',                 full: true, ml: true,  maths: true  },
     { label: 'Course valid until',
-      fullText:  fmtDate((pricingMap['full-course']    || {}).validity) || '-',
+      // The table's Full Course column shows the GATE 2028 course's
+      // validity (direct request 2026-10-04), from /team if set, else the
+      // 2028 card's own date.
+      fullText:  fmtDate((pricingMap['full-course-2028'] || {}).validity || (COMBOS.find(c => c.id === 'full-course-2028') || {}).validityDate) || '-',
       mlText:    fmtDate((pricingMap['maths-ml-bundle']|| {}).validity) || '-',
       mathsText: fmtDate((pricingMap['maths-bundle']   || {}).validity) || '-' },
   ];
@@ -3783,7 +3786,7 @@ function App() {
                               <span className="plan120-sub">A day-by-day plan for the last 120 days before GATE, free on the progress tracker.</span>
                             </span>
                             <span className="plan120-list">
-                              <span>Starts Oct 9, 2026</span>
+                              <span>{new Date() >= new Date('2026-10-09T00:00:00+05:30') ? 'Started' : 'Starts'} Oct 9, 2026</span>
                               <span>Linear Algebra and Probability first, then Statistics and Python</span>
                               <span>A task for every day: lectures, quizzes or tests</span>
                               <span>Streaks, a focus timer and leaderboards</span>
