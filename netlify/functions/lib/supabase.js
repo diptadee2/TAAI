@@ -73,7 +73,19 @@ export async function fetchAllRows(buildQuery, pageSize = 1000) {
 // (old JS silently sending a request shape the new server no longer
 // accepts) doesn't stay stuck indefinitely waiting for someone to notice
 // and manually refresh.
-export const CLIENT_VERSION = '2026-10-03-8';
+export const CLIENT_VERSION = '2026-10-04-1';
+
+// How far the requesting device's clock is ahead of the server's (negative
+// if behind), from the clientNow (epoch ms) the tracker sends. Pomodoro end
+// times are device timestamps, so comparing them with the server clock
+// misfires on a device whose clock is off (a real case ran ~1.5 min fast).
+// Bounded to 6h; anything missing or wilder counts as 0 (old clients, junk).
+export function clockSkewMs(clientNow) {
+  const n = Number(clientNow);
+  if (!Number.isFinite(n)) return 0;
+  const skew = n - Date.now();
+  return Math.abs(skew) <= 6 * 3600 * 1000 ? skew : 0;
+}
 
 export function json(statusCode, body) {
   return {

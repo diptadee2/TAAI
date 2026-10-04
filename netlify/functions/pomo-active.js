@@ -13,7 +13,7 @@
 // pomo-settings) — a lost write here just means cross-device sync is
 // stale until the next successful one, not that the timer itself breaks;
 // localStorage remains the authoritative same-device state regardless.
-import { getSupabase, json } from './lib/supabase.js';
+import { getSupabase, json, clockSkewMs } from './lib/supabase.js';
 
 export async function handler(event) {
   if (event.httpMethod !== 'POST') return json(405, { error: 'method not allowed' });
@@ -84,7 +84,14 @@ export async function handler(event) {
   // actually ended. The owning device keeps priority until its own
   // session naturally completes/expires/changes, rather than losing to
   // whichever device's sync happens to land last.
-  const existingStillActive = !!(existing && existing.running && Number.isFinite(existing.phase_end_at) && existing.phase_end_at > Date.now());
+  // phase_end_at is a CLIENT timestamp (the device's own clock), so judge
+  // "has it ended" on the requesting device's clock, not the server's.
+  // Real report 2026-10-04 (Uday, uday35700@): his device ran ~1.5 min
+  // fast, so his next-phase write landed while the server still thought
+  // the old phase was running and was ignored; the new 2h session then
+  // never existed server-side and got zero credit, four times.
+  const clientSkewMs = clockSkewMs(body.clientNow);
+  const existingStillActive = !!(existing && existing.running && Number.isFinite(existing.phase_end_at) && existing.phase_end_at > Date.now() + clientSkewMs);
   // While a phase is running and unexpired, ONLY the tab/device that started
   // it (owner_token) may change it. Widened 2026-10-01 from "new phases
   // only, and only when a token is present": a stale tab's pagehide beacon
@@ -175,7 +182,12 @@ export async function handler(event) {
   // who owns it. No token to stamp (sessionStorage unavailable, or an
   // old pre-fix tab) just means this write goes through unowned, same as
   // today's behavior — never blocks the write itself.
-  if (isNewPhase && deviceToken) upsertPayload.owner_token = deviceToken;
+  // Also claims it when this device RESUMES a phase nobody is actively
+  // running (paused, or past its end). Before 2026-10-04 a resume never
+  // moved ownership, so a session paused in one tab and resumed in a new
+  // one (browser reopened, new tab) stayed owned by the dead tab, and the
+  // live tab's own next-phase write could be ignored as "another device".
+  if (deviceToken && (isNewPhase || (running && !existingStillActive))) upsertPayload.owner_token = deviceToken;
 
   let { error } = await supabase.from('pomo_active_session').upsert(upsertPayload, { onConflict: 'email' });
   if (error && upsertPayload.owner_token) {

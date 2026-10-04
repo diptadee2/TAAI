@@ -275,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-03-8';
+  var CLIENT_VERSION = '2026-10-04-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -735,6 +735,9 @@
       phaseEndAt: payload.phaseEndAt,
       completedSessions: payload.completedSessions,
       deviceToken: getPomoDeviceToken(),
+      // This device's clock, so the server can correct for a fast/slow
+      // device clock when comparing phaseEndAt (see clockSkewMs).
+      clientNow: Date.now(),
     });
     function attempt(retriesLeft) {
       api('/pomo-active', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body })
@@ -824,6 +827,7 @@
       // Identifies this tab, so the server can ignore the beacon if another
       // tab/device owns the running session (see pomo-active.js).
       deviceToken: getPomoDeviceToken(),
+      clientNow: Date.now(),
     });
     navigator.sendBeacon('/api/pomo-active', new Blob([body], { type: 'application/json' }));
   }
@@ -5511,7 +5515,7 @@
       return api('/pomodoro-complete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: state.student.email, minutes: minutes, phaseEndAt: phaseEndAt }),
+        body: JSON.stringify({ email: state.student.email, minutes: minutes, phaseEndAt: phaseEndAt, clientNow: Date.now() }),
       })
         .then(refreshLeaderboard)
         .catch(function () {

@@ -17,7 +17,7 @@
 // itself has a matching record of that exact phase, and enough real
 // wall-clock time has genuinely passed since it began. `phaseEndAt` is
 // still accepted/logged but likewise not what's credited — see below.
-import { getSupabase, json, weekStartIST, todayIST, hourIST } from './lib/supabase.js';
+import { getSupabase, json, weekStartIST, todayIST, hourIST, clockSkewMs } from './lib/supabase.js';
 
 // See pomodoro_credit_failures in supabase/schema.sql — a rejected/errored
 // completion used to leave zero trace anywhere once the response was
@@ -149,9 +149,14 @@ export async function handler(event) {
   // is what actually guards against cheating, and crediting uses the
   // stored end so it stays claim-once. An EARLIER claimed end (a stale tab
   // claiming a previous phase) is still rejected.
+  // "Not in the future" is judged on the claiming device's own clock
+  // (clientNow), since phaseEndAt is that device's timestamp: a device
+  // running ~1.5 min fast was rejected here every time (2026-10-04). This
+  // check isn't the anti-cheat guard (the server-measured elapsed check
+  // below is), and crediting still uses the STORED end, claim-once.
   const laterEndSamePhase = Number.isFinite(session.phase_end_at)
     && phaseEndAt > session.phase_end_at
-    && phaseEndAt <= Date.now() + GRACE_MS;
+    && phaseEndAt <= Date.now() + clockSkewMs(body.clientNow) + GRACE_MS;
   if (session.phase_end_at !== phaseEndAt && !laterEndSamePhase) {
     await logCreditFailure(supabase, { email, reason: 'phase_end_mismatch', claimedPhaseEndAt: phaseEndAt, session });
     return json(400, { error: 'could not verify this session' });
