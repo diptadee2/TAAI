@@ -1144,6 +1144,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .combo-projects ul { margin: 0; padding: 0 0 0 16px; display: flex; flex-direction: column; gap: 7px; }
 .combo-projects li { font-size: 13.5px; line-height: 1.45; color: rgba(255,255,255,0.72); padding-left: 2px; }
 .combo-projects li::marker { color: #FCD34D; }
+.combo-soon-btn { margin-top: 18px; background: rgba(245,158,11,0.12); color: #FCD34D; border: 1px solid rgba(245,158,11,0.35); cursor: not-allowed; font-weight: 600; box-shadow: none; }
+.combo-soon-btn:hover { transform: none; box-shadow: none; }
 .combo-projects-note { margin: 12px 0 0; font-size: 13px; color: #FCD34D; }
 
 /* Every course includes, tab showcase (mirrors Why TAAI on landing page) */
@@ -2361,6 +2363,7 @@ const COMBOS = [
       'Core DA subjects: Machine Learning and AI',
       'Programming and data: Python, DSA, DBMS',
       'A bank of 1,000+ practice questions, added weekly',
+      '300+ quality questions for every subject, and even more for the maths',
       'Personal guidance from Manoj Kumar',
       'A clear study plan for every week and month',
       'Weekly tests, by topic and by full subject',
@@ -3059,6 +3062,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
         </div>
         <div className="combo-horizontal-right">
           {priceRowEl}
+          <span className="btn btn-full combo-soon-btn" aria-disabled="true">Coming soon</span>
           {c.projects && (
             <div className="combo-projects">
               <div className="combo-includes-label">{c.projectsLabel}</div>
