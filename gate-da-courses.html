@@ -949,6 +949,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 .combo-deadline-left { display: inline-flex; align-items: center; gap: 7px; font-size: 14.5px; font-weight: 600; color: #FCD34D; }
 .combo-deadline-date { font-size: 13.5px; color: rgba(255,255,255,0.7); }
+.combo-launch { align-self: flex-start; margin-top: 4px; }
 
 /* ── Bundle cards de-slopped, 2026-10-03 ("change the bundle cards") ──
    One override layer, kept together so it's easy to see what changed:
@@ -2364,6 +2365,11 @@ const COMBOS = [
     ],
     projectsNote: 'One bundle, two shots: crack GATE, and walk into DS and AI interviews with a portfolio to show.',
     validityDate: '2028-02-15',
+    // Launch date, on request 2026-10-04. Before it, the card shows a
+    // "Launches Oct 6" row and the disabled button reads "Launching Oct 6".
+    // It does NOT switch the card to live by itself: going live still
+    // needs comingSoon removed and a real price/enrol link.
+    launchDate: '2026-10-06',
     accent: 'linear-gradient(90deg, #F59E0B, #EC4899, var(--purple))',
     title: 'GATE 2028 Full Course',
     includes: [
@@ -2893,6 +2899,11 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   const soldOutDate = pd.soldOutDate || c.soldOutDate || null;
   const soldOutAt = soldOutDate ? new Date(soldOutDate + 'T00:00:00+05:30') : null;
   const isSoldOut = !!(soldOutAt && new Date() >= soldOutAt);
+  const launchAt = c.launchDate ? new Date(c.launchDate + 'T00:00:00+05:30') : null;
+  const msToLaunch = launchAt ? launchAt - new Date() : null;
+  const launchUpcoming = msToLaunch != null && msToLaunch > -86400000; // through launch day itself
+  const daysUntilLaunch = launchUpcoming ? Math.max(0, Math.ceil(msToLaunch / 86400000)) : null;
+  const launchShort = launchAt ? launchAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'Asia/Kolkata' }) : '';
   const daysUntilSoldOut = soldOutAt && !isSoldOut
     ? Math.max(1, Math.ceil((soldOutAt - new Date()) / 86400000))
     : null;
@@ -3025,6 +3036,12 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
           {badgeEl}
           {titleEl}
           {taglineEl}
+          {launchUpcoming && (
+            <div className="combo-deadline combo-launch">
+              <span className="combo-deadline-left"><Icon.Bell size={14} />{daysUntilLaunch === 0 ? 'Launching today' : `Launches in ${daysUntilLaunch} ${daysUntilLaunch === 1 ? 'day' : 'days'}`}</span>
+              <span className="combo-deadline-date">{fmtDate(c.launchDate)}</span>
+            </div>
+          )}
           {validityEl}
           <div className="combo-divider" />
           <div className="combo-includes-label">What's included</div>
@@ -3034,7 +3051,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
         </div>
         <div className="combo-horizontal-right">
           {priceRowEl}
-          <span className="btn btn-full combo-soon-btn" aria-disabled="true">Coming soon</span>
+          <span className="btn btn-full combo-soon-btn" aria-disabled="true">{launchUpcoming ? (daysUntilLaunch === 0 ? 'Launching today' : `Launching ${launchShort}`) : 'Coming soon'}</span>
           {c.projects && (
             <div className="combo-projects">
               <div className="combo-includes-label">{c.projectsLabel}</div>
