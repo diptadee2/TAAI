@@ -2343,8 +2343,9 @@ const COMBOS = [
     featured: true,
     comingSoon: true,
     tagline: '300+ hours of content, the most concise, no-fluff GATE DA course out there.',
-    // Shown in plain sight (not blurred like the includes list), on
-    // request: five industry-style projects the 2028 batch builds.
+    // Five industry-style projects the 2028 batch builds. The count label
+    // stays readable; the list itself is blurred like the includes list
+    // (on request, 2026-10-04), since the 2028 syllabus isn't final.
     projects: [
       'Credit card fraud detection on imbalanced data',
       'Movie recommendation engine',
@@ -3067,7 +3068,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
           {c.projects && (
             <div className="combo-projects">
               <div className="combo-includes-label">{c.projects.length} industry projects</div>
-              <ol>
+              <ol className="combo-includes-blurred" aria-hidden="true">
                 {c.projects.map((p, i) => <li key={i}>{p}</li>)}
               </ol>
             </div>
