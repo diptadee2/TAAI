@@ -1141,9 +1141,9 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 }
 /* 2028 card's visible projects list, under its blurred price. */
 .combo-projects { margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.08); position: relative; z-index: 1; }
-.combo-projects ol { margin: 0; padding: 0 0 0 18px; display: flex; flex-direction: column; gap: 7px; }
+.combo-projects ul { margin: 0; padding: 0 0 0 16px; display: flex; flex-direction: column; gap: 7px; }
 .combo-projects li { font-size: 13.5px; line-height: 1.45; color: rgba(255,255,255,0.72); padding-left: 2px; }
-.combo-projects li::marker { color: #FCD34D; font-weight: 600; }
+.combo-projects li::marker { color: #FCD34D; }
 
 /* Every course includes, tab showcase (mirrors Why TAAI on landing page) */
 .incl-layout {
@@ -2343,15 +2343,13 @@ const COMBOS = [
     featured: true,
     comingSoon: true,
     tagline: '300+ hours of content, the most concise, no-fluff GATE DA course out there.',
-    // Five industry-style projects the 2028 batch builds. The count label
-    // stays readable; the list itself is blurred like the includes list
-    // (on request, 2026-10-04), since the 2028 syllabus isn't final.
+    // The 2028 batch's project plan, by category (specific projects not
+    // final yet), on request 2026-10-04.
+    projectsLabel: '5 real-world projects',
     projects: [
-      'Credit card fraud detection on imbalanced data',
-      'Movie recommendation engine',
-      'Churn prediction model served as an API',
-      'Retail sales demand forecasting',
-      'RAG chatbot over your own documents',
+      '2 classic machine learning projects on real business data',
+      '1 deep learning project on images',
+      '2 projects built with large language models',
     ],
     validityDate: '2028-02-15',
     accent: 'linear-gradient(90deg, #F59E0B, #EC4899, var(--purple))',
@@ -2984,7 +2982,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   // announce here. Sold-out reuses the exact same blur, on request —
   // "features blurred out below" the stamp.
   const includesEl = (
-    <div className={'combo-includes' + ((comingSoon || isSoldOut) ? ' combo-includes-blurred' : '')} aria-hidden={(comingSoon || isSoldOut) || undefined}>
+    <div className={'combo-includes' + (isSoldOut ? ' combo-includes-blurred' : '')} aria-hidden={isSoldOut || undefined}>
       <ul>
         {c.includes.map((item, i) => (
           <li key={i} style={{ '--delay': `${i * 48}ms` }}>
@@ -3030,15 +3028,10 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   const ctaEl = isSoldOut
     ? <a href="mailto:support@taai.live?subject=GATE%202027%20Full%20Course" className="btn btn-primary btn-full"><Icon.Mail size={15} /> Confident? Contact us</a>
     : <a href={pd.enrollUrl || c.href} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-full">Enrol now <Icon.ArrowRight /></a>;
-  // comingSoon has no button at all — a big "Coming Soon" overlay sits
-  // directly over the blurred What's-included list instead (see
-  // combo-includes-wrap below), the most visually prominent blurred
-  // area on the card, rather than a small label off to the side.
-  const comingSoonTagEl = (
-    <div className="combo-coming-soon-overlay">
-      <div className="combo-coming-soon-overlay-inner"><Icon.Bell size={22} /> Coming Soon</div>
-    </div>
-  );
+  // comingSoon has no button. Since 2026-10-04 its What's-included list
+  // is readable (only the price stays blurred) and the "Coming Soon"
+  // status is carried by the badge alone; the big overlay that used to
+  // sit over the blurred list was removed with the blur.
 
   // comingSoon gets a genuinely different structure (two side-by-side
   // halves on desktop — see .combo-horizontal), not just the same flat
@@ -3060,17 +3053,16 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
           <div className="combo-includes-label">What's included</div>
           <div className="combo-includes-wrap">
             {includesEl}
-            {comingSoonTagEl}
           </div>
         </div>
         <div className="combo-horizontal-right">
           {priceRowEl}
           {c.projects && (
             <div className="combo-projects">
-              <div className="combo-includes-label">{c.projects.length} industry projects</div>
-              <ol className="combo-includes-blurred" aria-hidden="true">
+              <div className="combo-includes-label">{c.projectsLabel}</div>
+              <ul>
                 {c.projects.map((p, i) => <li key={i}>{p}</li>)}
-              </ol>
+              </ul>
             </div>
           )}
         </div>
