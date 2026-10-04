@@ -1156,6 +1156,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .combo-projects li::marker { color: #FCD34D; }
 .combo-soon-btn { margin-top: 18px; background: rgba(245,158,11,0.12); color: #FCD34D; border: 1px solid rgba(245,158,11,0.35); cursor: not-allowed; font-weight: 600; box-shadow: none; }
 .combo-soon-btn:hover { transform: none; box-shadow: none; }
+.combo-live-cta { margin-top: 18px; display: flex; flex-direction: column; gap: 10px; }
+.combo-live-cta .combo-saving { margin: 0; }
 .combo-projects-note { margin: 12px 0 0; font-size: 13px; color: #FCD34D; }
 
 /* Every course includes, tab showcase (mirrors Why TAAI on landing page) */
@@ -2390,8 +2392,9 @@ const COMBOS = [
     validityDate: '2028-02-15',
     // Launch date, on request 2026-10-04. Before it, the card shows a
     // "Launches Oct 6" row and the disabled button reads "Launching Oct 6".
-    // It does NOT switch the card to live by itself: going live still
-    // needs comingSoon removed and a real price/enrol link.
+    // The card goes live by itself (price shown, "Enrol now") once /team
+    // has both a price and an enrol link for full-course-2028; this date
+    // only drives the countdown text, not the switch.
     launchDate: '2026-10-06',
     accent: 'linear-gradient(90deg, #F59E0B, #EC4899, var(--purple))',
     title: 'GATE 2028 Full Course',
@@ -2905,7 +2908,13 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   const discountDeadline = pd.discountDeadline ? fmtDeadline(pd.discountDeadline) : null;
   const discountReason   = pd.discountReason  || null;
   const saving           = c.saving;
-  const comingSoon = !!c.comingSoon;
+  // A preview card (the 2028 course) keeps its own layout and amber look
+  // for good, but its "coming soon" state switches off by itself once
+  // /team has BOTH a price and an enrol link for it (2026-10-04, direct
+  // request), so launch day needs no code change or deploy: the price
+  // unblurs, "Enrol now" appears, and the launch row disappears.
+  const isPreviewCard = !!c.comingSoon;
+  const comingSoon = isPreviewCard && !(pd.price && pd.enrollUrl);
   // This card's own enrollment cutoff, separate from discountDeadline
   // (a pricing field driving the unrelated ⏳ discount-offer line
   // below) — isn't a price change, it's "this batch stops accepting
@@ -2934,9 +2943,9 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   // course (nothing in pricingMap for an id with no real offer yet) — so
   // this reads the date straight off the combo's own data instead, the
   // same "known, hardcoded, not fetched" treatment its accent/badge get.
-  const validity = comingSoon && c.validityDate ? fmtValidity(c.validityDate) : (pd.validity ? fmtValidity(pd.validity) : '-');
+  const validity = pd.validity ? fmtValidity(pd.validity) : (isPreviewCard && c.validityDate ? fmtValidity(c.validityDate) : '-');
   const featured = c.badge === 'best' || c.featured;
-  const cls = 'combo-card card' + (featured ? ' featured' : '') + (c.theme ? ` combo-${c.theme}` : '') + (comingSoon ? ' coming-soon' : '');
+  const cls = 'combo-card card' + (featured ? ' featured' : '') + (c.theme ? ` combo-${c.theme}` : '') + (isPreviewCard ? ' coming-soon' : '');
   const spotlightProps = {
     onMouseMove: e => { const r = e.currentTarget.getBoundingClientRect(); e.currentTarget.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100).toFixed(1) + '%'); e.currentTarget.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%'); },
     onMouseLeave: e => { e.currentTarget.style.setProperty('--mx', '-200%'); e.currentTarget.style.setProperty('--my', '-200%'); }
@@ -3037,7 +3046,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   // direct line to support instead of quietly disappearing or staying
   // clickable.
   const ctaEl = isSoldOut
-    ? <a href="mailto:support@taai.live?subject=GATE%202027%20Full%20Course" className="btn btn-primary btn-full"><Icon.Mail size={15} /> Confident? Contact us</a>
+    ? <a href={'mailto:support@taai.live?subject=' + encodeURIComponent(c.title)} className="btn btn-primary btn-full"><Icon.Mail size={15} /> Confident? Contact us</a>
     : <a href={pd.enrollUrl || c.href} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-full">Enrol now <Icon.ArrowRight /></a>;
   // comingSoon has no button. Since 2026-10-04 its What's-included list
   // is readable (only the price stays blurred) and the "Coming Soon"
@@ -3050,7 +3059,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   // card has room to do more with its "own row" than a same-shaped
   // duplicate of the vertical cards below it. Every other combo (2027,
   // the two bundles) keeps the exact original flat structure, untouched.
-  const inner = comingSoon ? (
+  const inner = isPreviewCard ? (
     <div id={c.id} className={cls} {...spotlightProps}>
       <div className="combo-num">{c.num}</div>
       <div className="combo-accent" style={{ background: c.accent }} />
@@ -3058,22 +3067,31 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
         <div className="combo-horizontal-left">
           {titleEl}
           {taglineEl}
-          {launchUpcoming && (
+          {comingSoon && launchUpcoming && (
             <div className="combo-deadline combo-launch">
               <span className="combo-deadline-left"><Icon.Bell size={14} />{daysUntilLaunch === 0 ? 'Launching today' : `Launches in ${daysUntilLaunch} ${daysUntilLaunch === 1 ? 'day' : 'days'}`}</span>
               <span className="combo-deadline-date">{fmtDate(c.launchDate)}</span>
             </div>
           )}
-          {validityEl}
+          {!comingSoon && !isSoldOut && countdownDetailEl}
+          {!isSoldOut && validityEl}
           <div className="combo-divider" />
           <div className="combo-includes-label">What's included</div>
           <div className="combo-includes-wrap">
             {includesEl}
+            {isSoldOut && soldOutStampEl}
           </div>
         </div>
         <div className="combo-horizontal-right">
           {priceRowEl}
-          <span className="btn btn-full combo-soon-btn" aria-disabled="true">{launchUpcoming ? (daysUntilLaunch === 0 ? 'Launching today' : `Launching ${launchShort}`) : 'Coming soon'}</span>
+          {comingSoon ? (
+            <span className="btn btn-full combo-soon-btn" aria-disabled="true">{launchUpcoming ? (daysUntilLaunch === 0 ? 'Launching today' : `Launching ${launchShort}`) : 'Coming soon'}</span>
+          ) : (
+            <div className="combo-live-cta">
+              {!isSoldOut && (discountReason || discountDeadline) && <div className="combo-saving" style={{ color: '#e05a2b', fontWeight: 600 }}>⏳ {[discountReason, discountDeadline].filter(Boolean).join(' · ')}</div>}
+              {ctaEl}
+            </div>
+          )}
           {c.projects && (
             <div className="combo-projects">
               <div className="combo-includes-label">{c.projectsLabel}</div>
@@ -3121,7 +3139,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
       {ctaEl}
     </div>
   );
-  if (featured) return <div className={'combo-featured-frame' + (comingSoon ? ' coming-soon' : '')}>{inner}</div>;
+  if (featured) return <div className={'combo-featured-frame' + (isPreviewCard ? ' coming-soon' : '')}>{inner}</div>;
   return inner;
 });
 
