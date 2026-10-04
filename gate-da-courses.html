@@ -1738,6 +1738,28 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   color: rgba(255,255,255,0.72); background: transparent; border-color: rgba(255,255,255,0.14);
 }
 .why-icon-wrap, .why-heading, .why-sub, .why-chip { animation: none; opacity: 1; }
+/* Tighter, 2026-10-04 ("too much negative space"): smaller padding, the
+   icon sits beside each heading instead of on its own row above it, the
+   banner's chips move to its right side on wide screens, and no
+   flex:1 on the sub so cards don't stretch empty space under the text. */
+.why-grid { gap: 16px; }
+.why-pillar, .why-pillar.why-pillar--featured { padding: 28px 30px; }
+.why-pillar { display: grid; grid-template-columns: auto minmax(0,1fr); column-gap: 14px; row-gap: 0; align-items: start; align-content: start; }
+.why-icon-wrap, .why-pillar--featured .why-icon-wrap { margin: 0; padding-top: 1px; }
+.why-icon-wrap svg, .why-pillar--featured .why-icon-wrap svg { width: 24px; height: 24px; }
+.why-heading { margin-bottom: 8px; }
+.why-pillar--featured .why-heading { font-size: 24px; margin-bottom: 8px; }
+.why-sub, .why-pillar--featured .why-sub { flex: none; margin-bottom: 14px; }
+.why-sub:last-child { margin-bottom: 0; }
+.why-pillar--featured .why-sub { font-size: 16px; margin-bottom: 0; }
+.why-pillar.why-pillar--featured { display: grid; grid-template-columns: auto minmax(0,1fr) auto; column-gap: 14px; row-gap: 0; align-items: center; }
+.why-pillar--featured .why-text { display: contents; }
+.why-pillar--featured .why-heading, .why-pillar--featured .why-sub { grid-column: 2; }
+.why-pillar--featured .why-icon-wrap { grid-column: 1; grid-row: 1; align-self: start; padding-top: 3px; }
+.why-pillar--featured .why-chips { grid-column: 3; grid-row: 1 / span 2; max-width: 320px; justify-content: flex-end; margin-left: 24px; }
+@media (max-width: 1024px) {
+  .why-pillar--featured .why-chips { grid-column: 2 / 4; grid-row: 3; justify-content: flex-start; margin: 14px 0 0; max-width: none; }
+}
 
 /* ── Sticky contact buttons ───────────────────────────── */
 @keyframes mcb-slide-up {
