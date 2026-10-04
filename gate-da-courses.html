@@ -468,7 +468,12 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
    and the plain 3-column grid below it. */
 .combo-group-divider { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; margin: 4px 0 20px; }
 .combo-group-divider > span { flex-shrink: 0; font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: -0.01em; color: #fff; white-space: nowrap; }
-.combo-group-divider .cgd-pre { font-weight: 500; color: rgba(255,255,255,0.5); }
+.combo-group-divider .cgd-pre { font-weight: 500; color: rgba(255,255,255,0.72); }
+/* Readability over the section's moving dot field (2026-10-04, "these texts
+   are getting merged with the background dots"): a soft halo in the
+   section's own background colour hides the dots right around the
+   letters, without adding a box behind the label. */
+.combo-group-divider > span { text-shadow: 0 0 4px #07060f, 0 0 10px #07060f, 0 0 18px #07060f; }
 @media (max-width: 480px) { .combo-group-divider > span { font-size: 19px; } }
 .combo-group-divider::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(255,255,255,0.22), transparent); }
 /* No max-width cap here — real gap found on iPad portrait (~820px):
@@ -1754,13 +1759,22 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 .why-sub, .why-pillar--featured .why-sub { flex: none; margin-bottom: 14px; }
 .why-sub:last-child { margin-bottom: 0; }
 .why-pillar--featured .why-sub { font-size: 16px; margin-bottom: 0; }
-.why-pillar.why-pillar--featured { display: grid; grid-template-columns: auto minmax(0,1fr) auto; column-gap: 14px; row-gap: 0; align-items: center; }
-.why-pillar--featured .why-text { display: contents; }
-.why-pillar--featured .why-heading, .why-pillar--featured .why-sub { grid-column: 2; }
+.why-pillar.why-pillar--featured { display: grid; grid-template-columns: auto minmax(0,1fr) auto; column-gap: 14px; row-gap: 0; align-items: start; }
+.why-pillar--featured .why-text { grid-column: 2; grid-row: 1; }
 .why-pillar--featured .why-icon-wrap { grid-column: 1; grid-row: 1; align-self: start; padding-top: 3px; }
-.why-pillar--featured .why-chips { grid-column: 3; grid-row: 1 / span 2; max-width: 320px; justify-content: flex-end; margin-left: 24px; }
+.why-pillar.why-pillar--featured { grid-template-columns: auto minmax(0,1fr) minmax(0,1fr); column-gap: 14px; }
+.why-contrast { grid-column: 3; grid-row: 1; margin-left: 28px; padding-left: 28px; border-left: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 14px; }
+.why-contrast-label { font-size: 12.5px; font-weight: 600; margin-bottom: 3px; }
+.why-contrast-items { font-size: 14.5px; line-height: 1.5; display: flex; flex-wrap: wrap; column-gap: 6px; }
+.why-contrast-items span { white-space: nowrap; }
+.why-contrast-items span + span::before { content: '·'; margin-right: 6px; opacity: .6; }
+.why-contrast-no .why-contrast-label { color: rgba(255,255,255,0.4); }
+.why-contrast-no .why-contrast-items { color: rgba(255,255,255,0.4); text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.35); }
+.why-contrast-yes .why-contrast-label { color: #C4B5FD; }
+.why-contrast-yes .why-contrast-items { color: rgba(255,255,255,0.9); }
 @media (max-width: 1024px) {
-  .why-pillar--featured .why-chips { grid-column: 2 / 4; grid-row: 3; justify-content: flex-start; margin: 14px 0 0; max-width: none; }
+  .why-pillar.why-pillar--featured { grid-template-columns: auto minmax(0,1fr); }
+  .why-contrast { grid-column: 2; grid-row: 2; margin: 18px 0 0; padding: 16px 0 0; border-left: none; border-top: 1px solid rgba(255,255,255,0.1); }
 }
 
 /* ── Sticky contact buttons ───────────────────────────── */
@@ -3320,7 +3334,14 @@ const WHY_PILLARS = [
     // already lists, not invented filler) giving the wider box real
     // content to hold instead of empty space.
     featured: true,
-    chips: ['Linear Algebra', 'Probability', 'Statistics', 'Calculus', 'ML'],
+    // Replaced the subject pills (2026-10-04, "the pills are not the same
+    // context as the text"): the claim is "not repurposed CSE content", so
+    // the right side now shows exactly that contrast. All three CSE topics
+    // are outside the GATE DA syllabus; the DA side is its core.
+    contrast: {
+      notLabel: 'Repurposed CSE prep', not: ['Operating Systems', 'Computer Networks', 'Compiler Design'],
+      yesLabel: 'What GATE DA asks', yes: ['Probability & Statistics', 'Linear Algebra', 'Machine Learning', 'AI'],
+    },
   },
   {
     rgb: '236,72,153',
@@ -3366,6 +3387,18 @@ function WhyStrip() {
                   </div>
                 )}
               </div>
+              {p.contrast && (
+                <div className="why-contrast">
+                  <div className="why-contrast-row why-contrast-no">
+                    <div className="why-contrast-label">{p.contrast.notLabel}</div>
+                    <div className="why-contrast-items">{p.contrast.not.map((t, j) => <span key={j}>{t}</span>)}</div>
+                  </div>
+                  <div className="why-contrast-row why-contrast-yes">
+                    <div className="why-contrast-label">{p.contrast.yesLabel}</div>
+                    <div className="why-contrast-items">{p.contrast.yes.map((t, j) => <span key={j}>{t}</span>)}</div>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
