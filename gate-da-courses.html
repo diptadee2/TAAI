@@ -1693,6 +1693,38 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   .why-icon-wrap, .why-heading, .why-sub, .why-chip { animation: none; opacity: 1; }
 }
 @media (max-width: 768px) { .why-strip { display: none; } }
+/* "Built differently" pillars de-slopped 2026-10-04: one flat dark
+   surface with a hairline border (no cursor spotlight, noise, dot grid,
+   blurred glow orb, drop shadow or hover lift), plain line icons in a
+   soft accent instead of gradient tiles, sans-serif chips instead of
+   monospace pills, and no bouncy per-line text cascade. Layout (wide
+   banner on top, two cards below) is unchanged. */
+.why-pillar, .why-pillar:hover {
+  background: #14102B; background-image: none;
+  border: 1px solid rgba(255,255,255,0.08); box-shadow: none; transform: none;
+  transition: border-color .2s ease;
+}
+.why-pillar:hover { border-color: rgba(255,255,255,0.16); }
+.why-pillar::after { display: none; }
+.why-icon-wrap, .why-bd-1 .why-icon-wrap, .why-bd-2 .why-icon-wrap, .why-bd-3 .why-icon-wrap {
+  width: auto; height: auto; border-radius: 0; background: none; box-shadow: none; margin-bottom: 22px;
+}
+.why-icon-wrap svg { width: 26px; height: 26px; }
+.why-bd-1 .why-icon-wrap { color: #C4B5FD; }
+.why-bd-2 .why-icon-wrap { color: #F9A8D4; }
+.why-bd-3 .why-icon-wrap { color: #7DD3FC; }
+.why-pillar--featured .why-icon-wrap { margin-bottom: 0; align-self: flex-start; padding-top: 4px; }
+.why-pillar--featured .why-icon-wrap svg { width: 32px; height: 32px; }
+.why-pillar.why-pillar--featured { align-items: flex-start; gap: 28px; }
+.why-heading { font-size: 21px; }
+.why-pillar--featured .why-heading { font-size: 26px; }
+.why-sub { font-size: 15px; color: rgba(255,255,255,0.62); }
+.why-pillar--featured .why-sub { font-size: 17px; margin-bottom: 18px; }
+.why-chip, .why-pillar--featured .why-chip, .why-pillar:hover .why-chip {
+  font-family: var(--font-body); font-size: 13px; padding: 4px 11px;
+  color: rgba(255,255,255,0.72); background: transparent; border-color: rgba(255,255,255,0.14);
+}
+.why-icon-wrap, .why-heading, .why-sub, .why-chip { animation: none; opacity: 1; }
 
 /* ── Sticky contact buttons ───────────────────────────── */
 @keyframes mcb-slide-up {
@@ -3281,7 +3313,6 @@ function WhyStrip() {
   return (
     <div className="why-strip">
       <div className="container">
-        <div className="why-strip-label fade-in">Why students choose TAAI</div>
         <h2 className="why-strip-h2 fade-in">Built differently. <em>For GATE DA.</em></h2>
         <p className="why-strip-sub fade-in">Every choice we made, from content to pedagogy, was made with one exam in mind.</p>
         <div className="why-grid">
