@@ -1166,6 +1166,30 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .combo-live-cta .combo-saving { margin: 0; }
 .combo-projects-note { margin: 12px 0 0; font-size: 13px; color: #FCD34D; }
 
+/* "Before you enrol" note for the GATE 2028 card (2026-10-04, direct
+   request): shown when its live Enrol now is clicked, explaining what
+   unlocks now vs after GATE DA 2027, then continues to the enrol page. */
+.enrol-note-backdrop { position: fixed; inset: 0; z-index: 10000; background: rgba(5,4,12,0.72); display: flex; align-items: center; justify-content: center; padding: 16px; animation: enrol-note-fade .18s ease both; }
+.enrol-note { width: 100%; max-width: 440px; background: #14102B; border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; padding: 26px 24px 22px; color: #fff; font-family: inherit; animation: enrol-note-rise .22s ease both; }
+.enrol-note h3 { margin: 0 0 16px; font-size: 20px; font-weight: 700; line-height: 1.3; }
+.enrol-note-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.enrol-note-list li { display: grid; grid-template-columns: 22px 1fr; gap: 10px; font-size: 14.5px; line-height: 1.5; color: rgba(255,255,255,0.78); }
+.enrol-note-list b { color: #fff; font-weight: 600; }
+.enrol-note-dot { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; margin-top: 1px; }
+.enrol-note-dot.now { background: rgba(74,222,128,0.16); color: #4ADE80; }
+.enrol-note-dot.later { background: rgba(252,211,77,0.14); color: #FCD34D; }
+.enrol-note-callout { margin: 18px 0 0; padding: 12px 14px; border-radius: 12px; background: rgba(167,139,250,0.12); border: 1px solid rgba(167,139,250,0.28); font-size: 14px; line-height: 1.5; color: #E9E3FF; }
+.enrol-note-actions { display: flex; gap: 10px; margin-top: 20px; }
+.enrol-note-actions .btn { flex: 1; justify-content: center; }
+.enrol-note .enrol-note-go { background: #fff; color: #14102B; border: none; box-shadow: none; font-weight: 600; }
+.enrol-note .enrol-note-go:hover { background: #EDE9FE; transform: none; box-shadow: none; }
+.enrol-note-cancel { background: transparent; color: rgba(255,255,255,0.75); border: 1px solid rgba(255,255,255,0.18); box-shadow: none; cursor: pointer; }
+.enrol-note-cancel:hover { color: #fff; border-color: rgba(255,255,255,0.35); transform: none; box-shadow: none; }
+@keyframes enrol-note-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes enrol-note-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (max-width: 420px) { .enrol-note-actions { flex-direction: column-reverse; } }
+@media (prefers-reduced-motion: reduce) { .enrol-note-backdrop, .enrol-note { animation: none; } }
+
 /* Every course includes, tab showcase (mirrors Why TAAI on landing page) */
 .incl-layout {
   display: grid; grid-template-columns: 360px 1fr; gap: 0; align-items: stretch;
@@ -2932,6 +2956,36 @@ function BundleComparison({ pricingMap }) {
   );
 }
 
+// "Before you enrol" note for the GATE 2028 card: what unlocks right
+// away vs after GATE DA 2027. Rendered into <body> so no card transform
+// or overflow can clip it. Continue opens the real enrol link.
+function EnrolNote({ href, onClose }) {
+  const goRef = React.useRef(null);
+  React.useEffect(() => {
+    const onKey = e => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    if (goRef.current) goRef.current.focus();
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+  return ReactDOM.createPortal(
+    <div className="enrol-note-backdrop" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="enrol-note" role="dialog" aria-modal="true" aria-labelledby="enrol-note-title">
+        <h3 id="enrol-note-title">Here's how the course unlocks</h3>
+        <ul className="enrol-note-list">
+          <li><span className="enrol-note-dot now">✓</span><span><b>Right away:</b> content covering 65+ marks of GATE DA 2027, plus weekly quizzes.</span></li>
+          <li><span className="enrol-note-dot later">2</span><span><b>After GATE DA 2027:</b> the rest of the course.</span></li>
+        </ul>
+        <p className="enrol-note-callout">Score those 65+ marks and you're in double-digit rank territory. What unlocks now is enough to get you there.</p>
+        <div className="enrol-note-actions">
+          <button type="button" className="btn enrol-note-cancel" onClick={onClose}>Not now</button>
+          <a ref={goRef} href={href} target="_blank" rel="noopener noreferrer" className="btn enrol-note-go" onClick={onClose}>Continue to enrol <Icon.ArrowRight /></a>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   const p = pricing;
   const live = !!p;
@@ -2950,6 +3004,8 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   // unblurs, "Enrol now" appears, and the launch row disappears.
   const isPreviewCard = !!c.comingSoon;
   const comingSoon = isPreviewCard && !(pd.price && pd.enrollUrl);
+  const [showEnrolNote, setShowEnrolNote] = React.useState(false);
+  const closeEnrolNote = React.useCallback(() => setShowEnrolNote(false), []);
   // This card's own enrollment cutoff, separate from discountDeadline
   // (a pricing field driving the unrelated ⏳ discount-offer line
   // below) — isn't a price change, it's "this batch stops accepting
@@ -3082,7 +3138,9 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   // clickable.
   const ctaEl = isSoldOut
     ? <a href={'mailto:support@taai.live?subject=' + encodeURIComponent(c.title)} className="btn btn-primary btn-full"><Icon.Mail size={15} /> Confident? Contact us</a>
-    : <a href={pd.enrollUrl || c.href} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-full">Enrol now <Icon.ArrowRight /></a>;
+    : isPreviewCard
+      ? <button type="button" className="btn btn-primary btn-full" onClick={() => setShowEnrolNote(true)}>Enrol now <Icon.ArrowRight /></button>
+      : <a href={pd.enrollUrl || c.href} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-full">Enrol now <Icon.ArrowRight /></a>;
   // comingSoon has no button. Since 2026-10-04 its What's-included list
   // is readable (only the price stays blurred) and the "Coming Soon"
   // status is carried by the badge alone; the big overlay that used to
@@ -3175,8 +3233,9 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
       {ctaEl}
     </div>
   );
-  if (featured) return <div className={'combo-featured-frame' + (isPreviewCard ? ' coming-soon' : '')}>{inner}</div>;
-  return inner;
+  const note = showEnrolNote && <EnrolNote href={pd.enrollUrl || c.href} onClose={closeEnrolNote} />;
+  if (featured) return <div className={'combo-featured-frame' + (isPreviewCard ? ' coming-soon' : '')}>{inner}{note}</div>;
+  return <>{inner}{note}</>;
 });
 
 const CourseCard = React.memo(function CourseCard({ c, pricing }) {
