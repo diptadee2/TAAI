@@ -21,7 +21,7 @@
     // overallBar/targetMarks: the plan progress card (Day N of 180, %, marks)
     // and the "+N credit earned" note on ticks. Batch C covers the technical
     // syllabus, 85 marks (General Aptitude's 15 isn't scheduled). 2026-10-03.
-    C: { start: PROGRAM_START_DATE, length: PROGRAM_LENGTH_DAYS, overallBar: true, targetMarks: 85 },
+    C: { start: PROGRAM_START_DATE, length: PROGRAM_LENGTH_DAYS, overallBar: true, targetMarks: 85, marksNote: '+15 marks aptitude' },
     D: { length: 120, countsToExam: true, overallBar: true, targetMarks: 70 },
   };
 
@@ -275,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-04-1';
+  var CLIENT_VERSION = '2026-10-04-2';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2725,7 +2725,7 @@
     var program = BATCH_PROGRAMS[state.student && state.student.batch] || {};
     // Marks covered: the plan aims at targetMarks (70), so finishing a
     // share of it covers that share of the target. Fixed denominator.
-    return { done: done, total: total, pct: Math.round(frac * 100), target: program.targetMarks || 0, marks: Math.round(frac * (program.targetMarks || 0)) };
+    return { done: done, total: total, pct: Math.round(frac * 100), target: program.targetMarks || 0, note: program.marksNote || '', marks: Math.round(frac * (program.targetMarks || 0)) };
   }
   // The marks number counts up from 0 once per page visit (not on every
   // re-render, and not on the quiet cached-to-fresh swap), then pops; a
@@ -2734,7 +2734,7 @@
   function planMarksHtml(t) {
     if (!t.target) return '';
     var start = planMarksCounted || quietRender ? t.marks : 0;
-    return '<span class="plan-marks" id="plan-progress-marks"><b id="plan-marks-num" data-marks="' + t.marks + '">' + start + '</b> / ' + t.target + ' marks</span>';
+    return '<span class="plan-marks" id="plan-progress-marks"><b id="plan-marks-num" data-marks="' + t.marks + '">' + start + '</b> / ' + t.target + ' marks' + (t.note ? ' <span class="plan-marks-note">(' + escapeHtml(t.note) + ')</span>' : '') + '</span>';
   }
   function animatePlanMarks() {
     var el = document.getElementById('plan-marks-num');
