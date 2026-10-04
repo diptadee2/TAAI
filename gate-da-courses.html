@@ -1306,6 +1306,8 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .compare-price.best { color: var(--purple); }
 
 .compare-row.zebra { background: rgba(0,0,0,0.018); }
+.compare-head-sub { display: block; margin-top: 6px; font-style: normal; font-size: 11.5px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--ink-dim); }
+.compare-head-cell.featured .compare-head-sub { color: var(--purple); }
 .compare-row.compare-group, .compare-row.compare-group:hover { background: #f1eefe; animation: none; }
 .compare-row.compare-group .compare-cell { padding-top: 14px; padding-bottom: 8px; font-size: 12px; font-weight: 700; color: var(--ink); }
 .compare-row.compare-group .compare-cell.feat-name { background: #f1eefe; color: var(--ink); text-transform: uppercase; letter-spacing: .05em; font-size: 11px; box-shadow: none; }
@@ -2431,7 +2433,7 @@ const COMBOS = [
       'Personal guidance from Manoj Kumar',
       'A clear study plan for every week and month',
       'Weekly tests, by topic and by full subject',
-      'Live weekend classes to revise what you learnt',
+      'Live classes to revise what you learnt',
       'A Discord community to ask doubts anytime',
     ],
     href: '#',
@@ -2459,7 +2461,7 @@ const COMBOS = [
       'GATE mentorship with Manoj Kumar',
       'Weekly & subject wise monthly schedules',
       'Topic-wise & full-subject weekly quizzes',
-      'Live revision lectures every weekend',
+      'Live revision lectures',
       'Active Discord community support',
     ],
     href: 'https://learn.taai.live/learn/batch/GATE-2027/content',
@@ -2479,7 +2481,6 @@ const COMBOS = [
       'Calculus',
       'Machine Learning',
       'Topic-wise & full-subject weekly quizzes',
-      'Live revision lectures every weekend',
       'Active Discord community support',
     ],
     href: 'https://learn.taai.live/learn/Maths--ML---AI-Bundle---GATE-2026',
@@ -2498,7 +2499,6 @@ const COMBOS = [
       'Statistics',
       'Calculus',
       'Topic-wise & full-subject weekly quizzes',
-      'Live revision lectures every weekend',
       'Active Discord community support',
     ],
     href: 'https://learn.taai.live/learn/Mathematics-Course-by-manoj-sir-gate-2026-gateda',
@@ -2830,31 +2830,22 @@ const INCLUDED = [
 ];
 
 function BundleComparison({ pricingMap }) {
-  // Rebuilt 2026-10-04 ("make the what's included in each bundle better"):
-  // grouped (subjects, practice, live classes and support), subject counts
-  // per bundle in the group heading, and rows matched to what each bundle's
-  // own card lists (Python, weekly quizzes and live weekend revision were
-  // missing). Keep in sync with the COMBOS includes lists above.
+  // Rebuilt 2026-10-04, then trimmed the same day ("there are so many
+  // things, do better"): 11 rows instead of 22, related items merged, no
+  // group headings; subject counts sit in the column headers instead.
+  // Live revision lectures, 1,000+ quiz questions and the projects are full
+  // course only (direct corrections). Keep in sync with COMBOS includes.
   const features = [
-    { heading: 'Subjects', fullText: '10 subjects', mlText: '5 subjects', mathsText: '4 subjects' },
-    { label: 'Linear Algebra',            full: true, ml: true,  maths: true  },
-    { label: 'Probability',               full: true, ml: true,  maths: true  },
-    { label: 'Statistics',                full: true, ml: true,  maths: true  },
-    { label: 'Calculus',                  full: true, ml: true,  maths: true  },
-    { label: 'Machine Learning',          full: true, ml: true,  maths: false },
-    { label: 'Artificial Intelligence',   full: true, ml: false, maths: false },
-    { label: 'Python',                    full: true, ml: false, maths: false },
-    { label: 'Data Structures',           full: true, ml: false, maths: false },
-    { label: 'Algorithms',                full: true, ml: false, maths: false },
-    { label: 'DBMS',                      full: true, ml: false, maths: false },
-    { heading: 'Practice' },
-    { label: 'Topic-wise & full-subject weekly quizzes', full: true, ml: true, maths: true },
-    { label: '1,000+ quiz questions',     full: true, ml: true,  maths: true  },
-    { heading: 'Classes & support' },
-    { label: 'Live revision lectures every weekend', full: true, ml: true, maths: true },
-    { label: 'Discord community support', full: true, ml: true,  maths: true  },
-    { label: 'GATE mentorship with Manoj Kumar', full: true, ml: false, maths: false },
-    { label: 'Weekly & monthly study schedules', full: true, ml: false, maths: false },
+    { label: 'Maths: Linear Algebra, Probability, Statistics, Calculus', full: true, ml: true, maths: true },
+    { label: 'Machine Learning',                          full: true, ml: true,  maths: false },
+    { label: 'AI, Python, DSA and DBMS',                  full: true, ml: false, maths: false },
+    { label: 'Topic-wise & full-subject weekly quizzes',  full: true, ml: true,  maths: true  },
+    { label: '1,000+ quiz questions',                     full: true, ml: false, maths: false },
+    { label: '5 projects: 2 ML, 1 deep learning, 2 LLM',  full: true, ml: false, maths: false },
+    { label: 'Live revision lectures',                    full: true, ml: false, maths: false },
+    { label: 'GATE mentorship with Manoj Kumar',          full: true, ml: false, maths: false },
+    { label: 'Weekly & monthly study schedules',          full: true, ml: false, maths: false },
+    { label: 'Discord community support',                 full: true, ml: true,  maths: true  },
     { label: 'Course valid until',
       fullText:  fmtDate((pricingMap['full-course']    || {}).validity) || '-',
       mlText:    fmtDate((pricingMap['maths-ml-bundle']|| {}).validity) || '-',
@@ -2894,9 +2885,9 @@ function BundleComparison({ pricingMap }) {
           <div className="compare-table">
             <div className="compare-head">
               <div className="compare-head-cell" />
-              <div className="compare-head-cell featured">Full Course<br/><span>Best value</span></div>
-              <div className="compare-head-cell">Maths &amp; ML<br/>Bundle</div>
-              <div className="compare-head-cell">Maths<br/>Bundle</div>
+              <div className="compare-head-cell featured">Full Course<br/><span>Best value</span><em className="compare-head-sub">10 subjects</em></div>
+              <div className="compare-head-cell">Maths &amp; ML<br/>Bundle<em className="compare-head-sub">5 subjects</em></div>
+              <div className="compare-head-cell">Maths<br/>Bundle<em className="compare-head-sub">4 subjects</em></div>
             </div>
             {features.map((f, i) => f.heading ? (
               <div key={i} className="compare-row compare-group">
