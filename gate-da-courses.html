@@ -1161,6 +1161,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .combo-projects li::marker { color: #FCD34D; }
 .combo-soon-btn { margin-top: 18px; background: rgba(245,158,11,0.12); color: #FCD34D; border: 1px solid rgba(245,158,11,0.35); cursor: not-allowed; font-weight: 600; box-shadow: none; }
 .combo-soon-btn:hover { transform: none; box-shadow: none; }
+.combo-price-note { margin-top: -16px; font-size: 13px; color: rgba(255,255,255,0.55); position: relative; z-index: 1; }
 .combo-live-cta { margin-top: 18px; display: flex; flex-direction: column; gap: 10px; }
 .combo-live-cta .combo-saving { margin: 0; }
 .combo-projects-note { margin: 12px 0 0; font-size: 13px; color: #FCD34D; }
@@ -2412,6 +2413,8 @@ const COMBOS = [
     // has both a price and an enrol link for full-course-2028; this date
     // only drives the countdown text, not the switch.
     launchDate: '2026-10-06',
+    // Shown right under the price, this card only (direct request 2026-10-04).
+    priceNote: 'Price excludes 18% GST',
     accent: 'linear-gradient(90deg, #F59E0B, #EC4899, var(--purple))',
     title: 'GATE 2028 Full Course',
     includes: [
@@ -3100,6 +3103,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
         </div>
         <div className="combo-horizontal-right">
           {priceRowEl}
+          {c.priceNote && <div className="combo-price-note">{c.priceNote}</div>}
           {comingSoon ? (
             <span className="btn btn-full combo-soon-btn" aria-disabled="true">{launchUpcoming ? (daysUntilLaunch === 0 ? 'Launching today' : `Launching ${launchShort}`) : 'Coming soon'}</span>
           ) : (
