@@ -1361,8 +1361,13 @@ a[href*="youtube"]:not(.offer-card):hover svg, a[href*="youtu.be"]:not(.offer-ca
   .instructor-play-btn { left: auto; right: 16px; max-width: 300px; }
   .offer-grid { grid-template-columns: 1fr; }
   .offer-card { padding: 24px; }
-  /* Inline justifySelf:end on hero-visual beats the 1024px CSS rule — use !important */
-  .hero-visual { justify-self: center !important; margin: 20px auto 0 !important; }
+  /* Inline justifySelf:end on hero-visual beats the 1024px CSS rule — use !important.
+     Tablet portrait (2026-10-04, from an iPad screenshot): the two cards used to sit
+     stacked in a centered 460px column, out of line with the left-aligned text above
+     and the left-aligned heading below. They now sit side by side across the full
+     text width, starting at the same left edge as the text. */
+  .hero-visual { justify-self: stretch !important; margin: 8px 0 0 !important; max-width: none !important; width: 100%; flex-direction: row !important; }
+  .hero-bento-1, .hero-bento-2 { flex: 1; min-width: 0; margin-top: 0; }
 }
 /* ── Mobile sticky CTA ──────────────────────────────── */
 .mobile-sticky-cta { display: none; }
