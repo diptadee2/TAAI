@@ -1772,6 +1772,10 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 .why-contrast-no .why-contrast-items { color: rgba(255,255,255,0.4); text-decoration: line-through; text-decoration-color: rgba(255,255,255,0.35); }
 .why-contrast-yes .why-contrast-label { color: #C4B5FD; }
 .why-contrast-yes .why-contrast-items { color: rgba(255,255,255,0.9); }
+.why-contrast-maths { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.08); max-width: 58ch; }
+.why-contrast-maths .why-contrast-label { font-size: 12.5px; font-weight: 600; margin-bottom: 3px; }
+.why-contrast-maths .why-contrast-label { color: #FBCFE8; }
+.why-contrast-note { margin: 0; font-size: 14px; line-height: 1.55; color: rgba(255,255,255,0.68); }
 @media (max-width: 1024px) {
   .why-pillar.why-pillar--featured { grid-template-columns: auto minmax(0,1fr); }
   .why-contrast { grid-column: 2; grid-row: 2; margin: 18px 0 0; padding: 16px 0 0; border-left: none; border-top: 1px solid rgba(255,255,255,0.1); }
@@ -3341,6 +3345,9 @@ const WHY_PILLARS = [
     contrast: {
       notLabel: 'Repurposed CSE prep', not: ['Operating Systems', 'Computer Networks', 'Compiler Design'],
       yesLabel: 'What GATE DA asks', yes: ['Probability & Statistics', 'Linear Algebra', 'Machine Learning', 'AI'],
+      // Direct request 2026-10-04: say the maths itself differs too.
+      mathsLabel: 'Even the maths is different',
+      maths: 'CSE papers lean on discrete maths and quick formulas. The IITs set GATE DA maths deeper: probability, statistics and linear algebra, asked the way machine learning uses them.',
     },
   },
   {
@@ -3381,6 +3388,12 @@ function WhyStrip() {
               <div className="why-text">
                 <div className="why-heading">{p.heading}</div>
                 <p className="why-sub">{p.sub}</p>
+                {p.contrast && p.contrast.maths && (
+                  <div className="why-contrast-maths">
+                    <div className="why-contrast-label">{p.contrast.mathsLabel}</div>
+                    <p className="why-contrast-note">{p.contrast.maths}</p>
+                  </div>
+                )}
                 {p.chips && (
                   <div className="why-chips">
                     {p.chips.map((c, j) => <span key={j} className="why-chip" style={{ animationDelay: (0.25 + j * 0.05) + 's' }}>{c}</span>)}
