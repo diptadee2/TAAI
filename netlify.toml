@@ -128,6 +128,15 @@
 # Schedule data is provided directly (as PDFs/etc.) and loaded via
 # `npm run load-schedule`, not synced automatically from anywhere —
 # there is deliberately no cron job or external fetch for this.
+# The ONE place the Discord invite lives (2026-10-08). Every Discord link
+# on the site points to /discord; to change the server invite, change only
+# this line. 302 (not 301) so browsers don't cache the old invite.
+[[redirects]]
+  from = "/discord"
+  to = "https://discord.com/invite/AwZqYz9wvK"
+  status = 302
+  force = true
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"

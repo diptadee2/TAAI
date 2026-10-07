@@ -12,7 +12,9 @@
   if (window.__discordNotice) return;
   window.__discordNotice = true;
 
-  var MATCH = /(^|\.)discord\.(com\/invite|gg)\//i;
+  // Matches raw invite links and the site's own /discord redirect (the one
+  // place the invite URL lives: netlify.toml).
+  var MATCH = /(^|\.)discord\.(com\/invite|gg)\/|^((www\.)?taai\.live)?\/discord\/?([?#]|$)/i;
   var css = '' +
     '.dn-backdrop{position:fixed;inset:0;z-index:2147483000;background:rgba(10,8,20,.55);display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;transition:opacity .2s ease}' +
     '.dn-backdrop.dn-open{opacity:1}' +
@@ -89,7 +91,7 @@
     wrap.querySelector('.dn-go').focus();
   }
 
-  var INVITE = 'https://discord.com/invite/AwZqYz9wvK';
+  var INVITE = '/discord'; // redirect defined in netlify.toml
   function footerInView() {
     var f = document.querySelector('footer');
     var doc = document.documentElement;
