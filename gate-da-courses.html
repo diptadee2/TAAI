@@ -1885,6 +1885,18 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 @media (max-width: 1024px) {
   .why-grid { grid-template-columns: 1fr; }
 }
+/* Desktop: the banner shares the two halves of the cards below, so the
+   three cards sit on one grid ("these three are not sitting properly",
+   2026-10-08). Banner content width C = grid width - 60 (30px padding each
+   side); a lower card is (grid - 16)/2 wide, so the right card's left edge
+   falls at C/2 + 8 inside the banner's content box. The right column takes
+   exactly the rest (C/2 - 8): its border lines up with the right card's
+   left edge and its 68px inset (+1px border) matches where "Proven Results" starts. */
+@media (min-width: 1025px) {
+  .why-pillar.why-pillar--featured { grid-template-columns: auto minmax(0,1fr) calc(50% - 8px); column-gap: 14px; }
+  .why-pillar--featured .why-text { padding-right: 16px; }
+  .why-contrast { margin-left: 0; padding-left: 68px; border-left: 1px solid rgba(255,255,255,0.1); }
+}
 
 /* ── Sticky contact buttons ───────────────────────────── */
 @keyframes mcb-slide-up {
