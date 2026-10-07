@@ -3125,8 +3125,12 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   // The card's normal badge sits back at the top.
   const countdownDetailEl = daysUntilSoldOut != null && (
     <div className="combo-deadline">
-      <span className="combo-deadline-left"><Icon.Bell size={14} />{daysUntilSoldOut === 0 ? 'Last day' : `${daysUntilSoldOut} ${daysUntilSoldOut === 1 ? 'day' : 'days'} left`}</span>
-      <span className="combo-deadline-date">Enrollment closes {fmtDate(soldOutDate)}</span>
+      {/* The sold-out date is the first day enrolment is CLOSED (the card
+          sells out at 00:00 IST that day), so the count includes today and
+          the date shown is the day before: the last day to enrol (2026-10-07,
+          when the 2027 course's date moved to Oct 11). */}
+      <span className="combo-deadline-left"><Icon.Bell size={14} />{daysUntilSoldOut === 1 ? 'Last day' : `${daysUntilSoldOut} days left`}</span>
+      <span className="combo-deadline-date">{daysUntilSoldOut === 1 ? 'Enrolment closes at midnight' : 'Last day to enrol ' + fmtDate(new Date(new Date(soldOutDate + 'T00:00:00+05:30').getTime() - 86400000).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }))}</span>
     </div>
   );
   // A floated spacer (not padding-right on the whole title) reserves room
