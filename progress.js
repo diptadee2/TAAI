@@ -275,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-08-3';
+  var CLIENT_VERSION = '2026-10-08-4';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2668,8 +2668,8 @@
     }
     var legend = '<span class="hm-key"><i class="hm-swatch hm-done"></i>Done</span>' +
       '<span class="hm-key"><i class="hm-swatch hm-partial"></i>Partly</span>' +
-      (state.student ? '<span class="hm-key"><i class="hm-swatch hm-missed"></i>Missed</span>' : '') +
-      '<span class="hm-key"><i class="hm-swatch hm-upcoming"></i>Upcoming</span>';
+      (state.student ? '<span class="hm-key"><i class="hm-swatch hm-missed"></i>Missed</span>' : '');
+    // No "Upcoming" entry: it's the plain default look (removed on request).
 
     return '<div class="heatmap-card fade-in">' +
       '<div class="heatmap-head"><span class="heatmap-title">' + monthLabel(state.month) + '</span>' +
