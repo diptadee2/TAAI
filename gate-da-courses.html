@@ -540,6 +540,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .combo-side-col { display: flex; flex-direction: column; gap: 16px; }
 @media (min-width: 1025px) {
   .combo-side-col { flex: 0 0 280px; }
+  /* The frame's own height:100% (of an auto-height row) blocks flex
+     stretching, so once the card is live (shorter than the side column)
+     it left a gap underneath; height:auto lets it stretch to the row. */
+  .combo-with-side > .combo-featured-frame { height: auto; }
   .combo-side-col > .plan120-cta { flex: 0 0 auto; gap: 14px; padding: 22px 22px; }
   .combo-side-col .plan120-list { gap: 9px; padding: 14px 0; }
   .combo-side-col > .challenge-card { flex: 1 1 auto; gap: 10px; padding: 22px; }
@@ -2484,8 +2488,6 @@ const COMBOS = [
     // has both a price and an enrol link for full-course-2028; this date
     // only drives the countdown text, not the switch.
     launchDate: '2026-10-07',
-    // Shown right under the price, this card only (direct request 2026-10-04).
-    priceNote: '+ 18% GST, calculated at checkout',
     liveOffer: 'Super early bird offer',
     accent: 'linear-gradient(90deg, #F59E0B, #EC4899, var(--purple))',
     title: 'GATE 2028 Full Course',
