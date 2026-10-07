@@ -275,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-07-5';
+  var CLIENT_VERSION = '2026-10-07-6';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -3034,6 +3034,16 @@
     hideAboutBubble();
     var today = todayIso();
     var todayDay = state.days.find(function (d) { return d.date === today; });
+    // Before a batch's very first scheduled day (e.g. "120 Days - 70 Marks"
+    // before Oct 9), the Today card previews that first day instead of
+    // showing nothing (direct request 2026-10-07). Only on the current month
+    // that is the batch's own start month, so a browsed future month never
+    // previews its first day.
+    var firstDayPreview = null;
+    if (!todayDay && state.days.length && state.days[0].date > today &&
+        state.month === currentMonthStr() && BATCH_SCHEDULE_START[effectiveScoutBatch()] === state.month) {
+      firstDayPreview = state.days[0];
+    }
     // dayStatus() itself already only ever returns 'missed' for a
     // signed-in student (see its guest guard), so this is naturally empty
     // for guests without needing a separate check here too.
@@ -3142,12 +3152,14 @@
       // and busy meter live on this card's right half and are batch-wide
       // data, not about today's checklist, so they shouldn't vanish on an
       // empty day (direct report: "where is the bar graph and busy meter").
-      html += renderTodayCard(todayDay || null, missedBefore.length, true);
+      html += renderTodayCard(todayDay || firstDayPreview, missedBefore.length, true, !todayDay && !!firstDayPreview);
       html += '<div class="focus-divider"></div>';
       html += renderLeaderboardCard();
       html += '</div>'; // focus-card
     } else if (todayDay) {
       html += renderTodayCard(todayDay, missedBefore.length);
+    } else if (firstDayPreview) {
+      html += renderTodayCard(firstDayPreview, 0, false, true);
     }
 
     if (!state.focus) {
@@ -4424,10 +4436,13 @@
   // away from inside the pomodoro page") made clear Focus Mode's own
   // copy was meant to stay — renderCalendar's Focus Mode call site below
   // passes showHourly=true, the plain-checklist call site doesn't.
-  function renderTodayCard(day, missedBeforeCount, showHourly) {
-    var left = '<div class="today-tag">Today · ' + escapeHtml(batchLabel(effectiveScoutBatch())) + '</div>';
+  function renderTodayCard(day, missedBeforeCount, showHourly, isFirstDayPreview) {
+    var left = '<div class="today-tag">' + (isFirstDayPreview ? 'Day 1' : 'Today') + ' · ' + escapeHtml(batchLabel(effectiveScoutBatch())) + '</div>';
     left += '<div class="today-date">' + dayLabel(day ? day.date : realTodayIso()) + '</div>';
-    if (!day) {
+    if (isFirstDayPreview) {
+      var daysAway = Math.round((Date.parse(day.date) - Date.parse(todayIso())) / 864e5);
+      left += '<p class="today-preview-note">Starts ' + (daysAway === 1 ? 'tomorrow' : 'in ' + daysAway + ' days') + '. Here\'s what\'s first.</p>';
+    } else if (!day) {
       left += state.latestScheduledMonth
         ? '<p class="today-empty">Nothing scheduled for today.</p>'
         : '<p class="today-empty"><strong>We are cooking...</strong> The schedule for <strong>' + escapeHtml(batchLabel(effectiveScoutBatch())) + '</strong> will show up here once it\'s ready.</p>';
