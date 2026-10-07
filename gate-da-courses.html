@@ -1866,6 +1866,25 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
   .why-pillar.why-pillar--featured { grid-template-columns: auto minmax(0,1fr); }
   .why-contrast { grid-column: 2; grid-row: 2; margin: 18px 0 0; padding: 16px 0 0; border-left: none; border-top: 1px solid rgba(255,255,255,0.1); }
 }
+/* Refinement layer, 2026-10-08 ("can it look better?"): calmer corners
+   and padding, the banner's two halves at matching text sizes, and both
+   lower cards' lists as the same aligned two-column table with hairlines
+   (no wandering arrows). Last in source on purpose. */
+.why-pillar, .why-pillar.why-pillar--featured { border-radius: 20px; padding: 28px 30px; }
+.why-pillar--featured .why-sub { font-size: 16px; line-height: 1.6; }
+.why-contrast-note { font-size: 15px; line-height: 1.6; }
+.why-examples { display: grid; grid-template-columns: var(--why-term-w, 148px) minmax(0,1fr); gap: 0; margin-top: 6px; }
+.why-examples--results { --why-term-w: 108px; }
+.why-examples li { display: contents; font-size: 14px; }
+.why-examples li > b, .why-examples li > span { padding: 10px 0; border-top: 1px solid rgba(255,255,255,0.08); line-height: 1.45; }
+.why-examples li > b { padding-right: 14px; }
+.why-examples span::before { content: none; }
+/* iPad portrait and small laptops: the lower cards get too narrow side by
+   side (the examples wrapped to three lines, leaving one card mostly
+   empty), so they stack full width like the banner. */
+@media (max-width: 1024px) {
+  .why-grid { grid-template-columns: 1fr; }
+}
 
 /* ── Sticky contact buttons ───────────────────────────── */
 @keyframes mcb-slide-up {
@@ -3486,7 +3505,7 @@ const WHY_PILLARS = [
   {
     rgb: '139,92,246',
     icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5"/><circle cx="12" cy="12" r="4.5" stroke="currentColor" strokeWidth="1.5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>,
-    heading: 'GATE DA–Specific',
+    heading: 'GATE DA-Specific',
     sub: 'Not repurposed CSE content. Built ground-up for the exact topics GATE DA tests, from scratch.',
     // Featured/dominant pillar, not an arbitrary pick — this is the one
     // claim that directly echoes the hero's own headline pitch ("Not
@@ -3528,6 +3547,7 @@ const WHY_PILLARS = [
       ['Eigenvectors', 'directions a matrix only stretches'],
       ["Bayes' theorem", 'a tree of outcomes'],
       ['Gradient descent', 'walking downhill on a loss surface'],
+      ['PCA', 'the directions data spreads out most'],
     ],
   },
   {
