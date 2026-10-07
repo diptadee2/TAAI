@@ -275,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-07-3';
+  var CLIENT_VERSION = '2026-10-07-4';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -5617,10 +5617,16 @@
         return next();
       }, function (err) {
         if (err && err.status >= 400 && err.status < 500) { drop(); return next(); }
-        // Offline or a server error: keep it and try again later.
+        // Offline or a server error: keep it and try again later. Only a
+        // real server error counts toward POMO_CLAIM_MAX_ATTEMPTS; a send
+        // that never reached the server (offline, aborted) doesn't, or a
+        // long outage, or two tabs retrying, would use up the attempts and
+        // drop the claim before the connection is back. POMO_CLAIM_MAX_AGE_MS
+        // still bounds those.
+        var serverError = !!(err && err.status >= 500);
         var all = loadPomoClaims();
         all.forEach(function (x) {
-          if (x.email === c.email && x.phaseEndAt === c.phaseEndAt) x.attempts = (x.attempts || 0) + 1;
+          if (serverError && x.email === c.email && x.phaseEndAt === c.phaseEndAt) x.attempts = (x.attempts || 0) + 1;
         });
         savePomoClaims(all.filter(function (x) { return (x.attempts || 0) < POMO_CLAIM_MAX_ATTEMPTS; }));
         if (!hasPendingPomoClaims()) return next();
