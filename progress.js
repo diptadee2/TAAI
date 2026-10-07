@@ -275,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-08-2';
+  var CLIENT_VERSION = '2026-10-08-3';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2607,6 +2607,48 @@
     return done / total < 0.5 ? 2 : 3;
   }
 
+  // Month calendar ("at a glance"), redesigned 2026-10-08: each day shows
+  // its number and one state instead of a GitHub-style intensity:
+  // done / partly done / missed (signed-in students only) / upcoming /
+  // rest (nothing scheduled, not clickable). A summary line sits under the
+  // title, and tapping a day scrolls the checklist to it (see
+  // jumpToChecklistDay). heatLevel() stays for anything else that uses it.
+  function heatState(day, dateStr) {
+    if (!day || !day.tasks.length) return 'rest';
+    var total = day.tasks.length;
+    var done = day.tasks.filter(function (t) { return t.completed; }).length;
+    if (done === total) return 'done';
+    if (done > 0) return 'partial';
+    return (state.student && dateStr < todayIso()) ? 'missed' : 'upcoming';
+  }
+  function heatCellLabel(day, dateStr) {
+    var d = new Date(dateStr + 'T00:00:00');
+    var when = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    if (!day || !day.tasks.length) return when + ': nothing scheduled';
+    var done = day.tasks.filter(function (t) { return t.completed; }).length;
+    return when + ': ' + done + ' of ' + day.tasks.length + ' done';
+  }
+  function heatmapSummaryText() {
+    var today = todayIso();
+    var scheduled = state.days.filter(function (d) { return d.tasks.length; });
+    if (!scheduled.length) return 'Nothing scheduled this month';
+    if (!state.student) return scheduled.length + ' days with tasks this month';
+    var due = scheduled.filter(function (d) { return d.date <= today; });
+    if (!due.length) {
+      var first = new Date(scheduled[0].date + 'T00:00:00');
+      return 'Starts ' + first.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+    var done = due.filter(function (d) { return heatState(d, d.date) === 'done'; }).length;
+    var missed = due.filter(function (d) { return heatState(d, d.date) === 'missed'; }).length;
+    return done + ' of ' + due.length + ' days done' + (missed ? ' · ' + missed + ' to catch up' : '');
+  }
+  function heatCellHtml(day, dateStr, dayNum, today) {
+    var st = heatState(day, dateStr);
+    var cls = 'heatmap-cell hm-' + st + (dateStr === today ? ' is-today' : '');
+    var label = escapeAttr(heatCellLabel(day, dateStr));
+    if (st === 'rest') return '<div class="' + cls + '" data-date="' + dateStr + '" title="' + label + '"><span class="hm-num">' + dayNum + '</span></div>';
+    return '<button type="button" class="' + cls + '" data-date="' + dateStr + '" title="' + label + '" aria-label="' + label + '"><span class="hm-num">' + dayNum + '</span></button>';
+  }
   function renderHeatmap() {
     var parts = state.month.split('-').map(Number);
     var year = parts[0], month = parts[1];
@@ -2619,18 +2661,35 @@
 
     var cells = '';
     ['M', 'T', 'W', 'T', 'F', 'S', 'S'].forEach(function (l) { cells += '<div class="heatmap-dow">' + l + '</div>'; });
-    for (var i = 0; i < leadBlanks; i++) cells += '<div class="heatmap-cell" style="visibility:hidden"></div>';
+    for (var i = 0; i < leadBlanks; i++) cells += '<div class="heatmap-blank"></div>';
     for (var day = 1; day <= daysInMonth; day++) {
       var dateStr = year + '-' + pad(month) + '-' + pad(day);
-      var level = heatLevel(byDate[dateStr]);
-      var isToday = dateStr === today ? ' is-today' : '';
-      cells += '<div class="heatmap-cell' + isToday + '" data-level="' + level + '" data-date="' + dateStr + '" title="' + dateStr + '"></div>';
+      cells += heatCellHtml(byDate[dateStr], dateStr, day, today);
     }
+    var legend = '<span class="hm-key"><i class="hm-swatch hm-done"></i>Done</span>' +
+      '<span class="hm-key"><i class="hm-swatch hm-partial"></i>Partly</span>' +
+      (state.student ? '<span class="hm-key"><i class="hm-swatch hm-missed"></i>Missed</span>' : '') +
+      '<span class="hm-key"><i class="hm-swatch hm-upcoming"></i>Upcoming</span>';
 
     return '<div class="heatmap-card fade-in">' +
-      '<div class="heatmap-head"><span class="heatmap-title">' + monthLabel(state.month) + ' at a glance</span>' +
-      '<span class="heatmap-legend">Less <span class="heatmap-cell" data-level="0"></span><span class="heatmap-cell" data-level="1"></span><span class="heatmap-cell" data-level="2"></span><span class="heatmap-cell" data-level="3"></span><span class="heatmap-cell" data-level="4"></span> More</span></div>' +
-      '<div class="heatmap-grid">' + cells + '</div></div>';
+      '<div class="heatmap-head"><span class="heatmap-title">' + monthLabel(state.month) + '</span>' +
+      '<span class="heatmap-summary" id="heatmap-summary">' + escapeHtml(heatmapSummaryText()) + '</span></div>' +
+      '<div class="heatmap-grid">' + cells + '</div>' +
+      '<div class="heatmap-legend">' + legend + '</div></div>';
+  }
+
+  // Scrolls the checklist to a day tapped in the month calendar, opening
+  // its week first if collapsed, and briefly highlights it.
+  function jumpToChecklistDay(date) {
+    var target = date === todayIso() ? document.querySelector('.today-card') : document.querySelector('.day[data-date="' + date + '"]');
+    if (!target) return;
+    var week = target.closest('.week');
+    if (week && state.collapsedWeeks.has(week.dataset.week)) toggleWeek(week.dataset.week);
+    setTimeout(function () {
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      target.classList.remove('hm-flash'); void target.offsetWidth; target.classList.add('hm-flash');
+      setTimeout(function () { target.classList.remove('hm-flash'); }, 1600);
+    }, week && week.querySelector('.week-body-wrap.expanded') ? 0 : 380);
   }
 
   // Exam countdown + subject breakdown. Streak lives in its own separate
@@ -2879,7 +2938,16 @@
   function patchHeatmapCell(date) {
     var day = state.days.find(function (d) { return d.date === date; });
     var cell = document.querySelector('.heatmap-cell[data-date="' + date + '"]');
-    if (cell) cell.setAttribute('data-level', String(heatLevel(day)));
+    if (cell) {
+      var st = heatState(day, date);
+      cell.classList.remove('hm-done', 'hm-partial', 'hm-missed', 'hm-upcoming', 'hm-rest');
+      cell.classList.add('hm-' + st);
+      var label = heatCellLabel(day, date);
+      cell.setAttribute('title', label);
+      if (cell.hasAttribute('aria-label')) cell.setAttribute('aria-label', label);
+    }
+    var sum = document.getElementById('heatmap-summary');
+    if (sum) sum.textContent = heatmapSummaryText();
   }
 
   // Updates one day card's status badge in place (e.g. Missed → Complete
@@ -6248,6 +6316,12 @@
 
     var next = document.getElementById('next-month');
     if (next) next.addEventListener('click', function () { loadMonth(shiftMonth(state.month, 1)); });
+
+    var heatPanel = document.getElementById('heatmap-panel');
+    if (heatPanel) heatPanel.addEventListener('click', function (e) {
+      var c = e.target.closest && e.target.closest('button.heatmap-cell');
+      if (c) jumpToChecklistDay(c.dataset.date);
+    });
 
     Array.prototype.forEach.call(document.querySelectorAll('.week-label'), function (el) {
       el.addEventListener('click', function () { toggleWeek(el.closest('.week').dataset.week); });
