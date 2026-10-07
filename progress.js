@@ -275,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-04-3';
+  var CLIENT_VERSION = '2026-10-07-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1754,7 +1754,7 @@
   //   'on'     - /edge/tracker-data is used, falling back to
   //              /api/tracker-data on any error or a response slower than
   //              TRACKER_EDGE_TIMEOUT_MS.
-  var TRACKER_EDGE_MODE = 'shadow';
+  var TRACKER_EDGE_MODE = 'off'; // shadow test ended 2026-10-07: edge was not faster (median 2.03s vs 1.73s)
   var TRACKER_EDGE_SHADOW_RATE = 0.1;
   var TRACKER_EDGE_TIMEOUT_MS = 6000;
   var trackerShadowDone = false; // at most one comparison per page load
