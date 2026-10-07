@@ -877,6 +877,18 @@
      so it lines up with the plan card), the calendar below it. */
   .side-col .subject-breakdown { margin-top: 0; }
   .side-col #heatmap-panel { margin-top: 20px; }
+  /* Subjects with nothing ticked yet are dimmed (2026-10-08), so the ones in
+     progress stand out. Only once the student has ticked something
+     somewhere (a brand-new student or a visitor sees the card at full
+     strength rather than all greyed out). Pure CSS on .has-progress, which
+     refreshSubjectProgress() keeps in sync, so it follows every tick. A
+     multi-subject section dims each untouched subject row, and its header
+     only when none of its subjects have progress. */
+  .subject-breakdown .subject-group, .subject-breakdown .subject-row, .subject-breakdown .subject-group-head { transition: opacity .3s ease; }
+  .subject-breakdown:has(.has-progress) .subject-group:not(.subject-group--multi):not(:has(.has-progress)),
+  .subject-breakdown:has(.has-progress) .subject-group--multi .subject-row:not(.has-progress),
+  .subject-breakdown:has(.has-progress) .subject-group--multi:not(:has(.has-progress)) .subject-group-head,
+  .subject-breakdown:has(.has-progress) .subject-row--assessment:not(.has-progress) { opacity: 0.4; }
 
   /* Heatmap — moved to the bottom as a compact secondary visual, with a legend */
   .heatmap-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 16px 18px; max-width: 320px; margin: 0 auto; }
