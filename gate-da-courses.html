@@ -1939,6 +1939,25 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 @media (max-width: 1024px) {
   .why-grid { grid-template-columns: 1fr; }
 }
+/* Light cards (2026-10-08, "the cards can be a lighter colour, not sitting
+   with the background"): the near-black cards were heavy against the pale
+   lavender page. White cards with a hairline lavender border, dark text,
+   and the accents in deeper shades so they stay readable on white. */
+.why-strip .why-pillar, .why-strip .why-pillar:hover { background: #fff; border: 1px solid var(--line); box-shadow: none; }
+.why-strip .why-pillar:hover { border-color: rgba(139,92,246,0.35); }
+.why-strip .why-heading { color: var(--ink); }
+.why-strip .why-sub { color: var(--ink-dim); }
+.why-strip .why-bd-1 .why-icon-wrap { color: #7C3AED; }
+.why-strip .why-bd-2 .why-icon-wrap { color: #DB2777; }
+.why-strip .why-bd-3 .why-icon-wrap { color: #2563EB; }
+.why-strip .why-contrast { border-left-color: var(--line); }
+.why-strip .why-contrast .why-contrast-label { color: #DB2777; }
+.why-strip .why-contrast-note { color: var(--ink-dim); }
+.why-strip .why-examples li > b, .why-strip .why-examples li > span { border-top-color: var(--line); }
+.why-strip .why-examples b { color: #DB2777; }
+.why-strip .why-examples--results b { color: #2563EB; }
+.why-strip .why-examples span { color: var(--ink-dim); }
+@media (max-width: 1024px) { .why-strip .why-contrast { border-top-color: var(--line); } }
 /* Desktop: the banner shares the two halves of the cards below, so the
    three cards sit on one grid ("these three are not sitting properly",
    2026-10-08). Banner content width C = grid width - 60 (30px padding each
