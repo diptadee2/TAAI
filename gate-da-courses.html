@@ -244,6 +244,22 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .hero-guide-link { display: inline-block; margin-top: 34px; font-size: 14.5px; font-weight: 500; line-height: 1.5; color: var(--purple); text-decoration: none; }
 .hero-guide-link svg { display: inline-block; vertical-align: -2px; }
 .hero-guide-link:hover span { text-decoration: underline; text-underline-offset: 3px; }
+/* Courses hero de-slopped 2026-10-08 ("this portion can look less ai
+   slop"), same direction as the home hero on 2026-10-03: no mono caps label
+   above the headline (removed from the markup), "One place." in one solid
+   accent instead of a gradient, a plain dark primary button and a hairline
+   secondary one (no gradient, glow or swipe fill), no dot grid or blurred
+   corner blobs, and the quote cards hold still instead of bobbing. */
+section.page-hero { background-image: none; }
+section.page-hero::before, section.page-hero::after { display: none; }
+.page-hero .page-hero-left h1 em { background: none; -webkit-background-clip: border-box; background-clip: border-box; color: var(--purple); }
+.page-hero .btn-primary { background: var(--ink); color: #fff; box-shadow: none; }
+.page-hero .btn-primary:hover { background: #2a2148; transform: none; box-shadow: none; }
+.page-hero .btn-stories { color: var(--ink); border: 1px solid rgba(20,16,43,0.22); box-shadow: none; }
+.page-hero .btn-stories::before { display: none; }
+.page-hero .btn-stories:hover { color: var(--ink); border-color: var(--ink); background: transparent; box-shadow: none; transform: none; }
+.page-hero .hero-proof-float-1, .page-hero .hero-proof-float-2 { animation: none; }
+.page-hero .proof-orb-1, .page-hero .proof-orb-2 { animation: none; }
 .page-hero .hero-proof-row  { animation: pageHeroIn .65s cubic-bezier(.34,1.12,.64,1) .54s both; }
 .page-hero .hero-proof-link { animation: pageHeroIn .58s cubic-bezier(.34,1.12,.64,1) .72s both; }
 @keyframes proof-float1 {
@@ -3874,7 +3890,6 @@ function App() {
       <section className="page-hero">
         <div className="container page-hero-inner">
           <div className="page-hero-left">
-            <div className="page-eyebrow">GATE DA 2027 Courses</div>
             <h1>Your career, all at<br /><em>One place.</em></h1>
             <p className="hero-sub" style={{ fontSize: 19, color: 'var(--ink-dim)', maxWidth: 580, lineHeight: 1.5, marginBottom: 36 }}>
               The only GATE DA prep that teaches mathematics the way the exam actually tests it, visual, conceptual, and built for DA from scratch. Not repurposed CSE content.
