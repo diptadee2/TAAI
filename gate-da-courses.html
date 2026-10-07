@@ -505,12 +505,15 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   -webkit-backdrop-filter: blur(12px) saturate(140%); backdrop-filter: blur(12px) saturate(140%);
   color: #fff; transition: background-color .2s ease, border-color .2s ease, transform .3s cubic-bezier(.34,1.05,.64,1);
 }
-.plan120-cta:hover { background: rgba(30,24,54,0.72); border-color: rgba(196,176,255,0.55); }
+@media (hover: hover) and (pointer: fine) {
+  .plan120-cta:hover { background: rgba(30,24,54,0.72); border-color: rgba(196,176,255,0.55); }
+}
 /* The 10px lift was removed 2026-10-04: the 2028 card itself stopped
    lifting when the bundle cards were calmed down, so this card rose on
    its own. Now neither moves; hovering either one tints both borders. */
 @media (hover: hover) and (pointer: fine) {
   .combo-with-side:has(> .combo-featured-frame:hover) .plan120-cta { border-color: rgba(196,176,255,0.55); }
+  .combo-with-side:has(> .combo-featured-frame:hover) .challenge-card { border-color: rgba(251,191,36,0.6); }
 }
 @media (prefers-reduced-motion: reduce) { .plan120-cta { transition: background-color .2s ease, border-color .2s ease; } }
 .plan120-cta:focus-visible { outline: 2px solid var(--lilac); outline-offset: 3px; }
@@ -548,7 +551,19 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   padding: 24px 22px; border-radius: 22px;
   background: rgba(22,18,40,0.62); border: 1px solid rgba(251,191,36,0.32);
   -webkit-backdrop-filter: blur(12px) saturate(140%); backdrop-filter: blur(12px) saturate(140%);
-  color: #fff;
+  color: #fff; transition: border-color .2s ease;
+}
+/* Phones and iPad portrait: the 2028 row reveals as one tall block, so the
+   side cards stacked ~1500px below its top would finish animating long
+   before anyone scrolled to them. Below 1025px they get their own reveal
+   (observed with the page's touch observer); desktop keeps the row's
+   single slide-in and ignores this class. */
+@media (max-width: 1024px) {
+  .fade-in-touch { opacity: 0; transform: translateY(36px) scale(0.96); transition: opacity .58s cubic-bezier(.34,1.1,.64,1), transform .58s cubic-bezier(.34,1.1,.64,1), border-color .2s ease, background-color .2s ease; }
+  .fade-in-touch.visible { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (max-width: 1024px) and (prefers-reduced-motion: reduce) {
+  .fade-in-touch { opacity: 1; transform: none; transition: none; }
 }
 .challenge-eyebrow { font-size: 13px; font-weight: 600; color: #FBBF24; }
 .challenge-title { font-size: 26px; font-weight: 800; line-height: 1.1; letter-spacing: -.01em; }
@@ -3667,6 +3682,8 @@ function App() {
       : { threshold: 0.1, rootMargin: '0px 0px 200px 0px' });
     const pendingReveal = new Set();
     document.querySelectorAll('.fade-in:not(.combo-full-row)').forEach((el) => { markInitialVisibility(el); io.observe(el); pendingReveal.add(el); });
+    // Cards that only get their own reveal on phones/tablets (see .fade-in-touch).
+    if (touchLayout) document.querySelectorAll('.fade-in-touch').forEach((el) => { markInitialVisibility(el); io.observe(el); pendingReveal.add(el); });
     // Safety net for the negative margin: something sitting in the last
     // ~12% of the page could otherwise never reach the trigger line once
     // the page can't scroll any further. At the very bottom, reveal
@@ -3867,7 +3884,12 @@ function App() {
                         <div className="combo-with-side">
                           <ComboCard c={{ ...c, saving }} pricing={effectivePricingMap[c.id] || null} />
                           <div className="combo-side-col">
-                          <a className="plan120-cta" href="/gate-da-progress-tracker?batch=D">
+                          <div className="challenge-card fade-in-touch">
+                            <span className="challenge-eyebrow">The challenge</span>
+                            <span className="challenge-title">100 pe <b>100% off</b></span>
+                            <span className="challenge-sub">Get an AIR under 100 in GATE DA 2027 and we refund your full GATE 2028 course fee. You keep full access to the course.</span>
+                          </div>
+                          <a className="plan120-cta fade-in-touch" href="/gate-da-progress-tracker?batch=D">
                             <span className="plan120-head">
                               <span className="plan120-eyebrow">New study plan</span>
                               <span className="plan120-title">120 Days<br />70 Marks</span>
@@ -3881,11 +3903,6 @@ function App() {
                             </span>
                             <span className="plan120-go">View the roadmap <span aria-hidden="true">&rarr;</span></span>
                           </a>
-                          <div className="challenge-card">
-                            <span className="challenge-eyebrow">The challenge</span>
-                            <span className="challenge-title">100 pe <b>100% off</b></span>
-                            <span className="challenge-sub">Get an AIR under 100 in GATE DA 2027 and we refund your full GATE 2028 course fee. You keep full access to the course.</span>
-                          </div>
                           </div>
                         </div>
                       ) : (
