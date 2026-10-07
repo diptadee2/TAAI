@@ -2195,8 +2195,13 @@
      4. smaller gold marks in "Progress by subject". */
   .plan-streak { margin-right: auto; margin-left: 14px; font-family: var(--font-nav); font-size: 13.5px; color: var(--ink-soft); white-space: nowrap; }
   .plan-streak b { color: var(--ink); font-weight: 700; display: inline-block; }
-  .plan-streak b.bump { animation: plan-bump .5s cubic-bezier(.34,1.56,.64,1); }
-  @media (prefers-reduced-motion: reduce) { .plan-streak b.bump { animation: none; } }
+  .plan-streak b.bump, .focus-tile-streak b.bump { animation: plan-bump .5s cubic-bezier(.34,1.56,.64,1); }
+  @media (prefers-reduced-motion: reduce) { .plan-streak b.bump, .focus-tile-streak b.bump { animation: none; } }
+  /* Desktop: the streak sits in the Focus tile, under its label; the plan
+     card's copy is only for smaller screens, where the tile is hidden. */
+  .focus-tile-streak { font-family: var(--font-nav); font-size: 12.5px; font-weight: 500; color: rgba(18,16,22,0.72); white-space: nowrap; }
+  .focus-tile-streak b { display: inline-block; font-weight: 800; color: #121016; }
+  @media (min-width: 1081px) { .plan-streak { display: none; } }
   .streak-champions-card .champions-section { border-left: 0; }
   #champions-card .leaderboard-row { grid-template-columns: 40px minmax(0,1fr) auto; }
   @media (max-width: 1080px) { .streak-champions-card { display: none; } }

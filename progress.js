@@ -275,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-08-11';
+  var CLIENT_VERSION = '2026-10-08-12';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1586,17 +1586,19 @@
         // knows about if this fires a second time — harmless no-op via
         // confettiAlreadyShown once it's actually fired once.
         armConfetti('streak-panel', 'first-streak', state.streak === 1);
-        var el = document.getElementById('streak-number');
-        if (!el) return;
-        el.textContent = state.streak;
-        if (changed) {
-          // Restart the bump animation even if it's already mid-run from a
-          // rapid previous toggle — force a reflow between remove/add so
-          // the browser treats it as a fresh animation, not a no-op.
-          el.classList.remove('bump');
-          void el.offsetWidth;
-          el.classList.add('bump');
-        }
+        armConfetti('streak-panel-m', 'first-streak', state.streak === 1);
+        // Every copy of the streak number (Focus tile on desktop, plan card
+        // on smaller screens, the old #streak-number if present).
+        Array.prototype.forEach.call(document.querySelectorAll('.streak-num, #streak-number'), function (el) {
+          el.textContent = state.streak;
+          if (changed) {
+            // Restart the bump animation even if it's already mid-run from a
+            // rapid previous toggle: force a reflow between remove/add.
+            el.classList.remove('bump');
+            void el.offsetWidth;
+            el.classList.add('bump');
+          }
+        });
       })
       .catch(function () { /* non-critical — leave last known value on screen */ });
   }
@@ -2856,12 +2858,11 @@
     var t = planProgressTotals();
     if (!t.total) return '';
     return '<div class="plan-progress" id="plan-progress" data-pct="' + t.pct + '">' +
-      // Streak lives here now (2026-10-08 simplification), a small line instead
-      // of its own big panel. Same ids as before (streak-number for
-      // refreshStreak's live update/bump, streak-panel for the first-streak
-      // confetti) so those keep working unchanged.
+      // Streak line: shown here only below 1081px (2026-10-08); on desktop
+      // it sits inside the Focus tile instead. refreshStreak updates every
+      // .streak-num, so both copies stay in sync.
       '<div class="plan-progress-line"><span class="plan-day">Day <b>' + dayNum + '</b> of ' + program.length + '</span>' +
-      '<span class="plan-streak" id="streak-panel">\uD83D\uDD25 <b id="streak-number">' + (state.streak || 0) + '</b>-day streak</span>' +
+      '<span class="plan-streak" id="streak-panel-m">\uD83D\uDD25 <b class="streak-num">' + (state.streak || 0) + '</b>-day streak</span>' +
       '<span class="plan-progress-pct" id="plan-progress-pct">' + t.pct + '%</span></div>' +
       '<div class="plan-track"><div class="plan-fill" id="plan-progress-fill" style="width:' + t.pct + '%"></div>' + planMilestonesHtml(t.pct) + '</div>' +
       '<div class="plan-progress-foot">' + planMarksHtml(t) + '<span class="plan-progress-msg" id="plan-progress-msg">' + planProgressMessage(t.pct, t.done) + '</span></div>' +
@@ -3200,7 +3201,7 @@
       var badgeHtml = renderProgramDayBadge();
       if (badgeHtml.indexOf('program-card') !== -1) {
         html += '<div class="program-day-badge-wrap program-row">' + badgeHtml +
-          '<div class="focus-tile-wrap fade-in"><button id="focus-toggle" class="focus-toggle focus-tile"><span class="focus-toggle-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M10 2h4"/></svg></span>Focus mode</button></div></div>';
+          '<div class="focus-tile-wrap fade-in"><button id="focus-toggle" class="focus-toggle focus-tile"><span class="focus-toggle-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M10 2h4"/></svg></span>Focus mode' + (state.student ? '<span class="focus-tile-streak" id="streak-panel">\uD83D\uDD25 <b class="streak-num">' + (state.streak || 0) + '</b>-day streak</span>' : '') + '</button></div></div>';
       } else {
         html += '<div class="program-day-badge-wrap">' + badgeHtml + '</div>';
         html += '<div class="focus-cta fade-in"><div class="focus-cta-text"><span class="focus-cta-title">Ready to study?</span>' +
@@ -3352,6 +3353,7 @@
     // 1. Armed here for the initial page-load case; refreshStreak below
     // handles the case where a task toggle is what makes it 1.
     armConfetti('streak-panel', 'first-streak', state.streak === 1);
+    armConfetti('streak-panel-m', 'first-streak', state.streak === 1);
   }
 
   function pomoDurationFor(mode) {
