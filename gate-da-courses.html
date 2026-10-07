@@ -544,9 +544,14 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
      stretching, so once the card is live (shorter than the side column)
      it left a gap underneath; height:auto lets it stretch to the row. */
   .combo-with-side > .combo-featured-frame { height: auto; }
-  .combo-side-col > .plan120-cta { flex: 0 0 auto; gap: 14px; padding: 22px 22px; }
+  .combo-side-col > .plan120-cta { flex: 1 1 auto; gap: 14px; padding: 22px 22px; }
   .combo-side-col .plan120-list { gap: 9px; padding: 14px 0; }
-  .combo-side-col > .challenge-card { flex: 1 1 auto; gap: 10px; padding: 22px; }
+  .combo-side-col > .challenge-card { flex: 0 0 auto; gap: 8px; padding: 20px 22px; }
+  /* Desktop only: the plan card's one-line description is dropped here so
+     the two stacked side cards don't outgrow the 2028 card (which would
+     leave a blank band inside it); its title and bullets say the same.
+     Phones and iPad keep it. */
+  .combo-side-col .plan120-sub { display: none; }
 }
 /* Not a link: a plain information card, so no hover state. Gold accent to
    read as a reward, distinct from the plan card's lilac. */
@@ -573,6 +578,10 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .challenge-title { font-size: 26px; font-weight: 800; line-height: 1.1; letter-spacing: -.01em; }
 .challenge-title b { color: #FBBF24; font-weight: 800; }
 .challenge-sub { font-size: 14px; line-height: 1.5; color: rgba(255,255,255,0.72); }
+.challenge-sub b { color: #FBBF24; font-weight: 700; white-space: nowrap; }
+/* The 2026 reference point under the offer (2026-10-07, direct request). */
+.challenge-fact { padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 13.5px; line-height: 1.45; color: rgba(255,255,255,0.72); }
+.challenge-fact b { color: #fff; font-weight: 700; white-space: nowrap; }
 /* Mobile-first base for the horizontal split — stacked, matching the
    normal card layout, same as every card gets below the desktop
    breakpoint. Real bug caught from testing, not assumed: the desktop
@@ -3964,7 +3973,8 @@ function App() {
                           <div className="challenge-card fade-in-touch">
                             <span className="challenge-eyebrow">The challenge</span>
                             <span className="challenge-title">100 pe <b>100% off</b></span>
-                            <span className="challenge-sub">Get an AIR under 100 in GATE DA 2027 and we refund your full GATE 2028 course fee. You keep full access to the course.</span>
+                            <span className="challenge-sub">Get an AIR under 100 in <b>GATE DA 2027</b> and we refund your full GATE 2028 course fee. You keep full access to the course.</span>
+                            <span className="challenge-fact">In GATE DA 2026, <b>65 marks</b> got an <b>AIR of 90</b>.</span>
                           </div>
                           <a className="plan120-cta fade-in-touch" href="/gate-da-progress-tracker?batch=D">
                             <span className="plan120-head">
