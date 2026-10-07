@@ -260,6 +260,22 @@ section.page-hero::before, section.page-hero::after { display: none; }
 .page-hero .btn-stories:hover { color: var(--ink); border-color: var(--ink); background: transparent; box-shadow: none; transform: none; }
 .page-hero .hero-proof-float-1, .page-hero .hero-proof-float-2 { animation: none; }
 .page-hero .proof-orb-1, .page-hero .proof-orb-2 { animation: none; }
+/* Less empty space (same day, "too much negative space"): tighter section
+   padding and a smaller headline, plus the what-you-get row under the buttons
+   so the left column is about as tall as the two quote cards. */
+section.page-hero { padding: 48px 0 44px; }
+.page-hero .page-hero-left h1 { font-size: clamp(40px, 4.6vw, 64px); margin-bottom: 18px; }
+.page-hero .page-hero-inner { gap: 48px; }
+.hero-results { margin-top: 32px; padding-top: 22px; border-top: 1px solid var(--line); max-width: 560px; }
+.hero-results-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.hero-result { display: flex; flex-direction: column; gap: 2px; }
+.hero-result b { font-family: var(--font-display); font-size: 20px; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; }
+.hero-result span { font-size: 13px; color: var(--ink-dim); }
+.page-hero .hero-guide-link { margin-top: 22px; }
+.page-hero .hero-proof-link { margin-top: 18px; }
+@media (max-width: 600px) {
+  .hero-results-row { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 14px; }
+}
 .page-hero .hero-proof-row  { animation: pageHeroIn .65s cubic-bezier(.34,1.12,.64,1) .54s both; }
 .page-hero .hero-proof-link { animation: pageHeroIn .58s cubic-bezier(.34,1.12,.64,1) .72s both; }
 @keyframes proof-float1 {
@@ -3890,13 +3906,25 @@ function App() {
       <section className="page-hero">
         <div className="container page-hero-inner">
           <div className="page-hero-left">
-            <h1>Your career, all at<br /><em>One place.</em></h1>
-            <p className="hero-sub" style={{ fontSize: 19, color: 'var(--ink-dim)', maxWidth: 580, lineHeight: 1.5, marginBottom: 36 }}>
+            <h1>Your career, all{'\u00A0'}at<br /><em>One place.</em></h1>
+            <p className="hero-sub" style={{ fontSize: 18, color: 'var(--ink-dim)', maxWidth: 560, lineHeight: 1.55, marginBottom: 28 }}>
               The only GATE DA prep that teaches mathematics the way the exam actually tests it, visual, conceptual, and built for DA from scratch. Not repurposed CSE content.
             </p>
             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }} className="ph-cta">
               <a href="#combos" className="btn btn-primary btn-lg">Bundled courses</a>
               <a href="#individual" className="btn btn-ghost btn-lg btn-stories"><span>Individual courses</span></a>
+            </div>
+            {/* What-you-get row (2026-10-08) so the left column carries content
+                instead of empty space beside the quote cards. Deliberately no
+                ranks (direct request); every figure is already stated on this
+                page's course cards. */}
+            <div className="hero-results">
+              <div className="hero-results-row">
+                <div className="hero-result"><b>300+ hours</b><span>of lectures</span></div>
+                <div className="hero-result"><b>1,000+</b><span>practice questions</span></div>
+                <div className="hero-result"><b>Weekly</b><span>quizzes</span></div>
+                <div className="hero-result"><b>Discord</b><span>for doubts</span></div>
+              </div>
             </div>
             <a href="/blogs/gate-da-syllabus-2027" className="hero-guide-link"><Icon.Book size={15} /> <span>New: Free GATE DA Syllabus 2027 guide</span> <Icon.ArrowRight size={13} /></a>
           </div>
