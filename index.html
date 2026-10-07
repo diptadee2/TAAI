@@ -515,6 +515,29 @@ body {
   background: radial-gradient(circle, rgba(255,255,255,0.14) 1.5px, transparent 1.5px), linear-gradient(135deg, #db2777 0%, #9333ea 50%, #6d28d9 100%);
   background-size: 24px 24px, auto; color: #fff; margin-top: 24px;
 }
+/* Dark glass hero cards (2026-10-08, from an artifact the user liked):
+   deep navy-plum glass with a faint coloured glow in the top-right corner,
+   a thin light border with a brighter top edge, softer translucent orbs,
+   a lighter and larger figure, and a glassy monospace label pill. Card 1
+   glows pink, card 2 violet. Layout, float and orb motion are unchanged. */
+.hero-bento-1, .hero-bento-2 {
+  background-size: auto;
+  border: 1px solid rgba(255,255,255,0.16);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 24px 48px -20px rgba(8,4,28,0.75);
+}
+.hero-bento-1 { background-image: radial-gradient(120% 140% at 88% 8%, rgba(236,72,153,0.22) 0%, transparent 55%), linear-gradient(135deg, #15102e 0%, #1d1538 55%, #261634 100%); }
+.hero-bento-2 { background-image: radial-gradient(120% 140% at 88% 8%, rgba(139,92,246,0.30) 0%, transparent 55%), linear-gradient(135deg, #15102e 0%, #1b1440 55%, #22173f 100%); }
+.hero-bento-card .hero-bento-orb-1 { width: 220px; height: 220px; top: -80px; right: -70px; background: rgba(255,214,236,0.09); }
+.hero-bento-2 .hero-bento-orb-1 { background: rgba(214,200,255,0.09); }
+.hero-bento-card .hero-bento-orb-2 { width: 150px; height: 150px; bottom: -60px; left: -50px; background: rgba(255,255,255,0.035); }
+.hero-bento-card .bento-label { padding: 5px 13px; font-size: 11.5px; letter-spacing: .08em; background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.22); color: rgba(255,255,255,0.88); }
+.hero-bento-card .bento-num { font-weight: 300; font-size: 42px; letter-spacing: -0.02em; margin-top: 10px; }
+.hero-bento-card .bento-desc { font-size: 14px; color: rgba(255,255,255,0.68); margin-top: 6px; }
+@media (max-width: 768px) {
+  /* Phones keep their own compact sizes (two small cards side by side). */
+  .hero-bento-card .bento-num { font-size: 28px; margin-top: 0; }
+  .hero-bento-card .bento-desc { font-size: 12px; margin-top: 2px; }
+}
 
 /* Stats strip */
 .stats {
