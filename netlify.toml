@@ -67,6 +67,12 @@
 [functions."hourly-activity-mock-cutover"]
   schedule = "*/15 * * * *"
 
+# Every 15 minutes; from 00:00 IST on 2026-10-21 it raises the GATE 2028
+# course from the super early bird 9999 to 11999 and clears the offer
+# deadline, once (guarded, see the function). Safe to remove after Oct 21.
+[functions."pricing-2028-cutover"]
+  schedule = "*/15 * * * *"
+
 # Runs once a day at 19:15 UTC (00:45 IST) — a SAFETY NET for the name
 # moderation feature, not its primary path. register.js and rename.js's
 # voluntary-rename path save a new name instantly, then fire a Netlify

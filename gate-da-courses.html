@@ -2489,6 +2489,7 @@ const COMBOS = [
     // only drives the countdown text, not the switch.
     launchDate: '2026-10-07',
     liveOffer: 'Super early bird offer',
+    liveOfferUntil: '2026-10-20',
     accent: 'linear-gradient(90deg, #F59E0B, #EC4899, var(--purple))',
     title: 'GATE 2028 Full Course',
     includes: [
@@ -3037,10 +3038,16 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   const priceOld         = pd.priceOld ? fmtPrice(pd.priceOld) : null;
   const discountRaw      = pd.discount || null;
   const discount         = discountRaw ? (isNaN(discountRaw) ? discountRaw : discountRaw + '% off') : null;
-  const discountDeadline = pd.discountDeadline ? fmtDeadline(pd.discountDeadline) : null;
+  // A card with liveOfferUntil (the 2028 card: super early bird until Oct 20)
+  // drops its whole offer line after that date (IST), so it never shows a
+  // past "Offer ends" or the default offer name once the offer is over. The
+  // price itself moves to 11999 via netlify/functions/pricing-2028-cutover.js.
+  const todayIST         = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  const liveOfferOver    = !!(c.liveOfferUntil && todayIST > c.liveOfferUntil);
+  const discountDeadline = pd.discountDeadline && !liveOfferOver ? fmtDeadline(pd.discountDeadline) : null;
   // The 2028 card defaults to 'Super early bird offer' once live (2026-10-05,
   // direct request); a discount reason set in /team still wins.
-  const discountReason   = pd.discountReason  || (c.comingSoon && pd.price && pd.enrollUrl ? c.liveOffer : null) || null;
+  const discountReason   = liveOfferOver ? null : (pd.discountReason  || (c.comingSoon && pd.price && pd.enrollUrl ? c.liveOffer : null) || null);
   const saving           = c.saving;
   // A preview card (the 2028 course) keeps its own layout and amber look
   // for good, but its "coming soon" state switches off by itself once
