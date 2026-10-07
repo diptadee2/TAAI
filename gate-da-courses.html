@@ -563,7 +563,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
    (observed with the page's touch observer); desktop keeps the row's
    single slide-in and ignores this class. */
 @media (max-width: 1024px) {
-  .fade-in-touch { opacity: 0; transform: translateY(36px) scale(0.96); transition: opacity .7s cubic-bezier(.34,1.1,.64,1), transform .7s cubic-bezier(.34,1.1,.64,1), border-color .2s ease, background-color .2s ease; }
+  .fade-in-touch { opacity: 0; transform: translateY(36px) scale(0.96); transition: opacity .5s cubic-bezier(.34,1.1,.64,1), transform .5s cubic-bezier(.34,1.1,.64,1), border-color .2s ease, background-color .2s ease; }
   .fade-in-touch.visible { opacity: 1; transform: translateY(0) scale(1); }
 }
 @media (max-width: 1024px) and (prefers-reduced-motion: reduce) {
@@ -1298,7 +1298,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .fade-in { opacity: 0; transform: translateY(24px); transition: opacity .7s cubic-bezier(.4,0,.2,1), transform .7s cubic-bezier(.4,0,.2,1); }
 .fade-in.visible { opacity: 1; transform: translateY(0); }
 @media (max-width: 768px) {
-  .fade-in { transform: translateY(36px) scale(0.96); transition: opacity .7s cubic-bezier(.34,1.1,.64,1), transform .7s cubic-bezier(.34,1.1,.64,1); }
+  .fade-in { transform: translateY(36px) scale(0.96); transition: opacity .5s cubic-bezier(.34,1.1,.64,1), transform .5s cubic-bezier(.34,1.1,.64,1); }
   .fade-in.visible { transform: translateY(0) scale(1); }
 }
 @media (max-width: 600px) {
@@ -2645,6 +2645,14 @@ const DotField = React.memo(function DotField({
     const ctx = canvas.getContext('2d', { alpha: true });
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     let resizeTimer;
+    // The dots only ever move in response to a mouse cursor. On touch
+    // devices (no hover / no fine pointer) every frame redrew an identical
+    // image: on a phone that's a ~780x10800px canvas with ~6,800 dots
+    // repainted 60 times a second for as long as the courses page is open,
+    // which starved the main thread and made the bundles' scroll reveals
+    // fire late and pop ("finicky" on mobile, 2026-10-07). There it's drawn
+    // once, and again only after a resize; desktop keeps the live loop.
+    const interactive = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
     function resize() {
       clearTimeout(resizeTimer);
@@ -2655,6 +2663,14 @@ const DotField = React.memo(function DotField({
       const rect = canvas.parentElement.getBoundingClientRect();
       const w = rect.width;
       const h = rect.height;
+      // iOS fires resize whenever Safari's toolbar collapses/expands during a
+      // scroll; the section's own size doesn't change then, so don't
+      // reallocate the canvas (only its page offset is refreshed).
+      if (w === sizeRef.current.w && h === sizeRef.current.h) {
+        sizeRef.current.offsetX = rect.left + window.scrollX;
+        sizeRef.current.offsetY = rect.top + window.scrollY;
+        return;
+      }
 
       canvas.width = w * dpr;
       canvas.height = h * dpr;
@@ -2670,6 +2686,7 @@ const DotField = React.memo(function DotField({
       };
 
       buildDots(w, h);
+      if (!interactive) tick(); // static: one frame per (re)size
     }
 
     function buildDots(w, h) {
@@ -2823,17 +2840,17 @@ const DotField = React.memo(function DotField({
 
       ctx.fill();
 
-      rafRef.current = requestAnimationFrame(tick);
+      if (interactive) rafRef.current = requestAnimationFrame(tick);
     }
 
     doResize();
     window.addEventListener('resize', resize);
     window.addEventListener('mousemove', onMouseMove, { passive: true });
-    rafRef.current = requestAnimationFrame(tick);
+    if (interactive) rafRef.current = requestAnimationFrame(tick);
 
     rebuildRef.current = () => {
       const { w, h } = sizeRef.current;
-      if (w > 0 && h > 0) buildDots(w, h);
+      if (w > 0 && h > 0) { buildDots(w, h); if (!interactive) tick(); }
     };
 
     return () => {
@@ -3738,7 +3755,38 @@ function App() {
     const ioRow = makeObserver({ threshold: 0.1 });
     document.querySelectorAll('.fade-in.combo-full-row').forEach((el) => { markInitialVisibility(el); ioRow.observe(el); });
 
-    return () => { io.disconnect(); ioRow.disconnect(); window.removeEventListener('scroll', revealRestAtBottom); };
+    // Phones/tablets: WebKit (every iPhone browser) delivers
+    // IntersectionObserver callbacks late during a fast scroll. Measured
+    // 2026-10-07 at a normal thumb speed: bundle cards revealed only after
+    // their top had already scrolled off the top of the screen, leaving a
+    // blank card-shaped area and then a pop ("the scroll animation in the
+    // bundled courses on mobile is still finicky"). Also checking positions
+    // on every scrolled frame reveals each element as its top crosses the
+    // same line the observer uses (75% down the screen); the observers stay
+    // as a backup. Stops listening once everything has been revealed.
+    let onScrollCheck = null;
+    if (touchLayout) {
+      const watched = [...pendingReveal, ...document.querySelectorAll('.fade-in.combo-full-row')];
+      // Run straight from the scroll event (scroll events already arrive
+      // once per frame); deferring to requestAnimationFrame still lagged in
+      // WebKit during fast scrolls.
+      const check = () => {
+        const line = window.innerHeight * 0.75;
+        let remaining = 0;
+        watched.forEach((el) => {
+          if (el.classList.contains('visible')) return;
+          const r = el.getBoundingClientRect();
+          if (r.height === 0) return; // hidden at this width; the bottom-of-page safety net covers it
+          if (r.top < line) { io.unobserve(el); ioRow.unobserve(el); show(el); }
+          else remaining++;
+        });
+        if (!remaining) window.removeEventListener('scroll', onScrollCheck);
+      };
+      onScrollCheck = check;
+      window.addEventListener('scroll', onScrollCheck, { passive: true });
+    }
+
+    return () => { io.disconnect(); ioRow.disconnect(); window.removeEventListener('scroll', revealRestAtBottom); if (onScrollCheck) window.removeEventListener('scroll', onScrollCheck); };
   }, []);
 
   return (
