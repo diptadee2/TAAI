@@ -563,7 +563,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
    (observed with the page's touch observer); desktop keeps the row's
    single slide-in and ignores this class. */
 @media (max-width: 1024px) {
-  .fade-in-touch { opacity: 0; transform: translateY(36px) scale(0.96); transition: opacity .58s cubic-bezier(.34,1.1,.64,1), transform .58s cubic-bezier(.34,1.1,.64,1), border-color .2s ease, background-color .2s ease; }
+  .fade-in-touch { opacity: 0; transform: translateY(36px) scale(0.96); transition: opacity .7s cubic-bezier(.34,1.1,.64,1), transform .7s cubic-bezier(.34,1.1,.64,1), border-color .2s ease, background-color .2s ease; }
   .fade-in-touch.visible { opacity: 1; transform: translateY(0) scale(1); }
 }
 @media (max-width: 1024px) and (prefers-reduced-motion: reduce) {
@@ -1298,7 +1298,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .fade-in { opacity: 0; transform: translateY(24px); transition: opacity .7s cubic-bezier(.4,0,.2,1), transform .7s cubic-bezier(.4,0,.2,1); }
 .fade-in.visible { opacity: 1; transform: translateY(0); }
 @media (max-width: 768px) {
-  .fade-in { transform: translateY(36px) scale(0.96); transition: opacity .58s cubic-bezier(.34,1.1,.64,1), transform .58s cubic-bezier(.34,1.1,.64,1); }
+  .fade-in { transform: translateY(36px) scale(0.96); transition: opacity .7s cubic-bezier(.34,1.1,.64,1), transform .7s cubic-bezier(.34,1.1,.64,1); }
   .fade-in.visible { transform: translateY(0) scale(1); }
 }
 @media (max-width: 600px) {
@@ -1797,10 +1797,13 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
    banner on top, two cards below) is unchanged. */
 .why-pillar, .why-pillar:hover {
   background: #14102B; background-image: none;
-  border: 1px solid rgba(255,255,255,0.08); box-shadow: none; transform: none;
-  transition: border-color .2s ease;
+  border: 1px solid rgba(255,255,255,0.08); box-shadow: none;
+  /* opacity/transform listed (and no base transform:none) so the scroll
+     reveal (.fade-in) still plays: this rule replaced its transition and
+     transform, so these cards used to pop in instantly (found 2026-10-07). */
+  transition: opacity .7s cubic-bezier(.34,1.1,.64,1), transform .7s cubic-bezier(.34,1.1,.64,1), border-color .2s ease;
 }
-.why-pillar:hover { border-color: rgba(255,255,255,0.16); }
+.why-pillar:hover { border-color: rgba(255,255,255,0.16); transform: none; }
 .why-pillar::after { display: none; }
 .why-icon-wrap, .why-bd-1 .why-icon-wrap, .why-bd-2 .why-icon-wrap, .why-bd-3 .why-icon-wrap {
   width: auto; height: auto; border-radius: 0; background: none; box-shadow: none; margin-bottom: 22px;
@@ -1951,7 +1954,10 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
   display: flex; flex-direction: column; gap: 22px;
   position: relative; overflow: hidden;
   box-shadow: 0 2px 16px rgba(139,92,246,0.07), 0 1px 4px rgba(0,0,0,0.04);
-  transition: transform .38s cubic-bezier(.4,0,.2,1), box-shadow .38s ease, border-color .28s ease;
+  /* opacity is listed so the scroll reveal (.fade-in) still fades these in:
+     this rule comes after .fade-in and replaces its transition, which left
+     the cards popping in instantly (found 2026-10-07). */
+  transition: opacity .6s cubic-bezier(.4,0,.2,1), transform .38s cubic-bezier(.4,0,.2,1), box-shadow .38s ease, border-color .28s ease;
 }
 .course-testi-card::before {
   content: '\201C';
@@ -3687,7 +3693,12 @@ function App() {
     // scroll animations have disappeared" on mobile, 2026-10-01).
     const touchLayout = window.matchMedia('(max-width: 1024px)').matches;
     const io = makeObserver(touchLayout
-      ? { threshold: 0, rootMargin: '0px 0px -12% 0px' }
+      // -25%, not the earlier -12% (2026-10-07, "the scroll animation on
+      // phone is still non existent"): at -12% the reveal played in the
+      // bottom eighth of the screen, which on an iPhone sits behind
+      // Safari's toolbar and the scrolling thumb, so it was over before the
+      // element reached where anyone was looking.
+      ? { threshold: 0, rootMargin: '0px 0px -25% 0px' }
       : { threshold: 0.1, rootMargin: '0px 0px 200px 0px' });
     const pendingReveal = new Set();
     document.querySelectorAll('.fade-in:not(.combo-full-row)').forEach((el) => { markInitialVisibility(el); io.observe(el); pendingReveal.add(el); });
