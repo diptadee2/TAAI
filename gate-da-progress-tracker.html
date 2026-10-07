@@ -530,6 +530,14 @@
      Focus bar and the champions card line up as one stack (it was a
      centred 560px card above two 696px ones). */
   @media (min-width: 1081px) { .program-day-badge-wrap .program-card { width: 100%; } }
+  /* Plan card + Focus tile in one row (desktop). The tile is the page's
+     main action: solid purple, full card height, icon over the label. */
+  .program-day-badge-wrap.program-row { align-items: stretch; gap: 16px; margin-bottom: 28px; }
+  .program-row .program-card { flex: 1 1 auto; min-width: 0; }
+  .focus-toggle.focus-tile { flex: 0 0 168px; height: auto; flex-direction: column; gap: 8px; padding: 16px; border-radius: var(--radius-md); font-size: 16px; }
+  .focus-tile .focus-toggle-icon svg { width: 26px; height: 26px; }
+  @media (max-width: 1080px) { .focus-toggle.focus-tile { display: none; } }
+  .focus-cta { margin-bottom: 28px; }
   /* Restyled 2026-10-03 ("the focus mode button can be better"): same
      language as the Pomodoro Start button (solid accent, dark text, drawn
      timer icon, sentence case) instead of an uppercase gradient pill with
