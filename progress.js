@@ -275,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-07-6';
+  var CLIENT_VERSION = '2026-10-08-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2118,7 +2118,7 @@
   // Summarizes a whole week (excluding today, which renders separately —
   // see renderCalendar) so a returning/catch-up student can see at a
   // glance whether a past week still needs attention without expanding
-  // it. Same color vocabulary as dayStatus/day-status: green once every
+  // it. Same color vocabulary as the day rows: green once every
   // task in the week is done, amber if any day in it is genuinely missed,
   // grey otherwise (untouched or in-progress future week).
   function weekStatusInfo(weekDays) {
@@ -2129,9 +2129,10 @@
       doneTasks += d.tasks.filter(function (t) { return t.completed; }).length;
       if (state.student && d.date < today && dayStatus(d) === 'missed') hasMissed = true;
     });
-    if (totalTasks > 0 && doneTasks === totalTasks) return { cls: 'complete', label: '✅ Complete' };
-    if (hasMissed) return { cls: 'missed', label: '⚠️ ' + doneTasks + '/' + totalTasks + ' done' };
-    if (doneTasks === 0) return { cls: 'upcoming', label: 'Upcoming' };
+    // Plain counts, no emoji or pills (checklist redesign 2026-10-08).
+    if (totalTasks > 0 && doneTasks === totalTasks) return { cls: 'complete', label: 'All ' + totalTasks + ' done' };
+    if (hasMissed) return { cls: 'missed', label: doneTasks + '/' + totalTasks + ' done' };
+    if (doneTasks === 0) return { cls: 'upcoming', label: totalTasks + (totalTasks === 1 ? ' task' : ' tasks') };
     return { cls: 'upcoming', label: doneTasks + '/' + totalTasks + ' done' };
   }
 
@@ -2887,13 +2888,14 @@
   function patchDayStatus(date) {
     var day = state.days.find(function (d) { return d.date === date; });
     if (!day) return;
-    var el = document.querySelector('.day[data-date="' + date + '"] .day-status');
+    var el = document.querySelector('.day[data-date="' + date + '"]');
     if (!el) return;
     var status = dayStatus(day);
     if (status === 'today') return;
-    var label = status === 'complete' ? '✅ Complete' : status === 'missed' ? '⚠️ Missed' : 'Upcoming';
-    el.className = 'day-status ' + status;
-    el.textContent = label;
+    el.classList.remove('day--complete', 'day--missed', 'day--upcoming');
+    el.classList.add('day--' + status);
+    var count = el.querySelector('.day-count');
+    if (count) count.textContent = dayCountLabel(day);
   }
 
   // Recomputes the "N days incomplete before today" banner and patches it
@@ -3181,11 +3183,12 @@
         html += '<div class="week" data-week="' + week.key + '">' +
           '<div class="week-label" role="button" tabindex="0" aria-expanded="' + weekOpen + '">' +
           '<svg class="week-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M9 6L15 12L9 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
-          '<span>Week ' + (idx + 1) + '</span>' +
+          '<span class="week-name">Week ' + (idx + 1) + '</span>' +
+          '<span class="week-range">' + weekRangeLabel(week.key) + '</span>' +
           '<span class="week-status ' + status.cls + '">' + status.label + '</span></div>' +
-          '<div class="week-body-wrap' + (weekOpen ? ' expanded' : '') + '"><div class="week-body-inner">' +
+          '<div class="week-body-wrap' + (weekOpen ? ' expanded' : '') + '"><div class="week-body-inner"><div class="week-list">' +
           week.days.map(renderDay).join('') +
-          '</div></div></div>';
+          '</div></div></div></div>';
       });
 
       if (!state.days.length) {
@@ -4463,25 +4466,36 @@
     return '<div class="today-card fade-in">' + html + '</div>';
   }
 
-  // Non-native accordion (div-based, not <details>/<summary>) so the
-  // expand/collapse animates smoothly via a CSS grid-rows transition,
-  // instead of the native element's instant snap-open.
+  // One row of a week's timetable (checklist redesign 2026-10-08, "looks too
+  // vibe coded"): date column on the left, the day's tasks on the right, no
+  // per-day card or collapse. The state shows as a class (complete days
+  // dim, missed days get an amber mark, see the CSS) plus a plain "done of
+  // total" count, instead of the old "Upcoming"/"Complete"/"Missed" pills
+  // (which also wrongly said "Upcoming" on past days for visitors).
+  function dayCountLabel(day) {
+    var done = day.tasks.filter(function (t) { return t.completed; }).length;
+    return done + '/' + day.tasks.length;
+  }
+  function weekRangeLabel(mondayIso) {
+    var a = new Date(mondayIso + 'T00:00:00');
+    var b = new Date(a); b.setDate(a.getDate() + 6);
+    var mon = function (d) { return d.toLocaleDateString('en-US', { month: 'short' }); };
+    return mon(a) + ' ' + a.getDate() + ' to ' + (mon(a) === mon(b) ? '' : mon(b) + ' ') + b.getDate();
+  }
   function renderDay(day) {
     var status = dayStatus(day);
-    var isOpen = state.expanded.has(day.date);
-    var statusLabel = status === 'complete' ? '✅ Complete' : status === 'missed' ? '⚠️ Missed' : 'Upcoming';
-
+    var d = new Date(day.date + 'T00:00:00');
     var body = '';
     day.tasks.forEach(function (t) {
       body += taskRowHtml(day.date, t);
     });
-
-    return '<div class="day fade-in" data-date="' + day.date + '">' +
-      '<div class="day-summary" role="button" tabindex="0" aria-expanded="' + isOpen + '">' +
-      '<svg class="day-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 6L15 12L9 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
-      '<span class="day-date">' + dayLabel(day.date) + '</span>' +
-      '<span class="day-status ' + status + '">' + statusLabel + '</span></div>' +
-      '<div class="day-body-wrap' + (isOpen ? ' expanded' : '') + '"><div class="day-body-inner"><div class="day-body">' + body + '</div></div></div>' +
+    return '<div class="day fade-in day--' + status + '" data-date="' + day.date + '">' +
+      '<div class="day-when">' +
+      '<span class="day-wd">' + d.toLocaleDateString('en-US', { weekday: 'short' }) + '</span>' +
+      '<span class="day-num">' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '</span>' +
+      '<span class="day-count">' + dayCountLabel(day) + '</span>' +
+      '</div>' +
+      '<div class="day-tasks">' + body + '</div>' +
       '</div>';
   }
 
@@ -4519,6 +4533,22 @@
     return !!(state.student && effectiveScoutBatch() !== state.student.batch);
   }
 
+  // One fixed colour per subject, so the same subject looks the same
+  // everywhere in the checklist. Unknown names get a stable colour from a
+  // hash of the name.
+  var SUBJECT_COLORS = {
+    'Linear Algebra': '#A78BFA', 'Probability': '#60A5FA', 'Statistics': '#34D399',
+    'Calculus': '#F472B6', 'Machine Learning': '#FBBF24', 'Python': '#38BDF8',
+    'Data Structures': '#FB923C', 'Algorithms': '#F87171', 'DBMS': '#2DD4BF',
+    'AI': '#C084FC', 'AI (Logic)': '#C084FC', 'Quiz & Test Series': '#94A3B8',
+  };
+  var SUBJECT_FALLBACK_COLORS = ['#A78BFA', '#60A5FA', '#34D399', '#F472B6', '#FBBF24', '#38BDF8', '#FB923C', '#2DD4BF'];
+  function subjectColor(name) {
+    if (SUBJECT_COLORS[name]) return SUBJECT_COLORS[name];
+    var h = 0; for (var i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+    return SUBJECT_FALLBACK_COLORS[h % SUBJECT_FALLBACK_COLORS.length];
+  }
+
   function taskRowHtml(date, t) {
     var id = 'task-' + date + '-' + hashKey(t.subject + '|' + t.task_text);
     var link = taskLinkFor(t);
@@ -4531,7 +4561,8 @@
       : escapeHtml(t.task_text);
     return '<label class="task-row' + (t.completed ? ' done' : '') + (locked ? ' locked' : '') + '" for="' + id + '"' + (locked ? ' title="Switch to this batch to tick tasks"' : '') + '>' +
       '<input type="checkbox" id="' + id + '" data-date="' + date + '" data-subject="' + escapeAttr(t.subject) + '" data-task="' + escapeAttr(t.task_text) + '"' + (t.completed ? ' checked' : '') + (locked ? ' disabled' : '') + '>' +
-      '<span class="task-text"><span class="task-subject">' + escapeHtml(t.subject) + ':</span> ' + textHtml + '</span>' +
+      '<span class="task-body"><span class="task-text">' + textHtml + '</span>' +
+      '<span class="task-subject"><i class="task-dot" style="background:' + subjectColor(t.subject) + '"></i>' + escapeHtml(t.subject) + '</span></span>' +
       '</label>';
   }
 
@@ -6216,13 +6247,6 @@
     var next = document.getElementById('next-month');
     if (next) next.addEventListener('click', function () { loadMonth(shiftMonth(state.month, 1)); });
 
-    Array.prototype.forEach.call(document.querySelectorAll('.day-summary'), function (el) {
-      el.addEventListener('click', function () { toggleDay(el.closest('.day').dataset.date); });
-      el.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleDay(el.closest('.day').dataset.date); }
-      });
-    });
-
     Array.prototype.forEach.call(document.querySelectorAll('.week-label'), function (el) {
       el.addEventListener('click', function () { toggleWeek(el.closest('.week').dataset.week); });
       el.addEventListener('keydown', function (e) {
@@ -6233,17 +6257,6 @@
     Array.prototype.forEach.call(document.querySelectorAll('.task-row input[type="checkbox"]'), function (cb) {
       cb.addEventListener('change', onTaskToggle);
     });
-  }
-
-  function toggleDay(date) {
-    var el = document.querySelector('.day[data-date="' + date + '"]');
-    if (!el) return;
-    var wrap = el.querySelector('.day-body-wrap');
-    var summary = el.querySelector('.day-summary');
-    var open = state.expanded.has(date);
-    if (open) { state.expanded.delete(date); } else { state.expanded.add(date); }
-    wrap.classList.toggle('expanded', !open);
-    summary.setAttribute('aria-expanded', String(!open));
   }
 
   function toggleWeek(wk) {
