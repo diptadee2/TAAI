@@ -516,6 +516,20 @@
   /* Focus Mode is desktop-only, same breakpoint as .side-col below —
      phone and iPad-portrait get the task checklist only. */
   @media (max-width: 1080px) { .focus-toggle-wrap { display: none; } }
+  /* Focus mode call-to-action bar (2026-10-08): full main-column width,
+     a short explanation on the left, the big button on the right. Same
+     flat card idiom as the rest of the page with a soft purple tint so it
+     reads as the page's main action. Desktop only, like Focus Mode. */
+  .focus-cta { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin: 0 0 22px; padding: 18px 20px 18px 24px; border-radius: var(--radius-md); background: linear-gradient(90deg, rgba(139,92,246,0.16), rgba(139,92,246,0.06)); border: 1px solid rgba(139,92,246,0.35); }
+  .focus-cta-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .focus-cta-title { font-family: var(--font-nav); font-size: 17px; font-weight: 700; color: var(--ink); }
+  .focus-cta-sub { font-size: 13.5px; color: var(--ink-dim); }
+  .focus-cta .focus-toggle { flex-shrink: 0; }
+  @media (max-width: 1080px) { .focus-cta { display: none; } }
+  /* Desktop: the plan card spans the full main column too, so it, the
+     Focus bar and the champions card line up as one stack (it was a
+     centred 560px card above two 696px ones). */
+  @media (min-width: 1081px) { .program-day-badge-wrap .program-card { width: 100%; } }
   /* Restyled 2026-10-03 ("the focus mode button can be better"): same
      language as the Pomodoro Start button (solid accent, dark text, drawn
      timer icon, sentence case) instead of an uppercase gradient pill with

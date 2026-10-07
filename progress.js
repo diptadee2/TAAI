@@ -275,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-08-5';
+  var CLIENT_VERSION = '2026-10-08-7';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -3189,10 +3189,14 @@
       // both constrained to .main-col's narrower width. Centering here
       // instead actually lines it up with them.
       html += '<div class="program-day-badge-wrap">' + renderProgramDayBadge() + '</div>';
-      // .fade-in on the wrapper (not the button, which carries box-shadow +
-      // border-radius and its own hover transform) so it enters with the
-      // rest of the page instead of just appearing.
-      html += '<div class="focus-toggle-wrap fade-in"><button id="focus-toggle" class="focus-toggle"><span class="focus-toggle-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M10 2h4"/></svg></span>Focus mode</button></div>';
+      // Focus mode as a full-width bar (2026-10-08): it has to be the most
+      // eye-catching thing here ("don't put it away in a corner"), but it
+      // used to float alone in the gap between two cards of different
+      // widths. This bar spans the same width as the cards below it, with
+      // a line saying what Focus Mode is. Desktop only (see CSS).
+      html += '<div class="focus-cta fade-in"><div class="focus-cta-text"><span class="focus-cta-title">Ready to study?</span>' +
+        '<span class="focus-cta-sub">Pomodoro timer, today\'s tasks and the live leaderboard in one view.</span></div>' +
+        '<button id="focus-toggle" class="focus-toggle"><span class="focus-toggle-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M10 2h4"/></svg></span>Focus mode</button></div>';
       // One shared card, not two side by side — same pattern as Focus
       // Mode's own unified card (countdown/timer/today/leaderboard as
       // sections with a divider, not stacked separate floating cards).
