@@ -828,6 +828,24 @@
   .subject-row--assessment .subject-row-name { color: #7dd3fc; }
   .subject-row--assessment .subject-row-pct { color: #38bdf8; }
   .subject-row--assessment .progress-fill { background: linear-gradient(90deg, #4D8BFF, #38bdf8); }
+  /* Cleaner pass, 2026-10-08 ("can the progress by subject card be cleaner?
+     also accentuate the average marks"): sentence-case title like the
+     calendar, gold marks figure (same gold as the plan card's marks), one
+     line per subject inside multi-subject sections, thinner bars, grey 0%,
+     spacing instead of divider lines. */
+  .subject-breakdown .subject-breakdown-title { font-size: 15px; letter-spacing: 0; text-transform: none; color: var(--ink); margin-bottom: 3px; }
+  .subject-breakdown .subject-breakdown-sub { font-size: 12px; margin-bottom: 10px; }
+  .subject-breakdown .subject-group { padding: 11px 0; border-top: 0; }
+  .subject-breakdown .subject-group-head { font-size: 13.5px; font-weight: 600; margin-bottom: 8px; }
+  .subject-breakdown .weightage-marks { font-size: 11.5px; font-weight: 500; color: var(--ink-soft); }
+  .subject-breakdown .weightage-marks b { font-size: 15px; font-weight: 700; color: #FBBF24; font-variant-numeric: tabular-nums; margin-right: 2px; }
+  .subject-breakdown .progress-track { height: 5px; background: rgba(255,255,255,0.07); }
+  .subject-breakdown .subject-row-pct { font-size: 12px; font-weight: 600; color: var(--ink-soft); width: 36px; font-variant-numeric: tabular-nums; }
+  .subject-breakdown .subject-row.has-progress .subject-row-pct { color: var(--purple); }
+  .subject-breakdown .subject-row--inline + .subject-row--inline { margin-top: 9px; }
+  .subject-breakdown .subject-row--inline .subject-row-name { width: 104px; flex-shrink: 0; margin: 0; font-size: 12.5px; font-weight: 500; color: var(--ink-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .subject-breakdown .subject-row--assessment { margin-top: 10px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.07); }
+  .subject-breakdown .subject-breakdown-foot { border-top: 1px solid rgba(255,255,255,0.07); margin-top: 12px; }
 
   /* Heatmap — moved to the bottom as a compact secondary visual, with a legend */
   .heatmap-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 16px 18px; max-width: 320px; margin: 0 auto; }

@@ -275,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-08-4';
+  var CLIENT_VERSION = '2026-10-08-5';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2197,7 +2197,7 @@
   var GA_AVG_MARKS = 15;
 
   function weightageMarksHtml(w) {
-    return '<span class="weightage-marks" title="' + escapeAttr('Avg ' + w.value + ' marks in GATE DA 2024-2026') + '">' + w.value + ' marks</span>';
+    return '<span class="weightage-marks" title="' + escapeAttr('Avg ' + w.value + ' marks in GATE DA 2024-2026') + '"><b>' + w.value + '</b> marks</span>';
   }
 
 
@@ -2214,9 +2214,17 @@
   }
   window.addEventListener('resize', fitSideColSticky);
 
-  function subjectRowHtml(s, nameHtml) {
+  function subjectRowHtml(s, nameHtml, inline) {
     var pct = s.total ? Math.round((s.done / s.total) * 100) : 0;
-    var rowClass = 'subject-row' + (isAssessment(s.subject) ? ' subject-row--assessment' : '');
+    var rowClass = 'subject-row' + (isAssessment(s.subject) ? ' subject-row--assessment' : '') + (pct > 0 ? ' has-progress' : '');
+    // Inline: name, bar and % on one line (subjects inside a multi-subject
+    // section, 2026-10-08 "cleaner" pass).
+    if (inline) {
+      return '<div class="' + rowClass + ' subject-row--inline" data-subject="' + escapeAttr(s.subject) + '">' +
+        '<div class="subject-row-line"><span class="subject-row-name">' + escapeHtml(s.subject) + '</span>' +
+        '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
+        '<div class="subject-row-pct">' + pct + '%</div></div></div>';
+    }
     return '<div class="' + rowClass + '" data-subject="' + escapeAttr(s.subject) + '">' +
       (nameHtml === '' ? '' : '<div class="subject-row-name">' + (nameHtml || escapeHtml(s.subject)) + '</div>') +
       '<div class="subject-row-line"><div class="progress-track"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
@@ -2249,7 +2257,7 @@
       // just the bar. Multi-subject: each row keeps its own name.
       return '<div class="subject-group' + (single ? '' : ' subject-group--multi') + '">' +
         '<div class="subject-group-head"><span>' + escapeHtml(single ? rows[0].subject : w.label) + '</span>' + weightageMarksHtml(w) + '</div>' +
-        rows.map(function (r) { return subjectRowHtml(r, single ? '' : null); }).join('') +
+        rows.map(function (r) { return single ? subjectRowHtml(r, '') : subjectRowHtml(r, null, true); }).join('') +
         '</div>';
     }).join('');
 
@@ -2261,7 +2269,7 @@
     html += assessments.map(function (s) { return subjectRowHtml(s); }).join('');
 
     return '<div class="subject-breakdown fade-in"><div class="subject-breakdown-title">Progress by subject</div>' +
-      '<div class="subject-breakdown-sub">Sorted by avg GATE marks, 2024 to 2026</div>' +
+      '<div class="subject-breakdown-sub">By average GATE marks, 2024 to 2026</div>' +
       html +
       '<div class="subject-breakdown-foot">General Aptitude adds ' + GA_AVG_MARKS + ' marks. <a href="/blogs/gate-da-syllabus-2027/" target="_blank" rel="noopener">Full analysis &rarr;</a></div>' +
       '</div>';
@@ -2926,6 +2934,7 @@
           var label = row.querySelector('.subject-row-pct');
           if (fill) fill.style.width = pct + '%';
           if (label) label.textContent = pct + '%';
+          row.classList.toggle('has-progress', pct > 0);
         });
         refreshPlanProgress();
       })
