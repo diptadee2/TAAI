@@ -3048,8 +3048,13 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   // drops its whole offer line after that date (IST), so it never shows a
   // past "Offer ends" or the default offer name once the offer is over. The
   // price itself moves to 11999 via netlify/functions/pricing-2028-cutover.js.
+  // Any card's offer line (reason + "Offer ends ...") also hides itself once
+  // its /team discount_deadline has passed in IST (direct request 2026-10-07,
+  // "hide the line only"): no past "Offer ends" date is ever shown. Only the
+  // line; the price and % pill stay as /team has them.
   const todayIST         = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
-  const liveOfferOver    = !!(c.liveOfferUntil && todayIST > c.liveOfferUntil);
+  const liveOfferOver    = !!(c.liveOfferUntil && todayIST > c.liveOfferUntil) ||
+                           !!(pd.discountDeadline && todayIST > pd.discountDeadline);
   const discountDeadline = pd.discountDeadline && !liveOfferOver ? fmtDeadline(pd.discountDeadline) : null;
   // The 2028 card defaults to 'Super early bird offer' once live (2026-10-05,
   // direct request); a discount reason set in /team still wins.
