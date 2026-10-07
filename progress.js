@@ -89,13 +89,13 @@
   // Batch C"). Used both on the registration screen (reading
   // state.previewBatch, since there's no student yet) and the main
   // checklist (reading state.student.batch).
-  // Only the original batch keeps the "180 DAYS Batch C" wording — any
+  // Only the original batch keeps the "180 Days Batch C" wording — any
   // other batch shows its own display label instead (direct request:
   // "don't use the word batch d"), since its letter is an internal id,
   // never a name students should see.
   function programTitle(batch) {
     batch = batch || 'C';
-    if (batch === 'C') return PROGRAM_LENGTH_DAYS + ' DAYS Batch C';
+    if (batch === 'C') return PROGRAM_LENGTH_DAYS + ' Days Batch C'; // normal case since 2026-10-08
     return batchLabel(batch);
   }
 
@@ -275,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-08-10';
+  var CLIENT_VERSION = '2026-10-08-11';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2297,7 +2297,6 @@
       // tracker-data.js's fetchLastWeekLeaders.
       return '<div class="leaderboard-row' + (i < 3 ? ' leaderboard-row--top' : '') + (l.is_me ? ' leaderboard-row--me' : '') + (l.is_live ? ' leaderboard-row--live' : '') + '">' +
         '<span class="leaderboard-rank">' + rank + '</span>' +
-        rankMovementHtml(i + 1, l.previous_week_rank) +
         '<span class="leaderboard-name"' + allTimeTitleAttr(l.all_time_minutes) + '>' + liveDotHtml(l.is_live) + escapeHtml(l.display_name) + (l.is_me ? ' <span class="leaderboard-you">You</span>' : '') + '</span>' +
         '<span class="leaderboard-time">' + formatHoursDecimal(l.total_minutes) + '</span>' +
         '</div>';
@@ -2309,7 +2308,6 @@
       rows += '<div class="leaderboard-gap">···</div>' +
         '<div class="leaderboard-row leaderboard-row--me' + (state.lastWeekViewerRank.is_live ? ' leaderboard-row--live' : '') + '">' +
         '<span class="leaderboard-rank">' + state.lastWeekViewerRank.rank + '</span>' +
-        rankMovementHtml(state.lastWeekViewerRank.rank, state.lastWeekViewerRank.previous_week_rank) +
         '<span class="leaderboard-name"' + allTimeTitleAttr(state.lastWeekViewerRank.all_time_minutes) + '>' + liveDotHtml(state.lastWeekViewerRank.is_live) + 'You</span>' +
         '<span class="leaderboard-time">' + formatHoursDecimal(state.lastWeekViewerRank.total_minutes) + '</span>' +
         '</div>';
@@ -2326,7 +2324,7 @@
     // but a mouse user could trigger.
     var showBadge5 = newBadgeVisible('top5');
     return '<div class="leaderboard-card champions-section clickable-card" id="champions-card" role="button" tabindex="0">' +
-      '<div class="leaderboard-title' + (showBadge5 ? ' has-badge' : '') + '">Last Week’s Champions</div>' +
+      '<div class="leaderboard-title' + (showBadge5 ? ' has-badge' : '') + '">Last week’s champions</div>' +
       newBadgeHtml(showBadge5) +
       '<div class="leaderboard-subtitle">Top 5 by hours logged, last week</div>' +
       '<div id="champions-rows">' + renderLastWeekChampionRows() + '</div>' +
@@ -2595,7 +2593,7 @@
   function renderTodayLeaders() {
     if (!state.todayLeaders.length) return '';
     return '<div class="leaderboard-card fade-in" id="today-leaderboard-card">' +
-      '<div class="leaderboard-title-row"><div class="leaderboard-title">Today’s Leaders</div>' + aboutEditButtonHtml('about-edit-btn--inline') + '</div>' +
+      '<div class="leaderboard-title-row"><div class="leaderboard-title">Today’s leaders</div>' + aboutEditButtonHtml('about-edit-btn--inline') + '</div>' +
       '<div class="leaderboard-subtitle">Top 10 by hours logged · Today</div>' +
       '<div id="today-leaderboard-rows">' + renderTodayLeaderboardRows(true) + '</div>' +
       '</div>';
@@ -2858,7 +2856,13 @@
     var t = planProgressTotals();
     if (!t.total) return '';
     return '<div class="plan-progress" id="plan-progress" data-pct="' + t.pct + '">' +
-      '<div class="plan-progress-line"><span class="plan-day">Day <b>' + dayNum + '</b> of ' + program.length + '</span><span class="plan-progress-pct" id="plan-progress-pct">' + t.pct + '%</span></div>' +
+      // Streak lives here now (2026-10-08 simplification), a small line instead
+      // of its own big panel. Same ids as before (streak-number for
+      // refreshStreak's live update/bump, streak-panel for the first-streak
+      // confetti) so those keep working unchanged.
+      '<div class="plan-progress-line"><span class="plan-day">Day <b>' + dayNum + '</b> of ' + program.length + '</span>' +
+      '<span class="plan-streak" id="streak-panel">\uD83D\uDD25 <b id="streak-number">' + (state.streak || 0) + '</b>-day streak</span>' +
+      '<span class="plan-progress-pct" id="plan-progress-pct">' + t.pct + '%</span></div>' +
       '<div class="plan-track"><div class="plan-fill" id="plan-progress-fill" style="width:' + t.pct + '%"></div>' + planMilestonesHtml(t.pct) + '</div>' +
       '<div class="plan-progress-foot">' + planMarksHtml(t) + '<span class="plan-progress-msg" id="plan-progress-msg">' + planProgressMessage(t.pct, t.done) + '</span></div>' +
       '</div>';
@@ -3210,10 +3214,10 @@
       // down in .side-col. Renders nothing at all (see
       // renderLastWeekChampions) when there's no data, in which case
       // #streak-panel's flex:1 just naturally claims the whole card alone.
-      html += '<div class="streak-champions-card fade-in">' +
-        '<div id="streak-panel">' + renderStreakHero() + '</div>' +
-        renderLastWeekChampions() +
-        '</div>';
+      // Champions only (the streak moved into the plan card, 2026-10-08);
+      // nothing at all when there's no leaderboard data.
+      var championsHtml = renderLastWeekChampions();
+      if (championsHtml) html += '<div class="streak-champions-card fade-in">' + championsHtml + '</div>';
 
       html += '<div class="month-nav"><button id="prev-month" aria-label="Previous month"' +
         (state.month <= batchStartMonth(effectiveScoutBatch()) ? ' disabled' : '') + '>&larr;</button>' +
@@ -5581,7 +5585,7 @@
     var animateNow = state.leaderboard.length > 0;
     leaderboardRowsAnimatedThisVisit = animateNow;
     return '<div class="leaderboard-card fade-in" id="leaderboard-card">' +
-      '<div class="leaderboard-title">Weekly Leaderboard</div>' +
+      '<div class="leaderboard-title">Weekly leaderboard</div>' +
       '<div class="leaderboard-subtitle">Top 20 by minutes logged · Resets every Monday</div>' +
       aboutEditButtonHtml() +
       // Mirrors each row's exact rank/name/streak/time widths so every

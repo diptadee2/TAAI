@@ -2187,6 +2187,23 @@
   /* Inline Discord links (rename gate hint) */
   .discord-inline { color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(88,101,242,0.7); }
   .discord-inline:hover { color: #8B9BFF; }
+  /* Simplification pass (2026-10-08, "isn't it too much complex?"):
+     1. the streak is a small line in the plan card, not its own big panel;
+     2. the champions card is just the leaderboard (no up/down arrows);
+     3. headings and labels in normal case on this page (the shared site
+        nav and the timer's FOCUS/BREAK readout are left as they are);
+     4. smaller gold marks in "Progress by subject". */
+  .plan-streak { margin-right: auto; margin-left: 14px; font-family: var(--font-nav); font-size: 13.5px; color: var(--ink-soft); white-space: nowrap; }
+  .plan-streak b { color: var(--ink); font-weight: 700; display: inline-block; }
+  .plan-streak b.bump { animation: plan-bump .5s cubic-bezier(.34,1.56,.64,1); }
+  @media (prefers-reduced-motion: reduce) { .plan-streak b.bump { animation: none; } }
+  .streak-champions-card .champions-section { border-left: 0; }
+  #champions-card .leaderboard-row { grid-template-columns: 40px minmax(0,1fr) auto; }
+  @media (max-width: 1080px) { .streak-champions-card { display: none; } }
+  .leaderboard-title, .today-card .today-tag, .program-day-label, .hourly-activity-title, .hourly-busy-meter-title,
+  .hourly-busy-meter-scale, .pomodoro-session-label, .pomo-settings-header, .leaderboard-columns, .leaderboard-you,
+  .batch-migration-col-title, .reg-field label, .about-modal-title { text-transform: none; letter-spacing: normal; }
+  .subject-breakdown .weightage-marks b { font-size: 13px; font-weight: 600; }
 </style>
 </head>
 <body data-float-stack>
