@@ -534,7 +534,12 @@
      main action: solid purple, full card height, icon over the label. */
   .program-day-badge-wrap.program-row { align-items: stretch; gap: 16px; margin-bottom: 28px; }
   .program-row .program-card { flex: 1 1 auto; min-width: 0; }
-  .focus-toggle.focus-tile { flex: 0 0 168px; height: auto; flex-direction: column; gap: 8px; padding: 16px; border-radius: var(--radius-md); font-size: 16px; }
+  /* The tile's wrapper carries .fade-in (same entrance as the plan card
+     beside it), not the button, so the reveal's transition doesn't replace
+     the button's own press/hover transition. */
+  .focus-tile-wrap { flex: 0 0 168px; display: flex; }
+  .focus-toggle.focus-tile { flex: 1 1 auto; width: 100%; height: auto; flex-direction: column; gap: 8px; padding: 16px; border-radius: var(--radius-md); font-size: 16px; }
+  @media (max-width: 1080px) { .focus-tile-wrap { display: none; } }
   .focus-tile .focus-toggle-icon svg { width: 26px; height: 26px; }
   @media (max-width: 1080px) { .focus-toggle.focus-tile { display: none; } }
   .focus-cta { margin-bottom: 28px; }

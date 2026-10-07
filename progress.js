@@ -275,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-08-9';
+  var CLIENT_VERSION = '2026-10-08-10';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -3196,7 +3196,7 @@
       var badgeHtml = renderProgramDayBadge();
       if (badgeHtml.indexOf('program-card') !== -1) {
         html += '<div class="program-day-badge-wrap program-row">' + badgeHtml +
-          '<button id="focus-toggle" class="focus-toggle focus-tile"><span class="focus-toggle-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M10 2h4"/></svg></span>Focus mode</button></div>';
+          '<div class="focus-tile-wrap fade-in"><button id="focus-toggle" class="focus-toggle focus-tile"><span class="focus-toggle-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M10 2h4"/></svg></span>Focus mode</button></div></div>';
       } else {
         html += '<div class="program-day-badge-wrap">' + badgeHtml + '</div>';
         html += '<div class="focus-cta fade-in"><div class="focus-cta-text"><span class="focus-cta-title">Ready to study?</span>' +
