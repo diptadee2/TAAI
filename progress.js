@@ -275,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-07-1';
+  var CLIENT_VERSION = '2026-10-07-2';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -726,6 +726,12 @@
   // or when this succeeds.
   function savePomoActiveRemote(payload) {
     if (!state.student) return;
+    // A finished phase whose credit claim hasn't reached the server yet
+    // (e.g. the wifi dropped right as it ended): writing the next phase
+    // now would replace the server's record of the finished one, and the
+    // claim would then be rejected. Hold this write; flushPomoClaims()
+    // sends the claim first, then re-syncs the current state.
+    if (hasPendingPomoClaims()) { pomoSyncHeld = true; flushPomoClaims(); return; }
     var body = JSON.stringify({
       email: state.student.email,
       mode: payload.mode,
@@ -797,6 +803,10 @@
   // actually running on a different device.
   function sendPomoStoppedBeacon() {
     if (!state.student || !pomoStateKnown || typeof navigator.sendBeacon !== 'function') return;
+    // Same reason as savePomoActiveRemote's hold: don't overwrite the
+    // finished phase a pending claim still needs. Its end time has passed,
+    // so the server already shows this student as not live.
+    if (hasPendingPomoClaims()) return;
     // Real bug, confirmed against production: this used to read
     // pomo.completedSessions directly, but this is the one write path
     // pomoResetSessionsIfNewDay (see its own comment) was never wired
@@ -1180,6 +1190,8 @@
     loadMonth(state.month);
     setInterval(checkClientVersion, VERSION_CHECK_MS);
     scheduleMidnightReload();
+    // Resend any completion claim a previous visit couldn't deliver.
+    if (hasPendingPomoClaims()) flushPomoClaims();
     if (restoringFocus) {
       // replaceState, not enterFocus()'s pushState — a correct {focus:true}
       // entry already exists from before the reload (reload re-executes
@@ -1549,6 +1561,7 @@
           // additive, every existing .catch(function(err){...}) that
           // only ever reads err.message is completely unaffected.
           err.data = data;
+          err.status = res.status;
           throw err;
         }
         return data;
@@ -5532,24 +5545,106 @@
     } catch (e) {}
   }
 
-  function recordPomodoroCompletion(minutes, phaseEndAt) {
-    if (!state.student) return Promise.resolve(); // guests aren't tracked — no identity to credit
-    function attempt(retriesLeft) {
+  // Completion claims are saved before sending and only removed once the
+  // server answers, so a claim made while offline (wifi dropped as the
+  // phase ended) is resent when the connection is back: on the 'online'
+  // event, when the tab becomes visible, on page load, and on a backoff
+  // timer. Safe to resend: the server re-checks every claim (real time
+  // elapsed since it recorded the phase start, matching stored end) and
+  // credits each phase once. Dropped on a definite rejection (4xx), so a
+  // doomed claim isn't resent forever; kept on network/server errors, up
+  // to POMO_CLAIM_MAX_ATTEMPTS sends or POMO_CLAIM_MAX_AGE_MS old.
+  var POMO_CLAIMS_KEY = 'taai_pomo_pending_claims_v1';
+  var POMO_CLAIM_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+  var POMO_CLAIM_MAX_ATTEMPTS = 8;
+  var pomoClaimFlush = null;   // the in-flight flush, so two never overlap
+  var pomoClaimRetryTimer = null;
+  var pomoClaimBackoffMs = 0;
+  var pomoSyncHeld = false;    // a state sync was skipped behind a pending claim
+
+  function loadPomoClaims() {
+    try {
+      var list = JSON.parse(localStorage.getItem(POMO_CLAIMS_KEY) || '[]');
+      return Array.isArray(list) ? list : [];
+    } catch (e) { return []; }
+  }
+  function savePomoClaims(list) {
+    try {
+      if (list.length) localStorage.setItem(POMO_CLAIMS_KEY, JSON.stringify(list));
+      else localStorage.removeItem(POMO_CLAIMS_KEY);
+    } catch (e) {}
+  }
+  function hasPendingPomoClaims() {
+    return loadPomoClaims().length > 0;
+  }
+
+  function flushPomoClaims() {
+    if (pomoClaimFlush) return pomoClaimFlush;
+    pomoClaimFlush = (function next() {
+      var list = loadPomoClaims().filter(function (c) {
+        return c && c.email && c.phaseEndAt && Date.now() - (c.savedAt || 0) < POMO_CLAIM_MAX_AGE_MS;
+      });
+      savePomoClaims(list);
+      if (!list.length) return Promise.resolve(true);
+      var c = list[0];
+      function drop() {
+        savePomoClaims(loadPomoClaims().filter(function (x) {
+          return !(x.email === c.email && x.phaseEndAt === c.phaseEndAt);
+        }));
+      }
       return api('/pomodoro-complete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: state.student.email, minutes: minutes, phaseEndAt: phaseEndAt, clientNow: Date.now() }),
-      })
-        .then(refreshLeaderboard)
-        .catch(function () {
-          if (retriesLeft > 0) {
-            return new Promise(function (resolve) { setTimeout(resolve, 800); }).then(function () { return attempt(retriesLeft - 1); });
-          }
-          // non-critical after retries exhausted — this session just won't count this time
+        body: JSON.stringify({ email: c.email, minutes: c.minutes, phaseEndAt: c.phaseEndAt, clientNow: Date.now() }),
+      }).then(function () {
+        drop();
+        pomoClaimBackoffMs = 0;
+        refreshLeaderboard();
+        return next();
+      }, function (err) {
+        if (err && err.status >= 400 && err.status < 500) { drop(); return next(); }
+        // Offline or a server error: keep it and try again later.
+        var all = loadPomoClaims();
+        all.forEach(function (x) {
+          if (x.email === c.email && x.phaseEndAt === c.phaseEndAt) x.attempts = (x.attempts || 0) + 1;
         });
-    }
-    return attempt(2);
+        savePomoClaims(all.filter(function (x) { return (x.attempts || 0) < POMO_CLAIM_MAX_ATTEMPTS; }));
+        if (!hasPendingPomoClaims()) return next();
+        schedulePomoClaimRetry();
+        return false;
+      });
+    })().then(function (allSent) {
+      pomoClaimFlush = null;
+      if (allSent && pomoSyncHeld) {
+        pomoSyncHeld = false;
+        if (pomoStateKnown) savePomoActiveState();
+      }
+      return allSent;
+    });
+    return pomoClaimFlush;
   }
+
+  function schedulePomoClaimRetry() {
+    if (pomoClaimRetryTimer) return;
+    pomoClaimBackoffMs = Math.min(60000, pomoClaimBackoffMs ? pomoClaimBackoffMs * 2 : 2000);
+    pomoClaimRetryTimer = setTimeout(function () {
+      pomoClaimRetryTimer = null;
+      flushPomoClaims();
+    }, pomoClaimBackoffMs);
+  }
+
+  function recordPomodoroCompletion(minutes, phaseEndAt) {
+    if (!state.student) return Promise.resolve(); // guests aren't tracked — no identity to credit
+    var list = loadPomoClaims();
+    var dup = list.some(function (c) { return c.email === state.student.email && c.phaseEndAt === phaseEndAt; });
+    if (!dup) {
+      list.push({ email: state.student.email, minutes: minutes, phaseEndAt: phaseEndAt, savedAt: Date.now(), attempts: 0 });
+      savePomoClaims(list);
+    }
+    return flushPomoClaims();
+  }
+
+  window.addEventListener('online', function () { flushPomoClaims(); });
 
   // Whenever state.focus becomes true (enterFocus, or the reload restore
   // in init()), it's always paired with a real {focus:true} history entry
@@ -6194,6 +6289,7 @@
   // one immediate refresh rather than waiting up to LEADERBOARD_POLL_MS
   // the moment it's visible again.
   document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && hasPendingPomoClaims()) flushPomoClaims();
     if (!document.hidden && pomo.running) pomoTick();
     if (state.focus) {
       if (document.hidden) stopLeaderboardPoll();
