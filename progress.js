@@ -275,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-07-2';
+  var CLIENT_VERSION = '2026-10-07-3';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -5561,18 +5561,26 @@
   var pomoClaimRetryTimer = null;
   var pomoClaimBackoffMs = 0;
   var pomoSyncHeld = false;    // a state sync was skipped behind a pending claim
+  var POMO_CLAIM_TIMEOUT_MS = 15000;
+  // Used when localStorage is blocked (some private windows): the claim
+  // then only survives this visit, but it's still sent and retried.
+  var pomoClaimsMem = null;
 
   function loadPomoClaims() {
+    if (pomoClaimsMem) return pomoClaimsMem.slice();
     try {
       var list = JSON.parse(localStorage.getItem(POMO_CLAIMS_KEY) || '[]');
       return Array.isArray(list) ? list : [];
-    } catch (e) { return []; }
+    } catch (e) { pomoClaimsMem = []; return []; }
   }
   function savePomoClaims(list) {
+    if (pomoClaimsMem) { pomoClaimsMem = list.slice(); return; }
     try {
       if (list.length) localStorage.setItem(POMO_CLAIMS_KEY, JSON.stringify(list));
       else localStorage.removeItem(POMO_CLAIMS_KEY);
-    } catch (e) {}
+    } catch (e) {
+      pomoClaimsMem = list.slice();
+    }
   }
   function hasPendingPomoClaims() {
     return loadPomoClaims().length > 0;
@@ -5592,11 +5600,17 @@
           return !(x.email === c.email && x.phaseEndAt === c.phaseEndAt);
         }));
       }
+      // A request caught by the connection dropping mid-flight can hang
+      // for minutes; abort it so it's retried instead of holding up every
+      // state sync behind it.
+      var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+      var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, POMO_CLAIM_TIMEOUT_MS) : null;
       return api('/pomodoro-complete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: c.email, minutes: c.minutes, phaseEndAt: c.phaseEndAt, clientNow: Date.now() }),
-      }).then(function () {
+        signal: ctrl ? ctrl.signal : undefined,
+      }).then(function (r) { clearTimeout(timer); return r; }, function (err) { clearTimeout(timer); throw err; }).then(function () {
         drop();
         pomoClaimBackoffMs = 0;
         refreshLeaderboard();
