@@ -275,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-08-8';
+  var CLIENT_VERSION = '2026-10-08-9';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -3285,9 +3285,13 @@
       }
 
       html += '</div>'; // main-col
+      // Progress by subject first, beside the plan card (both about overall
+      // progress and marks); the month calendar below it, beside the
+      // checklist it jumps into (swapped 2026-10-08, "can the positioning
+      // be better?").
       html += '<div class="side-col">' +
-        '<div id="heatmap-panel">' + renderHeatmap() + '</div>' +
         '<div id="subject-panel">' + renderSubjectBreakdown() + '</div>' +
+        '<div id="heatmap-panel">' + renderHeatmap() + '</div>' +
         '</div>'; // side-col
       html += '</div>'; // page-grid
     }
