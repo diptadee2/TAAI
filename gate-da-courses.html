@@ -529,6 +529,31 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
   .combo-with-side > .combo-featured-frame, .combo-with-side > .combo-card { flex: 1 1 auto; min-width: 0; }
   .plan120-cta { flex: 0 0 280px; justify-content: space-between; gap: 22px; padding: 28px 24px; }
 }
+/* Side column beside the 2028 card: the 120-day plan card plus the
+   "100 pe 100% off" challenge card (added 2026-10-07), stacked in one
+   280px column on desktop so the 2028 card keeps its width; stacked full
+   width under the card below 1025px (side by side on iPad left the short
+   challenge card stretched with a large empty area). */
+.combo-side-col { display: flex; flex-direction: column; gap: 16px; }
+@media (min-width: 1025px) {
+  .combo-side-col { flex: 0 0 280px; }
+  .combo-side-col > .plan120-cta { flex: 0 0 auto; gap: 14px; padding: 22px 22px; }
+  .combo-side-col .plan120-list { gap: 9px; padding: 14px 0; }
+  .combo-side-col > .challenge-card { flex: 1 1 auto; gap: 10px; padding: 22px; }
+}
+/* Not a link: a plain information card, so no hover state. Gold accent to
+   read as a reward, distinct from the plan card's lilac. */
+.challenge-card {
+  display: flex; flex-direction: column; gap: 14px;
+  padding: 24px 22px; border-radius: 22px;
+  background: rgba(22,18,40,0.62); border: 1px solid rgba(251,191,36,0.32);
+  -webkit-backdrop-filter: blur(12px) saturate(140%); backdrop-filter: blur(12px) saturate(140%);
+  color: #fff;
+}
+.challenge-eyebrow { font-size: 13px; font-weight: 600; color: #FBBF24; }
+.challenge-title { font-size: 26px; font-weight: 800; line-height: 1.1; letter-spacing: -.01em; }
+.challenge-title b { color: #FBBF24; font-weight: 800; }
+.challenge-sub { font-size: 14px; line-height: 1.5; color: rgba(255,255,255,0.72); }
 /* Mobile-first base for the horizontal split — stacked, matching the
    normal card layout, same as every card gets below the desktop
    breakpoint. Real bug caught from testing, not assumed: the desktop
@@ -3841,6 +3866,7 @@ function App() {
                         // reorder puts it.
                         <div className="combo-with-side">
                           <ComboCard c={{ ...c, saving }} pricing={effectivePricingMap[c.id] || null} />
+                          <div className="combo-side-col">
                           <a className="plan120-cta" href="/gate-da-progress-tracker?batch=D">
                             <span className="plan120-head">
                               <span className="plan120-eyebrow">New study plan</span>
@@ -3855,6 +3881,12 @@ function App() {
                             </span>
                             <span className="plan120-go">View the roadmap <span aria-hidden="true">&rarr;</span></span>
                           </a>
+                          <div className="challenge-card">
+                            <span className="challenge-eyebrow">The challenge</span>
+                            <span className="challenge-title">100 pe <b>100% off</b></span>
+                            <span className="challenge-sub">Get an AIR under 100 in GATE DA 2027 and we refund your full GATE 2028 course fee. You keep full access to the course.</span>
+                          </div>
+                          </div>
                         </div>
                       ) : (
                         <ComboCard c={{ ...c, saving }} pricing={effectivePricingMap[c.id] || null} />
