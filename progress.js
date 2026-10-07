@@ -275,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-07-4';
+  var CLIENT_VERSION = '2026-10-07-5';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -907,7 +907,10 @@
     // same counter its Day X badge uses, so the two switch on the same day.
     // Only the default: the dropdown and ?batch= still pick either. A
     // registered student always sees their own batch regardless.
-    previewBatch: daysTillExam() <= BATCH_PROGRAMS.D.length ? 'D' : 'C',
+    // Moved up to 2026-10-07 (two days before Day 0) on direct request: "make
+    // 120 Days - 70 Marks the default batch from today", so it's now simply
+    // always the default for a visitor without an account.
+    previewBatch: 'D',
     // Which batch's schedule a REGISTERED student is currently scouting
     // — null (meaning "their own real batch", see effectiveScoutBatch())
     // until they actually pick something different in the dropdown.
