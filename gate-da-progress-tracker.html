@@ -2194,10 +2194,11 @@
         nav and the timer's FOCUS/BREAK readout are left as they are);
      4. smaller gold marks in "Progress by subject". */
   /* Streak on the Today card's tag row (right side), 2026-10-08. */
-  .today-tag-row { position: relative; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+  .today-tag-row { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
   .today-card .today-tag-row .today-tag { margin-bottom: 0; }
-  .today-streak { font-family: var(--font-nav); font-size: 13px; color: var(--ink-soft); white-space: nowrap; }
-  .today-streak b { display: inline-block; color: var(--ink); font-weight: 700; }
+  /* A touch larger (same day: "a tad bit small"). */
+  .today-streak { font-family: var(--font-nav); font-size: 14.5px; color: var(--ink-dim); white-space: nowrap; }
+  .today-streak b { display: inline-block; font-size: 19px; color: var(--ink); font-weight: 800; margin-right: 1px; }
   .today-streak b.bump { animation: plan-bump .5s cubic-bezier(.34,1.56,.64,1); }
   @media (prefers-reduced-motion: reduce) { .today-streak b.bump { animation: none; } }
   .streak-champions-card .champions-section { border-left: 0; }
