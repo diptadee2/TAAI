@@ -636,6 +636,17 @@ section.page-hero { padding: 48px 0 44px; }
 /* The 2026 reference point under the offer (2026-10-07, direct request). */
 .challenge-fact { padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 13.5px; line-height: 1.45; color: rgba(255,255,255,0.72); }
 .challenge-fact b { color: #fff; font-weight: 700; white-space: nowrap; }
+/* Why the refund still leaves value (2026-10-08): the talking points used
+   when students ask "what's the point of 100% off", without names. */
+.challenge-why { padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); }
+.challenge-why-title { font-size: 13.5px; font-weight: 700; color: #FBBF24; cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.challenge-why-title::-webkit-details-marker { display: none; }
+.challenge-why-title::after { content: ''; flex: 0 0 auto; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-2px) rotate(45deg); transition: transform .2s ease; }
+.challenge-why[open] .challenge-why-title::after { transform: translateY(2px) rotate(-135deg); }
+.challenge-why[open] ul { margin-top: 10px; }
+.challenge-why ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.challenge-why li { position: relative; padding-left: 14px; font-size: 13px; line-height: 1.45; color: rgba(255,255,255,0.68); }
+.challenge-why li::before { content: ''; position: absolute; left: 0; top: .6em; width: 5px; height: 5px; border-radius: 50%; background: #FBBF24; }
 /* Mobile-first base for the horizontal split — stacked, matching the
    normal card layout, same as every card gets below the desktop
    breakpoint. Real bug caught from testing, not assumed: the desktop
@@ -4103,6 +4114,14 @@ function App() {
                             <span className="challenge-title">100 pe <b>100% off</b></span>
                             <span className="challenge-sub">Get an AIR under 100 in <b>GATE DA 2027</b> and we refund your full GATE 2028 course fee. You keep full access to the course.</span>
                             <span className="challenge-fact">In GATE DA 2026, <b>65 marks</b> got an <b>AIR of 90</b>.</span>
+                            <details className="challenge-why">
+                              <summary className="challenge-why-title">Why keep the course after the refund?</summary>
+                              <ul>
+                                <li>M.Tech and MS students at IIT Bombay, Delhi and Madras join us to fix the fundamentals their semesters assume.</li>
+                                <li>A GATE CSE top-100 ranker joined this year before IIT Madras, to get the maths ready for its curriculum.</li>
+                                <li>The ML projects give you a portfolio for the internship season that starts the day you join an IIT.</li>
+                              </ul>
+                            </details>
                           </div>
                           <a className="plan120-cta fade-in-touch" href="/gate-da-progress-tracker?batch=D">
                             <span className="plan120-head">
