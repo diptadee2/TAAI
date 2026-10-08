@@ -339,6 +339,9 @@ section.page-hero { padding: 48px 0 44px; }
 .page-hero-inner { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
 .page-hero-left { min-width: 0; }
 .page-hero-right { min-width: 0; }
+/* Phones and iPad portrait: no quote cards in the hero (2026-10-08, direct
+   request); the full testimonials section further down still shows. */
+@media (max-width: 1024px) { .page-hero .page-hero-right { display: none; } .page-hero .page-hero-inner { grid-template-columns: 1fr; } }
 .page-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 14px; letter-spacing: .14em; text-transform: uppercase; color: var(--purple); margin-bottom: 20px; }
 .page-eyebrow::before { content: ''; display: inline-block; width: 20px; height: 2px; background: linear-gradient(90deg, var(--pink), var(--purple)); border-radius: 2px; }
 .page-hero h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(42px, 5.5vw, 80px); line-height: 0.95; letter-spacing: -0.01em; margin-bottom: 22px; }
@@ -597,6 +600,7 @@ section.page-hero { padding: 48px 0 44px; }
    card, leaving an empty band inside it; wider means shorter. Not below
    1300px, where a wider column squeezes the 2028 card and makes it taller. */
 @media (min-width: 1100px) { .combo-with-side .combo-side-col { flex-basis: 420px; } }
+@media (min-width: 1025px) and (max-width: 1099px) { .combo-with-side .combo-side-col { flex-basis: 320px; } }
 @media (min-width: 1025px) {
   .combo-side-col { flex: 0 0 280px; }
   /* The frame's own height:100% (of an auto-height row) blocks flex
@@ -633,9 +637,12 @@ section.page-hero { padding: 48px 0 44px; }
 @media (max-width: 1024px) and (prefers-reduced-motion: reduce) {
   .fade-in-touch { opacity: 1; transform: none; transition: none; }
 }
-.challenge-eyebrow { font-size: 13px; font-weight: 600; color: #FBBF24; }
-.challenge-title { font-size: 26px; font-weight: 800; line-height: 1.1; letter-spacing: -.01em; }
-.challenge-title b { color: #FBBF24; font-weight: 800; }
+/* Headline (2026-10-08, "make it 100 pe 100 off challenge and more
+   attention seeking"): bigger, "100% off" in a gold-to-amber gradient,
+   "challenge" as a second line; the separate "The challenge" label is gone. */
+.challenge-title { display: block; font-size: 34px; font-weight: 800; line-height: 1.02; letter-spacing: -.02em; }
+.challenge-title b { font-weight: 800; background: linear-gradient(100deg, #FDE68A, #FBBF24 45%, #F59E0B); -webkit-background-clip: text; background-clip: text; color: transparent; white-space: nowrap; }
+.challenge-title-sub { display: block; margin-top: 4px; font-size: 24px; font-weight: 700; color: #fff; letter-spacing: -.01em; }
 .challenge-sub { font-size: 14px; line-height: 1.5; color: rgba(255,255,255,0.72); }
 .challenge-sub b { color: #FBBF24; font-weight: 700; white-space: nowrap; }
 /* The 2026 reference point under the offer (2026-10-07, direct request). */
@@ -4111,8 +4118,7 @@ function App() {
                           <ComboCard c={{ ...c, saving }} pricing={effectivePricingMap[c.id] || null} />
                           <div className="combo-side-col">
                           <div className="challenge-card fade-in-touch">
-                            <span className="challenge-eyebrow">The challenge</span>
-                            <span className="challenge-title">100 pe <b>100% off</b></span>
+                            <span className="challenge-title">100 pe <b>100% off</b><span className="challenge-title-sub">challenge</span></span>
                             <span className="challenge-sub">Get an AIR under 100 in <b>GATE DA 2027</b> and we refund your full GATE 2028 course fee. You keep full access to the course.</span>
                             <span className="challenge-fact">In GATE DA 2026, <b>65 marks</b> got an <b>AIR of 90</b>.</span>
                             <div className="challenge-why">

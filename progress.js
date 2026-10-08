@@ -275,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-08-14';
+  var CLIENT_VERSION = '2026-10-08-15';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1588,6 +1588,8 @@
         armConfetti('streak-panel', 'first-streak', state.streak === 1);
         // The streak number in the Today card (and the old #streak-number,
         // if present).
+        var streakChip = document.querySelector('.today-streak');
+        if (streakChip) streakChip.classList.toggle('is-zero', !state.streak);
         Array.prototype.forEach.call(document.querySelectorAll('.streak-num, #streak-number'), function (el) {
           el.textContent = state.streak;
           if (changed) {
@@ -4532,13 +4534,18 @@
   // away from inside the pomodoro page") made clear Focus Mode's own
   // copy was meant to stay — renderCalendar's Focus Mode call site below
   // passes showHourly=true, the plain-checklist call site doesn't.
+  // Drawn flame for the streak chip (2026-10-08, replaced the emoji):
+  // amber when the streak is live, grey at 0 (.is-zero).
+  var STREAK_FLAME_ICON = '<svg class="today-streak-flame" viewBox="0 0 24 24" aria-hidden="true">' +
+    '<path d="M12.5 2.5c.6 3.3 4.5 5.4 4.5 10.2a5 5 0 0 1-10 0c0-2.3 1.1-4 2.4-5.2.2 1.8 1.1 2.9 2.3 3.4.3-3.3-.8-5.6.8-8.4z"/></svg>';
   function renderTodayCard(day, missedBeforeCount, showHourly, isFirstDayPreview) {
     // The student's streak sits on the tag row (2026-10-08, picked over the
     // Focus tile / plan card): next to the tasks that keep it going, and
     // visible on every screen size. id streak-panel for the first-streak
     // confetti; refreshStreak updates .streak-num live.
     var streakHtml = (state.student && !isPreviewingOtherBatch())
-      ? '<span class="today-streak" id="streak-panel">\uD83D\uDD25 <b class="streak-num">' + (state.streak || 0) + '</b>-day streak</span>' : '';
+      ? '<span class="today-streak' + ((state.streak || 0) ? '' : ' is-zero') + '" id="streak-panel">' + STREAK_FLAME_ICON +
+        '<b class="streak-num">' + (state.streak || 0) + '</b><span class="today-streak-label">day streak</span></span>' : '';
     var left = '<div class="today-tag-row"><div class="today-tag">' + (isFirstDayPreview ? 'Day 1' : 'Today') + ' · ' + escapeHtml(batchLabel(effectiveScoutBatch())) + '</div>' + streakHtml + '</div>';
     left += '<div class="today-date">' + dayLabel(day ? day.date : realTodayIso()) + '</div>';
     if (isFirstDayPreview) {

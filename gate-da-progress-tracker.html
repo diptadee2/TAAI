@@ -2197,10 +2197,17 @@
   .today-tag-row { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
   .today-card .today-tag-row .today-tag { margin-bottom: 0; }
   /* A touch larger (same day: "a tad bit small"). */
-  /* Flex with line-height 1 so the emoji, number and text share one centre
-     line (2026-10-08: the bigger number sat higher than the emoji/text). */
-  .today-streak { display: inline-flex; align-items: center; gap: 5px; line-height: 1; font-family: var(--font-nav); font-size: 14.5px; color: var(--ink-dim); white-space: nowrap; }
-  .today-streak b { display: inline-block; font-size: 19px; line-height: 1; color: var(--ink); font-weight: 800; margin-right: -4px; }
+  /* Streak chip (redesigned 2026-10-08, "can the streak line be better
+     looking"): a drawn amber flame instead of the emoji, the number in the
+     same gold as the plan card's marks, a muted label, on a faint amber
+     tint. At 0 it goes neutral grey. inline-flex + line-height 1 keeps the
+     three on one centre line. */
+  .today-streak { display: inline-flex; align-items: center; gap: 6px; line-height: 1; padding: 6px 11px 6px 9px; border-radius: 10px; background: rgba(251,146,60,0.10); border: 1px solid rgba(251,146,60,0.28); font-family: var(--font-nav); font-size: 13.5px; color: var(--ink-dim); white-space: nowrap; }
+  .today-streak-flame { width: 18px; height: 18px; flex-shrink: 0; fill: #FB923C; }
+  .today-streak b { display: inline-block; font-size: 17px; line-height: 1; color: #FBBF24; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .today-streak.is-zero { background: rgba(255,255,255,0.04); border-color: var(--line); }
+  .today-streak.is-zero .today-streak-flame { fill: var(--ink-soft); }
+  .today-streak.is-zero b { color: var(--ink); }
   .today-streak b.bump { animation: plan-bump .5s cubic-bezier(.34,1.56,.64,1); }
   @media (prefers-reduced-motion: reduce) { .today-streak b.bump { animation: none; } }
   .streak-champions-card .champions-section { border-left: 0; }
