@@ -247,7 +247,7 @@
   .side-col { display: none; }
   @media (min-width: 1081px) {
     .wrap { max-width: 1060px; }
-    .page-grid { grid-template-columns: 1fr 300px; gap: 28px; align-items: start; }
+    .page-grid { grid-template-columns: 1fr 300px; gap: 48px; align-items: start; }
     .side-col { display: block; margin-top: 0; position: sticky; top: 24px; }
   }
 
@@ -2197,8 +2197,10 @@
   .today-tag-row { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
   .today-card .today-tag-row .today-tag { margin-bottom: 0; }
   /* A touch larger (same day: "a tad bit small"). */
-  .today-streak { font-family: var(--font-nav); font-size: 14.5px; color: var(--ink-dim); white-space: nowrap; }
-  .today-streak b { display: inline-block; font-size: 19px; color: var(--ink); font-weight: 800; margin-right: 1px; }
+  /* Flex with line-height 1 so the emoji, number and text share one centre
+     line (2026-10-08: the bigger number sat higher than the emoji/text). */
+  .today-streak { display: inline-flex; align-items: center; gap: 5px; line-height: 1; font-family: var(--font-nav); font-size: 14.5px; color: var(--ink-dim); white-space: nowrap; }
+  .today-streak b { display: inline-block; font-size: 19px; line-height: 1; color: var(--ink); font-weight: 800; margin-right: -4px; }
   .today-streak b.bump { animation: plan-bump .5s cubic-bezier(.34,1.56,.64,1); }
   @media (prefers-reduced-motion: reduce) { .today-streak b.bump { animation: none; } }
   .streak-champions-card .champions-section { border-left: 0; }
