@@ -640,9 +640,17 @@ section.page-hero { padding: 48px 0 44px; }
 /* Headline (2026-10-08, "make it 100 pe 100 off challenge and more
    attention seeking"): bigger, "100% off" in a gold-to-amber gradient,
    "challenge" as a second line; the separate "The challenge" label is gone. */
-.challenge-title { display: block; font-size: 34px; font-weight: 800; line-height: 1.02; letter-spacing: -.02em; }
-.challenge-title b { font-weight: 800; background: linear-gradient(100deg, #FDE68A, #FBBF24 45%, #F59E0B); -webkit-background-clip: text; background-clip: text; color: transparent; white-space: nowrap; }
-.challenge-title-sub { display: block; margin-top: 4px; font-size: 24px; font-weight: 700; color: #fff; letter-spacing: -.01em; }
+.challenge-head { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
+.challenge-icon { flex: 0 0 auto; width: 48px; height: 48px; border-radius: 13px; display: grid; place-items: center; color: #FBBF24; background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.32); }
+.challenge-icon svg { width: 26px; height: 26px; }
+.challenge-title { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.challenge-title-main { font-size: 30px; font-weight: 800; line-height: 1; letter-spacing: -.02em; color: #fff; white-space: nowrap; }
+.challenge-title-main b { font-weight: 800; background: linear-gradient(100deg, #FDE68A, #FBBF24 45%, #F59E0B); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.challenge-title-sub { font-size: 12.5px; font-weight: 600; color: rgba(251,191,36,0.75); letter-spacing: .01em; }
+/* Room for the one-line title in the narrow 320px side column (1025-1099px)
+   and on small phones. */
+@media (min-width: 1025px) and (max-width: 1099px) { .challenge-title-main { font-size: 26px; } }
+@media (max-width: 480px) { .challenge-title-main { font-size: clamp(22px, 7.2vw, 30px); } .challenge-icon { width: 42px; height: 42px; } .challenge-head { gap: 12px; } }
 .challenge-sub { font-size: 14px; line-height: 1.5; color: rgba(255,255,255,0.72); }
 .challenge-sub b { color: #FBBF24; font-weight: 700; white-space: nowrap; }
 /* The 2026 reference point under the offer (2026-10-07, direct request). */
@@ -3228,7 +3236,10 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   // request), so launch day needs no code change or deploy: the price
   // unblurs, "Enrol now" appears, and the launch row disappears.
   const isPreviewCard = !!c.comingSoon;
-  const comingSoon = isPreviewCard && !(pd.price && pd.enrollUrl);
+  // Only decided once /team pricing has actually loaded (2026-10-08): while
+  // it's still fetching, the card renders in its live layout with a plain
+  // "-" price, instead of flashing the blurred coming-soon placeholder.
+  const comingSoon = isPreviewCard && !!_sitePricingCache && !(pd.price && pd.enrollUrl);
   const [showEnrolNote, setShowEnrolNote] = React.useState(false);
   const closeEnrolNote = React.useCallback(() => setShowEnrolNote(false), []);
   // This card's own enrollment cutoff, separate from discountDeadline
@@ -4118,7 +4129,15 @@ function App() {
                           <ComboCard c={{ ...c, saving }} pricing={effectivePricingMap[c.id] || null} />
                           <div className="combo-side-col">
                           <div className="challenge-card fade-in-touch">
-                            <span className="challenge-title">100 pe <b>100% off</b><span className="challenge-title-sub">challenge</span></span>
+                            <div className="challenge-head">
+                              <span className="challenge-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 6H4.5v1.5A3.5 3.5 0 0 0 8 11M17 6h2.5v1.5A3.5 3.5 0 0 1 16 11"/></svg>
+                              </span>
+                              <span className="challenge-title">
+                                <span className="challenge-title-main">100 pe <b>100% off</b></span>
+                                <span className="challenge-title-sub">The GATE DA 2027 challenge</span>
+                              </span>
+                            </div>
                             <span className="challenge-sub">Get an AIR under 100 in <b>GATE DA 2027</b> and we refund your full GATE 2028 course fee. You keep full access to the course.</span>
                             <span className="challenge-fact">In GATE DA 2026, <b>65 marks</b> got an <b>AIR of 90</b>.</span>
                             <div className="challenge-why">
