@@ -345,7 +345,7 @@ function renderFooter() {
             <a href="https://www.youtube.com/@Manojkumar_TAAI" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
             <a href="https://www.linkedin.com/company/taai-gate-da-placements/?viewAsMember=true" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>
           </div>
-          <a href="mailto:support@taai.live" class="footer-email">support@taai.live</a>
+          <span class="footer-legal"><a href="mailto:support@taai.live" class="footer-email">support@taai.live</a><a href="/refund-policy" class="footer-email">Refund policy</a></span>
         </div>
       </div>
     </footer>`;
@@ -824,6 +824,46 @@ ${renderChrome(postBody)}
   return posts;
 }
 
+// Refund policy page (2026-10-09, direct request: "a small no refund
+// policy ... keeps us safe legally"). Written into source like the blog
+// (gitignored, regenerated every build) so it shares the blog's nav/footer
+// and the source-serving dev server can show it. Two exceptions, both
+// chosen by the user: duplicate/failed payments (refunded after
+// verification) and the "100 pe 100% off" challenge the courses page
+// promises. Keep that wording in step with the challenge card.
+function generateRefundPolicy() {
+  const dir = path.join(SRC, 'refund-policy');
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  const body = `<article class="policy">
+      <div class="container">
+        <h1>Refund policy</h1>
+        <div class="policy-updated">Last updated: 9 October 2026</div>
+        <p><strong>All purchases are final.</strong> Payments for TAAI courses, bundles, test series and quiz packs are non-refundable and cannot be cancelled once made. This applies regardless of how much of the content you have used, including if you change your mind, stop studying, or cannot attend live sessions.</p>
+        <h2>Try before you buy</h2>
+        <p>Free lectures, a free orientation and free notes are available so you can judge the teaching before you pay. Please go through them, and the course details and validity shown on each course, before purchasing.</p>
+        <h2>Access and validity</h2>
+        <p>Your purchase gives you access to the course on <a href="https://learn.taai.live" target="_blank" rel="noopener noreferrer">learn.taai.live</a> until the validity date shown on that course. Access ends on that date and is not extended or refunded.</p>
+        <h2>Exceptions</h2>
+        <p>There are only two:</p>
+        <p><strong>Duplicate or failed payments.</strong> If you were charged twice for the same purchase, or charged but did not get access to the course, write to us with your payment details. After we verify it with the payment provider, the extra or failed amount is refunded to the original payment method.</p>
+        <p><strong>The 100 pe 100% off challenge.</strong> On the GATE DA 2028 Full Course, an AIR under 100 in GATE DA 2027 gets your course fee refunded, as described on the <a href="/gate-da-courses">courses page</a>. It follows its own terms and does not apply to any other purchase.</p>
+        <h2>Questions</h2>
+        <p>Write to us at <a href="mailto:support@taai.live">support@taai.live</a>.</p>
+      </div>
+    </article>`;
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+${renderHead({ title: 'Refund policy | TAAI', description: 'TAAI refund policy: all purchases of courses, bundles and test series are final.', canonicalPath: '/refund-policy' })}
+</head>
+<body>
+${renderChrome(body)}
+</body>
+</html>`;
+  fs.writeFileSync(path.join(dir, 'index.html'), html);
+  console.log('  ✓ refund policy');
+}
+
 function generateSitemap(posts) {
   const staticUrls = [
     { loc: '/', priority: '1.0', freq: 'weekly' },
@@ -834,6 +874,7 @@ function generateSitemap(posts) {
     { loc: '/gate-da-progress-tracker', priority: '0.7', freq: 'daily' },
     { loc: '/blogs', priority: '0.7', freq: 'weekly' },
     { loc: '/contact', priority: '0.5', freq: 'monthly' },
+    { loc: '/refund-policy', priority: '0.3', freq: 'yearly' },
   ];
   const today = new Date().toISOString().slice(0, 10);
   const postUrls = posts.map(p => ({ loc: `/blogs/${p.slug}`, priority: '0.6', freq: 'monthly', lastmod: p.date || today }));
@@ -866,6 +907,7 @@ function build() {
   // copy step below carries the fresh output into dist/ along with
   // everything else.
   const posts = generateBlog();
+  generateRefundPolicy();
   generateSitemap(posts);
 
   // Copy static assets (images, etc.) — skip dist/, node_modules/, and
