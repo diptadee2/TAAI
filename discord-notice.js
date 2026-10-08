@@ -76,7 +76,7 @@
     wrap.innerHTML =
       '<div class="dn-card" role="dialog" aria-modal="true" aria-labelledby="dn-title">' +
         '<div class="dn-head"><span class="dn-icon">' + ICON + '</span><h2 class="dn-title" id="dn-title">Before you join</h2></div>' +
-        '<p class="dn-body">After joining, kindly post your email address and enrollment type in the <code>#introduce-yourself</code> channel. Our team will then grant you access to the relevant private discussion channels.</p>' +
+        '<p class="dn-body">Directly after joining, post your email address and enrollment type in the <code>#introduce-yourself</code> channel. Our team will then grant you access to the relevant private discussion channels.</p>' +
         '<div class="dn-actions"><button type="button" class="dn-btn dn-cancel">Cancel</button><button type="button" class="dn-btn dn-go">Continue to Discord</button></div>' +
       '</div>';
     document.body.appendChild(wrap);
