@@ -484,6 +484,11 @@ section.page-hero { padding: 48px 0 44px; }
 #combos h2 { color: #fff; }
 #combos .section-sub { color: rgba(255,255,255,0.62); }
 .combos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: stretch; }
+/* Non-featured bundles (Maths & ML, Maths) size to their own content on
+   desktop instead of stretching to the much longer 2027 Full Course card
+   beside them (2026-10-08: "minimal negative space according to their
+   text"); that stretch left ~300px empty above their prices. */
+.combos-grid > .combo-fit { align-self: start; }
 /* align-items:stretch only equalizes the direct grid children (each a
    .fade-in wrapper, since every card gets its own scroll-reveal) — it
    does NOT reach the .combo-card/.combo-featured-frame inside them, so
@@ -4116,7 +4121,7 @@ function App() {
                 return (
                   <React.Fragment key={i}>
                     {heading && <div className="combo-group-divider"><span><span className="cgd-pre">For GATE</span> {heading}</span></div>}
-                    <div className={'fade-in' + (getsOwnRow ? ' combo-full-row' : '')}>
+                    <div className={'fade-in' + (getsOwnRow ? ' combo-full-row' : '') + (!getsOwnRow && !c.featured ? ' combo-fit' : '')}>
                       {c.id === 'full-course-2028' ? (
                         // The "120 Days - 70 Marks" study-plan button sits
                         // beside the 2028 card on desktop and stacks below
