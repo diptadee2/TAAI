@@ -275,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-08-12';
+  var CLIENT_VERSION = '2026-10-08-13';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1586,9 +1586,8 @@
         // knows about if this fires a second time — harmless no-op via
         // confettiAlreadyShown once it's actually fired once.
         armConfetti('streak-panel', 'first-streak', state.streak === 1);
-        armConfetti('streak-panel-m', 'first-streak', state.streak === 1);
-        // Every copy of the streak number (Focus tile on desktop, plan card
-        // on smaller screens, the old #streak-number if present).
+        // The streak number in the Today card (and the old #streak-number,
+        // if present).
         Array.prototype.forEach.call(document.querySelectorAll('.streak-num, #streak-number'), function (el) {
           el.textContent = state.streak;
           if (changed) {
@@ -2858,11 +2857,7 @@
     var t = planProgressTotals();
     if (!t.total) return '';
     return '<div class="plan-progress" id="plan-progress" data-pct="' + t.pct + '">' +
-      // Streak line: shown here only below 1081px (2026-10-08); on desktop
-      // it sits inside the Focus tile instead. refreshStreak updates every
-      // .streak-num, so both copies stay in sync.
       '<div class="plan-progress-line"><span class="plan-day">Day <b>' + dayNum + '</b> of ' + program.length + '</span>' +
-      '<span class="plan-streak" id="streak-panel-m">\uD83D\uDD25 <b class="streak-num">' + (state.streak || 0) + '</b>-day streak</span>' +
       '<span class="plan-progress-pct" id="plan-progress-pct">' + t.pct + '%</span></div>' +
       '<div class="plan-track"><div class="plan-fill" id="plan-progress-fill" style="width:' + t.pct + '%"></div>' + planMilestonesHtml(t.pct) + '</div>' +
       '<div class="plan-progress-foot">' + planMarksHtml(t) + '<span class="plan-progress-msg" id="plan-progress-msg">' + planProgressMessage(t.pct, t.done) + '</span></div>' +
@@ -3201,7 +3196,7 @@
       var badgeHtml = renderProgramDayBadge();
       if (badgeHtml.indexOf('program-card') !== -1) {
         html += '<div class="program-day-badge-wrap program-row">' + badgeHtml +
-          '<div class="focus-tile-wrap fade-in"><button id="focus-toggle" class="focus-toggle focus-tile"><span class="focus-toggle-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M10 2h4"/></svg></span>Focus mode' + (state.student ? '<span class="focus-tile-streak" id="streak-panel">\uD83D\uDD25 <b class="streak-num">' + (state.streak || 0) + '</b>-day streak</span>' : '') + '</button></div></div>';
+          '<div class="focus-tile-wrap fade-in"><button id="focus-toggle" class="focus-toggle focus-tile"><span class="focus-toggle-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M10 2h4"/></svg></span>Focus mode</button></div></div>';
       } else {
         html += '<div class="program-day-badge-wrap">' + badgeHtml + '</div>';
         html += '<div class="focus-cta fade-in"><div class="focus-cta-text"><span class="focus-cta-title">Ready to study?</span>' +
@@ -3353,7 +3348,6 @@
     // 1. Armed here for the initial page-load case; refreshStreak below
     // handles the case where a task toggle is what makes it 1.
     armConfetti('streak-panel', 'first-streak', state.streak === 1);
-    armConfetti('streak-panel-m', 'first-streak', state.streak === 1);
   }
 
   function pomoDurationFor(mode) {
@@ -4539,7 +4533,13 @@
   // copy was meant to stay — renderCalendar's Focus Mode call site below
   // passes showHourly=true, the plain-checklist call site doesn't.
   function renderTodayCard(day, missedBeforeCount, showHourly, isFirstDayPreview) {
-    var left = '<div class="today-tag">' + (isFirstDayPreview ? 'Day 1' : 'Today') + ' · ' + escapeHtml(batchLabel(effectiveScoutBatch())) + '</div>';
+    // The student's streak sits on the tag row (2026-10-08, picked over the
+    // Focus tile / plan card): next to the tasks that keep it going, and
+    // visible on every screen size. id streak-panel for the first-streak
+    // confetti; refreshStreak updates .streak-num live.
+    var streakHtml = (state.student && !isPreviewingOtherBatch())
+      ? '<span class="today-streak" id="streak-panel">\uD83D\uDD25 <b class="streak-num">' + (state.streak || 0) + '</b>-day streak</span>' : '';
+    var left = '<div class="today-tag-row"><div class="today-tag">' + (isFirstDayPreview ? 'Day 1' : 'Today') + ' · ' + escapeHtml(batchLabel(effectiveScoutBatch())) + '</div>' + streakHtml + '</div>';
     left += '<div class="today-date">' + dayLabel(day ? day.date : realTodayIso()) + '</div>';
     if (isFirstDayPreview) {
       var daysAway = Math.round((Date.parse(day.date) - Date.parse(todayIso())) / 864e5);
