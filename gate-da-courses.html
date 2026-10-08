@@ -592,6 +592,11 @@ section.page-hero { padding: 48px 0 44px; }
    width under the card below 1025px (side by side on iPad left the short
    challenge card stretched with a large empty area). */
 .combo-side-col { display: flex; flex-direction: column; gap: 16px; }
+/* Large screens: a wider side column (2026-10-08). The challenge card's
+   "why keep the course" points made the 280px column taller than the 2028
+   card, leaving an empty band inside it; wider means shorter. Not below
+   1300px, where a wider column squeezes the 2028 card and makes it taller. */
+@media (min-width: 1100px) { .combo-with-side .combo-side-col { flex-basis: 420px; } }
 @media (min-width: 1025px) {
   .combo-side-col { flex: 0 0 280px; }
   /* The frame's own height:100% (of an auto-height row) blocks flex
@@ -638,12 +643,8 @@ section.page-hero { padding: 48px 0 44px; }
 .challenge-fact b { color: #fff; font-weight: 700; white-space: nowrap; }
 /* Why the refund still leaves value (2026-10-08): the talking points used
    when students ask "what's the point of 100% off", without names. */
-.challenge-why { padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); }
-.challenge-why-title { font-size: 13.5px; font-weight: 700; color: #FBBF24; cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.challenge-why-title::-webkit-details-marker { display: none; }
-.challenge-why-title::after { content: ''; flex: 0 0 auto; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-2px) rotate(45deg); transition: transform .2s ease; }
-.challenge-why[open] .challenge-why-title::after { transform: translateY(2px) rotate(-135deg); }
-.challenge-why[open] ul { margin-top: 10px; }
+.challenge-why { padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 8px; }
+.challenge-why-title { font-size: 13.5px; font-weight: 700; color: #FBBF24; }
 .challenge-why ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
 .challenge-why li { position: relative; padding-left: 14px; font-size: 13px; line-height: 1.45; color: rgba(255,255,255,0.68); }
 .challenge-why li::before { content: ''; position: absolute; left: 0; top: .6em; width: 5px; height: 5px; border-radius: 50%; background: #FBBF24; }
@@ -1008,7 +1009,7 @@ section.page-hero { padding: 48px 0 44px; }
    icons) still reads as "there's real content here," just not legible. */
 .combo-includes-blurred { filter: blur(6px); user-select: none; }
 .combo-price-old { font-size: 15px; color: rgba(255,255,255,0.3); text-decoration: line-through; }
-.combo-discount { font-size: 11px; font-weight: 700; color: #fff; background: linear-gradient(135deg, var(--pink), var(--purple)); padding: 4px 10px; border-radius: 999px; }
+.combo-discount { font-size: 11px; font-weight: 700; color: #fff; background: linear-gradient(135deg, var(--pink), var(--purple)); padding: 4px 10px; border-radius: 999px; white-space: nowrap; flex-shrink: 0; }
 .combo-saving { font-size: 12px; color: rgba(255,255,255,0.38); margin-bottom: 16px; font-style: italic; position: relative; z-index: 1; }
 .combo-card .btn { position: relative; z-index: 1; }
 @keyframes combo-btn-shimmer { 0%,60% { transform: translateX(-130%) skewX(-15deg); } 80%,100% { transform: translateX(260%) skewX(-15deg); } }
@@ -2325,7 +2326,7 @@ const parseCSV = text => {
 const fmtPrice    = n => n ? '₹' + Number(n).toLocaleString('en-IN') : '';
 const fmtValidity = d => { if (!d) return ''; const dt = new Date(d + 'T00:00:00'); return 'Valid until ' + dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); };
 const fmtDate     = d => { if (!d) return ''; const dt = new Date(d + 'T00:00:00'); return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); };
-const fmtDeadline = d => { if (!d) return ''; const dt = new Date(d + 'T00:00:00'); return 'Offer ends ' + dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };
+const fmtDeadline = d => { if (!d) return ''; const dt = new Date(d + 'T00:00:00'); return 'Ends ' + dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };
 
 // Pre-fetch pricing before React mounts so cards render once with correct data
 // Prices come ONLY from /team (site_pricing, via SITE_PRICING_API below)
@@ -4114,13 +4115,13 @@ function App() {
                             <span className="challenge-title">100 pe <b>100% off</b></span>
                             <span className="challenge-sub">Get an AIR under 100 in <b>GATE DA 2027</b> and we refund your full GATE 2028 course fee. You keep full access to the course.</span>
                             <span className="challenge-fact">In GATE DA 2026, <b>65 marks</b> got an <b>AIR of 90</b>.</span>
-                            <details className="challenge-why">
-                              <summary className="challenge-why-title">Why keep the course after the refund?</summary>
+                            <div className="challenge-why">
+                              <span className="challenge-why-title">Why keep the course after the refund?</span>
                               <ul>
-                                <li>M.Tech and MS students at IIT Bombay, Delhi and Madras join us to fix the fundamentals their semesters assume, including a GATE CSE top-100 ranker headed to IIT Madras this year.</li>
+                                <li>Even top GATE rankers starting M.Tech and MS at the IITs join us to strengthen the fundamentals their courses assume.</li>
                                 <li>The ML projects give you a portfolio for the internship season that starts the day you join an IIT.</li>
                               </ul>
-                            </details>
+                            </div>
                           </div>
                           <a className="plan120-cta fade-in-touch" href="/gate-da-progress-tracker?batch=D">
                             <span className="plan120-head">
