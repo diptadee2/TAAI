@@ -668,6 +668,29 @@ section.page-hero { padding: 48px 0 44px; }
 .challenge-why ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
 .challenge-why li { position: relative; padding-left: 14px; font-size: 13px; line-height: 1.45; color: rgba(255,255,255,0.68); }
 .challenge-why li::before { content: ''; position: absolute; left: 0; top: .6em; width: 5px; height: 5px; border-radius: 50%; background: #FBBF24; }
+/* Phones and iPad portrait (2026-10-08, "too many info cards before the
+   bundles"): the challenge and 120-day cards used to stack under the 2028
+   card, ~930px before the next bundle. Same content, less height: side by
+   side on iPad portrait (600-1024px), a swipeable row on phones with the
+   next card peeking in, plus tighter padding. The cards' own reveal
+   animation is off in the swipe row, since the second card starts
+   off-screen sideways and would otherwise stay invisible. */
+@media (min-width: 600px) and (max-width: 1024px) {
+  .combo-side-col { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 14px; align-items: stretch; }
+  .combo-side-col > .challenge-card, .combo-side-col > .plan120-cta { padding: 20px 20px; gap: 12px; }
+}
+@media (max-width: 599px) {
+  .combo-side-col { flex-direction: row; width: 100%; min-width: 0; max-width: 100%; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 4px; align-items: stretch; }
+  .combo-side-col::-webkit-scrollbar { display: none; }
+  .combo-side-col > .challenge-card, .combo-side-col > .plan120-cta { flex: 0 0 86%; min-width: 0; scroll-snap-align: start; padding: 18px 18px; gap: 10px; opacity: 1; transform: none; }
+  .combo-side-col .plan120-list { gap: 8px; padding: 12px 0; }
+  .combo-side-col .plan120-title { font-size: 22px; }
+  .combo-side-col .challenge-sub { font-size: 13.5px; }
+  .combo-side-col .challenge-title-main { font-size: 22px; }
+  .combo-side-col .challenge-icon { width: 38px; height: 38px; border-radius: 11px; }
+  .combo-side-col .challenge-icon svg { width: 21px; height: 21px; }
+  .combo-side-col .challenge-head { gap: 10px; }
+}
 /* Mobile-first base for the horizontal split — stacked, matching the
    normal card layout, same as every card gets below the desktop
    breakpoint. Real bug caught from testing, not assumed: the desktop
@@ -1499,7 +1522,7 @@ section.page-hero { padding: 48px 0 44px; }
 }
 
 @media (max-width: 1024px) {
-  .combos-grid { grid-template-columns: 1fr; }
+  .combos-grid { grid-template-columns: minmax(0, 1fr); }
   .included-grid { grid-template-columns: repeat(2, 1fr); }
 }
 /* Mobile accordion for "every course includes" */
