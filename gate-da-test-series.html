@@ -1277,6 +1277,13 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
   .mobile-contact-bar a:active { transform: scale(0.9); opacity: 0.85; }
   .back-to-top { bottom: 32px; width: 48px; height: 48px; right: 16px; }
 }
+/* Weekly quizzes already included (2026-10-08) */
+.ts-included-note { display: flex; align-items: flex-start; gap: 12px; max-width: 760px; margin: 0 0 40px; padding: 14px 18px; border-radius: 14px; background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.32); color: rgba(255,255,255,0.86); font-size: 15px; line-height: 1.5; position: relative; z-index: 2; }
+.ts-included-note b { display: block; color: #fff; font-weight: 600; margin-bottom: 2px; }
+.ts-included-note span { color: rgba(255,255,255,0.7); font-size: 14px; }
+.ts-included-icon { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: rgba(52,211,153,0.18); color: #6EE7B7; margin-top: 1px; }
+.ts-plan-included { display: inline-block; align-self: flex-start; margin: -12px 0 18px; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; color: #6EE7B7; background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.28); position: relative; z-index: 2; }
+@media (max-width: 600px) { .ts-included-note { font-size: 14px; padding: 12px 14px; } .ts-included-note span { font-size: 13px; } }
 </style>
 <script type="application/ld+json">
 {
@@ -2273,7 +2280,16 @@ function TSPricing({ pricingMap }) {
         <h2 className="fade-in" style={{ fontFamily:'var(--font-display)', fontSize:'clamp(30px,3.8vw,52px)', fontWeight:600, letterSpacing:'-0.035em', lineHeight:1, marginBottom:14 }}>
           Enroll for GATE DA <em>2027.</em>
         </h2>
-        <p className="section-sub fade-in" style={{ marginBottom:52 }}>Weekly quizzes are already part of Full Course and Bundled Courses.</p>
+        {/* Prominent "already included" notice (2026-10-08): students on a bundle
+            kept buying quizzes they already had; the old one-line subtitle in
+            46% white was easy to miss on this dark section. */}
+        <div className="ts-included-note fade-in" role="note">
+          <span className="ts-included-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+          <div>
+            <b>Already enrolled in the Full Course or a bundle? Weekly quizzes are already included.</b>
+            <span>Full Course: all 55+ quizzes. Maths and Maths &amp; ML bundles: the quizzes for their subjects. You only need the Test Series.</span>
+          </div>
+        </div>
 
         <div className="ts-plans-grid">
 
@@ -2312,6 +2328,7 @@ function TSPricing({ pricingMap }) {
             <div className="ts-plan-badge ts-plan-badge-blue">Weekly Quizzes</div>
             <div className="ts-plan-name">Weekly Quiz Pack</div>
             <div className="ts-plan-tagline">55+ concept-heavy quizzes to stay sharp throughout the year.</div>
+            <div className="ts-plan-included">Included free with the Full Course</div>
             <PriceBlock {...planPricing('weekly-quizzes')} />
             <div className="ts-plan-divider" />
             <div className="ts-plan-features">
@@ -2349,6 +2366,7 @@ function TSPricing({ pricingMap }) {
               </div>
               <div className="ts-plan-name">Test Series + Weekly Quizzes</div>
               <div className="ts-plan-tagline">Everything in one: full test series and weekly quizzes bundled together.</div>
+              <div className="ts-plan-included">Have the Full Course? Choose the Test Series alone.</div>
               <PriceBlock {...planPricing('test-series-quizzes')} />
               <div className="ts-plan-divider" />
               <div className="ts-plan-features">
