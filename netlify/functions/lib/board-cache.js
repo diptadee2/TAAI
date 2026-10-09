@@ -32,7 +32,7 @@ function cached(key, fn) {
   return promise;
 }
 
-const byMinutesThenEmail = (a, b) => b.total_minutes - a.total_minutes || (a.email < b.email ? -1 : a.email > b.email ? 1 : 0);
+export const byMinutesThenEmail = (a, b) => b.total_minutes - a.total_minutes || (a.email < b.email ? -1 : a.email > b.email ? 1 : 0);
 
 // Everything the weekly board (and the "today" board riding on it) needs
 // that doesn't depend on who is looking.
@@ -51,12 +51,14 @@ export function getSharedWeekly(supabase) {
 
     const weekSorted = weekRows.filter((s) => !flagged.has(s.email)).sort(byMinutesThenEmail);
     const top = weekSorted.slice(0, 20);
-    const topEmails = top.map((s) => s.email);
+    // One extra row each way, so a viewer's fresh minutes (merged in per
+    // request, see mergeViewerRow) can't push in someone we have no name for.
+    const topEmails = weekSorted.slice(0, 21).map((s) => s.email);
 
     const todayAll = todayResult.data || [];
     const todaySorted = todayAll.filter((s) => !flagged.has(s.email)).sort(byMinutesThenEmail);
     const todayTop = todaySorted.slice(0, 10);
-    const todayTopEmails = todayTop.map((s) => s.email);
+    const todayTopEmails = todaySorted.slice(0, 11).map((s) => s.email);
 
     const lookup = [...new Set(topEmails.concat(todayTopEmails))];
     const [studentsResult, liveByEmail, lastWeekRanksResult, allTimeByEmail, aboutRowsResult, aboutTextByEmail] = await Promise.all([
@@ -124,13 +126,21 @@ export function getSharedLastWeek(supabase) {
   });
 }
 
-// The viewer's own details, fetched per request (never cached).
-export async function getViewerDetails(supabase, email, lastWeekStart) {
-  const [studentResult, liveByEmail, finalRankResult] = await Promise.all([
-    supabase.from('students').select('email, current_streak, all_time_minutes, about_text, about_changed_month, about_check_count, about_check_month, about_banned_until, about_reset_allowed').eq('email', email).maybeSingle().then((r) => r, () => ({ data: null, error: true })),
+// The viewer's own details, fetched per request (never cached). Includes
+// the viewer's own week/today minutes, so their own row and rank are never
+// up to TTL_MS stale right after they finish a session.
+export async function getViewerDetails(supabase, email, lastWeekStart, weekStart, today) {
+  const [studentResult, liveByEmail, finalRankResult, weekResult, todayResult] = await Promise.all([
+    supabase.from('students').select('email, display_name, current_streak, all_time_minutes, about_text, about_changed_month, about_check_count, about_check_month, about_banned_until, about_reset_allowed').eq('email', email).maybeSingle().then((r) => r, () => ({ data: null, error: true })),
     fetchLiveStatusByEmail(supabase, [email]),
     lastWeekStart
       ? supabase.from('pomodoro_stats').select('final_rank').eq('email', email).eq('week_start', lastWeekStart).maybeSingle().then((r) => r, () => ({ data: null, error: true }))
+      : Promise.resolve({ data: null, error: null }),
+    weekStart
+      ? supabase.from('pomodoro_stats').select('email, total_minutes, total_sessions').eq('email', email).eq('week_start', weekStart).maybeSingle().then((r) => r, () => ({ data: null, error: true }))
+      : Promise.resolve({ data: null, error: null }),
+    today
+      ? supabase.from('pomo_daily_sessions').select('email, total_minutes').eq('email', email).eq('date', today).maybeSingle().then((r) => r, () => ({ data: null, error: true }))
       : Promise.resolve({ data: null, error: null }),
   ]);
   let row = studentResult.error ? null : studentResult.data;
@@ -138,17 +148,31 @@ export async function getViewerDetails(supabase, email, lastWeekStart) {
   // old code used, each fault tolerant on its own.
   if (studentResult.error) {
     const [s, allTime] = await Promise.all([
-      supabase.from('students').select('email, current_streak').eq('email', email).maybeSingle(),
+      supabase.from('students').select('email, display_name, current_streak').eq('email', email).maybeSingle(),
       fetchAllTimeMinutesByEmail(supabase, [email]),
     ]);
     if (s.data) row = { ...s.data, all_time_minutes: allTime[email] || 0 };
   }
   return {
     exists: !!row,
+    name: row?.display_name || null,
+    // undefined = lookup failed (keep the cached value); null = no row yet.
+    week: weekResult.error ? undefined : (weekResult.data || null),
+    today: todayResult.error ? undefined : (todayResult.data || null),
     streak: row?.current_streak || 0,
     allTime: row?.all_time_minutes || 0,
     aboutRow: row && 'about_text' in row ? row : null,
     live: liveByEmail[email],
     lastWeekFinalRank: finalRankResult.error ? null : (finalRankResult.data?.final_rank ?? null),
   };
+}
+
+// Replace the viewer's (possibly stale) entry in a cached, sorted list with
+// their fresh one and re-sort. Returns the list unchanged when the fresh
+// lookup failed.
+export function mergeViewerRow(sorted, email, fresh) {
+  if (!email || fresh === undefined) return sorted;
+  const rest = sorted.filter((s) => s.email !== email);
+  if (fresh && fresh.total_minutes > 0) rest.push(fresh);
+  return rest.sort(byMinutesThenEmail);
 }

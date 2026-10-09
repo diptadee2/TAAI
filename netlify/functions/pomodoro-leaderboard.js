@@ -13,7 +13,7 @@
 // unchanged. The pre-change version is in git history (commit before
 // "Leaderboards: shared 30s cache") if this ever needs comparing again.
 import { getSupabase, json } from './lib/supabase.js';
-import { getSharedWeekly, getViewerDetails } from './lib/board-cache.js';
+import { getSharedWeekly, getViewerDetails, mergeViewerRow } from './lib/board-cache.js';
 
 const EMPTY_POMO = { is_live: false, pomo_status: null, pomo_phase_end_at: null, pomo_phase_total_seconds: null, pomo_last_seen_at: null };
 
@@ -25,25 +25,32 @@ export async function handler(event) {
   let sh, viewer = null;
   try {
     sh = await getSharedWeekly(supabase);
-    if (viewerEmail) viewer = await getViewerDetails(supabase, viewerEmail, sh.lastWeekStart);
+    if (viewerEmail) viewer = await getViewerDetails(supabase, viewerEmail, sh.lastWeekStart, sh.weekStart, sh.today);
   } catch (err) {
     return json(500, { error: err.message });
   }
 
-  const todayLeaders = buildToday(sh, viewerEmail, viewer);
+  // The viewer's own minutes come fresh from this request, never the cache.
+  const viewerFlagged = !!viewerEmail && sh.flagged.has(viewerEmail);
+  const weekSorted = viewerFlagged ? sh.weekSorted : mergeViewerRow(sh.weekSorted, viewerEmail, viewer?.week);
+  const top = weekSorted.slice(0, 20);
+  const nameFor = (email) => sh.nameByEmail[email] || (email === viewerEmail && viewer?.name) || 'Anonymous';
+
+  const todayLeaders = buildToday(sh, viewerEmail, viewer, viewerFlagged, nameFor);
   const liveCount = sh.liveCount;
-  if (!sh.top.length) return json(200, { leaderboard: [], viewerRank: null, todayLeaders, liveCount });
+  if (!top.length) return json(200, { leaderboard: [], viewerRank: null, todayLeaders, liveCount });
 
   const pomoFor = (email) => (email === viewerEmail && viewer ? viewer.live : sh.liveByEmail[email]) || EMPTY_POMO;
 
-  const leaderboard = sh.top.map((s) => ({
-    display_name: sh.nameByEmail[s.email] || 'Anonymous',
+  const isViewer = (email) => !!viewerEmail && email === viewerEmail && !!viewer;
+  const leaderboard = top.map((s) => ({
+    display_name: nameFor(s.email),
     total_minutes: s.total_minutes,
     total_sessions: s.total_sessions,
-    streak: sh.streakByEmail[s.email] || 0,
-    all_time_minutes: sh.allTimeByEmail[s.email] || 0,
-    about: sh.aboutRowByEmail[s.email]?.about_text || null,
-    previous_week_rank: sh.lastWeekRankByEmail[s.email] ?? null,
+    streak: isViewer(s.email) ? viewer.streak : (sh.streakByEmail[s.email] || 0),
+    all_time_minutes: isViewer(s.email) ? viewer.allTime : (sh.allTimeByEmail[s.email] || 0),
+    about: (isViewer(s.email) && viewer.aboutRow ? viewer.aboutRow.about_text : sh.aboutRowByEmail[s.email]?.about_text) || null,
+    previous_week_rank: isViewer(s.email) ? viewer.lastWeekFinalRank : (sh.lastWeekRankByEmail[s.email] ?? null),
     ...pomoFor(s.email),
     is_me: !!viewerEmail && s.email === viewerEmail,
   }));
@@ -51,9 +58,9 @@ export async function handler(event) {
   let viewerRank = null;
   const viewerInTop = leaderboard.some((r) => r.is_me);
   if (viewerEmail && !viewerInTop && !sh.flagged.has(viewerEmail)) {
-    const idx = sh.weekSorted.findIndex((s) => s.email === viewerEmail);
+    const idx = weekSorted.findIndex((s) => s.email === viewerEmail);
     if (idx !== -1) {
-      const v = sh.weekSorted[idx];
+      const v = weekSorted[idx];
       viewerRank = {
         rank: idx + 1,
         total_minutes: v.total_minutes,
@@ -96,24 +103,26 @@ export async function handler(event) {
 
 // Same output as lib fetchTodayLeaders(supabase, viewerEmail), built from
 // the shared cache plus the viewer's own details.
-function buildToday(sh, viewerEmail, viewer) {
-  if (!sh.todayAll.length) return { date: sh.today, leaders: [], viewerRank: null };
-  const liveFor = (email) => (email === viewerEmail && viewer ? viewer.live : sh.liveByEmail[email]);
-  const leaders = sh.todayTop.map((s) => ({
-    display_name: sh.nameByEmail[s.email] || 'Anonymous',
+function buildToday(sh, viewerEmail, viewer, viewerFlagged, nameFor) {
+  const todaySorted = viewerFlagged ? sh.todaySorted : mergeViewerRow(sh.todaySorted, viewerEmail, viewer?.today);
+  if (!todaySorted.length) return { date: sh.today, leaders: [], viewerRank: null };
+  const isViewer = (email) => !!viewerEmail && email === viewerEmail && !!viewer;
+  const liveFor = (email) => (isViewer(email) ? viewer.live : sh.liveByEmail[email]);
+  const leaders = todaySorted.slice(0, 10).map((s) => ({
+    display_name: nameFor(s.email),
     total_minutes: s.total_minutes,
-    all_time_minutes: sh.allTimeByEmail[s.email] || 0,
-    about: sh.aboutTextByEmail[s.email] || null,
+    all_time_minutes: isViewer(s.email) ? viewer.allTime : (sh.allTimeByEmail[s.email] || 0),
+    about: (isViewer(s.email) && viewer.aboutRow ? viewer.aboutRow.about_text : sh.aboutTextByEmail[s.email]) || null,
     is_me: !!viewerEmail && s.email === viewerEmail,
     ...liveFor(s.email),
   }));
   let viewerRank = null;
   if (viewerEmail && !leaders.some((l) => l.is_me)) {
-    const idx = sh.todaySorted.findIndex((s) => s.email === viewerEmail);
+    const idx = todaySorted.findIndex((s) => s.email === viewerEmail);
     if (idx !== -1) {
       viewerRank = {
         rank: idx + 1,
-        total_minutes: sh.todaySorted[idx].total_minutes,
+        total_minutes: todaySorted[idx].total_minutes,
         all_time_minutes: viewer ? viewer.allTime : 0,
         about: viewer?.aboutRow?.about_text || null,
         ...(viewer?.live || {}),
