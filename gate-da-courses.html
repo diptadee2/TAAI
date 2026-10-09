@@ -3045,6 +3045,12 @@ const DotField = React.memo(function DotField({
 
     doResize();
     window.addEventListener('resize', resize);
+    // The section also grows after first paint (live prices load, cards
+    // resize, the purchase note) without any window resize, which left
+    // its bottom uncovered as a dark band (2026-10-09). Follow the
+    // section's own size too; doResize skips work when nothing changed.
+    const sizeObserver = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null;
+    if (sizeObserver) sizeObserver.observe(canvas.parentElement);
     window.addEventListener('mousemove', onMouseMove, { passive: true });
     if (interactive) rafRef.current = requestAnimationFrame(tick);
 
@@ -3058,6 +3064,7 @@ const DotField = React.memo(function DotField({
       clearInterval(speedInterval);
       clearTimeout(resizeTimer);
       window.removeEventListener('resize', resize);
+      if (sizeObserver) sizeObserver.disconnect();
       window.removeEventListener('mousemove', onMouseMove);
     };
     // eslint-disable-next-line
@@ -4090,8 +4097,8 @@ function App() {
             glowRadius={0}
             sparkle={false}
             waveAmplitude={0}
-            gradientFrom="rgba(139,92,246,0.22)"
-            gradientTo="rgba(255,127,183,0.14)"
+            gradientFrom="rgba(139,92,246,0.15)"
+            gradientTo="rgba(255,127,183,0.09)"
             glowColor="#8B5CF6"
           />
         </div>
