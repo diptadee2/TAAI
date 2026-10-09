@@ -1082,43 +1082,70 @@
   // else ... with a copyable button, filled in every day"). Built from the
   // same day as the picture; paste it into any AI chat. The facts and rules
   // are the ones the team agreed for these captions.
-  function dcCaptionPrompt(batch, iso, tasks) {
+  // The prompt is a template (2026-10-09, "keep the prompt editable even
+  // after deployment"): the saved one lives in site_settings.
+  // daycard_prompt_template (edited below the prompt), the default is this
+  // constant. {{placeholders}} are filled from the selected day.
+  var DC_PROMPT_PLACEHOLDERS = ['batch_label', 'day_line', 'tasks', 'target_marks', 'day_length', 'roadmap_link', 'course_link'];
+  var DC_DEFAULT_PROMPT = [
+    'Write a short social media caption (Instagram / LinkedIn / WhatsApp channel) for TAAI, a GATE DA (Data Science and AI) exam-prep brand in India. It goes with an image of one day from TAAI\'s free "{{batch_label}}" roadmap. The image already shows the day\'s tasks, the day counter and the offer, so don\'t list the tasks again.',
+    '',
+    'This post: {{day_line}}.',
+    'The day\'s tasks (for context only):',
+    '{{tasks}}',
+    '',
+    'Facts you may use (use nothing else):',
+    '- The roadmap is free, on TAAI\'s progress tracker. It\'s a day-by-day roadmap aimed at {{target_marks}} marks in GATE DA 2027.',
+    '- By Day {{day_length}} you\'ll have done the lectures, revision, quizzes and tests, so there\'s less to worry about before the real exam.',
+    '- GATE DA 2026: 65 marks got AIR 90.',
+    '- "100 pe 100% off" on the GATE 2028 Full Course: get an AIR under 100 in GATE DA 2027 and TAAI refunds the full GATE 2028 course fee, and you keep full access to the course. This is for students of that course; never say or imply the free roadmap earns it.',
+    '',
+    'Voice: sounds like a real person (a mentor or fellow aspirant) typing quickly, not a brand. Plain, direct, a little cheeky is fine. Short sentences. No corporate words (journey, unlock, elevate, game-changer, dive in), no "Here\'s what...", no exclamation spam.',
+    '',
+    'Structure:',
+    '1. Start the caption with the campaign name "100 pe 100% off", then an intriguing first line that makes someone stop scrolling.',
+    '2. One or two short lines about the roadmap and the offer.',
+    '3. These two links, each on its own line, exactly:',
+    '   Roadmap (free): {{roadmap_link}}',
+    '   Course: {{course_link}}',
+    '4. At most 3 hashtags on the last line.',
+    '',
+    'Rules:',
+    '- Under 50 words before the links.',
+    '- Always call it a "roadmap", never a "plan".',
+    '- Never invent prices, deadlines, ranks, student numbers, results, quotes, or claims about how long or hard a day is.',
+    '- Never call a future day "today".',
+    '- No em dashes or en dashes. At most 1 emoji.',
+    '- Output only the caption.',
+  ].join('\n');
+
+  function dcPromptValues(batch, iso, tasks) {
     var dayNum = dcDayNumber(batch, iso), len = DC_BATCHES[batch].length, today = dcTodayIST();
     var when = iso === today ? 'today' : iso === dcAddDays(today, 1) ? 'tomorrow' : new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
-    var taskLines = (tasks || []).map(function (t) { return '- ' + t.subject + ': ' + dcCleanTask(t.task_text); }).join('\n') || '- (nothing scheduled)';
-    return [
-      'Write a short social media caption (Instagram / LinkedIn / WhatsApp channel) for TAAI, a GATE DA (Data Science and AI) exam-prep brand in India. It goes with an image of one day from TAAI\'s free "' + DC_BATCHES[batch].label + '" roadmap. The image already shows the day\'s tasks, the day counter and the offer, so don\'t list the tasks again.',
-      '',
-      'This post: ' + (dayNum > 0 ? 'Day ' + dayNum + ' of ' + len : 'before Day 1') + ', which is ' + when + '.',
-      'The day\'s tasks (for context only):',
-      taskLines,
-      '',
-      'Facts you may use (use nothing else):',
-      '- The roadmap is free, on TAAI\'s progress tracker. It\'s a day-by-day roadmap aimed at ' + (batch === 'D' ? '70' : '85') + ' marks in GATE DA 2027.',
-      '- By Day ' + len + ' you\'ll have done the lectures, revision, quizzes and tests, so there\'s less to worry about before the real exam.',
-      '- GATE DA 2026: 65 marks got AIR 90.',
-      '- "100 pe 100% off" on the GATE 2028 Full Course: get an AIR under 100 in GATE DA 2027 and TAAI refunds the full GATE 2028 course fee, and you keep full access to the course. This is for students of that course; never say or imply the free roadmap earns it.',
-      '',
-      'Voice: sounds like a real person (a mentor or fellow aspirant) typing quickly, not a brand. Plain, direct, a little cheeky is fine. Short sentences. No corporate words (journey, unlock, elevate, game-changer, dive in), no "Here\'s what...", no exclamation spam.',
-      '',
-      'Structure:',
-      '1. Start the caption with the campaign name "100 pe 100% off", then an intriguing first line that makes someone stop scrolling.',
-      '2. One or two short lines about the roadmap and the offer.',
-      '3. These two links, each on its own line, exactly:',
+    return {
+      batch_label: DC_BATCHES[batch].label,
+      day_line: (dayNum > 0 ? 'Day ' + dayNum + ' of ' + len : 'before Day 1') + ', which is ' + when,
+      tasks: (tasks || []).map(function (t) { return '- ' + t.subject + ': ' + dcCleanTask(t.task_text); }).join('\n') || '- (nothing scheduled)',
+      target_marks: batch === 'D' ? '70' : '85',
+      day_length: String(len),
       // No ?batch=: visitors without an account already land on 120 Days -
       // 70 Marks by default (2026-10-09, direct request).
-      '   Roadmap (free): https://taai.live/gate-da-progress-tracker',
-      '   Course: https://taai.live/gate-da-courses',
-      '4. At most 3 hashtags on the last line.',
-      '',
-      'Rules:',
-      '- Under 50 words before the links.',
-      '- Always call it a "roadmap", never a "plan".',
-      '- Never invent prices, deadlines, ranks, student numbers, results, quotes, or claims about how long or hard a day is.',
-      '- Never call a future day "today".',
-      '- No em dashes or en dashes. At most 1 emoji.',
-      '- Output only the caption.',
-    ].join('\n');
+      roadmap_link: 'https://taai.live/gate-da-progress-tracker',
+      course_link: 'https://taai.live/gate-da-courses',
+    };
+  }
+  function dcCaptionPrompt(batch, iso, tasks) {
+    var tpl = state.dayCard.template || DC_DEFAULT_PROMPT;
+    var vals = dcPromptValues(batch, iso, tasks);
+    return tpl.replace(/\{\{\s*(\w+)\s*\}\}/g, function (m, k) { return Object.prototype.hasOwnProperty.call(vals, k) ? vals[k] : m; });
+  }
+  function loadDayCardTemplate() {
+    var dc = state.dayCard;
+    if (dc.templateLoaded) return;
+    dc.templateLoaded = true;
+    api('/site-settings').then(function (d) { dc.template = (d.row && d.row.daycard_prompt_template) || null; })
+      .catch(function () { dc.template = null; })
+      .then(function () { if (state.tab === 'day-card') render(); });
   }
 
   function renderDayCard() {
@@ -1145,6 +1172,18 @@
         '</div>' +
         '<div class="sub">Filled in for the day above. Paste it into any AI chat to get the caption.</div>' +
         '<textarea id="dc-prompt-text" rows="16" readonly>' + escapeHtml(tasks && tasks.length ? dcCaptionPrompt(dc.batch, iso, tasks) : '') + '</textarea>' +
+        '<div class="daycard-caption-head"><span class="sub">' + (dc.template ? 'Using your saved template.' : 'Using the built-in template.') + '</span>' +
+          '<button class="btn" id="dc-tpl-toggle">' + (dc.editingTemplate ? 'Close editor' : 'Edit template') + '</button>' +
+        '</div>' +
+        (dc.editingTemplate
+          ? '<div class="sub">Placeholders filled in for each day: ' + DC_PROMPT_PLACEHOLDERS.map(function (k) { return '<code>{{' + k + '}}</code>'; }).join(' ') + '. Saved for everyone on /team, no deploy needed.</div>' +
+            '<textarea id="dc-tpl-text" rows="22">' + escapeHtml(dc.templateDraft != null ? dc.templateDraft : (dc.template || DC_DEFAULT_PROMPT)) + '</textarea>' +
+            '<div class="daycard-caption-head">' +
+              (dc.templateMsg ? '<span class="sub">' + escapeHtml(dc.templateMsg) + '</span>' : '<span></span>') +
+              '<button class="btn" id="dc-tpl-reset"' + (dc.templateSaving ? ' disabled' : '') + '>Reset to default</button>' +
+              '<button class="btn btn-primary" id="dc-tpl-save"' + (dc.templateSaving ? ' disabled' : '') + '>' + (dc.templateSaving ? 'Saving…' : 'Save template') + '</button>' +
+            '</div>'
+          : '') +
       '</div>' +
     '</div>';
   }
@@ -1169,6 +1208,23 @@
         setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
       }, 'image/png');
     });
+    var tt = document.getElementById('dc-tpl-toggle');
+    if (tt) tt.addEventListener('click', function () { dc.editingTemplate = !dc.editingTemplate; dc.templateMsg = null; dc.templateDraft = null; render(); });
+    var saveTpl = function (value) {
+      var ta2 = document.getElementById('dc-tpl-text'); if (ta2) dc.templateDraft = ta2.value;
+      dc.templateSaving = true; dc.templateMsg = null; render();
+      api('/site-settings', { method: 'PUT', body: JSON.stringify({ daycard_prompt_template: value }) })
+        .then(function (d) { dc.template = (d.row && d.row.daycard_prompt_template) || null; dc.templateDraft = null; dc.templateMsg = value ? 'Saved.' : 'Back to the built-in template.'; })
+        .catch(function (e) { dc.templateMsg = 'Could not save: ' + e.message; })
+        .then(function () { dc.templateSaving = false; render(); });
+    };
+    var ts = document.getElementById('dc-tpl-save');
+    if (ts) ts.addEventListener('click', function () {
+      var v = (document.getElementById('dc-tpl-text') || {}).value || '';
+      saveTpl(v.trim() === DC_DEFAULT_PROMPT.trim() ? '' : v);
+    });
+    var tr = document.getElementById('dc-tpl-reset');
+    if (tr) tr.addEventListener('click', function () { if (confirm('Reset the caption prompt to the built-in template?')) saveTpl(''); });
     var cp = document.getElementById('dc-prompt-copy');
     if (cp) cp.addEventListener('click', function () {
       var ta = document.getElementById('dc-prompt-text'); if (!ta) return;
@@ -2398,7 +2454,7 @@
         state.tab = tab;
         if (tab === 'students' && state.students === null) { loadStudents(); return; }
         if (tab === 'site-data' && ensureSiteDataLoaded(state.siteData.subTab)) return;
-        if (tab === 'day-card') { render(); loadDayCardMonth(); return; }
+        if (tab === 'day-card') { render(); loadDayCardMonth(); loadDayCardTemplate(); return; }
         render();
       });
     });

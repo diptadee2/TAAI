@@ -976,6 +976,10 @@ CREATE TABLE IF NOT EXISTS site_settings (
 );
 GRANT SELECT, INSERT, UPDATE, DELETE ON site_settings TO service_role;
 INSERT INTO site_settings (id) VALUES ('main') ON CONFLICT (id) DO NOTHING;
+-- /team Day card caption prompt template (2026-10-09, "keep the prompt
+-- editable even after deployment"). NULL means "use the built-in default
+-- in team/team.js". Placeholders like {{tasks}} are filled per day there.
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS daycard_prompt_template TEXT;
 
 -- Leaderboard "About" text — a short WhatsApp-style status shown as a
 -- chat bubble beside a student's name on the weekly top-20 board.

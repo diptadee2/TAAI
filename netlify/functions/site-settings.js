@@ -40,6 +40,14 @@ export async function handler(event, context) {
     if (typeof body.hide_financial_assistance === 'boolean') {
       patch.hide_financial_assistance = body.hide_financial_assistance;
     }
+    // Day card caption prompt template (2026-10-09). An empty string means
+    // "back to the built-in default" and is stored as NULL. Capped so a
+    // stray paste can't bloat the settings row.
+    if (typeof body.daycard_prompt_template === 'string') {
+      const t = body.daycard_prompt_template.trim();
+      if (t.length > 8000) return json(400, { error: 'template is too long (max 8000 characters)' });
+      patch.daycard_prompt_template = t ? t : null;
+    }
 
     // upsert, not update-only — self-heals even if the schema
     // migration's own seed INSERT was skipped or the row was somehow
