@@ -987,6 +987,8 @@ section.page-hero { padding: 48px 0 44px; }
    together (border-radius alone, no shadow), so it doesn't trip this
    file's own known Chromium DOM-leak gotcha, and it's static anyway
    (no animation). */
+.combo-final-price { display: flex; flex-direction: column; gap: 4px; }
+.combo-final-price > span { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.6); }
 .combo-sold-out-overlay { position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; pointer-events: none; }
 .combo-sold-out-stamp {
   transform: rotate(-16deg);
@@ -2714,6 +2716,9 @@ const COMBOS = [
   },
   {
     id: 'full-course',
+    // Shown unblurred as the "Final price" once the card is sold out
+    // (2026-10-09, direct request), instead of the blurred live price.
+    soldOutPrice: 15000,
     num: '02',
     badge: 'best', badgeLabel: 'Best value',
     accent: 'linear-gradient(90deg, var(--pink), var(--purple), var(--blue))',
@@ -3420,7 +3425,9 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
         // still legible as "a real number," just not worth reading once
         // this batch isn't taking enrollments.
         : isSoldOut
-          ? <div className="combo-price combo-price-blurred" aria-hidden="true">{price}</div>
+          ? (c.soldOutPrice
+              ? <div className="combo-final-price"><span>Final price</span><div className="combo-price">{fmtPrice(c.soldOutPrice)}</div></div>
+              : <div className="combo-price combo-price-blurred" aria-hidden="true">{price}</div>)
           : <div className="combo-price">{price}</div>}
       {!comingSoon && !isSoldOut && priceOld && <div className="combo-price-old">{priceOld}</div>}
       {!comingSoon && !isSoldOut && discount && <div className="combo-discount">{discount}</div>}
