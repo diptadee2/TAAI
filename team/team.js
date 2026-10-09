@@ -1267,9 +1267,42 @@
       var footY = S - P + 4;
       var panelH = 196, panelY = footY - 44 - panelH;
 
-      // Tasks between the hero and the panel.
-      var top = heroTop + 322, bottom = panelY - 26;
-      ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(P, top - 22); ctx.lineTo(S - P, top - 22); ctx.stroke();
+      // Journey track (2026-10-09, "make it feel more rewarding, like the
+      // 70 marks goal in 120 days"): a bar filled up to this day with a
+      // glowing "you are here" dot, ending at a gold 70-marks medal. It shows
+      // the goal, never a claim of marks already earned.
+      var trackY = heroTop + 338, medalR = 46, medalX = S - P - medalR, barX0 = P, barX1 = medalX - medalR - 18, barH = 14;
+      var frac = Math.max(0.02, Math.min(1, dayNum / len));
+      dcRoundRect(ctx, barX0, trackY - barH / 2, barX1 - barX0, barH, barH / 2); ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fill();
+      var fx = barX0 + (barX1 - barX0) * frac;
+      var fg = ctx.createLinearGradient(barX0, 0, barX1, 0); fg.addColorStop(0, '#8B5CF6'); fg.addColorStop(0.6, '#EC4899'); fg.addColorStop(1, '#FBBF24');
+      dcRoundRect(ctx, barX0, trackY - barH / 2, Math.max(barH, fx - barX0), barH, barH / 2); ctx.fillStyle = fg; ctx.fill();
+      // milestone ticks every 30 days
+      for (var m = 30; m < len; m += 30) { var mx = barX0 + (barX1 - barX0) * (m / len); ctx.fillStyle = m / len <= frac ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.18)'; ctx.fillRect(mx - 1, trackY - 13, 2, 26); }
+      var halo = ctx.createRadialGradient(fx, trackY, 0, fx, trackY, 30); halo.addColorStop(0, 'rgba(255,255,255,0.45)'); halo.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(fx, trackY, 30, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.arc(fx, trackY, 13, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#A78BFA'; ctx.lineWidth = 5; ctx.stroke();
+      ctx.font = '600 22px ' + FONT; ctx.fillStyle = 'rgba(255,255,255,0.75)';
+      var hereLbl = dayNum > 0 ? 'You are here · Day ' + dayNum : 'Day 1 is coming';
+      var hlw = ctx.measureText(hereLbl).width;
+      ctx.fillText(hereLbl, Math.min(Math.max(barX0, fx - hlw / 2), barX1 - hlw), trackY + 44);
+      ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '500 20px ' + FONT;
+      var goalLbl = 'Day ' + len; ctx.fillText(goalLbl, barX1 - ctx.measureText(goalLbl).width, trackY - 20);
+      // gold medal
+      var mg = ctx.createRadialGradient(medalX - 14, trackY - 16, 4, medalX, trackY, medalR);
+      mg.addColorStop(0, '#FEF3C7'); mg.addColorStop(0.45, '#FBBF24'); mg.addColorStop(1, '#B45309');
+      var mglow = ctx.createRadialGradient(medalX, trackY, medalR * 0.6, medalX, trackY, medalR + 26); mglow.addColorStop(0, 'rgba(251,191,36,0.35)'); mglow.addColorStop(1, 'rgba(251,191,36,0)');
+      ctx.fillStyle = mglow; ctx.beginPath(); ctx.arc(medalX, trackY, medalR + 26, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = mg; ctx.beginPath(); ctx.arc(medalX, trackY, medalR, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(254,243,199,0.8)'; ctx.lineWidth = 3; ctx.stroke();
+      ctx.fillStyle = '#3B1D04'; ctx.textAlign = 'center';
+      ctx.font = '800 36px ' + FONT; ctx.fillText(dc.batch === 'D' ? '70' : '85', medalX, trackY + 8);
+      ctx.font = '700 14px ' + FONT; ctx.fillText('MARKS', medalX, trackY + 26);
+      ctx.textAlign = 'left';
+
+      // Tasks between the track and the panel.
+      var top = trackY + 84, bottom = panelY - 24;
       var list = tasks || [];
       var sizes = [[26, 40], [24, 36], [22, 32], [20, 28], [18, 25], [16, 22]], pick = sizes[sizes.length - 1];
       var maxW = S - 2 * P - 40;
