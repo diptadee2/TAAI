@@ -298,7 +298,7 @@
     renamingWebhook: null, // webhook_url of the channel group currently showing a rename input, or null
     renameStatus: null, // { webhookUrl, saving } | { webhookUrl, error } | null
     tab: 'announcements', // 'announcements' | 'students' — mutually exclusive views, not stacked panels
-    dayCard: { batch: 'D', which: 'today', date: '', months: {}, loading: false, error: null }, // Day card tab (2026-10-09)
+    dayCard: { batch: 'D', which: 'today', date: '', months: {}, loading: false, error: null, caption: null, captionLoading: false, captionError: null }, // Day card tab (2026-10-09)
     students: null, // null = not loaded yet; array once fetched
     studentsLoading: false,
     studentsError: null,
@@ -1095,17 +1095,25 @@
       status +
       '<div class="daycard-preview"><canvas id="daycard-canvas" width="1080" height="1080"></canvas></div>' +
       '<div class="sub">1080 × 1080. Task text comes straight from the live schedule.</div>' +
+      '<div class="daycard-caption">' +
+        '<div class="daycard-caption-head"><strong>Caption</strong>' +
+          '<button class="btn" id="dc-caption-gen"' + (tasks && tasks.length && !dc.captionLoading ? '' : ' disabled') + '>' + (dc.captionLoading ? 'Writing…' : (dc.caption ? '↻ Regenerate' : '✨ Generate caption')) + '</button>' +
+          (dc.caption ? '<button class="btn" id="dc-caption-copy">Copy</button>' : '') +
+        '</div>' +
+        (dc.captionError ? '<div class="msg msg-error">' + escapeHtml(dc.captionError) + '</div>' : '') +
+        (dc.caption ? '<textarea id="dc-caption-text" rows="14">' + escapeHtml(dc.caption) + '</textarea>' : '<div class="sub">Written by Claude from this day\'s tasks, the day counter and the 100 pe 100% off offer, with the progress tracker and courses page links.</div>') +
+      '</div>' +
     '</div>';
   }
 
   function bindDayCard() {
     var dc = state.dayCard;
     var b = document.getElementById('dc-batch');
-    if (b) b.addEventListener('change', function () { dc.batch = b.value; render(); loadDayCardMonth(); });
+    if (b) b.addEventListener('change', function () { dc.batch = b.value; dc.caption = null; render(); loadDayCardMonth(); });
     var w = document.getElementById('dc-which');
-    if (w) w.addEventListener('change', function () { dc.which = w.value; if (dc.which === 'custom' && !dc.date) dc.date = dcTodayIST(); render(); loadDayCardMonth(); });
+    if (w) w.addEventListener('change', function () { dc.which = w.value; dc.caption = null; if (dc.which === 'custom' && !dc.date) dc.date = dcTodayIST(); render(); loadDayCardMonth(); });
     var d = document.getElementById('dc-date');
-    if (d) d.addEventListener('change', function () { if (d.value) { dc.date = d.value; render(); loadDayCardMonth(); } });
+    if (d) d.addEventListener('change', function () { if (d.value) { dc.date = d.value; dc.caption = null; render(); loadDayCardMonth(); } });
     var dl = document.getElementById('dc-download');
     if (dl) dl.addEventListener('click', function () {
       var c = document.getElementById('daycard-canvas'); if (!c) return;
@@ -1117,6 +1125,25 @@
         document.body.appendChild(a); a.click(); a.remove();
         setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
       }, 'image/png');
+    });
+    var gen = document.getElementById('dc-caption-gen');
+    if (gen) gen.addEventListener('click', function () {
+      var iso = dcSelectedDate(), tasks = dcTasksFor(dc.batch, iso) || [];
+      dc.captionLoading = true; dc.captionError = null; render();
+      api('/team-daycard-caption', { method: 'POST', body: JSON.stringify({
+        batch: dc.batch, date: iso, dayNumber: dcDayNumber(dc.batch, iso), dayLength: DC_BATCHES[dc.batch].length,
+        when: iso === dcTodayIST() ? 'today' : iso === dcAddDays(dcTodayIST(), 1) ? 'tomorrow' : 'other',
+        tasks: tasks.map(function (t) { return { subject: t.subject, task_text: t.task_text }; }),
+      }) }).then(function (d) { dc.caption = d.caption; dc.captionFor = dc.batch + ':' + iso; })
+        .catch(function (e) { dc.captionError = e.message; })
+        .then(function () { dc.captionLoading = false; render(); });
+    });
+    var ta = document.getElementById('dc-caption-text');
+    if (ta) ta.addEventListener('input', function () { dc.caption = ta.value; });
+    var cp = document.getElementById('dc-caption-copy');
+    if (cp) cp.addEventListener('click', function () {
+      var text = (document.getElementById('dc-caption-text') || {}).value || dc.caption || '';
+      (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(function () { cp.textContent = 'Copied'; setTimeout(function () { cp.textContent = 'Copy'; }, 1500); }, function () { ta && ta.select(); });
     });
     drawDayCard();
   }
@@ -1136,84 +1163,131 @@
     ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
   }
 
+  function dcCleanTask(t) { return String(t || '').replace(/\s*\(Done\)\s*$/i, ''); }
+
+  // The card is a full pitch (2026-10-09: "all the relevant info about the
+  // 100 pe 100% off offer as well, and the day counter and the marks etc,
+  // make it a convincing pitch"): day badge, plan + date, three stat chips
+  // (target marks, days to GATE, free), the day's tasks (font steps down
+  // to fit), then the gold challenge panel and the footer link.
   function drawDayCard() {
     var c = document.getElementById('daycard-canvas'); if (!c) return;
     var dc = state.dayCard, iso = dcSelectedDate(), tasks = dcTasksFor(dc.batch, iso);
     if (!dcLogo) { dcLogo = new Image(); dcLogo.onload = function () { drawDayCard(); }; dcLogo.src = '/logo.webp'; }
     var FONT = '"Poppins", "Geist", system-ui, sans-serif';
     var go = function () {
-      var ctx = c.getContext('2d'), S = 1080, P = 84;
-      // Background: deep plum with two soft brand glows.
+      var ctx = c.getContext('2d'), S = 1080, P = 72;
+      ctx.textBaseline = 'alphabetic';
       ctx.fillStyle = '#0d0a1c'; ctx.fillRect(0, 0, S, S);
       var g1 = ctx.createRadialGradient(S, 0, 0, S, 0, 720); g1.addColorStop(0, 'rgba(139,92,246,0.34)'); g1.addColorStop(1, 'rgba(139,92,246,0)');
       ctx.fillStyle = g1; ctx.fillRect(0, 0, S, S);
-      var g2 = ctx.createRadialGradient(0, S, 0, 0, S, 640); g2.addColorStop(0, 'rgba(255,127,183,0.20)'); g2.addColorStop(1, 'rgba(255,127,183,0)');
+      var g2 = ctx.createRadialGradient(0, S, 0, 0, S, 700); g2.addColorStop(0, 'rgba(251,191,36,0.13)'); g2.addColorStop(1, 'rgba(251,191,36,0)');
       ctx.fillStyle = g2; ctx.fillRect(0, 0, S, S);
 
-      // Top row: logo + batch label, day badge on the right.
+      // Header: logo + day badge.
       var y = P;
       if (dcLogo && dcLogo.complete && dcLogo.naturalWidth) {
-        // /logo.webp is 360x216 with the mark in the middle (measured
-        // visible box x 108-250, y 72-143); draw just that part.
-        var sx = 104, sy = 68, sw = 150, sh = 80, lh = 58;
+        var sx = 104, sy = 68, sw = 150, sh = 80, lh = 52;
         ctx.drawImage(dcLogo, sx, sy, sw, sh, P, y, lh * sw / sh, lh);
       }
       var dayNum = dcDayNumber(dc.batch, iso), len = DC_BATCHES[dc.batch].length;
-      var badge = dayNum > 0 ? 'Day ' + dayNum + ' of ' + len : 'Starts today';
-      ctx.font = '600 30px ' + FONT;
+      var badge = dayNum > 0 ? 'Day ' + dayNum + ' of ' + len : 'Day 0 · starts today';
+      ctx.font = '700 30px ' + FONT;
       var bw = ctx.measureText(badge).width + 48;
-      dcRoundRect(ctx, S - P - bw, y + 2, bw, 54, 27);
-      ctx.fillStyle = 'rgba(167,139,250,0.16)'; ctx.fill();
-      ctx.strokeStyle = 'rgba(167,139,250,0.45)'; ctx.lineWidth = 2; ctx.stroke();
-      ctx.fillStyle = '#E9E2FF'; ctx.textBaseline = 'middle'; ctx.fillText(badge, S - P - bw + 24, y + 30);
+      dcRoundRect(ctx, S - P - bw, y, bw, 54, 27);
+      ctx.fillStyle = 'rgba(167,139,250,0.18)'; ctx.fill();
+      ctx.strokeStyle = 'rgba(167,139,250,0.5)'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = '#F1ECFF'; ctx.textBaseline = 'middle'; ctx.fillText(badge, S - P - bw + 24, y + 28); ctx.textBaseline = 'alphabetic';
 
-      // Title block.
-      y += 140;
-      ctx.textBaseline = 'alphabetic';
-      ctx.fillStyle = '#C4B5FD'; ctx.font = '600 32px ' + FONT;
-      ctx.fillText(DC_BATCHES[dc.batch].label, P, y);
-      y += 78;
-      var dt = new Date(iso + 'T00:00:00');
-      var dateLabel = dt.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
-      ctx.fillStyle = '#FFFFFF'; ctx.font = '700 64px ' + FONT;
-      ctx.fillText(dateLabel, P, y);
-      y += 52;
-      ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = '500 30px ' + FONT;
+      // Plan + date.
+      y += 120;
       var today = dcTodayIST();
-      ctx.fillText(iso === today ? "Today's plan" : iso === dcAddDays(today, 1) ? "Tomorrow's plan" : 'The plan', P, y);
+      var which = iso === today ? "Today's plan" : iso === dcAddDays(today, 1) ? "Tomorrow's plan" : 'The plan';
+      ctx.fillStyle = '#C4B5FD'; ctx.font = '600 30px ' + FONT;
+      ctx.fillText(DC_BATCHES[dc.batch].label + ' · ' + which, P, y);
+      y += 70;
+      var dateLabel = new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }).replace(/^(\w+) /, '$1, ');
+      var hs2 = 64; ctx.font = '700 ' + hs2 + 'px ' + FONT;
+      while (ctx.measureText(dateLabel).width > S - 2 * P && hs2 > 40) { hs2 -= 2; ctx.font = '700 ' + hs2 + 'px ' + FONT; }
+      ctx.fillStyle = '#FFFFFF'; ctx.fillText(dateLabel, P, y);
 
-      // Task list.
-      y += 56;
+      // Stat chips.
+      y += 34;
+      var daysToGate = Math.max(0, dcDiffDays(DC_EXAM_DATE, iso));
+      var chips = dc.batch === 'D'
+        ? ['Target: 70 marks', daysToGate + ' days to GATE DA 2027', 'Free on the tracker']
+        : ['Target: 85 marks', daysToGate + ' days to GATE DA 2027', 'Free on the tracker'];
+      var cx = P;
+      ctx.font = '600 24px ' + FONT;
+      chips.forEach(function (t) {
+        var w = ctx.measureText(t).width + 36;
+        dcRoundRect(ctx, cx, y, w, 46, 12);
+        ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.14)'; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,0.86)'; ctx.textBaseline = 'middle'; ctx.fillText(t, cx + 18, y + 24); ctx.textBaseline = 'alphabetic';
+        cx += w + 12;
+      });
+
+      // Challenge panel + footer, laid out from the bottom up.
+      var footY = S - P + 6;
+      var panelH = 222, panelY = footY - 46 - panelH;
+      // Tasks fill the space between the chips and the panel.
+      var top = y + 46 + 40, bottom = panelY - 28;
       var list = tasks || [];
-      var maxW = S - 2 * P - 52;
-      var taskSize = list.length > 4 ? 34 : 40;
+      var sizes = [[26, 40], [24, 34], [22, 30], [20, 27], [18, 24]], pick = sizes[sizes.length - 1];
+      var maxW = S - 2 * P - 40;
+      for (var k = 0; k < sizes.length; k++) {
+        var hs = 0;
+        ctx.font = '600 ' + sizes[k][1] + 'px ' + FONT;
+        list.forEach(function (t) { hs += sizes[k][0] + 10 + dcWrap(ctx, dcCleanTask(t.task_text), maxW).slice(0, 2).length * (sizes[k][1] + 8) + 18; });
+        if (top + hs <= bottom) { pick = sizes[k]; break; }
+      }
+      var ty = top;
       list.forEach(function (t) {
         var col = DC_SUBJECT_COLORS[t.subject] || '#A78BFA';
-        ctx.font = '600 26px ' + FONT;
-        ctx.fillStyle = col;
-        ctx.beginPath(); ctx.arc(P + 12, y + 18, 9, 0, Math.PI * 2); ctx.fill();
-        ctx.fillText(t.subject, P + 52, y + 28);
-        ctx.font = '600 ' + taskSize + 'px ' + FONT; ctx.fillStyle = '#FFFFFF';
-        var lines = dcWrap(ctx, t.task_text, maxW).slice(0, 2);
-        var ly = y + 28 + taskSize + 14;
-        lines.forEach(function (ln) { ctx.fillText(ln, P + 52, ly); ly += taskSize + 10; });
-        y = ly + 22;
+        ctx.fillStyle = col; ctx.beginPath(); ctx.arc(P + 9, ty + pick[0] * 0.62, 8, 0, Math.PI * 2); ctx.fill();
+        ctx.font = '600 ' + pick[0] + 'px ' + FONT; ctx.fillText(t.subject, P + 40, ty + pick[0]);
+        ty += pick[0] + 10;
+        ctx.font = '600 ' + pick[1] + 'px ' + FONT; ctx.fillStyle = '#FFFFFF';
+        dcWrap(ctx, dcCleanTask(t.task_text), maxW).slice(0, 2).forEach(function (ln) { ty += pick[1]; ctx.fillText(ln, P + 40, ty); ty += 8; });
+        ty += 18;
       });
       if (!list.length) {
-        ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '500 34px ' + FONT;
-        ctx.fillText(tasks === null ? 'Loading…' : 'Nothing scheduled for this day.', P, y + 40);
+        ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '500 32px ' + FONT;
+        ctx.fillText(tasks === null ? 'Loading…' : 'Nothing scheduled for this day.', P, top + 40);
       }
 
+      // Gold "100 pe 100% off" panel.
+      dcRoundRect(ctx, P, panelY, S - 2 * P, panelH, 24);
+      var pg = ctx.createLinearGradient(P, panelY, S - P, panelY + panelH);
+      pg.addColorStop(0, 'rgba(251,191,36,0.16)'); pg.addColorStop(1, 'rgba(245,158,11,0.06)');
+      ctx.fillStyle = pg; ctx.fill();
+      ctx.strokeStyle = 'rgba(251,191,36,0.55)'; ctx.lineWidth = 2; ctx.stroke();
+      var px = P + 34, py = panelY + 70;
+      ctx.font = '700 25px ' + FONT; ctx.fillStyle = '#FCD34D';
+      ctx.fillText('THE CHALLENGE', px, panelY + 44);
+      ctx.font = '800 50px ' + FONT; ctx.fillStyle = '#FFFFFF';
+      var w1 = ctx.measureText('100 pe ').width;
+      ctx.fillText('100 pe ', px, py + 44);
+      var gg = ctx.createLinearGradient(px + w1, 0, px + w1 + 260, 0);
+      gg.addColorStop(0, '#FDE68A'); gg.addColorStop(0.5, '#FBBF24'); gg.addColorStop(1, '#F59E0B');
+      ctx.fillStyle = gg; ctx.fillText('100% off', px + w1, py + 44);
+      ctx.font = '500 25px ' + FONT; ctx.fillStyle = 'rgba(255,255,255,0.88)';
+      ctx.fillText('AIR under 100 in GATE DA 2027 = your full GATE 2028', px, py + 92);
+      ctx.fillText('course fee back, and you keep full access.', px, py + 126);
+      ctx.font = '600 22px ' + FONT; ctx.fillStyle = '#FCD34D';
+      var fact = 'GATE DA 2026: 65 marks got AIR 90';
+      ctx.fillText(fact, S - P - 34 - ctx.measureText(fact).width, panelY + 44);
+
       // Footer.
-      ctx.fillStyle = 'rgba(255,255,255,0.12)'; ctx.fillRect(P, S - P - 74, S - 2 * P, 2);
-      ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.font = '500 28px ' + FONT;
-      ctx.fillText('Follow along free on the progress tracker', P, S - P - 18);
-      ctx.fillStyle = '#C4B5FD'; ctx.font = '600 28px ' + FONT;
+      ctx.font = '500 26px ' + FONT; ctx.fillStyle = 'rgba(255,255,255,0.72)';
+      ctx.fillText('Follow the plan free and join the challenge:', P, footY);
+      ctx.font = '700 26px ' + FONT; ctx.fillStyle = '#C4B5FD';
       var url = 'taai.live';
-      ctx.fillText(url, S - P - ctx.measureText(url).width, S - P - 18);
+      ctx.fillText(url, S - P - ctx.measureText(url).width, footY);
     };
     if (document.fonts && document.fonts.load) {
-      Promise.all([document.fonts.load('700 64px Poppins'), document.fonts.load('600 32px Poppins'), document.fonts.load('500 30px Poppins')]).then(go, go);
+      Promise.all(['800 50px Poppins', '700 54px Poppins', '600 30px Poppins', '500 26px Poppins'].map(function (f) { return document.fonts.load(f); })).then(go, go);
     } else go();
   }
 

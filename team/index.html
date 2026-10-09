@@ -412,6 +412,10 @@
   .daycard-controls label { display: flex; flex-direction: column; gap: 6px; margin: 0; font-size: 12.5px; color: var(--ink-dim); }
   .daycard-controls select, .daycard-controls input { min-width: 200px; }
   .daycard-preview canvas { display: block; width: min(100%, 540px); height: auto; aspect-ratio: 1 / 1; border-radius: 12px; border: 1px solid var(--line); }
+  .daycard-caption { display: flex; flex-direction: column; gap: 10px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .daycard-caption-head { display: flex; align-items: center; gap: 10px; }
+  .daycard-caption-head strong { margin-right: auto; }
+  .daycard-caption textarea { width: 100%; max-width: 760px; font: inherit; font-size: 14px; line-height: 1.55; padding: 12px; border-radius: 10px; background: var(--card); color: var(--ink); border: 1px solid var(--line); resize: vertical; }
 </style>
 </head>
 <body>

@@ -1,0 +1,104 @@
+// POST /api/team-daycard-caption { batch, date, dayNumber, dayLength, tasks: [{subject, task_text}] }
+//
+// Writes a social caption for the /team "Day card" image (2026-10-09,
+// direct request: "generate a caption using the claude api that contains
+// the progress tracker link and also the course page link"). Admin-gated
+// like every other /team endpoint, since it spends API credit.
+//
+// The facts it may use are passed in explicitly (the day's tasks, the day
+// counter, the 70-mark plan, the 100 pe 100% off terms) and the prompt
+// forbids inventing others, because this text goes out publicly under
+// TAAI's name. Both links are fixed here and appended by the server if
+// the model leaves either out, so a caption can never ship without them.
+import { json, requireAdmin } from './lib/supabase.js';
+
+const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
+const MODEL = 'claude-sonnet-5-5';
+const TIMEOUT_MS = 20000;
+const TRACKER_URL = 'https://taai.live/gate-da-progress-tracker?batch=D';
+const COURSES_URL = 'https://taai.live/gate-da-courses';
+
+const SYSTEM_PROMPT = `You write social media captions (Instagram, LinkedIn, WhatsApp channel) for TAAI, a GATE DA (Data Science and AI) exam-prep brand in India. The caption accompanies an image that shows one day's study tasks from TAAI's free "120 Days - 70 Marks" study plan.
+
+Write a convincing but honest pitch, for Indian GATE DA aspirants, that:
+- opens with a strong hook about where the plan is on that day (use the day counter you are given, and say today/tomorrow/the date exactly as described in the user message; never call a future day 'today'),
+- lists the day's tasks briefly,
+- explains the plan: a free day-by-day plan on TAAI's progress tracker aimed at 70 marks in GATE DA 2027, with streaks, a focus timer and leaderboards,
+- pitches the "100 pe 100% off" challenge on the GATE DA 2028 Full Course: get an AIR under 100 in GATE DA 2027 and TAAI refunds the full GATE 2028 course fee, and you keep full access to the course. For context: in GATE DA 2026, 65 marks got an AIR of 90.
+- ends with a clear call to action and BOTH links, each on its own line, exactly as given:
+  Follow the plan free: ${TRACKER_URL}
+  GATE 2028 course and the challenge: ${COURSES_URL}
+
+Rules:
+- Use ONLY the facts given here and in the user message. Never invent prices, discounts, deadlines, ranks, student counts, results or testimonials.
+- Never use em dashes or en dashes. Use commas, full stops or colons instead.
+- Plain text, short lines and short paragraphs. At most 3 emojis. 4 to 6 relevant hashtags at the very end (for example #GATEDA #GATE2027).
+- Roughly 120 to 200 words before the hashtags.
+- Output only the caption text, nothing else.`;
+
+export async function handler(event, context) {
+  const auth = requireAdmin(context);
+  if (!auth.authorized) return auth.response;
+  if (event.httpMethod !== 'POST') return json(405, { error: 'method not allowed' });
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return json(503, { error: 'Claude API key is not configured' });
+
+  let body;
+  try { body = JSON.parse(event.body || '{}'); } catch { return json(400, { error: 'invalid JSON' }); }
+  const tasks = Array.isArray(body.tasks) ? body.tasks.slice(0, 12) : [];
+  if (!tasks.length) return json(400, { error: 'no tasks for this day' });
+  const date = String(body.date || '').slice(0, 10);
+  const dayNumber = Number(body.dayNumber) || 0;
+  const dayLength = Number(body.dayLength) || 120;
+  const batchLabel = body.batch === 'C' ? '180 Days Batch C' : '120 Days - 70 Marks';
+
+  const taskLines = tasks.map(t => '- ' + String(t.subject || '').slice(0, 60) + ': ' + String(t.task_text || '').replace(/\s*\(Done\)\s*$/i, '').slice(0, 160)).join('\n');
+  const when = body.when === 'today' ? 'today (the post goes out the same day)' : body.when === 'tomorrow' ? 'tomorrow (the post goes out the day before, as a preview)' : 'a specific date (not necessarily today or tomorrow; refer to it by its date)';
+  const userContent = `Plan: ${batchLabel}
+Date: ${date}, which is ${when}
+Day counter: ${dayNumber > 0 ? `Day ${dayNumber} of ${dayLength}` : `Starts today (Day 0 of ${dayLength})`}
+Tasks for this day:
+${taskLines}`;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  let res;
+  try {
+    res = await fetch(ANTHROPIC_API_URL, {
+      method: 'POST',
+      headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      body: JSON.stringify({
+        model: MODEL,
+        // This model thinks by default, and thinking tokens count against
+        // max_tokens: at 900 the caption was cut off mid-sentence. A short
+        // caption doesn't need it, so it's off, with headroom regardless.
+        max_tokens: 2000,
+        thinking: { type: 'between_tools' },
+        system: SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: userContent }],
+      }),
+      signal: controller.signal,
+    });
+  } catch (e) {
+    return json(502, { error: e.name === 'AbortError' ? 'Claude took too long, try again' : 'Could not reach Claude' });
+  } finally {
+    clearTimeout(timer);
+  }
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    return json(502, { error: 'Claude API error ' + res.status + ': ' + text.slice(0, 200) });
+  }
+  const data = await res.json();
+  if (data.stop_reason === 'max_tokens') return json(502, { error: 'The caption came back cut off, try again' });
+  let caption = (data.content || []).filter(c => c.type === 'text').map(c => c.text).join('').trim();
+  if (!caption) return json(502, { error: 'Claude returned an empty caption' });
+
+  // House style: no em/en dashes in public copy.
+  caption = caption.replace(/\s*[—–]\s*/g, ', ');
+  // Guarantee both links.
+  if (!caption.includes(TRACKER_URL)) caption += '\n\nFollow the plan free: ' + TRACKER_URL;
+  if (!caption.includes(COURSES_URL)) caption += '\nGATE 2028 course and the challenge: ' + COURSES_URL;
+
+  return json(200, { caption });
+}
