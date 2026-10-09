@@ -298,6 +298,7 @@
     renamingWebhook: null, // webhook_url of the channel group currently showing a rename input, or null
     renameStatus: null, // { webhookUrl, saving } | { webhookUrl, error } | null
     tab: 'announcements', // 'announcements' | 'students' — mutually exclusive views, not stacked panels
+    dayCard: { batch: 'D', which: 'today', date: '', months: {}, loading: false, error: null }, // Day card tab (2026-10-09)
     students: null, // null = not loaded yet; array once fetched
     studentsLoading: false,
     studentsError: null,
@@ -970,6 +971,7 @@
         '<button class="tab-btn' + (isAnnouncements ? ' active' : '') + '" data-tab="announcements">📣 Announcements' + postsCountLabel + '</button>' +
         '<button class="tab-btn' + (isStudents ? ' active' : '') + '" data-tab="students">👥 Students' + studentsCountLabel + '</button>' +
         '<button class="tab-btn' + (isSiteData ? ' active' : '') + '" data-tab="site-data">🗂️ Site data</button>' +
+        '<button class="tab-btn' + (state.tab === 'day-card' ? ' active' : '') + '" data-tab="day-card">📸 Day card</button>' +
       '</div>';
 
     var actionsHtml = isAnnouncements
@@ -997,7 +999,9 @@
          renderPostList())
       : isStudents
         ? renderStudents()
-        : (msgHtml + renderSiteData());
+        : state.tab === 'day-card'
+          ? renderDayCard()
+          : (msgHtml + renderSiteData());
 
     root.innerHTML =
       '<div class="wrap">' +
@@ -1013,6 +1017,204 @@
       '</div>';
 
     bindEvents();
+    if (state.tab === 'day-card') bindDayCard();
+  }
+
+  // ── Day card (2026-10-09) ────────────────────────────────────────────
+  // A 1:1 (1080x1080) image of one day's tasks for a batch, for marketing
+  // posts ("screenshots of the current day tasks or the next day of the
+  // 120 days 70 marks batch"). Reads the same public /api/tracker-data the
+  // tracker uses (guest view, ?batch=), so it always matches the live
+  // schedule. Drawn straight onto a <canvas> (no library) and downloaded
+  // as PNG. Day numbers follow the tracker's own badge rules.
+  var DC_SUBJECT_COLORS = {
+    'Linear Algebra': '#A78BFA', 'Probability': '#60A5FA', 'Statistics': '#34D399',
+    'Calculus': '#F472B6', 'Machine Learning': '#FBBF24', 'Python': '#38BDF8',
+    'Data Structures': '#FB923C', 'Algorithms': '#F87171', 'DBMS': '#2DD4BF',
+    'AI': '#C084FC', 'AI (Logic)': '#C084FC', 'Quiz & Test Series': '#94A3B8',
+  };
+  var DC_BATCHES = {
+    D: { label: '120 Days - 70 Marks', length: 120 },
+    C: { label: '180 Days Batch C', length: 180 },
+  };
+  var DC_EXAM_DATE = '2027-02-06';
+  var DC_C_START = '2026-08-01';
+
+  function dcTodayIST() {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+  }
+  function dcAddDays(iso, n) {
+    var d = new Date(iso + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10);
+  }
+  function dcDiffDays(a, b) { return Math.round((Date.parse(a + 'T00:00:00Z') - Date.parse(b + 'T00:00:00Z')) / 864e5); }
+  function dcSelectedDate() {
+    var dc = state.dayCard, today = dcTodayIST();
+    if (dc.which === 'tomorrow') return dcAddDays(today, 1);
+    if (dc.which === 'custom' && dc.date) return dc.date;
+    return today;
+  }
+  function dcDayNumber(batch, iso) {
+    if (batch === 'D') return Math.max(0, 120 - Math.max(0, dcDiffDays(DC_EXAM_DATE, iso)));
+    return Math.max(0, dcDiffDays(iso, DC_C_START) + 1);
+  }
+  function dcMonthKey(batch, iso) { return batch + ':' + iso.slice(0, 7); }
+
+  function loadDayCardMonth() {
+    var dc = state.dayCard, iso = dcSelectedDate(), key = dcMonthKey(dc.batch, iso);
+    if (dc.months[key] || dc.loading) { drawDayCard(); return; }
+    dc.loading = true; dc.error = null; render();
+    fetch('/api/tracker-data?month=' + iso.slice(0, 7) + '&batch=' + encodeURIComponent(dc.batch))
+      .then(function (r) { if (!r.ok) throw new Error('Could not load the schedule (' + r.status + ')'); return r.json(); })
+      .then(function (d) { dc.months[key] = (d.schedule && d.schedule.days) || []; })
+      .catch(function (e) { dc.error = e.message; })
+      .then(function () { dc.loading = false; render(); });
+  }
+
+  function dcTasksFor(batch, iso) {
+    var days = state.dayCard.months[dcMonthKey(batch, iso)];
+    if (!days) return null;
+    var day = days.filter(function (d) { return d.date === iso; })[0];
+    return day ? day.tasks.slice().sort(function (a, b) { return a.position - b.position; }) : [];
+  }
+
+  function renderDayCard() {
+    var dc = state.dayCard, iso = dcSelectedDate();
+    var tasks = dcTasksFor(dc.batch, iso);
+    var opt = function (v, label, cur) { return '<option value="' + v + '"' + (v === cur ? ' selected' : '') + '>' + label + '</option>'; };
+    var status = dc.error ? '<div class="msg msg-error">' + escapeHtml(dc.error) + '</div>'
+      : dc.loading || tasks === null ? '<div class="sub">Loading the schedule…</div>'
+      : !tasks.length ? '<div class="msg msg-error">Nothing is scheduled for ' + escapeHtml(DC_BATCHES[dc.batch].label) + ' on ' + escapeHtml(iso) + '.</div>'
+      : '';
+    return '<div class="card daycard">' +
+      '<div class="daycard-controls">' +
+        '<label class="field">Batch<select id="dc-batch">' + opt('D', DC_BATCHES.D.label, dc.batch) + opt('C', DC_BATCHES.C.label, dc.batch) + '</select></label>' +
+        '<label class="field">Day<select id="dc-which">' + opt('today', 'Today', dc.which) + opt('tomorrow', 'Tomorrow', dc.which) + opt('custom', 'Pick a date', dc.which) + '</select></label>' +
+        (dc.which === 'custom' ? '<label class="field">Date<input type="date" id="dc-date" value="' + escapeHtml(dc.date || dcTodayIST()) + '"></label>' : '') +
+        '<button class="btn btn-primary" id="dc-download"' + (tasks && tasks.length ? '' : ' disabled') + '>Download PNG</button>' +
+      '</div>' +
+      status +
+      '<div class="daycard-preview"><canvas id="daycard-canvas" width="1080" height="1080"></canvas></div>' +
+      '<div class="sub">1080 × 1080. Task text comes straight from the live schedule.</div>' +
+    '</div>';
+  }
+
+  function bindDayCard() {
+    var dc = state.dayCard;
+    var b = document.getElementById('dc-batch');
+    if (b) b.addEventListener('change', function () { dc.batch = b.value; render(); loadDayCardMonth(); });
+    var w = document.getElementById('dc-which');
+    if (w) w.addEventListener('change', function () { dc.which = w.value; if (dc.which === 'custom' && !dc.date) dc.date = dcTodayIST(); render(); loadDayCardMonth(); });
+    var d = document.getElementById('dc-date');
+    if (d) d.addEventListener('change', function () { if (d.value) { dc.date = d.value; render(); loadDayCardMonth(); } });
+    var dl = document.getElementById('dc-download');
+    if (dl) dl.addEventListener('click', function () {
+      var c = document.getElementById('daycard-canvas'); if (!c) return;
+      var iso = dcSelectedDate();
+      c.toBlob(function (blob) {
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'taai-' + (dc.batch === 'D' ? '120-days' : 'batch-c') + '-' + iso + '.png';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+      }, 'image/png');
+    });
+    drawDayCard();
+  }
+
+  var dcLogo = null;
+  function dcWrap(ctx, text, maxW) {
+    var words = String(text).split(/\s+/), lines = [], line = '';
+    words.forEach(function (wd) {
+      var t = line ? line + ' ' + wd : wd;
+      if (ctx.measureText(t).width > maxW && line) { lines.push(line); line = wd; } else line = t;
+    });
+    if (line) lines.push(line);
+    return lines;
+  }
+  function dcRoundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+  }
+
+  function drawDayCard() {
+    var c = document.getElementById('daycard-canvas'); if (!c) return;
+    var dc = state.dayCard, iso = dcSelectedDate(), tasks = dcTasksFor(dc.batch, iso);
+    if (!dcLogo) { dcLogo = new Image(); dcLogo.onload = function () { drawDayCard(); }; dcLogo.src = '/logo.webp'; }
+    var FONT = '"Poppins", "Geist", system-ui, sans-serif';
+    var go = function () {
+      var ctx = c.getContext('2d'), S = 1080, P = 84;
+      // Background: deep plum with two soft brand glows.
+      ctx.fillStyle = '#0d0a1c'; ctx.fillRect(0, 0, S, S);
+      var g1 = ctx.createRadialGradient(S, 0, 0, S, 0, 720); g1.addColorStop(0, 'rgba(139,92,246,0.34)'); g1.addColorStop(1, 'rgba(139,92,246,0)');
+      ctx.fillStyle = g1; ctx.fillRect(0, 0, S, S);
+      var g2 = ctx.createRadialGradient(0, S, 0, 0, S, 640); g2.addColorStop(0, 'rgba(255,127,183,0.20)'); g2.addColorStop(1, 'rgba(255,127,183,0)');
+      ctx.fillStyle = g2; ctx.fillRect(0, 0, S, S);
+
+      // Top row: logo + batch label, day badge on the right.
+      var y = P;
+      if (dcLogo && dcLogo.complete && dcLogo.naturalWidth) {
+        // /logo.webp is 360x216 with the mark in the middle (measured
+        // visible box x 108-250, y 72-143); draw just that part.
+        var sx = 104, sy = 68, sw = 150, sh = 80, lh = 58;
+        ctx.drawImage(dcLogo, sx, sy, sw, sh, P, y, lh * sw / sh, lh);
+      }
+      var dayNum = dcDayNumber(dc.batch, iso), len = DC_BATCHES[dc.batch].length;
+      var badge = dayNum > 0 ? 'Day ' + dayNum + ' of ' + len : 'Starts today';
+      ctx.font = '600 30px ' + FONT;
+      var bw = ctx.measureText(badge).width + 48;
+      dcRoundRect(ctx, S - P - bw, y + 2, bw, 54, 27);
+      ctx.fillStyle = 'rgba(167,139,250,0.16)'; ctx.fill();
+      ctx.strokeStyle = 'rgba(167,139,250,0.45)'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = '#E9E2FF'; ctx.textBaseline = 'middle'; ctx.fillText(badge, S - P - bw + 24, y + 30);
+
+      // Title block.
+      y += 140;
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = '#C4B5FD'; ctx.font = '600 32px ' + FONT;
+      ctx.fillText(DC_BATCHES[dc.batch].label, P, y);
+      y += 78;
+      var dt = new Date(iso + 'T00:00:00');
+      var dateLabel = dt.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+      ctx.fillStyle = '#FFFFFF'; ctx.font = '700 64px ' + FONT;
+      ctx.fillText(dateLabel, P, y);
+      y += 52;
+      ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = '500 30px ' + FONT;
+      var today = dcTodayIST();
+      ctx.fillText(iso === today ? "Today's plan" : iso === dcAddDays(today, 1) ? "Tomorrow's plan" : 'The plan', P, y);
+
+      // Task list.
+      y += 56;
+      var list = tasks || [];
+      var maxW = S - 2 * P - 52;
+      var taskSize = list.length > 4 ? 34 : 40;
+      list.forEach(function (t) {
+        var col = DC_SUBJECT_COLORS[t.subject] || '#A78BFA';
+        ctx.font = '600 26px ' + FONT;
+        ctx.fillStyle = col;
+        ctx.beginPath(); ctx.arc(P + 12, y + 18, 9, 0, Math.PI * 2); ctx.fill();
+        ctx.fillText(t.subject, P + 52, y + 28);
+        ctx.font = '600 ' + taskSize + 'px ' + FONT; ctx.fillStyle = '#FFFFFF';
+        var lines = dcWrap(ctx, t.task_text, maxW).slice(0, 2);
+        var ly = y + 28 + taskSize + 14;
+        lines.forEach(function (ln) { ctx.fillText(ln, P + 52, ly); ly += taskSize + 10; });
+        y = ly + 22;
+      });
+      if (!list.length) {
+        ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '500 34px ' + FONT;
+        ctx.fillText(tasks === null ? 'Loading…' : 'Nothing scheduled for this day.', P, y + 40);
+      }
+
+      // Footer.
+      ctx.fillStyle = 'rgba(255,255,255,0.12)'; ctx.fillRect(P, S - P - 74, S - 2 * P, 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.font = '500 28px ' + FONT;
+      ctx.fillText('Follow along free on the progress tracker', P, S - P - 18);
+      ctx.fillStyle = '#C4B5FD'; ctx.font = '600 28px ' + FONT;
+      var url = 'taai.live';
+      ctx.fillText(url, S - P - ctx.measureText(url).width, S - P - 18);
+    };
+    if (document.fonts && document.fonts.load) {
+      Promise.all([document.fonts.load('700 64px Poppins'), document.fonts.load('600 32px Poppins'), document.fonts.load('500 30px Poppins')]).then(go, go);
+    } else go();
   }
 
   // A persistent, always-current reference for anyone creating a post —
@@ -2040,6 +2242,7 @@
         state.tab = tab;
         if (tab === 'students' && state.students === null) { loadStudents(); return; }
         if (tab === 'site-data' && ensureSiteDataLoaded(state.siteData.subTab)) return;
+        if (tab === 'day-card') { render(); loadDayCardMonth(); return; }
         render();
       });
     });
