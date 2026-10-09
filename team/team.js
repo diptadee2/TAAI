@@ -1267,7 +1267,7 @@
 
       // Offer panel + footer from the bottom up.
       var footY = S - P + 4;
-      var panelH = 182, panelY = footY - 42 - panelH;
+      var panelH = 214, panelY = footY - 40 - panelH;
 
       // Journey track (2026-10-09, "make it feel more rewarding, like the
       // 70 marks goal in 120 days"): a bar filled up to this day with a
@@ -1305,56 +1305,61 @@
 
       // Tasks between the track and the panel.
       var top = trackY + 72, bottom = panelY - 22;
-      // Subject on the left, task on the same line (2026-10-09: "keep the
-      // task font size bigger"): half the height of a stacked label, so the
-      // task text can stay large. Steps down only if a busy day won't fit.
+      // Subject first and big, lecture detail smaller beside it (2026-10-09:
+      // "the subject name matters more than the lecture number"). The detail
+      // drops to its own line when both don't fit on one. Steps down only if
+      // a busy day won't fit.
       var list = tasks || [];
-      var subjW = 250, txX = P + 34 + subjW, maxW = S - P - txX;
-      var sizes = [40, 38, 36, 34, 32, 30, 28], pick = sizes[sizes.length - 1];
+      var rowX = P + 34, rowW = S - P - rowX;
+      var sizes = [[42, 28], [40, 27], [38, 26], [36, 25], [34, 24], [32, 23], [30, 22]], pick = sizes[sizes.length - 1];
+      var layoutRow = function (t, sz) {
+        ctx.font = '700 ' + sz[0] + 'px ' + FONT; var sw = ctx.measureText(t.subject).width;
+        ctx.font = '500 ' + sz[1] + 'px ' + FONT; var detail = dcCleanTask(t.task_text), dw = ctx.measureText(detail).width;
+        var inline = sw + 22 + dw <= rowW;
+        return { sw: sw, detail: detail, inline: inline, h: inline ? sz[0] + 22 : sz[0] + 10 + sz[1] + 22 };
+      };
       for (var k = 0; k < sizes.length; k++) {
         var hs = 0;
-        ctx.font = '600 ' + sizes[k] + 'px ' + FONT;
-        list.forEach(function (t) { hs += dcWrap(ctx, dcCleanTask(t.task_text), maxW).slice(0, 2).length * (sizes[k] + 8) + 20; });
+        list.forEach(function (t) { hs += layoutRow(t, sizes[k]).h; });
         if (top + hs <= bottom) { pick = sizes[k]; break; }
       }
       var ty = top;
       list.forEach(function (t) {
         var col = DC_SUBJECT_COLORS[t.subject] || '#A78BFA';
-        ctx.font = '600 ' + pick + 'px ' + FONT;
-        var lines = dcWrap(ctx, dcCleanTask(t.task_text), maxW).slice(0, 2);
-        var base = ty + pick;
-        ctx.fillStyle = col; ctx.beginPath(); ctx.arc(P + 9, base - pick * 0.36, 8, 0, Math.PI * 2); ctx.fill();
-        ctx.font = '600 22px ' + FONT;
-        var sub = t.subject; while (ctx.measureText(sub).width > subjW - 12 && sub.length > 4) sub = sub.slice(0, -2) + '…';
-        ctx.fillText(sub, P + 34, base - pick * 0.18);
-        ctx.font = '600 ' + pick + 'px ' + FONT; ctx.fillStyle = '#FFFFFF';
-        lines.forEach(function (ln, li) { ctx.fillText(ln, txX, base + li * (pick + 8)); });
-        ty += lines.length * (pick + 8) + 20;
+        var L = layoutRow(t, pick), base = ty + pick[0];
+        ctx.fillStyle = col; ctx.beginPath(); ctx.arc(P + 10, base - pick[0] * 0.34, 9, 0, Math.PI * 2); ctx.fill();
+        ctx.font = '700 ' + pick[0] + 'px ' + FONT; ctx.fillText(t.subject, rowX, base);
+        ctx.font = '500 ' + pick[1] + 'px ' + FONT; ctx.fillStyle = 'rgba(255,255,255,0.72)';
+        var detail = L.detail; while (ctx.measureText(detail).width > rowW && detail.length > 4) detail = detail.slice(0, -2) + '…';
+        if (L.inline) ctx.fillText(detail, rowX + L.sw + 22, base);
+        else ctx.fillText(detail, rowX, base + 10 + pick[1]);
+        ty += L.h;
       });
       if (!list.length) {
         ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '500 30px ' + FONT;
         ctx.fillText(tasks === null ? 'Loading…' : 'Nothing scheduled for this day.', P, top + 36);
       }
 
-      // Gold offer panel.
+      // Gold offer panel. Copy rewritten 2026-10-09 ("the writing can be
+      // better"): the headline echoes the offer's own name (100 under ->
+      // 100% back); the course and the fine print sit in smaller lines.
       dcRoundRect(ctx, P, panelY, S - 2 * P, panelH, 24);
       var pg = ctx.createLinearGradient(P, panelY, S - P, panelY + panelH);
       pg.addColorStop(0, 'rgba(251,191,36,0.18)'); pg.addColorStop(1, 'rgba(245,158,11,0.06)');
       ctx.fillStyle = pg; ctx.fill(); ctx.strokeStyle = 'rgba(251,191,36,0.55)'; ctx.lineWidth = 2; ctx.stroke();
       var px = P + 34;
-      ctx.font = '700 23px ' + FONT;
+      ctx.font = '700 22px ' + FONT;
       var tag = '100 pe 100% off', tw = ctx.measureText(tag).width + 28;
-      dcRoundRect(ctx, px, panelY + 26, tw, 40, 10); ctx.fillStyle = 'rgba(251,191,36,0.22)'; ctx.fill();
-      ctx.fillStyle = '#FCD34D'; ctx.textBaseline = 'middle'; ctx.fillText(tag, px + 14, panelY + 47); ctx.textBaseline = 'alphabetic';
+      dcRoundRect(ctx, px, panelY + 24, tw, 38, 10); ctx.fillStyle = 'rgba(251,191,36,0.22)'; ctx.fill();
+      ctx.fillStyle = '#FCD34D'; ctx.textBaseline = 'middle'; ctx.fillText(tag, px + 14, panelY + 43); ctx.textBaseline = 'alphabetic';
       ctx.font = '600 22px ' + FONT; ctx.fillStyle = 'rgba(253,230,138,0.85)';
-      ctx.fillText('GATE DA 2026: 65 marks got AIR 90', px + tw + 18, panelY + 54);
-      ctx.font = '700 38px ' + FONT; ctx.fillStyle = '#FFFFFF';
-      ctx.fillText('AIR under 100 in GATE DA 2027?', px, panelY + 110); // not "Top 100": AIR 100 itself doesn't qualify
-      var line2a = 'Your GATE 2028 course fee ', line2b = 'comes back.';
-      ctx.font = '700 38px ' + FONT;
-      ctx.fillText(line2a, px, panelY + 154);
-      var gg = ctx.createLinearGradient(px, 0, px + 700, 0); gg.addColorStop(0, '#FDE68A'); gg.addColorStop(1, '#F59E0B');
-      ctx.fillStyle = gg; ctx.fillText(line2b, px + ctx.measureText(line2a).width, panelY + 154);
+      ctx.fillText('on the GATE 2028 Full Course', px + tw + 16, panelY + 51);
+      ctx.font = '700 40px ' + FONT; ctx.fillStyle = '#FFFFFF';
+      ctx.fillText('AIR under 100 in GATE DA 2027', px, panelY + 108);
+      var gg = ctx.createLinearGradient(px, 0, px + 640, 0); gg.addColorStop(0, '#FDE68A'); gg.addColorStop(1, '#F59E0B');
+      ctx.fillStyle = gg; ctx.fillText('= 100% of your fee back.', px, panelY + 154);
+      ctx.font = '500 21px ' + FONT; ctx.fillStyle = 'rgba(255,255,255,0.66)';
+      ctx.fillText('You keep full access. Last year, 65 marks got AIR 90.', px, panelY + 192);
 
       // Footer.
       ctx.font = '500 26px ' + FONT; ctx.fillStyle = 'rgba(255,255,255,0.7)';
