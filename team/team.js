@@ -1236,42 +1236,44 @@
       ctx.fillStyle = '#C4B5FD'; ctx.font = '600 34px ' + FONT;
       ctx.fillText(dayNum > 0 ? 'Day' : 'Starting', P, heroTop + 30);
       var numText = dayNum > 0 ? String(dayNum) : 'soon';
-      ctx.font = '800 200px ' + FONT;
-      var ng = ctx.createLinearGradient(P, heroTop, P + 360, heroTop + 220);
+      ctx.font = '800 172px ' + FONT;
+      var ng = ctx.createLinearGradient(P, heroTop, P + 320, heroTop + 190);
       ng.addColorStop(0, '#FFFFFF'); ng.addColorStop(0.55, '#E9D5FF'); ng.addColorStop(1, '#A78BFA');
-      ctx.fillStyle = ng; ctx.fillText(numText, P - 8, heroTop + 220);
+      ctx.fillStyle = ng; ctx.fillText(numText, P - 6, heroTop + 190);
       var nw = ctx.measureText(numText).width;
-      if (dayNum > 0) { ctx.font = '600 40px ' + FONT; ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.fillText('/ ' + len, P + nw + 6, heroTop + 220); }
+      if (dayNum > 0) { ctx.font = '600 40px ' + FONT; ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.fillText('/ ' + len, P + nw + 6, heroTop + 190); }
       ctx.font = '600 30px ' + FONT; ctx.fillStyle = '#FFFFFF';
-      ctx.fillText(which + ' · ' + dateShort, P, heroTop + 280);
+      ctx.fillText(which + ' · ' + dateShort, P, heroTop + 244);
 
       // No stat boxes (2026-10-09, "too many times mentioned"): the pill
       // already says 70 marks and "Day N / 120" already says how far in.
       // Instead, what the roadmap covers by its end (same day: "by the time
       // you have finished the roadmap you will have completed lectures,
       // revision, quizzes and tests").
-      var bx = 640, by0 = heroTop + 6, bw3 = S - P - bx, bh3 = 262;
-      dcRoundRect(ctx, bx, by0, bw3, bh3, 22);
+      // Compact 2x2 grid (2026-10-09: "make it smaller or change design to
+      // save space"), was a tall 4-row list.
+      var bx = 620, by0 = heroTop + 40, bw3 = S - P - bx, bh3 = 150;
+      dcRoundRect(ctx, bx, by0, bw3, bh3, 20);
       ctx.fillStyle = 'rgba(255,255,255,0.05)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.13)'; ctx.lineWidth = 1.5; ctx.stroke();
-      ctx.fillStyle = 'rgba(255,255,255,0.65)'; ctx.font = '600 24px ' + FONT;
-      ctx.fillText('Done before the exam:', bx + 26, by0 + 48);
+      ctx.fillStyle = 'rgba(255,255,255,0.62)'; ctx.font = '600 21px ' + FONT;
+      ctx.fillText('Done before the exam:', bx + 22, by0 + 36);
       ['Lectures', 'Revision', 'Quizzes', 'Tests'].forEach(function (lbl, i3) {
-        var ly2 = by0 + 104 + i3 * 46;
-        ctx.strokeStyle = '#34D399'; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-        ctx.beginPath(); ctx.moveTo(bx + 28, ly2 - 10); ctx.lineTo(bx + 37, ly2 - 1); ctx.lineTo(bx + 54, ly2 - 20); ctx.stroke();
+        var cx2 = bx + 22 + (i3 % 2) * (bw3 / 2 - 6), ly2 = by0 + 80 + Math.floor(i3 / 2) * 42;
+        ctx.strokeStyle = '#34D399'; ctx.lineWidth = 3.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        ctx.beginPath(); ctx.moveTo(cx2 + 1, ly2 - 9); ctx.lineTo(cx2 + 8, ly2 - 2); ctx.lineTo(cx2 + 22, ly2 - 17); ctx.stroke();
         ctx.lineCap = 'butt'; ctx.lineJoin = 'miter';
-        ctx.fillStyle = '#FFFFFF'; ctx.font = '600 30px ' + FONT; ctx.fillText(lbl, bx + 70, ly2);
+        ctx.fillStyle = '#FFFFFF'; ctx.font = '600 25px ' + FONT; ctx.fillText(lbl, cx2 + 34, ly2);
       });
 
       // Offer panel + footer from the bottom up.
       var footY = S - P + 4;
-      var panelH = 196, panelY = footY - 44 - panelH;
+      var panelH = 182, panelY = footY - 42 - panelH;
 
       // Journey track (2026-10-09, "make it feel more rewarding, like the
       // 70 marks goal in 120 days"): a bar filled up to this day with a
       // glowing "you are here" dot, ending at a gold 70-marks medal. It shows
       // the goal, never a claim of marks already earned.
-      var trackY = heroTop + 338, medalR = 46, medalX = S - P - medalR, barX0 = P, barX1 = medalX - medalR - 18, barH = 14;
+      var trackY = heroTop + 300, medalR = 46, medalX = S - P - medalR, barX0 = P, barX1 = medalX - medalR - 18, barH = 14;
       var frac = Math.max(0.02, Math.min(1, dayNum / len));
       dcRoundRect(ctx, barX0, trackY - barH / 2, barX1 - barX0, barH, barH / 2); ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fill();
       var fx = barX0 + (barX1 - barX0) * frac;
@@ -1302,25 +1304,32 @@
       ctx.textAlign = 'left';
 
       // Tasks between the track and the panel.
-      var top = trackY + 84, bottom = panelY - 24;
+      var top = trackY + 72, bottom = panelY - 22;
+      // Subject on the left, task on the same line (2026-10-09: "keep the
+      // task font size bigger"): half the height of a stacked label, so the
+      // task text can stay large. Steps down only if a busy day won't fit.
       var list = tasks || [];
-      var sizes = [[26, 40], [24, 36], [22, 32], [20, 28], [18, 25], [16, 22]], pick = sizes[sizes.length - 1];
-      var maxW = S - 2 * P - 40;
+      var subjW = 250, txX = P + 34 + subjW, maxW = S - P - txX;
+      var sizes = [40, 38, 36, 34, 32, 30, 28], pick = sizes[sizes.length - 1];
       for (var k = 0; k < sizes.length; k++) {
         var hs = 0;
-        ctx.font = '600 ' + sizes[k][1] + 'px ' + FONT;
-        list.forEach(function (t) { hs += sizes[k][0] + 8 + dcWrap(ctx, dcCleanTask(t.task_text), maxW).slice(0, 2).length * (sizes[k][1] + 6) + 14; });
+        ctx.font = '600 ' + sizes[k] + 'px ' + FONT;
+        list.forEach(function (t) { hs += dcWrap(ctx, dcCleanTask(t.task_text), maxW).slice(0, 2).length * (sizes[k] + 8) + 20; });
         if (top + hs <= bottom) { pick = sizes[k]; break; }
       }
       var ty = top;
       list.forEach(function (t) {
         var col = DC_SUBJECT_COLORS[t.subject] || '#A78BFA';
-        ctx.fillStyle = col; ctx.beginPath(); ctx.arc(P + 9, ty + pick[0] * 0.62, 8, 0, Math.PI * 2); ctx.fill();
-        ctx.font = '600 ' + pick[0] + 'px ' + FONT; ctx.fillText(t.subject, P + 38, ty + pick[0]);
-        ty += pick[0] + 8;
-        ctx.font = '600 ' + pick[1] + 'px ' + FONT; ctx.fillStyle = '#FFFFFF';
-        dcWrap(ctx, dcCleanTask(t.task_text), maxW).slice(0, 2).forEach(function (ln) { ty += pick[1]; ctx.fillText(ln, P + 38, ty); ty += 6; });
-        ty += 14;
+        ctx.font = '600 ' + pick + 'px ' + FONT;
+        var lines = dcWrap(ctx, dcCleanTask(t.task_text), maxW).slice(0, 2);
+        var base = ty + pick;
+        ctx.fillStyle = col; ctx.beginPath(); ctx.arc(P + 9, base - pick * 0.36, 8, 0, Math.PI * 2); ctx.fill();
+        ctx.font = '600 22px ' + FONT;
+        var sub = t.subject; while (ctx.measureText(sub).width > subjW - 12 && sub.length > 4) sub = sub.slice(0, -2) + '…';
+        ctx.fillText(sub, P + 34, base - pick * 0.18);
+        ctx.font = '600 ' + pick + 'px ' + FONT; ctx.fillStyle = '#FFFFFF';
+        lines.forEach(function (ln, li) { ctx.fillText(ln, txX, base + li * (pick + 8)); });
+        ty += lines.length * (pick + 8) + 20;
       });
       if (!list.length) {
         ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '500 30px ' + FONT;
@@ -1340,12 +1349,12 @@
       ctx.font = '600 22px ' + FONT; ctx.fillStyle = 'rgba(253,230,138,0.85)';
       ctx.fillText('GATE DA 2026: 65 marks got AIR 90', px + tw + 18, panelY + 54);
       ctx.font = '700 38px ' + FONT; ctx.fillStyle = '#FFFFFF';
-      ctx.fillText('AIR under 100 in GATE DA 2027?', px, panelY + 116); // not "Top 100": AIR 100 itself doesn't qualify
+      ctx.fillText('AIR under 100 in GATE DA 2027?', px, panelY + 110); // not "Top 100": AIR 100 itself doesn't qualify
       var line2a = 'Your GATE 2028 course fee ', line2b = 'comes back.';
       ctx.font = '700 38px ' + FONT;
-      ctx.fillText(line2a, px, panelY + 162);
+      ctx.fillText(line2a, px, panelY + 154);
       var gg = ctx.createLinearGradient(px, 0, px + 700, 0); gg.addColorStop(0, '#FDE68A'); gg.addColorStop(1, '#F59E0B');
-      ctx.fillStyle = gg; ctx.fillText(line2b, px + ctx.measureText(line2a).width, panelY + 162);
+      ctx.fillStyle = gg; ctx.fillText(line2b, px + ctx.measureText(line2a).width, panelY + 154);
 
       // Footer.
       ctx.font = '500 26px ' + FONT; ctx.fillStyle = 'rgba(255,255,255,0.7)';
@@ -1355,7 +1364,7 @@
       ctx.fillText(url, S - P - ctx.measureText(url).width, footY);
     };
     if (document.fonts && document.fonts.load) {
-      Promise.all(['800 200px Poppins', '700 38px Poppins', '600 30px Poppins', '500 26px Poppins'].map(function (f) { return document.fonts.load(f); })).then(go, go);
+      Promise.all(['800 172px Poppins', '700 38px Poppins', '600 30px Poppins', '500 26px Poppins'].map(function (f) { return document.fonts.load(f); })).then(go, go);
     } else go();
   }
 
