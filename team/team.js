@@ -1102,8 +1102,8 @@
       'Voice: sounds like a real person (a mentor or fellow aspirant) typing quickly, not a brand. Plain, direct, a little cheeky is fine. Short sentences. No corporate words (journey, unlock, elevate, game-changer, dive in), no "Here\'s what...", no exclamation spam.',
       '',
       'Structure:',
-      '1. One intriguing first line that makes someone stop scrolling.',
-      '2. One or two short lines about the roadmap and the 100 pe 100% off offer.',
+      '1. Start the caption with the campaign name "100 pe 100% off", then an intriguing first line that makes someone stop scrolling.',
+      '2. One or two short lines about the roadmap and the offer.',
       '3. These two links, each on its own line, exactly:',
       // No ?batch=: visitors without an account already land on 120 Days -
       // 70 Marks by default (2026-10-09, direct request).
