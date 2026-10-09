@@ -298,7 +298,7 @@
     renamingWebhook: null, // webhook_url of the channel group currently showing a rename input, or null
     renameStatus: null, // { webhookUrl, saving } | { webhookUrl, error } | null
     tab: 'announcements', // 'announcements' | 'students' — mutually exclusive views, not stacked panels
-    dayCard: { batch: 'D', which: 'today', date: '', months: {}, loading: false, error: null, caption: null, captionLoading: false, captionError: null }, // Day card tab (2026-10-09)
+    dayCard: { batch: 'D', which: 'today', date: '', months: {}, loading: false, error: null }, // Day card tab (2026-10-09)
     students: null, // null = not loaded yet; array once fetched
     studentsLoading: false,
     studentsError: null,
@@ -1077,6 +1077,48 @@
     return day ? day.tasks.slice().sort(function (a, b) { return a.position - b.position; }) : [];
   }
 
+  // Caption prompt (2026-10-09, replaced the Claude-API "Generate caption"
+  // button: "give me a prompt for the caption, I will generate it somewhere
+  // else ... with a copyable button, filled in every day"). Built from the
+  // same day as the picture; paste it into any AI chat. The facts and rules
+  // are the ones the team agreed for these captions.
+  function dcCaptionPrompt(batch, iso, tasks) {
+    var dayNum = dcDayNumber(batch, iso), len = DC_BATCHES[batch].length, today = dcTodayIST();
+    var when = iso === today ? 'today' : iso === dcAddDays(today, 1) ? 'tomorrow' : new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+    var taskLines = (tasks || []).map(function (t) { return '- ' + t.subject + ': ' + dcCleanTask(t.task_text); }).join('\n') || '- (nothing scheduled)';
+    return [
+      'Write a short social media caption (Instagram / LinkedIn / WhatsApp channel) for TAAI, a GATE DA (Data Science and AI) exam-prep brand in India. It goes with an image of one day from TAAI\'s free "' + DC_BATCHES[batch].label + '" roadmap. The image already shows the day\'s tasks, the day counter and the offer, so don\'t list the tasks again.',
+      '',
+      'This post: ' + (dayNum > 0 ? 'Day ' + dayNum + ' of ' + len : 'before Day 1') + ', which is ' + when + '.',
+      'The day\'s tasks (for context only):',
+      taskLines,
+      '',
+      'Facts you may use (use nothing else):',
+      '- The roadmap is free, on TAAI\'s progress tracker. It\'s a day-by-day roadmap aimed at ' + (batch === 'D' ? '70' : '85') + ' marks in GATE DA 2027.',
+      '- By Day ' + len + ' you\'ll have done the lectures, revision, quizzes and tests, so there\'s less to worry about before the real exam.',
+      '- GATE DA 2026: 65 marks got AIR 90.',
+      '- "100 pe 100% off" on the GATE 2028 Full Course: get an AIR under 100 in GATE DA 2027 and TAAI refunds the full GATE 2028 course fee, and you keep full access to the course. This is for students of that course; never say or imply the free roadmap earns it.',
+      '',
+      'Voice: sounds like a real person (a mentor or fellow aspirant) typing quickly, not a brand. Plain, direct, a little cheeky is fine. Short sentences. No corporate words (journey, unlock, elevate, game-changer, dive in), no "Here\'s what...", no exclamation spam.',
+      '',
+      'Structure:',
+      '1. One intriguing first line that makes someone stop scrolling.',
+      '2. One or two short lines about the roadmap and the 100 pe 100% off offer.',
+      '3. These two links, each on its own line, exactly:',
+      '   Roadmap (free): https://taai.live/gate-da-progress-tracker?batch=' + batch,
+      '   Course: https://taai.live/gate-da-courses',
+      '4. At most 3 hashtags on the last line.',
+      '',
+      'Rules:',
+      '- Under 50 words before the links.',
+      '- Always call it a "roadmap", never a "plan".',
+      '- Never invent prices, deadlines, ranks, student numbers, results, quotes, or claims about how long or hard a day is.',
+      '- Never call a future day "today".',
+      '- No em dashes or en dashes. At most 1 emoji.',
+      '- Output only the caption.',
+    ].join('\n');
+  }
+
   function renderDayCard() {
     var dc = state.dayCard, iso = dcSelectedDate();
     var tasks = dcTasksFor(dc.batch, iso);
@@ -1096,12 +1138,11 @@
       '<div class="daycard-preview"><canvas id="daycard-canvas" width="1080" height="1080"></canvas></div>' +
       '<div class="sub">1080 × 1080. Task text comes straight from the live schedule.</div>' +
       '<div class="daycard-caption">' +
-        '<div class="daycard-caption-head"><strong>Caption</strong>' +
-          '<button class="btn" id="dc-caption-gen"' + (tasks && tasks.length && !dc.captionLoading ? '' : ' disabled') + '>' + (dc.captionLoading ? 'Writing…' : (dc.caption ? '↻ Regenerate' : '✨ Generate caption')) + '</button>' +
-          (dc.caption ? '<button class="btn" id="dc-caption-copy">Copy</button>' : '') +
+        '<div class="daycard-caption-head"><strong>Caption prompt</strong>' +
+          '<button class="btn btn-primary" id="dc-prompt-copy"' + (tasks && tasks.length ? '' : ' disabled') + '>Copy prompt</button>' +
         '</div>' +
-        (dc.captionError ? '<div class="msg msg-error">' + escapeHtml(dc.captionError) + '</div>' : '') +
-        (dc.caption ? '<textarea id="dc-caption-text" rows="14">' + escapeHtml(dc.caption) + '</textarea>' : '<div class="sub">Written by Claude from this day\'s tasks, the day counter and the 100 pe 100% off offer, with the roadmap and course links.</div>') +
+        '<div class="sub">Filled in for the day above. Paste it into any AI chat to get the caption.</div>' +
+        '<textarea id="dc-prompt-text" rows="16" readonly>' + escapeHtml(tasks && tasks.length ? dcCaptionPrompt(dc.batch, iso, tasks) : '') + '</textarea>' +
       '</div>' +
     '</div>';
   }
@@ -1109,11 +1150,11 @@
   function bindDayCard() {
     var dc = state.dayCard;
     var b = document.getElementById('dc-batch');
-    if (b) b.addEventListener('change', function () { dc.batch = b.value; dc.caption = null; render(); loadDayCardMonth(); });
+    if (b) b.addEventListener('change', function () { dc.batch = b.value; render(); loadDayCardMonth(); });
     var w = document.getElementById('dc-which');
-    if (w) w.addEventListener('change', function () { dc.which = w.value; dc.caption = null; if (dc.which === 'custom' && !dc.date) dc.date = dcTodayIST(); render(); loadDayCardMonth(); });
+    if (w) w.addEventListener('change', function () { dc.which = w.value; if (dc.which === 'custom' && !dc.date) dc.date = dcTodayIST(); render(); loadDayCardMonth(); });
     var d = document.getElementById('dc-date');
-    if (d) d.addEventListener('change', function () { if (d.value) { dc.date = d.value; dc.caption = null; render(); loadDayCardMonth(); } });
+    if (d) d.addEventListener('change', function () { if (d.value) { dc.date = d.value; render(); loadDayCardMonth(); } });
     var dl = document.getElementById('dc-download');
     if (dl) dl.addEventListener('click', function () {
       var c = document.getElementById('daycard-canvas'); if (!c) return;
@@ -1126,24 +1167,12 @@
         setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
       }, 'image/png');
     });
-    var gen = document.getElementById('dc-caption-gen');
-    if (gen) gen.addEventListener('click', function () {
-      var iso = dcSelectedDate(), tasks = dcTasksFor(dc.batch, iso) || [];
-      dc.captionLoading = true; dc.captionError = null; render();
-      api('/team-daycard-caption', { method: 'POST', body: JSON.stringify({
-        batch: dc.batch, date: iso, dayNumber: dcDayNumber(dc.batch, iso), dayLength: DC_BATCHES[dc.batch].length,
-        when: iso === dcTodayIST() ? 'today' : iso === dcAddDays(dcTodayIST(), 1) ? 'tomorrow' : 'other',
-        tasks: tasks.map(function (t) { return { subject: t.subject, task_text: t.task_text }; }),
-      }) }).then(function (d) { dc.caption = d.caption; dc.captionFor = dc.batch + ':' + iso; })
-        .catch(function (e) { dc.captionError = e.message; })
-        .then(function () { dc.captionLoading = false; render(); });
-    });
-    var ta = document.getElementById('dc-caption-text');
-    if (ta) ta.addEventListener('input', function () { dc.caption = ta.value; });
-    var cp = document.getElementById('dc-caption-copy');
+    var cp = document.getElementById('dc-prompt-copy');
     if (cp) cp.addEventListener('click', function () {
-      var text = (document.getElementById('dc-caption-text') || {}).value || dc.caption || '';
-      (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(function () { cp.textContent = 'Copied'; setTimeout(function () { cp.textContent = 'Copy'; }, 1500); }, function () { ta && ta.select(); });
+      var ta = document.getElementById('dc-prompt-text'); if (!ta) return;
+      var done = function () { cp.textContent = 'Copied'; setTimeout(function () { cp.textContent = 'Copy prompt'; }, 1500); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(done, function () { ta.select(); document.execCommand('copy'); done(); });
+      else { ta.select(); document.execCommand('copy'); done(); }
     });
     drawDayCard();
   }
