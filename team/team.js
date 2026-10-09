@@ -1101,7 +1101,7 @@
           (dc.caption ? '<button class="btn" id="dc-caption-copy">Copy</button>' : '') +
         '</div>' +
         (dc.captionError ? '<div class="msg msg-error">' + escapeHtml(dc.captionError) + '</div>' : '') +
-        (dc.caption ? '<textarea id="dc-caption-text" rows="14">' + escapeHtml(dc.caption) + '</textarea>' : '<div class="sub">Written by Claude from this day\'s tasks, the day counter and the 100 pe 100% off offer, with the progress tracker and courses page links.</div>') +
+        (dc.caption ? '<textarea id="dc-caption-text" rows="14">' + escapeHtml(dc.caption) + '</textarea>' : '<div class="sub">Written by Claude from this day\'s tasks, the day counter and the 100 pe 100% off offer, with the roadmap and course links.</div>') +
       '</div>' +
     '</div>';
   }
@@ -1175,119 +1175,115 @@
     var dc = state.dayCard, iso = dcSelectedDate(), tasks = dcTasksFor(dc.batch, iso);
     if (!dcLogo) { dcLogo = new Image(); dcLogo.onload = function () { drawDayCard(); }; dcLogo.src = '/logo.webp'; }
     var FONT = '"Poppins", "Geist", system-ui, sans-serif';
+    // Layout follows the ads-create brief (concept A, "Countdown"): a giant
+    // day number is the hook, two stat boxes, the tasks, then the gold
+    // offer panel. Always "roadmap", never "plan".
     var go = function () {
       var ctx = c.getContext('2d'), S = 1080, P = 72;
       ctx.textBaseline = 'alphabetic';
       ctx.fillStyle = '#0d0a1c'; ctx.fillRect(0, 0, S, S);
-      var g1 = ctx.createRadialGradient(S, 0, 0, S, 0, 720); g1.addColorStop(0, 'rgba(139,92,246,0.34)'); g1.addColorStop(1, 'rgba(139,92,246,0)');
+      var g1 = ctx.createRadialGradient(S * 0.15, S * 0.22, 0, S * 0.15, S * 0.22, 620); g1.addColorStop(0, 'rgba(139,92,246,0.30)'); g1.addColorStop(1, 'rgba(139,92,246,0)');
       ctx.fillStyle = g1; ctx.fillRect(0, 0, S, S);
-      var g2 = ctx.createRadialGradient(0, S, 0, 0, S, 700); g2.addColorStop(0, 'rgba(251,191,36,0.13)'); g2.addColorStop(1, 'rgba(251,191,36,0)');
+      var g2 = ctx.createRadialGradient(S, S, 0, S, S, 720); g2.addColorStop(0, 'rgba(251,191,36,0.14)'); g2.addColorStop(1, 'rgba(251,191,36,0)');
       ctx.fillStyle = g2; ctx.fillRect(0, 0, S, S);
 
-      // Header: logo + day badge.
-      var y = P;
-      if (dcLogo && dcLogo.complete && dcLogo.naturalWidth) {
-        var sx = 104, sy = 68, sw = 150, sh = 80, lh = 52;
-        ctx.drawImage(dcLogo, sx, sy, sw, sh, P, y, lh * sw / sh, lh);
-      }
       var dayNum = dcDayNumber(dc.batch, iso), len = DC_BATCHES[dc.batch].length;
-      var badge = dayNum > 0 ? 'Day ' + dayNum + ' of ' + len : 'Starting soon';
-      ctx.font = '700 30px ' + FONT;
-      var bw = ctx.measureText(badge).width + 48;
-      dcRoundRect(ctx, S - P - bw, y, bw, 54, 27);
-      ctx.fillStyle = 'rgba(167,139,250,0.18)'; ctx.fill();
-      ctx.strokeStyle = 'rgba(167,139,250,0.5)'; ctx.lineWidth = 2; ctx.stroke();
-      ctx.fillStyle = '#F1ECFF'; ctx.textBaseline = 'middle'; ctx.fillText(badge, S - P - bw + 24, y + 28); ctx.textBaseline = 'alphabetic';
-
-      // Plan + date.
-      y += 120;
       var today = dcTodayIST();
-      var which = iso === today ? "Today's plan" : iso === dcAddDays(today, 1) ? "Tomorrow's plan" : 'The plan';
-      ctx.fillStyle = '#C4B5FD'; ctx.font = '600 30px ' + FONT;
-      ctx.fillText(DC_BATCHES[dc.batch].label + ' · ' + which, P, y);
-      y += 70;
-      var dateLabel = new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }).replace(/^(\w+) /, '$1, ');
-      var hs2 = 64; ctx.font = '700 ' + hs2 + 'px ' + FONT;
-      while (ctx.measureText(dateLabel).width > S - 2 * P && hs2 > 40) { hs2 -= 2; ctx.font = '700 ' + hs2 + 'px ' + FONT; }
-      ctx.fillStyle = '#FFFFFF'; ctx.fillText(dateLabel, P, y);
-
-      // Stat chips.
-      y += 34;
+      var which = iso === today ? "Today's roadmap" : iso === dcAddDays(today, 1) ? "Tomorrow's roadmap" : 'Roadmap';
+      var dateShort = new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).replace(/^(\w+) /, '$1, ');
       var daysToGate = Math.max(0, dcDiffDays(DC_EXAM_DATE, iso));
-      var chips = dc.batch === 'D'
-        ? ['Target: 70 marks', daysToGate + ' days to GATE DA 2027', 'Free on the tracker']
-        : ['Target: 85 marks', daysToGate + ' days to GATE DA 2027', 'Free on the tracker'];
-      var cx = P;
-      ctx.font = '600 24px ' + FONT;
-      chips.forEach(function (t) {
-        var w = ctx.measureText(t).width + 36;
-        dcRoundRect(ctx, cx, y, w, 46, 12);
-        ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.fill();
-        ctx.strokeStyle = 'rgba(255,255,255,0.14)'; ctx.lineWidth = 1.5; ctx.stroke();
-        ctx.fillStyle = 'rgba(255,255,255,0.86)'; ctx.textBaseline = 'middle'; ctx.fillText(t, cx + 18, y + 24); ctx.textBaseline = 'alphabetic';
-        cx += w + 12;
+
+      // Header: logo + batch pill.
+      if (dcLogo && dcLogo.complete && dcLogo.naturalWidth) ctx.drawImage(dcLogo, 104, 68, 150, 80, P, P, 52 * 150 / 80, 52);
+      ctx.font = '600 26px ' + FONT;
+      var pill = DC_BATCHES[dc.batch].label, pw = ctx.measureText(pill).width + 44;
+      dcRoundRect(ctx, S - P - pw, P + 2, pw, 50, 25);
+      ctx.fillStyle = 'rgba(167,139,250,0.16)'; ctx.fill(); ctx.strokeStyle = 'rgba(167,139,250,0.45)'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = '#E9E2FF'; ctx.textBaseline = 'middle'; ctx.fillText(pill, S - P - pw + 22, P + 28); ctx.textBaseline = 'alphabetic';
+
+      // Hero: giant day number (left) + two stat boxes (right).
+      var heroTop = 190;
+      ctx.fillStyle = '#C4B5FD'; ctx.font = '600 34px ' + FONT;
+      ctx.fillText(dayNum > 0 ? 'Day' : 'Starting', P, heroTop + 30);
+      var numText = dayNum > 0 ? String(dayNum) : 'soon';
+      ctx.font = '800 200px ' + FONT;
+      var ng = ctx.createLinearGradient(P, heroTop, P + 360, heroTop + 220);
+      ng.addColorStop(0, '#FFFFFF'); ng.addColorStop(0.55, '#E9D5FF'); ng.addColorStop(1, '#A78BFA');
+      ctx.fillStyle = ng; ctx.fillText(numText, P - 8, heroTop + 220);
+      var nw = ctx.measureText(numText).width;
+      if (dayNum > 0) { ctx.font = '600 40px ' + FONT; ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.fillText('/ ' + len, P + nw + 6, heroTop + 220); }
+      ctx.font = '600 30px ' + FONT; ctx.fillStyle = '#FFFFFF';
+      ctx.fillText(which + ' · ' + dateShort, P, heroTop + 280);
+
+      var bx = 664, bw2 = S - P - bx, bh = 128;
+      [[(dc.batch === 'D' ? '70' : '85'), 'marks target'], [String(daysToGate), 'days to GATE DA 2027']].forEach(function (st, i2) {
+        var by = heroTop + 8 + i2 * (bh + 16);
+        dcRoundRect(ctx, bx, by, bw2, bh, 20);
+        ctx.fillStyle = 'rgba(255,255,255,0.05)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.13)'; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.fillStyle = '#FFFFFF'; ctx.font = '800 58px ' + FONT; ctx.fillText(st[0], bx + 26, by + 70);
+        ctx.fillStyle = 'rgba(255,255,255,0.62)'; ctx.font = '500 24px ' + FONT; ctx.fillText(st[1], bx + 26, by + 106);
       });
 
-      // Challenge panel + footer, laid out from the bottom up.
-      var footY = S - P + 6;
-      var panelH = 222, panelY = footY - 46 - panelH;
-      // Tasks fill the space between the chips and the panel.
-      var top = y + 46 + 40, bottom = panelY - 28;
+      // Offer panel + footer from the bottom up.
+      var footY = S - P + 4;
+      var panelH = 196, panelY = footY - 44 - panelH;
+
+      // Tasks between the hero and the panel.
+      var top = heroTop + 322, bottom = panelY - 26;
+      ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(P, top - 22); ctx.lineTo(S - P, top - 22); ctx.stroke();
       var list = tasks || [];
-      var sizes = [[26, 40], [24, 34], [22, 30], [20, 27], [18, 24]], pick = sizes[sizes.length - 1];
+      var sizes = [[24, 36], [22, 32], [20, 28], [18, 25], [16, 22]], pick = sizes[sizes.length - 1];
       var maxW = S - 2 * P - 40;
       for (var k = 0; k < sizes.length; k++) {
         var hs = 0;
         ctx.font = '600 ' + sizes[k][1] + 'px ' + FONT;
-        list.forEach(function (t) { hs += sizes[k][0] + 10 + dcWrap(ctx, dcCleanTask(t.task_text), maxW).slice(0, 2).length * (sizes[k][1] + 8) + 18; });
+        list.forEach(function (t) { hs += sizes[k][0] + 8 + dcWrap(ctx, dcCleanTask(t.task_text), maxW).slice(0, 2).length * (sizes[k][1] + 6) + 14; });
         if (top + hs <= bottom) { pick = sizes[k]; break; }
       }
       var ty = top;
       list.forEach(function (t) {
         var col = DC_SUBJECT_COLORS[t.subject] || '#A78BFA';
         ctx.fillStyle = col; ctx.beginPath(); ctx.arc(P + 9, ty + pick[0] * 0.62, 8, 0, Math.PI * 2); ctx.fill();
-        ctx.font = '600 ' + pick[0] + 'px ' + FONT; ctx.fillText(t.subject, P + 40, ty + pick[0]);
-        ty += pick[0] + 10;
+        ctx.font = '600 ' + pick[0] + 'px ' + FONT; ctx.fillText(t.subject, P + 38, ty + pick[0]);
+        ty += pick[0] + 8;
         ctx.font = '600 ' + pick[1] + 'px ' + FONT; ctx.fillStyle = '#FFFFFF';
-        dcWrap(ctx, dcCleanTask(t.task_text), maxW).slice(0, 2).forEach(function (ln) { ty += pick[1]; ctx.fillText(ln, P + 40, ty); ty += 8; });
-        ty += 18;
+        dcWrap(ctx, dcCleanTask(t.task_text), maxW).slice(0, 2).forEach(function (ln) { ty += pick[1]; ctx.fillText(ln, P + 38, ty); ty += 6; });
+        ty += 14;
       });
       if (!list.length) {
-        ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '500 32px ' + FONT;
-        ctx.fillText(tasks === null ? 'Loading…' : 'Nothing scheduled for this day.', P, top + 40);
+        ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '500 30px ' + FONT;
+        ctx.fillText(tasks === null ? 'Loading…' : 'Nothing scheduled for this day.', P, top + 36);
       }
 
-      // Gold "100 pe 100% off" panel.
+      // Gold offer panel.
       dcRoundRect(ctx, P, panelY, S - 2 * P, panelH, 24);
       var pg = ctx.createLinearGradient(P, panelY, S - P, panelY + panelH);
-      pg.addColorStop(0, 'rgba(251,191,36,0.16)'); pg.addColorStop(1, 'rgba(245,158,11,0.06)');
-      ctx.fillStyle = pg; ctx.fill();
-      ctx.strokeStyle = 'rgba(251,191,36,0.55)'; ctx.lineWidth = 2; ctx.stroke();
-      var px = P + 34, py = panelY + 70;
-      ctx.font = '700 25px ' + FONT; ctx.fillStyle = '#FCD34D';
-      ctx.fillText('THE CHALLENGE', px, panelY + 44);
-      ctx.font = '800 50px ' + FONT; ctx.fillStyle = '#FFFFFF';
-      var w1 = ctx.measureText('100 pe ').width;
-      ctx.fillText('100 pe ', px, py + 44);
-      var gg = ctx.createLinearGradient(px + w1, 0, px + w1 + 260, 0);
-      gg.addColorStop(0, '#FDE68A'); gg.addColorStop(0.5, '#FBBF24'); gg.addColorStop(1, '#F59E0B');
-      ctx.fillStyle = gg; ctx.fillText('100% off', px + w1, py + 44);
-      ctx.font = '500 25px ' + FONT; ctx.fillStyle = 'rgba(255,255,255,0.88)';
-      ctx.fillText('AIR under 100 in GATE DA 2027 = your full GATE 2028', px, py + 92);
-      ctx.fillText('course fee back, and you keep full access.', px, py + 126);
-      ctx.font = '600 22px ' + FONT; ctx.fillStyle = '#FCD34D';
-      var fact = 'GATE DA 2026: 65 marks got AIR 90';
-      ctx.fillText(fact, S - P - 34 - ctx.measureText(fact).width, panelY + 44);
+      pg.addColorStop(0, 'rgba(251,191,36,0.18)'); pg.addColorStop(1, 'rgba(245,158,11,0.06)');
+      ctx.fillStyle = pg; ctx.fill(); ctx.strokeStyle = 'rgba(251,191,36,0.55)'; ctx.lineWidth = 2; ctx.stroke();
+      var px = P + 34;
+      ctx.font = '700 23px ' + FONT;
+      var tag = '100 pe 100% off', tw = ctx.measureText(tag).width + 28;
+      dcRoundRect(ctx, px, panelY + 26, tw, 40, 10); ctx.fillStyle = 'rgba(251,191,36,0.22)'; ctx.fill();
+      ctx.fillStyle = '#FCD34D'; ctx.textBaseline = 'middle'; ctx.fillText(tag, px + 14, panelY + 47); ctx.textBaseline = 'alphabetic';
+      ctx.font = '600 22px ' + FONT; ctx.fillStyle = 'rgba(253,230,138,0.85)';
+      ctx.fillText('GATE DA 2026: 65 marks got AIR 90', px + tw + 18, panelY + 54);
+      ctx.font = '700 38px ' + FONT; ctx.fillStyle = '#FFFFFF';
+      ctx.fillText('AIR under 100 in GATE DA 2027?', px, panelY + 116); // not "Top 100": AIR 100 itself doesn't qualify
+      var line2a = 'Your GATE 2028 course fee ', line2b = 'comes back.';
+      ctx.font = '700 38px ' + FONT;
+      ctx.fillText(line2a, px, panelY + 162);
+      var gg = ctx.createLinearGradient(px, 0, px + 700, 0); gg.addColorStop(0, '#FDE68A'); gg.addColorStop(1, '#F59E0B');
+      ctx.fillStyle = gg; ctx.fillText(line2b, px + ctx.measureText(line2a).width, panelY + 162);
 
       // Footer.
-      ctx.font = '500 26px ' + FONT; ctx.fillStyle = 'rgba(255,255,255,0.72)';
-      ctx.fillText('Follow the plan free and join the challenge:', P, footY);
+      ctx.font = '500 26px ' + FONT; ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.fillText('Follow the free roadmap, a task every day', P, footY);
       ctx.font = '700 26px ' + FONT; ctx.fillStyle = '#C4B5FD';
       var url = 'taai.live';
       ctx.fillText(url, S - P - ctx.measureText(url).width, footY);
     };
     if (document.fonts && document.fonts.load) {
-      Promise.all(['800 50px Poppins', '700 54px Poppins', '600 30px Poppins', '500 26px Poppins'].map(function (f) { return document.fonts.load(f); })).then(go, go);
+      Promise.all(['800 200px Poppins', '700 38px Poppins', '600 30px Poppins', '500 26px Poppins'].map(function (f) { return document.fonts.load(f); })).then(go, go);
     } else go();
   }
 

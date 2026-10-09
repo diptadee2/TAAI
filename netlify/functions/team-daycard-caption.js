@@ -20,14 +20,16 @@ const COURSES_URL = 'https://taai.live/gate-da-courses';
 
 const SYSTEM_PROMPT = `You write short social captions for TAAI, a GATE DA (Data Science and AI) prep brand in India, to go with an image of one day's tasks from TAAI's free "120 Days - 70 Marks" study plan. The image already shows the tasks, the day counter and the challenge details, so the caption should NOT repeat them as a list.
 
+Always call it a "roadmap" (the free 120-day roadmap on the progress tracker), never a "plan". The second link is the GATE 2028 course page, where the course and its 100 pe 100% off offer live.
+
 Voice: sounds like a real person (a mentor or a fellow aspirant) typing quickly, not a brand or an ad. Plain, direct, a little cheeky is fine. Short sentences. Lowercase starts are fine where natural. No corporate words (journey, unlock, elevate, game-changer, seamless, empower, dive in), no "Here's what...", no rhetorical lists of three, no exclamation-mark spam.
 
 Structure:
 - One intriguing first line that makes someone stop scrolling (a curious or slightly provocative thought tied to the day or the 70-mark goal). Not a question about "are you ready".
-- One or two short lines that hint at the plan and mention the "100 pe 100% off" challenge in plain words (AIR under 100 in GATE DA 2027 gets the GATE 2028 course fee back). You may use the fact that 65 marks got AIR 90 in GATE DA 2026.
+- One or two short lines that hint at the roadmap and mention the "100 pe 100% off" challenge in plain words (AIR under 100 in GATE DA 2027 gets the GATE 2028 course fee back). You may use the fact that 65 marks got AIR 90 in GATE DA 2026.
 - Then the two links, each on its own line, exactly:
-  Plan (free): ${TRACKER_URL}
-  Challenge: ${COURSES_URL}
+  Roadmap (free): ${TRACKER_URL}
+  Course: ${COURSES_URL}
 - Then at most 3 hashtags on the last line.
 
 Rules:
@@ -98,8 +100,8 @@ ${taskLines}`;
   // House style: no em/en dashes in public copy.
   caption = caption.replace(/\s*[—–]\s*/g, ', ');
   // Guarantee both links.
-  if (!caption.includes(TRACKER_URL)) caption += '\n\nPlan (free): ' + TRACKER_URL;
-  if (!caption.includes(COURSES_URL)) caption += '\nChallenge: ' + COURSES_URL;
+  if (!caption.includes(TRACKER_URL)) caption += '\n\nRoadmap (free): ' + TRACKER_URL;
+  if (!caption.includes(COURSES_URL)) caption += '\nCourse: ' + COURSES_URL;
 
   return json(200, { caption });
 }
