@@ -1054,7 +1054,7 @@
     return today;
   }
   function dcDayNumber(batch, iso) {
-    if (batch === 'D') return Math.max(0, 120 - Math.max(0, dcDiffDays(DC_EXAM_DATE, iso)));
+    if (batch === 'D') return Math.min(120, Math.max(0, 121 - Math.max(0, dcDiffDays(DC_EXAM_DATE, iso)))); // same rule as the tracker badge: Oct 9 = Day 1
     return Math.max(0, dcDiffDays(iso, DC_C_START) + 1);
   }
   function dcMonthKey(batch, iso) { return batch + ':' + iso.slice(0, 7); }
@@ -1191,7 +1191,7 @@
         ctx.drawImage(dcLogo, sx, sy, sw, sh, P, y, lh * sw / sh, lh);
       }
       var dayNum = dcDayNumber(dc.batch, iso), len = DC_BATCHES[dc.batch].length;
-      var badge = dayNum > 0 ? 'Day ' + dayNum + ' of ' + len : 'Day 0 · starts today';
+      var badge = dayNum > 0 ? 'Day ' + dayNum + ' of ' + len : 'Starting soon';
       ctx.font = '700 30px ' + FONT;
       var bw = ctx.measureText(badge).width + 48;
       dcRoundRect(ctx, S - P - bw, y, bw, 54, 27);

@@ -275,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-08-15';
+  var CLIENT_VERSION = '2026-10-09-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2781,7 +2781,11 @@
     var today = realTodayIso();
     var program = BATCH_PROGRAMS[effectiveScoutBatch()] || BATCH_PROGRAMS.C;
     var dayNum = program.countsToExam
-      ? Math.max(0, program.length - daysTillExam())
+      // Day 1 is the first day of the plan, when GATE is exactly 120 days
+      // away (2026-10-09, the first day with tasks); it showed Day 0 until
+      // 2026-10-09 ("should today be day 1?"). Day 120 is the day before
+      // the exam.
+      ? Math.max(0, program.length + 1 - daysTillExam())
       : Math.max(1, Math.round((new Date(today) - new Date(program.start)) / 864e5) + 1);
     dayNum = Math.min(dayNum, program.length);
     var plan = planProgressHtml(program, dayNum);

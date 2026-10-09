@@ -18,23 +18,24 @@ const TIMEOUT_MS = 20000;
 const TRACKER_URL = 'https://taai.live/gate-da-progress-tracker?batch=D';
 const COURSES_URL = 'https://taai.live/gate-da-courses';
 
-const SYSTEM_PROMPT = `You write social media captions (Instagram, LinkedIn, WhatsApp channel) for TAAI, a GATE DA (Data Science and AI) exam-prep brand in India. The caption accompanies an image that shows one day's study tasks from TAAI's free "120 Days - 70 Marks" study plan.
+const SYSTEM_PROMPT = `You write short social captions for TAAI, a GATE DA (Data Science and AI) prep brand in India, to go with an image of one day's tasks from TAAI's free "120 Days - 70 Marks" study plan. The image already shows the tasks, the day counter and the challenge details, so the caption should NOT repeat them as a list.
 
-Write a convincing but honest pitch, for Indian GATE DA aspirants, that:
-- opens with a strong hook about where the plan is on that day (use the day counter you are given, and say today/tomorrow/the date exactly as described in the user message; never call a future day 'today'),
-- lists the day's tasks briefly,
-- explains the plan: a free day-by-day plan on TAAI's progress tracker aimed at 70 marks in GATE DA 2027, with streaks, a focus timer and leaderboards,
-- pitches the "100 pe 100% off" challenge on the GATE DA 2028 Full Course: get an AIR under 100 in GATE DA 2027 and TAAI refunds the full GATE 2028 course fee, and you keep full access to the course. For context: in GATE DA 2026, 65 marks got an AIR of 90.
-- ends with a clear call to action and BOTH links, each on its own line, exactly as given:
-  Follow the plan free: ${TRACKER_URL}
-  GATE 2028 course and the challenge: ${COURSES_URL}
+Voice: sounds like a real person (a mentor or a fellow aspirant) typing quickly, not a brand or an ad. Plain, direct, a little cheeky is fine. Short sentences. Lowercase starts are fine where natural. No corporate words (journey, unlock, elevate, game-changer, seamless, empower, dive in), no "Here's what...", no rhetorical lists of three, no exclamation-mark spam.
+
+Structure:
+- One intriguing first line that makes someone stop scrolling (a curious or slightly provocative thought tied to the day or the 70-mark goal). Not a question about "are you ready".
+- One or two short lines that hint at the plan and mention the "100 pe 100% off" challenge in plain words (AIR under 100 in GATE DA 2027 gets the GATE 2028 course fee back). You may use the fact that 65 marks got AIR 90 in GATE DA 2026.
+- Then the two links, each on its own line, exactly:
+  Plan (free): ${TRACKER_URL}
+  Challenge: ${COURSES_URL}
+- Then at most 3 hashtags on the last line.
 
 Rules:
-- Use ONLY the facts given here and in the user message. Never invent prices, discounts, deadlines, ranks, student counts, results or testimonials.
-- Never use em dashes or en dashes. Use commas, full stops or colons instead.
-- Plain text, short lines and short paragraphs. At most 3 emojis. 4 to 6 relevant hashtags at the very end (for example #GATEDA #GATE2027).
-- Roughly 120 to 200 words before the hashtags.
-- Output only the caption text, nothing else.`;
+- Under 50 words before the links (hard limit). Two or three short lines is ideal.
+- Use ONLY the facts given. Never invent prices, deadlines, ranks, student numbers, results, quotes, or claims about how long the tasks take, how hard or easy a day is, or what most students do.
+- Say today/tomorrow/the date exactly as described in the user message; never call a future day "today".
+- Never use em dashes or en dashes. At most 1 emoji, often none.
+- Output only the caption.`;
 
 export async function handler(event, context) {
   const auth = requireAdmin(context);
@@ -57,7 +58,7 @@ export async function handler(event, context) {
   const when = body.when === 'today' ? 'today (the post goes out the same day)' : body.when === 'tomorrow' ? 'tomorrow (the post goes out the day before, as a preview)' : 'a specific date (not necessarily today or tomorrow; refer to it by its date)';
   const userContent = `Plan: ${batchLabel}
 Date: ${date}, which is ${when}
-Day counter: ${dayNumber > 0 ? `Day ${dayNumber} of ${dayLength}` : `Starts today (Day 0 of ${dayLength})`}
+Day counter: ${dayNumber > 0 ? `Day ${dayNumber} of ${dayLength}` : `Not started yet`}
 Tasks for this day:
 ${taskLines}`;
 
@@ -97,8 +98,8 @@ ${taskLines}`;
   // House style: no em/en dashes in public copy.
   caption = caption.replace(/\s*[—–]\s*/g, ', ');
   // Guarantee both links.
-  if (!caption.includes(TRACKER_URL)) caption += '\n\nFollow the plan free: ' + TRACKER_URL;
-  if (!caption.includes(COURSES_URL)) caption += '\nGATE 2028 course and the challenge: ' + COURSES_URL;
+  if (!caption.includes(TRACKER_URL)) caption += '\n\nPlan (free): ' + TRACKER_URL;
+  if (!caption.includes(COURSES_URL)) caption += '\nChallenge: ' + COURSES_URL;
 
   return json(200, { caption });
 }
