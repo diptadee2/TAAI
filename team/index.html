@@ -411,6 +411,12 @@
   .daycard-controls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px; }
   .daycard-controls label { display: flex; flex-direction: column; gap: 6px; margin: 0; font-size: 12.5px; color: var(--ink-dim); }
   .daycard-controls select, .daycard-controls input { min-width: 200px; }
+  .daycard-themes { display: flex; align-items: center; gap: 8px; height: 36px; }
+  .daycard-theme { width: 28px; height: 28px; padding: 0; border-radius: 50%; border: 2px solid transparent; outline: none; cursor: pointer; box-shadow: 0 0 0 1px var(--line); }
+  .daycard-theme.selected { border-color: var(--bg, #0a0a0a); box-shadow: 0 0 0 2px var(--ink); }
+  .daycard-theme--auto { width: auto; padding: 0 12px; border-radius: 14px; background: transparent; color: var(--ink-dim); font: inherit; font-size: 12.5px; border: 1px solid var(--line); box-shadow: none; }
+  .daycard-theme--auto.selected { color: var(--ink); border-color: var(--ink); box-shadow: none; }
+  .daycard-theme:focus-visible { box-shadow: 0 0 0 2px var(--ink); }
   .daycard-preview canvas { display: block; width: min(100%, 540px); height: auto; aspect-ratio: 1 / 1; border-radius: 12px; border: 1px solid var(--line); }
   .daycard-caption { display: flex; flex-direction: column; gap: 10px; padding-top: 14px; border-top: 1px solid var(--line); }
   .daycard-caption-head { display: flex; align-items: center; gap: 10px; }

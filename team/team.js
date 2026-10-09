@@ -298,7 +298,7 @@
     renamingWebhook: null, // webhook_url of the channel group currently showing a rename input, or null
     renameStatus: null, // { webhookUrl, saving } | { webhookUrl, error } | null
     tab: 'announcements', // 'announcements' | 'students' — mutually exclusive views, not stacked panels
-    dayCard: { batch: 'D', which: 'today', date: '', months: {}, loading: false, error: null }, // Day card tab (2026-10-09)
+    dayCard: { batch: 'D', which: 'today', theme: 'auto', date: '', months: {}, loading: false, error: null }, // Day card tab (2026-10-09)
     students: null, // null = not loaded yet; array once fetched
     studentsLoading: false,
     studentsError: null,
@@ -1150,6 +1150,7 @@
 
   function renderDayCard() {
     var dc = state.dayCard, iso = dcSelectedDate();
+    if (!dc.themeRestored) { dc.themeRestored = true; try { var saved = localStorage.getItem('taai_daycard_theme'); if (saved === 'auto' || DC_THEMES.some(function (t) { return t.id === saved; })) dc.theme = saved; } catch (e) {} }
     var tasks = dcTasksFor(dc.batch, iso);
     var opt = function (v, label, cur) { return '<option value="' + v + '"' + (v === cur ? ' selected' : '') + '>' + label + '</option>'; };
     var status = dc.error ? '<div class="msg msg-error">' + escapeHtml(dc.error) + '</div>'
@@ -1161,11 +1162,15 @@
         '<label class="field">Batch<select id="dc-batch">' + opt('D', DC_BATCHES.D.label, dc.batch) + opt('C', DC_BATCHES.C.label, dc.batch) + '</select></label>' +
         '<label class="field">Day<select id="dc-which">' + opt('today', 'Today', dc.which) + opt('tomorrow', 'Tomorrow', dc.which) + opt('custom', 'Pick a date', dc.which) + '</select></label>' +
         (dc.which === 'custom' ? '<label class="field">Date<input type="date" id="dc-date" value="' + escapeHtml(dc.date || dcTodayIST()) + '"></label>' : '') +
+        '<div class="field daycard-theme-field">Colour<div class="daycard-themes" role="radiogroup" aria-label="Colour scheme">' +
+          '<button type="button" class="daycard-theme daycard-theme--auto' + (dc.theme === 'auto' ? ' selected' : '') + '" data-theme="auto" role="radio" aria-checked="' + (dc.theme === 'auto') + '" title="Changes every day (Day 1 Violet, Day 2 Ocean, ...)">Auto</button>' +
+          DC_THEMES.map(function (t) { return '<button type="button" class="daycard-theme' + (dc.theme === t.id ? ' selected' : '') + '" data-theme="' + t.id + '" role="radio" aria-checked="' + (dc.theme === t.id) + '" title="' + t.name + '" aria-label="' + t.name + '" style="background:' + t.accent + '"></button>'; }).join('') +
+        '</div></div>' +
         '<button class="btn btn-primary" id="dc-download"' + (tasks && tasks.length ? '' : ' disabled') + '>Download PNG</button>' +
       '</div>' +
       status +
       '<div class="daycard-preview"><canvas id="daycard-canvas" width="1080" height="1080"></canvas></div>' +
-      '<div class="sub">1080 × 1080. Task text comes straight from the live schedule.</div>' +
+      '<div class="sub">1080 × 1080, ' + escapeHtml(dcThemeFor(dc.theme, dcDayNumber(dc.batch, iso)).name) + (dc.theme === 'auto' ? ' (Auto: changes every day)' : '') + '. Task text comes straight from the live schedule.</div>' +
       '<div class="daycard-caption">' +
         '<div class="daycard-caption-head"><strong>Caption prompt</strong>' +
           '<button class="btn btn-primary" id="dc-prompt-copy"' + (tasks && tasks.length ? '' : ' disabled') + '>Copy prompt</button>' +
@@ -1196,6 +1201,9 @@
     if (w) w.addEventListener('change', function () { dc.which = w.value; if (dc.which === 'custom' && !dc.date) dc.date = dcTodayIST(); render(); loadDayCardMonth(); });
     var d = document.getElementById('dc-date');
     if (d) d.addEventListener('change', function () { if (d.value) { dc.date = d.value; render(); loadDayCardMonth(); } });
+    Array.prototype.forEach.call(document.querySelectorAll('.daycard-theme'), function (btn) {
+      btn.addEventListener('click', function () { dc.theme = btn.getAttribute('data-theme'); try { localStorage.setItem('taai_daycard_theme', dc.theme); } catch (e) {} render(); });
+    });
     var dl = document.getElementById('dc-download');
     if (dl) dl.addEventListener('click', function () {
       var c = document.getElementById('daycard-canvas'); if (!c) return;
@@ -1235,6 +1243,27 @@
     drawDayCard();
   }
 
+  // Colour schemes for the Day card (2026-10-09: "5 different colour schemes
+  // for day after day"). 'auto' rotates them by day number so consecutive
+  // posts look different; any one can also be picked. The gold offer panel
+  // and the 70-marks medal stay gold in every scheme (that's the offer's
+  // own colour).
+  var DC_THEMES = [
+    { id: 'violet', name: 'Violet', bg: '#0d0a1c', glow: '139,92,246', accent: '#A78BFA', deep: '#8B5CF6', soft: '#C4B5FD', light: '#E9D5FF', pillText: '#E9E2FF' },
+    { id: 'ocean', name: 'Ocean', bg: '#061320', glow: '14,165,233', accent: '#38BDF8', deep: '#0EA5E9', soft: '#7DD3FC', light: '#E0F2FE', pillText: '#E0F2FE' },
+    { id: 'emerald', name: 'Emerald', bg: '#04140f', glow: '16,185,129', accent: '#34D399', deep: '#10B981', soft: '#6EE7B7', light: '#D1FAE5', pillText: '#D1FAE5' },
+    { id: 'rose', name: 'Rose', bg: '#1a0812', glow: '244,63,94', accent: '#FB7185', deep: '#F43F5E', soft: '#FDA4AF', light: '#FFE4E6', pillText: '#FFE4E6' },
+    { id: 'midnight', name: 'Midnight', bg: '#070b1f', glow: '99,102,241', accent: '#818CF8', deep: '#6366F1', soft: '#A5B4FC', light: '#E0E7FF', pillText: '#E0E7FF' },
+  ];
+  function dcThemeFor(choice, dayNum) {
+    if (choice && choice !== 'auto') { for (var i = 0; i < DC_THEMES.length; i++) if (DC_THEMES[i].id === choice) return DC_THEMES[i]; }
+    var n = Math.max(1, dayNum || 1);
+    return DC_THEMES[(n - 1) % DC_THEMES.length];
+  }
+  function dcHexA(hex, a) {
+    var h = hex.replace('#', ''); return 'rgba(' + parseInt(h.slice(0, 2), 16) + ',' + parseInt(h.slice(2, 4), 16) + ',' + parseInt(h.slice(4, 6), 16) + ',' + a + ')';
+  }
+
   var dcLogo = null;
   function dcWrap(ctx, text, maxW) {
     var words = String(text).split(/\s+/), lines = [], line = '';
@@ -1268,8 +1297,9 @@
     var go = function () {
       var ctx = c.getContext('2d'), S = 1080, P = 72;
       ctx.textBaseline = 'alphabetic';
-      ctx.fillStyle = '#0d0a1c'; ctx.fillRect(0, 0, S, S);
-      var g1 = ctx.createRadialGradient(S * 0.15, S * 0.22, 0, S * 0.15, S * 0.22, 620); g1.addColorStop(0, 'rgba(139,92,246,0.30)'); g1.addColorStop(1, 'rgba(139,92,246,0)');
+      var TH = dcThemeFor(dc.theme, dcDayNumber(dc.batch, iso));
+      ctx.fillStyle = TH.bg; ctx.fillRect(0, 0, S, S);
+      var g1 = ctx.createRadialGradient(S * 0.15, S * 0.22, 0, S * 0.15, S * 0.22, 620); g1.addColorStop(0, 'rgba(' + TH.glow + ',0.30)'); g1.addColorStop(1, 'rgba(' + TH.glow + ',0)');
       ctx.fillStyle = g1; ctx.fillRect(0, 0, S, S);
       var g2 = ctx.createRadialGradient(S, S, 0, S, S, 720); g2.addColorStop(0, 'rgba(251,191,36,0.14)'); g2.addColorStop(1, 'rgba(251,191,36,0)');
       ctx.fillStyle = g2; ctx.fillRect(0, 0, S, S);
@@ -1284,17 +1314,17 @@
       ctx.font = '600 26px ' + FONT;
       var pill = DC_BATCHES[dc.batch].label, pw = ctx.measureText(pill).width + 44;
       dcRoundRect(ctx, S - P - pw, P + 2, pw, 50, 25);
-      ctx.fillStyle = 'rgba(167,139,250,0.16)'; ctx.fill(); ctx.strokeStyle = 'rgba(167,139,250,0.45)'; ctx.lineWidth = 2; ctx.stroke();
-      ctx.fillStyle = '#E9E2FF'; ctx.textBaseline = 'middle'; ctx.fillText(pill, S - P - pw + 22, P + 28); ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = dcHexA(TH.accent, 0.16); ctx.fill(); ctx.strokeStyle = dcHexA(TH.accent, 0.45); ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = TH.pillText; ctx.textBaseline = 'middle'; ctx.fillText(pill, S - P - pw + 22, P + 28); ctx.textBaseline = 'alphabetic';
 
       // Hero: giant day number (left) + two stat boxes (right).
       var heroTop = 190;
-      ctx.fillStyle = '#C4B5FD'; ctx.font = '600 34px ' + FONT;
+      ctx.fillStyle = TH.soft; ctx.font = '600 34px ' + FONT;
       ctx.fillText(dayNum > 0 ? 'Day' : 'Starting', P, heroTop + 30);
       var numText = dayNum > 0 ? String(dayNum) : 'soon';
       ctx.font = '800 172px ' + FONT;
       var ng = ctx.createLinearGradient(P, heroTop, P + 320, heroTop + 190);
-      ng.addColorStop(0, '#FFFFFF'); ng.addColorStop(0.55, '#E9D5FF'); ng.addColorStop(1, '#A78BFA');
+      ng.addColorStop(0, '#FFFFFF'); ng.addColorStop(0.55, TH.light); ng.addColorStop(1, TH.accent);
       ctx.fillStyle = ng; ctx.fillText(numText, P - 6, heroTop + 190);
       var nw = ctx.measureText(numText).width;
       if (dayNum > 0) { ctx.font = '600 40px ' + FONT; ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.fillText('/ ' + len, P + nw + 6, heroTop + 190); }
@@ -1333,14 +1363,14 @@
       var frac = Math.max(0.02, Math.min(1, dayNum / len));
       dcRoundRect(ctx, barX0, trackY - barH / 2, barX1 - barX0, barH, barH / 2); ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fill();
       var fx = barX0 + (barX1 - barX0) * frac;
-      var fg = ctx.createLinearGradient(barX0, 0, barX1, 0); fg.addColorStop(0, '#8B5CF6'); fg.addColorStop(0.6, '#EC4899'); fg.addColorStop(1, '#FBBF24');
+      var fg = ctx.createLinearGradient(barX0, 0, barX1, 0); fg.addColorStop(0, TH.deep); fg.addColorStop(0.6, TH.accent); fg.addColorStop(1, '#FBBF24');
       dcRoundRect(ctx, barX0, trackY - barH / 2, Math.max(barH, fx - barX0), barH, barH / 2); ctx.fillStyle = fg; ctx.fill();
       // milestone ticks every 30 days
       for (var m = 30; m < len; m += 30) { var mx = barX0 + (barX1 - barX0) * (m / len); ctx.fillStyle = m / len <= frac ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.18)'; ctx.fillRect(mx - 1, trackY - 13, 2, 26); }
       var halo = ctx.createRadialGradient(fx, trackY, 0, fx, trackY, 30); halo.addColorStop(0, 'rgba(255,255,255,0.45)'); halo.addColorStop(1, 'rgba(255,255,255,0)');
       ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(fx, trackY, 30, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.arc(fx, trackY, 13, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = '#A78BFA'; ctx.lineWidth = 5; ctx.stroke();
+      ctx.strokeStyle = TH.accent; ctx.lineWidth = 5; ctx.stroke();
       ctx.font = '600 22px ' + FONT; ctx.fillStyle = 'rgba(255,255,255,0.75)';
       var hereLbl = dayNum > 0 ? 'You are here · Day ' + dayNum : 'Day 1 is coming';
       var hlw = ctx.measureText(hereLbl).width;
@@ -1420,7 +1450,7 @@
       // Footer.
       ctx.font = '500 26px ' + FONT; ctx.fillStyle = 'rgba(255,255,255,0.7)';
       ctx.fillText('Follow the free roadmap, a task every day', P, footY);
-      ctx.font = '700 26px ' + FONT; ctx.fillStyle = '#C4B5FD';
+      ctx.font = '700 26px ' + FONT; ctx.fillStyle = TH.soft;
       var url = 'taai.live';
       ctx.fillText(url, S - P - ctx.measureText(url).width, footY);
     };
