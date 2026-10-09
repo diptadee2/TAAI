@@ -587,14 +587,38 @@ Push reaches **both** `github.com/taai2025/TAAI` (primary) and `github.com/dipta
 - **Home financial assistance card**: priority now reads "recent GATE DA droppers" (was "GATE droppers"), and its two em dashes became full stops.
 - **Pomodoro Start/Reset/Skip redesigned 2026-10-03** ("too ai slop"): Start/Pause is a solid 46px rounded-rectangle in the picked theme's middle color (`--pomo-g2`, break color during breaks) with dark text, no gradient or glow; Reset and Skip are 46px round outline icon buttons either side (labels kept for screen readers, `title` tooltips), markup reordered to Reset, Start, Skip. Other `.pomo-btn-primary` buttons (Save changes, gate buttons, About Save) take the same solid style.
 
-## Open items as of 2026-10-02 (pick up here)
+## Open items as of 2026-10-09 (pick up here)
 
-- **Not yet deployed**: everything from 2026-10-02 (the 120-day plan card and marks, credit pill, DB-backed task links, locked previews, home-page card and anti-slop changes, the Progress by subject marks). The user deploys themselves; check `curl https://taai.live/api/version` against `CLIENT_VERSION` to see what's live.
-- **Task links**: live from `schedule_task_links` (58 rows for batch D, loaded 2026-10-02). Test-series ("Test N") links are still to come from the user; Python tasks have none. Add with `npm run load-task-links -- --batch=D <csv>`. Once confirmed working in production, `/course-links.js` (now only a fallback) can be deleted along with its `<script>` tag.
-- **Home-page anti-slop audit**: items 2 (labels above headings), 5 (emoji/glyph icons) and 6 (uppercase micro-labels, decorative glows, mobile-menu stripe) are done; item 1 (about 22 forever-looping animations), item 3 (animated gradient text in every heading) and item 4 (decorative frosted blur, 14 places) were deliberately not done. Dead CSS on the home page (`.stat-*`, `.faculty-*`, `.instructor-stat*`) is unused and still trips the impeccable detector; cleanup offered, not requested.
-- **"No scroll animations on mobile"** (home and courses): could not reproduce in Chrome or WebKit (iPhone 13 profile), local or live; animations measurably play. Asked the user which phone/browser and whether Reduce Motion is on; told to leave it for now. Playwright's WebKit build (~78 MB) is cached at `~/Library/Caches/ms-playwright` from that investigation.
-- **"Activity by hour" bar chart**: still an open question whether to keep it as an all-time histogram, make it recency-based, or remove it (see its own entry).
-- **Edge Function for tracker-data**: shadow test ended 2026-10-07, not faster, mode `'off'` (see its entry). Leftover file and `edge_shadow_log` table can be removed.
+**Deploy timing (the user deploys; check `curl https://taai.live/api/version` against `CLIENT_VERSION` to see what's live):**
+- **Before 00:00 IST Oct 11**: the sold-out 2027 card's "Final price ₹15,000" and the "Last day to enrol Oct 10" countdown need to be live.
+- **Before 00:00 IST Oct 21**: `pricing-2028-cutover.js` (2028 card 9999 to 11999, 33% to 20%) and the 2028 offer line hiding itself both need to be deployed.
+- Everything since 2026-10-02 is committed and pushed but not necessarily deployed. The biggest pieces: the leaderboard cache, the refund policy, the /team Day card tab, Oct 9 = Day 1 for 120 Days, and the mobile courses-page work.
+
+**Watch after deploying:**
+- **Supabase Log Ingestion** (was 3.35 GB / 1 GB, enforcement from early 2027): the leaderboard cache (see "Leaderboard polls share a 30s server-side cache") should cut it sharply. If it's still high, check Supabase Logs > API Gateway for the top request paths. Next candidates: `tracker-data` page loads, `pomo-active` syncs.
+- **Refund policy** (`/refund-policy`): plain-language draft, not legal advice. Have a lawyer read it, and make sure learn.taai.live's own checkout terms say the same thing.
+- **Day card captions**: the prompt template is editable in /team (stored in `site_settings.daycard_prompt_template`, column added 2026-10-09). If it's changed, the facts in it must stay true (the 100 pe 100% off refund is for GATE 2028 Full Course students only; AIR 100 itself doesn't qualify).
+
+**Open questions for the user:**
+- **"(Done)" in batch D task text**: e.g. Oct 10 "Mod 1: Lec 6 to 10 (Done)", Oct 20 "Mod 5: Covariance Lec 1-6 (Done)". The Day card strips it, but the tracker still shows it. Is it a leftover from the schedule PDF?
+- **"Marks completed so far" on the Day card**: cancelled. Revisit only with a method chosen by the user (subjects finished, or pace by days). Never use the tracker's formula there: it divides by the loaded part of the schedule only (Oct 9 to Nov 15 now), so it would claim 70/70 by Nov 15.
+- **Task links**: still no "Test N" links (the user will provide them) and no Python links. `/course-links.js` is only a fallback now and can be deleted once the DB links are confirmed in production.
+- **"Activity by hour" chart**: keep as an all-time histogram, make it recency-based, or remove (see its own entry).
+- **Edge Function for tracker-data**: shadow test ended, not faster, mode `'off'`. The leftover file and `edge_shadow_log` table can be removed.
+- **Home-page anti-slop audit**: items 1 (forever-looping animations), 3 (animated gradient heading text) and 4 (decorative frosted blur) deliberately not done. Dead CSS (`.stat-*`, `.faculty-*`, `.instructor-stat*`) is unused; cleanup offered, not requested.
+
+**Data operations done by hand (2026-10-09):**
+- **Progress transfer** from `ganeshdeulkar1196@gmail.com` to `ganesh.deulkar1509@gmail.com` (his registered email): the one missing task tick copied over; `pomodoro_stats` (3 weeks) and `pomo_daily_sessions` (6 days) moved, not copied, so he doesn't appear twice on the leaderboard; `all_time_minutes` 1240 moved (old account set to 0). The old account's own rows were left in place. He needs to use "Not you?" on the tracker and sign in with the registered email. For future transfers, use the same pattern: inspect both accounts first, copy missing ticks, move (never copy) focus rows, guard every update on the values just read.
+
+**Working notes for this environment (things that cost time to rediscover):**
+- **Shell `grep`**: it sometimes prints nothing, even for text that's definitely there (seen on `team/team.js`, `progress.js`). That silently breaks `grep ... && git commit` chains. Use Python (`python3 -c "..."`) to search, and verify the result before chaining a commit.
+- **Playwright WebKit**: the project's `playwright-core` can't launch the cached WebKit build (`~/Library/Caches/ms-playwright/webkit-2359`). Install `playwright-core@1.63` in a throwaway folder in the scratchpad and run WebKit tests from there. Chromium works with the project's copy plus `executablePath` pointing at `chromium-1234`.
+- **/team locally**: `localhost:8080/team/` skips Identity (`DEV_BYPASS`), and admin functions accept requests under `netlify dev` (`NETLIFY_DEV`). Writes still hit the real production database.
+- **Comparing old and new function code**: copy the old file to the scratchpad, rewrite its `./lib/supabase.js` import to an absolute path, and call both `handler()`s with the same event. Strip second-by-second fields (`pomo_last_seen_at`, `liveCount`) before comparing.
+- **Faking the date for date-gated UI**: `page.clock.install({ time: new Date('2026-10-11T01:00:00+05:30') })` before `goto`, then `page.clock.runFor(...)`.
+- **Courses page smooth scroll**: set `document.documentElement.style.scrollBehavior = 'auto'` before measuring positions or taking screenshots after scrolling; otherwise they can be caught mid-scroll.
+- **Skills**: installed with `npx skills add <owner/repo> -s '*' -a claude-code -y` into `.claude/skills/` (untracked in git). `agricidaniel/claude-ads` (34 `ads-*` skills) was added 2026-10-09; `ads-create` shaped the Day card poster.
+- **Commit messages**: no `Co-Authored-By` trailer (the user's rule overrides the tooling reminder). Never stage `package.json` / `package-lock.json` (two deps added outside these sessions).
 
 ## Future considerations (not started, no code exists for this yet)
 
