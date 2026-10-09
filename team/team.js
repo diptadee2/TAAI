@@ -1105,7 +1105,9 @@
       '1. One intriguing first line that makes someone stop scrolling.',
       '2. One or two short lines about the roadmap and the 100 pe 100% off offer.',
       '3. These two links, each on its own line, exactly:',
-      '   Roadmap (free): https://taai.live/gate-da-progress-tracker?batch=' + batch,
+      // No ?batch=: visitors without an account already land on 120 Days -
+      // 70 Marks by default (2026-10-09, direct request).
+      '   Roadmap (free): https://taai.live/gate-da-progress-tracker',
       '   Course: https://taai.live/gate-da-courses',
       '4. At most 3 hashtags on the last line.',
       '',
