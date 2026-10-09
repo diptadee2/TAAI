@@ -1191,7 +1191,6 @@
       var today = dcTodayIST();
       var which = iso === today ? "Today's roadmap" : iso === dcAddDays(today, 1) ? "Tomorrow's roadmap" : 'Roadmap';
       var dateShort = new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).replace(/^(\w+) /, '$1, ');
-      var daysToGate = Math.max(0, dcDiffDays(DC_EXAM_DATE, iso));
 
       // Header: logo + batch pill.
       if (dcLogo && dcLogo.complete && dcLogo.naturalWidth) ctx.drawImage(dcLogo, 104, 68, 150, 80, P, P, 52 * 150 / 80, 52);
@@ -1215,13 +1214,22 @@
       ctx.font = '600 30px ' + FONT; ctx.fillStyle = '#FFFFFF';
       ctx.fillText(which + ' · ' + dateShort, P, heroTop + 280);
 
-      var bx = 664, bw2 = S - P - bx, bh = 128;
-      [[(dc.batch === 'D' ? '70' : '85'), 'marks target'], [String(daysToGate), 'days to GATE DA 2027']].forEach(function (st, i2) {
-        var by = heroTop + 8 + i2 * (bh + 16);
-        dcRoundRect(ctx, bx, by, bw2, bh, 20);
-        ctx.fillStyle = 'rgba(255,255,255,0.05)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.13)'; ctx.lineWidth = 1.5; ctx.stroke();
-        ctx.fillStyle = '#FFFFFF'; ctx.font = '800 58px ' + FONT; ctx.fillText(st[0], bx + 26, by + 70);
-        ctx.fillStyle = 'rgba(255,255,255,0.62)'; ctx.font = '500 24px ' + FONT; ctx.fillText(st[1], bx + 26, by + 106);
+      // No stat boxes (2026-10-09, "too many times mentioned"): the pill
+      // already says 70 marks and "Day N / 120" already says how far in.
+      // Instead, what the roadmap covers by its end (same day: "by the time
+      // you have finished the roadmap you will have completed lectures,
+      // revision, quizzes and tests").
+      var bx = 640, by0 = heroTop + 6, bw3 = S - P - bx, bh3 = 262;
+      dcRoundRect(ctx, bx, by0, bw3, bh3, 22);
+      ctx.fillStyle = 'rgba(255,255,255,0.05)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.13)'; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.65)'; ctx.font = '600 24px ' + FONT;
+      ctx.fillText('Done before the exam:', bx + 26, by0 + 48);
+      ['Lectures', 'Revision', 'Quizzes', 'Tests'].forEach(function (lbl, i3) {
+        var ly2 = by0 + 104 + i3 * 46;
+        ctx.strokeStyle = '#34D399'; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        ctx.beginPath(); ctx.moveTo(bx + 28, ly2 - 10); ctx.lineTo(bx + 37, ly2 - 1); ctx.lineTo(bx + 54, ly2 - 20); ctx.stroke();
+        ctx.lineCap = 'butt'; ctx.lineJoin = 'miter';
+        ctx.fillStyle = '#FFFFFF'; ctx.font = '600 30px ' + FONT; ctx.fillText(lbl, bx + 70, ly2);
       });
 
       // Offer panel + footer from the bottom up.
@@ -1232,7 +1240,7 @@
       var top = heroTop + 322, bottom = panelY - 26;
       ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(P, top - 22); ctx.lineTo(S - P, top - 22); ctx.stroke();
       var list = tasks || [];
-      var sizes = [[24, 36], [22, 32], [20, 28], [18, 25], [16, 22]], pick = sizes[sizes.length - 1];
+      var sizes = [[26, 40], [24, 36], [22, 32], [20, 28], [18, 25], [16, 22]], pick = sizes[sizes.length - 1];
       var maxW = S - 2 * P - 40;
       for (var k = 0; k < sizes.length; k++) {
         var hs = 0;

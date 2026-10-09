@@ -27,6 +27,7 @@ Voice: sounds like a real person (a mentor or a fellow aspirant) typing quickly,
 Structure:
 - One intriguing first line that makes someone stop scrolling (a curious or slightly provocative thought tied to the day or the 70-mark goal). Not a question about "are you ready".
 - One or two short lines that hint at the roadmap and mention the "100 pe 100% off" challenge in plain words (AIR under 100 in GATE DA 2027 gets the GATE 2028 course fee back). You may use the fact that 65 marks got AIR 90 in GATE DA 2026.
+- Optionally, a line on what finishing the roadmap means: by Day 120 you will have done the lectures, revision, quizzes and tests, so there's less to worry about before the real exam.
 - Then the two links, each on its own line, exactly:
   Roadmap (free): ${TRACKER_URL}
   Course: ${COURSES_URL}
@@ -34,6 +35,7 @@ Structure:
 
 Rules:
 - Under 50 words before the links (hard limit). Two or three short lines is ideal.
+- The 100 pe 100% off refund is for students of the GATE 2028 Full Course (on the course page). Never say or imply that following or finishing the free roadmap earns it.
 - Use ONLY the facts given. Never invent prices, deadlines, ranks, student numbers, results, quotes, or claims about how long the tasks take, how hard or easy a day is, or what most students do.
 - Say today/tomorrow/the date exactly as described in the user message; never call a future day "today".
 - Never use em dashes or en dashes. At most 1 emoji, often none.
