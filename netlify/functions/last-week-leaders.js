@@ -14,20 +14,51 @@
 // folding it into both existing 60s polls means the meter gets live
 // updates with zero extra requests, instead of running its own separate
 // always-on poll for every viewer regardless of context.
-import { getSupabase, json, fetchLastWeekLeaders, fetchLiveCount } from './lib/supabase.js';
+//
+// 2026-10-09: rebuilt on lib/board-cache.js (see pomodoro-leaderboard.js):
+// the shared parts are computed at most once per 30s per function
+// instance, the viewer's rank is computed from the cached week (same "count
+// of eligible students with more minutes, plus one" rule as lib
+// fetchLastWeekLeaders), and only the viewer's own all-time minutes and
+// live status are looked up per request. Same response shape.
+import { getSupabase, json, fetchLiveStatusByEmail, fetchAllTimeMinutesByEmail } from './lib/supabase.js';
+import { getSharedLastWeek } from './lib/board-cache.js';
 
 export async function handler(event) {
   if (event.httpMethod !== 'GET') return json(405, { error: 'method not allowed' });
   const email = String(event.queryStringParameters?.email || '').trim().toLowerCase() || null;
   const supabase = getSupabase();
   try {
-    const [result, liveCount] = await Promise.all([
-      fetchLastWeekLeaders(supabase, email),
-      // Non-critical — a live-count hiccup (or, pre-migration, the table
-      // simply not existing yet) must never fail the champions card.
-      fetchLiveCount(supabase).catch(() => ({ count: 0, maxCount: 0 })),
-    ]);
-    return json(200, { ...result, liveCount });
+    const sh = await getSharedLastWeek(supabase);
+    const liveCount = sh.liveCount;
+    if (!sh.top.length) return json(200, { weekStart: sh.weekStart, leaders: [], viewerRank: null, liveCount });
+
+    const topEmails = sh.top.map((s) => s.email);
+    const viewerInTop = !!email && topEmails.includes(email);
+    let viewerLive = null, viewerAllTime = null;
+    if (email) {
+      const [live, allTime] = await Promise.all([fetchLiveStatusByEmail(supabase, [email]), viewerInTop ? Promise.resolve(null) : fetchAllTimeMinutesByEmail(supabase, [email])]);
+      viewerLive = live[email];
+      viewerAllTime = allTime ? (allTime[email] || 0) : null;
+    }
+
+    const leaders = sh.top.map((s) => ({
+      display_name: sh.nameByEmail[s.email] || 'Anonymous',
+      total_minutes: s.total_minutes,
+      all_time_minutes: sh.allTimeByEmail[s.email] || 0,
+      is_me: !!email && s.email === email,
+      previous_week_rank: sh.prevRankByEmail[s.email] ?? null,
+      ...(s.email === email && viewerLive ? viewerLive : sh.liveByEmail[s.email]),
+    }));
+
+    let viewerRank = null;
+    const viewerEligible = !!email && !sh.flagged.has(email);
+    const viewerStats = viewerEligible ? sh.eligibleWeekRows.find((r) => r.email === email) : null;
+    if (viewerStats && !viewerInTop) {
+      const greater = sh.eligibleWeekRows.filter((r) => r.total_minutes > viewerStats.total_minutes).length;
+      viewerRank = { rank: greater + 1, total_minutes: viewerStats.total_minutes, all_time_minutes: viewerAllTime || 0, previous_week_rank: sh.prevRankByEmail[email] ?? null, ...viewerLive };
+    }
+    return json(200, { weekStart: sh.weekStart, leaders, viewerRank, liveCount });
   } catch (err) {
     return json(500, { error: err.message });
   }
