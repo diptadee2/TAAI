@@ -1450,7 +1450,8 @@ section.page-hero { padding: 48px 0 44px; }
 
   /* Detailed projects map (2026-10-11), where "Built differently" used to
      sit; the short version moved to the home page. */
-  .pmap-section { padding: 80px 0 72px; background: var(--bg-soft); scroll-margin-top: 70px; }
+  #full-course-2028 { scroll-margin-top: 150px; }
+  .pmap-section { padding: 80px 0 72px; background: var(--bg-soft); scroll-margin-top: 80px; }
   .pmap-h2 { font-family: var(--font-display); font-size: clamp(28px, 3.4vw, 46px); font-weight: 600; letter-spacing: -0.03em; line-height: 1.05; color: var(--ink); margin: 0 0 14px; }
   .pmap-h2 em { font-style: normal; color: var(--purple); }
   .pmap-sub { font-size: 16.5px; line-height: 1.55; color: var(--ink-dim); max-width: 680px; margin: 0 0 36px; }
@@ -1507,8 +1508,12 @@ section.page-hero { padding: 48px 0 44px; }
   .pmap-uses span { color: var(--ink); }
   .pmap-detail-link { margin: 14px 0 0; padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, var(--sc, #7C3AED) 8%, #fff); font-size: 14px; line-height: 1.5; color: var(--ink); }
   .pmap-detail-link b { color: var(--sc, #7C3AED); }
-  .pmap-cta { display: inline-block; margin-top: 26px; font-size: 15px; font-weight: 600; color: #7C3AED; text-decoration: none; }
-  .pmap-cta:hover { text-decoration: underline; }
+  .pmap-cta { display: inline-flex; align-items: center; gap: 12px; margin-top: 28px; padding: 8px 8px 8px 22px; border-radius: 999px; background: var(--ink); color: #fff;
+    font-size: 15px; font-weight: 600; text-decoration: none; transition: background .2s; }
+  .pmap-cta:hover { background: #2A2340; }
+  .pmap-cta-arrow { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: #fff; color: var(--ink); transition: transform .25s ease; }
+  .pmap-cta:hover .pmap-cta-arrow { transform: translateY(2px); }
+  .pmap-cta:focus-visible { outline: 3px solid #A78BFA; outline-offset: 3px; }
   @media (max-width: 1279px) { .pmap { grid-template-columns: minmax(190px, 220px) 64px minmax(230px, 280px) 48px minmax(0, 1fr); } .pmap-subject-topics { font-size: 12px; } }
   @media (max-width: 1099px) {
     /* No subject column or lines: stages become a row of tabs, detail below. */
@@ -4118,7 +4123,23 @@ function ProjectsMap() {
             ))}
           </div>
         </div>
-        <a href="#full-course-2028" className="pmap-cta">See the GATE 2028 Full Course <span aria-hidden="true">↓</span></a>
+        <a href="#full-course-2028" className="pmap-cta" onClick={e => {
+          // Land with the card's "For GATE 2027 and 2028" label just below
+          // the sticky nav (a plain #hash jump left the card's top under it).
+          const card = document.getElementById('full-course-2028'); if (!card) return;
+          e.preventDefault();
+          // Land just past the bundles intro paragraph, so no half-visible
+          // line of it peeks out under the nav above the label.
+          const sub = document.querySelector('#combos .section-sub');
+          const navH = (document.querySelector('nav') || { getBoundingClientRect: () => ({ height: 70 }) }).getBoundingClientRect().height;
+          const anchorY = sub ? sub.getBoundingClientRect().bottom + 8 : card.getBoundingClientRect().top - 60;
+          const top = anchorY + window.scrollY - navH;
+          window.scrollTo({ top, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+          history.replaceState(null, '', '#full-course-2028');
+        }}>
+          <span>See the GATE 2028 Full Course</span>
+          <span className="pmap-cta-arrow" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M6 13l6 6 6-6" /></svg></span>
+        </a>
       </div>
     </section>
   );
@@ -4704,6 +4725,7 @@ function scrollToEl(hash) {
 })(8);
 // Same-page: intercept hash link clicks directly
 document.addEventListener('click', function(e) {
+  if (e.defaultPrevented) return; // a link that scrolled itself (e.g. the projects map button)
   var a = e.target.closest('a[href]');
   if (!a) return;
   var href = a.getAttribute('href');
