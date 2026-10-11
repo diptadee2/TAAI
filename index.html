@@ -1454,6 +1454,179 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
 /* Inline Discord links (withDiscordLink) */
 .discord-inline { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; text-decoration-color: rgba(88,101,242,0.6); transition: color .15s ease, text-decoration-color .15s ease; }
 .discord-inline:hover { color: #5865F2; text-decoration-color: #5865F2; }
+
+/* ===== Built differently (moved from the courses page, 2026-10-11) ===== */
+.why-strip { padding: 80px 0 92px; background: var(--bg-soft); position: relative; }
+.why-strip-h2 {
+  font-family: var(--font-display); font-size: clamp(30px, 3.8vw, 52px); font-weight: 600;
+  letter-spacing: -0.035em; line-height: 1; margin-bottom: 16px; color: var(--ink);
+}
+.why-strip-h2 em { font-style: normal; background: linear-gradient(120deg, var(--pink) 0%, var(--purple) 50%, var(--blue) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.why-strip-sub { font-size: 17px; color: var(--ink-dim); line-height: 1.5; max-width: 560px; margin-bottom: 48px; }
+  /* "From GATE prep to a portfolio" block in the Built differently
+     section (2026-10-11). Light card on the section's light background. */
+  .prep-projects { margin-top: 16px; padding: 24px 28px 24px; border-radius: 20px; background: #fff; border: 1px solid var(--line); scroll-margin-top: 90px; }
+  .prep-projects-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px 28px; flex-wrap: wrap; }
+  .prep-projects-head h3 { font-size: 21px; line-height: 1.25; color: var(--ink); margin: 0 0 6px; }
+  .prep-projects-head p { margin: 0; max-width: 640px; font-size: 15px; line-height: 1.55; color: var(--ink-dim); }
+  .prep-projects-flow { position: relative; display: grid; grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); gap: 16px 110px; align-items: center; margin-top: 20px; }
+  .prep-lines { position: absolute; inset: 0; overflow: visible; pointer-events: none; z-index: 0; }
+  .prep-line-path { fill: none; stroke: url(#prep-line-grad); stroke-width: 2; stroke-linecap: round; opacity: .55;
+    stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1s cubic-bezier(.4,0,.2,1) var(--d), opacity .2s; }
+  .prep-projects.is-shown .prep-line-path { stroke-dashoffset: 0; }
+  .prep-line.is-hot .prep-line-path { opacity: 1; stroke-width: 3; }
+  .prep-line-dot { fill: #DB2777; }
+  .prep-card, .prep-tiles { position: relative; z-index: 1; }
+  .prep-card { padding: 18px 20px; border-radius: 16px; background: #F7F3FF; border: 1px solid #E4DAFE; }
+  .prep-card-label { font-size: 12.5px; font-weight: 700; color: #7C3AED; }
+  .prep-card-title { margin-top: 2px; font-size: 16px; font-weight: 700; color: var(--ink); }
+  .prep-subjects { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+  .prep-subjects li { padding: 6px 10px; border-radius: 10px; background: #fff; border: 1px solid #E4DAFE; font-size: 14px; font-weight: 600; color: var(--ink);
+    transition: background .2s, border-color .2s, color .2s; }
+  .prep-subjects li.is-lit { background: #7C3AED; border-color: #7C3AED; color: #fff; }
+  .prep-tiles { display: flex; flex-direction: column; gap: 10px; }
+  .project-tile { --pc: #D97706; display: flex; align-items: center; gap: 14px; padding: 10px 14px; border-radius: 14px; background: #fff;
+    border: 1px solid var(--line); opacity: 0; transform: translateX(12px); transition: opacity .5s ease var(--d), transform .5s ease var(--d), border-color .2s; }
+  .prep-projects.is-shown .project-tile { opacity: 1; transform: none; }
+  .project-tile:hover { border-color: var(--pc); }
+  .project-tile--cv { --pc: #DB2777; }
+  .project-tile--llm { --pc: #7C3AED; }
+  .project-art { position: relative; flex: 0 0 auto; width: 76px; height: 54px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    color: var(--pc); background: #F6F6F8; border: 1px solid var(--line);
+    background: color-mix(in srgb, var(--pc) 9%, #fff); border: 1px solid color-mix(in srgb, var(--pc) 26%, #fff); }
+  .project-count { position: absolute; top: -8px; right: -8px; font-size: 11.5px; font-weight: 800; line-height: 1; color: #fff;
+    padding: 4px 6px; border-radius: 999px; background: var(--pc); font-variant-numeric: tabular-nums; }
+  .project-text { min-width: 0; }
+  .project-title { font-weight: 700; font-size: 16px; color: var(--ink); line-height: 1.25; }
+  .project-caption { margin-top: 3px; font-size: 14px; line-height: 1.45; color: var(--ink-dim); }
+  .project-uses { margin-top: 6px; font-size: 12.5px; font-weight: 600; color: var(--pc); }
+  .prep-projects-link { display: inline-block; margin-bottom: 4px; font-size: 14.5px; font-weight: 600; color: #7C3AED; text-decoration: none; }
+  .prep-projects-link:hover { text-decoration: underline; }
+  @media (max-width: 1024px) { .prep-projects-flow { gap: 20px 72px; grid-template-columns: minmax(200px, 260px) minmax(0, 1fr); } }
+  @media (max-width: 768px) {
+    .prep-projects { padding: 22px 18px 20px; margin-top: 0; }
+    .prep-projects-head h3 { font-size: 20px; }
+    .prep-projects-flow { grid-template-columns: 1fr; gap: 26px; }
+    .prep-subjects { flex-direction: row; flex-wrap: wrap; }
+    .prep-tiles { padding-left: 22px; }
+    .project-tile { transform: translateY(10px); }
+  }
+  @media (max-width: 479px) {
+    .project-tile { gap: 12px; padding: 12px; }
+    .project-art { width: 64px; height: 50px; }
+    .project-art svg { width: 54px; height: 40px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .prep-line-path, .project-tile { transition: none; }
+    .prep-line-dot { display: none; }
+  }
+
+  /* "Built differently" redesign (2026-10-11): three illustrated cards
+     in one row. Light cards on the section's light background, matching
+     the earlier light-card pass; old .why-pillar CSS is no longer used. */
+  .bd-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 28px; }
+  .bd-card { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 24px 24px 22px; display: flex; flex-direction: column; }
+  .bd-head { display: flex; align-items: center; gap: 10px; }
+  .bd-icon { display: inline-flex; width: 26px; height: 26px; }
+  .bd-icon svg { width: 26px; height: 26px; }
+  .bd-card--spec .bd-icon { color: #7C3AED; } .bd-card--vis .bd-icon { color: #DB2777; } .bd-card--res .bd-icon { color: #2563EB; }
+  .bd-head h3 { margin: 0; font-size: 19px; line-height: 1.25; color: var(--ink); }
+  .bd-sub { margin: 8px 0 0; font-size: 14.5px; line-height: 1.55; color: var(--ink-dim); }
+  .bd-compare-label { margin-top: 16px; font-size: 12.5px; font-weight: 700; color: #DB2777; }
+  .bd-compare { margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .bd-paper { display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 12px; min-width: 0; }
+  .bd-paper-tag { font-size: 12px; font-weight: 800; margin-bottom: 2px; }
+  .bd-chip { font-size: 12.5px; font-weight: 600; padding: 5px 8px; border-radius: 8px; background: #fff; white-space: nowrap; }
+  .bd-paper--cse { background: #F5F5F7; border: 1px dashed #D1D5DB; }
+  .bd-paper--cse .bd-paper-tag { color: #9CA3AF; }
+  .bd-paper--cse .bd-chip { color: #9CA3AF; text-decoration: line-through; text-decoration-color: rgba(156,163,175,.7); }
+  .bd-paper--da { background: #F3EDFF; border: 1px solid #DDD0FD; }
+  .bd-paper--da .bd-paper-tag { color: #7C3AED; }
+  .bd-paper--da .bd-chip { color: #5B21B6; }
+  .bd-compare-note { margin-top: 10px; font-size: 13px; line-height: 1.45; color: var(--ink-dim); }
+  .bd-visuals { margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+  .bd-visual-art { height: 58px; border-radius: 12px; background: #FDF2F8; border: 1px solid #FBCFE8; color: #DB2777; display: flex; align-items: center; justify-content: center; }
+  .bd-visual-term { margin-top: 7px; font-size: 13.5px; font-weight: 700; color: var(--ink); }
+  .bd-visual-meaning { font-size: 12.5px; line-height: 1.4; color: var(--ink-dim); }
+  .bd-admits { margin-top: 18px; display: grid; grid-template-columns: 1fr; gap: 10px; }
+  .bd-admit { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; background: #F5F8FF; border: 1px solid #DBE6FE; min-width: 0; }
+  .bd-admit-mono { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; background: #2563EB; color: #fff; font-size: 13px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center; }
+  .bd-admit-text { display: flex; flex-direction: row; flex-wrap: wrap; align-items: baseline; column-gap: 8px; min-width: 0; line-height: 1.3; }
+  .bd-admit-text b { font-size: 13.5px; color: var(--ink); }
+  .bd-admit-text span { font-size: 12px; color: var(--ink-dim); }
+  @media (max-width: 1099px) {
+    .bd-grid { grid-template-columns: 1fr 1fr; }
+    .bd-card--spec { grid-column: 1 / -1; }
+    .bd-card--spec .bd-compare { max-width: 560px; }
+  }
+  @media (max-width: 480px) {
+    .bd-paper--cse, .bd-paper--da { transform: none; }
+    .bd-paper { padding: 8px; }
+    .bd-chip { white-space: normal; font-size: 12px; padding: 5px 7px; align-items: flex-start; }
+    .bd-compare { gap: 6px; }
+  }
+  @media (max-width: 768px) {
+    .why-strip { padding: 56px 0 44px; }
+    .why-strip-sub { margin-bottom: 8px; }
+    .bd-grid { grid-template-columns: 1fr; }
+    .bd-card--spec { grid-column: auto; }
+    .bd-card { padding: 20px 18px; }
+  }
+
+  /* Richer look for the three cards (2026-10-11: "the layout is good, the
+     designs are a bit bland"). Same idiom as the home offer cards: a faint
+     flat accent tint, accent border, solid accent icon tile. Drawings
+     animate once when the card is revealed (.visible from the shared
+     reveal observer); reduced motion shows them finished. */
+  .bd-card { background: linear-gradient(rgba(var(--ac-rgb), .045), rgba(var(--ac-rgb), .045)), #fff; border-color: rgba(var(--ac-rgb), .2); transition-property: opacity, transform, border-color; }
+  .bd-card:hover { border-color: rgba(var(--ac-rgb), .45); }
+  .bd-icon { width: 38px; height: 38px; border-radius: 11px; align-items: center; justify-content: center; background: var(--ac); color: #fff !important;
+    box-shadow: 0 6px 14px -6px rgba(var(--ac-rgb), .7); }
+  .bd-icon svg { width: 22px; height: 22px; }
+  .bd-head { gap: 12px; }
+  .bd-head h3 { font-size: 20px; }
+  /* Papers */
+  .bd-compare { grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; }
+  .bd-compare-arrow { color: var(--ac); display: inline-flex; }
+  .bd-paper { box-shadow: 0 1px 0 rgba(17,24,39,.04), 0 8px 16px -10px rgba(17,24,39,.18); }
+  .bd-paper--cse { transform: rotate(-2.5deg); opacity: .85; }
+  .bd-paper--da { transform: rotate(1.5deg); background: #fff; border: 1.5px solid rgba(var(--ac-rgb), .45); }
+  .bd-paper--da .bd-chip { background: rgba(var(--ac-rgb), .08); }
+  .bd-chip { display: flex; align-items: center; gap: 6px; }
+  .bd-mark { font-size: 11px; font-weight: 800; line-height: 1; }
+  .bd-paper--cse .bd-mark { color: #EF4444; text-decoration: none; }
+  .bd-paper--da .bd-mark { color: #16A34A; }
+  /* Visual tiles: graph paper */
+  .bd-visual-art { background-color: #fff; border-color: rgba(var(--ac-rgb), .25);
+    background-image: linear-gradient(rgba(var(--ac-rgb), .08) 1px, transparent 1px), linear-gradient(90deg, rgba(var(--ac-rgb), .08) 1px, transparent 1px);
+    background-size: 9px 9px; background-position: -1px -1px; transition: border-color .2s; }
+  .bd-visual:hover .bd-visual-art { border-color: rgba(var(--ac-rgb), .6); }
+  .bd-visual-term { color: var(--ink); }
+  .va-draw { stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset .7s cubic-bezier(.4,0,.2,1) var(--vd, 0s); }
+  .va-pop { opacity: 0; transition: opacity .4s ease var(--vd, 0s); }
+  .bd-play .va-draw { stroke-dashoffset: 0; }
+  .bd-play .va-pop { opacity: 1; }
+  .va-ball { opacity: 0; transform: translate(-22px, -16px); }
+  .bd-play .va-ball { animation: va-roll 1.3s cubic-bezier(.45,0,.25,1) .7s forwards; }
+  .bd-visual:hover .va-ball { animation: va-roll 1.1s cubic-bezier(.45,0,.25,1) forwards; }
+  @keyframes va-roll { 0% { opacity: 1; transform: translate(-22px, -16px); } 45% { transform: translate(-13px, -4px); } 75% { transform: translate(-5px, 0); } 100% { opacity: 1; transform: none; } }
+  /* Admits */
+  .bd-admit { background: #fff; border-color: rgba(var(--ac-rgb), .18); opacity: 0; transform: translateY(6px); transition: opacity .45s ease var(--vd), transform .45s ease var(--vd), border-color .2s; }
+  .bd-play .bd-admit { opacity: 1; transform: none; }
+  .bd-admit:hover { border-color: var(--mc); }
+  .bd-admit-mono { background: var(--mc); box-shadow: 0 4px 10px -4px var(--mc); }
+  .bd-admit-text { flex: 1; }
+  .bd-admit-tick { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: #DCFCE7; color: #16A34A; }
+  .prep-projects { --ac: #D97706; --ac-rgb: 217,119,6; background: linear-gradient(rgba(var(--ac-rgb), .04), rgba(var(--ac-rgb), .04)), #fff; border-color: rgba(var(--ac-rgb), .22); }
+  .prep-projects-title { display: grid; grid-template-columns: auto 1fr; column-gap: 12px; align-items: center; }
+  .prep-projects-title p { grid-column: 1 / -1; margin-top: 8px; }
+  @media (prefers-reduced-motion: reduce) {
+    .va-draw { stroke-dashoffset: 0; transition: none; }
+    .va-pop, .bd-admit { opacity: 1; transform: none; transition: none; }
+    .va-ball, .bd-play .va-ball, .bd-visual:hover .va-ball { opacity: 1; transform: none; animation: none; }
+  }
+
 </style>
 <script type="application/ld+json">
 {
@@ -2083,165 +2256,329 @@ function Offer() {
 }
 
 // ============ WHY TAAI ============
-const WHY_FEATURES = [
+// "Built differently" section, moved here from the courses page
+// (2026-10-11: "move this whole section to the home page towards the top
+// as a selling point"); replaces the old "Not coaching" tabs. The courses
+// page now has the detailed projects map instead. Keep the copy in sync
+// with the courses page's WHY_PILLARS/projects if either changes.
+// The 2028 course's projects (same data as the courses page's COMBOS entry).
+const PROJECTS_2028 = [
+  { count: 2, art: 'ml', title: 'Machine learning', caption: 'Real business data, from raw dataset to working model', uses: ['Probability & Statistics', 'Linear Algebra', 'Python'] },
+  { count: 1, art: 'cv', title: 'Computer vision', caption: 'A deep learning model that sees and labels images', uses: ['Linear Algebra', 'Calculus', 'Python'] },
+  { count: 2, art: 'llm', title: 'Large language models', caption: 'The skill AI teams are hiring for right now', uses: ['Probability & Statistics', 'Linear Algebra', 'Python'] },
+];
+
+const WHY_PILLARS = [
   {
-    icon: <Icon.Brain />,
-    grad: 'linear-gradient(135deg,var(--pink),var(--purple))',
-    color: '#FF7FB7',
-    label: 'Conceptual clarity.',
-    sub: 'Visual, intuition-first teaching',
-    title: <>Understand the <em style={{color:'var(--pink)'}}>why,</em><br />not just the formulas.</>,
-    desc: 'Every concept taught visually and intuitively. Builds the thinking ability that carries you through exams and IIT interviews, not just pattern matching.',
-    stat: null
+    rgb: '139,92,246',
+    icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5"/><circle cx="12" cy="12" r="4.5" stroke="currentColor" strokeWidth="1.5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>,
+    heading: 'GATE DA-Specific',
+    sub: 'Not repurposed CSE content. Built ground-up for the exact topics GATE DA tests, from scratch.',
+    // Featured/dominant pillar, not an arbitrary pick — this is the one
+    // claim that directly echoes the hero's own headline pitch ("Not
+    // repurposed CSE content" appears verbatim in both places), so
+    // giving it real visual weight reinforces the page's main thread
+    // instead of treating all three pillars as interchangeable. Breaks
+    // the flagged "three equal card columns" pattern with a reason tied
+    // to this page's own content, not just layout variety for its own sake.
+    //
+    // Shipped once as a tall stretched card first — real feedback ("too
+    // generic and negative space") called that out correctly: centering
+    // two lines of text in a much taller box just splits the dead space
+    // between top and bottom instead of removing it, and a bigger
+    // version of the same icon-badge-on-dark-card shape is still that
+    // same generic shape. Rebuilt as a full-width horizontal banner
+    // instead — a genuinely different silhouette, not a resize — with
+    // real subject chips (its own actual specificity claim made
+    // concrete, same real subjects the Individual-courses section below
+    // already lists, not invented filler) giving the wider box real
+    // content to hold instead of empty space.
+    featured: true,
+    // Right side (2026-10-04): replaced the subject pills, then a struck-
+    // through CSE-vs-DA topic list (removed on request); now just the note
+    // that even the maths differs.
+    contrast: {
+      mathsLabel: 'Even the maths is different',
+      maths: 'CSE papers lean on discrete maths and quick formulas. The IITs set GATE DA maths deeper: probability, statistics and linear algebra, asked the way machine learning uses them.',
+      // Drawn as a two-row comparison in the redesigned section (2026-10-11).
+      cse: ['Discrete maths', 'Quick formulas'],
+      da: ['Probability', 'Statistics', 'Linear algebra'],
+      daNote: 'Set deeper by the IITs, asked the way machine learning uses them',
+    },
   },
   {
-    icon: <Icon.Target />,
-    grad: 'linear-gradient(135deg,var(--purple),var(--blue))',
-    color: '#8B5CF6',
-    label: 'GATE-level practice.',
-    sub: '1,000+ weekly quiz questions',
-    title: <>Quality over<br /><em style={{color:'var(--lilac)'}}>quantity.</em></>,
-    desc: 'Conceptual, exam-relevant questions with solutions. Every question earns its place, no filler, no repetition.',
-    stat: { num: '1,000+', lbl: 'weekly quiz questions' }
+    rgb: '236,72,153',
+    // Eye icon (was a map pin, which didn't say "visual"), 2026-10-04.
+    icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5"/></svg>,
+    heading: 'Visual & Conceptual',
+    sub: 'Mathematics taught for understanding, not memorisation, intuition-first with clear, grounded visuals.',
+    // Concrete examples of the "visual" claim, filling what was an empty
+    // lower half (2026-10-04, "make this card better").
+    examples: [
+      ['Eigenvectors', 'directions a matrix only stretches', 'eigen'],
+      ["Bayes' theorem", 'a tree of outcomes', 'bayes'],
+      ['Gradient descent', 'walking downhill on a loss surface', 'descent'],
+      ['PCA', 'the directions data spreads out most', 'pca'],
+    ],
   },
   {
-    icon: <Icon.Users />,
-    grad: 'linear-gradient(135deg,var(--blue),var(--purple))',
-    color: '#4D8BFF',
-    label: 'End-to-end guidance.',
-    sub: 'From prep to IIT admission',
-    title: <>With you until<br /><em style={{color:'#7EB3FF'}}>IIT admission.</em></>,
-    desc: 'From your first concept to your final interview, guidance through GATE, institute selection, and written tests at top IITs.'
-  },
-  {
-    icon: <Icon.Discord />,
-    grad: 'linear-gradient(135deg,var(--pink),#FF9ECB)',
-    color: '#FF7FB7',
-    label: 'Active community.',
-    sub: 'Discord · any hour',
-    title: <>Real help at<br /><em style={{color:'var(--pink)'}}>any hour.</em></>,
-    desc: 'Late-night doubt? Tricky question? A real community of mentors and toppers, not a bot. Instant resolution on Discord.',
-    stat: { num: '24/7', lbl: 'community support' }
+    rgb: '6,182,212',
+    icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M4 4V20H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M7 15L11 10L14 13L19 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><circle cx="19" cy="6" r="1.5" fill="currentColor"/></svg>,
+    heading: 'Proven Results',
+    sub: 'Every batch, students reach top institutions. Consistent outcomes, year after year.',
+    // Where students got in, from this page's own testimonials (JSON-LD
+    // reviews and the course testimonial cards), replacing the
+    // IIT/IISc/IIIT/NIT pills (2026-10-04). Ranks deliberately not shown
+    // (direct request: "don't include the airs").
+    examples: [
+      ['IIT Madras', 'M.Tech Data Science & AI', 'M'],
+      ['IIT Bombay', 'C-MInDS', 'B'],
+      ['IIT Delhi', 'MINDS', 'D'],
+      ['IISc', 'M.Tech AI', 'Sc'],
+    ],
+    examplesStyle: 'results',
   },
 ];
 
-function WhyUs() {
-  const [active, setActive] = React.useState(0);
-  const [isMobile, setIsMobile] = React.useState(window.matchMedia('(max-width: 1280px)').matches);
+// Small line drawings for the 2028 card's project tiles (2026-10-11).
+// Plain inline SVG in the tile's accent colour (currentColor), no images.
+function ProjectArt({ kind }) {
+  if (kind === 'ml') return (
+    <svg viewBox="0 0 64 48" width="64" height="48" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <path d="M6 6v36h52" strokeOpacity=".45" />
+      {[[13,35],[18,31],[22,33],[27,26],[31,28],[36,21],[40,23],[45,16],[50,18],[54,11]].map(([x, y], i) => <circle key={i} cx={x} cy={y} r="2.2" fill="currentColor" stroke="none" opacity=".75" />)}
+      <path d="M10 37 L56 10" strokeWidth="2.4" />
+    </svg>
+  );
+  if (kind === 'cv') return (
+    <svg viewBox="0 0 64 48" width="64" height="48" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="5" width="56" height="38" rx="5" strokeOpacity=".45" />
+      <circle cx="16" cy="15" r="3.5" strokeOpacity=".45" />
+      <path d="M8 40 L24 24 L33 32 L40 26 L56 40" strokeOpacity=".45" />
+      <rect x="29" y="17" width="20" height="18" rx="2" strokeDasharray="3 3" strokeWidth="2.2" />
+      <rect x="29" y="11" width="15" height="6" rx="1.5" fill="currentColor" stroke="none" />
+    </svg>
+  );
+  return (
+    <svg viewBox="0 0 64 48" width="64" height="48" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 9h30a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4H16l-6 5v-5H6a4 4 0 0 1-4-4v-8a4 4 0 0 1 4-4z" strokeOpacity=".45" />
+      <path d="M9 15h22M9 20h14" strokeOpacity=".45" />
+      <path d="M28 25h30a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4h-4v5l-6-5H28a4 4 0 0 1-4-4v-8a4 4 0 0 1 4-4z" />
+      <circle cx="34" cy="33" r="1.8" fill="currentColor" stroke="none" />
+      <circle cx="41" cy="33" r="1.8" fill="currentColor" stroke="none" />
+      <circle cx="48" cy="33" r="1.8" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
 
-  React.useEffect(() => {
-    const mq = window.matchMedia('(max-width: 1280px)');
-    const fn = e => setIsMobile(e.matches);
-    mq.addEventListener('change', fn);
-    return () => mq.removeEventListener('change', fn);
-  }, []);
-
-  // Keyboard navigation
-  React.useEffect(() => {
-    const onKey = e => {
-      if (e.key === 'ArrowUp')   setActive(a => Math.max(0, a - 1));
-      if (e.key === 'ArrowDown') setActive(a => Math.min(WHY_FEATURES.length - 1, a + 1));
+// "From GATE prep to a portfolio" (2026-10-11): the 2028 course's projects,
+// shown in the Built differently section with animated lines from the
+// GATE DA prep card to each project. Paths are measured from the real
+// element positions (ResizeObserver), so they follow any layout: side by
+// side on wide screens, stacked on phones.
+const PREP_SUBJECTS = ['Linear Algebra', 'Probability & Statistics', 'Calculus', 'Python'];
+function PrepToProjects() {
+  const projects = PROJECTS_2028;
+  const wrapRef = React.useRef(null), prepRef = React.useRef(null), tileRefs = React.useRef([]);
+  const [paths, setPaths] = React.useState([]);
+  const [box, setBox] = React.useState({ w: 0, h: 0 });
+  const [shown, setShown] = React.useState(false);
+  const [hover, setHover] = React.useState(-1);
+  React.useLayoutEffect(() => {
+    const wrap = wrapRef.current, prep = prepRef.current; if (!wrap || !prep) return;
+    const measure = () => {
+      const W = wrap.getBoundingClientRect(), P = prep.getBoundingClientRect();
+      const side = tileRefs.current[0] && tileRefs.current[0].getBoundingClientRect().left > P.right - 4;
+      setBox({ w: W.width, h: W.height });
+      setPaths(tileRefs.current.filter(Boolean).map(el => {
+        const T = el.getBoundingClientRect();
+        if (side) {
+          const x1 = P.right - W.left, y1 = P.top + P.height / 2 - W.top, x2 = T.left - W.left, y2 = T.top + T.height / 2 - W.top, mx = (x1 + x2) / 2;
+          return `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`;
+        }
+        // Stacked (phones): one rail down the left gutter from the prep
+        // card, with a short rounded branch into each tile.
+        const x0 = T.left - 11 - W.left, y1 = P.bottom - W.top, x2 = T.left - W.left, y2 = T.top + T.height / 2 - W.top, r = 8;
+        return `M${x0},${y1} V${y2 - r} Q${x0},${y2} ${x0 + r},${y2} H${x2}`;
+      }));
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    measure();
+    const ro = new ResizeObserver(measure); ro.observe(wrap);
+    window.addEventListener('resize', measure);
+    return () => { ro.disconnect(); window.removeEventListener('resize', measure); };
   }, []);
-
-  const go = i => setActive(i);
-  const toggle = i => setActive(prev => prev === i ? -1 : i);
-  const f = WHY_FEATURES[Math.max(0, active)];
-
-  const PanelContent = ({ feat }) => (
-    <>
-      <div className="whyus-ptitle">{feat.title}</div>
-      <div className="whyus-pdesc">{withDiscordLink(feat.desc)}</div>
-      {feat.stat && <div className="whyus-pstat">
-        <div className="whyus-pstat-num" style={{ color: feat.color }}>{feat.stat.num}</div>
-        <div className="whyus-pstat-lbl">{feat.stat.lbl}</div>
-      </div>}
-    </>
-  );
-
-  const header = (
-    <div className="section-head fade-in">
-      <div className="section-head-left">
-        <h2>Not coaching.<br />Your <em>unfair advantage.</em></h2>
+  React.useEffect(() => {
+    const el = wrapRef.current; if (!el) return;
+    if (!('IntersectionObserver' in window)) { setShown(true); return; }
+    const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { setShown(true); io.disconnect(); } }, { threshold: 0.25 });
+    io.observe(el); return () => io.disconnect();
+  }, []);
+  const lit = hover >= 0 ? (projects[hover] || {}).uses || [] : [];
+  return (
+    <div className={'prep-projects' + (shown ? ' is-shown' : '')} id="prep-to-projects">
+      <div className="prep-projects-head">
+        <div className="prep-projects-title">
+          <span className="bd-icon prep-projects-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="7" width="18" height="13" rx="2.5" /><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M3 12.5h18" /></svg></span>
+          <h3>From GATE prep to a portfolio</h3>
+          <p>The maths and Python you learn for GATE DA power these projects. The GATE 2028 Full Course adds 5 of them, so you finish with a portfolio for DS and AI interviews too.</p>
+        </div>
+        <a href="/gate-da-courses#projects-map" className="prep-projects-link">See how the projects connect <span aria-hidden="true">→</span></a>
       </div>
-    </div>
-  );
-
-  if (isMobile) return (
-    <section className="section" id="why" style={{ background: 'var(--bg-soft)' }}>
-      <div className="container">
-        {header}
-        <div className="whyus-acc fade-in">
-          {WHY_FEATURES.map((feat, i) => (
-            <div key={i} className={`whyus-acc-item${active === i ? ' open' : ''}`}>
-              <button className="whyus-tab" style={{ '--tab-color': feat.color }} onClick={() => toggle(i)}>
-                <div className="whyus-tab-icon" style={{ background: feat.grad }}>{feat.icon}</div>
-                <div className="whyus-tab-info">
-                  <div className="whyus-tab-label">{feat.label}</div>
-                  <div className="whyus-tab-sub">{feat.sub}</div>
-                </div>
-                <svg className="whyus-acc-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-              <div className="whyus-acc-panel">
-                <div className="whyus-acc-panel-inner">
-                  <div className="whyus-content"><PanelContent feat={feat} /></div>
-                </div>
+      <div className="prep-projects-flow" ref={wrapRef}>
+        <svg className="prep-lines" width={box.w} height={box.h} viewBox={`0 0 ${box.w || 1} ${box.h || 1}`} aria-hidden="true">
+          <defs>
+            <linearGradient id="prep-line-grad" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="#7C3AED" /><stop offset="1" stopColor="#DB2777" /></linearGradient>
+          </defs>
+          {paths.map((d, i) => (
+            <g key={i} className={'prep-line' + (hover === i ? ' is-hot' : '')} style={{ '--d': i * 0.18 + 's' }}>
+              <path id={'prep-path-' + i} d={d} pathLength="1" className="prep-line-path" />
+              {shown && <circle r="4" className="prep-line-dot"><animateMotion dur={(2.4 + i * 0.3) + 's'} begin={(1 + i * 0.25) + 's'} repeatCount="indefinite"><mpath href={'#prep-path-' + i} /></animateMotion></circle>}
+            </g>
+          ))}
+        </svg>
+        <div className="prep-card" ref={prepRef}>
+          <div className="prep-card-label">GATE DA prep</div>
+          <div className="prep-card-title">What you study for the exam</div>
+          <ul className="prep-subjects">
+            {PREP_SUBJECTS.map(sj => <li key={sj} className={lit.indexOf(sj) >= 0 ? 'is-lit' : ''}>{sj}</li>)}
+          </ul>
+        </div>
+        <div className="prep-tiles">
+          {projects.map((p, i) => (
+            <div key={i} ref={el => tileRefs.current[i] = el} className={'project-tile project-tile--' + p.art} style={{ '--d': (0.5 + i * 0.18) + 's' }}
+              onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(-1)}>
+              <div className="project-art"><ProjectArt kind={p.art} /><span className="project-count" aria-label={p.count + (p.count === 1 ? ' project' : ' projects')}>×{p.count}</span></div>
+              <div className="project-text">
+                <div className="project-title">{p.title}</div>
+                <div className="project-caption">{p.caption}</div>
+                <div className="project-uses">Uses {p.uses.join(', ')}</div>
               </div>
             </div>
           ))}
         </div>
       </div>
-    </section>
+    </div>
   );
+}
 
+// Mini drawings for the Visual & Conceptual card (2026-10-11): each one
+// pictures the example's own one-line meaning.
+function VisualArt({ kind }) {
+  // Parts animate once the card is revealed (.bd-card.visible, see CSS):
+  // .va-draw paths draw themselves (pathLength 1), .va-pop fades in.
+  const common = { viewBox: '0 0 72 52', width: 72, height: 52, fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true };
+  if (kind === 'eigen') return (
+    <svg {...common}>
+      <path d="M8 44h58M8 44V6" strokeOpacity=".3" strokeWidth="1.5" />
+      <path className="va-draw" pathLength="1" d="M8 44 L20 22" strokeOpacity=".4" strokeDasharray="3 3" style={{ '--vd': '.2s' }} />
+      <path className="va-draw" pathLength="1" d="M8 44 L46 30" strokeOpacity=".4" style={{ '--vd': '.35s' }} />
+      <path className="va-draw" pathLength="1" d="M8 44 L56 12" strokeWidth="2.8" style={{ '--vd': '.6s' }} />
+      <path className="va-pop" d="M49 11h7v7" strokeWidth="2.8" style={{ '--vd': '1.2s' }} />
+    </svg>
+  );
+  if (kind === 'bayes') return (
+    <svg {...common}>
+      <circle className="va-pop" cx="10" cy="26" r="3.5" fill="currentColor" stroke="none" style={{ '--vd': '.2s' }} />
+      <path className="va-draw" pathLength="1" d="M13 24 L34 12" style={{ '--vd': '.35s' }} /><path className="va-draw" pathLength="1" d="M13 28 L34 40" style={{ '--vd': '.35s' }} />
+      <circle className="va-pop" cx="37" cy="12" r="3" style={{ '--vd': '.75s' }} /><circle className="va-pop" cx="37" cy="40" r="3" style={{ '--vd': '.75s' }} />
+      {['M40 11 L60 5', 'M40 13 L60 19', 'M40 39 L60 33', 'M40 41 L60 47'].map((d, i) => <path key={d} className="va-draw" pathLength="1" d={d} strokeOpacity=".6" style={{ '--vd': (0.9 + i * 0.08) + 's' }} />)}
+      {[5, 19, 33, 47].map((y, i) => <circle key={y} className="va-pop" cx="63" cy={y} r="2.5" fill="currentColor" stroke="none" opacity=".7" style={{ '--vd': (1.25 + i * 0.08) + 's' }} />)}
+    </svg>
+  );
+  if (kind === 'descent') return (
+    <svg {...common}>
+      <path className="va-draw" pathLength="1" d="M6 8 C 18 48, 54 48, 66 8" strokeOpacity=".5" style={{ '--vd': '.2s' }} />
+      {[[13, 24], [21, 35], [29, 40]].map(([x, y], i) => <circle key={i} className="va-pop" cx={x} cy={y} r="2.2" fill="currentColor" stroke="none" opacity={0.3 + i * 0.2} style={{ '--vd': (0.8 + i * 0.22) + 's' }} />)}
+      <circle className="va-ball" cx="36" cy="41" r="4.6" fill="currentColor" stroke="none" />
+    </svg>
+  );
   return (
-    <section className="section" id="why" style={{ background: 'var(--bg-soft)' }}
-      onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+    <svg {...common}>
+      <ellipse className="va-pop" cx="36" cy="26" rx="27" ry="10" transform="rotate(-28 36 26)" strokeOpacity=".35" strokeDasharray="3 3" style={{ '--vd': '.2s' }} />
+      {[[18, 36], [24, 33], [28, 27], [33, 29], [37, 24], [41, 21], [46, 20], [50, 15], [30, 33], [43, 26], [22, 28], [54, 17]].map(([x, y], i) => <circle key={i} className="va-pop" cx={x} cy={y} r="1.9" fill="currentColor" stroke="none" opacity=".6" style={{ '--vd': (0.3 + i * 0.05) + 's' }} />)}
+      <path className="va-draw" pathLength="1" d="M10 41 L62 11" strokeWidth="2.8" style={{ '--vd': '1s' }} />
+      <path className="va-pop" d="M55 11h7v7" strokeWidth="2.8" style={{ '--vd': '1.55s' }} />
+    </svg>
+  );
+}
+
+// "Built differently" (redesigned 2026-10-11: "more concise and
+// illustrative, without taking away any of the information"): one row of
+// three cards, each fact drawn rather than listed, then the prep-to-
+// projects block. Copy comes from WHY_PILLARS.
+function WhyStrip() {
+  const [spec, vis, res] = WHY_PILLARS;
+  // The drawings play once the cards are genuinely on screen. The shared
+  // reveal fires 200px early on desktop, and this section sits right
+  // under the hero, so it would have played before anyone saw it.
+  const gridRef = React.useRef(null);
+  const [play, setPlay] = React.useState(false);
+  React.useEffect(() => {
+    const el = gridRef.current; if (!el) return;
+    if (!('IntersectionObserver' in window)) { setPlay(true); return; }
+    const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { setPlay(true); io.disconnect(); } }, { threshold: 0.4 });
+    io.observe(el); return () => io.disconnect();
+  }, []);
+  return (
+    <div className="why-strip" id="why">
       <div className="container">
-        {header}
-        <div className="whyus-layout fade-in">
-          <div className="whyus-tabs">
-            {WHY_FEATURES.map((feat, i) => (
-              <button key={i}
-                className={`whyus-tab${active === i ? ' active' : ''}`}
-                style={{ '--tab-color': feat.color, '--i': i }}
-                onClick={() => go(i)}>
-                <div className="whyus-tab-icon" style={{ background: feat.grad }}>{feat.icon}</div>
-                <div className="whyus-tab-info">
-                  <div className="whyus-tab-label">{feat.label}</div>
-                  <div className="whyus-tab-sub">{feat.sub}</div>
-                </div>
-                <svg className="whyus-tab-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-            ))}
+        <h2 className="why-strip-h2 fade-in">Built differently. <em>For GATE DA.</em></h2>
+        <p className="why-strip-sub fade-in">Every choice we made, from content to pedagogy, was made with one exam in mind.</p>
+        <div className={'bd-grid' + (play ? ' bd-play' : '')} ref={gridRef}>
+          <div className="bd-card bd-card--spec fade-in" style={{ transitionDelay: '0ms', '--ac': '#7C3AED', '--ac-rgb': '124,58,237' }}>
+            <div className="bd-head"><span className="bd-icon">{spec.icon}</span><h3>{spec.heading}</h3></div>
+            <p className="bd-sub">{spec.sub}</p>
+            <div className="bd-compare-label">{spec.contrast.mathsLabel}</div>
+            <div className="bd-compare" aria-label={spec.contrast.maths}>
+              <div className="bd-paper bd-paper--cse">
+                <div className="bd-paper-tag">CSE paper</div>
+                {spec.contrast.cse.map(t => <span key={t} className="bd-chip"><span className="bd-mark" aria-hidden="true">✕</span>{t}</span>)}
+              </div>
+              <span className="bd-compare-arrow" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg></span>
+              <div className="bd-paper bd-paper--da">
+                <div className="bd-paper-tag">GATE DA paper</div>
+                {spec.contrast.da.map(t => <span key={t} className="bd-chip"><span className="bd-mark" aria-hidden="true">✓</span>{t}</span>)}
+              </div>
+            </div>
+            <div className="bd-compare-note">{spec.contrast.daNote}.</div>
           </div>
-          <div className="whyus-panel"
-            onMouseMove={e=>{const r=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');e.currentTarget.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%');}}
-            onMouseLeave={e=>{e.currentTarget.style.setProperty('--mx','-200%');e.currentTarget.style.setProperty('--my','-200%');}}>
-            <div className="whyus-orb1" style={{ background: f.color }} />
-            <div className="whyus-orb2" style={{ background: f.color }} />
-            <div className="whyus-icon-bg">{React.cloneElement(f.icon, { style: { width: 108, height: 108 } })}</div>
-            <div className="whyus-content" key={active}><PanelContent feat={f} /></div>
-            <div className="whyus-dots">
-              {WHY_FEATURES.map((_, i) => (
-                <div key={i} className={`whyus-dot${active === i ? ' active' : ''}`} onClick={() => go(i)} />
+          <div className="bd-card bd-card--vis fade-in" style={{ transitionDelay: '60ms', '--ac': '#DB2777', '--ac-rgb': '219,39,119' }}>
+            <div className="bd-head"><span className="bd-icon">{vis.icon}</span><h3>{vis.heading}</h3></div>
+            <p className="bd-sub">{vis.sub}</p>
+            <div className="bd-visuals">
+              {vis.examples.map(([term, meaning, art]) => (
+                <div key={term} className="bd-visual">
+                  <div className="bd-visual-art"><VisualArt kind={art} /></div>
+                  <div className="bd-visual-term">{term}</div>
+                  <div className="bd-visual-meaning">{meaning}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="bd-card bd-card--res fade-in" style={{ transitionDelay: '120ms', '--ac': '#2563EB', '--ac-rgb': '37,99,235' }}>
+            <div className="bd-head"><span className="bd-icon">{res.icon}</span><h3>{res.heading}</h3></div>
+            <p className="bd-sub">{res.sub}</p>
+            <div className="bd-admits">
+              {res.examples.map(([inst, prog, mono], i) => (
+                <div key={inst} className="bd-admit" style={{ '--mc': ['#B45309', '#2563EB', '#7C3AED', '#0E7490'][i % 4], '--vd': (0.25 + i * 0.12) + 's' }}>
+                  <span className="bd-admit-mono" aria-hidden="true">{mono}</span>
+                  <span className="bd-admit-text"><b>{inst}</b><span>{prog}</span></span>
+                  <span className="bd-admit-tick" aria-label="admitted"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></span>
+                </div>
               ))}
             </div>
           </div>
         </div>
+        <PrepToProjects />
       </div>
-    </section>
+    </div>
   );
 }
 
+
 // ============ INSTRUCTOR ============
 const MANOJ_SUBJECTS = ['Probability', 'Statistics', 'Linear Algebra', 'Calculus', 'Machine Learning', 'AI', 'Python', 'Data Structures'];
+
 function Instructor() {
   const sectionRef = React.useRef(null);
 
@@ -2586,9 +2923,9 @@ function App() {
         <Hero />
         <Stats />
       </div>
+      <WhyStrip />
       <Offer />
       <Instructor />
-      <WhyUs />
       <Testimonials />
       <FAQ />
       <CTA />
