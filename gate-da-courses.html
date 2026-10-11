@@ -1338,15 +1338,39 @@ section.page-hero { padding: 48px 0 44px; }
 }
 /* 2028 card's visible projects list, under its blurred price. */
 .combo-projects { margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.08); position: relative; z-index: 1; }
-.combo-projects ul { margin: 0; padding: 0 0 0 16px; display: flex; flex-direction: column; gap: 7px; }
-.combo-projects li { font-size: 13.5px; line-height: 1.45; color: rgba(255,255,255,0.72); padding-left: 2px; }
-.combo-projects li::marker { color: #FCD34D; }
 .combo-soon-btn { margin-top: 18px; background: rgba(245,158,11,0.12); color: #FCD34D; border: 1px solid rgba(245,158,11,0.35); cursor: not-allowed; font-weight: 600; box-shadow: none; }
 .combo-soon-btn:hover { transform: none; box-shadow: none; }
 .combo-price-note { margin-top: -16px; font-size: 13px; color: rgba(255,255,255,0.55); position: relative; z-index: 1; }
 .combo-live-cta { margin-top: 18px; display: flex; flex-direction: column; gap: 10px; }
 .combo-live-cta .combo-saving { margin: 0; }
 .combo-projects-note { margin: 12px 0 0; font-size: 13px; color: #FCD34D; }
+  /* Project tiles on the 2028 card (2026-10-11): one tile per category,
+     a line drawing in the category colour, a count badge and a caption.
+     Stacked in the card's narrow right column on desktop, three across
+     at tablet widths, stacked on phones. */
+  .project-tiles { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 12px; }
+  .project-tile { --pc: #F59E0B; display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: 14px;
+    background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.08); }
+  .project-tile--cv { --pc: #F472B6; }
+  .project-tile--llm { --pc: #A78BFA; }
+  .project-art { position: relative; flex: 0 0 auto; width: 76px; height: 58px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    color: var(--pc); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+    background: color-mix(in srgb, var(--pc) 12%, transparent); border: 1px solid color-mix(in srgb, var(--pc) 28%, transparent); }
+  .project-text { min-width: 0; }
+  .project-title { font-weight: 700; font-size: 15px; color: #fff; line-height: 1.25; }
+  .project-count { position: absolute; top: -8px; right: -8px; font-size: 11.5px; font-weight: 800; line-height: 1; color: #14101f;
+    padding: 4px 6px; border-radius: 999px; background: var(--pc); font-variant-numeric: tabular-nums; }
+  .project-caption { margin-top: 4px; font-size: 13px; line-height: 1.45; color: rgba(255,255,255,0.62); }
+  @media (min-width: 640px) and (max-width: 1024px) {
+    .project-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .project-tile { flex-direction: column; align-items: flex-start; }
+    .project-art { width: 100%; height: 72px; }
+  }
+  @media (max-width: 479px) {
+    .project-tile { gap: 12px; padding: 12px; }
+    .project-art { width: 64px; height: 50px; }
+    .project-art svg { width: 54px; height: 40px; }
+  }
 
 /* "Before you enrol" note for the GATE 2028 card (2026-10-04, direct
    request): shown when its live Enrol now is clicked, explaining what
@@ -2683,10 +2707,12 @@ const COMBOS = [
     // The 2028 batch's project plan, by category (specific projects not
     // final yet), on request 2026-10-04.
     projectsLabel: 'Beyond GATE: 5 portfolio projects',
+    // Shown as illustrated tiles (2026-10-11: "can we have visuals for the
+    // projects"); art picks the drawing in ProjectArt.
     projects: [
-      '2 machine learning projects on real business data, from raw dataset to working model',
-      '1 deep learning project in computer vision',
-      '2 projects with large language models, the skill AI teams are hiring for now',
+      { count: 2, art: 'ml', title: 'Machine learning', caption: 'Real business data, from raw dataset to working model' },
+      { count: 1, art: 'cv', title: 'Computer vision', caption: 'A deep learning model that sees and labels images' },
+      { count: 2, art: 'llm', title: 'Large language models', caption: 'The skill AI teams are hiring for right now' },
     ],
     projectsNote: 'One bundle, two shots: crack GATE, and walk into DS and AI interviews with a portfolio to show.',
     validityDate: '2028-02-15',
@@ -3265,6 +3291,37 @@ function EnrolNote({ href, onClose }) {
   );
 }
 
+// Small line drawings for the 2028 card's project tiles (2026-10-11).
+// Plain inline SVG in the tile's accent colour (currentColor), no images.
+function ProjectArt({ kind }) {
+  if (kind === 'ml') return (
+    <svg viewBox="0 0 64 48" width="64" height="48" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <path d="M6 6v36h52" strokeOpacity=".45" />
+      {[[13,35],[18,31],[22,33],[27,26],[31,28],[36,21],[40,23],[45,16],[50,18],[54,11]].map(([x, y], i) => <circle key={i} cx={x} cy={y} r="2.2" fill="currentColor" stroke="none" opacity=".75" />)}
+      <path d="M10 37 L56 10" strokeWidth="2.4" />
+    </svg>
+  );
+  if (kind === 'cv') return (
+    <svg viewBox="0 0 64 48" width="64" height="48" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="5" width="56" height="38" rx="5" strokeOpacity=".45" />
+      <circle cx="16" cy="15" r="3.5" strokeOpacity=".45" />
+      <path d="M8 40 L24 24 L33 32 L40 26 L56 40" strokeOpacity=".45" />
+      <rect x="29" y="17" width="20" height="18" rx="2" strokeDasharray="3 3" strokeWidth="2.2" />
+      <rect x="29" y="11" width="15" height="6" rx="1.5" fill="currentColor" stroke="none" />
+    </svg>
+  );
+  return (
+    <svg viewBox="0 0 64 48" width="64" height="48" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 9h30a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4H16l-6 5v-5H6a4 4 0 0 1-4-4v-8a4 4 0 0 1 4-4z" strokeOpacity=".45" />
+      <path d="M9 15h22M9 20h14" strokeOpacity=".45" />
+      <path d="M28 25h30a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4h-4v5l-6-5H28a4 4 0 0 1-4-4v-8a4 4 0 0 1 4-4z" />
+      <circle cx="34" cy="33" r="1.8" fill="currentColor" stroke="none" />
+      <circle cx="41" cy="33" r="1.8" fill="currentColor" stroke="none" />
+      <circle cx="48" cy="33" r="1.8" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   const p = pricing;
   const live = !!p;
@@ -3490,9 +3547,17 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
           {c.projects && (
             <div className="combo-projects">
               <div className="combo-includes-label">{c.projectsLabel}</div>
-              <ul>
-                {c.projects.map((p, i) => <li key={i}>{p}</li>)}
-              </ul>
+              <div className="project-tiles">
+                {c.projects.map((p, i) => (
+                  <div key={i} className={'project-tile project-tile--' + p.art}>
+                    <div className="project-art"><ProjectArt kind={p.art} /><span className="project-count" aria-label={p.count + (p.count === 1 ? ' project' : ' projects')}>×{p.count}</span></div>
+                    <div className="project-text">
+                      <div className="project-title">{p.title}</div>
+                      <div className="project-caption">{p.caption}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
               {c.projectsNote && <p className="combo-projects-note">{c.projectsNote}</p>}
             </div>
           )}
