@@ -1512,7 +1512,7 @@ section.page-hero { padding: 48px 0 44px; }
   .pmap-uses span { color: var(--ink); }
   .pmap-detail-link { margin: 14px 0 0; padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, var(--sc, #7C3AED) 8%, #fff); font-size: 14px; line-height: 1.5; color: var(--ink); }
   .pmap-detail-link b { color: var(--sc, #7C3AED); }
-  .pmap-cta-band { display: flex; align-items: center; justify-content: space-between; gap: 20px 32px; flex-wrap: wrap; margin-top: 32px; padding: 26px 28px;
+  .pmap-cta-band { display: flex; align-items: center; justify-content: space-between; gap: 20px 32px; flex-wrap: wrap; margin: 4px 0 36px; padding: 26px 28px;
     border-radius: 20px; background: linear-gradient(135deg, #F3EEFF 0%, #FCEFF6 100%); border: 1px solid rgba(124,58,237,0.18); }
   .pmap-cta-copy { min-width: 0; flex: 1 1 320px; }
   .pmap-cta-kicker { margin: 0 0 4px; font-size: 13px; font-weight: 600; color: #7C3AED; }
@@ -1563,7 +1563,7 @@ section.page-hero { padding: 48px 0 44px; }
     .pmap-uses li b { display: inline; font-size: 13.5px; }
     .pmap-uses li b::after { content: ': '; }
     .pmap-detail-link { margin-top: 10px; padding: 10px 12px; font-size: 13px; }
-    .pmap-cta-band { margin-top: 20px; padding: 18px 16px; gap: 14px; }
+    .pmap-cta-band { margin: 0 0 22px; padding: 18px 16px; gap: 14px; }
     .pmap-cta-kicker { display: none; }
     .pmap-cta-title { font-size: 19px; }
     .pmap-cta-sub { font-size: 14px; }
@@ -4107,6 +4107,30 @@ function ProjectsMap() {
       <div className="container">
         <h2 className="pmap-h2 fade-in">GATE 2028 Full Course:<br /><em>exam prep that builds your portfolio.</em></h2>
         <p className="pmap-sub fade-in">Every subject you study for GATE DA in this course also powers its 5 portfolio projects, built in three stages. Pick a stage to see which subjects it uses and how.</p>
+        <div className="pmap-cta-band fade-in">
+          <div className="pmap-cta-copy">
+            <p className="pmap-cta-kicker">Ready when you are</p>
+            <p className="pmap-cta-title">GATE 2028 Full Course</p>
+            <p className="pmap-cta-sub">One enrolment covers GATE DA 2027 and 2028, with all 5 projects included.</p>
+          </div>
+        <a href="#full-course-2028" className="pmap-cta" onClick={e => {
+          // Land with the card's "For GATE 2027 and 2028" label just below
+          // the sticky nav (a plain #hash jump left the card's top under it).
+          const card = document.getElementById('full-course-2028'); if (!card) return;
+          e.preventDefault();
+          // Land just past the bundles intro paragraph, so no half-visible
+          // line of it peeks out under the nav above the label.
+          const sub = document.querySelector('#combos .section-sub');
+          const navH = (document.querySelector('nav') || { getBoundingClientRect: () => ({ height: 70 }) }).getBoundingClientRect().height;
+          const anchorY = sub ? sub.getBoundingClientRect().bottom + 8 : card.getBoundingClientRect().top - 60;
+          const top = anchorY + window.scrollY - navH;
+          window.scrollTo({ top, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+          history.replaceState(null, '', '#full-course-2028');
+        }}>
+          <span>See price and details</span>
+          <span className="pmap-cta-arrow" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M6 13l6 6 6-6" /></svg></span>
+        </a>
+        </div>
         <div className={'pmap' + (shown ? ' is-shown' : '')} ref={wrapRef}>
           <svg className="pmap-lines" width={box.w} height={box.h} viewBox={`0 0 ${box.w || 1} ${box.h || 1}`} aria-hidden="true">
             {paths.map((p, i) => {
@@ -4165,30 +4189,6 @@ function ProjectsMap() {
               </div>
             ))}
           </div>
-        </div>
-        <div className="pmap-cta-band fade-in">
-          <div className="pmap-cta-copy">
-            <p className="pmap-cta-kicker">Ready when you are</p>
-            <p className="pmap-cta-title">GATE 2028 Full Course</p>
-            <p className="pmap-cta-sub">One enrolment covers GATE DA 2027 and 2028, with all 5 projects included.</p>
-          </div>
-        <a href="#full-course-2028" className="pmap-cta" onClick={e => {
-          // Land with the card's "For GATE 2027 and 2028" label just below
-          // the sticky nav (a plain #hash jump left the card's top under it).
-          const card = document.getElementById('full-course-2028'); if (!card) return;
-          e.preventDefault();
-          // Land just past the bundles intro paragraph, so no half-visible
-          // line of it peeks out under the nav above the label.
-          const sub = document.querySelector('#combos .section-sub');
-          const navH = (document.querySelector('nav') || { getBoundingClientRect: () => ({ height: 70 }) }).getBoundingClientRect().height;
-          const anchorY = sub ? sub.getBoundingClientRect().bottom + 8 : card.getBoundingClientRect().top - 60;
-          const top = anchorY + window.scrollY - navH;
-          window.scrollTo({ top, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
-          history.replaceState(null, '', '#full-course-2028');
-        }}>
-          <span>See price and details</span>
-          <span className="pmap-cta-arrow" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M6 13l6 6 6-6" /></svg></span>
-        </a>
         </div>
       </div>
     </section>
