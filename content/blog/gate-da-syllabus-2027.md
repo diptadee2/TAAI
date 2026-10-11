@@ -2,6 +2,7 @@
 title: 'GATE DA Syllabus 2027: Exam Pattern, Weightage & Preparation'
 slug: gate-da-syllabus-2027
 date: '2026-08-12'
+updated: '2026-09-05'
 description: A look at why GATE DA is worth taking, how the exam is set up, what has carried the most marks across the 2024 to 2026 papers, and how to prepare for it.
 tags:
   - gate-strategy

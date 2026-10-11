@@ -369,7 +369,7 @@ function renderChrome(bodyHtml) {
 // its Q&A straight from the post's own faq block, if any, so there's
 // nothing to duplicate/keep in sync by hand either.
 function generateJsonLd(post, blocks) {
-  const url = `${SITE_URL}/blogs/${post.slug}`;
+  const url = `${SITE_URL}/blogs/${post.slug}/`;
   const graph = [
     {
       '@type': 'Article',
@@ -378,7 +378,7 @@ function generateJsonLd(post, blocks) {
       author: { '@type': 'Organization', name: 'TAAI', url: `${SITE_URL}/` },
       publisher: { '@type': 'Organization', name: 'TAAI', url: `${SITE_URL}/`, logo: { '@type': 'ImageObject', url: `${SITE_URL}/logo.webp` } },
       datePublished: post.date,
-      dateModified: post.date,
+      dateModified: post.updated || post.date,
       mainEntityOfPage: { '@type': 'WebPage', '@id': url },
       image: post.cover ? `${SITE_URL}${post.cover}` : `${SITE_URL}/og-banner.webp`,
     },
@@ -386,7 +386,7 @@ function generateJsonLd(post, blocks) {
       '@type': 'BreadcrumbList',
       itemListElement: [
         { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
-        { '@type': 'ListItem', position: 2, name: 'Blog', item: `${SITE_URL}/blogs` },
+        { '@type': 'ListItem', position: 2, name: 'Blog', item: `${SITE_URL}/blogs/` },
         { '@type': 'ListItem', position: 3, name: post.title, item: url },
       ],
     },
@@ -440,6 +440,9 @@ function loadPosts() {
         slug,
         title: data.title || slug,
         date: data.date || '',
+        // Optional: when the post's content last changed. Feeds dateModified
+        // and the sitemap's lastmod, so search engines see real updates.
+        updated: data.updated || '',
         description: data.description || '',
         cover: data.cover || '',
         tags: Array.isArray(data.tags) ? data.tags : (data.tags ? [data.tags] : []),
@@ -779,7 +782,7 @@ function generateBlog() {
   const indexHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
-${renderHead({ title: 'Blogs | TAAI', description: 'GATE DA prep guides, syllabus breakdowns, and study tips from the TAAI team.', canonicalPath: '/blogs' })}
+${renderHead({ title: 'Blogs | TAAI', description: 'GATE DA prep guides, syllabus breakdowns, and study tips from the TAAI team.', canonicalPath: '/blogs/' })}
 </head>
 <body>
 ${renderChrome(indexBody)}
@@ -794,7 +797,7 @@ ${renderChrome(indexBody)}
     const postBody = `<article class="blog-post">
       <div class="blog-post-hero">
         <div class="container">
-          <a href="/blogs" class="blog-post-back">← All blogs</a>
+          <a href="/blogs/" class="blog-post-back">← All blogs</a>
           <div class="blog-post-date fade-in">${formatDate(post.date)}</div>
           ${post.tags.length ? `<div class="fade-in">${renderTags(post.tags)}</div>` : ''}
           <h1 class="fade-in">${escapeHtml(post.title)}</h1>
@@ -811,7 +814,7 @@ ${renderChrome(indexBody)}
     const postHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
-${renderHead({ title: `${post.title} | TAAI Blogs`, description: post.description, canonicalPath: `/blogs/${post.slug}`, ogImage: post.cover ? `${SITE_URL}${post.cover}` : undefined })}
+${renderHead({ title: `${post.title} | TAAI Blogs`, description: post.description, canonicalPath: `/blogs/${post.slug}/`, ogImage: post.cover ? `${SITE_URL}${post.cover}` : undefined })}
 ${post.jsonLd}
 </head>
 <body>
@@ -855,7 +858,7 @@ function generateRefundPolicy() {
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
-${renderHead({ title: 'Refund policy | TAAI', description: 'TAAI refund policy: all purchases of courses, bundles and test series are final.', canonicalPath: '/refund-policy' })}
+${renderHead({ title: 'Refund policy | TAAI', description: 'TAAI refund policy: all purchases of courses, bundles and test series are final.', canonicalPath: '/refund-policy/' })}
 </head>
 <body>
 ${renderChrome(body)}
@@ -889,7 +892,7 @@ function generatePrivacyPolicy() {
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
-${renderHead({ title: 'Privacy | TAAI', description: 'How TAAI handles your data on taai.live and the free progress tracker.', canonicalPath: '/privacy' })}
+${renderHead({ title: 'Privacy | TAAI', description: 'How TAAI handles your data on taai.live and the free progress tracker.', canonicalPath: '/privacy/' })}
 </head>
 <body>
 ${renderChrome(body)}
@@ -907,13 +910,13 @@ function generateSitemap(posts) {
     { loc: '/gate-da-toppers', priority: '0.7', freq: 'weekly' },
     { loc: '/gate-da-free-notes', priority: '0.7', freq: 'weekly' },
     { loc: '/gate-da-progress-tracker', priority: '0.7', freq: 'daily' },
-    { loc: '/blogs', priority: '0.7', freq: 'weekly' },
+    { loc: '/blogs/', priority: '0.7', freq: 'weekly' },
     { loc: '/contact', priority: '0.5', freq: 'monthly' },
-    { loc: '/refund-policy', priority: '0.3', freq: 'yearly' },
-    { loc: '/privacy', priority: '0.3', freq: 'yearly' },
+    { loc: '/refund-policy/', priority: '0.3', freq: 'yearly' },
+    { loc: '/privacy/', priority: '0.3', freq: 'yearly' },
   ];
   const today = new Date().toISOString().slice(0, 10);
-  const postUrls = posts.map(p => ({ loc: `/blogs/${p.slug}`, priority: '0.6', freq: 'monthly', lastmod: p.date || today }));
+  const postUrls = posts.map(p => ({ loc: `/blogs/${p.slug}/`, priority: '0.6', freq: 'monthly', lastmod: p.updated || p.date || today }));
 
   const entries = [...staticUrls.map(u => ({ ...u, lastmod: today })), ...postUrls];
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
