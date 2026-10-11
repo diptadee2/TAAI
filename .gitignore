@@ -13,6 +13,7 @@ deno.lock
 /blogs/index.html
 /blogs/*/
 /refund-policy/
+/privacy/
 
 # Internal planning doc, not part of the deployed site
 /taai-technical-spec-v4.md

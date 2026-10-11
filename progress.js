@@ -275,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-11-1';
+  var CLIENT_VERSION = '2026-10-11-2';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2340,7 +2340,7 @@
     // announced as a control, not just a div with a click listener nobody
     // but a mouse user could trigger.
     var showBadge5 = newBadgeVisible('top5');
-    return '<div class="leaderboard-card champions-section clickable-card" id="champions-card" role="button" tabindex="0">' +
+    return '<div class="leaderboard-card champions-section clickable-card" id="champions-card" role="button" tabindex="0" data-clarity-mask="true">' +
       '<div class="leaderboard-title' + (showBadge5 ? ' has-badge' : '') + '">Last week’s champions</div>' +
       newBadgeHtml(showBadge5) +
       '<div class="leaderboard-subtitle">Top 5 by hours logged, last week</div>' +
@@ -2609,7 +2609,7 @@
 
   function renderTodayLeaders() {
     if (!state.todayLeaders.length) return '';
-    return '<div class="leaderboard-card fade-in" id="today-leaderboard-card">' +
+    return '<div class="leaderboard-card fade-in" id="today-leaderboard-card" data-clarity-mask="true">' +
       '<div class="leaderboard-title-row"><div class="leaderboard-title">Today’s leaders</div>' + aboutEditButtonHtml('about-edit-btn--inline') + '</div>' +
       '<div class="leaderboard-subtitle">Top 10 by hours logged · Today</div>' +
       '<div id="today-leaderboard-rows">' + renderTodayLeaderboardRows(true) + '</div>' +
@@ -3180,7 +3180,7 @@
     // already a space-between flex row, so it lands opposite the name/
     // rename/streak text for free.
     html += '<div class="roadmap-sub">' +
-      '<div class="roadmap-sub-left">' + renderIdentityLine() + '</div>' +
+      '<div class="roadmap-sub-left" data-clarity-mask="true">' + renderIdentityLine() + '</div>' +
       '<div class="roadmap-sub-right">' +
       // Same invite as the footer/contact links on every other page.
       '<a class="discord-join" href="' + DISCORD_INVITE_URL + '" target="_blank" rel="noopener">' + DISCORD_ICON_SVG + '<span>Join Discord</span></a>' +
@@ -5362,6 +5362,7 @@
     if (!aboutBubbleEl) {
       aboutBubbleEl = document.createElement('div');
       aboutBubbleEl.className = 'about-bubble';
+      aboutBubbleEl.setAttribute('data-clarity-mask', 'true'); // student-written text, kept out of Clarity recordings
       document.body.appendChild(aboutBubbleEl);
     }
     aboutBubbleAnchor = target;
@@ -5458,6 +5459,7 @@
     var canChange = !state.viewerAbout || state.viewerAbout.canChange !== false;
     var el = document.createElement('div');
     el.className = 'about-modal-backdrop';
+    el.setAttribute('data-clarity-mask', 'true');
     el.innerHTML =
       '<div class="about-modal" role="dialog" aria-modal="true" aria-labelledby="about-modal-title">' +
         '<div class="about-modal-title" id="about-modal-title">Your About</div>' +
@@ -5611,7 +5613,7 @@
     // to fire right after this from animating a second time in a row.
     var animateNow = state.leaderboard.length > 0;
     leaderboardRowsAnimatedThisVisit = animateNow;
-    return '<div class="leaderboard-card fade-in" id="leaderboard-card">' +
+    return '<div class="leaderboard-card fade-in" id="leaderboard-card" data-clarity-mask="true">' +
       '<div class="leaderboard-title">Weekly leaderboard</div>' +
       '<div class="leaderboard-subtitle">Top 20 by minutes logged · Resets every Monday</div>' +
       aboutEditButtonHtml() +

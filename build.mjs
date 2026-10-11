@@ -345,7 +345,7 @@ function renderFooter() {
             <a href="https://www.youtube.com/@Manojkumar_TAAI" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
             <a href="https://www.linkedin.com/company/taai-gate-da-placements/?viewAsMember=true" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>
           </div>
-          <span class="footer-legal"><a href="mailto:support@taai.live" class="footer-email">support@taai.live</a><a href="/refund-policy" class="footer-email">Refund policy</a></span>
+          <span class="footer-legal"><a href="mailto:support@taai.live" class="footer-email">support@taai.live</a><a href="/refund-policy" class="footer-email">Refund policy</a><a href="/privacy" class="footer-email">Privacy</a></span>
         </div>
       </div>
     </footer>`;
@@ -358,7 +358,8 @@ function renderChrome(bodyHtml) {
     ${renderFooter()}
     <button class="back-to-top" aria-label="Back to top"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg></button>
     <script src="/blogs/blog.js"></script>
-    <script src="/discord-notice.js" defer></script>`;
+    <script src="/discord-notice.js" defer></script>
+  <script src="/clarity.js" defer></script>`;
 }
 
 // Article + BreadcrumbList (+ FAQPage, when the post has an faq block)
@@ -864,6 +865,40 @@ ${renderChrome(body)}
   console.log('  ✓ refund policy');
 }
 
+// Privacy page (added 2026-10-11 with Microsoft Clarity, whose terms ask
+// sites to disclose it). Generated like the refund policy above.
+function generatePrivacyPolicy() {
+  const dir = path.join(SRC, 'privacy');
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  const body = `<article class="policy">
+      <div class="container">
+        <h1>Privacy</h1>
+        <div class="policy-updated">Last updated: 11 October 2026</div>
+        <h2>What we collect</h2>
+        <p>If you use the free progress tracker, we store the name and email you sign up with, the tasks you tick, your focus timer sessions and timer settings, and the About line you choose to show. This is what powers your streak, your progress and the leaderboards. We do not ask for passwords.</p>
+        <h2>How the site is used</h2>
+        <p>We use <a href="https://clarity.microsoft.com" target="_blank" rel="noopener noreferrer">Microsoft Clarity</a> to see how visitors use taai.live, for example which sections get read and where people click, so we can improve the site. Clarity records page activity such as clicks, scrolling and mouse movement. Anything you type into forms is hidden from it, and student names on the leaderboards are hidden too. Clarity sets cookies to do this; see <a href="https://privacy.microsoft.com/privacystatement" target="_blank" rel="noopener noreferrer">Microsoft's privacy statement</a>.</p>
+        <h2>What we don't do</h2>
+        <p>We don't sell your data. Your name and focus hours appear on the tracker's public leaderboards; your email never does.</p>
+        <h2>Courses and payments</h2>
+        <p>Courses are delivered on <a href="https://learn.taai.live" target="_blank" rel="noopener noreferrer">learn.taai.live</a>, which has its own terms for accounts and payments. See also our <a href="/refund-policy">refund policy</a>.</p>
+        <h2>Questions or removal</h2>
+        <p>To ask what we hold about you or to have your tracker data deleted, write to <a href="mailto:support@taai.live">support@taai.live</a>.</p>
+      </div>
+    </article>`;
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+${renderHead({ title: 'Privacy | TAAI', description: 'How TAAI handles your data on taai.live and the free progress tracker.', canonicalPath: '/privacy' })}
+</head>
+<body>
+${renderChrome(body)}
+</body>
+</html>`;
+  fs.writeFileSync(path.join(dir, 'index.html'), html);
+  console.log('  ✓ privacy');
+}
+
 function generateSitemap(posts) {
   const staticUrls = [
     { loc: '/', priority: '1.0', freq: 'weekly' },
@@ -875,6 +910,7 @@ function generateSitemap(posts) {
     { loc: '/blogs', priority: '0.7', freq: 'weekly' },
     { loc: '/contact', priority: '0.5', freq: 'monthly' },
     { loc: '/refund-policy', priority: '0.3', freq: 'yearly' },
+    { loc: '/privacy', priority: '0.3', freq: 'yearly' },
   ];
   const today = new Date().toISOString().slice(0, 10);
   const postUrls = posts.map(p => ({ loc: `/blogs/${p.slug}`, priority: '0.6', freq: 'monthly', lastmod: p.date || today }));
@@ -908,6 +944,7 @@ function build() {
   // everything else.
   const posts = generateBlog();
   generateRefundPolicy();
+  generatePrivacyPolicy();
   generateSitemap(posts);
 
   // Copy static assets (images, etc.) — skip dist/, node_modules/, and
