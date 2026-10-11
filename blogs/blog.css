@@ -3,7 +3,7 @@
   --bg-soft: #FBF9FF;
   --ink: #14102B;
   --ink-dim: #4A4270;
-  --ink-soft: #857CAE;
+  --ink-soft: #6E6596;
   --line: #ECE6F8;
   --card: #FFFFFF;
 
@@ -276,7 +276,7 @@ a { color: inherit; }
    the same column, not a separate design. */
 .post-blocks { max-width: 720px; margin: 0 auto; color: var(--ink-dim); }
 .block-section-heading { margin: 44px 0 16px; }
-.block-eyebrow { font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--purple); margin-bottom: 8px; }
+.block-eyebrow { font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #7C3AED; margin-bottom: 8px; }
 .block-section-heading h2 { font-family: var(--font-display); font-size: 26px; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; }
 .block-text { margin: 0 0 20px; font-family: var(--font-serif); font-size: 19px; line-height: 1.7; }
 .block-text p { margin: 0 0 20px; }
@@ -390,8 +390,8 @@ a { color: inherit; }
 .block-syl-wrap { margin: 24px 0; }
 .block-syl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius-md); overflow: hidden; }
 .block-syl-cell { background: var(--card); padding: 16px 18px; }
-.block-syl-cell h4 { font-family: var(--font-display); font-weight: 600; font-size: 15px; margin-bottom: 5px; color: var(--purple); display: flex; align-items: center; gap: 9px; }
-.block-syl-cell h4 i { font-family: var(--font-mono); font-style: normal; font-size: 11px; color: var(--pink); font-weight: 600; }
+.block-syl-cell h3 { font-family: var(--font-display); font-weight: 600; font-size: 15px; line-height: 1.35; margin: 0 0 5px; color: var(--purple); display: flex; align-items: center; gap: 9px; }
+.block-syl-cell h3 i { font-family: var(--font-mono); font-style: normal; font-size: 11px; color: var(--pink); font-weight: 600; }
 .block-syl-cell p { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--ink-soft); }
 .block-syl-cell.block-syl-highlight { grid-column: 1 / -1; background: var(--bg-soft); }
 
@@ -449,4 +449,4 @@ a { color: inherit; }
 .policy h2 { font-size: 18px; font-weight: 600; margin: 32px 0 8px; }
 .policy p { font-size: 16px; line-height: 1.65; color: var(--ink-dim); margin: 0 0 12px; }
 .policy p strong { color: var(--ink); font-weight: 600; }
-.policy a { color: var(--purple); }
+.policy a { color: #6D28D9; }

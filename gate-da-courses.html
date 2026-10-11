@@ -36,7 +36,7 @@
   --bg-soft: #FBF9FF;
   --ink: #14102B;
   --ink-dim: #4A4270;
-  --ink-soft: #857CAE;
+  --ink-soft: #6E6596;
   --line: #ECE6F8;
   --card: #FFFFFF;
 
@@ -241,7 +241,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
    Delay sits between .ph-cta's .42s and .hero-proof-row's .54s, next
    in the visual/DOM order. */
 .page-hero .hero-guide-link { animation: pageHeroIn .55s cubic-bezier(.34,1.12,.64,1) .50s both; }
-.hero-guide-link { display: inline-block; margin-top: 34px; font-size: 14.5px; font-weight: 500; line-height: 1.5; color: var(--purple); text-decoration: none; }
+.hero-guide-link { display: inline-block; margin-top: 34px; font-size: 14.5px; font-weight: 500; line-height: 1.5; color: #7C3AED; text-decoration: none; }
 .hero-guide-link svg { display: inline-block; vertical-align: -2px; }
 .hero-guide-link:hover span { text-decoration: underline; text-underline-offset: 3px; }
 /* Courses hero de-slopped 2026-10-08 ("this portion can look less ai
@@ -1485,7 +1485,7 @@ section.page-hero { padding: 48px 0 44px; }
   .pmap-subject.is-hl { background: color-mix(in srgb, var(--c) 8%, #fff); border-color: var(--c); color: var(--ink); }
   .pmap-stages { display: flex; flex-direction: column; }
   .pmap-stages .pmap-builds { flex: 1; min-height: 30px; }
-  .pmap-stage { --pc: #D97706; display: flex; align-items: center; gap: 14px; width: 100%; padding: 10px 14px; border-radius: 14px; background: #fff; border: 1.5px solid var(--line);
+  .pmap-stage { --pc: #B45309; display: flex; align-items: center; gap: 14px; width: 100%; padding: 10px 14px; border-radius: 14px; background: #fff; border: 1.5px solid var(--line);
     text-align: left; cursor: pointer; font: inherit; transition: border-color .25s, box-shadow .25s, background .25s; }
   .pmap-stage.project-tile--cv { --pc: #DB2777; } .pmap-stage.project-tile--llm { --pc: #7C3AED; }
   .pmap-stage:hover, .pmap-stage.is-hl { border-color: color-mix(in srgb, var(--pc) 55%, #fff); }
@@ -1511,7 +1511,7 @@ section.page-hero { padding: 48px 0 44px; }
   .pmap-uses b { color: var(--c); font-weight: 700; }
   .pmap-uses span { color: var(--ink); }
   .pmap-detail-link { margin: 14px 0 0; padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, var(--sc, #7C3AED) 8%, #fff); font-size: 14px; line-height: 1.5; color: var(--ink); }
-  .pmap-detail-link b { color: var(--sc, #7C3AED); }
+  .pmap-detail-link b { color: color-mix(in srgb, var(--sc, #7C3AED) 88%, #000); }
   .pmap-cta-band { display: flex; align-items: center; justify-content: space-between; gap: 20px 32px; flex-wrap: wrap; margin: 4px 0 36px; padding: 26px 28px;
     border-radius: 20px; background: linear-gradient(135deg, #F3EEFF 0%, #FCEFF6 100%); border: 1px solid rgba(124,58,237,0.18); }
   .pmap-cta-copy { min-width: 0; flex: 1 1 320px; }
@@ -3706,7 +3706,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   // announce here. Sold-out reuses the exact same blur, on request —
   // "features blurred out below" the stamp.
   const includesEl = (
-    <div className={'combo-includes' + (isSoldOut ? ' combo-includes-blurred' : '')} aria-hidden={isSoldOut || undefined}>
+    <div className={'combo-includes' + (isSoldOut ? ' combo-includes-blurred' : '')} aria-hidden={isSoldOut || undefined} inert={isSoldOut ? '' : undefined}>
       <ul>
         {c.includes.map((item, i) => (
           <li key={i} style={{ '--delay': `${i * 48}ms` }}>
@@ -4020,11 +4020,11 @@ function ScrollProgress() {
 const MAP_SUBJECTS = [
   { id: 'la', name: 'Linear Algebra', color: '#7C3AED', topics: 'Vectors, matrices, eigenvalues, SVD' },
   { id: 'ps', name: 'Probability & Statistics', color: '#DB2777', topics: 'Distributions, Bayes, estimation, tests' },
-  { id: 'calc', name: 'Calculus & Optimization', color: '#D97706', topics: 'Derivatives, gradients, optimization' },
-  { id: 'py', name: 'Python & DSA', color: '#0891B2', topics: 'Python, data structures, algorithms' },
+  { id: 'calc', name: 'Calculus & Optimization', color: '#B45309', topics: 'Derivatives, gradients, optimization' },
+  { id: 'py', name: 'Python & DSA', color: '#0E7490', topics: 'Python, data structures, algorithms' },
   { id: 'ml', name: 'Machine Learning', color: '#2563EB', topics: 'Regression, classification, neural networks' },
 ];
-const MAP_STAGE_COLORS = ['#D97706', '#DB2777', '#7C3AED'];
+const MAP_STAGE_COLORS = ['#B45309', '#DB2777', '#7C3AED'];
 const MAP_STAGES = [
   { art: 'ml', count: 2, title: 'Machine learning', caption: 'Real business data, from raw dataset to working model',
     leads: 'The train, validate and improve loop you learn here is the same one every later project uses.',

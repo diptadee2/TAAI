@@ -670,7 +670,7 @@ function renderBlockSyllabusGrid(f) {
   const cells = Array.isArray(f.cells) ? f.cells : [];
   if (!cells.length) return '';
   const cellsHtml = cells.map(c => `<div class="block-syl-cell${c.highlight ? ' block-syl-highlight' : ''}">
-    <h4><i>${escapeHtml(c.number)}</i>${escapeHtml(c.title)}</h4>
+    <h3><i>${escapeHtml(c.number)}</i>${escapeHtml(c.title)}</h3>
     <p>${escapeHtml(c.description)}</p>
   </div>`).join('');
   return `<div class="block-syl-wrap">
