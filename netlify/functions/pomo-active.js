@@ -42,7 +42,7 @@ export async function handler(event) {
   // accumulating from when it first began).
   const { data: existing, error: readError } = await supabase
     .from('pomo_active_session')
-    .select('mode, total_seconds, phase_started_at, running, phase_end_at')
+    .select('mode, total_seconds, phase_started_at, running, phase_end_at, seconds_left')
     .eq('email', email)
     .maybeSingle();
   if (readError) return json(500, { error: readError.message });
@@ -120,6 +120,25 @@ export async function handler(event) {
   // directly. Checked only for a genuine new work-phase start (not every
   // call) both to keep this cheap and because that's the only case
   // "frozen" is actually supposed to mean anything for.
+  // A break can't replace a work phase that hasn't finished (2026-10-11,
+  // ganesh.deulkar1509: lost a 65-min session on Oct 9, 10 and 11). A
+  // duplicated tab (same device token, so the owner check above can't tell
+  // it apart) kept its own copy of the session running; when the real tab
+  // paused and resumed, the copy reached the ORIGINAL end first and wrote
+  // its break over the still-unfinished work phase, so the real tab's
+  // claim failed (wrong_mode), or its resume was treated as a new phase
+  // and re-dated (client_skipped). Skip is disabled during Focus and a
+  // natural break only starts once work time is up, so a break write
+  // against unfinished work is never legitimate, from any tab.
+  if (existing && existing.mode === 'work' && body.mode === 'break') {
+    const workRunningUnfinished = existing.running && Number.isFinite(existing.phase_end_at) && existing.phase_end_at > Date.now() + clientSkewMs + 5000;
+    const workPausedMidway = !existing.running && Number.isFinite(existing.seconds_left) && Number.isFinite(existing.total_seconds)
+      && existing.seconds_left > 0 && existing.seconds_left < existing.total_seconds;
+    if (workRunningUnfinished || workPausedMidway) {
+      return json(200, { ok: true, ignored: 'work phase still in progress' });
+    }
+  }
+
   if (isNewPhase && body.mode === 'work' && running) {
     // Best-effort, not a hard dependency — pre-migration (or any other
     // failure), a broken freeze CHECK must never break the routine

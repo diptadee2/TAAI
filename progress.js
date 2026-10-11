@@ -275,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-09-1';
+  var CLIENT_VERSION = '2026-10-11-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -637,6 +637,20 @@
   // CLAUDE.md's 2026-09-22 multi-device investigation). Falls back to
   // null (no protection for this tab, matches the pre-fix behavior)
   // rather than breaking anything if sessionStorage is unavailable.
+  // A tab copied from a live tab (Chrome "Duplicate tab", window.open)
+  // inherits its sessionStorage, and with it the same device token, so the
+  // server can't tell the two tabs apart (2026-10-11, see pomo-active.js).
+  // This flag is set while a page is live and cleared on pagehide, so a
+  // reload keeps its token but a copy made while the original is open
+  // starts with the flag already set and gets a fresh token.
+  (function markPomoTabLive() {
+    try {
+      if (sessionStorage.getItem('taai_pomo_tab_live') === '1') sessionStorage.removeItem('taai_pomo_device_token');
+      sessionStorage.setItem('taai_pomo_tab_live', '1');
+      window.addEventListener('pagehide', function () { try { sessionStorage.removeItem('taai_pomo_tab_live'); } catch (e) {} });
+      window.addEventListener('pageshow', function (e) { if (e.persisted) { try { sessionStorage.setItem('taai_pomo_tab_live', '1'); } catch (er) {} } });
+    } catch (e) { /* sessionStorage unavailable: no token at all, see below */ }
+  })();
   function getPomoDeviceToken() {
     try {
       var token = sessionStorage.getItem('taai_pomo_device_token');
