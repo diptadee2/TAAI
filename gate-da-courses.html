@@ -1542,6 +1542,31 @@ section.page-hero { padding: 48px 0 44px; }
     .pmap-stage .project-art svg { width: 48px; height: 36px; }
     .pmap-detail { padding: 20px 18px; }
     .pmap-uses li { grid-template-columns: 1fr; gap: 2px; }
+    /* Compact phone layout (2026-10-11: "taking a lot of scroll"). Stage
+       tabs become three small equal chips (no drawing, no caption: the
+       panel below repeats both), and the panel drops its repeated
+       step/title so it starts straight with what the stage is. */
+    .pmap-section { padding: 40px 0 36px; }
+    .pmap-sub { font-size: 15px; line-height: 1.55; }
+    .pmap-stages { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; overflow: visible; padding-bottom: 0; }
+    .pmap-stage { flex: none; min-width: 0; padding: 10px 10px; align-items: flex-start; }
+    .pmap-stage .project-art, .pmap-stage .pmap-stage-cap { display: none; }
+    .pmap-stage .pmap-stage-step { font-size: 11.5px; }
+    .pmap-stage .pmap-stage-count { display: none; }
+    .pmap-stage .pmap-stage-title { font-size: 13.5px; line-height: 1.25; }
+    .pmap-detail-stack { margin-top: 10px; }
+    .pmap-detail { padding: 16px 16px 14px; }
+    .pmap-detail .pmap-detail-step, .pmap-detail h3 { display: none; }
+    .pmap-detail-cap { margin-top: 0; font-size: 14.5px; }
+    .pmap-detail-label { margin-top: 10px; }
+    .pmap-uses li { display: block; padding: 8px 0; font-size: 13.5px; line-height: 1.45; }
+    .pmap-uses li b { display: inline; font-size: 13.5px; }
+    .pmap-uses li b::after { content: ': '; }
+    .pmap-detail-link { margin-top: 10px; padding: 10px 12px; font-size: 13px; }
+    .pmap-cta-band { margin-top: 20px; padding: 18px 16px; gap: 14px; }
+    .pmap-cta-kicker { display: none; }
+    .pmap-cta-title { font-size: 19px; }
+    .pmap-cta-sub { font-size: 14px; }
   }
   @media (prefers-reduced-motion: reduce) { .pmap-detail, .pmap-uses li { animation: none; } }
 
@@ -4116,7 +4141,7 @@ function ProjectsMap() {
                   className={'pmap-stage project-tile--' + sg.art + (sel === i ? ' is-sel' : '') + (hoverSub && sg.uses.some(u => u[0] === hoverSub) ? ' is-hl' : '')}
                   onClick={() => pick(i)}>
                   <span className="project-art"><ProjectArt kind={sg.art} /><span className="project-count">×{sg.count}</span></span>
-                  <span className="pmap-stage-text"><span className="pmap-stage-step">Stage {i + 1} · {sg.count} {sg.count === 1 ? 'project' : 'projects'}</span><span className="pmap-stage-title">{sg.title}</span><span className="pmap-stage-cap">{sg.caption}</span></span>
+                  <span className="pmap-stage-text"><span className="pmap-stage-step">Stage {i + 1}<span className="pmap-stage-count"> · {sg.count} {sg.count === 1 ? 'project' : 'projects'}</span></span><span className="pmap-stage-title">{sg.title}</span><span className="pmap-stage-cap">{sg.caption}</span></span>
                 </button>
               </React.Fragment>
             ))}
