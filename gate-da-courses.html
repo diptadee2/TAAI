@@ -1344,32 +1344,66 @@ section.page-hero { padding: 48px 0 44px; }
 .combo-live-cta { margin-top: 18px; display: flex; flex-direction: column; gap: 10px; }
 .combo-live-cta .combo-saving { margin: 0; }
 .combo-projects-note { margin: 12px 0 0; font-size: 13px; color: #FCD34D; }
-  /* Project tiles on the 2028 card (2026-10-11): one tile per category,
-     a line drawing in the category colour, a count badge and a caption.
-     Stacked in the card's narrow right column on desktop, three across
-     at tablet widths, stacked on phones. */
-  .project-tiles { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 12px; }
-  .project-tile { --pc: #F59E0B; display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: 14px;
-    background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.08); }
-  .project-tile--cv { --pc: #F472B6; }
-  .project-tile--llm { --pc: #A78BFA; }
-  .project-art { position: relative; flex: 0 0 auto; width: 76px; height: 58px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
-    color: var(--pc); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
-    background: color-mix(in srgb, var(--pc) 12%, transparent); border: 1px solid color-mix(in srgb, var(--pc) 28%, transparent); }
-  .project-text { min-width: 0; }
-  .project-title { font-weight: 700; font-size: 15px; color: #fff; line-height: 1.25; }
-  .project-count { position: absolute; top: -8px; right: -8px; font-size: 11.5px; font-weight: 800; line-height: 1; color: #14101f;
+  /* 2028 card: one-line project summary + link to the section block. */
+  .combo-projects-line { margin: 10px 0 0; font-size: 14px; line-height: 1.5; color: rgba(255,255,255,0.78); }
+  .combo-projects-link { display: inline-block; margin-top: 8px; font-size: 13.5px; font-weight: 600; color: #C4B5FD; text-decoration: none; }
+  .combo-projects-link:hover { text-decoration: underline; }
+
+  /* "From GATE prep to a portfolio" block in the Built differently
+     section (2026-10-11). Light card on the section's light background. */
+  .prep-projects { margin-top: 28px; padding: 30px 32px 26px; border-radius: 20px; background: #fff; border: 1px solid var(--line); scroll-margin-top: 90px; }
+  .prep-projects-head h3 { font-size: 22px; line-height: 1.25; color: var(--ink); margin: 0 0 6px; }
+  .prep-projects-head p { margin: 0; max-width: 640px; font-size: 15px; line-height: 1.55; color: var(--ink-dim); }
+  .prep-projects-flow { position: relative; display: grid; grid-template-columns: minmax(220px, 300px) minmax(0, 1fr); gap: 20px 120px; align-items: center; margin-top: 24px; }
+  .prep-lines { position: absolute; inset: 0; overflow: visible; pointer-events: none; z-index: 0; }
+  .prep-line-path { fill: none; stroke: url(#prep-line-grad); stroke-width: 2; stroke-linecap: round; opacity: .55;
+    stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1s cubic-bezier(.4,0,.2,1) var(--d), opacity .2s; }
+  .prep-projects.is-shown .prep-line-path { stroke-dashoffset: 0; }
+  .prep-line.is-hot .prep-line-path { opacity: 1; stroke-width: 3; }
+  .prep-line-dot { fill: #DB2777; }
+  .prep-card, .prep-tiles { position: relative; z-index: 1; }
+  .prep-card { padding: 18px 20px; border-radius: 16px; background: #F7F3FF; border: 1px solid #E4DAFE; }
+  .prep-card-label { font-size: 12.5px; font-weight: 700; color: #7C3AED; }
+  .prep-card-title { margin-top: 2px; font-size: 16px; font-weight: 700; color: var(--ink); }
+  .prep-subjects { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  .prep-subjects li { padding: 7px 12px; border-radius: 10px; background: #fff; border: 1px solid #E4DAFE; font-size: 14px; font-weight: 600; color: var(--ink);
+    transition: background .2s, border-color .2s, color .2s; }
+  .prep-subjects li.is-lit { background: #7C3AED; border-color: #7C3AED; color: #fff; }
+  .prep-tiles { display: flex; flex-direction: column; gap: 12px; }
+  .project-tile { --pc: #D97706; display: flex; align-items: center; gap: 16px; padding: 14px 16px; border-radius: 14px; background: #fff;
+    border: 1px solid var(--line); opacity: 0; transform: translateX(12px); transition: opacity .5s ease var(--d), transform .5s ease var(--d), border-color .2s; }
+  .prep-projects.is-shown .project-tile { opacity: 1; transform: none; }
+  .project-tile:hover { border-color: var(--pc); }
+  .project-tile--cv { --pc: #DB2777; }
+  .project-tile--llm { --pc: #7C3AED; }
+  .project-art { position: relative; flex: 0 0 auto; width: 84px; height: 62px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    color: var(--pc); background: #F6F6F8; border: 1px solid var(--line);
+    background: color-mix(in srgb, var(--pc) 9%, #fff); border: 1px solid color-mix(in srgb, var(--pc) 26%, #fff); }
+  .project-count { position: absolute; top: -8px; right: -8px; font-size: 11.5px; font-weight: 800; line-height: 1; color: #fff;
     padding: 4px 6px; border-radius: 999px; background: var(--pc); font-variant-numeric: tabular-nums; }
-  .project-caption { margin-top: 4px; font-size: 13px; line-height: 1.45; color: rgba(255,255,255,0.62); }
-  @media (min-width: 640px) and (max-width: 1024px) {
-    .project-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .project-tile { flex-direction: column; align-items: flex-start; }
-    .project-art { width: 100%; height: 72px; }
+  .project-text { min-width: 0; }
+  .project-title { font-weight: 700; font-size: 16px; color: var(--ink); line-height: 1.25; }
+  .project-caption { margin-top: 3px; font-size: 14px; line-height: 1.45; color: var(--ink-dim); }
+  .project-uses { margin-top: 6px; font-size: 12.5px; font-weight: 600; color: var(--pc); }
+  .prep-projects-link { display: inline-block; margin-top: 18px; font-size: 14.5px; font-weight: 600; color: #7C3AED; text-decoration: none; }
+  .prep-projects-link:hover { text-decoration: underline; }
+  @media (max-width: 1024px) { .prep-projects-flow { gap: 20px 72px; grid-template-columns: minmax(200px, 260px) minmax(0, 1fr); } }
+  @media (max-width: 768px) {
+    .prep-projects { padding: 22px 18px 20px; margin-top: 0; }
+    .prep-projects-head h3 { font-size: 20px; }
+    .prep-projects-flow { grid-template-columns: 1fr; gap: 26px; }
+    .prep-subjects { flex-direction: row; flex-wrap: wrap; }
+    .prep-tiles { padding-left: 22px; }
+    .project-tile { transform: translateY(10px); }
   }
   @media (max-width: 479px) {
     .project-tile { gap: 12px; padding: 12px; }
     .project-art { width: 64px; height: 50px; }
     .project-art svg { width: 54px; height: 40px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .prep-line-path, .project-tile { transition: none; }
+    .prep-line-dot { display: none; }
   }
 
 /* "Before you enrol" note for the GATE 2028 card (2026-10-04, direct
@@ -1951,7 +1985,11 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 @media (prefers-reduced-motion: reduce) {
   .why-icon-wrap, .why-heading, .why-sub, .why-chip { animation: none; opacity: 1; }
 }
-@media (max-width: 768px) { .why-strip { display: none; } }
+@media (max-width: 768px) {
+  /* Pillars stay hidden on phones; the prep-to-projects block shows. */
+  .why-strip { padding: 44px 0 36px; }
+  .why-strip-h2, .why-strip-sub, .why-grid { display: none; }
+}
 /* "Built differently" pillars de-slopped 2026-10-04: one flat dark
    surface with a hairline border (no cursor spotlight, noise, dot grid,
    blurred glow orb, drop shadow or hover lift), plain line icons in a
@@ -2707,12 +2745,14 @@ const COMBOS = [
     // The 2028 batch's project plan, by category (specific projects not
     // final yet), on request 2026-10-04.
     projectsLabel: 'Beyond GATE: 5 portfolio projects',
-    // Shown as illustrated tiles (2026-10-11: "can we have visuals for the
-    // projects"); art picks the drawing in ProjectArt.
+    // Shown as illustrated tiles in the "Built differently" section's
+    // PrepToProjects block (2026-10-11), linked to the GATE subjects each
+    // one uses; the card itself shows a one-line summary. art picks the
+    // drawing in ProjectArt.
     projects: [
-      { count: 2, art: 'ml', title: 'Machine learning', caption: 'Real business data, from raw dataset to working model' },
-      { count: 1, art: 'cv', title: 'Computer vision', caption: 'A deep learning model that sees and labels images' },
-      { count: 2, art: 'llm', title: 'Large language models', caption: 'The skill AI teams are hiring for right now' },
+      { count: 2, art: 'ml', title: 'Machine learning', caption: 'Real business data, from raw dataset to working model', uses: ['Probability & Statistics', 'Linear Algebra', 'Python'] },
+      { count: 1, art: 'cv', title: 'Computer vision', caption: 'A deep learning model that sees and labels images', uses: ['Linear Algebra', 'Calculus', 'Python'] },
+      { count: 2, art: 'llm', title: 'Large language models', caption: 'The skill AI teams are hiring for right now', uses: ['Probability & Statistics', 'Linear Algebra', 'Python'] },
     ],
     projectsNote: 'One bundle, two shots: crack GATE, and walk into DS and AI interviews with a portfolio to show.',
     validityDate: '2028-02-15',
@@ -3547,17 +3587,8 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
           {c.projects && (
             <div className="combo-projects">
               <div className="combo-includes-label">{c.projectsLabel}</div>
-              <div className="project-tiles">
-                {c.projects.map((p, i) => (
-                  <div key={i} className={'project-tile project-tile--' + p.art}>
-                    <div className="project-art"><ProjectArt kind={p.art} /><span className="project-count" aria-label={p.count + (p.count === 1 ? ' project' : ' projects')}>×{p.count}</span></div>
-                    <div className="project-text">
-                      <div className="project-title">{p.title}</div>
-                      <div className="project-caption">{p.caption}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <p className="combo-projects-line">{c.projects.map(p => p.count + ' ' + p.title.toLowerCase()).join(' · ')}</p>
+              <a href="#prep-to-projects" className="combo-projects-link">See how your GATE prep builds them <span aria-hidden="true">↑</span></a>
               {c.projectsNote && <p className="combo-projects-note">{c.projectsNote}</p>}
             </div>
           )}
@@ -3823,6 +3854,93 @@ const WHY_PILLARS = [
   },
 ];
 
+// "From GATE prep to a portfolio" (2026-10-11): the 2028 course's projects,
+// shown in the Built differently section with animated lines from the
+// GATE DA prep card to each project. Paths are measured from the real
+// element positions (ResizeObserver), so they follow any layout: side by
+// side on wide screens, stacked on phones.
+const PREP_SUBJECTS = ['Linear Algebra', 'Probability & Statistics', 'Calculus', 'Python'];
+function PrepToProjects() {
+  const projects = (COMBOS.find(c => c.id === 'full-course-2028') || {}).projects || [];
+  const wrapRef = React.useRef(null), prepRef = React.useRef(null), tileRefs = React.useRef([]);
+  const [paths, setPaths] = React.useState([]);
+  const [box, setBox] = React.useState({ w: 0, h: 0 });
+  const [shown, setShown] = React.useState(false);
+  const [hover, setHover] = React.useState(-1);
+  React.useLayoutEffect(() => {
+    const wrap = wrapRef.current, prep = prepRef.current; if (!wrap || !prep) return;
+    const measure = () => {
+      const W = wrap.getBoundingClientRect(), P = prep.getBoundingClientRect();
+      const side = tileRefs.current[0] && tileRefs.current[0].getBoundingClientRect().left > P.right - 4;
+      setBox({ w: W.width, h: W.height });
+      setPaths(tileRefs.current.filter(Boolean).map(el => {
+        const T = el.getBoundingClientRect();
+        if (side) {
+          const x1 = P.right - W.left, y1 = P.top + P.height / 2 - W.top, x2 = T.left - W.left, y2 = T.top + T.height / 2 - W.top, mx = (x1 + x2) / 2;
+          return `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`;
+        }
+        // Stacked (phones): one rail down the left gutter from the prep
+        // card, with a short rounded branch into each tile.
+        const x0 = T.left - 11 - W.left, y1 = P.bottom - W.top, x2 = T.left - W.left, y2 = T.top + T.height / 2 - W.top, r = 8;
+        return `M${x0},${y1} V${y2 - r} Q${x0},${y2} ${x0 + r},${y2} H${x2}`;
+      }));
+    };
+    measure();
+    const ro = new ResizeObserver(measure); ro.observe(wrap);
+    window.addEventListener('resize', measure);
+    return () => { ro.disconnect(); window.removeEventListener('resize', measure); };
+  }, []);
+  React.useEffect(() => {
+    const el = wrapRef.current; if (!el) return;
+    if (!('IntersectionObserver' in window)) { setShown(true); return; }
+    const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { setShown(true); io.disconnect(); } }, { threshold: 0.25 });
+    io.observe(el); return () => io.disconnect();
+  }, []);
+  const lit = hover >= 0 ? (projects[hover] || {}).uses || [] : [];
+  return (
+    <div className={'prep-projects' + (shown ? ' is-shown' : '')} id="prep-to-projects">
+      <div className="prep-projects-head">
+        <h3>From GATE prep to a portfolio</h3>
+        <p>The maths and Python you learn for GATE DA are what these projects run on. The GATE 2028 Full Course adds 5 of them, so you finish with a portfolio for DS and AI interviews too.</p>
+      </div>
+      <div className="prep-projects-flow" ref={wrapRef}>
+        <svg className="prep-lines" width={box.w} height={box.h} viewBox={`0 0 ${box.w || 1} ${box.h || 1}`} aria-hidden="true">
+          <defs>
+            <linearGradient id="prep-line-grad" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="#7C3AED" /><stop offset="1" stopColor="#DB2777" /></linearGradient>
+          </defs>
+          {paths.map((d, i) => (
+            <g key={i} className={'prep-line' + (hover === i ? ' is-hot' : '')} style={{ '--d': i * 0.18 + 's' }}>
+              <path id={'prep-path-' + i} d={d} pathLength="1" className="prep-line-path" />
+              {shown && <circle r="4" className="prep-line-dot"><animateMotion dur={(2.4 + i * 0.3) + 's'} begin={(1 + i * 0.25) + 's'} repeatCount="indefinite"><mpath href={'#prep-path-' + i} /></animateMotion></circle>}
+            </g>
+          ))}
+        </svg>
+        <div className="prep-card" ref={prepRef}>
+          <div className="prep-card-label">GATE DA prep</div>
+          <div className="prep-card-title">What you study for the exam</div>
+          <ul className="prep-subjects">
+            {PREP_SUBJECTS.map(sj => <li key={sj} className={lit.indexOf(sj) >= 0 ? 'is-lit' : ''}>{sj}</li>)}
+          </ul>
+        </div>
+        <div className="prep-tiles">
+          {projects.map((p, i) => (
+            <div key={i} ref={el => tileRefs.current[i] = el} className={'project-tile project-tile--' + p.art} style={{ '--d': (0.5 + i * 0.18) + 's' }}
+              onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(-1)}>
+              <div className="project-art"><ProjectArt kind={p.art} /><span className="project-count" aria-label={p.count + (p.count === 1 ? ' project' : ' projects')}>×{p.count}</span></div>
+              <div className="project-text">
+                <div className="project-title">{p.title}</div>
+                <div className="project-caption">{p.caption}</div>
+                <div className="project-uses">Uses {p.uses.join(', ')}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <a href="#full-course-2028" className="prep-projects-link">See the GATE 2028 Full Course <span aria-hidden="true">↓</span></a>
+    </div>
+  );
+}
+
 function WhyStrip() {
   return (
     <div className="why-strip">
@@ -3866,6 +3984,7 @@ function WhyStrip() {
             </div>
           ))}
         </div>
+        <PrepToProjects />
       </div>
     </div>
   );
