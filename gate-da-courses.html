@@ -1448,77 +1448,50 @@ section.page-hero { padding: 48px 0 44px; }
   }
   @media (max-width: 768px) { .bd-grid { display: none; } }
 
-  /* Detailed projects map (2026-10-11), where "Built differently" used to
-     sit; the short version moved to the home page. */
-  .pmap-section { padding: 80px 0 72px; background: var(--bg-soft); scroll-margin-top: 70px; }
-  .pmap-h2 { font-family: var(--font-display); font-size: clamp(28px, 3.4vw, 46px); font-weight: 600; letter-spacing: -0.03em; line-height: 1.05; color: var(--ink); margin: 0 0 14px; }
+  /* Detailed projects map (2026-10-11, simplified the same day): three
+     stage cards in a row joined by "builds on" arrows, a subject legend
+     above. Where "Built differently" used to sit; that moved to home. */
+  .pmap-section { padding: 72px 0 64px; background: var(--bg-soft); scroll-margin-top: 70px; }
+  .pmap-h2 { font-family: var(--font-display); font-size: clamp(28px, 3.4vw, 46px); font-weight: 600; letter-spacing: -0.03em; line-height: 1.05; color: var(--ink); margin: 0 0 12px; }
   .pmap-h2 em { font-style: normal; color: var(--purple); }
-  .pmap-sub { font-size: 16.5px; line-height: 1.55; color: var(--ink-dim); max-width: 680px; margin: 0 0 36px; }
-  .pmap { position: relative; display: grid; grid-template-columns: minmax(200px, 250px) minmax(260px, 340px) minmax(0, 1fr); column-gap: 96px; align-items: start; }
-  .pmap-detail-stack { margin-left: -64px; display: grid; position: relative; z-index: 1; }
-  .pmap-detail-stack > .pmap-detail { grid-area: 1 / 1; }
-  .pmap-detail:not(.is-sel) { visibility: hidden; }
-  .pmap-lines { position: absolute; inset: 0; overflow: visible; pointer-events: none; z-index: 0; }
-  .pmap-line path { fill: none; stroke: var(--c); stroke-width: 1.5; opacity: .14; transition: opacity .3s, stroke-width .3s; }
-  .pmap-line.is-on path { opacity: .75; stroke-width: 2.2; }
-  .pmap-line.is-hl path { opacity: .9; stroke-width: 2.6; }
-  .pmap-line circle { fill: var(--c); }
-  .pmap-subjects, .pmap-stages, .pmap-detail { position: relative; z-index: 1; }
-  .pmap-col-label { font-size: 12.5px; font-weight: 700; color: var(--ink-dim); margin-bottom: 10px; }
-  .pmap-subjects { display: flex; flex-direction: column; gap: 10px; padding-top: 4px; }
-  .pmap-subject { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 12px; background: #fff; border: 1px solid var(--line);
-    font-size: 14.5px; font-weight: 600; color: var(--ink-dim); transition: border-color .25s, color .25s, background .25s; cursor: default; }
-  .pmap-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--c); opacity: .35; transition: opacity .25s; flex: 0 0 auto; }
-  .pmap-subject.is-used { color: var(--ink); border-color: color-mix(in srgb, var(--c) 45%, #fff); }
-  .pmap-subject.is-used .pmap-dot, .pmap-subject.is-hl .pmap-dot { opacity: 1; }
-  .pmap-subject.is-hl { background: color-mix(in srgb, var(--c) 8%, #fff); border-color: var(--c); color: var(--ink); }
-  .pmap-stages { display: flex; flex-direction: column; }
-  .pmap-stage { --pc: #D97706; display: flex; align-items: center; gap: 14px; width: 100%; padding: 10px 14px; border-radius: 14px; background: #fff; border: 1.5px solid var(--line);
-    text-align: left; cursor: pointer; font: inherit; transition: border-color .25s, box-shadow .25s, background .25s; }
+  .pmap-sub { font-size: 16.5px; line-height: 1.55; color: var(--ink-dim); max-width: 640px; margin: 0 0 22px; }
+  .pmap-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
+  .pmap-chip { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 999px; background: #fff; border: 1px solid var(--line);
+    font: inherit; font-size: 13.5px; font-weight: 600; color: var(--ink); cursor: pointer; transition: border-color .2s, background .2s; }
+  .pmap-chip:hover, .pmap-chip.is-hl { border-color: var(--c); background: color-mix(in srgb, var(--c) 8%, #fff); }
+  .pmap-chip-n { font-size: 12px; font-weight: 600; color: var(--ink-dim); }
+  .pmap-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--c); flex: 0 0 auto; }
+  .pmap-flow { display: grid; grid-template-columns: minmax(0, 1fr) 48px minmax(0, 1fr) 48px minmax(0, 1fr); align-items: stretch; }
+  .pmap-link { position: relative; display: flex; align-items: center; justify-content: center; }
+  .pmap-link-arrow { width: 38px; height: 38px; border-radius: 50%; background: #fff; border: 1px solid #DDD0FD; color: #7C3AED; display: inline-flex; align-items: center; justify-content: center; z-index: 1; }
+  .pmap-stage { --pc: #D97706; background: #fff; border: 1px solid var(--line); border-top: 3px solid var(--pc); border-radius: 18px; padding: 18px 18px 16px; display: flex; flex-direction: column; }
   .pmap-stage.project-tile--cv { --pc: #DB2777; } .pmap-stage.project-tile--llm { --pc: #7C3AED; }
-  .pmap-stage:hover, .pmap-stage.is-hl { border-color: color-mix(in srgb, var(--pc) 55%, #fff); }
-  .pmap-stage.is-sel { border-color: var(--pc); background: color-mix(in srgb, var(--pc) 6%, #fff); box-shadow: 0 10px 24px -14px var(--pc); }
+  .pmap-stage-head { display: flex; align-items: center; gap: 14px; }
   .pmap-stage .project-art { width: 70px; height: 52px; }
-  .pmap-stage-text { display: flex; flex-direction: column; }
   .pmap-stage-step { font-size: 12px; font-weight: 700; color: var(--pc); }
-  .pmap-stage-title { font-size: 16px; font-weight: 700; color: var(--ink); }
-  .pmap-builds { position: relative; height: 34px; margin-left: 48px; border-left: 2px dashed #C4B5FD; }
-  .pmap-builds span { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 11.5px; font-weight: 700; color: #7C3AED; background: var(--bg-soft); padding: 1px 6px; border-radius: 6px; }
-  .pmap-detail { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 24px 26px; box-shadow: 0 14px 34px -24px rgba(17,24,39,.35); }
-  .pmap-detail.is-sel { animation: pmap-in .35s ease; }
-  @keyframes pmap-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-  .pmap-detail-step { font-size: 12.5px; font-weight: 700; color: var(--purple); }
-  .pmap-detail h3 { margin: 4px 0 4px; font-size: 22px; color: var(--ink); }
-  .pmap-detail-cap { margin: 0; font-size: 14.5px; color: var(--ink-dim); }
-  .pmap-detail-label { margin: 18px 0 8px; font-size: 12.5px; font-weight: 700; color: var(--ink-dim); }
-  .pmap-uses { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-  .pmap-uses li { display: grid; grid-template-columns: 150px 1fr; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 14px; line-height: 1.45; }
-  .pmap-detail.is-sel .pmap-uses li { animation: pmap-in .35s ease both; animation-delay: var(--d); }
-  .pmap-uses b { color: var(--c); font-weight: 700; }
-  .pmap-uses span { color: var(--ink); }
-  .pmap-detail-link { margin: 14px 0 0; padding: 12px 14px; border-radius: 12px; background: #F7F3FF; font-size: 14px; line-height: 1.5; color: var(--ink); }
-  .pmap-detail-link b { color: #7C3AED; }
-  .pmap-cta { display: inline-block; margin-top: 26px; font-size: 15px; font-weight: 600; color: #7C3AED; text-decoration: none; }
+  .pmap-stage-title { margin: 2px 0 0; font-size: 18px; line-height: 1.2; color: var(--ink); }
+  .pmap-stage-cap { margin: 10px 0 6px; font-size: 13.5px; line-height: 1.45; color: var(--ink-dim); }
+  .pmap-uses { list-style: none; margin: 0; padding: 0; }
+  .pmap-uses li { padding: 8px 0; border-top: 1px solid var(--line); font-size: 13.5px; line-height: 1.45; transition: opacity .2s; }
+  .pmap-uses li b { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--c); margin-bottom: 1px; }
+  .pmap-uses li span { color: var(--ink); }
+  .pmap-uses li b .pmap-dot { width: 7px; height: 7px; }
+  .pmap-flow.has-hl .pmap-uses li { opacity: .35; }
+  .pmap-flow.has-hl .pmap-uses li.is-hl { opacity: 1; }
+  .pmap-stage-note { margin: auto 0 0; padding: 10px 12px; border-radius: 10px; background: #F7F3FF; font-size: 13px; line-height: 1.45; color: var(--ink); }
+  .pmap-uses + .pmap-stage-note { margin-top: 12px; }
+  .pmap-stage-note b { color: #7C3AED; }
+  .pmap-cta { display: inline-block; margin-top: 22px; font-size: 15px; font-weight: 600; color: #7C3AED; text-decoration: none; }
   .pmap-cta:hover { text-decoration: underline; }
-  @media (max-width: 1279px) { .pmap { column-gap: 72px; grid-template-columns: minmax(180px, 220px) minmax(240px, 300px) minmax(0, 1fr); } .pmap-detail-stack { margin-left: -48px; } }
-  @media (max-width: 1099px) {
-    /* No subject column or lines: stages become a row of tabs, detail below. */
-    .pmap { display: block; }
-    .pmap-lines, .pmap-subjects, .pmap-builds, .pmap-stages .pmap-col-label { display: none; }
-    .pmap-stages { flex-direction: row; gap: 10px; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
-    .pmap-stages::-webkit-scrollbar { display: none; }
-    .pmap-stage { flex: 1 0 200px; padding: 10px 12px; }
-    .pmap-detail-stack { margin: 14px 0 0; }
+  @media (max-width: 1024px) {
+    .pmap-flow { grid-template-columns: 1fr; }
+    .pmap-link { height: 44px; }
+    .pmap-link-arrow { transform: rotate(90deg); }
   }
   @media (max-width: 600px) {
     .pmap-section { padding: 52px 0 44px; }
-    .pmap-stage { flex: 0 0 76%; }
-    .pmap-stage .project-art { width: 56px; height: 44px; }
-    .pmap-stage .project-art svg { width: 48px; height: 36px; }
-    .pmap-detail { padding: 20px 18px; }
-    .pmap-uses li { grid-template-columns: 1fr; gap: 2px; }
+    .pmap-chip { font-size: 12.5px; padding: 6px 10px; }
   }
-  @media (prefers-reduced-motion: reduce) { .pmap-detail, .pmap-uses li { animation: none; } }
 
   /* Richer look for the three cards (2026-10-11: "the layout is good, the
      designs are a bit bland"). Same idiom as the home offer cards: a faint
@@ -3969,7 +3942,6 @@ const MAP_SUBJECTS = [
 ];
 const MAP_STAGES = [
   { art: 'ml', count: 2, title: 'Machine learning', caption: 'Real business data, from raw dataset to working model',
-    leads: 'The train, validate and improve loop you learn here is the same one every later project uses.',
     uses: [['ps', 'Read the data first: distributions, summary statistics and hypothesis tests'], ['la', 'Rows and features become matrices, and models are matrix operations'], ['calc', 'Fitting a model means minimising a loss'], ['py', 'Clean and prepare messy real data in Python'], ['ml', 'Regression and classification, validated properly']] },
   { art: 'cv', count: 1, title: 'Computer vision', caption: 'A deep learning model that sees and labels images',
     builds: 'The same train, validate and improve loop as the machine learning projects, with a neural network as the model.',
@@ -3979,120 +3951,59 @@ const MAP_STAGES = [
     uses: [['la', 'Words become vectors, and attention is matrix multiplication'], ['ps', 'The model predicts a probability for every possible next word'], ['calc', 'Trained by gradient descent, like every model before it'], ['py', 'Turn the model into a working application'], ['ml', 'Embeddings, evaluation and knowing where the model fails']] },
 ];
 function ProjectsMap() {
-  const [sel, setSel] = React.useState(0);
-  const [hoverSub, setHoverSub] = React.useState(null);
-  const [auto, setAuto] = React.useState(true);
-  const [shown, setShown] = React.useState(false);
-  const [paths, setPaths] = React.useState([]);
-  const [box, setBox] = React.useState({ w: 0, h: 0 });
-  const wrapRef = React.useRef(null), subRefs = React.useRef({}), stageRefs = React.useRef([]);
-  const reduce = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  React.useLayoutEffect(() => {
-    const wrap = wrapRef.current; if (!wrap) return;
-    const measure = () => {
-      const W = wrap.getBoundingClientRect();
-      setBox({ w: W.width, h: W.height });
-      const out = [];
-      MAP_STAGES.forEach((st, si) => {
-        const T = stageRefs.current[si] && stageRefs.current[si].getBoundingClientRect();
-        if (!T || !T.width) return;
-        st.uses.forEach(([sid]) => {
-          const el = subRefs.current[sid]; const S = el && el.getBoundingClientRect();
-          if (!S || !S.width || S.right > T.left) return;
-          const x1 = S.right - W.left, y1 = S.top + S.height / 2 - W.top, x2 = T.left - W.left, y2 = T.top + T.height / 2 - W.top, mx = (x1 + x2) / 2;
-          out.push({ si, sid, d: `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}` });
-        });
-      });
-      setPaths(out);
-    };
-    measure();
-    const ro = new ResizeObserver(measure); ro.observe(wrap);
-    window.addEventListener('resize', measure);
-    return () => { ro.disconnect(); window.removeEventListener('resize', measure); };
-  }, []);
-  React.useEffect(() => {
-    const el = wrapRef.current; if (!el || !('IntersectionObserver' in window)) { setShown(true); return; }
-    const io = new IntersectionObserver(es => setShown(es.some(e => e.isIntersecting)), { threshold: 0.3 });
-    io.observe(el); return () => io.disconnect();
-  }, []);
-  // Cycle through the stages while the map is on screen, until someone picks one.
-  React.useEffect(() => {
-    if (!auto || !shown || reduce) return;
-    const t = setInterval(() => setSel(v => (v + 1) % MAP_STAGES.length), 5500);
-    return () => clearInterval(t);
-  }, [auto, shown, reduce]);
-  // On narrow screens the stages are a sideways-scrolling row: keep the
-  // selected one in view (scrolls the row only, never the page).
-  React.useEffect(() => {
-    const btn = stageRefs.current[sel]; const row = btn && btn.parentElement;
-    if (!row || row.scrollWidth <= row.clientWidth) return;
-    row.scrollTo({ left: btn.offsetLeft - row.offsetLeft - 8, behavior: reduce ? 'auto' : 'smooth' });
-  }, [sel]);
-  const pick = i => { setAuto(false); setSel(i); };
-  const st = MAP_STAGES[sel];
+  // Simplified 2026-10-11 ("too much negative space, too many tangled
+  // lines, too confusing"): the three stages side by side as a journey,
+  // each listing the subjects it uses and how, with "builds on" arrows
+  // between them. A subject legend on top counts how many stages use
+  // each subject; hovering a subject lights up its rows everywhere.
+  const [hl, setHl] = React.useState(null);
   const subName = id => (MAP_SUBJECTS.find(x => x.id === id) || {}).name;
   const subColor = id => (MAP_SUBJECTS.find(x => x.id === id) || {}).color;
-  const usedBySel = st.uses.map(u => u[0]);
+  const usedIn = id => MAP_STAGES.filter(st => st.uses.some(u => u[0] === id)).length;
   return (
     <section className="pmap-section" id="projects-map">
       <div className="container">
         <h2 className="pmap-h2 fade-in">How your GATE subjects become <em>5 projects.</em></h2>
-        <p className="pmap-sub fade-in">The GATE 2028 Full Course adds 5 portfolio projects in three stages. Each stage runs on the maths you study for the exam, and each builds on the one before. Pick a stage to see exactly what it uses.</p>
-        <div className={'pmap' + (shown ? ' is-shown' : '')} ref={wrapRef}>
-          <svg className="pmap-lines" width={box.w} height={box.h} viewBox={`0 0 ${box.w || 1} ${box.h || 1}`} aria-hidden="true">
-            {paths.map((p, i) => {
-              const on = p.si === sel, hl = hoverSub && p.sid === hoverSub;
-              return (
-                <g key={i} className={'pmap-line' + (on ? ' is-on' : '') + (hl ? ' is-hl' : '')} style={{ '--c': subColor(p.sid) }}>
-                  <path id={'pmap-p-' + i} d={p.d} />
-                  {on && shown && !reduce && <circle r="3.5"><animateMotion dur="2.2s" begin={(i % 5) * 0.25 + 's'} repeatCount="indefinite"><mpath href={'#pmap-p-' + i} /></animateMotion></circle>}
-                </g>
-              );
-            })}
-          </svg>
-          <div className="pmap-subjects">
-            <div className="pmap-col-label">GATE DA subjects</div>
-            {MAP_SUBJECTS.map(sj => (
-              <div key={sj.id} ref={el => subRefs.current[sj.id] = el}
-                className={'pmap-subject' + (usedBySel.indexOf(sj.id) >= 0 ? ' is-used' : '') + (hoverSub === sj.id ? ' is-hl' : '')}
-                style={{ '--c': sj.color }} onMouseEnter={() => setHoverSub(sj.id)} onMouseLeave={() => setHoverSub(null)}>
-                <span className="pmap-dot" />{sj.name}
-              </div>
-            ))}
-          </div>
-          <div className="pmap-stages" role="tablist" aria-label="Project stages">
-            <div className="pmap-col-label">Project stages</div>
-            {MAP_STAGES.map((sg, i) => (
-              <React.Fragment key={sg.title}>
-                {i > 0 && <div className="pmap-builds" aria-hidden="true"><span>builds on</span></div>}
-                <button type="button" role="tab" aria-selected={sel === i} ref={el => stageRefs.current[i] = el}
-                  className={'pmap-stage project-tile--' + sg.art + (sel === i ? ' is-sel' : '') + (hoverSub && sg.uses.some(u => u[0] === hoverSub) ? ' is-hl' : '')}
-                  onClick={() => pick(i)}>
-                  <span className="project-art"><ProjectArt kind={sg.art} /><span className="project-count">×{sg.count}</span></span>
-                  <span className="pmap-stage-text"><span className="pmap-stage-step">Stage {i + 1}</span><span className="pmap-stage-title">{sg.title}</span></span>
-                </button>
-              </React.Fragment>
-            ))}
-          </div>
-          {/* All three panels share one grid cell, so the panel is always as
-              tall as the tallest stage and switching never moves the page. */}
-          <div className="pmap-detail-stack">
-            {MAP_STAGES.map((sg, k) => (
-              <div key={k} className={'pmap-detail' + (k === sel ? ' is-sel' : '')} role="tabpanel" aria-hidden={k !== sel}>
-                <div className="pmap-detail-step">Stage {k + 1} of 3 · {sg.count} {sg.count === 1 ? 'project' : 'projects'}</div>
-                <h3>{sg.title}</h3>
-                <p className="pmap-detail-cap">{sg.caption}</p>
-                <div className="pmap-detail-label">What it uses from GATE DA</div>
+        <p className="pmap-sub fade-in">The GATE 2028 Full Course adds 5 portfolio projects in three stages. Each runs on the maths you study for the exam, and each builds on the one before.</p>
+        <div className="pmap-legend fade-in" onMouseLeave={() => setHl(null)}>
+          {MAP_SUBJECTS.map(sj => {
+            const n = usedIn(sj.id);
+            return (
+              <button type="button" key={sj.id} className={'pmap-chip' + (hl === sj.id ? ' is-hl' : '')} style={{ '--c': sj.color }}
+                onMouseEnter={() => setHl(sj.id)} onFocus={() => setHl(sj.id)} onBlur={() => setHl(null)} onClick={() => setHl(hl === sj.id ? null : sj.id)}>
+                <span className="pmap-dot" />{sj.name}<span className="pmap-chip-n">{n === MAP_STAGES.length ? 'all 3' : n + ' of 3'}</span>
+              </button>
+            );
+          })}
+        </div>
+        <div className={'pmap-flow' + (hl ? ' has-hl' : '')}>
+          {MAP_STAGES.map((st, i) => (
+            <React.Fragment key={st.title}>
+              {i > 0 && (
+                <div className="pmap-link fade-in" aria-hidden="true">
+                  <span className="pmap-link-arrow"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg></span>
+                </div>
+              )}
+              <div className={'pmap-stage project-tile--' + st.art + ' fade-in'} style={{ transitionDelay: i * 80 + 'ms' }}>
+                <div className="pmap-stage-head">
+                  <span className="project-art"><ProjectArt kind={st.art} /><span className="project-count">×{st.count}</span></span>
+                  <div>
+                    <div className="pmap-stage-step">Stage {i + 1} · {st.count} {st.count === 1 ? 'project' : 'projects'}</div>
+                    <h3 className="pmap-stage-title">{st.title}</h3>
+                  </div>
+                </div>
+                <p className="pmap-stage-cap">{st.caption}</p>
                 <ul className="pmap-uses">
-                  {sg.uses.map(([sid, how], j) => (
-                    <li key={sid} style={{ '--c': subColor(sid), '--d': j * 0.06 + 's' }}><b>{subName(sid)}</b><span>{how}</span></li>
+                  {st.uses.map(([sid, how]) => (
+                    <li key={sid} className={hl === sid ? 'is-hl' : ''} style={{ '--c': subColor(sid) }}>
+                      <b><span className="pmap-dot" />{subName(sid)}</b><span>{how}</span>
+                    </li>
                   ))}
                 </ul>
-                {sg.builds && <p className="pmap-detail-link"><b>Builds on stage {k}.</b> {sg.builds}</p>}
-                {sg.leads && <p className="pmap-detail-link"><b>Leads into stage 2.</b> {sg.leads}</p>}
+                {st.builds && <p className="pmap-stage-note"><b>Builds on stage {i}.</b> {st.builds}</p>}
               </div>
-            ))}
-          </div>
+            </React.Fragment>
+          ))}
         </div>
         <a href="#full-course-2028" className="pmap-cta">See the GATE 2028 Full Course <span aria-hidden="true">↓</span></a>
       </div>
