@@ -1454,32 +1454,40 @@ section.page-hero { padding: 48px 0 44px; }
   .pmap-h2 { font-family: var(--font-display); font-size: clamp(28px, 3.4vw, 46px); font-weight: 600; letter-spacing: -0.03em; line-height: 1.05; color: var(--ink); margin: 0 0 14px; }
   .pmap-h2 em { font-style: normal; color: var(--purple); }
   .pmap-sub { font-size: 16.5px; line-height: 1.55; color: var(--ink-dim); max-width: 680px; margin: 0 0 36px; }
-  .pmap { position: relative; display: grid; grid-template-columns: minmax(200px, 250px) minmax(260px, 340px) minmax(0, 1fr); column-gap: 96px; align-items: start; }
-  .pmap-detail-stack { margin-left: -64px; display: grid; position: relative; z-index: 1; }
+  .pmap { position: relative; display: grid; grid-template-columns: minmax(220px, 270px) 88px minmax(250px, 320px) 64px minmax(0, 1fr); align-items: stretch; }
+  .pmap-subjects { grid-column: 1; } .pmap-stages { grid-column: 3; } .pmap-detail-stack { grid-column: 5; }
+  .pmap-detail-stack { display: grid; position: relative; z-index: 1; }
   .pmap-detail-stack > .pmap-detail { grid-area: 1 / 1; }
   .pmap-detail:not(.is-sel) { visibility: hidden; }
   .pmap-lines { position: absolute; inset: 0; overflow: visible; pointer-events: none; z-index: 0; }
   .pmap-line path { fill: none; stroke: var(--c); stroke-width: 1.5; opacity: .14; transition: opacity .3s, stroke-width .3s; }
   .pmap-line.is-on path { opacity: .75; stroke-width: 2.2; }
   .pmap-line.is-hl path { opacity: .9; stroke-width: 2.6; }
+  .pmap-line--panel path { stroke-width: 2.6; opacity: .9; stroke-dasharray: 6 5; }
   .pmap-line circle { fill: var(--c); }
   .pmap-subjects, .pmap-stages, .pmap-detail { position: relative; z-index: 1; }
   .pmap-col-label { font-size: 12.5px; font-weight: 700; color: var(--ink-dim); margin-bottom: 10px; }
-  .pmap-subjects { display: flex; flex-direction: column; gap: 10px; padding-top: 4px; }
-  .pmap-subject { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 12px; background: #fff; border: 1px solid var(--line);
+  .pmap-subjects { display: flex; flex-direction: column; }
+  .pmap-subject-list { flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; }
+  .pmap-subject { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; background: #fff; border: 1px solid var(--line);
     font-size: 14.5px; font-weight: 600; color: var(--ink-dim); transition: border-color .25s, color .25s, background .25s; cursor: default; }
+  .pmap-subject-text { display: flex; flex-direction: column; min-width: 0; }
+  .pmap-subject-name { font-size: 14.5px; font-weight: 700; }
+  .pmap-subject-topics { margin-top: 2px; font-size: 12.5px; font-weight: 500; color: var(--ink-dim); line-height: 1.35; }
   .pmap-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--c); opacity: .35; transition: opacity .25s; flex: 0 0 auto; }
   .pmap-subject.is-used { color: var(--ink); border-color: color-mix(in srgb, var(--c) 45%, #fff); }
   .pmap-subject.is-used .pmap-dot, .pmap-subject.is-hl .pmap-dot { opacity: 1; }
   .pmap-subject.is-hl { background: color-mix(in srgb, var(--c) 8%, #fff); border-color: var(--c); color: var(--ink); }
   .pmap-stages { display: flex; flex-direction: column; }
+  .pmap-stages .pmap-builds { flex: 1; min-height: 30px; }
   .pmap-stage { --pc: #D97706; display: flex; align-items: center; gap: 14px; width: 100%; padding: 10px 14px; border-radius: 14px; background: #fff; border: 1.5px solid var(--line);
     text-align: left; cursor: pointer; font: inherit; transition: border-color .25s, box-shadow .25s, background .25s; }
   .pmap-stage.project-tile--cv { --pc: #DB2777; } .pmap-stage.project-tile--llm { --pc: #7C3AED; }
   .pmap-stage:hover, .pmap-stage.is-hl { border-color: color-mix(in srgb, var(--pc) 55%, #fff); }
   .pmap-stage.is-sel { border-color: var(--pc); background: color-mix(in srgb, var(--pc) 6%, #fff); box-shadow: 0 10px 24px -14px var(--pc); }
   .pmap-stage .project-art { width: 70px; height: 52px; }
-  .pmap-stage-text { display: flex; flex-direction: column; }
+  .pmap-stage-text { display: flex; flex-direction: column; min-width: 0; }
+  .pmap-stage-cap { margin-top: 3px; font-size: 12.5px; line-height: 1.35; color: var(--ink-dim); }
   .pmap-stage-step { font-size: 12px; font-weight: 700; color: var(--pc); }
   .pmap-stage-title { font-size: 16px; font-weight: 700; color: var(--ink); }
   .pmap-builds { position: relative; height: 34px; margin-left: 48px; border-left: 2px dashed #C4B5FD; }
@@ -1487,7 +1495,8 @@ section.page-hero { padding: 48px 0 44px; }
   .pmap-detail { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 24px 26px; box-shadow: 0 14px 34px -24px rgba(17,24,39,.35); }
   .pmap-detail.is-sel { animation: pmap-in .35s ease; }
   @keyframes pmap-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-  .pmap-detail-step { font-size: 12.5px; font-weight: 700; color: var(--purple); }
+  .pmap-detail { border-left: 4px solid var(--sc, var(--purple)); }
+  .pmap-detail-step { font-size: 12.5px; font-weight: 700; color: var(--sc, var(--purple)); }
   .pmap-detail h3 { margin: 4px 0 4px; font-size: 22px; color: var(--ink); }
   .pmap-detail-cap { margin: 0; font-size: 14.5px; color: var(--ink-dim); }
   .pmap-detail-label { margin: 18px 0 8px; font-size: 12.5px; font-weight: 700; color: var(--ink-dim); }
@@ -1496,11 +1505,11 @@ section.page-hero { padding: 48px 0 44px; }
   .pmap-detail.is-sel .pmap-uses li { animation: pmap-in .35s ease both; animation-delay: var(--d); }
   .pmap-uses b { color: var(--c); font-weight: 700; }
   .pmap-uses span { color: var(--ink); }
-  .pmap-detail-link { margin: 14px 0 0; padding: 12px 14px; border-radius: 12px; background: #F7F3FF; font-size: 14px; line-height: 1.5; color: var(--ink); }
-  .pmap-detail-link b { color: #7C3AED; }
+  .pmap-detail-link { margin: 14px 0 0; padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, var(--sc, #7C3AED) 8%, #fff); font-size: 14px; line-height: 1.5; color: var(--ink); }
+  .pmap-detail-link b { color: var(--sc, #7C3AED); }
   .pmap-cta { display: inline-block; margin-top: 26px; font-size: 15px; font-weight: 600; color: #7C3AED; text-decoration: none; }
   .pmap-cta:hover { text-decoration: underline; }
-  @media (max-width: 1279px) { .pmap { column-gap: 72px; grid-template-columns: minmax(180px, 220px) minmax(240px, 300px) minmax(0, 1fr); } .pmap-detail-stack { margin-left: -48px; } }
+  @media (max-width: 1279px) { .pmap { grid-template-columns: minmax(190px, 220px) 64px minmax(230px, 280px) 48px minmax(0, 1fr); } .pmap-subject-topics { font-size: 12px; } }
   @media (max-width: 1099px) {
     /* No subject column or lines: stages become a row of tabs, detail below. */
     .pmap { display: block; }
@@ -3961,12 +3970,13 @@ function ScrollProgress() {
 // home page. Project specifics aren't final, so this describes stages and
 // the maths each uses, not named projects.
 const MAP_SUBJECTS = [
-  { id: 'la', name: 'Linear Algebra', color: '#7C3AED' },
-  { id: 'ps', name: 'Probability & Statistics', color: '#DB2777' },
-  { id: 'calc', name: 'Calculus & Optimization', color: '#D97706' },
-  { id: 'py', name: 'Python & DSA', color: '#0891B2' },
-  { id: 'ml', name: 'Machine Learning', color: '#2563EB' },
+  { id: 'la', name: 'Linear Algebra', color: '#7C3AED', topics: 'Vectors, matrices, eigenvalues, SVD' },
+  { id: 'ps', name: 'Probability & Statistics', color: '#DB2777', topics: 'Distributions, Bayes, estimation, tests' },
+  { id: 'calc', name: 'Calculus & Optimization', color: '#D97706', topics: 'Derivatives, gradients, optimization' },
+  { id: 'py', name: 'Python & DSA', color: '#0891B2', topics: 'Python, data structures, algorithms' },
+  { id: 'ml', name: 'Machine Learning', color: '#2563EB', topics: 'Regression, classification, neural networks' },
 ];
+const MAP_STAGE_COLORS = ['#D97706', '#DB2777', '#7C3AED'];
 const MAP_STAGES = [
   { art: 'ml', count: 2, title: 'Machine learning', caption: 'Real business data, from raw dataset to working model',
     leads: 'The train, validate and improve loop you learn here is the same one every later project uses.',
@@ -3985,7 +3995,7 @@ function ProjectsMap() {
   const [shown, setShown] = React.useState(false);
   const [paths, setPaths] = React.useState([]);
   const [box, setBox] = React.useState({ w: 0, h: 0 });
-  const wrapRef = React.useRef(null), subRefs = React.useRef({}), stageRefs = React.useRef([]);
+  const wrapRef = React.useRef(null), subRefs = React.useRef({}), stageRefs = React.useRef([]), panelRef = React.useRef(null);
   const reduce = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   React.useLayoutEffect(() => {
     const wrap = wrapRef.current; if (!wrap) return;
@@ -3996,12 +4006,23 @@ function ProjectsMap() {
       MAP_STAGES.forEach((st, si) => {
         const T = stageRefs.current[si] && stageRefs.current[si].getBoundingClientRect();
         if (!T || !T.width) return;
-        st.uses.forEach(([sid]) => {
-          const el = subRefs.current[sid]; const S = el && el.getBoundingClientRect();
+        // Endpoints fan out down the stage card's left edge, in the same
+        // top-to-bottom order as the subjects, so no two wires cross.
+        const used = MAP_SUBJECTS.filter(sj => st.uses.some(u => u[0] === sj.id));
+        used.forEach((sj, k) => {
+          const el = subRefs.current[sj.id]; const S = el && el.getBoundingClientRect();
           if (!S || !S.width || S.right > T.left) return;
-          const x1 = S.right - W.left, y1 = S.top + S.height / 2 - W.top, x2 = T.left - W.left, y2 = T.top + T.height / 2 - W.top, mx = (x1 + x2) / 2;
-          out.push({ si, sid, d: `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}` });
+          const x1 = S.right - W.left, y1 = S.top + S.height / 2 - W.top, x2 = T.left - W.left;
+          const y2 = T.top - W.top + T.height * (k + 1) / (used.length + 1), mx = (x1 + x2) / 2;
+          out.push({ si, sid: sj.id, d: `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}` });
         });
+        // The selected stage's link into the detail panel.
+        const P = panelRef.current && panelRef.current.getBoundingClientRect();
+        if (P && P.width && P.left > T.right) {
+          const x1 = T.right - W.left, y1 = T.top + T.height / 2 - W.top, x2 = P.left - W.left;
+          const y2 = Math.min(Math.max(y1, P.top - W.top + 40), P.bottom - W.top - 40), mx = (x1 + x2) / 2;
+          out.push({ si, panel: true, d: `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}` });
+        }
       });
       setPaths(out);
     };
@@ -4041,9 +4062,10 @@ function ProjectsMap() {
         <div className={'pmap' + (shown ? ' is-shown' : '')} ref={wrapRef}>
           <svg className="pmap-lines" width={box.w} height={box.h} viewBox={`0 0 ${box.w || 1} ${box.h || 1}`} aria-hidden="true">
             {paths.map((p, i) => {
-              const on = p.si === sel, hl = hoverSub && p.sid === hoverSub;
+              if (p.si !== sel) return null;
+              const on = true, hl = hoverSub && p.sid === hoverSub;
               return (
-                <g key={i} className={'pmap-line' + (on ? ' is-on' : '') + (hl ? ' is-hl' : '')} style={{ '--c': subColor(p.sid) }}>
+                <g key={i} className={'pmap-line is-on' + (p.panel ? ' pmap-line--panel' : '') + (hl ? ' is-hl' : '')} style={{ '--c': p.panel ? MAP_STAGE_COLORS[sel] : subColor(p.sid) }}>
                   <path id={'pmap-p-' + i} d={p.d} />
                   {on && shown && !reduce && <circle r="3.5"><animateMotion dur="2.2s" begin={(i % 5) * 0.25 + 's'} repeatCount="indefinite"><mpath href={'#pmap-p-' + i} /></animateMotion></circle>}
                 </g>
@@ -4052,13 +4074,15 @@ function ProjectsMap() {
           </svg>
           <div className="pmap-subjects">
             <div className="pmap-col-label">GATE DA subjects</div>
+            <div className="pmap-subject-list">
             {MAP_SUBJECTS.map(sj => (
               <div key={sj.id} ref={el => subRefs.current[sj.id] = el}
                 className={'pmap-subject' + (usedBySel.indexOf(sj.id) >= 0 ? ' is-used' : '') + (hoverSub === sj.id ? ' is-hl' : '')}
                 style={{ '--c': sj.color }} onMouseEnter={() => setHoverSub(sj.id)} onMouseLeave={() => setHoverSub(null)}>
-                <span className="pmap-dot" />{sj.name}
+                <span className="pmap-dot" /><span className="pmap-subject-text"><span className="pmap-subject-name">{sj.name}</span><span className="pmap-subject-topics">{sj.topics}</span></span>
               </div>
             ))}
+            </div>
           </div>
           <div className="pmap-stages" role="tablist" aria-label="Project stages">
             <div className="pmap-col-label">Project stages</div>
@@ -4069,14 +4093,14 @@ function ProjectsMap() {
                   className={'pmap-stage project-tile--' + sg.art + (sel === i ? ' is-sel' : '') + (hoverSub && sg.uses.some(u => u[0] === hoverSub) ? ' is-hl' : '')}
                   onClick={() => pick(i)}>
                   <span className="project-art"><ProjectArt kind={sg.art} /><span className="project-count">×{sg.count}</span></span>
-                  <span className="pmap-stage-text"><span className="pmap-stage-step">Stage {i + 1}</span><span className="pmap-stage-title">{sg.title}</span></span>
+                  <span className="pmap-stage-text"><span className="pmap-stage-step">Stage {i + 1} · {sg.count} {sg.count === 1 ? 'project' : 'projects'}</span><span className="pmap-stage-title">{sg.title}</span><span className="pmap-stage-cap">{sg.caption}</span></span>
                 </button>
               </React.Fragment>
             ))}
           </div>
           {/* All three panels share one grid cell, so the panel is always as
               tall as the tallest stage and switching never moves the page. */}
-          <div className="pmap-detail-stack">
+          <div className="pmap-detail-stack" ref={panelRef} style={{ '--sc': MAP_STAGE_COLORS[sel] }}>
             {MAP_STAGES.map((sg, k) => (
               <div key={k} className={'pmap-detail' + (k === sel ? ' is-sel' : '')} role="tabpanel" aria-hidden={k !== sel}>
                 <div className="pmap-detail-step">Stage {k + 1} of 3 · {sg.count} {sg.count === 1 ? 'project' : 'projects'}</div>
