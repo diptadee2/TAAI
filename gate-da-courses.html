@@ -1519,6 +1519,7 @@ section.page-hero { padding: 48px 0 44px; }
   .pmap-uses span { color: var(--ink); }
   .pmap-detail-link { margin: 14px 0 0; padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, var(--sc, #7C3AED) 8%, #fff); font-size: 14px; line-height: 1.5; color: var(--ink); }
   .pmap-detail-link b { color: color-mix(in srgb, var(--sc, #7C3AED) 88%, #000); }
+  .pmap-t-short { display: none; }
   .pmap-cta-band { display: flex; align-items: center; justify-content: space-between; gap: 20px 32px; flex-wrap: wrap; margin: 4px 0 36px; padding: 26px 28px;
     border-radius: 20px; background: linear-gradient(135deg, #F3EEFF 0%, #FCEFF6 100%); border: 1px solid rgba(124,58,237,0.18); }
   .pmap-cta-copy { min-width: 0; flex: 1 1 320px; }
@@ -1574,6 +1575,30 @@ section.page-hero { padding: 48px 0 44px; }
     .pmap-cta-kicker { display: none; }
     .pmap-cta-title { font-size: 19px; }
     .pmap-cta-sub { font-size: 14px; }
+  }
+  /* Phones: tabs and panel read as ONE card (2026-10-12: "these cards feel
+     less connected and separated on mobile, also a bit congested"). The
+     stage tabs become a segmented control at the top of the card, the
+     selected one a white raised chip in its stage colour, and the panel
+     content sits below in the same white card; more air between rows. */
+  @media (max-width: 600px) {
+    .pmap { background: #fff; border: 1px solid var(--line); border-radius: 22px; padding: 8px; box-shadow: 0 14px 34px -26px rgba(17,24,39,.35); }
+    .pmap-stages { gap: 4px; padding: 4px; border-radius: 16px; background: #F2EFF8; }
+    .pmap-stage { border: 0; border-radius: 12px; background: transparent; box-shadow: none; padding: 10px 8px; align-items: center; text-align: center; justify-content: center; }
+    .pmap-stage .pmap-stage-text { align-items: center; }
+    .pmap-stage .pmap-stage-step { font-size: 11px; color: var(--ink-soft); }
+    .pmap-stage .pmap-stage-title { font-size: 14px; color: var(--ink-dim); }
+    .pmap-stage.is-sel { background: #fff; box-shadow: 0 4px 12px -6px rgba(17,24,39,.3), inset 0 -2px 0 var(--pc); }
+    .pmap-stage.is-sel .pmap-stage-step { color: var(--pc); }
+    .pmap-stage.is-sel .pmap-stage-title { color: var(--ink); }
+    .pmap-t-full { display: none; } .pmap-t-short { display: inline; }
+    .pmap-detail-stack { margin-top: 4px; }
+    .pmap-detail { border: 0; border-left: 0; box-shadow: none; background: transparent; padding: 14px 10px 8px; }
+    .pmap-detail-cap { font-size: 15px; line-height: 1.5; color: var(--ink); }
+    .pmap-detail-label { margin: 16px 0 4px; }
+    .pmap-uses li { padding: 12px 0; font-size: 14px; line-height: 1.55; }
+    .pmap-uses li b { font-size: 14px; }
+    .pmap-detail-link { margin-top: 12px; padding: 12px 14px; font-size: 13.5px; line-height: 1.55; }
   }
   @media (prefers-reduced-motion: reduce) { .pmap-detail, .pmap-uses li { animation: none; } }
 
@@ -4039,7 +4064,7 @@ const MAP_STAGES = [
   { art: 'cv', count: 1, title: 'Computer vision', caption: 'A deep learning model that sees and labels images',
     builds: 'The same train, validate and improve loop as the machine learning projects, with a neural network as the model.',
     uses: [['la', 'An image is a matrix, and a convolution is a matrix operation'], ['calc', 'Backpropagation is the chain rule, and training is gradient descent'], ['py', 'Write the data pipeline and the training loop'], ['ml', 'Neural networks, overfitting and regularisation']] },
-  { art: 'llm', count: 2, title: 'Large language models', caption: 'The skill AI teams are hiring for right now',
+  { art: 'llm', count: 2, tab: 'LLMs', title: 'Large language models', caption: 'The skill AI teams are hiring for right now',
     builds: 'A transformer is a neural network too, trained the same way as in computer vision, at a far larger scale.',
     uses: [['la', 'Words become vectors, and attention is matrix multiplication'], ['ps', 'The model predicts a probability for every possible next word'], ['calc', 'Trained by gradient descent, like every model before it'], ['py', 'Turn the model into a working application'], ['ml', 'Embeddings, evaluation and knowing where the model fails']] },
 ];
@@ -4172,7 +4197,7 @@ function ProjectsMap() {
                   className={'pmap-stage project-tile--' + sg.art + (sel === i ? ' is-sel' : '') + (hoverSub && sg.uses.some(u => u[0] === hoverSub) ? ' is-hl' : '')}
                   onClick={() => pick(i)}>
                   <span className="project-art"><ProjectArt kind={sg.art} /><span className="project-count">×{sg.count}</span></span>
-                  <span className="pmap-stage-text"><span className="pmap-stage-step">Stage {i + 1}<span className="pmap-stage-count"> · {sg.count} {sg.count === 1 ? 'project' : 'projects'}</span></span><span className="pmap-stage-title">{sg.title}</span><span className="pmap-stage-cap">{sg.caption}</span></span>
+                  <span className="pmap-stage-text"><span className="pmap-stage-step">Stage {i + 1}<span className="pmap-stage-count"> · {sg.count} {sg.count === 1 ? 'project' : 'projects'}</span></span><span className="pmap-stage-title"><span className="pmap-t-full">{sg.title}</span><span className="pmap-t-short">{sg.tab || sg.title}</span></span><span className="pmap-stage-cap">{sg.caption}</span></span>
                 </button>
               </React.Fragment>
             ))}
