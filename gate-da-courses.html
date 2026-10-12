@@ -1345,6 +1345,12 @@ section.page-hero { padding: 48px 0 44px; }
 }
 /* 2028 card's visible projects list, under its blurred price. */
 .combo-projects { margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.08); position: relative; z-index: 1; }
+/* Stacked layout (phones, iPad portrait): the projects come right after
+   "What's included" and before the price, not after Enrol now
+   (2026-10-12). Side by side (1025px+) keeps them under the price. */
+@media (max-width: 1024px) {
+  .combo-horizontal-right .combo-projects { order: -1; margin-top: 0; padding-top: 0; border-top: 0; padding-bottom: 22px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+}
 .combo-soon-btn { margin-top: 18px; background: rgba(245,158,11,0.12); color: #FCD34D; border: 1px solid rgba(245,158,11,0.35); cursor: not-allowed; font-weight: 600; box-shadow: none; }
 .combo-soon-btn:hover { transform: none; box-shadow: none; }
 .combo-price-note { margin-top: -16px; font-size: 13px; color: rgba(255,255,255,0.55); position: relative; z-index: 1; }
