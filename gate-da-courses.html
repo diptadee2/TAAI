@@ -1356,6 +1356,15 @@ section.page-hero { padding: 48px 0 44px; }
   .combo-projects-list { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
   .combo-projects-list li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; line-height: 1.45; color: rgba(255,255,255,0.72); }
   .combo-projects-list li b { color: #fff; font-weight: 600; }
+  .combo-incl-toggle { display: none; }
+  @media (max-width: 600px) {
+    .combo-includes.is-collapsible:not(.is-open) .combo-incl-more { display: none; }
+    .combo-projects-list:not(.is-open) .combo-projects-pitch { display: none; }
+    .combo-projects-list { gap: 8px; }
+    .combo-proj-toggle { margin: 12px 0 4px; }
+    .combo-incl-toggle { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(196,181,253,0.35);
+      background: rgba(196,181,253,0.08); color: #C4B5FD; font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+  }
   .combo-projects-tick { flex: 0 0 16px; margin-top: 2px; color: #FCD34D; }
   .combo-projects-link { display: inline-block; margin-top: 8px; font-size: 13.5px; font-weight: 600; color: #C4B5FD; text-decoration: none; }
   .combo-projects-link:hover { text-decoration: underline; }
@@ -1908,6 +1917,11 @@ section.page-hero { padding: 48px 0 44px; }
     pointer-events: none !important;
   }
   .combo-card .btn-primary, .combo-card .btn-primary * { pointer-events: auto !important; }
+  /* Every other link/button inside a card too (2026-10-12): only the
+     Enrol button used to be re-enabled, so on phones/iPads the inline
+     Discord links, the 2028 card's "See how" link and its Show-all
+     toggles did nothing when tapped. */
+  .combo-card a, .combo-card a *, .combo-card button, .combo-card button * { pointer-events: auto !important; }
   .combo-card, .combo-card::before, .combo-card::after,
   .combo-card *, .combo-card *::before, .combo-card *::after,
   .combo-featured-frame, .combo-featured-frame::before, .combo-featured-frame::after {
@@ -2993,6 +3007,7 @@ const COMBOS = [
     tagline: '300+ hours of content from scratch, the most concise, no-fluff GATE DA course out there.',
     // The 2028 batch's project plan, by category (specific projects not
     // final yet), on request 2026-10-04.
+    includesPeek: 4,
     projectsLabel: 'Beyond GATE: 5 portfolio projects',
     // Shown as illustrated tiles in the "Built differently" section's
     // PrepToProjects block (2026-10-11), linked to the GATE subjects each
@@ -3613,6 +3628,11 @@ function ProjectArt({ kind }) {
 
 const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   const p = pricing;
+  // Phones only: long includes lists show the first few items behind a
+  // "Show all" toggle (CSS hides the rest under 600px; desktop ignores it).
+  const [inclOpen, setInclOpen] = React.useState(false);
+  const [projOpen, setProjOpen] = React.useState(false);
+  const inclPeek = c.includesPeek || 0;
   const live = !!p;
   const pd = p || {};
   const price            = pd.price    ? fmtPrice(pd.price)    : '-';
@@ -3738,10 +3758,10 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   // announce here. Sold-out reuses the exact same blur, on request —
   // "features blurred out below" the stamp.
   const includesEl = (
-    <div className={'combo-includes' + (isSoldOut ? ' combo-includes-blurred' : '')} aria-hidden={isSoldOut || undefined} inert={isSoldOut ? '' : undefined}>
+    <div className={'combo-includes' + (isSoldOut ? ' combo-includes-blurred' : '') + (inclPeek && !isSoldOut ? ' is-collapsible' + (inclOpen ? ' is-open' : '') : '')} aria-hidden={isSoldOut || undefined} inert={isSoldOut ? '' : undefined}>
       <ul>
         {c.includes.map((item, i) => (
-          <li key={i} style={{ '--delay': `${i * 48}ms` }}>
+          <li key={i} className={inclPeek && i >= inclPeek ? 'combo-incl-more' : undefined} style={{ '--delay': `${i * 48}ms` }}>
             <span className="combo-check">
               <svg viewBox="0 0 10 8" fill="none">
                 <path d="M1 4l3 3 5-5" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
@@ -3751,6 +3771,12 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
           </li>
         ))}
       </ul>
+      {inclPeek > 0 && !isSoldOut && (
+        <button type="button" className="combo-incl-toggle" aria-expanded={inclOpen} onClick={() => setInclOpen(v => !v)}>
+          {inclOpen ? 'Show less' : `Show all ${c.includes.length} included`}
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={inclOpen ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} /></svg>
+        </button>
+      )}
     </div>
   );
   const priceRowEl = (
@@ -3836,14 +3862,18 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
           {c.projects && (
             <div className="combo-projects">
               <div className="combo-includes-label">{c.projectsLabel}</div>
-              <ul className="combo-projects-list">
+              <ul className={'combo-projects-list' + (projOpen ? ' is-open' : '')}>
                 {c.projects.map(p => (
                   <li key={p.art}>
                     <svg className="combo-projects-tick" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" /></svg>
-                    <span><b>{p.count} {p.short || p.title.toLowerCase()} project{p.count > 1 ? 's' : ''}</b>{p.pitch ? ': ' + p.pitch : ''}</span>
+                    <span><b>{p.count} {p.short || p.title.toLowerCase()} project{p.count > 1 ? 's' : ''}</b>{p.pitch && <span className="combo-projects-pitch">{': ' + p.pitch}</span>}</span>
                   </li>
                 ))}
               </ul>
+              <button type="button" className="combo-incl-toggle combo-proj-toggle" aria-expanded={projOpen} onClick={() => setProjOpen(v => !v)}>
+                {projOpen ? 'Show less' : "See what you'll build"}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={projOpen ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} /></svg>
+              </button>
               <a href="#projects-map" className="combo-projects-link">All built on the maths you study for GATE. See how <span aria-hidden="true">↑</span></a>
               {c.projectsNote && <p className="combo-projects-note">{c.projectsNote}</p>}
             </div>
