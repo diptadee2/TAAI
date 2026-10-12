@@ -607,7 +607,12 @@ section.page-hero { padding: 48px 0 44px; }
 .plan120-go { margin-top: 4px; font-size: 14px; font-weight: 700; color: var(--lilac); display: inline-flex; align-items: center; gap: 6px; }
 .plan120-go span { transition: transform .2s ease; }
 .plan120-cta:hover .plan120-go span { transform: translateX(3px); }
-@media (min-width: 1025px) {
+/* Side by side only from 1280px (2026-10-12): at iPad 11" landscape
+   (1180-1194px) the side column squeezed the 2028 card's two-column
+   includes list to one or two words a line and left an empty band in the
+   120-day card, so 1025-1279px stacks the side cards under it like iPad
+   portrait. */
+@media (min-width: 1280px) {
   .combo-with-side { flex-direction: row; align-items: stretch; gap: 20px; }
   .combo-with-side > .combo-featured-frame, .combo-with-side > .combo-card { flex: 1 1 auto; min-width: 0; }
   .plan120-cta { flex: 0 0 280px; justify-content: space-between; gap: 22px; padding: 28px 24px; }
@@ -622,9 +627,8 @@ section.page-hero { padding: 48px 0 44px; }
    "why keep the course" points made the 280px column taller than the 2028
    card, leaving an empty band inside it; wider means shorter. Not below
    1300px, where a wider column squeezes the 2028 card and makes it taller. */
-@media (min-width: 1100px) { .combo-with-side .combo-side-col { flex-basis: 420px; } }
-@media (min-width: 1025px) and (max-width: 1099px) { .combo-with-side .combo-side-col { flex-basis: 320px; } }
-@media (min-width: 1025px) {
+@media (min-width: 1280px) { .combo-with-side .combo-side-col { flex-basis: 420px; } }
+@media (min-width: 1280px) {
   .combo-side-col { flex: 0 0 280px; }
   /* The frame's own height:100% (of an auto-height row) blocks flex
      stretching, so once the card is live (shorter than the side column)
@@ -693,7 +697,10 @@ section.page-hero { padding: 48px 0 44px; }
    next card peeking in, plus tighter padding. The cards' own reveal
    animation is off in the swipe row, since the second card starts
    off-screen sideways and would otherwise stay invisible. */
-@media (min-width: 600px) and (max-width: 1024px) {
+@media (min-width: 1025px) and (max-width: 1279px) {
+  .combo-full-row .combo-with-side .combo-featured-frame, .combo-full-row .combo-with-side .combo-card { max-width: none; }
+}
+@media (min-width: 600px) and (max-width: 1279px) {
   .combo-side-col { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 14px; align-items: stretch; }
   .combo-side-col > .challenge-card, .combo-side-col > .plan120-cta { padding: 20px 20px; gap: 12px; }
 }
