@@ -354,6 +354,8 @@ body {
 .quick-pill:hover { background: #F5F3FF; border-color: rgba(124,58,237,0.5); }
 .quick-pill:hover svg { transform: translateX(2px); }
 .quick-pill:focus-visible { outline: 2px solid #7C3AED; outline-offset: 2px; }
+    /* Phones only: on wider screens the nav already reaches these pages. */
+    @media (min-width: 769px) { .quick-links { display: none; } }
 [data-hero="centered"] .hero-guide-link { margin-left: auto; margin-right: auto; }
 .hero-meta { display: flex; gap: 14px 28px; align-items: center; font-size: 14.5px; color: rgba(255,255,255,0.62); flex-wrap: wrap; padding-top: 22px; border-top: 1px solid rgba(255,255,255,0.1); max-width: 560px; }
 .hero-proof { display: flex; align-items: center; gap: 7px; }
