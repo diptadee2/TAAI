@@ -2532,7 +2532,299 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
 /* Inline Discord links (withDiscordLink) */
 .discord-inline { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; text-decoration-color: rgba(88,101,242,0.6); transition: color .15s ease, text-decoration-color .15s ease; }
 .discord-inline:hover { color: #5865F2; text-decoration-color: #5865F2; }
-</style>
+
+    /* ===================================================================
+       NEO-BRUTALISM LAYER (2026-10-15, direct request: "do neo brutalism
+       but keep all the information of the cards"). Visual only: no markup
+       or content changed. Scoped to <main>, so the shared nav and footer
+       stay identical to the other 6 pages. Delete this whole block to get
+       the previous look back.
+       Corners are square on purpose: hard shadow + border-radius on an
+       element whose transform animates (the .fade-in reveals) is the
+       Chromium detached-node leak noted in CLAUDE.md, and square corners
+       avoid it entirely.
+       =================================================================== */
+    main {
+      --nb-ink: #111111;
+      --nb-paper: #FFF4D6;
+      --nb-paper-2: #FFFBEF;
+      --nb-yellow: #FDE047;
+      --nb-lilac: #C4B5FD;
+      --nb-pink: #F9A8D4;
+      --nb-sky: #7DD3FC;
+      --nb-lime: #BEF264;
+      --nb-orange: #FDBA74;
+      --nb-shadow: 6px 6px 0 var(--nb-ink);
+      --nb-shadow-sm: 4px 4px 0 var(--nb-ink);
+      --nb-mono: 'DM Mono', ui-monospace, Menlo, monospace;
+      background: var(--nb-paper);
+      color: var(--nb-ink);
+    }
+    html body main > section,
+    html body main .pmap-section,
+    html body main section.page-hero,
+    html body main #combos,
+    html body main #individual,
+    html body main #interview,
+    html body main .course-testi-section {
+      background: var(--nb-paper) !important;
+      border-top: 3px solid var(--nb-ink);
+    }
+    html body main section.page-hero { border-top: 0; }
+    html body main #combos, html body main .course-testi-section { background: var(--nb-paper-2) !important; }
+    html body main .combos-dotfield,
+    html body main .proof-orb-1, html body main .proof-orb-2,
+    html body main .incl-orb1, html body main .incl-orb2 { display: none !important; }
+
+    /* Type: black, heavy; gradient emphasis becomes a highlighter block */
+    html body main h1, html body main h2, html body main h3 { color: var(--nb-ink) !important; }
+    html body main h1 em, html body main h2 em {
+      font-style: normal;
+      background: var(--nb-yellow) !important;
+      color: var(--nb-ink) !important;
+      -webkit-text-fill-color: var(--nb-ink) !important;
+      padding: 0 .12em;
+      box-shadow: 4px 4px 0 var(--nb-ink);
+      -webkit-box-decoration-break: clone; box-decoration-break: clone;
+      animation: none !important;
+    }
+    html body main .section-sub, html body main .hero-sub, html body main .pmap-sub { color: #2B2B2B !important; }
+    html body main .section-eyebrow, html body main .incl-eyebrow {
+      background: var(--nb-ink) !important; color: var(--nb-paper) !important;
+      border: 0 !important; border-radius: 0 !important;
+      font-family: var(--nb-mono); text-transform: uppercase; letter-spacing: .06em;
+    }
+
+    /* Buttons */
+    html body main .btn, html body main .orient-btn, html body main .pmap-cta,
+    html body main .compare-enroll-btn, html body main .combo-incl-toggle, html body main .combo-proj-toggle {
+      border: 3px solid var(--nb-ink) !important;
+      border-radius: 0 !important;
+      box-shadow: var(--nb-shadow-sm) !important;
+      color: var(--nb-ink) !important;
+      background: #fff !important;
+      font-weight: 700 !important;
+      transition: transform .12s ease, box-shadow .12s ease !important;
+    }
+    html body main .btn-primary, html body main .pmap-cta, html body main .compare-enroll-btn,
+    html body main .combo-card .btn { background: var(--nb-yellow) !important; }
+    html body main .btn::before, html body main .btn::after { display: none !important; }
+    html body main .btn *, html body main .orient-btn *, html body main .pmap-cta * { color: var(--nb-ink) !important; }
+    @media (hover: hover) and (pointer: fine) {
+      html body main .btn:hover, html body main .orient-btn:hover, html body main .pmap-cta:hover,
+      html body main .compare-enroll-btn:hover {
+        transform: translate(-2px, -2px) !important; box-shadow: 6px 6px 0 var(--nb-ink) !important;
+      }
+    }
+    html body main .btn:active, html body main .orient-btn:active, html body main .pmap-cta:active {
+      transform: translate(3px, 3px) !important; box-shadow: 1px 1px 0 var(--nb-ink) !important;
+    }
+    html body main .orient-play { background: var(--nb-ink) !important; border-radius: 0 !important; }
+    html body main .orient-play svg path { fill: var(--nb-yellow) !important; }
+    html body main .orient-text span { color: #333 !important; }
+    html body main .pmap-cta-arrow { background: var(--nb-ink) !important; border-radius: 0 !important; }
+    html body main .pmap-cta-arrow, html body main .pmap-cta-arrow * { color: var(--nb-yellow) !important; stroke: var(--nb-yellow); }
+
+    /* Shared card treatment */
+    html body main .hero-proof, html body main .pmap-cta-band, html body main .pmap,
+    html body main .combo-card, html body main .challenge-card, html body main .plan120-cta,
+    html body main .course-card, html body main .compare-wrap, html body main .course-testi-card,
+    html body main .placement-card {
+      border: 3px solid var(--nb-ink) !important;
+      border-radius: 0 !important;
+      box-shadow: var(--nb-shadow) !important;
+      backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+      background-image: none !important;
+    }
+    html body main .hero-proof::before, html body main .hero-proof::after,
+    html body main .combo-card::before, html body main .combo-card::after,
+    html body main .course-card::before, html body main .course-card::after,
+    html body main .placement-card::before, html body main .placement-card::after,
+    html body main .challenge-card::before, html body main .plan120-cta::before { display: none !important; }
+
+    /* Hero */
+    html body main .hero-results-row { gap: 12px !important; }
+    html body main .hero-result {
+      border: 3px solid var(--nb-ink); background: #fff; padding: 8px 12px; box-shadow: var(--nb-shadow-sm);
+    }
+    html body main .hero-result b { color: var(--nb-ink) !important; font-family: var(--nb-mono); }
+    html body main .hero-result span { color: #333 !important; }
+    html body main .hero-guide-link { color: var(--nb-ink) !important; text-decoration: underline; text-decoration-thickness: 2px; font-weight: 600; }
+    html body main .hero-proof-row .hero-proof-float-1 .hero-proof { background: var(--nb-pink) !important; }
+    html body main .hero-proof-row .hero-proof-float-2 .hero-proof { background: var(--nb-sky) !important; }
+    html body main .hero-proof-float { animation: none !important; }
+    html body main .hero-proof * { color: var(--nb-ink) !important; }
+    html body main .hero-proof-rank {
+      background: var(--nb-ink) !important; color: var(--nb-paper) !important;
+      border: 0 !important; border-radius: 0 !important; font-family: var(--nb-mono);
+    }
+    html body main .hero-proof-avatar { background: #fff !important; border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; }
+    html body main .hero-proof-footer { border-top: 2px solid var(--nb-ink) !important; }
+    html body main .hero-proof-link { color: var(--nb-ink) !important; font-weight: 700; text-decoration: underline; }
+
+    /* Projects map */
+    html body main .pmap-cta-band { background: var(--nb-lilac) !important; }
+    html body main .pmap-cta-band * { color: var(--nb-ink); }
+    html body main .pmap { background: #fff !important; }
+    html body main .pmap-subject, html body main .pmap-stage, html body main .pmap-detail {
+      border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: var(--nb-shadow-sm) !important;
+    }
+    html body main .pmap-stage.is-on { box-shadow: 6px 6px 0 var(--nb-ink) !important; }
+    html body main .pmap-builds { border-color: var(--nb-ink) !important; }
+    html body main .pmap-stages { border-radius: 0 !important; }
+
+    /* Bundles: dark section becomes light, so every text colour flips to ink */
+    html body main #combos, html body main #combos * { color: var(--nb-ink); }
+    html body main #combos .section-sub, html body main #combos h2,
+    html body main #combos .combo-title, html body main #combos .combo-tagline,
+    html body main #combos .combo-validity, html body main #combos .combo-includes-label,
+    html body main #combos .combo-includes li, html body main #combos .combo-price,
+    html body main #combos .combo-price-old, html body main #combos .combo-saving,
+    html body main #combos .combo-deadline-date, html body main #combos .combo-final-price > span,
+    html body main #combos .combo-price-note, html body main #combos .combo-projects-list li,
+    html body main #combos .combo-projects-list li b, html body main #combos .combo-projects-note,
+    html body main #combos .combo-projects-link, html body main #combos .challenge-title-main,
+    html body main #combos .challenge-sub, html body main #combos .challenge-fact,
+    html body main #combos .challenge-fact b, html body main #combos .challenge-why li,
+    html body main #combos .challenge-why-title, html body main #combos .challenge-title-sub,
+    html body main #combos .plan120-list span, html body main #combos .plan120-sub,
+    html body main #combos .plan120-title, html body main #combos .plan120-eyebrow,
+    html body main #combos .plan120-go, html body main #combos .combo-group-divider > span,
+    html body main #combos .combo-group-divider .cgd-pre, html body main #combos .purchase-note,
+    html body main #combos .purchase-note a, html body main #combos .orient-text b {
+      color: var(--nb-ink) !important;
+      -webkit-text-fill-color: var(--nb-ink) !important;
+      text-shadow: none !important;
+    }
+    html body main #combos .combo-price-old, html body main #combos .combo-includes li { opacity: 1 !important; }
+    html body main #combos .combo-group-divider > span { font-family: var(--nb-mono); font-weight: 500; text-transform: uppercase; letter-spacing: .04em; font-size: 17px; }
+    html body main #combos .combo-group-divider::after,
+    html body main #combos .combo-group-divider::before { background: var(--nb-ink) !important; height: 3px !important; opacity: 1 !important; }
+    html body main .combo-featured-frame { background: none !important; padding: 0 !important; box-shadow: none !important; border-radius: 0 !important; animation: none !important; }
+    html body main .combo-featured-frame::before, html body main .combo-featured-frame::after { display: none !important; }
+    html body main .combo-card { background: #fff !important; }
+    html body main .combo-card.featured { background: var(--nb-lilac) !important; }
+    html body main .combo-card.combo-blue { background: var(--nb-sky) !important; }
+    html body main .combo-card.combo-pink { background: var(--nb-pink) !important; }
+    html body main .combo-full-row .combo-card { background: var(--nb-lilac) !important; }
+    html body main .combo-with-side .combo-featured-frame .combo-card { background: var(--nb-lilac) !important; }
+    html body main .combo-badge {
+      background: var(--nb-ink) !important; color: var(--nb-paper) !important; -webkit-text-fill-color: var(--nb-paper) !important;
+      border: 0 !important; border-radius: 0 !important; box-shadow: none !important; font-family: var(--nb-mono); text-transform: uppercase;
+    }
+    html body main .combo-badge * { color: var(--nb-paper) !important; }
+    html body main .combo-num { display: none !important; }
+    html body main .combo-price { font-family: var(--nb-mono) !important; font-weight: 500 !important; }
+    html body main .combo-discount {
+      background: var(--nb-lime) !important; color: var(--nb-ink) !important; -webkit-text-fill-color: var(--nb-ink) !important;
+      border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; font-weight: 700 !important;
+      transform: rotate(-3deg); display: inline-block;
+    }
+    html body main .combo-divider { background: var(--nb-ink) !important; height: 2px !important; opacity: 1 !important; }
+    html body main .combo-check, html body main .combo-check * { color: var(--nb-ink) !important; stroke: var(--nb-ink) !important; }
+    html body main .combo-deadline, html body main .combo-launch {
+      background: var(--nb-yellow) !important; border: 2px solid var(--nb-ink) !important; border-radius: 0 !important;
+    }
+    html body main .combo-deadline-left { color: var(--nb-ink) !important; font-weight: 700; }
+    html body main .combo-deadline svg { stroke: var(--nb-ink) !important; color: var(--nb-ink) !important; }
+    html body main .combo-horizontal-right { border-left-color: var(--nb-ink) !important; }
+    html body main .combo-projects { border-color: var(--nb-ink) !important; }
+    html body main .combo-projects-tick, html body main .combo-projects-tick * { stroke: var(--nb-ink) !important; color: var(--nb-ink) !important; }
+    html body main .combo-soon-btn {
+      background: #fff !important; border: 3px solid var(--nb-ink) !important; border-radius: 0 !important; color: var(--nb-ink) !important;
+    }
+    html body main .combo-sold-out-stamp { border-color: #B91C1C !important; color: #B91C1C !important; background: #fff !important; border-radius: 0 !important; }
+    html body main .challenge-card { background: var(--nb-yellow) !important; }
+    html body main .challenge-icon { background: #fff !important; border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; }
+    html body main .challenge-icon svg { stroke: var(--nb-ink) !important; }
+    html body main .challenge-title-main em, html body main .challenge-title-main b {
+      background: none !important; -webkit-text-fill-color: var(--nb-ink) !important; color: var(--nb-ink) !important;
+      text-decoration: underline; text-decoration-thickness: 4px; text-underline-offset: 4px;
+    }
+    html body main .challenge-fact, html body main .challenge-why { border-color: var(--nb-ink) !important; }
+    html body main .plan120-cta { background: var(--nb-lime) !important; }
+    html body main .plan120-list li { border-color: var(--nb-ink) !important; }
+    html body main .plan120-go { text-decoration: underline; text-decoration-thickness: 2px; font-weight: 700; }
+
+    /* Comparison table */
+    html body main .compare-wrap { background: #fff !important; }
+    html body main .compare-head-cell, html body main .compare-cell, html body main .compare-footer-cell,
+    html body main .compare-row, html body main .compare-head, html body main .compare-footer { border-color: var(--nb-ink) !important; }
+    html body main .compare-head { background: var(--nb-yellow) !important; border-bottom: 3px solid var(--nb-ink) !important; }
+    html body main .compare-head-cell { color: var(--nb-ink) !important; }
+    html body main .compare-yes, html body main .compare-yes * { color: #15803D !important; stroke: #15803D; }
+
+    /* Individual course cards: one flat colour each */
+    html body main .courses-grid > :nth-child(6n+1) .course-card { background: var(--nb-pink) !important; }
+    html body main .courses-grid > :nth-child(6n+2) .course-card { background: var(--nb-sky) !important; }
+    html body main .courses-grid > :nth-child(6n+3) .course-card { background: var(--nb-yellow) !important; }
+    html body main .courses-grid > :nth-child(6n+4) .course-card { background: var(--nb-lime) !important; }
+    html body main .courses-grid > :nth-child(6n+5) .course-card { background: var(--nb-lilac) !important; }
+    html body main .courses-grid > :nth-child(6n+6) .course-card { background: var(--nb-orange) !important; }
+    html body main .course-card, html body main .course-card * { color: var(--nb-ink) !important; }
+    html body main .course-card:hover .course-title, html body main .course-card:hover .course-validity,
+    html body main .course-card:hover .course-topic, html body main .course-card:hover .course-price,
+    html body main .course-card:hover .course-price-old { color: var(--nb-ink) !important; }
+    html body main .course-accent { display: none !important; }
+    html body main .course-icon { background: #fff !important; border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: none !important; }
+    html body main .course-icon svg { stroke: var(--nb-ink) !important; color: var(--nb-ink) !important; }
+    html body main .course-topic { background: #fff !important; border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; }
+    html body main .course-price { font-family: var(--nb-mono) !important; font-weight: 500 !important; }
+    html body main .ticket-notch, html body main .ticket-notch-line { display: none !important; }
+    html body main .course-card .btn { background: #fff !important; }
+
+    /* Testimonials */
+    html body main .course-testi-card { background: #fff !important; }
+    html body main .course-testi-grid > :nth-child(2) .course-testi-card,
+    html body main .course-testi-grid > .course-testi-card:nth-child(2) { background: var(--nb-sky) !important; }
+    html body main .course-testi-card * { color: var(--nb-ink) !important; }
+    html body main .course-testi-air-badge, html body main .course-testi-avatar {
+      background: var(--nb-ink) !important; color: var(--nb-paper) !important; border-radius: 0 !important; border: 0 !important;
+    }
+    html body main .course-testi-air-badge *, html body main .course-testi-avatar * { color: var(--nb-paper) !important; }
+
+    /* Interview prep: the one black card, for contrast */
+    html body main .placement-card { background: var(--nb-ink) !important; box-shadow: 6px 6px 0 var(--nb-yellow), 6px 6px 0 3px var(--nb-ink) !important; }
+    html body main .placement-card * { color: var(--nb-paper) !important; }
+    html body main .placement-badge { color: var(--nb-yellow) !important; }
+    html body main .placement-badge-dot { background: var(--nb-yellow) !important; }
+    html body main .placement-card .btn { background: var(--nb-yellow) !important; border-color: var(--nb-yellow) !important; box-shadow: 4px 4px 0 #fff !important; }
+    html body main .placement-card .btn, html body main .placement-card .btn * { color: var(--nb-ink) !important; }
+
+    /* Inline Discord links keep a readable underline */
+    html body main .discord-inline { color: inherit !important; text-decoration: underline; text-decoration-thickness: 2px; }
+
+    /* Round 2 fixes */
+    html body main h1 em, html body main h2 em { display: inline-block; line-height: 1.08; margin-top: .1em; }
+    html body main .combo-featured-frame { overflow: visible !important; }
+    html body main .combo-featured-frame:not(.combo-with-side .combo-featured-frame) .combo-card.featured:not(.coming-soon) { background: var(--nb-orange) !important; }
+    html body main #combos::before, html body main #combos::after,
+    html body main .course-testi-section::before, html body main .course-testi-section::after,
+    html body main .page-hero::before, html body main .page-hero::after { display: none !important; }
+    html body main .course-topics { display: flex; flex-wrap: wrap; gap: 6px; }
+    html body main .course-topic { width: fit-content !important; padding: 2px 8px !important; font-weight: 500; }
+    html body main .course-topic::before { background: var(--nb-ink) !important; }
+    html body main .incl-layout {
+      border: 3px solid var(--nb-ink) !important; border-radius: 0 !important;
+      background: var(--nb-ink) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+      box-shadow: 6px 6px 0 var(--nb-yellow), 6px 6px 0 3px var(--nb-ink) !important;
+    }
+    html body main .incl-panel { background-image: none !important; }
+    html body main .incl-eyebrow { display: inline-block !important; width: fit-content !important; background: var(--nb-yellow) !important; color: var(--nb-ink) !important; }
+    html body main .incl-panel em, html body main .incl-ptitle em {
+      background: none !important; color: var(--nb-yellow) !important; -webkit-text-fill-color: var(--nb-yellow) !important;
+    }
+    html body main .incl-tab-icon, html body main .incl-icon-bg { border-radius: 0 !important; }
+    html body main .incl-tabs > * { border-radius: 0 !important; }
+    html body main .compare-table, html body main .compare-outer, html body main .compare-scroll { border-radius: 0 !important; }
+    html body main .compare-outer { border: 2px solid var(--nb-ink) !important; }
+    html body main .compare-cell.feat-name { color: var(--nb-ink) !important; box-shadow: none !important; }
+    html body main .compare-cell.featured, html body main .compare-row.zebra .compare-cell.featured { background: rgba(253,224,71,.25) !important; }
+    html body main .compare-head-sub, html body main .compare-price { color: var(--nb-ink) !important; }
+    @media (max-width: 600px) {
+      main { --nb-shadow: 4px 4px 0 var(--nb-ink); --nb-shadow-sm: 3px 3px 0 var(--nb-ink); }
+    }
+  </style>
 <script type="application/ld+json" id="course-jsonld">
 {
   "@context": "https://schema.org",
