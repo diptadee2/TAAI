@@ -2533,6 +2533,9 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
 .discord-inline { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; text-decoration-color: rgba(88,101,242,0.6); transition: color .15s ease, text-decoration-color .15s ease; }
 .discord-inline:hover { color: #5865F2; text-decoration-color: #5865F2; }
 
+    /* "Valid till GATE 2027" tag under the individual courses heading (2026-10-15) */
+    #individual .section-sub:has(+ .valid-tag) { margin-bottom: 0 !important; }
+    .valid-tag { display: inline-block; margin-top: 16px; margin-bottom: 18px; padding: 5px 12px; border-radius: 8px; background: var(--bg-soft); border: 1px solid var(--line); font-size: 14px; font-weight: 600; color: var(--ink); }
     /* ===================================================================
        NEO-BRUTALISM LAYER (2026-10-15, direct request: "do neo brutalism
        but keep all the information of the cards"). Visual only: no markup
@@ -2896,6 +2899,11 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     html body main .compare-cell.feat-name { color: var(--nb-ink) !important; box-shadow: none !important; }
     html body main .compare-cell.featured, html body main .compare-row.zebra .compare-cell.featured { background: rgba(253,224,71,.25) !important; }
     html body main .compare-head-sub, html body main .compare-price { color: var(--nb-ink) !important; }
+    html body main .valid-tag {
+      border: 3px solid var(--nb-ink) !important; border-radius: 0 !important; background: var(--nb-lime) !important;
+      box-shadow: var(--nb-shadow-sm); color: var(--nb-ink) !important; font-family: var(--nb-mono); font-weight: 500 !important;
+      text-transform: uppercase; letter-spacing: .04em; font-size: 13.5px !important; padding: 6px 12px !important;
+    }
     @media (max-width: 600px) {
       main { --nb-shadow: 4px 4px 0 var(--nb-ink); --nb-shadow-sm: 3px 3px 0 var(--nb-ink); }
     }
@@ -5071,6 +5079,7 @@ function App() {
                 Pick a <em>single subject</em>
               </h2>
               <p className="section-sub fade-in">Need to strengthen one area? Get any subject standalone.</p>
+              <div className="valid-tag fade-in">Valid till GATE 2027</div>
             </div>
           </div>
           <div className="courses-grid">
