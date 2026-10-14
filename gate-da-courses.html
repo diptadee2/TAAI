@@ -2626,7 +2626,7 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     html body main .pmap-cta-arrow, html body main .pmap-cta-arrow * { color: var(--nb-yellow) !important; stroke: var(--nb-yellow); }
 
     /* Shared card treatment */
-    html body main .hero-proof, html body main .pmap-cta-band, html body main .pmap,
+    html body main .hero-proof, html body main .pmap-cta-band,
     html body main .combo-card, html body main .challenge-card, html body main .plan120-cta,
     html body main .course-card, html body main .compare-wrap, html body main .course-testi-card,
     html body main .placement-card {
@@ -2662,16 +2662,91 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     html body main .hero-proof-footer { border-top: 2px solid var(--nb-ink) !important; }
     html body main .hero-proof-link { color: var(--nb-ink) !important; font-weight: 700; text-decoration: underline; }
 
-    /* Projects map */
+    /* Projects map. Desktop: no outer box, the map sits open on the page
+       and each piece is its own black-bordered block. Phones keep one card. */
     html body main .pmap-cta-band { background: var(--nb-lilac) !important; }
     html body main .pmap-cta-band * { color: var(--nb-ink); }
-    html body main .pmap { background: #fff !important; }
-    html body main .pmap-subject, html body main .pmap-stage, html body main .pmap-detail {
-      border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: var(--nb-shadow-sm) !important;
+    html body main .pmap { background: none !important; border: 0 !important; box-shadow: none !important; padding: 0 0 8px !important; border-radius: 0 !important; }
+    html body main .pmap-col-label {
+      display: inline-block; align-self: flex-start; width: fit-content;
+      background: var(--nb-ink); color: var(--nb-paper) !important; font-family: var(--nb-mono);
+      font-size: 11.5px; font-weight: 500; text-transform: uppercase; letter-spacing: .06em;
+      padding: 3px 8px; margin-bottom: 14px;
     }
-    html body main .pmap-stage.is-on { box-shadow: 6px 6px 0 var(--nb-ink) !important; }
-    html body main .pmap-builds { border-color: var(--nb-ink) !important; }
-    html body main .pmap-stages { border-radius: 0 !important; }
+    html body main .pmap-subject-list { gap: 16px; }
+    html body main .pmap-subject {
+      background: #fff !important; border: 3px solid var(--nb-ink) !important; border-radius: 0 !important;
+      box-shadow: var(--nb-shadow-sm) !important; color: var(--nb-ink) !important; opacity: .5;
+      transition: opacity .25s !important;
+    }
+    html body main .pmap-subject.is-used { opacity: 1; }
+    html body main .pmap-subject.is-hl { background: color-mix(in srgb, var(--c) 18%, #fff) !important; opacity: 1; }
+    html body main .pmap-subject-topics { color: #333 !important; }
+    html body main .pmap-dot { border-radius: 0 !important; width: 12px !important; height: 12px !important; opacity: 1 !important; border: 2px solid var(--nb-ink); }
+    html body main .pmap-stage {
+      background: #fff !important; border: 3px solid var(--nb-ink) !important; border-radius: 0 !important;
+      box-shadow: var(--nb-shadow-sm) !important; transition: background .2s, box-shadow .2s !important;
+    }
+    html body main .pmap-stage:hover { background: var(--nb-paper-2) !important; }
+    html body main .pmap-stage.is-sel { background: var(--nb-yellow) !important; box-shadow: 7px 7px 0 var(--nb-ink) !important; }
+    html body main .pmap-stage-step, html body main .pmap-stage.is-sel .pmap-stage-step { color: var(--nb-ink) !important; font-family: var(--nb-mono); font-weight: 500 !important; text-transform: uppercase; font-size: 11px !important; letter-spacing: .04em; }
+    html body main .pmap-stage-title { color: var(--nb-ink) !important; }
+    html body main .pmap-stage-cap { color: #333 !important; }
+    html body main .pmap .project-art { border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; background: #fff !important; }
+    html body main .pmap .project-count { background: var(--nb-ink) !important; color: var(--nb-paper) !important; border-radius: 0 !important; font-family: var(--nb-mono); }
+    html body main .pmap-builds { border-left: 3px dashed var(--nb-ink) !important; margin-left: 44px; }
+    html body main .pmap-builds span {
+      background: var(--nb-ink) !important; color: var(--nb-paper) !important; border-radius: 0 !important;
+      font-family: var(--nb-mono); font-weight: 500 !important; text-transform: uppercase; font-size: 10.5px !important; letter-spacing: .05em; padding: 2px 6px !important;
+    }
+    html body main .pmap-line path { stroke-width: 2.5 !important; opacity: .18; }
+    html body main .pmap-line.is-on path { stroke-width: 3.5 !important; opacity: 1 !important; }
+    html body main .pmap-line--panel path { stroke: var(--nb-ink) !important; stroke-width: 3 !important; opacity: 1 !important; }
+    html body main .pmap-line--panel circle { fill: var(--nb-ink) !important; }
+    html body main .pmap-detail {
+      background: #fff !important; border: 3px solid var(--nb-ink) !important; border-radius: 0 !important;
+      box-shadow: var(--nb-shadow) !important; padding: 0 !important; overflow: hidden;
+    }
+    html body main .pmap-detail-step {
+      display: block; background: var(--sc, var(--nb-lilac)); color: #fff !important;
+      font-family: var(--nb-mono); font-weight: 500 !important; text-transform: uppercase; letter-spacing: .05em; font-size: 12px !important;
+      padding: 10px 24px; margin: 0 0 14px; border-bottom: 3px solid var(--nb-ink);
+    }
+    html body main .pmap-detail h3, html body main .pmap-detail-cap, html body main .pmap-detail-label,
+    html body main .pmap-uses, html body main .pmap-detail-link { margin-left: 24px !important; margin-right: 24px !important; }
+    html body main .pmap-detail-cap { color: #222 !important; }
+    html body main .pmap-detail-label { color: var(--nb-ink) !important; font-family: var(--nb-mono); font-weight: 500 !important; text-transform: uppercase; font-size: 11.5px !important; letter-spacing: .05em; }
+    html body main .pmap-uses li { border-top: 2px solid var(--nb-ink) !important; }
+    html body main .pmap-uses li:last-child { border-bottom: 2px solid var(--nb-ink) !important; }
+    html body main .pmap-uses b { color: color-mix(in srgb, var(--c) 82%, #000) !important; }
+    html body main .pmap-detail-link {
+      margin-top: 18px !important; margin-bottom: 24px !important; border-radius: 0 !important;
+      border: 2px solid var(--nb-ink) !important; background: var(--nb-yellow) !important; color: var(--nb-ink) !important;
+    }
+    html body main .pmap-detail-link b { color: var(--nb-ink) !important; }
+    /* iPad: stages are a row of tabs above the detail; leave room for their shadows */
+    @media (max-width: 1099px) {
+      html body main .pmap-stages { padding: 0 8px 10px 0 !important; gap: 14px !important; }
+      html body main .pmap-detail-stack { margin-top: 18px !important; }
+    }
+    /* Phones: one card holding tabs and detail */
+    @media (max-width: 600px) {
+      html body main .pmap { background: #fff !important; border: 3px solid var(--nb-ink) !important; box-shadow: var(--nb-shadow) !important; padding: 0 !important; }
+      html body main .pmap-stages {
+        display: grid !important; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 0 !important; padding: 0 !important;
+        background: var(--nb-paper-2) !important; border-bottom: 3px solid var(--nb-ink); border-radius: 0 !important;
+      }
+      html body main .pmap-stage { border: 0 !important; border-right: 3px solid var(--nb-ink) !important; box-shadow: none !important; background: transparent !important; padding: 12px 6px !important; }
+      html body main .pmap-stage:last-child { border-right: 0 !important; }
+      html body main .pmap-stage.is-sel { background: var(--nb-yellow) !important; box-shadow: none !important; }
+      html body main .pmap-detail-stack { margin-top: 0 !important; }
+      html body main .pmap-detail { border: 0 !important; box-shadow: none !important; }
+      html body main .pmap-detail h3, html body main .pmap-detail-cap, html body main .pmap-detail-label,
+      html body main .pmap-uses, html body main .pmap-detail-link { margin-left: 16px !important; margin-right: 16px !important; }
+      html body main .pmap-detail-step { display: none !important; }
+      html body main .pmap-detail-cap { margin-top: 16px !important; }
+      html body main .pmap-detail-link { margin-bottom: 16px !important; }
+    }
 
     /* Bundles: dark section becomes light, so every text colour flips to ink */
     html body main #combos, html body main #combos * { color: var(--nb-ink); }
