@@ -1640,7 +1640,195 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     .va-ball, .bd-play .va-ball, .bd-visual:hover .va-ball { opacity: 1; transform: none; animation: none; }
   }
 
-</style>
+
+    /* ===================================================================
+       NEO-BRUTALISM LAYER (2026-10-15, direct request: "can you make the
+       home page neo brutalist?", after the courses and test series pages).
+       Visual only: no markup or copy changed. Scoped to the content areas
+       inside #root (this page has no <main>), so the shared nav, footer,
+       floating buttons and phone sticky bar stay as they are. Delete this
+       whole block to get the previous look back. Corners are square on
+       purpose (hard shadow + radius on a transforming element is the
+       Chromium leak in CLAUDE.md's known gotchas).
+       =================================================================== */
+    #root {
+      --nb-ink: #111111; --nb-paper: #FFF4D6; --nb-paper-2: #FFFBEF;
+      --nb-yellow: #FDE047; --nb-lilac: #C4B5FD; --nb-pink: #F9A8D4; --nb-sky: #7DD3FC;
+      --nb-lime: #BEF264; --nb-orange: #FDBA74;
+      --nb-shadow: 6px 6px 0 var(--nb-ink); --nb-shadow-sm: 4px 4px 0 var(--nb-ink);
+      --nb-mono: 'DM Mono', ui-monospace, Menlo, monospace;
+    }
+    html body #root .hero-toppers-bg-wrap, html body #root section, html body #root .why-strip {
+      background: var(--nb-paper) !important; background-image: none !important; border-image: none !important; color: var(--nb-ink);
+    }
+    html body #root .toppers-strip, html body #root .why-strip, html body #root .testimonials, html body #root #faq, html body #root .cta {
+      border-top: 3px solid var(--nb-ink);
+    }
+    html body #root .why-strip, html body #root .testimonials { background: var(--nb-paper-2) !important; }
+    html body #root section::before, html body #root section::after,
+    html body #root .hero-bento-orb-1, html body #root .hero-bento-orb-2,
+    html body #root .toppers-scroll-outer::before, html body #root .toppers-scroll-outer::after { display: none !important; }
+
+    /* Headings: black, gradient emphasis becomes a yellow highlighter block */
+    html body #root .hero h1, html body #root section h2, html body #root .why-strip-h2, html body #root .toppers-title { color: var(--nb-ink) !important; }
+    html body #root .hero h1 em, html body #root section h2 em, html body #root .why-strip-h2 em, html body #root .toppers-title em {
+      font-style: normal; display: inline-block; line-height: 1.08; margin-top: .1em;
+      background: var(--nb-yellow) !important; color: var(--nb-ink) !important; -webkit-text-fill-color: var(--nb-ink) !important;
+      padding: 0 .12em; box-shadow: 4px 4px 0 var(--nb-ink); animation: none !important;
+    }
+    html body #root section .section-eyebrow {
+      background: var(--nb-ink) !important; color: var(--nb-paper) !important; border: 0 !important; border-radius: 0 !important;
+      font-family: var(--nb-mono); text-transform: uppercase; letter-spacing: .06em;
+    }
+    html body #root .section-sub, html body #root .why-strip-sub, html body #root .toppers-sub { color: #2B2B2B !important; }
+
+    /* Buttons */
+    html body #root section .btn, html body #root .why-strip .btn, html body #root .quick-pill, html body #root .toppers-view-all, html body #root .prep-projects-link {
+      border: 3px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: var(--nb-shadow-sm) !important;
+      background: #fff !important; color: var(--nb-ink) !important; font-weight: 700 !important;
+      transition: transform .12s ease, box-shadow .12s ease !important;
+    }
+    html body #root section .btn-primary, html body #root .cta-btn-white { background: var(--nb-yellow) !important; }
+    html body #root section .btn::before, html body #root section .btn::after { display: none !important; }
+    html body #root section .btn *, html body #root .quick-pill *, html body #root .toppers-view-all * { color: var(--nb-ink) !important; }
+    html body #root .prep-projects-link { padding: 6px 12px; text-decoration: none !important; }
+    @media (hover: hover) and (pointer: fine) {
+      html body #root section .btn:hover, html body #root .quick-pill:hover, html body #root .toppers-view-all:hover {
+        transform: translate(-2px, -2px) !important; box-shadow: 6px 6px 0 var(--nb-ink) !important;
+      }
+    }
+    html body #root section .btn:active, html body #root .quick-pill:active { transform: translate(3px, 3px) !important; box-shadow: 1px 1px 0 var(--nb-ink) !important; }
+    html body #root .quick-links-label { color: var(--nb-ink) !important; font-family: var(--nb-mono); text-transform: uppercase; font-size: 12px !important; }
+
+    /* Hero */
+    html body #root .hero, html body #root .hero * { color: var(--nb-ink); }
+    html body #root .hero-sub, html body #root .hero-check, html body #root .hero-meta, html body #root .hero-proof-text,
+    html body #root .hero-proof-text b, html body #root .hero-proof-num, html body #root .hero-guide-link { color: var(--nb-ink) !important; }
+    html body #root .hero-check-icon { background: var(--nb-yellow) !important; border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; color: var(--nb-ink) !important; box-shadow: none !important; }
+    html body #root .hero-check-icon * { color: var(--nb-ink) !important; stroke: var(--nb-ink); }
+    html body #root .hero-meta { border-top: 2px solid var(--nb-ink) !important; }
+    html body #root .hero-guide-link { text-decoration: underline; text-decoration-thickness: 2px; font-weight: 600; }
+    html body #root .hero-bento-1, html body #root .hero-bento-2 {
+      background: var(--nb-pink) !important; background-image: none !important;
+      border: 3px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: var(--nb-shadow) !important;
+      backdrop-filter: none !important;
+    }
+    html body #root .hero-bento-2 { background: var(--nb-sky) !important; }
+    html body #root .hero-bento-card *, html body #root .hero-bento-1 *, html body #root .hero-bento-2 * { color: var(--nb-ink) !important; -webkit-text-fill-color: var(--nb-ink) !important; text-shadow: none !important; }
+    html body #root .bento-num { font-family: var(--nb-mono) !important; font-weight: 500 !important; background: none !important; }
+    html body #root .bento-label { background: var(--nb-ink) !important; color: var(--nb-paper) !important; -webkit-text-fill-color: var(--nb-paper) !important; border: 0 !important; border-radius: 0 !important; }
+    html body #root .hero-bento-card svg, html body #root .hero-bento-1 svg, html body #root .hero-bento-2 svg { stroke: var(--nb-ink); }
+    html body #root .hero-progress-bar { background: #fff !important; border: 2px solid var(--nb-ink); border-radius: 0 !important; }
+    html body #root .hero-progress-fill { background: var(--nb-ink) !important; border-radius: 0 !important; }
+
+    /* Hall of Fame strip */
+    html body #root .toppers-strip, html body #root .toppers-strip * { color: var(--nb-ink); }
+    html body #root .topper-card {
+      border: 3px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: var(--nb-shadow-sm) !important;
+      background: #fff !important; overflow: hidden;
+    }
+    html body #root .topper-img-wrap { border-radius: 0 !important; border-bottom: 3px solid var(--nb-ink); }
+    html body #root .topper-name, html body #root .topper-college { color: var(--nb-ink) !important; }
+    html body #root .topper-air, html body #root .topper-tag {
+      background: var(--nb-ink) !important; color: var(--nb-paper) !important; border: 0 !important; border-radius: 0 !important; font-family: var(--nb-mono);
+    }
+    html body #root .topper-pill { background: var(--nb-yellow) !important; color: var(--nb-ink) !important; border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; }
+    html body #root .topper-yt-label { color: #fff !important; }
+    html body #root .topper-yt-play { border-radius: 0 !important; }
+
+    /* Built differently cards */
+    html body #root .bd-card, html body #root .prep-projects {
+      border: 3px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: var(--nb-shadow) !important;
+      background-image: none !important;
+    }
+    html body #root .bd-card--spec { background: var(--nb-lilac) !important; }
+    html body #root .bd-card--vis { background: var(--nb-pink) !important; }
+    html body #root .bd-card--res { background: var(--nb-sky) !important; }
+    html body #root .prep-projects { background: var(--nb-yellow) !important; }
+    html body #root .bd-card *, html body #root .prep-projects * { color: var(--nb-ink); }
+    html body #root .bd-card .bd-head h3, html body #root .bd-sub, html body #root .prep-projects-head h3, html body #root .prep-projects-head p { color: var(--nb-ink) !important; }
+    html body #root .bd-icon { background: #fff !important; border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; color: var(--nb-ink) !important; box-shadow: none !important; }
+    html body #root .bd-icon * { color: var(--nb-ink) !important; stroke: var(--nb-ink); }
+    html body #root .bd-paper, html body #root .bd-visual, html body #root .bd-admit, html body #root .bd-chip {
+      border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; background-color: #fff !important; box-shadow: 3px 3px 0 var(--nb-ink) !important;
+    }
+    html body #root .bd-admit-mono { border-radius: 0 !important; border: 2px solid var(--nb-ink) !important; }
+    html body #root .bd-paper-tag, html body #root .bd-compare-label { color: var(--nb-ink) !important; font-family: var(--nb-mono); }
+    html body #root .prep-card { background: #fff !important; border: 3px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: var(--nb-shadow-sm) !important; }
+    html body #root .prep-card-label { color: var(--nb-ink) !important; font-family: var(--nb-mono); text-transform: uppercase; font-size: 11.5px !important; }
+    html body #root .prep-subjects li { border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; background: #fff !important; color: var(--nb-ink) !important; }
+    html body #root .prep-subjects li.is-lit { background: var(--nb-ink) !important; color: var(--nb-yellow) !important; }
+    html body #root .project-tile { background: #fff !important; border: 3px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: var(--nb-shadow-sm) !important; }
+    html body #root .project-art { border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; background: #fff !important; }
+    html body #root .project-count { background: var(--nb-ink) !important; color: var(--nb-paper) !important; border-radius: 0 !important; font-family: var(--nb-mono); }
+    html body #root .prep-projects-icon { border-radius: 0 !important; border: 2px solid var(--nb-ink); }
+    html body #root .prep-line-path { stroke: var(--nb-ink) !important; stroke-width: 3 !important; opacity: .9 !important; }
+    html body #root .prep-line-dot { fill: var(--nb-ink) !important; }
+
+    /* Mentor: one black band for contrast */
+    html body #root .instructor-section { background: var(--nb-ink) !important; border-top: 3px solid var(--nb-ink); }
+    html body #root .instructor-section h2 { color: var(--nb-paper) !important; }
+    html body #root .instructor-section h2 em { background: var(--nb-yellow) !important; color: var(--nb-ink) !important; -webkit-text-fill-color: var(--nb-ink) !important; box-shadow: 4px 4px 0 var(--nb-paper) !important; }
+    html body #root .instructor-photo-wrap { border: 3px solid var(--nb-paper); border-radius: 0 !important; box-shadow: 8px 8px 0 var(--nb-yellow) !important; overflow: hidden; }
+    html body #root .instructor-photo { border-radius: 0 !important; }
+    html body #root .instructor-play-btn { border-radius: 0 !important; background: var(--nb-yellow) !important; border: 3px solid var(--nb-ink) !important; }
+    html body #root .instructor-play-btn * { color: var(--nb-ink) !important; }
+    html body #root .instructor-play-icon { border-radius: 0 !important; background: var(--nb-ink) !important; }
+    html body #root .instructor-play-icon * { color: var(--nb-yellow) !important; fill: var(--nb-yellow); }
+    html body #root .instructor-name { background: none !important; -webkit-text-fill-color: var(--nb-paper) !important; color: var(--nb-paper) !important; }
+    html body #root .instructor-fact dd { color: var(--nb-yellow) !important; font-family: var(--nb-mono); }
+    html body #root .instructor-facts { border-color: var(--nb-paper) !important; }
+    html body #root .instructor-fact { border-color: rgba(255,244,214,.4) !important; }
+
+    /* Testimonials */
+    html body #root .testi, html body #root .gitem {
+      border: 3px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: var(--nb-shadow) !important;
+      background-image: none !important;
+    }
+    html body #root .testi { background: #fff !important; }
+    html body #root .testi-grid > :nth-child(3n+2) .testi, html body #root .testi-grid > .testi:nth-child(3n+2) { background: var(--nb-sky) !important; }
+    html body #root .testi-grid > :nth-child(3n+3) .testi, html body #root .testi-grid > .testi:nth-child(3n+3) { background: var(--nb-pink) !important; }
+    html body #root .testi * { color: var(--nb-ink) !important; }
+    html body #root .testi-rank, html body #root .testi-avatar, html body #root .gitem-badge {
+      background: var(--nb-ink) !important; color: var(--nb-paper) !important; border-radius: 0 !important; border: 0 !important;
+    }
+    html body #root .testi-rank *, html body #root .testi-avatar * { color: var(--nb-paper) !important; }
+    html body #root .testi::before, html body #root .testi::after { display: none !important; }
+    @media (hover: hover) and (pointer: fine) {
+      html body #root .testi:hover, html body #root .gitem:hover, html body #root .bd-card:hover, html body #root .topper-card:hover {
+        transform: translate(-3px, -3px) !important; box-shadow: 9px 9px 0 var(--nb-ink) !important;
+      }
+    }
+
+    /* FAQ */
+    html body #root .faq-item { background: #fff !important; border: 3px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: var(--nb-shadow-sm) !important; }
+    html body #root .faq-item.open { background: var(--nb-yellow) !important; }
+    html body #root .faq-q, html body #root .faq-a, html body #root .faq-a * { color: var(--nb-ink) !important; }
+    html body #root .faq-icon { border-radius: 0 !important; border: 2px solid var(--nb-ink) !important; background: #fff !important; color: var(--nb-ink) !important; }
+    html body #root .trust-item { background: #fff !important; border: 3px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: var(--nb-shadow-sm) !important; }
+    html body #root .trust-icon, html body #root .trust-check { background: var(--nb-yellow) !important; border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: none !important; color: var(--nb-ink) !important; }
+    html body #root .trust-icon *, html body #root .trust-check * { color: var(--nb-ink) !important; stroke: var(--nb-ink); }
+
+    /* Financial assistance card (hidden by a /team switch right now) */
+    html body #root .cta-card {
+      background: var(--nb-yellow) !important; color: var(--nb-ink) !important; border: 3px solid var(--nb-ink) !important;
+      border-radius: 0 !important; box-shadow: var(--nb-shadow) !important;
+    }
+    html body #root .cta-card::before, html body #root .cta-card::after { display: none !important; }
+    html body #root .cta-card h2, html body #root .cta-card p { color: var(--nb-ink) !important; }
+    html body #root .cta-card h2 em { background: #fff !important; }
+    html body #root .cta-btn-white { background: #fff !important; }
+
+
+    /* Round 2 fixes */
+    html body #root .bd-visual-term, html body #root .bd-visual-meaning { padding-left: 10px; padding-right: 8px; }
+    html body #root .bd-visual { padding-bottom: 8px; }
+    html body #root .testi-rank { display: inline-block !important; width: fit-content !important; padding: 2px 10px !important; }
+    html body #root .bento-icon-row svg { filter: brightness(0); }
+    @media (max-width: 600px) {
+      #root { --nb-shadow: 4px 4px 0 var(--nb-ink); --nb-shadow-sm: 3px 3px 0 var(--nb-ink); }
+    }
+  </style>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
