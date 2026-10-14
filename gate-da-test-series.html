@@ -1289,7 +1289,197 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
 .ts-included-icon { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: rgba(52,211,153,0.18); color: #6EE7B7; margin-top: 1px; }
 .ts-plan-included { display: inline-block; align-self: flex-start; margin: -12px 0 18px; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; color: #6EE7B7; background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.28); position: relative; z-index: 2; }
 @media (max-width: 600px) { .ts-included-note { font-size: 14px; padding: 12px 14px; } .ts-included-note span { font-size: 13px; } }
-</style>
+
+    /* ===================================================================
+       NEO-BRUTALISM LAYER (2026-10-15, direct request: "can you do the
+       test series page also neo brutalist?", after the courses page got
+       the same treatment). Visual only: no markup or copy changed. Scoped
+       to the page's own <section>s inside #root, so the shared nav and
+       footer stay identical to the other pages. Delete this whole block to
+       get the previous look back. Corners are square on purpose (hard
+       shadow + radius on a transforming element is the Chromium leak in
+       CLAUDE.md's known gotchas).
+       =================================================================== */
+    #root {
+      --nb-ink: #111111; --nb-paper: #FFF4D6; --nb-paper-2: #FFFBEF;
+      --nb-yellow: #FDE047; --nb-lilac: #C4B5FD; --nb-pink: #F9A8D4; --nb-sky: #7DD3FC;
+      --nb-lime: #BEF264; --nb-orange: #FDBA74;
+      --nb-shadow: 6px 6px 0 var(--nb-ink); --nb-shadow-sm: 4px 4px 0 var(--nb-ink);
+      --nb-mono: 'DM Mono', ui-monospace, Menlo, monospace;
+    }
+    html body #root section {
+      background: var(--nb-paper) !important; background-image: none !important;
+      border-top: 3px solid var(--nb-ink); color: var(--nb-ink);
+    }
+    html body #root section.hero { border-top: 0; }
+    html body #root section.ts-plans-section, html body #root section.disc-section { background: var(--nb-paper-2) !important; }
+    html body #root section::before, html body #root section::after,
+    html body #root .hero-bg-orb-1, html body #root .hero-bg-orb-2, html body #root .hero-bg-orb-3 { display: none !important; }
+
+    /* Type */
+    html body #root section h1, html body #root section h2 { color: var(--nb-ink) !important; }
+    html body #root section h1 em, html body #root section h2 em {
+      font-style: normal; display: inline-block; line-height: 1.08; margin-top: .1em;
+      background: var(--nb-yellow) !important; color: var(--nb-ink) !important; -webkit-text-fill-color: var(--nb-ink) !important;
+      padding: 0 .12em; box-shadow: 4px 4px 0 var(--nb-ink); animation: none !important;
+    }
+    html body #root section .section-sub, html body #root section .hero-sub { color: #2B2B2B !important; }
+    html body #root section .section-eyebrow {
+      background: var(--nb-ink) !important; color: var(--nb-paper) !important; border: 0 !important; border-radius: 0 !important;
+      font-family: var(--nb-mono); text-transform: uppercase; letter-spacing: .06em;
+    }
+    html body #root .hero-coming-badge { border-radius: 0 !important; background: var(--nb-ink) !important; color: var(--nb-paper) !important; font-family: var(--nb-mono); }
+    html body #root .hero-coming-dot { background: var(--nb-yellow) !important; border-radius: 0 !important; }
+
+    /* Buttons */
+    html body #root section .btn, html body #root .ts-plan-btn, html body #root .ts-testi-more {
+      border: 3px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: var(--nb-shadow-sm) !important;
+      background: #fff !important; color: var(--nb-ink) !important; font-weight: 700 !important;
+      backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+      transition: transform .12s ease, box-shadow .12s ease !important;
+    }
+    html body #root section .btn-primary, html body #root .ts-plan-btn { background: var(--nb-yellow) !important; }
+    html body #root section .btn::before, html body #root section .btn::after, html body #root .ts-plan-btn::before { display: none !important; }
+    html body #root section .btn *, html body #root .ts-plan-btn * { color: var(--nb-ink) !important; }
+    html body #root .ts-plan-btn svg path, html body #root .ts-plan-btn svg { stroke: var(--nb-ink); }
+    @media (hover: hover) and (pointer: fine) {
+      html body #root section .btn:hover, html body #root .ts-plan-btn:hover { transform: translate(-2px, -2px) !important; box-shadow: 6px 6px 0 var(--nb-ink) !important; }
+    }
+    html body #root section .btn:active, html body #root .ts-plan-btn:active { transform: translate(3px, 3px) !important; box-shadow: 1px 1px 0 var(--nb-ink) !important; }
+
+    /* Shared card treatment */
+    html body #root .ts-plan, html body #root .breakdown-card, html body #root .feat, html body #root .disc-card,
+    html body #root .ts-testi-card, html body #root .faq-item, html body #root .trust-item, html body #root .mac-window {
+      border: 3px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: var(--nb-shadow) !important;
+      background-image: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+      animation: none !important;
+    }
+    html body #root .ts-plan::before, html body #root .ts-plan::after, html body #root .breakdown-card::after,
+    html body #root .ts-testi-card::before, html body #root .ts-testi-card::after,
+    html body #root .feat::before, html body #root .feat::after { display: none !important; }
+    @media (hover: hover) and (pointer: fine) {
+      html body #root .ts-plan:hover, html body #root .ts-plan.ts-plan-selected, html body #root .breakdown-card:hover,
+      html body #root .feat:hover, html body #root .disc-card:hover, html body #root .ts-testi-card:hover, html body #root .trust-item:hover {
+        transform: translate(-3px, -3px) !important; box-shadow: 9px 9px 0 var(--nb-ink) !important; animation: none !important;
+      }
+    }
+
+    /* Plans: dark section becomes light, every text colour flips to ink */
+    html body #root .ts-plans-section, html body #root .ts-plans-section * { color: var(--nb-ink); }
+    html body #root .ts-plans-section :is(.ts-plan-name, .ts-plan-tagline, .ts-plan-price, .ts-plan-price-old, .ts-plan-validity,
+      .ts-plan-feat, .ts-plan-note, .ts-plan-addons-label, .quiz-subs-label, .quiz-sub-name, .quiz-sub-count, .ts-plans-footer,
+      .ts-purchase-note, .ts-purchase-note a, .ts-plan-meta-dot, .ts-included-note b, .ts-included-note span, .ts-plan-included) {
+      color: var(--nb-ink) !important; -webkit-text-fill-color: var(--nb-ink) !important; background-clip: border-box !important; -webkit-background-clip: border-box !important;
+    }
+    html body #root .ts-plan-price { background: none !important; font-family: var(--nb-mono) !important; font-weight: 500 !important; }
+    html body #root .ts-plan-price-old { opacity: .75; }
+    html body #root .ts-plan-featured-frame { background: none !important; padding: 0 !important; box-shadow: none !important; border-radius: 0 !important; animation: none !important; transform: none !important; }
+    html body #root .ts-plan-pink { background-color: var(--nb-pink) !important; }
+    html body #root .ts-plan-blue { background-color: var(--nb-sky) !important; }
+    html body #root .ts-plan-featured { background: var(--nb-lilac) !important; }
+    html body #root .ts-plan-badge {
+      background: var(--nb-ink) !important; color: var(--nb-paper) !important; -webkit-text-fill-color: var(--nb-paper) !important;
+      border: 0 !important; border-radius: 0 !important; font-family: var(--nb-mono);
+    }
+    html body #root .ts-plan-badge * { color: var(--nb-paper) !important; }
+    html body #root .ts-plan-discount {
+      background: var(--nb-lime) !important; color: var(--nb-ink) !important; border: 2px solid var(--nb-ink); border-radius: 0 !important;
+      transform: rotate(-3deg); display: inline-block;
+    }
+    html body #root .ts-plan-divider, html body #root .ts-plan-addons-label { background: var(--nb-ink) !important; height: 2px; border-color: var(--nb-ink) !important; }
+    html body #root .ts-plan-addons-label { height: auto; background: none !important; border-top: 2px solid var(--nb-ink) !important; }
+    html body #root .ts-plan-check { background: #fff !important; border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; }
+    html body #root .ts-plan-check svg path { stroke: var(--nb-ink) !important; stroke-dashoffset: 0 !important; }
+    html body #root .ts-plan-feat:hover { background: rgba(255,255,255,.45) !important; }
+    html body #root .quiz-sub { background: #fff !important; border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; }
+    html body #root .ts-included-note { background: var(--nb-lime) !important; border: 3px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: var(--nb-shadow-sm); }
+    html body #root .ts-included-icon, html body #root .ts-included-icon * { color: var(--nb-ink) !important; stroke: var(--nb-ink); }
+    html body #root .ts-plan-included { background: #fff !important; border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; }
+    html body #root .ts-purchase-note a { text-decoration: underline; }
+
+    /* Breakdown cards: one flat colour each, ink text */
+    html body #root .bd-1 { background-color: var(--nb-pink) !important; }
+    html body #root .bd-2 { background-color: var(--nb-lilac) !important; }
+    html body #root .bd-3 { background-color: var(--nb-sky) !important; }
+    html body #root .bd-4 { background-color: var(--nb-lime) !important; }
+    html body #root .breakdown-card, html body #root .breakdown-card * { color: var(--nb-ink) !important; }
+    html body #root .breakdown-count { font-family: var(--nb-mono) !important; font-weight: 500 !important; }
+    html body #root .breakdown-icon { background: #fff !important; border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: none !important; }
+    html body #root .breakdown-icon svg { stroke: var(--nb-ink) !important; color: var(--nb-ink) !important; }
+    html body #root .breakdown-pill { background: #fff !important; border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; color: var(--nb-ink) !important; }
+
+    /* Feature bento */
+    html body #root .feat-b { background: #fff !important; }
+    html body #root .feat-c { background: var(--nb-sky) !important; }
+    html body #root .feat-f { background: var(--nb-lilac) !important; }
+    html body #root .feat-dark { background: var(--nb-ink) !important; box-shadow: 6px 6px 0 var(--nb-yellow), 6px 6px 0 3px var(--nb-ink) !important; }
+    html body #root .feat:not(.feat-dark) :is(.feat-title, .feat-desc, .feat-time-label, .feat-time-val, .feat-palette-hint, .feat-palette-legend, .feat-rank-name, .feat-rank-score, .feat-rank-label) { color: var(--nb-ink) !important; }
+    html body #root .feat-icon { border-radius: 0 !important; border: 2px solid var(--nb-ink); }
+    html body #root .feat-dark .feat-icon { border-color: var(--nb-yellow); }
+    html body #root .feat-chip { border-radius: 0 !important; border: 2px solid var(--nb-ink) !important; background: #fff !important; color: var(--nb-ink) !important; }
+    html body #root .feat-dark .feat-chip { background: var(--nb-yellow) !important; border-color: var(--nb-yellow) !important; }
+    html body #root .feat-dark .feat-desc { color: rgba(255,244,214,.75) !important; }
+    html body #root .feat-dark .feat-title { color: var(--nb-paper) !important; }
+    html body #root .feat-bar { border-radius: 0 !important; }
+    html body #root .feat-dark .feat-bar-hi, html body #root .feat-dark .feat-bar-top { background: var(--nb-yellow) !important; }
+    html body #root .feat-stat-num { background: none !important; -webkit-text-fill-color: var(--nb-yellow) !important; color: var(--nb-yellow) !important; font-family: var(--nb-mono); font-weight: 500 !important; }
+    html body #root .feat-palette-q, html body #root .feat-legend-dot { border-radius: 0 !important; }
+    html body #root .feat-time-bar-track, html body #root .feat-time-bar-fill { border-radius: 0 !important; }
+    html body #root .feat-time-bar-track { background: #fff !important; border: 2px solid var(--nb-ink); height: 10px !important; }
+    html body #root .feat-time-bar-fill { background: var(--nb-ink) !important; }
+    html body #root .feat-rank-row { border-radius: 0 !important; border: 2px solid var(--nb-ink) !important; background: #fff !important; }
+    html body #root .feat-rank-row.rank-you { background: var(--nb-yellow) !important; }
+    html body #root .feat-rank-you-badge { border-radius: 0 !important; background: var(--nb-ink) !important; color: var(--nb-paper) !important; border: 0 !important; }
+    html body #root .feat-rank-pos { color: var(--nb-ink) !important; }
+    html body #root .feat-rank-num { background: none !important; -webkit-text-fill-color: var(--nb-ink) !important; font-family: var(--nb-mono); font-weight: 500 !important; }
+    html body #root .feat-rank-divider { background: var(--nb-ink) !important; width: 3px !important; }
+    html body #root .feat-video-row, html body #root .feat-bubble, html body #root .feat-live { border-radius: 0 !important; }
+
+    /* Discussions: dark section becomes light */
+    html body #root .disc-section .section-sub { color: #2B2B2B !important; }
+    html body #root .disc-card { background: #fff !important; overflow: hidden; }
+    html body #root .disc-card * { color: var(--nb-ink) !important; }
+    html body #root .disc-thumb-wrap { border-bottom: 3px solid var(--nb-ink); }
+    html body #root .disc-live-tag { border-radius: 0 !important; background: var(--nb-yellow) !important; border: 2px solid var(--nb-ink) !important; }
+    html body #root .disc-arrow { border-radius: 0 !important; border: 2px solid var(--nb-ink) !important; background: var(--nb-yellow) !important; }
+    html body #root .disc-play-circle { border-radius: 0 !important; background: var(--nb-yellow) !important; border: 3px solid var(--nb-ink) !important; }
+    html body #root .disc-play-circle * { color: var(--nb-ink) !important; fill: var(--nb-ink); }
+
+    /* Testimonials */
+    html body #root .ts-testi-card { background: #fff !important; }
+    html body #root .ts-testi-grid > :nth-child(3n+2) { background: var(--nb-sky) !important; }
+    html body #root .ts-testi-grid > :nth-child(3n+3) { background: var(--nb-pink) !important; }
+    html body #root .ts-testi-card * { color: var(--nb-ink) !important; }
+    html body #root .ts-testi-rank, html body #root .ts-testi-avatar {
+      background: var(--nb-ink) !important; color: var(--nb-paper) !important; border-radius: 0 !important; border: 0 !important; font-family: var(--nb-mono);
+    }
+    html body #root .ts-testi-rank *, html body #root .ts-testi-avatar * { color: var(--nb-paper) !important; }
+
+    /* FAQ */
+    html body #root .faq-item { background: #fff !important; border-left-width: 3px !important; }
+    html body #root .faq-item.open { background: var(--nb-yellow) !important; }
+    html body #root .faq-q, html body #root .faq-a, html body #root .faq-a * { color: var(--nb-ink) !important; }
+    html body #root .faq-icon { border-radius: 0 !important; border: 2px solid var(--nb-ink) !important; background: #fff !important; color: var(--nb-ink) !important; }
+    html body #root .trust-item { background: #fff !important; border-top-width: 3px !important; }
+    html body #root .trust-icon { border-radius: 0 !important; }
+
+
+    /* Round 2 fixes */
+    html body #root section { border-image: none !important; }
+    html body #root .ts-plan-badge, html body #root .ts-plan-badge * { color: var(--nb-paper) !important; -webkit-text-fill-color: var(--nb-paper) !important; }
+    html body #root .ts-testi-more { display: inline-flex !important; align-items: center; gap: 8px; padding: 10px 18px !important; margin-top: 8px; background: var(--nb-yellow) !important; }
+    html body #root .ts-testi-more * { color: var(--nb-ink) !important; }
+    html body #root .trust-icon, html body #root .trust-check { background: var(--nb-yellow) !important; border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: none !important; color: var(--nb-ink) !important; }
+    html body #root .trust-icon *, html body #root .trust-check * { color: var(--nb-ink) !important; stroke: var(--nb-ink); }
+    html body #root .trust-desc { color: #333 !important; }
+    html body #root .feat-b .feat-icon, html body #root .feat-c .feat-icon { background: var(--nb-yellow) !important; color: var(--nb-ink) !important; }
+    html body #root .feat-b .feat-icon *, html body #root .feat-c .feat-icon * { stroke: var(--nb-ink); color: var(--nb-ink) !important; }
+    /* Hero device mockups stay as they are, just framed */
+    html body #root .mac-window { border-width: 3px !important; }
+    @media (max-width: 600px) {
+      #root { --nb-shadow: 4px 4px 0 var(--nb-ink); --nb-shadow-sm: 3px 3px 0 var(--nb-ink); }
+    }
+  </style>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
