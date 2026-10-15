@@ -2928,6 +2928,26 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     }
     html body main .incl-tab-icon, html body main .incl-icon-bg { border-radius: 0 !important; }
     html body main .incl-tabs > * { border-radius: 0 !important; }
+    /* Phone accordion (2026-10-15): square bordered rows with hard shadows, one flat colour per row,
+       square bordered icon tiles, open body black with yellow emphasis like the desktop panel */
+    html body main .incl-accordion { display: flex; flex-direction: column; gap: 12px; padding-right: 4px; }
+    html body main .incl-accordion-item { border: 3px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: var(--nb-shadow-sm) !important; overflow: hidden; background: #fff !important; }
+    html body main .incl-accordion-item:nth-child(1) .incl-accordion-btn { background: var(--nb-pink) !important; }
+    html body main .incl-accordion-item:nth-child(2) .incl-accordion-btn { background: var(--nb-sky) !important; }
+    html body main .incl-accordion-item:nth-child(3) .incl-accordion-btn { background: var(--nb-lilac) !important; }
+    html body main .incl-accordion-item:nth-child(4) .incl-accordion-btn { background: var(--nb-lime) !important; }
+    html body main .incl-accordion-btn { border: 0 !important; border-radius: 0 !important; }
+    html body main .incl-accordion-btn * { color: var(--nb-ink) !important; }
+    html body main .incl-accordion-btn .incl-tab-label { font-weight: 700 !important; }
+    html body main .incl-accordion-btn .incl-tab-icon { border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; }
+    html body main .incl-accordion-btn .incl-tab-icon, html body main .incl-accordion-btn .incl-tab-icon * { color: #fff !important; }
+    html body main .incl-accordion-item.active .incl-accordion-btn { border-bottom: 3px solid var(--nb-ink) !important; }
+    html body main .incl-accordion-body { background: var(--nb-ink) !important; border-radius: 0 !important; }
+    html body main .incl-accordion-item.active { background: var(--nb-ink) !important; }
+    html body main .incl-accordion-body-title { color: #fff !important; }
+    html body main .incl-accordion-body-title em { color: var(--nb-yellow) !important; -webkit-text-fill-color: var(--nb-yellow) !important; background: none !important; }
+    html body main .incl-accordion-body-desc { color: rgba(255,255,255,.78) !important; }
+    html body main .incl-accordion-body .incl-pstat-num { color: var(--nb-yellow) !important; font-family: var(--nb-mono); }
     html body main .compare-table, html body main .compare-outer, html body main .compare-scroll { border-radius: 0 !important; }
     html body main .compare-outer { border: 2px solid var(--nb-ink) !important; }
     html body main .compare-cell.feat-name { color: var(--nb-ink) !important; box-shadow: none !important; }
