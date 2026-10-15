@@ -375,6 +375,9 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 
 /* Subsection labels (Notes / Lectures within a subject) */
 .subsection-header { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-soft); margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
+.subject-group + .subject-group { margin-top: 44px; }
+.subject-group-title { font-size: 20px; font-weight: 700; color: var(--ink); margin-bottom: 18px; }
+.subject-group-empty { padding: 22px; border: 1.5px dashed var(--line); border-radius: 14px; color: var(--ink-soft); font-size: 14.5px; }
 .subsection-header::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--purple-soft); border: 1.5px solid var(--purple); flex-shrink: 0; }
 .subsection-header::after { display: none; }
 .notes-grid--spaced { margin-bottom: 56px; }
@@ -686,6 +689,9 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     html body #root .subject-count { color: var(--nb-ink) !important; background: var(--nb-yellow) !important; border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; }
     html body #root .subsection-header { color: var(--nb-ink) !important; font-family: var(--nb-mono); font-weight: 500 !important; }
     html body #root .subsection-header::before { border-radius: 0 !important; background: var(--nb-ink) !important; border-color: var(--nb-ink) !important; }
+    html body #root .subject-group-title { display: inline-block; background: var(--nb-yellow); border: 3px solid var(--nb-ink); box-shadow: var(--nb-shadow-sm); padding: 6px 12px; color: var(--nb-ink) !important; font-size: 18px; }
+    html body #root .subject-group + .subject-group { border-top: 3px solid var(--nb-ink); padding-top: 32px; }
+    html body #root .subject-group-empty { border: 3px dashed var(--nb-ink) !important; border-radius: 0 !important; background: #fff; color: var(--nb-ink) !important; font-weight: 600; }
     html body #root .subject-swipe { border-radius: 0 !important; }
 
     /* Note and lecture cards */
@@ -800,6 +806,14 @@ const NAV_LINKS = [
 // For each sheet: File → Share → Publish to web → Sheet tab → CSV → Copy link
 const NOTES_CSV_URL    = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSVYXQcKli0NtjXf93cxRwx3A15WiNcETEw26MubPYIihLyMQs2rfZjXKm85fNsOxxlUWkoyR89DKCK/pub?gid=850997370&single=true&output=csv';
 const LECTURES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSVYXQcKli0NtjXf93cxRwx3A15WiNcETEw26MubPYIihLyMQs2rfZjXKm85fNsOxxlUWkoyR89DKCK/pub?gid=725480532&single=true&output=csv';
+// Subjects shown as several titled groups. Each group's "id" is the value to put in the
+// sheet's "subject" column for its notes/lectures; a group with nothing yet shows "coming soon".
+const SUBJECT_GROUPS = {
+  'machine-learning': [
+    { id: 'machine-learning', title: 'Machine Learning for GATE DA' },
+    { id: 'machine-learning-scratch', title: 'Complete Machine Learning from scratch' },
+  ],
+};
 
 // ── Icons ─────────────────────────────────────────────────────────
 const DownloadIcon = () => (
@@ -1248,7 +1262,14 @@ function App() {
       const lecturesMap = groupBy(lectureRows, 'subject');
       Object.values(notesMap).forEach(a => a.sort((a, b) => new Date(b.postedOn) - new Date(a.postedOn)));
       Object.values(lecturesMap).forEach(a => a.sort((a, b) => (Number(a.lectureNumber) || 0) - (Number(b.lectureNumber) || 0)));
-      const subjects = meta.subjects.map(s => ({ ...s, notes: notesMap[s.id] || [], lectures: lecturesMap[s.id] || [] }));
+      // A subject can be split into titled groups; each group reads its own sheet "subject" value (2026-10-15).
+      const subjects = meta.subjects.map(s => {
+        const groupDefs = SUBJECT_GROUPS[s.id];
+        const groups = groupDefs ? groupDefs.map(g => ({ ...g, notes: notesMap[g.id] || [], lectures: lecturesMap[g.id] || [] })) : null;
+        const notes = groups ? groups.flatMap(g => g.notes) : (notesMap[s.id] || []);
+        const lectures = groups ? groups.flatMap(g => g.lectures) : (lecturesMap[s.id] || []);
+        return { ...s, notes, lectures, groups };
+      });
       setSubjects(subjects);
       setActive(subjects[0]?.id || '');
       setDisplayActive(subjects[0]?.id || '');
@@ -1407,6 +1428,33 @@ function App() {
                       {hasLectures && `${subject.lectures.length} ${subject.lectures.length !== 1 ? 'lectures' : 'lecture'}`}
                     </div>
                   </div>
+                  {subject.groups ? subject.groups.map(g => {
+                    const gNotes = g.notes.length > 0, gLect = g.lectures.length > 0, gLabels = gNotes && gLect;
+                    return (
+                      <div key={g.id} className="subject-group">
+                        <div className="subject-group-title">{g.title}</div>
+                        {!gNotes && !gLect && (
+                          <div className="subject-group-empty">Lectures coming soon.</div>
+                        )}
+                        {gNotes && (
+                          <>
+                            {gLabels && <div className="subsection-header">Notes</div>}
+                            <div className={`notes-grid${gLect ? ' notes-grid--spaced' : ''}`}>
+                              {g.notes.map((note, i) => <NoteCard key={i} note={note} accent={subject.accent} color={subject.color} index={i} />)}
+                            </div>
+                          </>
+                        )}
+                        {gLect && (
+                          <>
+                            {gLabels && <div className="subsection-header">Lectures</div>}
+                            <div className="notes-grid">
+                              {g.lectures.map((lec, i) => <LectureCard key={i} lecture={lec} accent={subject.accent} color={subject.color} index={i} />)}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    );
+                  }) : (<>
                   {hasNotes && (
                     <>
                       {showLabels && <div className="subsection-header">Notes</div>}
@@ -1427,6 +1475,7 @@ function App() {
                       </div>
                     </>
                   )}
+                  </>)}
                 </div>
               );
             })
