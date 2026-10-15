@@ -1303,109 +1303,91 @@
     // Layout follows the ads-create brief (concept A, "Countdown"): a giant
     // day number is the hook, two stat boxes, the tasks, then the gold
     // offer panel. Always "roadmap", never "plan".
+    // Neo-brutalist poster (2026-10-15, "can the schedule poster be in neo brutalism form"): cream page,
+    // 4px black borders, hard offset shadows, flat colour blocks, same content and layout as before.
+    // The colour picker / Auto rotation now picks the flat pastel of the day-number block and journey bar.
+    var MONO = '"Geist Mono", ui-monospace, monospace';
     var go = function () {
-      var ctx = c.getContext('2d'), S = 1080, P = 72;
-      ctx.textBaseline = 'alphabetic';
-      var TH = dcThemeFor(dc.theme, dcDayNumber(dc.batch, iso));
-      ctx.fillStyle = TH.bg; ctx.fillRect(0, 0, S, S);
-      var g1 = ctx.createRadialGradient(S * 0.15, S * 0.22, 0, S * 0.15, S * 0.22, 620); g1.addColorStop(0, 'rgba(' + TH.glow + ',0.30)'); g1.addColorStop(1, 'rgba(' + TH.glow + ',0)');
-      ctx.fillStyle = g1; ctx.fillRect(0, 0, S, S);
-      var g2 = ctx.createRadialGradient(S, S, 0, S, S, 720); g2.addColorStop(0, 'rgba(251,191,36,0.14)'); g2.addColorStop(1, 'rgba(251,191,36,0)');
-      ctx.fillStyle = g2; ctx.fillRect(0, 0, S, S);
+      var ctx = c.getContext('2d'), S = 1080, P = 72, INK = '#111111', PAPER = '#FFF4D6', YEL = '#FDE047';
+      ctx.textBaseline = 'alphabetic'; ctx.lineJoin = 'miter'; ctx.lineCap = 'butt';
+      var TH = dcThemeFor(dc.theme, dcDayNumber(dc.batch, iso)), FILL = TH.soft;
+      // Flat bordered box with a hard offset shadow.
+      var box = function (x, y, w, h, fill, sh, shCol, bw) {
+        sh = sh == null ? 8 : sh; bw = bw || 4;
+        if (sh) { ctx.fillStyle = shCol || INK; ctx.fillRect(x + sh, y + sh, w, h); }
+        ctx.fillStyle = fill; ctx.fillRect(x, y, w, h);
+        ctx.strokeStyle = INK; ctx.lineWidth = bw; ctx.strokeRect(x + bw / 2, y + bw / 2, w - bw, h - bw);
+      };
+      ctx.fillStyle = PAPER; ctx.fillRect(0, 0, S, S);
+      ctx.fillStyle = 'rgba(17,17,17,0.09)';
+      for (var gx = 18; gx < S; gx += 36) for (var gy = 18; gy < S; gy += 36) { ctx.beginPath(); ctx.arc(gx, gy, 1.6, 0, Math.PI * 2); ctx.fill(); }
 
       var dayNum = dcDayNumber(dc.batch, iso), len = DC_BATCHES[dc.batch].length;
       var today = dcTodayIST();
       var which = iso === today ? "Today's roadmap" : iso === dcAddDays(today, 1) ? "Tomorrow's roadmap" : 'Roadmap';
       var dateShort = new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).replace(/^(\w+) /, '$1, ');
 
-      // Header: logo + batch pill.
-      if (dcLogo && dcLogo.complete && dcLogo.naturalWidth) ctx.drawImage(dcLogo, 104, 68, 150, 80, P, P, 52 * 150 / 80, 52);
-      ctx.font = '600 26px ' + FONT;
-      var pill = DC_BATCHES[dc.batch].label, pw = ctx.measureText(pill).width + 44;
-      dcRoundRect(ctx, S - P - pw, P + 2, pw, 50, 25);
-      ctx.fillStyle = dcHexA(TH.accent, 0.16); ctx.fill(); ctx.strokeStyle = dcHexA(TH.accent, 0.45); ctx.lineWidth = 2; ctx.stroke();
-      ctx.fillStyle = TH.pillText; ctx.textBaseline = 'middle'; ctx.fillText(pill, S - P - pw + 22, P + 28); ctx.textBaseline = 'alphabetic';
+      // Header: logo + yellow batch tag.
+      if (dcLogo && dcLogo.complete && dcLogo.naturalWidth) ctx.drawImage(dcLogo, 104, 68, 150, 80, P, P - 2, 56 * 150 / 80, 56);
+      ctx.font = '700 25px ' + FONT;
+      var pill = DC_BATCHES[dc.batch].label, pw = ctx.measureText(pill).width + 40;
+      box(S - P - pw - 6, P, pw, 54, YEL, 6);
+      ctx.fillStyle = INK; ctx.textBaseline = 'middle'; ctx.fillText(pill, S - P - pw - 6 + 20, P + 28); ctx.textBaseline = 'alphabetic';
 
-      // Hero: giant day number (left) + two stat boxes (right).
-      var heroTop = 190;
-      ctx.fillStyle = TH.soft; ctx.font = '600 34px ' + FONT;
-      ctx.fillText(dayNum > 0 ? 'Day' : 'Starting', P, heroTop + 30);
+      // Hero: day number in a flat colour block (left), "done before the exam" box (right).
+      var heroTop = 172, hbW = 500, hbH = 250;
+      box(P, heroTop, hbW, hbH, FILL, 10);
+      ctx.fillStyle = INK; ctx.font = '500 26px ' + MONO;
+      ctx.fillText(dayNum > 0 ? 'DAY' : 'STARTING', P + 30, heroTop + 50);
       var numText = dayNum > 0 ? String(dayNum) : 'soon';
-      ctx.font = '800 172px ' + FONT;
-      var ng = ctx.createLinearGradient(P, heroTop, P + 320, heroTop + 190);
-      ng.addColorStop(0, '#FFFFFF'); ng.addColorStop(0.55, TH.light); ng.addColorStop(1, TH.accent);
-      ctx.fillStyle = ng; ctx.fillText(numText, P - 6, heroTop + 190);
+      ctx.font = '800 150px ' + FONT; ctx.fillText(numText, P + 24, heroTop + 190);
       var nw = ctx.measureText(numText).width;
-      if (dayNum > 0) { ctx.font = '600 40px ' + FONT; ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.fillText('/ ' + len, P + nw + 6, heroTop + 190); }
-      ctx.font = '600 30px ' + FONT; ctx.fillStyle = '#FFFFFF';
-      ctx.fillText(which + ' · ' + dateShort, P, heroTop + 244);
+      if (dayNum > 0) { ctx.font = '600 40px ' + FONT; ctx.fillStyle = 'rgba(17,17,17,0.6)'; ctx.fillText('/ ' + len, P + 24 + nw + 10, heroTop + 190); }
+      // date strip as a black tag across the bottom of the block
+      ctx.fillStyle = INK; ctx.fillRect(P, heroTop + hbH - 46, hbW, 46);
+      ctx.fillStyle = PAPER; ctx.font = '600 23px ' + FONT; ctx.textBaseline = 'middle';
+      ctx.fillText(which + ' · ' + dateShort, P + 26, heroTop + hbH - 22); ctx.textBaseline = 'alphabetic';
 
-      // No stat boxes (2026-10-09, "too many times mentioned"): the pill
-      // already says 70 marks and "Day N / 120" already says how far in.
-      // Instead, what the roadmap covers by its end (same day: "by the time
-      // you have finished the roadmap you will have completed lectures,
-      // revision, quizzes and tests").
-      // Compact 2x2 grid (2026-10-09: "make it smaller or change design to
-      // save space"), was a tall 4-row list.
-      var bx = 620, by0 = heroTop + 40, bw3 = S - P - bx, bh3 = 150;
-      dcRoundRect(ctx, bx, by0, bw3, bh3, 20);
-      ctx.fillStyle = 'rgba(255,255,255,0.05)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.13)'; ctx.lineWidth = 1.5; ctx.stroke();
-      ctx.fillStyle = 'rgba(255,255,255,0.62)'; ctx.font = '600 21px ' + FONT;
-      ctx.fillText('Done before the exam:', bx + 22, by0 + 36);
+      var bx = P + hbW + 40, by0 = heroTop, bw3 = S - P - bx - 10, bh3 = hbH;
+      box(bx, by0, bw3, bh3, '#FFFFFF', 10);
+      ctx.fillStyle = INK; ctx.font = '500 21px ' + MONO;
+      ctx.fillText('DONE BEFORE THE EXAM', bx + 26, by0 + 46);
       ['Lectures', 'Revision', 'Quizzes', 'Tests'].forEach(function (lbl, i3) {
-        var cx2 = bx + 22 + (i3 % 2) * (bw3 / 2 - 6), ly2 = by0 + 80 + Math.floor(i3 / 2) * 42;
-        ctx.strokeStyle = '#34D399'; ctx.lineWidth = 3.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-        ctx.beginPath(); ctx.moveTo(cx2 + 1, ly2 - 9); ctx.lineTo(cx2 + 8, ly2 - 2); ctx.lineTo(cx2 + 22, ly2 - 17); ctx.stroke();
-        ctx.lineCap = 'butt'; ctx.lineJoin = 'miter';
-        ctx.fillStyle = '#FFFFFF'; ctx.font = '600 25px ' + FONT; ctx.fillText(lbl, cx2 + 34, ly2);
+        var cx2 = bx + 26, ly2 = by0 + 92 + i3 * 40;
+        ctx.fillStyle = '#BEF264'; ctx.fillRect(cx2, ly2 - 24, 28, 28);
+        ctx.strokeStyle = INK; ctx.lineWidth = 3; ctx.strokeRect(cx2 + 1.5, ly2 - 22.5, 25, 25);
+        ctx.lineWidth = 3.5; ctx.lineCap = 'square'; ctx.beginPath(); ctx.moveTo(cx2 + 7, ly2 - 10); ctx.lineTo(cx2 + 12, ly2 - 5); ctx.lineTo(cx2 + 21, ly2 - 17); ctx.stroke(); ctx.lineCap = 'butt';
+        ctx.fillStyle = INK; ctx.font = '600 26px ' + FONT; ctx.fillText(lbl, cx2 + 42, ly2);
       });
 
       // Offer panel + footer from the bottom up.
       var footY = S - P + 4;
-      var panelH = 214, panelY = footY - 40 - panelH;
+      var panelH = 214, panelY = footY - 44 - panelH;
 
-      // Journey track (2026-10-09, "make it feel more rewarding, like the
-      // 70 marks goal in 120 days"): a bar filled up to this day with a
-      // glowing "you are here" dot, ending at a gold 70-marks medal. It shows
-      // the goal, never a claim of marks already earned.
-      var trackY = heroTop + 300, medalR = 46, medalX = S - P - medalR, barX0 = P, barX1 = medalX - medalR - 18, barH = 14;
+      // Journey track: bordered bar filled to this day, square "you are here" marker, square marks badge.
+      var trackY = heroTop + hbH + 66, badgeS = 92, badgeX = S - P - badgeS - 8, barX0 = P, barX1 = badgeX - 26, barH = 26;
       var frac = Math.max(0.02, Math.min(1, dayNum / len));
-      dcRoundRect(ctx, barX0, trackY - barH / 2, barX1 - barX0, barH, barH / 2); ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fill();
+      box(barX0, trackY - barH / 2, barX1 - barX0, barH, '#FFFFFF', 5, null, 3);
       var fx = barX0 + (barX1 - barX0) * frac;
-      var fg = ctx.createLinearGradient(barX0, 0, barX1, 0); fg.addColorStop(0, TH.deep); fg.addColorStop(0.6, TH.accent); fg.addColorStop(1, '#FBBF24');
-      dcRoundRect(ctx, barX0, trackY - barH / 2, Math.max(barH, fx - barX0), barH, barH / 2); ctx.fillStyle = fg; ctx.fill();
-      // milestone ticks every 30 days
-      for (var m = 30; m < len; m += 30) { var mx = barX0 + (barX1 - barX0) * (m / len); ctx.fillStyle = m / len <= frac ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.18)'; ctx.fillRect(mx - 1, trackY - 13, 2, 26); }
-      var halo = ctx.createRadialGradient(fx, trackY, 0, fx, trackY, 30); halo.addColorStop(0, 'rgba(255,255,255,0.45)'); halo.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(fx, trackY, 30, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.arc(fx, trackY, 13, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = TH.accent; ctx.lineWidth = 5; ctx.stroke();
-      ctx.font = '600 22px ' + FONT; ctx.fillStyle = 'rgba(255,255,255,0.75)';
-      var hereLbl = dayNum > 0 ? 'You are here · Day ' + dayNum : 'Day 1 is coming';
+      ctx.fillStyle = FILL; ctx.fillRect(barX0 + 3, trackY - barH / 2 + 3, Math.max(4, fx - barX0 - 3), barH - 6);
+      for (var m = 30; m < len; m += 30) { var mx = barX0 + (barX1 - barX0) * (m / len); ctx.fillStyle = INK; ctx.fillRect(mx - 1.5, trackY - barH / 2, 3, barH); }
+      ctx.fillStyle = YEL; ctx.fillRect(fx - 15, trackY - 15, 30, 30); ctx.strokeStyle = INK; ctx.lineWidth = 4; ctx.strokeRect(fx - 13, trackY - 13, 26, 26);
+      ctx.font = '500 20px ' + MONO; ctx.fillStyle = INK;
+      var hereLbl = dayNum > 0 ? 'YOU ARE HERE · DAY ' + dayNum : 'DAY 1 IS COMING';
       var hlw = ctx.measureText(hereLbl).width;
-      ctx.fillText(hereLbl, Math.min(Math.max(barX0, fx - hlw / 2), barX1 - hlw), trackY + 44);
-      ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '500 20px ' + FONT;
-      var goalLbl = 'Day ' + len; ctx.fillText(goalLbl, barX1 - ctx.measureText(goalLbl).width, trackY - 20);
-      // gold medal
-      var mg = ctx.createRadialGradient(medalX - 14, trackY - 16, 4, medalX, trackY, medalR);
-      mg.addColorStop(0, '#FEF3C7'); mg.addColorStop(0.45, '#FBBF24'); mg.addColorStop(1, '#B45309');
-      var mglow = ctx.createRadialGradient(medalX, trackY, medalR * 0.6, medalX, trackY, medalR + 26); mglow.addColorStop(0, 'rgba(251,191,36,0.35)'); mglow.addColorStop(1, 'rgba(251,191,36,0)');
-      ctx.fillStyle = mglow; ctx.beginPath(); ctx.arc(medalX, trackY, medalR + 26, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = mg; ctx.beginPath(); ctx.arc(medalX, trackY, medalR, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = 'rgba(254,243,199,0.8)'; ctx.lineWidth = 3; ctx.stroke();
-      ctx.fillStyle = '#3B1D04'; ctx.textAlign = 'center';
-      ctx.font = '800 36px ' + FONT; ctx.fillText(dc.batch === 'D' ? '70' : '85', medalX, trackY + 8);
-      ctx.font = '700 14px ' + FONT; ctx.fillText('MARKS', medalX, trackY + 26);
+      ctx.fillText(hereLbl, Math.min(Math.max(barX0, fx - hlw / 2), barX1 - hlw), trackY + 48);
+      var goalLbl = 'DAY ' + len; ctx.fillText(goalLbl, barX1 - ctx.measureText(goalLbl).width, trackY - 26);
+      box(badgeX, trackY - badgeS / 2, badgeS, badgeS, YEL, 6);
+      ctx.fillStyle = INK; ctx.textAlign = 'center';
+      ctx.font = '800 38px ' + FONT; ctx.fillText(dc.batch === 'D' ? '70' : '85', badgeX + badgeS / 2, trackY + 8);
+      ctx.font = '500 14px ' + MONO; ctx.fillText('MARKS', badgeX + badgeS / 2, trackY + 30);
       ctx.textAlign = 'left';
 
-      // Tasks between the track and the panel.
-      var top = trackY + 72, bottom = panelY - 22;
-      // Subject first and big, lecture detail smaller beside it (2026-10-09:
-      // "the subject name matters more than the lecture number"). The detail
-      // drops to its own line when both don't fit on one. Steps down only if
-      // a busy day won't fit.
+      // Tasks between the track and the panel: subject first and big with a bordered colour square,
+      // lecture detail smaller beside it (or below it when both don't fit).
+      var top = trackY + 76, bottom = panelY - 26;
       var list = tasks || [];
-      var rowX = P + 34, rowW = S - P - rowX;
+      var rowX = P + 46, rowW = S - P - rowX;
       var sizes = [[42, 28], [40, 27], [38, 26], [36, 25], [34, 24], [32, 23], [30, 22]], pick = sizes[sizes.length - 1];
       var layoutRow = function (t, sz) {
         ctx.font = '700 ' + sz[0] + 'px ' + FONT; var sw = ctx.measureText(t.subject).width;
@@ -1422,49 +1404,45 @@
       list.forEach(function (t) {
         var col = DC_SUBJECT_COLORS[t.subject] || '#A78BFA';
         var L = layoutRow(t, pick), base = ty + pick[0];
-        ctx.fillStyle = col; ctx.beginPath(); ctx.arc(P + 10, base - pick[0] * 0.34, 9, 0, Math.PI * 2); ctx.fill();
-        ctx.font = '700 ' + pick[0] + 'px ' + FONT; ctx.fillText(t.subject, rowX, base);
-        ctx.font = '500 ' + pick[1] + 'px ' + FONT; ctx.fillStyle = 'rgba(255,255,255,0.72)';
+        var sq = 24, sqY = base - pick[0] * 0.34 - sq / 2;
+        ctx.fillStyle = col; ctx.fillRect(P, sqY, sq, sq); ctx.strokeStyle = INK; ctx.lineWidth = 3; ctx.strokeRect(P + 1.5, sqY + 1.5, sq - 3, sq - 3);
+        ctx.fillStyle = INK; ctx.font = '700 ' + pick[0] + 'px ' + FONT; ctx.fillText(t.subject, rowX, base);
+        ctx.font = '500 ' + pick[1] + 'px ' + FONT; ctx.fillStyle = '#3A3A3A';
         var detail = L.detail; while (ctx.measureText(detail).width > rowW && detail.length > 4) detail = detail.slice(0, -2) + '…';
         if (L.inline) ctx.fillText(detail, rowX + L.sw + 22, base);
         else ctx.fillText(detail, rowX, base + 10 + pick[1]);
         ty += L.h;
       });
       if (!list.length) {
-        ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '500 30px ' + FONT;
+        ctx.fillStyle = '#3A3A3A'; ctx.font = '500 30px ' + FONT;
         ctx.fillText(tasks === null ? 'Loading…' : 'Nothing scheduled for this day.', P, top + 36);
       }
 
-      // Gold offer panel. Copy rewritten 2026-10-09 ("the writing can be
-      // better"): the headline echoes the offer's own name (100 under ->
-      // 100% back); the course and the fine print sit in smaller lines.
-      dcRoundRect(ctx, P, panelY, S - 2 * P, panelH, 24);
-      var pg = ctx.createLinearGradient(P, panelY, S - P, panelY + panelH);
-      pg.addColorStop(0, 'rgba(251,191,36,0.18)'); pg.addColorStop(1, 'rgba(245,158,11,0.06)');
-      ctx.fillStyle = pg; ctx.fill(); ctx.strokeStyle = 'rgba(251,191,36,0.55)'; ctx.lineWidth = 2; ctx.stroke();
+      // Offer panel: black block with a yellow hard shadow.
+      box(P, panelY, S - 2 * P - 10, panelH, INK, 10, YEL);
       var px = P + 34;
       ctx.font = '700 22px ' + FONT;
       var tag = '100 pe 100% off', tw = ctx.measureText(tag).width + 28;
-      dcRoundRect(ctx, px, panelY + 24, tw, 38, 10); ctx.fillStyle = 'rgba(251,191,36,0.22)'; ctx.fill();
-      ctx.fillStyle = '#FCD34D'; ctx.textBaseline = 'middle'; ctx.fillText(tag, px + 14, panelY + 43); ctx.textBaseline = 'alphabetic';
-      ctx.font = '600 22px ' + FONT; ctx.fillStyle = 'rgba(253,230,138,0.85)';
-      ctx.fillText('on the GATE 2028 Full Course', px + tw + 16, panelY + 51);
+      ctx.fillStyle = YEL; ctx.fillRect(px, panelY + 26, tw, 38);
+      ctx.fillStyle = INK; ctx.textBaseline = 'middle'; ctx.fillText(tag, px + 14, panelY + 45); ctx.textBaseline = 'alphabetic';
+      ctx.font = '600 22px ' + FONT; ctx.fillStyle = 'rgba(255,244,214,0.85)';
+      ctx.fillText('on the GATE 2028 Full Course', px + tw + 16, panelY + 53);
       ctx.font = '700 40px ' + FONT; ctx.fillStyle = '#FFFFFF';
-      ctx.fillText('AIR under 100 in GATE DA 2027', px, panelY + 108);
-      var gg = ctx.createLinearGradient(px, 0, px + 640, 0); gg.addColorStop(0, '#FDE68A'); gg.addColorStop(1, '#F59E0B');
-      ctx.fillStyle = gg; ctx.fillText('= 100% of your fee back.', px, panelY + 154);
-      ctx.font = '500 21px ' + FONT; ctx.fillStyle = 'rgba(255,255,255,0.66)';
-      ctx.fillText('You keep full access. Last year, 65 marks got AIR 90.', px, panelY + 192);
+      ctx.fillText('AIR under 100 in GATE DA 2027', px, panelY + 110);
+      ctx.fillStyle = YEL; ctx.fillText('= 100% of your fee back.', px, panelY + 156);
+      ctx.font = '500 21px ' + FONT; ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.fillText('You keep full access. Last year, 65 marks got AIR 90.', px, panelY + 193);
 
-      // Footer.
-      ctx.font = '500 26px ' + FONT; ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      // Footer: line + yellow-highlighted URL.
+      ctx.font = '600 26px ' + FONT; ctx.fillStyle = INK;
       ctx.fillText('Follow the free roadmap, a task every day', P, footY);
-      ctx.font = '700 26px ' + FONT; ctx.fillStyle = TH.soft;
-      var url = 'taai.live';
-      ctx.fillText(url, S - P - ctx.measureText(url).width, footY);
+      ctx.font = '700 26px ' + FONT;
+      var url = 'taai.live', uw = ctx.measureText(url).width;
+      ctx.fillStyle = YEL; ctx.fillRect(S - P - uw - 16, footY - 30, uw + 16, 40);
+      ctx.fillStyle = INK; ctx.fillText(url, S - P - uw - 8, footY);
     };
     if (document.fonts && document.fonts.load) {
-      Promise.all(['800 172px Poppins', '700 38px Poppins', '600 30px Poppins', '500 26px Poppins'].map(function (f) { return document.fonts.load(f); })).then(go, go);
+      Promise.all(['800 150px Poppins', '700 38px Poppins', '600 30px Poppins', '500 26px Poppins', '500 21px "Geist Mono"'].map(function (f) { return document.fonts.load(f); })).then(go, go);
     } else go();
   }
 
