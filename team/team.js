@@ -65,6 +65,15 @@
   var SITE_SUBJECT_OPTIONS = GATE_DA_SUBJECT_NAMES.map(function (name) {
     return { id: name.toLowerCase().replace(/\s+/g, '-'), label: name };
   });
+  // The resources page splits Machine Learning into two groups (2026-10-15):
+  // relabel the GATE one and add the from-scratch course right after it.
+  (function () {
+    var i = -1;
+    SITE_SUBJECT_OPTIONS.forEach(function (o, k) { if (o.id === 'machine-learning') i = k; });
+    if (i < 0) return;
+    SITE_SUBJECT_OPTIONS[i] = { id: 'machine-learning', label: 'Machine Learning for GATE DA' };
+    SITE_SUBJECT_OPTIONS.splice(i + 1, 0, { id: 'machine-learning-scratch', label: 'Complete Machine Learning from scratch' });
+  })();
 
   // Every real site_pricing id that actually maps to a card rendered
   // somewhere on the live public site — COMBOS[]/INDIVIDUAL[] in
@@ -2101,15 +2110,15 @@
     lectures: 'Video lectures and their slides, organized by subject.',
     settings: 'Site-wide switches for what shows on taai.live.',
   };
-  // Pricing went live 2026-09-23 (see CLAUDE.md's "Site data corner"
-  // section) — Notes/Lectures are still preview-only, the live pages
-  // keep reading their own published spreadsheet for those. Kept as a
+  // Pricing went live 2026-09-23 and Notes/Lectures on 2026-10-15 (the
+  // Resources page reads them via /api/site-resources-public; the Google
+  // Sheet is no longer used). Kept as a
   // per-type sentence rather than one blanket line so this stays
   // accurate if/when Notes/Lectures ever get their own cutover later.
   var SITE_DATA_LIVE_NOTE = {
     pricing: 'Changes here go live on taai.live immediately — no deploy needed.',
-    notes: 'Changes here are a preview only for now — the live site still reads its own published spreadsheet, so nothing you edit here shows up on taai.live yet.',
-    lectures: 'Changes here are a preview only for now — the live site still reads its own published spreadsheet, so nothing you edit here shows up on taai.live yet.',
+    notes: 'Changes here show on the taai.live Resources page within about a minute. No deploy needed.',
+    lectures: 'Changes here show on the taai.live Resources page within about a minute. No deploy needed.',
     settings: 'Changes here go live on taai.live immediately — no deploy needed.',
   };
   var SITE_DATA_NEW_LABEL = { pricing: '+ New course', notes: '+ New note', lectures: '+ New lecture' };

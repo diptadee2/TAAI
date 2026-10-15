@@ -803,11 +803,9 @@ const NAV_LINKS = [
 ];
 
 // ── Data sources ─────────────────────────────────────────────────
-// For each sheet: File → Share → Publish to web → Sheet tab → CSV → Copy link
-const NOTES_CSV_URL    = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSVYXQcKli0NtjXf93cxRwx3A15WiNcETEw26MubPYIihLyMQs2rfZjXKm85fNsOxxlUWkoyR89DKCK/pub?gid=850997370&single=true&output=csv';
-const LECTURES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSVYXQcKli0NtjXf93cxRwx3A15WiNcETEw26MubPYIihLyMQs2rfZjXKm85fNsOxxlUWkoyR89DKCK/pub?gid=725480532&single=true&output=csv';
-// Subjects shown as several titled groups. Each group's "id" is the value to put in the
-// sheet's "subject" column for its notes/lectures; a group with nothing yet shows "coming soon".
+// Notes and lectures come from /team (Site data > Notes / Lectures) via /api/site-resources-public.
+// Subjects shown as several titled groups. Each group's "id" is the subject picked for its
+// notes/lectures in /team (Site data > Notes / Lectures); a group with nothing yet shows "coming soon".
 const SUBJECT_GROUPS = {
   'machine-learning': [
     { id: 'machine-learning', title: 'Machine Learning for GATE DA' },
@@ -1235,28 +1233,12 @@ function App() {
   const newHRef = React.useRef(null);
 
   React.useEffect(() => {
-    const parseCSV = text => {
-      const parseLine = line => {
-        const out = []; let cur = '', inQ = false;
-        for (let i = 0; i < line.length; i++) {
-          const ch = line[i];
-          if (ch === '"') { if (inQ && line[i+1] === '"') { cur += '"'; i++; } else inQ = !inQ; }
-          else if (ch === ',' && !inQ) { out.push(cur.trim()); cur = ''; }
-          else cur += ch;
-        }
-        out.push(cur.trim()); return out;
-      };
-      const rows = text.trim().split('\n');
-      const headers = parseLine(rows[0]);
-      return rows.slice(1).filter(r => r.trim()).map(r => Object.fromEntries(headers.map((h, i) => [h, parseLine(r)[i] || ''])));
-    };
-    const fetchCSV = url => url ? fetch(url).then(r => r.text()).then(parseCSV).catch(() => []) : Promise.resolve([]);
 
     Promise.all([
       fetch('notes-data.json').then(r => r.json()),
-      fetchCSV(NOTES_CSV_URL),
-      fetchCSV(LECTURES_CSV_URL),
-    ]).then(([meta, notesRows, lectureRows]) => {
+      fetch('/api/site-resources-public').then(r => r.ok ? r.json() : { notes: [], lectures: [] }).catch(() => ({ notes: [], lectures: [] })),
+    ]).then(([meta, resources]) => {
+      const notesRows = resources.notes || [], lectureRows = resources.lectures || [];
       const groupBy = (rows, key) => rows.reduce((m, r) => { (m[r[key]] = m[r[key]] || []).push(r); return m; }, {});
       const notesMap    = groupBy(notesRows, 'subject');
       const lecturesMap = groupBy(lectureRows, 'subject');

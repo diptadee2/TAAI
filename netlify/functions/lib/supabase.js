@@ -13,6 +13,8 @@ import ws from 'ws';
 export const SITE_DATA_SUBJECT_IDS = [
   'linear-algebra', 'probability', 'statistics', 'calculus',
   'machine-learning', 'ai', 'python', 'data-structures', 'algorithms', 'dbms',
+  // Second Machine Learning group on the resources page (2026-10-15), see SUBJECT_GROUPS in gate-da-free-notes.html.
+  'machine-learning-scratch',
 ];
 
 let client = null;

@@ -5,9 +5,8 @@
 //
 // Backs /team's Site data > Notes sub-tab — role-gated (see requireAdmin
 // in lib/supabase.js) CRUD for site_notes, which mirrors sheets/notes.csv
-// (downloadable PDF notes per subject, read live today by
-// gate-da-free-notes.html straight from a Google Sheet CSV — not from
-// here yet, see CLAUDE.md's "Site data corner" section).
+// (downloadable PDF notes per subject, read live by
+// gate-da-free-notes.html through site-resources-public.js since 2026-10-15).
 import { getSupabase, json, requireAdmin, SITE_DATA_SUBJECT_IDS } from './lib/supabase.js';
 
 function sanitizeDate(v) {
