@@ -2873,6 +2873,15 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     html body main .courses-grid > :nth-child(6n+4) .course-card { background: var(--nb-lime) !important; }
     html body main .courses-grid > :nth-child(6n+5) .course-card { background: var(--nb-lilac) !important; }
     html body main .courses-grid > :nth-child(6n+6) .course-card { background: var(--nb-orange) !important; }
+    /* Phones and small tablets: individual courses as a horizontal swipe row (next card peeks in), 2026-10-15 */
+    @media (max-width: 768px) {
+      html body main .courses-grid {
+        display: flex !important; gap: 14px !important; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+        margin-left: -32px; margin-right: -32px; padding: 4px 32px 14px; scroll-padding-left: 32px; scrollbar-width: none;
+      }
+      html body main .courses-grid::-webkit-scrollbar { display: none; }
+      html body main .courses-grid > * { flex: 0 0 min(80%, 340px); scroll-snap-align: start; min-width: 0; opacity: 1 !important; transform: none !important; }
+    }
     html body main .course-card, html body main .course-card * { color: var(--nb-ink) !important; }
     html body main .course-card:hover .course-title, html body main .course-card:hover .course-validity,
     html body main .course-card:hover .course-topic, html body main .course-card:hover .course-price,
