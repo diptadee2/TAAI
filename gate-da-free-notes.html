@@ -626,7 +626,124 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
   .page-hero-sub { font-size: 14px; }
   .subject-name { font-size: 18px; }
 }
-</style>
+
+    /* ===================================================================
+       NEO-BRUTALISM LAYER (2026-10-15, direct request: "now do for the
+       resources page", after home, courses, test series and testimonials).
+       Visual only: no markup or copy changed. Scoped to the page's own
+       sections inside #root, so nav, footer, floating buttons and the phone
+       enrol bar are untouched. The coloured subject banners on note cards
+       are kept (they identify the subject); everything around them goes
+       flat. Delete this whole block to get the previous look back. Corners
+       are square on purpose (Chromium leak, see CLAUDE.md known gotchas).
+       =================================================================== */
+    #root {
+      --nb-ink: #111111; --nb-paper: #FFF4D6; --nb-paper-2: #FFFBEF;
+      --nb-yellow: #FDE047; --nb-lilac: #C4B5FD; --nb-pink: #F9A8D4; --nb-sky: #7DD3FC; --nb-lime: #BEF264;
+      --nb-shadow: 6px 6px 0 var(--nb-ink); --nb-shadow-sm: 4px 4px 0 var(--nb-ink);
+      --nb-mono: 'DM Mono', ui-monospace, Menlo, monospace;
+    }
+    html body #root section {
+      background: var(--nb-paper) !important; background-image: none !important; border-image: none !important;
+      border-top: 3px solid var(--nb-ink); color: var(--nb-ink);
+    }
+    html body #root section.page-hero { border-top: 0; }
+    html body #root section::before, html body #root section::after, html body #root .resources-content-orb3 { display: none !important; }
+
+    /* Hero */
+    html body #root .page-hero h1 { color: var(--nb-ink) !important; }
+    html body #root section h1 em, html body #root section h2 em {
+      font-style: normal; display: inline-block; line-height: 1.08; margin-top: .1em;
+      background: var(--nb-yellow) !important; color: var(--nb-ink) !important; -webkit-text-fill-color: var(--nb-ink) !important;
+      padding: 0 .12em; box-shadow: 4px 4px 0 var(--nb-ink); animation: none !important;
+    }
+    html body #root .page-hero-sub { color: #2B2B2B !important; }
+    html body #root .page-eyebrow {
+      background: var(--nb-ink) !important; color: var(--nb-paper) !important; border: 0 !important; border-radius: 0 !important;
+      font-family: var(--nb-mono); text-transform: uppercase; letter-spacing: .06em; display: inline-block; padding: 3px 9px !important;
+    }
+
+    /* Subject filter tabs */
+    html body #root .filter-btn {
+      border: 3px solid var(--nb-ink) !important; border-radius: 0 !important; background: #fff !important; color: var(--nb-ink) !important;
+      box-shadow: 3px 3px 0 var(--nb-ink) !important; transform: none !important;
+    }
+    html body #root .filter-btn::before { border-radius: 0 !important; }
+    html body #root .filter-btn.active { color: #fff !important; box-shadow: 4px 4px 0 var(--nb-ink) !important; }
+    html body #root .filter-btn-swatch { border-radius: 0 !important; border: 1.5px solid var(--nb-ink); }
+    html body #root .filter-btn-count { border-radius: 0 !important; background: var(--nb-paper) !important; color: var(--nb-ink) !important; border: 1px solid var(--nb-ink); }
+    html body #root .filter-btn.active .filter-btn-count { background: #fff !important; color: var(--nb-ink) !important; }
+    html body #root .filter-arrow { border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; background: #fff !important; color: var(--nb-ink) !important; box-shadow: 2px 2px 0 var(--nb-ink) !important; }
+    html body #root .filter-bar { padding-bottom: 14px !important; padding-top: 6px !important; }
+
+    /* Subject panel */
+    html body #root .subject-section {
+      background: var(--nb-paper-2) !important; border: 3px solid var(--nb-ink) !important; border-radius: 0 !important;
+      box-shadow: var(--nb-shadow) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+    }
+    html body #root .subject-icon { border-radius: 0 !important; border: 2px solid var(--nb-ink) !important; box-shadow: none !important; }
+    html body #root .subject-name { color: var(--nb-ink) !important; }
+    html body #root .subject-count { color: var(--nb-ink) !important; background: var(--nb-yellow) !important; border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; }
+    html body #root .subsection-header { color: var(--nb-ink) !important; font-family: var(--nb-mono); font-weight: 500 !important; }
+    html body #root .subsection-header::before { border-radius: 0 !important; background: var(--nb-ink) !important; border-color: var(--nb-ink) !important; }
+    html body #root .subject-swipe { border-radius: 0 !important; }
+
+    /* Note and lecture cards */
+    html body #root .note-card, html body #root .lecture-card {
+      background: #fff !important; border: 3px solid var(--nb-ink) !important; border-radius: 0 !important;
+      box-shadow: var(--nb-shadow-sm) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; overflow: hidden;
+    }
+    html body #root .note-card::after, html body #root .lecture-card::after, html body #root .card-banner::before, html body #root .card-banner::after { display: none !important; }
+    @media (hover: hover) and (pointer: fine) {
+      html body #root .note-card:hover, html body #root .lecture-card:hover { transform: translate(-3px, -3px) !important; box-shadow: 7px 7px 0 var(--nb-ink) !important; }
+    }
+    html body #root .card-banner { border-radius: 0 !important; border-bottom: 3px solid var(--nb-ink); }
+    html body #root .card-banner-icon { border-radius: 0 !important; background: #fff !important; color: var(--nb-ink) !important; border: 2px solid var(--nb-ink); }
+    html body #root .card-banner-icon * { color: var(--nb-ink) !important; }
+    html body #root .card-banner-label { color: #fff !important; }
+    html body #root .card-title { color: var(--nb-ink) !important; }
+    html body #root .note-desc, html body #root .card-date, html body #root .lecture-card-num { color: #444 !important; }
+    html body #root .lecture-thumb-bg { opacity: 1 !important; filter: none !important; transform: none !important; }
+    html body #root .lecture-card .card-banner { background: var(--nb-ink) !important; }
+    html body #root .lecture-slides-pill { border-radius: 0 !important; background: var(--nb-yellow) !important; color: var(--nb-ink) !important; border: 2px solid var(--nb-ink); }
+    html body #root .btn-download, html body #root .btn-slides, html body #root .btn-watch {
+      border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: 3px 3px 0 var(--nb-ink) !important;
+      background: var(--nb-yellow) !important; color: var(--nb-ink) !important; transform: none !important;
+    }
+    html body #root .btn-slides { background: #fff !important; }
+    html body #root .btn-download *, html body #root .btn-slides *, html body #root .btn-watch * { color: var(--nb-ink) !important; }
+    html body #root .btn-download:active, html body #root .btn-slides:active, html body #root .btn-watch:active { transform: translate(2px, 2px) !important; box-shadow: 1px 1px 0 var(--nb-ink) !important; }
+    html body #root .notes-empty { border: 3px dashed var(--nb-ink) !important; border-radius: 0 !important; background: #fff !important; }
+    html body #root .notes-empty * { color: var(--nb-ink) !important; }
+    html body #root .skel-card, html body #root .skel-card-banner, html body #root .skel-pill, html body #root .skel-icon,
+    html body #root .skel-bar, html body #root .skel-line, html body #root .skel-card-btn { border-radius: 0 !important; }
+    html body #root .skel-card { border: 3px solid var(--nb-ink) !important; }
+
+    /* Closing call-to-action: the one black block */
+    html body #root section.res-cta { background: var(--nb-paper) !important; }
+    html body #root .res-cta-inner {
+      background: var(--nb-ink); border: 3px solid var(--nb-ink); padding: 44px 32px !important;
+      box-shadow: 6px 6px 0 var(--nb-yellow), 6px 6px 0 3px var(--nb-ink);
+    }
+    html body #root .res-cta h2 { color: var(--nb-paper) !important; }
+    html body #root .res-cta h2 em { box-shadow: 4px 4px 0 var(--nb-paper) !important; }
+    html body #root .res-cta p { color: rgba(255,244,214,.8) !important; }
+    html body #root .res-cta-eyebrow { color: var(--nb-yellow) !important; }
+    html body #root .btn-cta-primary, html body #root .btn-cta-ghost {
+      border: 3px solid var(--nb-paper) !important; border-radius: 0 !important; box-shadow: 4px 4px 0 var(--nb-paper) !important;
+      background: var(--nb-yellow) !important; color: var(--nb-ink) !important;
+    }
+    html body #root .btn-cta-ghost { background: #fff !important; }
+    html body #root .btn-cta-primary *, html body #root .btn-cta-ghost * { color: var(--nb-ink) !important; }
+    html body #root .btn-cta-primary::before, html body #root .btn-cta-primary::after { display: none !important; }
+
+    html body #root .res-cta h2 em { margin: 0 .18em; }
+    html body #root .lecture-card .card-banner { aspect-ratio: 16 / 9; min-height: 0 !important; height: auto !important; }
+    @media (max-width: 600px) {
+      #root { --nb-shadow: 4px 4px 0 var(--nb-ink); --nb-shadow-sm: 3px 3px 0 var(--nb-ink); }
+      html body #root .res-cta-inner { padding: 32px 20px !important; }
+    }
+  </style>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
