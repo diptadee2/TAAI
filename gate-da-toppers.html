@@ -887,7 +887,7 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
 
     /* Video thumbnails */
     html body #root .vthumb { background: #fff !important; overflow: hidden; }
-    html body #root .vthumb-wrap { border-radius: 0 !important; border-bottom: 3px solid var(--nb-ink); }
+    html body #root .vthumb-wrap { overflow: visible !important; border-radius: 0 !important; border-bottom: 3px solid var(--nb-ink); }
     html body #root .vthumb-info, html body #root .vthumb-info * { color: var(--nb-ink) !important; }
     html body #root .vthumb-air-badge { background: var(--nb-yellow) !important; color: var(--nb-ink) !important; border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; }
     html body #root .vthumb-batch { border-radius: 0 !important; }
@@ -901,7 +901,27 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     html body #root .video-cta-left p { color: rgba(255,244,214,.8) !important; }
     html body #root .video-cta .btn { border-color: var(--nb-paper) !important; box-shadow: 4px 4px 0 var(--nb-paper) !important; }
 
-    html body #root .vthumb-info { padding: 10px 14px 14px !important; }
+    /* Video cards, reworked ("the youtube video cards can be better") */
+    html body #root .vthumb-grid { gap: 22px !important; }
+    html body #root .vthumb { display: flex !important; flex-direction: column; }
+    html body #root .vthumb-wrap { overflow: visible !important; border-radius: 0 !important; background: var(--nb-ink) !important; border-bottom: 3px solid var(--nb-ink); }
+    html body #root .vthumb-wrap img { position: absolute; inset: 0; opacity: 1 !important; transform: none !important; }
+    html body #root .vthumb-play-overlay {
+      inset: calc(100% + 20px) 16px auto auto !important; width: 52px; height: 40px; opacity: 1 !important; z-index: 2;
+      background: var(--nb-yellow); border: 3px solid var(--nb-ink); box-shadow: 3px 3px 0 var(--nb-ink);
+      transition: transform .12s ease, box-shadow .12s ease !important;
+    }
+    html body #root .vthumb-play-overlay svg { width: 30px; height: 21px; }
+    html body #root .vthumb-play-overlay svg rect { fill: transparent !important; }
+    html body #root .vthumb-play-overlay svg polygon { fill: var(--nb-ink) !important; }
+    @media (hover: hover) and (pointer: fine) {
+      html body #root .vthumb:hover .vthumb-play-overlay { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--nb-ink); }
+    }
+    html body #root .vthumb-info { padding: 14px 80px 16px 16px !important; display: flex; flex-direction: column; gap: 4px; }
+    html body #root .vthumb-air-badge { align-self: flex-start; margin-bottom: 6px !important; padding: 3px 8px !important; font-size: 12px !important; }
+    html body #root .vthumb-name { font-size: 16px !important; font-weight: 700 !important; }
+    html body #root .vthumb-batch { font-size: 13px !important; color: #444 !important; }
+    html body #root .vthumb-header-label { background: var(--nb-ink); color: var(--nb-paper) !important; padding: 3px 8px; font-family: var(--nb-mono); font-weight: 500 !important; }
     html body #root .batch-divider-label { border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; background: var(--nb-yellow) !important; }
     @media (max-width: 600px) {
       #root { --nb-shadow: 4px 4px 0 var(--nb-ink); --nb-shadow-sm: 3px 3px 0 var(--nb-ink); }
