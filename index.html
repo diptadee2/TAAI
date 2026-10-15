@@ -1763,6 +1763,8 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     }
     html body #root .bd-admit-mono { border-radius: 0 !important; border: 2px solid var(--nb-ink) !important; }
     html body #root .bd-paper-tag, html body #root .bd-compare-label { color: var(--nb-ink) !important; font-family: var(--nb-mono); }
+    html body #root .bd-chip { white-space: normal !important; line-height: 1.3; }
+    @media (max-width: 400px) { html body #root .bd-chip { font-size: 11.5px !important; padding: 4px 6px !important; } }
     html body #root .prep-card { background: #fff !important; border: 3px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: var(--nb-shadow-sm) !important; }
     html body #root .prep-card-label { color: var(--nb-ink) !important; font-family: var(--nb-mono); text-transform: uppercase; font-size: 11.5px !important; }
     html body #root .prep-subjects li { border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; background: #fff !important; color: var(--nb-ink) !important; }
@@ -2476,10 +2478,10 @@ const WHY_PILLARS = [
     // that even the maths differs.
     contrast: {
       mathsLabel: 'Even the maths is different',
-      maths: 'CSE papers lean on discrete maths and quick formulas. The IITs set GATE DA maths deeper: probability, statistics and linear algebra, asked the way machine learning uses them.',
+      maths: 'CSE papers ask linear algebra, probability and calculus too, but only at the surface: plug in the right formula and you are done. The IITs set GATE DA maths deeper, asked the way machine learning uses them.',
       // Drawn as a two-row comparison in the redesigned section (2026-10-11).
-      cse: ['Discrete maths', 'Quick formulas'],
-      da: ['Probability', 'Statistics', 'Linear algebra'],
+      cse: ['Surface-level maths', 'Plug in a formula'],
+      da: ['Linear algebra', 'Probability & stats', 'Calculus'],
       daNote: 'Set deeper by the IITs, asked the way machine learning uses them',
     },
   },
