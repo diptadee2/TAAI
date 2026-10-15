@@ -779,7 +779,134 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
 /* Inline Discord links (withDiscordLink) */
 .discord-inline { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; text-decoration-color: rgba(88,101,242,0.6); transition: color .15s ease, text-decoration-color .15s ease; }
 .discord-inline:hover { color: #5865F2; text-decoration-color: #5865F2; }
-</style>
+
+    /* ===================================================================
+       NEO-BRUTALISM LAYER (2026-10-15, direct request: "do the testimonials
+       page neo brutalism", after home, courses and test series). Visual
+       only: no markup or copy changed. Scoped to the page's own sections
+       inside #root (no <main> here), so the shared nav, footer and floating
+       buttons are untouched. Delete this whole block to get the previous
+       look back. Corners are square on purpose (Chromium leak, see
+       CLAUDE.md known gotchas).
+       =================================================================== */
+    #root {
+      --nb-ink: #111111; --nb-paper: #FFF4D6; --nb-paper-2: #FFFBEF;
+      --nb-yellow: #FDE047; --nb-lilac: #C4B5FD; --nb-pink: #F9A8D4; --nb-sky: #7DD3FC;
+      --nb-lime: #BEF264; --nb-orange: #FDBA74;
+      --nb-shadow: 6px 6px 0 var(--nb-ink); --nb-shadow-sm: 4px 4px 0 var(--nb-ink);
+      --nb-mono: 'DM Mono', ui-monospace, Menlo, monospace;
+    }
+    html body #root section {
+      background: var(--nb-paper) !important; background-image: none !important; border-image: none !important;
+      border-top: 3px solid var(--nb-ink); color: var(--nb-ink);
+    }
+    html body #root section.hero { border-top: 0; }
+    html body #root #batch-2025 { background: var(--nb-paper-2) !important; }
+    html body #root section::before, html body #root section::after,
+    html body #root .hero-orb-1, html body #root .hero-orb-2 { display: none !important; }
+
+    /* Type */
+    html body #root section h1, html body #root section h2, html body #root .section-h2 { color: var(--nb-ink) !important; }
+    html body #root section h1 em, html body #root section h2 em {
+      font-style: normal; display: inline-block; line-height: 1.08; margin-top: .1em;
+      background: var(--nb-yellow) !important; color: var(--nb-ink) !important; -webkit-text-fill-color: var(--nb-ink) !important;
+      padding: 0 .12em; box-shadow: 4px 4px 0 var(--nb-ink); animation: none !important;
+    }
+    html body #root .hero-sub, html body #root .section-sub { color: #2B2B2B !important; }
+    html body #root section .section-eyebrow {
+      background: var(--nb-ink) !important; color: var(--nb-paper) !important; border: 0 !important; border-radius: 0 !important;
+      font-family: var(--nb-mono); text-transform: uppercase; letter-spacing: .06em;
+    }
+
+    /* Buttons */
+    html body #root section .btn {
+      border: 3px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: var(--nb-shadow-sm) !important;
+      background: #fff !important; color: var(--nb-ink) !important; font-weight: 700 !important;
+      transition: transform .12s ease, box-shadow .12s ease !important;
+    }
+    html body #root section .btn-primary { background: var(--nb-yellow) !important; }
+    html body #root section .btn::before, html body #root section .btn::after { display: none !important; }
+    html body #root section .btn * { color: var(--nb-ink) !important; }
+    @media (hover: hover) and (pointer: fine) {
+      html body #root section .btn:hover { transform: translate(-2px, -2px) !important; box-shadow: 6px 6px 0 var(--nb-ink) !important; }
+    }
+    html body #root section .btn:active { transform: translate(3px, 3px) !important; box-shadow: 1px 1px 0 var(--nb-ink) !important; }
+
+    /* Cards */
+    html body #root .feat-card, html body #root .testi-card, html body #root .result-card, html body #root .result-hero,
+    html body #root .vthumb, html body #root .video-cta {
+      border: 3px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: var(--nb-shadow) !important;
+      background-image: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+    }
+    html body #root .feat-card::before, html body #root .feat-card::after, html body #root .testi-card::before,
+    html body #root .testi-card::after, html body #root .result-hero::before, html body #root .result-hero::after,
+    html body #root .video-cta::before, html body #root .video-cta::after { display: none !important; }
+    @media (hover: hover) and (pointer: fine) {
+      html body #root .feat-card:hover, html body #root .testi-card:hover, html body #root .result-card:hover, html body #root .vthumb:hover {
+        transform: translate(-3px, -3px) !important; box-shadow: 9px 9px 0 var(--nb-ink) !important;
+      }
+    }
+
+    /* 2026 featured cards: one flat colour each, ink text */
+    html body #root .featured-grid > :nth-child(5n+1) { background: var(--nb-pink) !important; }
+    html body #root .featured-grid > :nth-child(5n+2) { background: var(--nb-sky) !important; }
+    html body #root .featured-grid > :nth-child(5n+3) { background: var(--nb-yellow) !important; }
+    html body #root .featured-grid > :nth-child(5n+4) { background: var(--nb-lime) !important; }
+    html body #root .featured-grid > :nth-child(5n+5) { background: var(--nb-lilac) !important; }
+    html body #root .feat-card, html body #root .feat-card * { color: var(--nb-ink) !important; }
+    html body #root .feat-rank-num { font-family: var(--nb-mono) !important; font-weight: 500 !important; background: none !important; -webkit-text-fill-color: var(--nb-ink) !important; }
+    html body #root .feat-avatar, html body #root .testi-avatar { border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; }
+    html body #root .topper-tag {
+      background: var(--nb-ink) !important; color: var(--nb-paper) !important; -webkit-text-fill-color: var(--nb-paper) !important;
+      border: 0 !important; border-radius: 0 !important; font-family: var(--nb-mono);
+    }
+    html body #root .feat-author { border-color: var(--nb-ink) !important; }
+
+    /* Results block */
+    html body #root .result-hero { background: var(--nb-yellow) !important; }
+    html body #root .result-hero, html body #root .result-hero * { color: var(--nb-ink) !important; -webkit-text-fill-color: var(--nb-ink) !important; }
+    html body #root .result-hero-num, html body #root .result-card .big { font-family: var(--nb-mono) !important; font-weight: 500 !important; background: none !important; }
+    html body #root .result-hero-eyebrow { background: var(--nb-ink) !important; color: var(--nb-paper) !important; -webkit-text-fill-color: var(--nb-paper) !important; display: inline-block; padding: 2px 8px; border-radius: 0 !important; }
+    html body #root .result-card { background: #fff !important; }
+    html body #root .results-row > :nth-child(2) { background: var(--nb-sky) !important; }
+    html body #root .results-row > :nth-child(3) { background: var(--nb-lime) !important; }
+    html body #root .result-card * { color: var(--nb-ink) !important; -webkit-text-fill-color: var(--nb-ink) !important; }
+
+    /* 2025 testimonials */
+    html body #root .testi-card { background: #fff !important; }
+    html body #root .testi-grid > :nth-child(3n+2) { background: var(--nb-sky) !important; }
+    html body #root .testi-grid > :nth-child(3n+3) { background: var(--nb-pink) !important; }
+    html body #root .testi-card * { color: var(--nb-ink) !important; }
+    html body #root .testi-rank-badge {
+      background: var(--nb-ink) !important; color: var(--nb-paper) !important; -webkit-text-fill-color: var(--nb-paper) !important;
+      border: 0 !important; border-radius: 0 !important; font-family: var(--nb-mono);
+    }
+    html body #root .testi-rank-badge * { color: var(--nb-paper) !important; }
+    html body #root .batch-divider-line { background: var(--nb-ink) !important; height: 3px !important; opacity: 1 !important; }
+    html body #root .batch-divider-label { color: var(--nb-ink) !important; font-family: var(--nb-mono); text-transform: uppercase; }
+
+    /* Video thumbnails */
+    html body #root .vthumb { background: #fff !important; overflow: hidden; }
+    html body #root .vthumb-wrap { border-radius: 0 !important; border-bottom: 3px solid var(--nb-ink); }
+    html body #root .vthumb-info, html body #root .vthumb-info * { color: var(--nb-ink) !important; }
+    html body #root .vthumb-air-badge { background: var(--nb-yellow) !important; color: var(--nb-ink) !important; border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; }
+    html body #root .vthumb-batch { border-radius: 0 !important; }
+    html body #root .vthumb-header-label { color: var(--nb-ink) !important; }
+    html body #root .vthumb-header-all { color: var(--nb-ink) !important; text-decoration: underline; font-weight: 700; }
+
+    /* Closing video call-to-action: the one black block */
+    html body #root .video-cta { background: var(--nb-ink) !important; box-shadow: 6px 6px 0 var(--nb-yellow), 6px 6px 0 3px var(--nb-ink) !important; }
+    html body #root .video-cta-left h2 { color: var(--nb-paper) !important; }
+    html body #root .video-cta-left h2 em { box-shadow: 4px 4px 0 var(--nb-paper) !important; }
+    html body #root .video-cta-left p { color: rgba(255,244,214,.8) !important; }
+    html body #root .video-cta .btn { border-color: var(--nb-paper) !important; box-shadow: 4px 4px 0 var(--nb-paper) !important; }
+
+    html body #root .vthumb-info { padding: 10px 14px 14px !important; }
+    html body #root .batch-divider-label { border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; background: var(--nb-yellow) !important; }
+    @media (max-width: 600px) {
+      #root { --nb-shadow: 4px 4px 0 var(--nb-ink); --nb-shadow-sm: 3px 3px 0 var(--nb-ink); }
+    }
+  </style>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
