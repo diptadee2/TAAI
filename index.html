@@ -1513,6 +1513,8 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
   .project-title { font-weight: 700; font-size: 16px; color: var(--ink); line-height: 1.25; }
   .project-caption { margin-top: 3px; font-size: 14px; line-height: 1.45; color: var(--ink-dim); }
   .project-uses { margin-top: 6px; font-size: 12.5px; font-weight: 600; color: var(--pc); }
+  .project-uses { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .project-use { display: inline-block; padding: 2px 8px; border-radius: 999px; background: rgba(0,0,0,.05); }
   .prep-projects-link { display: inline-block; margin-bottom: 4px; font-size: 14.5px; font-weight: 600; color: #7C3AED; text-decoration: none; }
   .prep-projects-link:hover { text-decoration: underline; }
   @media (max-width: 1024px) { .prep-projects-flow { gap: 20px 72px; grid-template-columns: minmax(200px, 260px) minmax(0, 1fr); } }
@@ -1761,6 +1763,21 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     html body #root .project-tile { background: #fff !important; border: 3px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: var(--nb-shadow-sm) !important; }
     html body #root .project-art { border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; background: #fff !important; }
     html body #root .project-count { background: var(--nb-ink) !important; color: var(--nb-paper) !important; border-radius: 0 !important; font-family: var(--nb-mono); }
+    /* Project tiles: one flat colour each, drawing in full black on a white dot-grid box, yellow count tag, subjects as chips */
+    html body #root .project-tile--ml { background: var(--nb-pink) !important; }
+    html body #root .project-tile--cv { background: var(--nb-sky) !important; }
+    html body #root .project-tile--llm { background: var(--nb-lime) !important; }
+    html body #root .project-art { color: var(--nb-ink) !important; background-color: #fff !important; background-image: radial-gradient(rgba(17,17,17,.14) 1px, transparent 1px) !important; background-size: 8px 8px !important; }
+    html body #root .project-art svg * { stroke-opacity: 1 !important; opacity: 1 !important; }
+    html body #root .project-count { background: var(--nb-yellow) !important; color: var(--nb-ink) !important; border: 2px solid var(--nb-ink) !important; }
+    html body #root .project-uses { color: var(--nb-ink) !important; margin-top: 8px; }
+    html body #root .project-uses-label { font-family: var(--nb-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+    html body #root .project-use { background: #fff !important; border: 2px solid var(--nb-ink); border-radius: 0 !important; font-size: 12px; font-weight: 700; padding: 1px 7px; }
+    @media (max-width: 480px) {
+      html body #root .project-tile { align-items: flex-start; }
+      html body #root .project-uses { gap: 4px; }
+      html body #root .project-use { font-size: 11px; padding: 0 5px; border-width: 1.5px; }
+    }
     html body #root .prep-projects-icon { border-radius: 0 !important; border: 2px solid var(--nb-ink); }
     html body #root .prep-line-path { stroke: var(--nb-ink) !important; stroke-width: 3 !important; opacity: .9 !important; }
     html body #root .prep-line-dot { fill: var(--nb-ink) !important; }
@@ -2604,7 +2621,7 @@ function PrepToProjects() {
               <div className="project-text">
                 <div className="project-title">{p.title}</div>
                 <div className="project-caption">{p.caption}</div>
-                <div className="project-uses">Uses {p.uses.join(', ')}</div>
+                <div className="project-uses"><span className="project-uses-label">Uses</span>{p.uses.map(u => <span key={u} className="project-use">{u}</span>)}</div>
               </div>
             </div>
           ))}
