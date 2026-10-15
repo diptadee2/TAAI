@@ -2889,6 +2889,15 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     html body main .course-testi-card { background: #fff !important; }
     html body main .course-testi-grid > :nth-child(2) .course-testi-card,
     html body main .course-testi-grid > .course-testi-card:nth-child(2) { background: var(--nb-sky) !important; }
+    /* Phones: the two testimonial cards are a horizontal swipe row (scroll-snap, next card peeks in) instead of a tall stack (2026-10-15) */
+    @media (max-width: 768px) {
+      html body main .course-testi-grid {
+        display: flex !important; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+        margin-left: -32px; margin-right: -32px; padding: 4px 32px 14px; scroll-padding-left: 32px; scrollbar-width: none;
+      }
+      html body main .course-testi-grid::-webkit-scrollbar { display: none; }
+      html body main .course-testi-grid > * { flex: 0 0 88%; scroll-snap-align: start; min-width: 0; opacity: 1 !important; transform: none !important; }
+    }
     html body main .course-testi-card * { color: var(--nb-ink) !important; }
     html body main .course-testi-air-badge, html body main .course-testi-avatar {
       background: var(--nb-ink) !important; color: var(--nb-paper) !important; border-radius: 0 !important; border: 0 !important;
