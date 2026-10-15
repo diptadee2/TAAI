@@ -598,7 +598,106 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
 @media (min-width: 768px) and (max-width: 1024px) {
 }
 
-</style>
+
+    /* ===================================================================
+       NEO-BRUTALISM LAYER (2026-10-15, direct request: "now do it for the
+       contact us page"). Visual only: no markup or copy changed. Scoped to
+       the page's hero and sections inside #root; nav and footer untouched.
+       Delete this whole block to get the previous look back. Corners are
+       square on purpose (Chromium leak, see CLAUDE.md known gotchas).
+       =================================================================== */
+    #root {
+      --nb-ink: #111111; --nb-paper: #FFF4D6; --nb-paper-2: #FFFBEF;
+      --nb-yellow: #FDE047; --nb-lilac: #C4B5FD; --nb-pink: #F9A8D4; --nb-sky: #7DD3FC; --nb-lime: #BEF264;
+      --nb-shadow: 6px 6px 0 var(--nb-ink); --nb-shadow-sm: 4px 4px 0 var(--nb-ink);
+      --nb-mono: 'DM Mono', ui-monospace, Menlo, monospace;
+    }
+    html body #root .contact-hero, html body #root section {
+      background: var(--nb-paper) !important; background-image: none !important; border-image: none !important; color: var(--nb-ink);
+    }
+    html body #root section { border-top: 3px solid var(--nb-ink); }
+    html body #root section:nth-of-type(odd) { background: var(--nb-paper-2) !important; }
+    html body #root .contact-hero::before, html body #root .contact-hero::after, html body #root section::before, html body #root section::after,
+    html body #root .cta-orb1, html body #root .cta-orb2 { display: none !important; }
+
+    /* Type */
+    html body #root .contact-hero h1, html body #root section h2 { color: var(--nb-ink) !important; }
+    html body #root .contact-hero h1 em, html body #root section h2 em {
+      font-style: normal; display: inline-block; line-height: 1.08; margin-top: .1em;
+      background: var(--nb-yellow) !important; color: var(--nb-ink) !important; -webkit-text-fill-color: var(--nb-ink) !important;
+      padding: 0 .12em; box-shadow: 4px 4px 0 var(--nb-ink); animation: none !important;
+    }
+    html body #root .contact-hero-sub { color: #2B2B2B !important; }
+    html body #root .contact-eyebrow, html body #root section .section-eyebrow {
+      background: var(--nb-ink) !important; color: var(--nb-paper) !important; border: 0 !important; border-radius: 0 !important;
+      font-family: var(--nb-mono); text-transform: uppercase; letter-spacing: .06em; padding: 3px 9px !important;
+    }
+
+    /* Channel cards: white, square, the platform colour kept on the icon */
+    html body #root .channel-card {
+      background: #fff !important; background-image: none !important; border: 3px solid var(--nb-ink) !important; border-radius: 0 !important;
+      box-shadow: var(--nb-shadow) !important;
+    }
+    html body #root .channel-card::after { display: none !important; }
+    html body #root .channel-card, html body #root .channel-card * { color: var(--nb-ink); }
+    html body #root .channel-name { color: var(--nb-ink) !important; text-shadow: none !important; }
+    html body #root .channel-detail, html body #root .channel-hours { color: #444 !important; }
+    html body #root .channel-label { color: var(--nb-ink) !important; font-family: var(--nb-mono); }
+    html body #root .channel-cta { color: var(--nb-ink) !important; font-weight: 700 !important; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+    html body #root .channel-icon { border-radius: 0 !important; border: 2px solid var(--nb-ink); box-shadow: none !important; animation: none !important; }
+    html body #root .channel-icon, html body #root .channel-icon * { color: #fff !important; }
+    html body #root .channel-grid > :nth-child(1) { background: var(--nb-yellow) !important; }
+    html body #root .channel-grid > :nth-child(2) { background: var(--nb-lilac) !important; }
+    html body #root .channel-more { border: 3px dashed var(--nb-ink) !important; background: #fff !important; box-shadow: none !important; }
+    html body #root .channel-more-icons span { border-radius: 0 !important; border: 2px solid var(--nb-ink) !important; }
+    @media (hover: hover) and (pointer: fine) {
+      html body #root .channel-card:hover { transform: translate(-3px, -3px) !important; box-shadow: 9px 9px 0 var(--nb-ink) !important; }
+      html body #root .channel-card:hover .channel-icon { transform: none !important; }
+    }
+
+    /* Other cards */
+    html body #root .offer-card, html body #root .trust-item {
+      background: #fff !important; background-image: none !important; border: 3px solid var(--nb-ink) !important; border-radius: 0 !important;
+      box-shadow: var(--nb-shadow-sm) !important;
+    }
+    html body #root .offer-card::before, html body #root .offer-card::after { display: none !important; }
+    html body #root .offer-card *, html body #root .trust-item * { color: var(--nb-ink); }
+    html body #root .offer-desc, html body #root .trust-desc { color: #444 !important; }
+    html body #root .offer-icon, html body #root .trust-icon, html body #root .trust-check {
+      border-radius: 0 !important; border: 2px solid var(--nb-ink) !important; background: var(--nb-yellow) !important; color: var(--nb-ink) !important; box-shadow: none !important;
+    }
+    html body #root .offer-icon *, html body #root .trust-icon *, html body #root .trust-check * { color: var(--nb-ink) !important; stroke: var(--nb-ink); }
+    html body #root .offer-num { color: var(--nb-ink) !important; font-family: var(--nb-mono); -webkit-text-fill-color: var(--nb-ink) !important; background: none !important; }
+    html body #root .offer-link { color: var(--nb-ink) !important; font-weight: 700; text-decoration: underline; }
+
+    /* Closing banner: the one black block */
+    html body #root .cta-banner {
+      background: var(--nb-ink) !important; background-image: none !important; border: 3px solid var(--nb-ink) !important; border-radius: 0 !important;
+      box-shadow: 6px 6px 0 var(--nb-yellow), 6px 6px 0 3px var(--nb-ink) !important;
+    }
+    html body #root .cta-banner .cta-title, html body #root .cta-banner h2 { color: var(--nb-paper) !important; }
+    html body #root .cta-banner .cta-title em, html body #root .cta-banner h2 em { box-shadow: 4px 4px 0 var(--nb-paper) !important; }
+    html body #root .cta-sub { color: rgba(255,244,214,.8) !important; }
+    html body #root .cta-eyebrow { color: var(--nb-yellow) !important; font-family: var(--nb-mono); }
+    html body #root .btn-cta-primary, html body #root .btn-cta-ghost, html body #root section .btn {
+      border: 3px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: var(--nb-shadow-sm) !important;
+      background: var(--nb-yellow) !important; color: var(--nb-ink) !important;
+    }
+    html body #root .cta-banner .btn-cta-primary, html body #root .cta-banner .btn-cta-ghost { border-color: var(--nb-paper) !important; box-shadow: 4px 4px 0 var(--nb-paper) !important; }
+    html body #root .btn-cta-ghost { background: #fff !important; }
+    html body #root .btn-cta-primary *, html body #root .btn-cta-ghost *, html body #root section .btn * { color: var(--nb-ink) !important; }
+    html body #root .btn-cta-primary::before, html body #root .btn-cta-primary::after { display: none !important; }
+
+    html body #root .cta-title em {
+      font-style: normal; display: inline-block; line-height: 1.08; margin-top: .1em; padding: 0 .12em;
+      background: var(--nb-yellow) !important; -webkit-background-clip: border-box !important; background-clip: border-box !important;
+      color: var(--nb-ink) !important; -webkit-text-fill-color: var(--nb-ink) !important; box-shadow: 4px 4px 0 var(--nb-paper) !important; animation: none !important;
+    }
+    html body #root .cta-title { color: var(--nb-paper) !important; }
+    @media (max-width: 600px) {
+      #root { --nb-shadow: 4px 4px 0 var(--nb-ink); --nb-shadow-sm: 3px 3px 0 var(--nb-ink); }
+    }
+  </style>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
