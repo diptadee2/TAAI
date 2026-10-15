@@ -1454,6 +1454,22 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
       background: var(--nb-ink) !important; color: var(--nb-paper) !important; border-radius: 0 !important; border: 0 !important; font-family: var(--nb-mono);
     }
     html body #root .ts-testi-rank *, html body #root .ts-testi-avatar * { color: var(--nb-paper) !important; }
+    /* Testimonial cards styled like the home page's (2026-10-15): AIR in a black block in big bold display type, year as a small tag beside it,
+       quote upright and bold, a hairline above the author, square black initials box. Stars removed. */
+    html body #root .ts-testi-top { display: flex !important; align-items: center !important; flex-wrap: wrap; gap: 10px 12px !important; }
+    html body #root .ts-testi-rank {
+      display: inline-block !important; width: fit-content !important; background: var(--nb-ink) !important; color: var(--nb-paper) !important; -webkit-text-fill-color: var(--nb-paper) !important;
+      font-family: var(--font-display) !important; font-weight: 700 !important; font-size: clamp(34px, 3.6vw, 46px) !important; letter-spacing: -0.03em !important; line-height: 1 !important;
+      text-transform: none !important; padding: 8px 14px !important; border: 0 !important; border-radius: 0 !important;
+    }
+    html body #root .ts-testi-top .testi-year-tag { font-family: var(--nb-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--nb-ink) !important; border: 2px solid var(--nb-ink); padding: 3px 7px; background: rgba(255,255,255,.55); }
+    html body #root .ts-testi-quote { font-family: var(--font-display) !important; font-style: normal !important; font-weight: 600 !important; letter-spacing: -0.01em; color: var(--nb-ink) !important; }
+    html body #root .ts-testi-footer { border-top: 1.5px solid rgba(17,17,17,.22) !important; padding-top: 18px !important; }
+    html body #root .ts-testi-avatar { width: 52px !important; height: 52px !important; border-radius: 0 !important; background: var(--nb-ink) !important; color: var(--nb-paper) !important; -webkit-text-fill-color: var(--nb-paper) !important; display: grid !important; place-items: center; font-family: var(--font-display); font-weight: 700; font-size: 17px; border: 0 !important; flex: 0 0 auto; }
+    html body #root .ts-testi-name { font-weight: 700 !important; }
+    html body #root .ts-testi-quote { font-size: 16px !important; line-height: 1.5 !important; }
+    html body #root .ts-testi-avatar { box-shadow: none !important; }
+    html body #root .ts-testi-card::before, html body #root .ts-testi-card::after { display: none !important; }
 
     /* FAQ */
     html body #root .faq-item { background: #fff !important; border-left-width: 3px !important; }
@@ -2254,8 +2270,8 @@ function TSTestimonials() {
           {TS_TESTIS.map((t, i) => (
             <div key={i} className="ts-testi-card fade-in" style={{ '--delay': `${i * 100}ms` }}>
               <div className="ts-testi-top">
-                <div className="ts-testi-rank">{t.rank}</div>
-                <div className="ts-testi-stars">★★★★★</div>
+                <div className="ts-testi-rank">{t.rank.split(' · ')[0]}</div>
+                {t.rank.split(' · ')[1] && <div className="testi-year-tag">{t.rank.split(' · ')[1]}</div>}
               </div>
               <p className="ts-testi-quote">{t.quote}</p>
               <div className="ts-testi-footer">

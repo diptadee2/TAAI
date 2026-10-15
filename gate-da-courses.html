@@ -2889,6 +2889,38 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     html body main .course-testi-card { background: #fff !important; }
     html body main .course-testi-grid > :nth-child(2) .course-testi-card,
     html body main .course-testi-grid > .course-testi-card:nth-child(2) { background: var(--nb-sky) !important; }
+    /* Testimonial cards styled like the home page's (2026-10-15): AIR in a black block in big bold display type, year as a small tag beside it,
+       quote upright and bold, a hairline above the author, square black initials box. Stars removed. */
+    html body main .course-testi-air { display: flex !important; align-items: center !important; flex-wrap: wrap; gap: 10px 12px !important; }
+    html body main .course-testi-air-badge {
+      display: inline-block !important; width: fit-content !important; background: var(--nb-ink) !important; color: var(--nb-paper) !important; -webkit-text-fill-color: var(--nb-paper) !important;
+      font-family: var(--font-display) !important; font-weight: 700 !important; font-size: clamp(36px, 4.6vw, 54px) !important; letter-spacing: -0.03em !important; line-height: 1 !important;
+      text-transform: none !important; padding: 8px 14px !important; border: 0 !important; border-radius: 0 !important;
+    }
+    html body main .course-testi-air .testi-year-tag { font-family: var(--nb-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--nb-ink) !important; border: 2px solid var(--nb-ink); padding: 3px 7px; background: rgba(255,255,255,.55); }
+    html body main .course-testi-quote { font-family: var(--font-display) !important; font-style: normal !important; font-weight: 600 !important; letter-spacing: -0.01em; color: var(--nb-ink) !important; }
+    html body main .course-testi-footer { border-top: 1.5px solid rgba(17,17,17,.22) !important; padding-top: 18px !important; }
+    html body main .course-testi-avatar { width: 52px !important; height: 52px !important; border-radius: 0 !important; background: var(--nb-ink) !important; color: var(--nb-paper) !important; -webkit-text-fill-color: var(--nb-paper) !important; display: grid !important; place-items: center; font-family: var(--font-display); font-weight: 700; font-size: 17px; border: 0 !important; flex: 0 0 auto; }
+    html body main .course-testi-name { font-weight: 700 !important; }
+    html body main .course-testi-quote { font-size: 17px !important; line-height: 1.5 !important; }
+    @media (max-width: 600px) { html body main .course-testi-quote { font-size: 15.5px !important; } }
+    /* Testimonial cards styled like the home page's (2026-10-15): AIR in a black block in big bold display type, year as a small tag beside it,
+       quote upright and bold, a hairline above the author, square black initials box. Stars removed. */
+    html body main .hero-proof-top { display: flex !important; align-items: center !important; flex-wrap: wrap; gap: 10px 12px !important; }
+    html body main .hero-proof-rank {
+      display: inline-block !important; width: fit-content !important; background: var(--nb-ink) !important; color: var(--nb-paper) !important; -webkit-text-fill-color: var(--nb-paper) !important;
+      font-family: var(--font-display) !important; font-weight: 700 !important; font-size: 30px !important; letter-spacing: -0.03em !important; line-height: 1 !important;
+      text-transform: none !important; padding: 8px 14px !important; border: 0 !important; border-radius: 0 !important;
+    }
+    html body main .hero-proof-top .testi-year-tag { font-family: var(--nb-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--nb-ink) !important; border: 2px solid var(--nb-ink); padding: 3px 7px; background: rgba(255,255,255,.55); }
+    html body main .hero-proof-quote { font-family: var(--font-display) !important; font-style: normal !important; font-weight: 600 !important; letter-spacing: -0.01em; color: var(--nb-ink) !important; }
+    html body main .hero-proof-footer { border-top: 1.5px solid rgba(17,17,17,.22) !important; padding-top: 18px !important; }
+    html body main .hero-proof-avatar { width: 52px !important; height: 52px !important; border-radius: 0 !important; background: var(--nb-ink) !important; color: var(--nb-paper) !important; -webkit-text-fill-color: var(--nb-paper) !important; display: grid !important; place-items: center; font-family: var(--font-display); font-weight: 700; font-size: 17px; border: 0 !important; flex: 0 0 auto; }
+    html body main .hero-proof-name { font-weight: 700 !important; }
+    html body main .hero-proof-avatar { width: 42px !important; height: 42px !important; font-size: 14px; }
+    html body main .hero-proof-top { justify-content: flex-start !important; }
+    html body main .course-testi-card::before, html body main .course-testi-card::after, html body main .course-testi-quote::before { display: none !important; }
+    html body main .course-testi-avatar, html body main .hero-proof-avatar { box-shadow: none !important; }
     /* Phones: the two testimonial cards are a horizontal swipe row (scroll-snap, next card peeks in) instead of a tall stack (2026-10-15) */
     @media (max-width: 768px) {
       html body main .course-testi-grid {
@@ -4950,8 +4982,7 @@ function App() {
                 <div className="hero-proof">
                   <div className="proof-orb-1" /><div className="proof-orb-2" />
                   <div className="hero-proof-top">
-                    <div className="hero-proof-rank">AIR 91 · GATE DA 2026</div>
-                    <div className="hero-proof-stars">★★★★★</div>
+                    <div className="hero-proof-rank">AIR 91</div><div className="testi-year-tag">GATE DA 2026</div>
                   </div>
                   <p className="hero-proof-quote">"The way Manoj Sir taught Maths and ML made even tough topics feel much easier to understand. I never really felt scared of Maths or ML while preparing for the exam. The courses and guidance from TAAI played a big role in my journey."</p>
                   <div className="hero-proof-footer">
@@ -4967,8 +4998,7 @@ function App() {
                 <div className="hero-proof">
                   <div className="proof-orb-1" /><div className="proof-orb-2" />
                   <div className="hero-proof-top">
-                    <div className="hero-proof-rank">AIR 102 · GATE DA 2026</div>
-                    <div className="hero-proof-stars">★★★★★</div>
+                    <div className="hero-proof-rank">AIR 102</div><div className="testi-year-tag">GATE DA 2026</div>
                   </div>
                   <p className="hero-proof-quote">"The lectures felt just right, clear, to the point, and not overloaded with unnecessary content. Concepts were explained so intuitively, with plenty of examples. Manoj Sir's personal support truly stood out and made a big difference in my learning."</p>
                   <div className="hero-proof-footer">
@@ -5169,8 +5199,7 @@ function App() {
           <div className="course-testi-grid">
             <div className="course-testi-card card fade-in" style={{ '--delay': '0ms' }} itemScope itemType="https://schema.org/Review">
               <div className="course-testi-air">
-                <span className="course-testi-air-badge">AIR 125 · GATE DA 2026</span>
-                <span className="course-testi-stars">★★★★★</span>
+                <span className="course-testi-air-badge">AIR 125</span><span className="testi-year-tag">GATE DA 2026</span>
               </div>
               <p className="course-testi-quote" itemProp="reviewBody">"Manoj Sir's way of breaking down complex mathematical concepts, along with sharing smart tricks and shortcuts, made a massive difference in solving problems faster. He doesn't just teach concepts; he teaches how to think through questions efficiently. Concepts that initially felt abstract became much clearer, especially as we learned to connect them with the underlying mathematics."</p>
               <div className="course-testi-footer">
@@ -5183,8 +5212,7 @@ function App() {
             </div>
             <div className="course-testi-card card fade-in" style={{ '--delay': '120ms' }} itemScope itemType="https://schema.org/Review">
               <div className="course-testi-air">
-                <span className="course-testi-air-badge">AIR 155 · GATE DA 2026</span>
-                <span className="course-testi-stars">★★★★★</span>
+                <span className="course-testi-air-badge">AIR 155</span><span className="testi-year-tag">GATE DA 2026</span>
               </div>
               <p className="course-testi-quote" itemProp="reviewBody">"His way of breaking down complex mathematical and data science concepts, focusing on intuition and problem-solving rather than just formulas, completely changed how I approached the exam. Topics like statistics and ML, which initially felt abstract, became much clearer and more enjoyable to study. Grateful to Manoj Sir and the entire TAAI team for their support, guidance, and constant motivation throughout this journey."</p>
               <div className="course-testi-footer">
