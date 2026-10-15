@@ -1701,6 +1701,13 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     }
     html body #root section .btn:active, html body #root .quick-pill:active { transform: translate(3px, 3px) !important; box-shadow: 1px 1px 0 var(--nb-ink) !important; }
     html body #root .quick-links-label { color: var(--nb-ink) !important; font-family: var(--nb-mono); text-transform: uppercase; font-size: 12px !important; }
+    /* Jump to (phones only): label as a black tag on its own line, then three equal full-width buttons, one colour each, arrows lined up on the right */
+    html body #root .quick-links { display: grid; grid-template-columns: 1fr; gap: 12px; padding-right: 6px; }
+    html body #root .quick-links-label { justify-self: start; background: var(--nb-ink); color: var(--nb-paper) !important; padding: 4px 8px; margin: 0 0 2px !important; letter-spacing: .08em; }
+    html body #root .quick-pill { display: flex !important; justify-content: space-between; width: 100%; box-sizing: border-box; padding: 13px 16px !important; font-size: 16px; }
+    html body #root .quick-pill:nth-of-type(1) { background: var(--nb-pink) !important; }
+    html body #root .quick-pill:nth-of-type(2) { background: var(--nb-sky) !important; }
+    html body #root .quick-pill:nth-of-type(3) { background: var(--nb-lime) !important; }
 
     /* Hero */
     html body #root .hero, html body #root .hero * { color: var(--nb-ink); }
