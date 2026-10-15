@@ -923,6 +923,32 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     html body #root .vthumb-batch { font-size: 13px !important; color: #444 !important; }
     html body #root .vthumb-header-label { background: var(--nb-ink); color: var(--nb-paper) !important; padding: 3px 8px; font-family: var(--nb-mono); font-weight: 500 !important; }
     html body #root .batch-divider-label { border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; background: var(--nb-yellow) !important; }
+    /* Testimonial cards match the home page's (2026-10-15): AIR in a black block in big bold display type,
+       quote upright and bold, a hairline above the author, square black initials / photo box */
+    html body #root .feat-rank-num, html body #root .testi-rank-badge {
+      display: inline-flex !important; align-items: center; gap: 10px; width: fit-content !important;
+      background: var(--nb-ink) !important; color: var(--nb-paper) !important; -webkit-text-fill-color: var(--nb-paper) !important;
+      font-family: var(--font-display) !important; font-weight: 700 !important; font-size: clamp(36px, 4.6vw, 54px) !important;
+      letter-spacing: -0.03em !important; line-height: 1 !important; padding: 8px 14px !important; border: 0 !important; border-radius: 0 !important;
+    }
+    html body #root .testi-rank-badge span { font: inherit !important; color: var(--nb-paper) !important; -webkit-text-fill-color: var(--nb-paper) !important; }
+    html body #root .feat-rank-num .topper-tag { font-size: 13px !important; letter-spacing: .04em; -webkit-text-fill-color: var(--nb-ink) !important; }
+    html body #root .feat-quote, html body #root .testi-quote {
+      font-family: var(--font-display) !important; font-style: normal !important; font-weight: 600 !important;
+      font-size: 16.5px !important; line-height: 1.45 !important; letter-spacing: -0.01em; margin-top: 22px !important;
+    }
+    html body #root .feat-author, html body #root .testi-author { border-top: 1.5px solid rgba(17,17,17,.22) !important; padding-top: 18px !important; margin-top: 22px !important; }
+    html body #root .feat-avatar, html body #root .testi-avatar { width: 52px !important; height: 52px !important; border-radius: 0 !important; }
+    html body #root .testi-avatar, html body #root .feat-avatar:not(:has(img)) {
+      background: var(--nb-ink) !important; color: var(--nb-paper) !important; -webkit-text-fill-color: var(--nb-paper) !important;
+      display: grid !important; place-items: center; font-family: var(--font-display); font-weight: 700; font-size: 17px; border: 0 !important;
+    }
+    html body #root .feat-name, html body #root .testi-name { font-weight: 700 !important; font-size: 15.5px !important; }
+    html body #root .feat-quote { margin-top: 4px !important; }
+    html body #root .testi-card::before, html body #root .testi-card::after { display: none !important; }
+    @media (max-width: 600px) {
+      html body #root .feat-quote, html body #root .testi-quote { font-size: 15.5px !important; }
+    }
     @media (max-width: 600px) {
       #root { --nb-shadow: 4px 4px 0 var(--nb-ink); --nb-shadow-sm: 3px 3px 0 var(--nb-ink); }
     }
