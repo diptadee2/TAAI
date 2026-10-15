@@ -650,6 +650,15 @@ a[href*="youtube"]:hover svg, a[href*="youtu.be"]:hover svg {
     html body #root .channel-grid > :nth-child(2) { background: var(--nb-lilac) !important; }
     html body #root .channel-more { border: 3px dashed var(--nb-ink) !important; background: #fff !important; box-shadow: none !important; }
     html body #root .channel-more-icons span { border-radius: 0 !important; border: 2px solid var(--nb-ink) !important; }
+    /* Show-more tile: icon strip centred, evenly spaced (no overlap), text centred under it */
+    html body #root .channel-more { align-items: center; text-align: center; }
+    html body #root .channel-more-icons { justify-content: center; gap: 8px; align-self: center; }
+    html body #root .channel-more-icons span { margin-left: 0 !important; }
+    html body #root .channel-more .channel-cta { justify-content: center; }
+    @media (max-width: 600px) {
+      html body #root .channel-more { text-align: left; }
+      html body #root .channel-more-icons { gap: 4px; }
+    }
     @media (hover: hover) and (pointer: fine) {
       html body #root .channel-card:hover { transform: translate(-3px, -3px) !important; box-shadow: 9px 9px 0 var(--nb-ink) !important; }
       html body #root .channel-card:hover .channel-icon { transform: none !important; }

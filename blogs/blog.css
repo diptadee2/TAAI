@@ -450,3 +450,95 @@ a { color: inherit; }
 .policy p { font-size: 16px; line-height: 1.65; color: var(--ink-dim); margin: 0 0 12px; }
 .policy p strong { color: var(--ink); font-weight: 600; }
 .policy a { color: #6D28D9; }
+
+/* ===================================================================
+   NEO-BRUTALISM LAYER (2026-10-15, direct request: "now do it for ...
+   the blogs page"). Visual only: build.mjs markup and post content are
+   unchanged. Scoped to the content wrappers (.blog-hero, .blog-list,
+   .blog-post, .policy), so the shared nav and footer are untouched. Covers
+   the listing, every post (including Blocks charts/tables) and the refund
+   and privacy pages, which use this same file. Delete this whole block to
+   get the previous look back. Corners are square on purpose (Chromium
+   leak, see CLAUDE.md known gotchas).
+   =================================================================== */
+:root {
+  --nb-ink: #111111; --nb-paper: #FFF4D6; --nb-paper-2: #FFFBEF;
+  --nb-yellow: #FDE047; --nb-lilac: #C4B5FD; --nb-pink: #F9A8D4; --nb-sky: #7DD3FC; --nb-lime: #BEF264;
+  --nb-shadow: 6px 6px 0 var(--nb-ink); --nb-shadow-sm: 4px 4px 0 var(--nb-ink);
+  --nb-mono: 'DM Mono', ui-monospace, Menlo, monospace;
+}
+html body .blog-hero, html body .blog-list, html body .blog-post, html body .policy {
+  background: var(--nb-paper) !important; background-image: none !important; color: var(--nb-ink);
+}
+html body .blog-list { border-top: 3px solid var(--nb-ink); background: var(--nb-paper-2) !important; }
+html body .blog-post-hero { background: transparent !important; }
+html body .blog-hero::before, html body .blog-hero::after, html body .blog-post-hero::before, html body .blog-post-hero::after { display: none !important; }
+
+/* Headings and labels */
+html body .blog-hero h1, html body .blog-post h1, html body .policy h1 { color: var(--nb-ink) !important; }
+html body .blog-hero h1 em, html body .blog-post h1 em, html body .policy h1 em {
+  font-style: normal; display: inline-block; line-height: 1.08; margin-top: .1em; padding: 0 .12em;
+  background: var(--nb-yellow) !important; -webkit-background-clip: border-box !important; background-clip: border-box !important;
+  color: var(--nb-ink) !important; -webkit-text-fill-color: var(--nb-ink) !important; box-shadow: 4px 4px 0 var(--nb-ink); animation: none !important;
+}
+html body .blog-hero-sub { color: #2B2B2B !important; }
+html body .blog-eyebrow {
+  background: var(--nb-ink); color: var(--nb-paper) !important; padding: 3px 9px; font-family: var(--nb-mono); letter-spacing: .06em;
+}
+html body .blog-post-date { color: var(--nb-ink) !important; font-family: var(--nb-mono); }
+html body .blog-post-back { color: var(--nb-ink) !important; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+html body .blog-tag { border-radius: 0 !important; background: var(--nb-yellow) !important; color: var(--nb-ink) !important; border: 2px solid var(--nb-ink); }
+
+/* Listing cards */
+html body .blog-card {
+  background: #fff !important; border: 3px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: var(--nb-shadow) !important;
+}
+html body .blog-card::before, html body .blog-card::after { display: none !important; }
+html body .blog-grid > .blog-card:nth-child(4n+2) { background: var(--nb-sky) !important; }
+html body .blog-grid > .blog-card:nth-child(4n+3) { background: var(--nb-pink) !important; }
+html body .blog-grid > .blog-card:nth-child(4n+4) { background: var(--nb-lime) !important; }
+html body .blog-card-cover { border-bottom: 3px solid var(--nb-ink); transform: none !important; }
+html body .blog-card-icon { border-radius: 0 !important; background: var(--nb-yellow) !important; border: 2px solid var(--nb-ink); color: var(--nb-ink) !important; box-shadow: none !important; transform: none !important; }
+html body .blog-card-icon * { color: var(--nb-ink) !important; stroke: var(--nb-ink); }
+html body .blog-card-title, html body .blog-card:hover .blog-card-title { color: var(--nb-ink) !important; }
+html body .blog-card-date { color: var(--nb-ink) !important; font-family: var(--nb-mono); }
+html body .blog-card-desc { color: #333 !important; }
+html body .blog-card-link { color: var(--nb-ink) !important; font-weight: 700; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+@media (hover: hover) and (pointer: fine) {
+  html body .blog-card:hover { transform: translate(-3px, -3px) !important; box-shadow: 9px 9px 0 var(--nb-ink) !important; }
+}
+
+/* Post body */
+html body .blog-post-cover { border-radius: 0 !important; border: 3px solid var(--nb-ink); box-shadow: var(--nb-shadow) !important; }
+html body .blog-post-content, html body .post-blocks, html body .block-text { color: #222 !important; }
+html body .blog-post-content h2, html body .blog-post-content h3, html body .block-section-heading h2, html body .block-text h2, html body .block-text h3 { color: var(--nb-ink) !important; }
+html body .blog-post-content a, html body .block-text a, html body .policy a { color: var(--nb-ink) !important; text-decoration: underline !important; text-decoration-color: var(--nb-ink) !important; text-decoration-thickness: 2px !important; }
+html body .blog-post-content blockquote, html body .block-text blockquote { border-left: 4px solid var(--nb-ink) !important; background: var(--nb-paper-2); padding: 12px 18px !important; color: #333 !important; }
+html body .blog-post-content code { border-radius: 0 !important; background: var(--nb-yellow) !important; color: var(--nb-ink); }
+html body .blog-post-content pre { border-radius: 0 !important; border: 3px solid var(--nb-ink); }
+html body .blog-post-content img { border-radius: 0 !important; border: 3px solid var(--nb-ink); }
+html body .block-eyebrow { background: var(--nb-ink); color: var(--nb-paper) !important; display: inline-block; padding: 2px 8px; font-family: var(--nb-mono); }
+
+/* Blocks: charts, tables, diagrams */
+html body .block-chart-card, html body .block-narrative-card {
+  background: #fff !important; border: 3px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: var(--nb-shadow-sm) !important;
+}
+html body .block-narrative-card { background: var(--nb-paper-2) !important; }
+html body .block-bar-track { border-radius: 0 !important; background: var(--nb-paper) !important; border: 2px solid var(--nb-ink); }
+html body .block-bar-fill, html body .block-gbar, html body .block-swatch { border-radius: 0 !important; }
+html body .block-step-item, html body .block-path, html body .block-path-root, html body .block-comp-row { border-radius: 0 !important; }
+html body .block-path { border: 2px solid var(--nb-ink) !important; }
+html body .block-path-root { border: 2px solid var(--nb-ink); }
+html body .block-syl-grid, html body .block-resources-list { border-radius: 0 !important; border: 3px solid var(--nb-ink) !important; background: var(--nb-ink) !important; gap: 2px !important; }
+/* odd cell count leaves an empty slot: paint the grid paper and draw the lines with each cell's own 1px spread, so the slot isn't a black block */
+html body .block-syl-grid { background: var(--nb-paper-2) !important; }
+html body .block-syl-grid > .block-syl-cell { box-shadow: 0 0 0 1px var(--nb-ink) !important; }
+html body .block-resource-cta { border-radius: 0 !important; border: 2px solid var(--nb-ink); background: var(--nb-yellow) !important; color: var(--nb-ink) !important; }
+html body .block-resource-row:hover .block-resource-cta { background: var(--nb-ink) !important; color: var(--nb-yellow) !important; }
+html body .block-table, html body .post-blocks table { border: 3px solid var(--nb-ink) !important; border-radius: 0 !important; }
+html body .post-blocks table th { background: var(--nb-yellow) !important; color: var(--nb-ink) !important; }
+html body .faq-item, html body .block-faq-item { border-radius: 0 !important; border: 2px solid var(--nb-ink) !important; }
+
+@media (max-width: 600px) {
+  :root { --nb-shadow: 4px 4px 0 var(--nb-ink); --nb-shadow-sm: 3px 3px 0 var(--nb-ink); }
+}
