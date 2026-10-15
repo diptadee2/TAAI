@@ -715,6 +715,27 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
       html body #root .copy-link-btn span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
       html body #root .subject-header .subject-name { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; line-height: 1.2; }
     }
+    /* Phones (2026-10-15): no framed panel around a subject; each notes/lectures grid is a sideways swipe row
+       (next card peeks in) running edge to edge, instead of one long stack of cards. The content wrapper keeps
+       overflow:hidden for the tab animation, so it is widened to the full screen and headings are padded back in. */
+    @media (max-width: 600px) {
+      html body #root .subject-content { margin-left: -32px !important; margin-right: -32px !important; }
+      html body #root .subject-section {
+        background: none !important; border: 0 !important; box-shadow: none !important; border-radius: 0 !important; padding: 0 !important;
+      }
+      html body #root .subject-header, html body #root .subject-group-summary, html body #root .subsection-header, html body #root .subject-group-empty { margin-left: 32px !important; margin-right: 32px !important; }
+      html body #root .notes-empty { margin-left: 32px !important; margin-right: 32px !important; }
+      html body #root .subject-group + .subject-group { margin-left: 32px; margin-right: 32px; }
+      html body #root .subject-group + .subject-group > *, html body #root .subject-group + .subject-group .subject-group-empty, html body #root .subject-group + .subject-group .subsection-header { margin-left: 0 !important; margin-right: 0 !important; }
+      html body #root .subject-group + .subject-group .notes-grid { margin-left: -32px !important; margin-right: -32px !important; }
+      html body #root .notes-grid {
+        display: flex !important; gap: 14px !important; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+        padding: 4px 32px 14px !important; scroll-padding-left: 32px; scrollbar-width: none;
+      }
+      html body #root .notes-grid::-webkit-scrollbar { display: none; }
+      html body #root .notes-grid > * { flex: 0 0 80% !important; scroll-snap-align: start; min-width: 0; }
+      html body #root .notes-grid--spaced { margin-bottom: 28px !important; }
+    }
     @media (max-width: 600px) {
       html body #root .subject-group-summary { flex-wrap: wrap; row-gap: 8px; }
       html body #root .subject-group-summary .subject-group-title { font-size: 15.5px; flex: 1 1 0; min-width: 0; }
