@@ -2652,6 +2652,18 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     }
     html body main .hero-result b { color: var(--nb-ink) !important; font-family: var(--nb-mono); }
     html body main .hero-result span { color: #333 !important; }
+    /* One flat colour each, laid out as an equal-width three-column row so the boxes line up (also on phones) */
+    html body main .hero-results-row { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 560px; }
+    html body main .hero-result:nth-child(1) { background: var(--nb-pink); }
+    html body main .hero-result:nth-child(2) { background: var(--nb-sky); }
+    html body main .hero-result:nth-child(3) { background: var(--nb-lime); }
+    html body main .hero-result span { color: var(--nb-ink) !important; }
+    @media (max-width: 600px) {
+      html body main .hero-results-row { gap: 10px !important; }
+      html body main .hero-result { padding: 8px 9px; }
+      html body main .hero-result b { font-size: 15px; }
+      html body main .hero-result span { font-size: 12px; line-height: 1.3; }
+    }
     html body main .hero-guide-link { color: var(--nb-ink) !important; text-decoration: underline; text-decoration-thickness: 2px; font-weight: 600; }
     html body main .hero-proof-row .hero-proof-float-1 .hero-proof { background: var(--nb-pink) !important; }
     html body main .hero-proof-row .hero-proof-float-2 .hero-proof { background: var(--nb-sky) !important; }
@@ -2722,6 +2734,21 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     html body main .pmap-uses li { border-top: 2px solid var(--nb-ink) !important; }
     html body main .pmap-uses li:last-child { border-bottom: 2px solid var(--nb-ink) !important; }
     html body main .pmap-uses b { color: color-mix(in srgb, var(--c) 82%, #000) !important; }
+    /* More colour (2026-10-15): every subject, stage and "uses" row tinted with its own map colour */
+    html body main .pmap-subject { background: color-mix(in srgb, var(--c) 16%, #fff) !important; }
+    html body main .pmap-subject.is-hl { background: color-mix(in srgb, var(--c) 32%, #fff) !important; }
+    html body main .pmap-subject-name { color: color-mix(in srgb, var(--c) 78%, #000) !important; }
+    html body main .pmap-dot { background: var(--c) !important; }
+    html body main .pmap .pmap-stage.project-tile--ml { --sf: var(--nb-orange); }
+    html body main .pmap .pmap-stage.project-tile--cv { --sf: var(--nb-pink); }
+    html body main .pmap .pmap-stage.project-tile--llm { --sf: var(--nb-lilac); }
+    html body main .pmap .pmap-stage { background: color-mix(in srgb, var(--sf) 35%, #fff) !important; }
+    html body main .pmap .pmap-stage:hover, html body main .pmap .pmap-stage.is-hl { background: color-mix(in srgb, var(--sf) 60%, #fff) !important; }
+    html body main .pmap .pmap-stage.is-sel { background: var(--sf) !important; }
+    html body main .pmap .project-art { background-color: #fff !important; background-image: radial-gradient(rgba(17,17,17,.13) 1px, transparent 1px) !important; background-size: 8px 8px !important; }
+    html body main .pmap .project-count { background: var(--nb-yellow) !important; color: var(--nb-ink) !important; border: 2px solid var(--nb-ink); }
+    html body main .pmap-detail { background: color-mix(in srgb, var(--sc) 6%, #fff) !important; }
+    html body main .pmap-uses li { background: color-mix(in srgb, var(--c) 10%, transparent); box-shadow: inset 6px 0 0 var(--c); padding-left: 16px !important; }
     html body main .pmap-detail-link {
       margin-top: 18px !important; margin-bottom: 24px !important; border-radius: 0 !important;
       border: 2px solid var(--nb-ink) !important; background: var(--nb-yellow) !important; color: var(--nb-ink) !important;
