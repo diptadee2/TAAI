@@ -506,7 +506,7 @@ section.page-hero { padding: 48px 0 44px; }
    desktop instead of stretching to the much longer 2027 Full Course card
    beside them (2026-10-08: "minimal negative space according to their
    text"); that stretch left ~300px empty above their prices. */
-.combos-grid > .combo-fit { align-self: start; }
+.combos-grid > .combo-fit, .combos-grid > .combo-2027-row > .combo-fit { align-self: start; }
 /* align-items:stretch only equalizes the direct grid children (each a
    .fade-in wrapper, since every card gets its own scroll-reveal) — it
    does NOT reach the .combo-card/.combo-featured-frame inside them, so
@@ -1183,6 +1183,7 @@ section.page-hero { padding: 48px 0 44px; }
    2 full rows and stays robust if more subjects are added later, rather than a
    fix tied to exactly 6 items. */
 .courses-grid { display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 1fr; gap: 16px; }
+.combo-2027-row { display: contents; }
 /* Every card the same height, not just each row: at iPad-portrait width
    (~241px columns) "Python Programming" wraps to two lines and made that
    one card 24px taller than the other five (real report). The .fade-in
@@ -2873,6 +2874,15 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     html body main .courses-grid > :nth-child(6n+4) .course-card { background: var(--nb-lime) !important; }
     html body main .courses-grid > :nth-child(6n+5) .course-card { background: var(--nb-lilac) !important; }
     html body main .courses-grid > :nth-child(6n+6) .course-card { background: var(--nb-orange) !important; }
+    /* Phones: the three 2027 bundle cards as one horizontal swipe row (2026-10-15); display: contents elsewhere */
+    @media (max-width: 600px) {
+      html body main .combo-2027-row {
+        display: flex !important; grid-column: 1 / -1; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+        margin-left: -32px; margin-right: -32px; padding: 4px 32px 16px; scroll-padding-left: 32px; scrollbar-width: none; align-items: flex-start;
+      }
+      html body main .combo-2027-row::-webkit-scrollbar { display: none; }
+      html body main .combo-2027-row > * { flex: 0 0 min(86%, 360px); scroll-snap-align: start; min-width: 0; opacity: 1 !important; transform: none !important; }
+    }
     /* Phones and small tablets: individual courses as a horizontal swipe row (next card peeks in), 2026-10-15 */
     @media (max-width: 768px) {
       html body main .courses-grid {
@@ -5071,7 +5081,7 @@ function App() {
               // to that course regardless of where a future reorder
               // happens to put it.
               let shown2027Heading = false;
-              return sortedCombos.map((c, i) => {
+              const parts = sortedCombos.map((c, i) => {
                 const comboPrice = parseInt((effectivePricingMap[c.id] || {}).price) || 0;
                 const saving = c.bundleOf && comboPrice
                   ? (() => {
@@ -5107,9 +5117,9 @@ function App() {
                 // cells beside it instead of reverting cleanly to the
                 // plain grid every other combo card uses.
                 const getsOwnRow = i === 0 && COMBOS.length > 3;
-                return (
+                return { is2028, node: (
                   <React.Fragment key={i}>
-                    {heading && <div className="combo-group-divider"><span><span className="cgd-pre">For GATE</span> {heading}</span></div>}
+                    {heading && is2028 && <div className="combo-group-divider"><span><span className="cgd-pre">For GATE</span> {heading}</span></div>}
                     <div className={'fade-in' + (getsOwnRow ? ' combo-full-row' : '') + (!getsOwnRow && !c.featured ? ' combo-fit' : '')}>
                       {c.id === 'full-course-2028' ? (
                         // The "120 Days - 70 Marks" study-plan button sits
@@ -5163,8 +5173,21 @@ function App() {
                       )}
                     </div>
                   </React.Fragment>
-                );
+                ) };
               });
+              // The 2027 cards share one wrapper (2026-10-15): display: contents on desktop/iPad
+              // (grid unchanged), a horizontal swipe row on phones.
+              const rest = parts.filter(p => !p.is2028).map(p => p.node);
+              const out = [];
+              let placed = false;
+              parts.forEach(p => {
+                if (p.is2028) { out.push(p.node); return; }
+                if (placed) return;
+                placed = true;
+                out.push(<div key="h2027" className="combo-group-divider"><span><span className="cgd-pre">For GATE</span> 2027</span></div>);
+                out.push(<div key="r2027" className="combo-2027-row">{rest}</div>);
+              });
+              return out;
             })()}
           </div>
           <p className="purchase-note">All purchases are final, except as set out in our <a href="/refund-policy">refund policy</a>.</p>
