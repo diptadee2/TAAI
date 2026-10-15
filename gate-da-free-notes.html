@@ -386,6 +386,11 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .subject-group:not([open]) .subject-group-chevron { transform: rotate(-90deg); }
 .subject-group:not([open]) .subject-group-summary { margin-bottom: 0; }
 .subject-group-summary:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+.copy-link-btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 999px; background: #fff; font: inherit; font-size: 12.5px; font-weight: 600; color: var(--ink); cursor: pointer; flex: 0 0 auto; }
+.copy-link-btn.is-done { color: #15803D; border-color: #86EFAC; }
+.subject-group-summary .copy-link-btn { margin-left: auto; }
+.subject-group-summary .copy-link-btn + .subject-group-chevron { margin-left: 0; }
+.subject-group { scroll-margin-top: 110px; }
 .subsection-header::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--purple-soft); border: 1.5px solid var(--purple); flex-shrink: 0; }
 .subsection-header::after { display: none; }
 .notes-grid--spaced { margin-bottom: 56px; }
@@ -702,6 +707,14 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     html body #root .subject-group-empty { border: 3px dashed var(--nb-ink) !important; border-radius: 0 !important; background: #fff; color: var(--nb-ink) !important; font-weight: 600; }
     html body #root .subject-group-count { font-family: var(--nb-mono); font-size: 12px !important; color: var(--nb-ink) !important; text-transform: uppercase; }
     html body #root .subject-group-chevron { width: 34px; height: 34px; padding: 6px; box-sizing: border-box; background: #fff; border: 2px solid var(--nb-ink); color: var(--nb-ink); }
+    html body #root .copy-link-btn { border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: 2px 2px 0 var(--nb-ink); color: var(--nb-ink) !important; height: 34px; box-sizing: border-box; }
+    html body #root .copy-link-btn.is-done { background: var(--nb-lime) !important; }
+    html body #root .copy-link-btn:active { transform: translate(2px, 2px); box-shadow: none; }
+    @media (max-width: 600px) {
+      html body #root .copy-link-btn { width: 34px; padding: 0 !important; justify-content: center; }
+      html body #root .copy-link-btn span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+      html body #root .subject-header .subject-name { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; line-height: 1.2; }
+    }
     @media (max-width: 600px) {
       html body #root .subject-group-summary { flex-wrap: wrap; row-gap: 8px; }
       html body #root .subject-group-summary .subject-group-title { font-size: 15.5px; flex: 1 1 0; min-width: 0; }
@@ -1237,6 +1250,39 @@ function LectureCard({ lecture, accent, color, index = 0 }) {
 }
 
 // ── App ───────────────────────────────────────────────────────────
+// Shareable links (2026-10-15): #<subject id> opens that tab, #<group id> (e.g.
+// #machine-learning-scratch) opens its subject's tab and scrolls to that section.
+function resourceTargetFromHash(subjects) {
+  const h = decodeURIComponent((location.hash || '').slice(1));
+  if (!h) return null;
+  for (const s of subjects) {
+    if (s.groups && s.groups.some(g => g.id === h)) return { subject: s.id, anchor: 'grp-' + h };
+  }
+  if (subjects.some(s => s.id === h)) return { subject: h, anchor: 'sec-' + h };
+  return null;
+}
+
+function CopyLinkButton({ hash, label }) {
+  const [done, setDone] = React.useState(false);
+  const copy = e => {
+    e.preventDefault(); e.stopPropagation();
+    const url = location.origin + location.pathname + '#' + hash;
+    const ok = () => { setDone(true); setTimeout(() => setDone(false), 1600); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(ok, () => { window.prompt('Copy this link', url); });
+    else window.prompt('Copy this link', url);
+  };
+  return (
+    <button type="button" className={'copy-link-btn' + (done ? ' is-done' : '')} onClick={copy} aria-label={'Copy link to ' + label}>
+      {done ? (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12l5 5L19 7" /></svg>
+      ) : (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5" /><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5" /></svg>
+      )}
+      <span>{done ? 'Copied' : 'Copy link'}</span>
+    </button>
+  );
+}
+
 function App() {
   const [subjects, setSubjects] = React.useState([]);
   const [active, setActive]     = React.useState('');
@@ -1247,6 +1293,33 @@ function App() {
   const [loading, setLoading]   = React.useState(true);
   const contentRef = React.useRef(null);
   const newHRef = React.useRef(null);
+  const pendingScrollRef = React.useRef(null);
+
+  // After the shared-link tab renders, scroll to the linked section (below the sticky nav) and open it.
+  React.useEffect(() => {
+    if (loading || !pendingScrollRef.current) return;
+    const id = pendingScrollRef.current;
+    const t = setTimeout(() => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (el.tagName === 'DETAILS') el.open = true;
+      pendingScrollRef.current = null;
+      window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 110, behavior: 'smooth' });
+    }, 350);
+    return () => clearTimeout(t);
+  }, [loading, displayActive]);
+
+  // A link pasted or clicked while already on the page.
+  React.useEffect(() => {
+    const onHash = () => {
+      const target = resourceTargetFromHash(subjects);
+      if (!target) return;
+      pendingScrollRef.current = target.anchor;
+      setActive(target.subject); setDisplayActive(target.subject);
+    };
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, [subjects]);
 
   React.useEffect(() => {
 
@@ -1269,8 +1342,12 @@ function App() {
         return { ...s, notes, lectures, groups };
       });
       setSubjects(subjects);
-      setActive(subjects[0]?.id || '');
-      setDisplayActive(subjects[0]?.id || '');
+      // A shared link (#subject-id or #group-id) opens that tab directly.
+      const target = resourceTargetFromHash(subjects);
+      const first = (target && target.subject) || subjects[0]?.id || '';
+      setActive(first);
+      setDisplayActive(first);
+      if (target) pendingScrollRef.current = target.anchor;
       setLoading(false);
     }).catch(() => { setLoading(false); });
   }, []);
@@ -1283,6 +1360,7 @@ function App() {
   // of jumping or moving in lockstep with the slab.
   const selectSubject = id => {
     if (id === active || swipePhase !== 'idle') return;
+    try { history.replaceState(null, '', '#' + id); } catch (e) {}
     if (contentRef.current) setHeightLock(contentRef.current.getBoundingClientRect().height);
     setActive(id);
     setSwipePhase('cover');
@@ -1408,7 +1486,7 @@ function App() {
               const showLabels  = hasNotes && hasLectures;
               if (!hasNotes && !hasLectures) {
                 return (
-                  <div key={subject.id} className="notes-empty">
+                  <div key={subject.id} id={'sec-' + subject.id} className="notes-empty">
                     <div className="notes-empty-icon"><FileIcon /></div>
                     <div className="notes-empty-label">Content coming soon</div>
                     <div className="notes-empty-text">{subject.name} notes and lectures are being prepared.</div>
@@ -1416,10 +1494,11 @@ function App() {
                 );
               }
               return (
-                <div key={subject.id} className="subject-section">
+                <div key={subject.id} id={'sec-' + subject.id} className="subject-section">
                   <div className="subject-header">
                     <div className="subject-icon" style={{ background: subject.accent }}><FileIcon /></div>
                     <div className="subject-name" style={{ backgroundImage: subject.accent, WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }}>{subject.name}</div>
+                    <CopyLinkButton hash={subject.id} label={subject.name} />
                     <div className="subject-count">
                       {hasNotes && `${subject.notes.length} ${subject.notes.length !== 1 ? 'notes' : 'note'}`}
                       {hasNotes && hasLectures && ' · '}
@@ -1429,10 +1508,11 @@ function App() {
                   {subject.groups ? subject.groups.map(g => {
                     const gNotes = g.notes.length > 0, gLect = g.lectures.length > 0, gLabels = gNotes && gLect;
                     return (
-                      <details key={g.id} className="subject-group" open>
+                      <details key={g.id} id={'grp-' + g.id} className="subject-group" open>
                         <summary className="subject-group-summary">
                           <span className="subject-group-title">{g.title}</span>
                           <span className="subject-group-count">{gLect ? `${g.lectures.length} ${g.lectures.length !== 1 ? 'lectures' : 'lecture'}` : (gNotes ? `${g.notes.length} ${g.notes.length !== 1 ? 'notes' : 'note'}` : 'Coming soon')}</span>
+                          <CopyLinkButton hash={g.id} label={g.title} />
                           <svg className="subject-group-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
                         </summary>
                         <div className="subject-group-body">
