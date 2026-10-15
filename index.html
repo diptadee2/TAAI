@@ -1025,6 +1025,10 @@ body {
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 .testi-quote { font-family: var(--font-display); font-size: clamp(16px, 4.5vw, 20px); font-weight: 600; letter-spacing: -0.015em; line-height: 1.3; margin-bottom: 24px; flex: 1; }
+.testi-quote-wrap { flex: 1; margin-bottom: 20px; }
+.testi-quote-wrap .testi-quote { margin-bottom: 0; }
+.testi-quote.is-clamped { display: -webkit-box; -webkit-line-clamp: 7; -webkit-box-orient: vertical; overflow: hidden; }
+.testi-more { margin-top: 10px; padding: 0; border: 0; background: none; font: inherit; font-size: 14px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; color: var(--ink); }
 .testi-author { display: flex; align-items: center; gap: 12px; padding-top: 20px; border-top: 1px solid var(--line); }
 .testi-avatar {
   width: 44px; height: 44px; border-radius: 50%;
@@ -1834,6 +1838,8 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     }
     html body #root .testi-rank *, html body #root .testi-avatar * { color: var(--nb-paper) !important; }
     html body #root .testi::before, html body #root .testi::after { display: none !important; }
+    html body #root .testi-avatar.has-photo { overflow: hidden; border: 2px solid var(--nb-ink) !important; padding: 0 !important; }
+    html body #root .testi-avatar.has-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
     @media (hover: hover) and (pointer: fine) {
       html body #root .testi:hover, html body #root .gitem:hover, html body #root .bd-card:hover, html body #root .topper-card:hover {
         transform: translate(-3px, -3px) !important; box-shadow: 9px 9px 0 var(--nb-ink) !important;
@@ -2834,11 +2840,28 @@ function Instructor() {
 const MIXED_TESTIMONIALS = [
   { type: 'quote', air: 38, ytLink: 'https://www.youtube.com/watch?v=p5Rnv2XklDQ&list=PLZvuMBNC5r0WNKW_nqAD703PwYRd0UqQH&index=2', quote: "The most GATE DA specific practice I've found, with really excellent coverage of the content. The clarity in teaching, structured approach, and constant support from the team made all the difference. Grateful to Manoj Sir and the entire TAAI team for shaping my success.", name: 'Sanved Bangale', role: 'IIT Madras · M.Tech Data Science & AI', grad: 'linear-gradient(135deg,var(--pink),var(--purple))' },
   { type: 'quote', air: 49, ytLink: 'https://www.youtube.com/watch?v=6vQ6V39y7lA&list=PLZvuMBNC5r0WNKW_nqAD703PwYRd0UqQH&index=3', quote: "Preparing for GATE DA was tough; I wasted significant time on ineffective resources. Your course was a complete game-changer, bridging the gap between concepts and application. The intuitive approach to problem-solving transformed my understanding of Maths, making Linear Algebra and Probability my strongest areas.", name: 'Yash Raj', role: 'IIT Madras · M.Tech Data Science & AI', grad: 'linear-gradient(135deg,var(--purple),var(--blue))' },
-  { type: 'image', src: 'testimonials/15 AIR.webp', air: 15 },
-  { type: 'image', src: 'testimonials/23 AIR.webp', air: 23, ytLink: 'https://www.youtube.com/watch?v=8wks9zdLvDc&list=PLZvuMBNC5r0WNKW_nqAD703PwYRd0UqQH&index=5&t=754s' },
-  { type: 'image', src: 'testimonials/46 AIR.webp', air: 46, ytLink: 'https://www.youtube.com/watch?v=MSzQvLGT8wo&list=PLZvuMBNC5r0WNKW_nqAD703PwYRd0UqQH&index=10&t=3491s' },
-  { type: 'image', src: 'testimonials/111 AIR.webp', air: 111 },
+  { type: 'quote', air: 15, quote: 'I\'m happy to share that I secured AIR 15 in GATE DA 2026, and TAAI played a meaningful role in my preparation journey. One thing that stood out was how different the full-length tests felt compared to typical mock exams. The papers often had an uneven and surprising distribution of questions, which initially shook my confidence. At that time, it felt uncomfortable, but in hindsight, this was extremely valuable — the actual GATE paper reflected a similar unpredictability. I also made extensive use of TAAI\'s practice PDFs and revision notes, especially for Probability and Linear Algebra, which I found to be particularly well-structured and conceptually strong. Lastly, I\'m grateful to Manoj Sir for his guidance and mentorship. His inputs helped me stay on track when it mattered most.', name: 'Alin Anto', role: 'IISc · M.Tech CDS', photo: 'testimonials/photos/2026/alin-anto.webp', grad: 'linear-gradient(135deg,var(--pink),var(--purple))' },
+  { type: 'quote', air: 23, ytLink: 'https://www.youtube.com/watch?v=8wks9zdLvDc&list=PLZvuMBNC5r0WNKW_nqAD703PwYRd0UqQH&index=5&t=754s', quote: 'I began my GATE DA preparation in June 2025 using online notes and LLMs, building a strong foundation but struggling with problem-solving in December test series. TAAI mock tests changed this. Despite initial low scores, the quality and depth of questions—closely matching the GATE standard—highlighted my preparation gaps. Free AIMTs and course notes helped me bridge the gap between theory and exam-level practice. I particularly appreciate their approach to Mathematics (Linear Algebra, Calculus, and Probability). By emphasizing theoretical understanding over shortcuts, they provide value that lasts beyond the exam. TAAI refined my strategy and improved my performance. I highly recommend their content to serious aspirants.', name: 'Surya Mani Shankar Bharatula', role: 'IISc · M.Tech AI', photo: 'testimonials/photos/2026/surya-mani-shankar-bharatula.webp', grad: 'linear-gradient(135deg,var(--purple),var(--blue))' },
+  { type: 'quote', air: 46, ytLink: 'https://www.youtube.com/watch?v=MSzQvLGT8wo&list=PLZvuMBNC5r0WNKW_nqAD703PwYRd0UqQH&index=10&t=3491s', quote: 'I want to start by thanking Manoj Sir for building such a rock-solid foundation in Maths and ML and for helping me sharpen my problem solving skills. The course was brilliant and well structured, but the community was just as important to my prep. I spent a lot of time helping others with their doubts and they were always there to help me right back when I was stuck. We built such a bond that my success feels just as personal to them as it does to me. We all know a rank doesn\'t really do justice to the actual knowledge a person holds and I feel exactly the same way but still I\'m just so grateful to Sir and to all my friends who were there for me throughout this journey.', name: 'Laksheet Mathur', role: 'IIT Madras · M.Tech Data Science & AI', photo: 'testimonials/photos/2026/laksheet-mathur.webp', grad: 'linear-gradient(135deg,var(--blue),var(--purple))' },
+  { type: 'quote', air: 111, quote: 'TAAI played a crucial role in my GATE DA preparation journey. The overall structure of the course, along with the high-quality problem sets, really helped me build strong fundamentals and stay consistent. A special mention to Manoj Kumar Sir — his lectures were incredibly clear and intuitive. What stood out to me even more was that he personally made follow-up calls to take my opinion on the test series. I truly appreciated his care and dedication towards his students. The test series was very well designed and closely matched the actual GATE level. In fact, a few questions were quite similar to what appeared in the final exam, which gave me a lot of confidence during the paper. With their support, I was able to secure AIR 111 with a GATE score of 803.', name: 'Vamsi', role: null, photo: 'testimonials/photos/2026/vamsi.webp', grad: 'linear-gradient(135deg,var(--blue),var(--pink))' },
 ];
+
+// Long testimonial quotes are capped at 7 lines with a Read more toggle (2026-10-15),
+// so the four long 2026 quotes don't make the grid several screens tall.
+function TestiQuote({ text }) {
+  const [open, setOpen] = React.useState(false);
+  const long = text.length > 330;
+  return (
+    <div className="testi-quote-wrap">
+      <div className={'testi-quote' + (long && !open ? ' is-clamped' : '')}>"{withDiscordLink(text)}"</div>
+      {long && (
+        <button type="button" className="testi-more" aria-expanded={open} onClick={() => setOpen(v => !v)}>
+          {open ? 'Show less' : 'Read more'}
+        </button>
+      )}
+    </div>
+  );
+}
 
 function Testimonials() {
   return (
@@ -2876,10 +2899,12 @@ function Testimonials() {
               <div className="testi-rank">
                 <span className="testi-rank-num">AIR {t.air}</span>
               </div>
-              <div className="testi-quote">"{t.quote}"</div>
+              <TestiQuote text={t.quote} />
               <div className="testi-author">
-                <div className="testi-avatar" style={{ background: t.grad }}>
-                  {t.name.split(' ').map((n) => n[0]).slice(0, 2).join('')}
+                <div className={'testi-avatar' + (t.photo ? ' has-photo' : '')} style={{ background: t.photo ? 'none' : t.grad }}>
+                  {t.photo
+                    ? <img src={t.photo} alt={t.name} loading="lazy" style={t.photoPos ? { objectPosition: t.photoPos } : undefined} />
+                    : t.name.split(' ').map((n) => n[0]).slice(0, 2).join('')}
                 </div>
                 <div>
                   <div className="testi-name">{t.name}</div>
