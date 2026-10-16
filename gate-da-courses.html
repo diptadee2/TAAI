@@ -3018,6 +3018,42 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
       box-shadow: var(--nb-shadow-sm); color: var(--nb-ink) !important; font-family: var(--nb-mono); font-weight: 500 !important;
       text-transform: uppercase; letter-spacing: .04em; font-size: 13.5px !important; padding: 6px 12px !important;
     }
+    /* GATE 2028 Full Course card, re-laid out 2026-10-16 ("can the 2028 full course card look better?"):
+       title + price box side by side, then "What's included" across the full width, then the projects strip. */
+    html body main .c28 { display: flex; flex-direction: column; gap: 24px; position: relative; z-index: 1; }
+    html body main .c28-head { display: flex; flex-direction: column; gap: 20px; }
+    html body main .c28-main .combo-title { margin-bottom: 8px !important; }
+    html body main .c28-main .combo-tagline { max-width: 46ch !important; }
+    html body main .c28-buy { background: #fff; border: 3px solid var(--nb-ink); box-shadow: var(--nb-shadow-sm); padding: 18px 18px 20px; }
+    html body main .c28-buy .combo-price-row { margin: 0 !important; padding: 0 !important; border: 0 !important; flex-wrap: wrap; row-gap: 6px; }
+    html body main .c28-buy .combo-live-cta { margin-top: 14px; }
+    html body main #combos .c28-offer { color: var(--nb-ink) !important; font-weight: 600; font-size: 13.5px; }
+    html body main .c28-includes { border-top: 3px solid var(--nb-ink); padding-top: 18px; }
+    html body main .c28-includes .combo-includes ul { display: grid !important; grid-template-columns: minmax(0,1fr); gap: 10px 28px !important; columns: auto !important; }
+    html body main .c28-includes .combo-includes li { margin: 0 !important; }
+    html body main .c28-projects { margin: 0 !important; background: var(--nb-lime); border: 3px solid var(--nb-ink) !important; padding: 18px !important; }
+    html body main .c28-projects-top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
+    html body main .c28-projects-top .combo-includes-label { margin: 0 !important; }
+    html body main .c28-projects .combo-projects-link { margin: 0 !important; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
+    html body main .c28-projects .combo-projects-list { display: grid !important; grid-template-columns: minmax(0,1fr); gap: 10px !important; margin-top: 14px !important; }
+    html body main .c28-projects .combo-projects-list li { background: #fff; border: 2px solid var(--nb-ink); padding: 12px; display: flex; gap: 12px; align-items: flex-start; }
+    html body main .c28-buy .combo-price { font-family: 'Poppins', sans-serif !important; font-weight: 700 !important; letter-spacing: -0.02em !important; }
+    html body main #combos .c28-projects .combo-projects-list li b.c28-proj-count { color: var(--nb-paper) !important; -webkit-text-fill-color: var(--nb-paper) !important; }
+    html body main .c28-proj-count { flex: none; min-width: 40px; height: 34px; padding: 0 8px; display: grid; place-items: center; background: var(--nb-ink); color: var(--nb-paper) !important; font: 700 17px/1 'Poppins', sans-serif; }
+    html body main .c28-projects .combo-projects-list li > span { display: flex; flex-direction: column; gap: 3px; }
+    html body main .c28-projects .combo-projects-list li > span > b { font-weight: 700; font-size: 14.5px; }
+    html body main .c28-projects .combo-projects-pitch { display: block !important; font-size: 13px; line-height: 1.4; }
+    html body main .c28-projects .combo-projects-note { margin-top: 14px !important; font-weight: 600; font-size: 14px; }
+    @media (min-width: 601px) {
+      html body main .c28-includes .combo-includes ul { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      html body main .c28-includes .combo-incl-more { display: flex !important; }
+      html body main .c28-includes .combo-incl-toggle { display: none !important; }
+    }
+    @media (min-width: 700px) {
+      html body main .c28-head { display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 28px; align-items: start; }
+      html body main .c28-projects .combo-projects-list { grid-template-columns: repeat(3, minmax(0,1fr)); }
+      html body main .c28-projects .combo-projects-list li { flex-direction: column; }
+    }
     @media (max-width: 600px) {
       main { --nb-shadow: 4px 4px 0 var(--nb-ink); --nb-shadow-sm: 3px 3px 0 var(--nb-ink); }
     }
@@ -4324,56 +4360,57 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
     <div id={c.id} className={cls} {...spotlightProps}>
       <div className="combo-num">{c.num}</div>
       <div className="combo-accent" style={{ background: c.accent }} />
-      <div className="combo-horizontal">
-        <div className="combo-horizontal-left">
-          {titleEl}
-          {taglineEl}
-          {comingSoon && launchUpcoming && (
-            <div className="combo-deadline combo-launch">
-              <span className="combo-deadline-left"><Icon.Bell size={14} />{daysUntilLaunch === 0 ? 'Launching today' : `Launches in ${daysUntilLaunch} ${daysUntilLaunch === 1 ? 'day' : 'days'}`}</span>
-              <span className="combo-deadline-date">{fmtDate(c.launchDate)}</span>
-            </div>
-          )}
-          {!comingSoon && !isSoldOut && countdownDetailEl}
-          {!isSoldOut && validityEl}
-          <div className="combo-divider" />
+      <div className="c28">
+        <div className="c28-head">
+          <div className="c28-main">
+            {titleEl}
+            {taglineEl}
+            {comingSoon && launchUpcoming && (
+              <div className="combo-deadline combo-launch">
+                <span className="combo-deadline-left"><Icon.Bell size={14} />{daysUntilLaunch === 0 ? 'Launching today' : `Launches in ${daysUntilLaunch} ${daysUntilLaunch === 1 ? 'day' : 'days'}`}</span>
+                <span className="combo-deadline-date">{fmtDate(c.launchDate)}</span>
+              </div>
+            )}
+            {!comingSoon && !isSoldOut && countdownDetailEl}
+            {!isSoldOut && validityEl}
+          </div>
+          <div className="c28-buy">
+            {priceRowEl}
+            {c.priceNote && <div className={'combo-price-note' + (comingSoon ? ' combo-includes-blurred' : '')} aria-hidden={comingSoon || undefined}>{c.priceNote}</div>}
+            {comingSoon ? (
+              <span className="btn btn-full combo-soon-btn" aria-disabled="true">{launchUpcoming ? (daysUntilLaunch === 0 ? 'Launching today' : `Launching ${launchShort}`) : 'Coming soon'}</span>
+            ) : (
+              <div className="combo-live-cta">
+                {!isSoldOut && (discountReason || discountDeadline) && <div className="combo-saving c28-offer">⏳ {[discountReason, discountDeadline].filter(Boolean).join(' · ')}</div>}
+                {ctaEl}
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="c28-includes">
           <div className="combo-includes-label">What's included</div>
           <div className="combo-includes-wrap">
             {includesEl}
             {isSoldOut && soldOutStampEl}
           </div>
         </div>
-        <div className="combo-horizontal-right">
-          {priceRowEl}
-          {c.priceNote && <div className={'combo-price-note' + (comingSoon ? ' combo-includes-blurred' : '')} aria-hidden={comingSoon || undefined}>{c.priceNote}</div>}
-          {comingSoon ? (
-            <span className="btn btn-full combo-soon-btn" aria-disabled="true">{launchUpcoming ? (daysUntilLaunch === 0 ? 'Launching today' : `Launching ${launchShort}`) : 'Coming soon'}</span>
-          ) : (
-            <div className="combo-live-cta">
-              {!isSoldOut && (discountReason || discountDeadline) && <div className="combo-saving" style={{ color: '#e05a2b', fontWeight: 600 }}>⏳ {[discountReason, discountDeadline].filter(Boolean).join(' · ')}</div>}
-              {ctaEl}
-            </div>
-          )}
-          {c.projects && (
-            <div className="combo-projects">
+        {c.projects && (
+          <div className="combo-projects c28-projects">
+            <div className="c28-projects-top">
               <div className="combo-includes-label">{c.projectsLabel}</div>
-              <ul className={'combo-projects-list' + (projOpen ? ' is-open' : '')}>
-                {c.projects.map(p => (
-                  <li key={p.art}>
-                    <svg className="combo-projects-tick" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" /></svg>
-                    <span><b>{p.count} {p.short || p.title.toLowerCase()} project{p.count > 1 ? 's' : ''}</b>{p.pitch && <span className="combo-projects-pitch">{': ' + p.pitch}</span>}</span>
-                  </li>
-                ))}
-              </ul>
-              <button type="button" className="combo-incl-toggle combo-proj-toggle" aria-expanded={projOpen} onClick={() => setProjOpen(v => !v)}>
-                {projOpen ? 'Show less' : "See what you'll build"}
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={projOpen ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} /></svg>
-              </button>
               <a href="#projects-map" className="combo-projects-link">All built on the maths you study for GATE. See how <span aria-hidden="true">↑</span></a>
-              {c.projectsNote && <p className="combo-projects-note">{c.projectsNote}</p>}
             </div>
-          )}
-        </div>
+            <ul className="combo-projects-list is-open">
+              {c.projects.map(p => (
+                <li key={p.art}>
+                  <b className="c28-proj-count" aria-label={p.count + (p.count > 1 ? ' projects' : ' project')}>×{p.count}</b>
+                  <span><b>{p.title}</b><span className="combo-projects-pitch">{p.caption}</span></span>
+                </li>
+              ))}
+            </ul>
+            {c.projectsNote && <p className="combo-projects-note">{c.projectsNote}</p>}
+          </div>
+        )}
       </div>
     </div>
   ) : (
