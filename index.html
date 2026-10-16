@@ -1935,9 +1935,10 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     /* "Why India needs this paper" video section (2026-10-17) */
     html body #root .why-india { background: var(--nb-paper); border-top: 3px solid var(--nb-ink); padding: 72px 0; }
     html body #root .why-india-inner { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 48px; align-items: center; }
-    html body #root .why-india h2 { font-size: clamp(30px, 3.6vw, 48px); line-height: 1.1; letter-spacing: -0.03em; margin: 0 0 18px; }
-    html body #root .why-india-sub { font-size: 17px; line-height: 1.6; color: #333; margin: 0 0 16px; }
-    html body #root .why-india-credit { font-family: var(--nb-mono); font-size: 12px; line-height: 1.5; color: #555; margin: 0; }
+    html body #root .why-india-tag { display: inline-block; background: var(--nb-ink); color: var(--nb-paper); font-family: var(--nb-mono); font-size: 13px; letter-spacing: .06em; text-transform: uppercase; padding: 6px 12px; margin-bottom: 20px; }
+    html body #root .why-india h2.why-india-quote { font-size: clamp(28px, 3.1vw, 42px); line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 18px; }
+    html body #root .why-india-by { display: inline-block; font-family: var(--font-display); font-weight: 700; font-size: 17px; background: var(--nb-yellow); border: 3px solid var(--nb-ink); box-shadow: 4px 4px 0 var(--nb-ink); padding: 8px 14px; margin: 0 0 22px; }
+    html body #root .why-india-sub { font-size: 17px; line-height: 1.6; color: #333; margin: 0; }
     html body #root .why-india-video { position: relative; aspect-ratio: 16 / 9; border: 3px solid var(--nb-ink); box-shadow: var(--nb-shadow); background: #000; }
     html body #root .why-india-video iframe, html body #root .why-india-poster { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; padding: 0; margin: 0; display: block; cursor: pointer; background: #000; }
     html body #root .why-india-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -3179,9 +3180,10 @@ function WhyIndia() {
     <section className="section why-india" id="why-india">
       <div className="container why-india-inner">
         <div className="why-india-text fade-in">
-          <h2>Why India needs <em>this paper.</em></h2>
-          <p className="why-india-sub">GATE DA isn&rsquo;t just another branch of GATE. Hear it from IIT Madras faculty: India needs people who understand data science and AI from the fundamentals up, and this exam is how the IITs find them.</p>
-          <p className="why-india-credit">Video: &ldquo;IITM Faculty Speaks: Why India needs fundamental researchers in data science and AI&rdquo;, from the official GATE 2027 channel (IIT Madras) on YouTube.</p>
+          <div className="why-india-tag">IIT Madras faculty on GATE DA</div>
+          <h2 className="why-india-quote">&ldquo;Why India needs fundamental researchers in data science and AI.&rdquo;</h2>
+          <p className="why-india-by">IIT Madras faculty, on the official GATE 2027 channel</p>
+          <p className="why-india-sub">GATE DA is how the IITs find those researchers. Hear it in their words.</p>
         </div>
         <div className="why-india-video fade-in">
           {playing ? (
