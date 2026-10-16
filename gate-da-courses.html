@@ -3042,7 +3042,15 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     html body main .c28-proj-count { flex: none; min-width: 40px; height: 34px; padding: 0 8px; display: grid; place-items: center; background: var(--nb-ink); color: var(--nb-paper) !important; font: 700 17px/1 'Poppins', sans-serif; }
     html body main .c28-projects .combo-projects-list li > span { display: flex; flex-direction: column; gap: 3px; }
     html body main .c28-projects .combo-projects-list li > span > b { font-weight: 700; font-size: 14.5px; }
-    html body main .c28-projects .combo-projects-pitch { display: block !important; font-size: 13px; line-height: 1.4; }
+    html body main .c28-projects .combo-projects-pitch { display: block; font-size: 13px; line-height: 1.4; }
+    html body main .c28-main .combo-validity { display: inline-flex !important; margin-top: 12px; background: #fff; border: 2px solid var(--nb-ink); padding: 3px 8px; font-family: var(--nb-mono); font-size: 12px !important; }
+    html body main .c28-buy .combo-price { font-size: 44px !important; }
+    @media (max-width: 600px) {
+      html body main .c28-projects .combo-projects-list:not(.is-open) .combo-projects-pitch { display: none; }
+      html body main .c28-projects .combo-projects-list li { padding: 8px 10px; align-items: center; }
+      html body main .c28-projects .combo-projects-list { gap: 8px !important; }
+      html body main .c28-projects .combo-proj-toggle { display: inline-flex !important; margin: 12px 0 0; background: #fff; border: 2px solid var(--nb-ink); border-radius: 0; color: var(--nb-ink); }
+          }
     html body main .c28-projects .combo-projects-note { margin-top: 14px !important; font-weight: 600; font-size: 14px; }
     @media (min-width: 601px) {
       html body main .c28-includes .combo-includes ul { grid-template-columns: repeat(2, minmax(0,1fr)); }
@@ -3053,6 +3061,33 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
       html body main .c28-head { display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 28px; align-items: start; }
       html body main .c28-projects .combo-projects-list { grid-template-columns: repeat(3, minmax(0,1fr)); }
       html body main .c28-projects .combo-projects-list li { flex-direction: column; }
+    }
+    /* Compact pass (2026-10-16, "the 2028 card looks too big") */
+    html body main .combo-with-side .combo-card.coming-soon { padding: 28px 30px !important; }
+    html body main .c28 { gap: 18px; }
+    html body main .c28-head { gap: 22px !important; }
+    html body main .c28-main .combo-title { font-size: 30px !important; }
+    html body main .c28-buy { padding: 14px 16px 16px; }
+    html body main .c28-buy .combo-price { font-size: 38px !important; }
+    html body main .c28-buy .combo-live-cta { margin-top: 10px; }
+    html body main .c28-includes { padding-top: 14px; }
+    html body main .c28-includes .combo-includes-label { margin-bottom: 10px !important; }
+    html body main .c28-includes .combo-includes ul { gap: 6px 24px !important; }
+    html body main .c28-includes .combo-includes li { font-size: 13.5px !important; line-height: 1.4 !important; }
+    html body main .c28-projects { padding: 14px !important; }
+    html body main .c28-projects .combo-projects-list { margin-top: 10px !important; gap: 8px !important; }
+    html body main .c28-projects .combo-projects-list li { padding: 10px; gap: 10px; }
+    html body main .c28-proj-count { height: 28px; min-width: 34px; font-size: 15px; }
+    html body main .c28-projects .combo-projects-note { margin-top: 10px !important; font-size: 13.5px; }
+    @media (min-width: 700px) {
+      html body main .c28-head { grid-template-columns: minmax(0,1fr) 270px !important; }
+      html body main .c28-projects .combo-projects-list li { flex-direction: row !important; align-items: flex-start; }
+    }
+    /* Side column beside it: content packed to the top, link at the bottom */
+    @media (min-width: 1280px) {
+      html body main .combo-side-col > .plan120-cta { justify-content: flex-start !important; }
+      html body main .combo-side-col > .plan120-cta .plan120-go { margin-top: auto; }
+      html body main .combo-side-col .plan120-sub { display: block !important; }
     }
     @media (max-width: 600px) {
       main { --nb-shadow: 4px 4px 0 var(--nb-ink); --nb-shadow-sm: 3px 3px 0 var(--nb-ink); }
@@ -4400,7 +4435,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
               <div className="combo-includes-label">{c.projectsLabel}</div>
               <a href="#projects-map" className="combo-projects-link">All built on the maths you study for GATE. See how <span aria-hidden="true">↑</span></a>
             </div>
-            <ul className="combo-projects-list is-open">
+            <ul className={'combo-projects-list' + (projOpen ? ' is-open' : '')}>
               {c.projects.map(p => (
                 <li key={p.art}>
                   <b className="c28-proj-count" aria-label={p.count + (p.count > 1 ? ' projects' : ' project')}>×{p.count}</b>
@@ -4408,6 +4443,10 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
                 </li>
               ))}
             </ul>
+            <button type="button" className="combo-incl-toggle combo-proj-toggle" aria-expanded={projOpen} onClick={() => setProjOpen(v => !v)}>
+              {projOpen ? 'Show less' : "See what you'll build"}
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={projOpen ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} /></svg>
+            </button>
             {c.projectsNote && <p className="combo-projects-note">{c.projectsNote}</p>}
           </div>
         )}
