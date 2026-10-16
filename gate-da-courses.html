@@ -3028,6 +3028,8 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     html body main .c28-buy .combo-price-row { margin: 0 !important; padding: 0 !important; border: 0 !important; flex-wrap: wrap; row-gap: 6px; }
     html body main .c28-buy .combo-live-cta { margin-top: 14px; }
     html body main #combos .c28-offer { color: var(--nb-ink) !important; font-weight: 600; font-size: 13.5px; }
+    html body main .c28-offer { display: flex; flex-direction: column; gap: 2px; }
+    html body main #combos .c28-offer-ends { font-weight: 500; font-style: normal; }
     html body main .c28-includes { border-top: 3px solid var(--nb-ink); padding-top: 18px; }
     html body main .c28-includes .combo-includes ul { display: grid !important; grid-template-columns: minmax(0,1fr); gap: 10px 28px !important; columns: auto !important; }
     html body main .c28-includes .combo-includes li { margin: 0 !important; }
@@ -4416,7 +4418,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
               <span className="btn btn-full combo-soon-btn" aria-disabled="true">{launchUpcoming ? (daysUntilLaunch === 0 ? 'Launching today' : `Launching ${launchShort}`) : 'Coming soon'}</span>
             ) : (
               <div className="combo-live-cta">
-                {!isSoldOut && (discountReason || discountDeadline) && <div className="combo-saving c28-offer">⏳ {[discountReason, discountDeadline].filter(Boolean).join(' · ')}</div>}
+                {!isSoldOut && (discountReason || discountDeadline) && <div className="combo-saving c28-offer">{discountReason && <span>⏳ {discountReason}</span>}{discountDeadline && <span className="c28-offer-ends">{discountDeadline}</span>}</div>}
                 {ctaEl}
               </div>
             )}
