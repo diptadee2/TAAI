@@ -1532,6 +1532,61 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
         html body #root .breakdown-grid > .breakdown-card > * { min-width: 0; }
       }
     }
+    /* "Built for serious prep" feature cards, reworked 2026-10-16 */
+    html body #root .feat-dark, html body #root .feat-b, html body #root .feat-c { display: flex; flex-direction: column; }
+    html body #root .feat-stat-num, html body #root .feat-rank-num { font-family: 'Poppins', var(--font-display) !important; font-weight: 700 !important; letter-spacing: -0.02em !important; }
+    /* Analytics: labelled bars, key, stats pinned to the bottom */
+    html body #root .feat-bars-head, html body #root .feat-time-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 4px; margin-bottom: -4px; font-family: var(--nb-mono); font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; }
+    html body #root .feat-dark .feat-bars-head { color: rgba(255,244,214,.6) !important; }
+    html body #root .feat-bars-key, html body #root .feat-time-key { display: inline-flex; align-items: center; gap: 6px; text-transform: none; letter-spacing: 0.02em; }
+    html body #root .feat-bars-key i { display: inline-block; width: 9px; height: 9px; }
+    html body #root .feat-bars-key .k-strong { background: var(--nb-yellow); }
+    html body #root .feat-bars-key .k-weak { background: var(--nb-pink); margin-left: 6px; }
+    html body #root .feat-dark .feat-bars { height: 150px !important; gap: 8px !important; border-bottom: 2px solid rgba(255,244,214,.35); }
+    html body #root .feat-dark .feat-bar-md, html body #root .feat-dark .feat-bar-lo { background: var(--nb-pink) !important; }
+    html body #root .feat-bar-labels { display: flex; gap: 8px; margin-top: -6px; }
+    html body #root .feat-bar-labels span { flex: 1; text-align: center; font-family: var(--nb-mono); font-size: 10px; color: rgba(255,244,214,.7) !important; min-width: 0; overflow: hidden; }
+    @media (max-width: 480px) { html body #root .feat-bar-labels { gap: 4px; } html body #root .feat-dark .feat-bars { gap: 4px !important; } html body #root .feat-bar-labels span { font-size: 9px; } }
+    html body #root .feat-dark .feat-analytics-stats { margin-top: auto; padding-top: 18px !important; border-top: 2px solid rgba(255,244,214,.18) !important; }
+    html body #root .feat-dark .feat-bars-head + .feat-bars { margin-top: 0 !important; }
+    html body #root .feat-stat-num { font-size: 28px !important; }
+    /* GATE interface: the real exam's palette colours */
+    html body #root .feat-palette { gap: 6px !important; margin-top: 8px !important; }
+    html body #root .feat-palette-q { border: 2px solid var(--nb-ink) !important; box-shadow: none !important; font-family: var(--nb-mono); font-weight: 500 !important; font-size: 12px !important; color: var(--nb-ink) !important; }
+    html body #root .feat-palette-q.pq-clickable:hover { transform: translate(-1px, -1px) !important; box-shadow: 2px 2px 0 var(--nb-ink) !important; }
+    html body #root .pq-done { background: #4ADE80 !important; }
+    html body #root .pq-skip { background: #F87171 !important; }
+    html body #root .pq-mark { background: var(--nb-lilac) !important; background-image: radial-gradient(circle at 78% 22%, #16A34A 0 3px, transparent 3.5px) !important; }
+    html body #root .pq-none { background: #fff !important; }
+    html body #root .pq-curr { background: var(--nb-yellow) !important; }
+    html body #root .feat-palette-legend { gap: 8px 12px !important; font-size: 11px !important; margin-top: 12px; }
+    html body #root .feat-legend-dot { width: 11px !important; height: 11px !important; border: 1.5px solid var(--nb-ink) !important; }
+    html body #root .feat-legend-dot.lg-done { background: #4ADE80 !important; }
+    html body #root .feat-legend-dot.lg-skip { background: #F87171 !important; }
+    html body #root .feat-legend-dot.lg-mark { background: var(--nb-lilac) !important; }
+    html body #root .feat-legend-dot.lg-none { background: #fff !important; }
+    html body #root .feat-legend-dot.lg-curr { background: var(--nb-yellow) !important; }
+    /* Time management: bars always filled, own colours, a 3-minute target line */
+    html body #root .feat-time-rows { gap: 14px !important; }
+    html body #root .feat-time-label { font-size: 11px !important; width: 40px !important; }
+    html body #root .feat-time-val { font-family: var(--nb-mono); font-size: 12px !important; font-weight: 500; }
+    html body #root .feat-time-bar-track { position: relative; height: 16px !important; overflow: visible !important; }
+    html body #root .feat-time-bar-track::after { content: ''; position: absolute; left: 58.6%; top: -5px; bottom: -5px; border-left: 2px dashed var(--nb-ink); }
+    html body #root .feat-time-bar-fill { width: var(--w) !important; transition: none !important; }
+    html body #root .feat-time-row:nth-child(1) .feat-time-bar-fill { background: var(--nb-pink) !important; }
+    html body #root .feat-time-row:nth-child(2) .feat-time-bar-fill { background: var(--nb-yellow) !important; }
+    html body #root .feat-time-row:nth-child(3) .feat-time-bar-fill { background: var(--nb-lime) !important; }
+    html body #root .feat-time-row:nth-child(4) .feat-time-bar-fill { background: var(--nb-lilac) !important; }
+    html body #root .feat-time-note { margin-top: 4px; background: #fff; border: 2px solid var(--nb-ink); padding: 10px 12px; font-size: 13.5px; line-height: 1.45; color: var(--nb-ink) !important; }
+    html body #root .feat-time-note b { background: var(--nb-pink); padding: 0 4px; border: 1.5px solid var(--nb-ink); }
+    html body #root .feat-time-key i { display: inline-block; height: 12px; border-left: 2px dashed var(--nb-ink); }
+    /* Rank prediction: label the big number and the leaderboard */
+    html body #root .feat-rank-big { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+    html body #root .feat-rank-cap { font-family: var(--nb-mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--nb-ink) !important; }
+    html body #root .feat-rank-big .feat-rank-cap { background: var(--nb-ink); color: var(--nb-paper) !important; padding: 3px 7px; }
+    html body #root .feat-rank-board .feat-rank-cap { margin-bottom: 4px; }
+    html body #root .feat-rank-big .feat-rank-num { width: auto !important; text-align: left !important; font-size: 72px !important; line-height: 0.95 !important; min-width: 3.2ch; }
+    html body #root .feat-f .feat-rank-big { flex-shrink: 0; }
     @media (max-width: 600px) {
       #root { --nb-shadow: 4px 4px 0 var(--nb-ink); --nb-shadow-sm: 3px 3px 0 var(--nb-ink); }
     }
@@ -2071,6 +2126,7 @@ const TIME_ROWS = [
   { label:'Calc', pct: 52, val:'2.7m', color:'var(--lilac)' },
 ];
 const BARS = [32,55,70,44,85,60,40,76];
+const BAR_LABELS = ['LA','Prob','Stats','Calc','ML','AI','DSA','DBMS'];
 const RANK_BOARD = [
   { pos: '#1', name: 'Arjun V.',   score: '67.2' },
   { pos: '#2', name: 'Sneha P.',   score: '65.8' },
@@ -2143,12 +2199,17 @@ function Features() {
           <div className="feat feat-dark fade-in">
             <div className="feat-title">Deep performance analytics</div>
             <div className="feat-desc">Know exactly where you stand, by topic, by difficulty, by time spent.</div>
+            <div className="feat-bars-head">
+              <span>Accuracy by subject</span>
+              <span className="feat-bars-key"><i className="k-strong"/>Strong <i className="k-weak"/>Needs work</span>
+            </div>
             <div className="feat-bars">
               {BARS.map((h, i) => (
                 <div key={i} className={`feat-bar ${h > 75 ? 'feat-bar-top' : h > 55 ? 'feat-bar-hi' : h > 40 ? 'feat-bar-md' : 'feat-bar-lo'}`}
                   style={{ height: h + '%' }} />
               ))}
             </div>
+            <div className="feat-bar-labels">{BAR_LABELS.map(l => <span key={l}>{l}</span>)}</div>
             <div className="feat-analytics-stats">
               <div className="feat-stat"><div className="feat-stat-num">87th</div><div className="feat-stat-lbl">Score Rank</div></div>
               <div className="feat-stat"><div className="feat-stat-num">76%</div><div className="feat-stat-lbl">Accuracy</div></div>
@@ -2172,9 +2233,11 @@ function Features() {
               ))}
             </div>
             <div className="feat-palette-legend">
-              <span><span className="feat-legend-dot" style={{background:'var(--purple)'}}/>Answered</span>
-              <span><span className="feat-legend-dot" style={{background:'var(--pink)'}}/>Current</span>
-              <span><span className="feat-legend-dot" style={{background:'var(--line)',border:'1px solid var(--line)'}}/>Not visited</span>
+              <span><span className="feat-legend-dot lg-done" style={{background:'var(--purple)'}}/>Answered</span>
+              <span><span className="feat-legend-dot lg-skip"/>Not answered</span>
+              <span><span className="feat-legend-dot lg-mark"/>Marked for review</span>
+              <span><span className="feat-legend-dot lg-none" style={{background:'var(--line)',border:'1px solid var(--line)'}}/>Not visited</span>
+              <span><span className="feat-legend-dot lg-curr" style={{background:'var(--pink)'}}/>Current</span>
             </div>
             <div className="feat-spacer"/>
             <div className="feat-chip">Same UI · Same rules · Same pressure</div>
@@ -2187,6 +2250,7 @@ function Features() {
 
             <div className="feat-icon" style={{ background:'linear-gradient(135deg,var(--blue),#7FA8FF)' }}><Icon.Clock /></div>
             <div className="feat-title">Time management insights</div>
+            <div className="feat-time-head"><span>Avg time per question</span><span className="feat-time-key"><i/>3 min target</span></div>
             <div className="feat-time-rows">
               {TIME_ROWS.map(r => (
                 <div key={r.label} className="feat-time-row">
@@ -2198,6 +2262,7 @@ function Features() {
                 </div>
               ))}
             </div>
+            <div className="feat-time-note"><b>ML</b> runs 1.2 min over target. Start your revision there.</div>
             <div className="feat-spacer"/>
             <div className="feat-chip">See exactly where time is lost</div>
           </div>
@@ -2207,13 +2272,17 @@ function Features() {
             onMouseEnter={() => setRankHov(true)}
             onMouseLeave={() => setRankHov(false)}
           >
-            <div className="feat-rank-num">#{rankNum}</div>
+            <div className="feat-rank-big">
+              <div className="feat-rank-cap">Predicted AIR</div>
+              <div className="feat-rank-num">{rankNum}</div>
+            </div>
             <div className="feat-rank-divider"/>
             <div className="feat-rank-right">
               <div className="feat-title">Rank prediction</div>
               <div className="feat-desc">See how you rank among everyone who attempted the same test, so you know exactly where you stand within the TAAI cohort.</div>
             </div>
             <div className="feat-rank-board">
+              <div className="feat-rank-cap">This test, TAAI students</div>
               {RANK_BOARD.map(function(row) {
                 return (
                   <div key={row.pos} className={'feat-rank-row' + (row.you ? ' rank-you' : '')}>
