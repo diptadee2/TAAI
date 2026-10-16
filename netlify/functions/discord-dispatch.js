@@ -21,6 +21,7 @@
 // functional benefit, so it stays discord-dispatch.js with this comment
 // as the pointer for a future reader wondering why Telegram code lives
 // here.
+import { syncLmsPrices } from './lib/lms-price-sync.js';
 import { getSupabase, json, computeNextFireAt, resolveScheduledPostEmbed, resolveScheduledPostText, buildMentionContent, postToDiscordWebhook, postToTelegram } from './lib/supabase.js';
 
 export async function handler() {
@@ -79,5 +80,16 @@ export async function handler() {
     }
   }
 
-  return json(200, { checked: due.length, results });
+  // LMS price sync rides on this same 15-minute run instead of its own cron
+  // (see lib/lms-price-sync.js). Runs after the posts so they're never
+  // delayed, stops starting new courses after ~22s of this function's run,
+  // and can never fail the dispatch result.
+  let lmsPrices;
+  try {
+    lmsPrices = await syncLmsPrices(supabase, { deadline: now.getTime() + 22000 });
+  } catch (err) {
+    lmsPrices = { error: err.message };
+  }
+
+  return json(200, { checked: due.length, results, lmsPrices });
 }

@@ -1044,3 +1044,41 @@ CREATE TABLE IF NOT EXISTS schedule_task_links (
 );
 ALTER TABLE schedule_task_links ENABLE ROW LEVEL SECURITY;
 GRANT SELECT, INSERT, UPDATE, DELETE ON schedule_task_links TO service_role;
+
+-- LMS price sync (2026-10-16): the 15-minute discord-dispatch run reads
+-- each course's price from the LMS (learn.taai.live) and updates
+-- site_pricing.price when the LMS price has changed since the last check
+-- ("last change wins"). See netlify/functions/lib/lms-price-sync.js.
+-- Kept in its own table, not as site_pricing columns, because
+-- site-pricing.js's PUT rebuilds the whole row from the /team form and
+-- would wipe any column the form doesn't send.
+-- One row per site_pricing id, plus one '__run__' row (time of last run).
+CREATE TABLE IF NOT EXISTS lms_price_sync (
+  id              TEXT PRIMARY KEY,
+  slug            TEXT,
+  lms_product_id  TEXT,
+  lms_price       INTEGER,      -- what you pay on the LMS, as last seen
+  lms_list_price  INTEGER,      -- the LMS's crossed-out price (shown for info only)
+  status          TEXT,         -- baseline | applied | matched | held | skipped | unavailable | run
+  checked_at      TIMESTAMPTZ,
+  changed_at      TIMESTAMPTZ,  -- when the LMS price was last seen to change
+  note            TEXT
+);
+ALTER TABLE lms_price_sync ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON lms_price_sync TO service_role;
+
+-- Every detected LMS price change, applied or not (shown in /team).
+CREATE TABLE IF NOT EXISTS lms_price_log (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  course_id    TEXT NOT NULL,
+  course_name  TEXT,
+  lms_old      INTEGER,
+  lms_new      INTEGER,
+  site_old     INTEGER,
+  site_new     INTEGER,
+  status       TEXT,
+  note         TEXT,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+ALTER TABLE lms_price_log ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON lms_price_log TO service_role;

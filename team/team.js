@@ -329,6 +329,8 @@
       editing: null, // { type, row } | null
       saving: false,
     },
+    // LMS price sync panel on Site data > Pricing (see lib/lms-price-sync.js)
+    lmsSync: { data: null, loading: false, checking: false, error: null },
     // A 4th Site data sub-tab (subTab: 'settings') alongside Pricing/Notes/
     // Lectures, but deliberately its own small state/functions rather than
     // shoehorned into SITE_DATA_RESOURCES' generic list-of-rows machinery
@@ -1740,6 +1742,81 @@
     });
   }
 
+  function loadLmsSync(runNow) {
+    var ls = state.lmsSync;
+    if (runNow) ls.checking = true; else ls.loading = true;
+    ls.error = null;
+    render();
+    api('/lms-price-check', runNow ? { method: 'POST' } : {}).then(function (data) {
+      ls.data = data;
+      ls.loading = false;
+      ls.checking = false;
+      // A check can change prices; reload the cards so they show it.
+      if (runNow && data.sync && data.sync.summary && data.sync.summary.applied) loadSiteData('pricing');
+      else render();
+    }).catch(function (err) {
+      ls.loading = false;
+      ls.checking = false;
+      ls.error = err.message;
+      render();
+    });
+  }
+
+  function fmtRupee(n) { return n == null ? '—' : '₹' + Number(n).toLocaleString('en-IN'); }
+  function fmtAgo(iso) {
+    if (!iso) return 'never';
+    var mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return mins + ' min ago';
+    var h = Math.round(mins / 60);
+    if (h < 48) return h + ' h ago';
+    return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  }
+
+  function renderLmsSyncPanel() {
+    var ls = state.lmsSync;
+    var d = ls.data;
+    var btn = '<button class="btn btn-secondary btn-sm" id="lms-check-now"' + (ls.checking ? ' disabled' : '') + '>' + (ls.checking ? 'Checking…' : 'Check LMS now') + '</button>';
+    var head = '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">' +
+      '<div style="font-weight:600;">LMS price sync</div>' + btn + '</div>' +
+      '<div class="field-hint" style="margin:6px 0 10px;">Every 15 minutes the site checks each course\'s price on learn.taai.live. When the LMS price changes, the site\'s price follows. A price you set here stays until the LMS price changes again.</div>';
+    var body;
+    if (ls.error) body = '<div class="msg msg-error">' + escapeHtml(ls.error) + '</div>';
+    else if (!d) body = '<div class="field-hint">Loading…</div>';
+    else if (!d.available) body = '<div class="msg msg-error">Not set up yet: the lms_price_sync tables need to be created in Supabase (see the end of supabase/schema.sql).</div>';
+    else {
+      var pricing = state.siteData.rows.pricing || [];
+      var nameOf = {}, siteOf = {};
+      pricing.forEach(function (r) { nameOf[r.id] = r.name; siteOf[r.id] = r.price; });
+      var lines = ['<div class="field-hint">Last checked: ' + escapeHtml(fmtAgo(d.lastRun && d.lastRun.checked_at)) + (d.lastRun && d.lastRun.note ? ' (' + escapeHtml(d.lastRun.note) + ')' : '') + '</div>'];
+      var diffs = (d.courses || []).filter(function (c) { return c.lms_price != null && siteOf[c.id] != null && c.lms_price !== siteOf[c.id]; });
+      if (diffs.length) {
+        lines.push('<div style="margin-top:8px;font-size:13px;">Different from the LMS right now (left as is; they\'ll follow the next LMS change, or edit them below):</div><ul style="margin:4px 0 0 18px;font-size:13px;">' +
+          diffs.map(function (c) { return '<li>' + escapeHtml(nameOf[c.id] || c.id) + ': site ' + fmtRupee(siteOf[c.id]) + ', LMS ' + fmtRupee(c.lms_price) + '</li>'; }).join('') + '</ul>');
+      }
+      var held = (d.courses || []).filter(function (c) { return c.status === 'held'; });
+      if (held.length) {
+        lines.push('<div class="msg msg-error" style="margin-top:8px;">' + held.map(function (c) { return escapeHtml((nameOf[c.id] || c.id) + ': ' + (c.note || 'held')); }).join('<br>') + '</div>');
+      }
+      var unavailable = (d.courses || []).filter(function (c) { return c.status === 'unavailable'; });
+      if (unavailable.length) {
+        lines.push('<div class="field-hint" style="margin-top:8px;">Not readable on the LMS (private or not found): ' + unavailable.map(function (c) { return escapeHtml(nameOf[c.id] || c.id); }).join(', ') + '</div>');
+      }
+      if (d.log && d.log.length) {
+        lines.push('<div style="margin-top:10px;font-size:13px;font-weight:600;">Recent LMS price changes</div><ul style="margin:4px 0 0 18px;font-size:13px;">' +
+          d.log.slice(0, 8).map(function (e) {
+            var what = e.status === 'applied' ? 'site updated ' + fmtRupee(e.site_old) + ' → ' + fmtRupee(e.site_new)
+              : e.status === 'matched' ? 'site already matched'
+              : e.status === 'held' ? 'not applied (check it)'
+              : 'not applied';
+            return '<li>' + escapeHtml((e.course_name || e.course_id) + ': LMS ' + fmtRupee(e.lms_old) + ' → ' + fmtRupee(e.lms_new) + ', ' + what + ' · ' + fmtAgo(e.created_at)) + '</li>';
+          }).join('') + '</ul>');
+      }
+      body = lines.join('');
+    }
+    return '<div class="pricing-group" style="border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:18px;">' + head + body + '</div>';
+  }
+
   // ── Site settings (a 5th, non-list sub-tab — see the state comment
   // above) ────────────────────────────────────────────────────────────
   // Currently just one toggle (hide the homepage's financial-assistance
@@ -1800,6 +1877,7 @@
       loadSiteSettings();
       return true;
     }
+    if (type === 'pricing' && !state.lmsSync.data && !state.lmsSync.loading) loadLmsSync(false);
     if (state.siteData.rows[type] !== null) return false;
     loadSiteData(type);
     return true;
@@ -1839,7 +1917,7 @@
         ? '<div class="empty">No pricing rows yet — these are added directly (with their matching course card), not through this page.</div>'
         : '<div class="empty">No rows yet. Click "+ New' + (type === 'notes' ? ' note' : ' lecture') + '" above to add one.</div>';
     }
-    return type === 'pricing' ? renderPricingGroups(rows) : renderSiteDataTable(type, rows);
+    return type === 'pricing' ? renderLmsSyncPanel() + renderPricingGroups(rows) : renderSiteDataTable(type, rows);
   }
 
   // Edit/Delete — shared by every plain sitedata-table row (Notes,
@@ -2492,6 +2570,9 @@
         saveSiteSettingsToggle(input.getAttribute('data-setting-field'), input.checked);
       });
     });
+
+    var lmsCheckBtn = document.getElementById('lms-check-now');
+    if (lmsCheckBtn) lmsCheckBtn.addEventListener('click', function () { loadLmsSync(true); });
 
     var sitedataNewBtn = document.getElementById('sitedata-new');
     if (sitedataNewBtn) sitedataNewBtn.addEventListener('click', function () {
