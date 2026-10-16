@@ -1929,7 +1929,10 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     @media (max-width: 600px) {
       #root { --nb-shadow: 4px 4px 0 var(--nb-ink); --nb-shadow-sm: 3px 3px 0 var(--nb-ink); }
     }
-  </style>
+      /* Home headline "GATE DA: the paper India can't ignore anymore." (2026-10-17): smaller and airier than the old two-line headline it replaced */
+    html body #root .hero h1.hero-h1-statement { font-size: clamp(36px, 4.6vw, 64px) !important; line-height: 1.1 !important; letter-spacing: -0.03em !important; max-width: 13em; }
+    html body #root .hero h1.hero-h1-statement em { margin-bottom: .14em; }
+</style>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -2235,7 +2238,7 @@ function Hero() {
       <div className="container hero-inner">
         <div className="hero-text">
 
-          <h1><em>GATE DA:</em> the paper India can’t ignore anymore.</h1>
+          <h1 className="hero-h1-statement"><em>GATE DA:</em><br />the paper India can’t ignore anymore.</h1>
           <p className="hero-sub">
             The only GATE DA prep that teaches mathematics the way the exam actually tests it.
           </p>
