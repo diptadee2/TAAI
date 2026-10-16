@@ -1754,6 +1754,35 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     }
     html body #root .topper-pill { background: var(--nb-yellow) !important; color: var(--nb-ink) !important; border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; }
     html body #root .topper-yt-label { color: #fff !important; }
+    /* Topper cards reworked 2026-10-16 ("can these cards look better?"): AIR as a yellow badge riding the photo's
+       bottom edge, a coloured name panel per card, bigger name, white product tag */
+    html body #root .topper-card { display: flex; flex-direction: column; }
+    html body #root .topper-info { position: relative; flex: 1; padding: 0 14px 14px !important; display: flex; flex-direction: column; align-items: flex-start; }
+    html body #root .toppers-scroll > .topper-card:nth-child(5n+1) .topper-info { background: var(--nb-pink); }
+    html body #root .toppers-scroll > .topper-card:nth-child(5n+2) .topper-info { background: var(--nb-sky); }
+    html body #root .toppers-scroll > .topper-card:nth-child(5n+3) .topper-info { background: var(--nb-lime); }
+    html body #root .toppers-scroll > .topper-card:nth-child(5n+4) .topper-info { background: var(--nb-lilac); }
+    html body #root .toppers-scroll > .topper-card:nth-child(5n+5) .topper-info { background: var(--nb-orange); }
+    html body #root .topper-info .topper-air {
+      display: inline-flex !important; align-items: center; gap: 6px; margin-top: -22px; position: relative; z-index: 2;
+      background: var(--nb-yellow) !important; color: var(--nb-ink) !important; -webkit-text-fill-color: var(--nb-ink) !important;
+      border: 3px solid var(--nb-ink) !important; box-shadow: 3px 3px 0 var(--nb-ink); padding: 4px 9px 3px;
+      font: 700 22px/1 'Poppins', sans-serif !important; letter-spacing: -0.01em !important;
+    }
+    html body #root .topper-info .topper-air .topper-tag {
+      margin-left: 2px; background: var(--nb-ink) !important; color: var(--nb-paper) !important; -webkit-text-fill-color: var(--nb-paper) !important;
+      font: 500 9.5px/1 var(--nb-mono) !important; padding: 3px 5px !important;
+    }
+    html body #root .topper-name { font-size: 15px !important; font-weight: 700 !important; margin-top: 10px !important; line-height: 1.2; }
+    html body #root .topper-college { font-size: 11.5px !important; margin-top: 3px !important; line-height: 1.35 !important; }
+    html body #root .topper-products { margin-top: auto !important; padding-top: 10px; gap: 5px !important; }
+    html body #root .topper-pill { background: #fff !important; font-size: 11px !important; padding: 3px 7px !important; }
+    @media (max-width: 768px) {
+      html body #root .topper-info { padding: 0 11px 11px !important; }
+      html body #root .topper-info .topper-air { font-size: 18px !important; margin-top: -19px; }
+      html body #root .topper-name { font-size: 13.5px !important; }
+      html body #root .topper-college { font-size: 10.5px !important; }
+    }
     html body #root .topper-yt-play { border-radius: 0 !important; }
 
     /* Built differently cards */
