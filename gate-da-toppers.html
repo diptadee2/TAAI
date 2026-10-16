@@ -949,6 +949,20 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     @media (max-width: 600px) {
       html body #root .feat-quote, html body #root .testi-quote { font-size: 15.5px !important; }
     }
+    html body #root .quote-more { display: none; }
+    /* Phones and small tablets: each batch's testimonials as its own horizontal swipe row (next card peeks in), 2026-10-16 */
+    @media (max-width: 768px) {
+      html body #root .featured-grid, html body #root .testi-grid {
+        display: flex !important; gap: 14px !important; align-items: stretch !important; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+        margin-left: calc(-1 * max(var(--gutter), 24px)); margin-right: calc(-1 * max(var(--gutter), 24px));
+        padding: 4px max(var(--gutter), 24px) 14px; scroll-padding-left: max(var(--gutter), 24px); scrollbar-width: none;
+      }
+      html body #root .featured-grid::-webkit-scrollbar, html body #root .testi-grid::-webkit-scrollbar { display: none; }
+      html body #root .is-clamped { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 8; overflow: hidden; flex: 0 0 auto !important; }
+      html body #root .feat-card .quote-more, html body #root .testi-card .quote-more { margin-bottom: auto; }
+      html body #root .quote-more { display: inline-block; align-self: flex-start; margin-top: -4px; background: none; border: 0; padding: 0; font: 600 14px/1.4 'Poppins', sans-serif; color: var(--nb-ink); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+      html body #root .featured-grid > *, html body #root .testi-grid > * { flex: 0 0 min(86%, 360px); scroll-snap-align: start; min-width: 0; opacity: 1 !important; transform: none !important; }
+    }
     @media (max-width: 600px) {
       #root { --nb-shadow: 4px 4px 0 var(--nb-ink); --nb-shadow-sm: 3px 3px 0 var(--nb-ink); }
     }
@@ -1278,6 +1292,18 @@ function Hero() {
   );
 }
 
+// Long quotes are capped at 8 lines with Read more, on phones only (the cards sit in a swipe row there, where one long quote would make the whole row tall)
+function QuoteClamp({ text, cls }) {
+  const [open, setOpen] = React.useState(false);
+  const long = text.length > 300;
+  return (
+    <>
+      <p className={cls + (long && !open ? ' is-clamped' : '')}>"{withDiscordLink(text)}"</p>
+      {long && <button type="button" className="quote-more" aria-expanded={open} onClick={() => setOpen(v => !v)}>{open ? 'Show less' : 'Read more'}</button>}
+    </>
+  );
+}
+
 // ── This Year Gallery ─────────────────────────────────────────────
 function ThisYearGallery() {
   const ini = name => name ? name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '?';
@@ -1298,7 +1324,7 @@ function ThisYearGallery() {
               <div>
                 <div className="feat-rank-num">AIR {s.air}{s.exam && <span className={`topper-tag topper-tag--${s.exam.toLowerCase()}`}>{s.exam}</span>}</div>
               </div>
-              {s.quote && <p className="feat-quote">"{withDiscordLink(s.quote)}"</p>}
+              {s.quote && <QuoteClamp cls="feat-quote" text={s.quote} />}
               <div className="feat-author">
                 <div className="feat-avatar" style={{ background: s.photo ? 'none' : s.grad }}>
                   {s.photo ? <img src={s.photo} alt={s.name || ''} loading="lazy" style={(s.photoPos || s.photoScale) ? { ...(s.photoPos && { objectPosition: s.photoPos }), ...(s.photoScale && { transform: `scale(${s.photoScale})` }) } : undefined} /> : ini(s.name)}
@@ -1366,7 +1392,7 @@ function PreviousBatch() {
               <div>
                 <div className="feat-rank-num">AIR {f.air}</div>
               </div>
-              <p className="feat-quote">"{withDiscordLink(f.quote)}"</p>
+              <QuoteClamp cls="feat-quote" text={f.quote} />
               <div className="feat-author">
                 <div className="feat-avatar" style={{ background: f.photo ? 'none' : f.grad }}>
                   {f.photo ? <img src={f.photo} alt={f.name} loading="lazy" style={f.photoPos ? { objectPosition: f.photoPos } : undefined} /> : initials(f.name)}
@@ -1427,7 +1453,7 @@ function PreviousBatch() {
           {TESTIMONIALS_2025.map((t, i) => (
             <div key={i} className="testi-card card fade-in" style={{ '--delay': `${(i % 3) * 100}ms`, '--grad': t.grad }}>
               <div className="testi-rank-badge">AIR <span>{t.air}</span></div>
-              <p className="testi-quote">"{withDiscordLink(t.quote)}"</p>
+              <QuoteClamp cls="testi-quote" text={t.quote} />
               <div className="testi-author">
                 <div className="testi-avatar" style={{ background: t.grad }}>{initials(t.name)}</div>
                 <div>
