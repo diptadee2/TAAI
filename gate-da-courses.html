@@ -3091,6 +3091,31 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
       html body main .combo-side-col > .plan120-cta .plan120-go { margin-top: auto; }
       html body main .combo-side-col .plan120-sub { display: block !important; }
     }
+    /* Individual course cards reworked 2026-10-16 ("can the individual course cards look better?") */
+    html body main .course-card { display: flex !important; flex-direction: column; }
+    html body main .course-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+    html body main .course-head .course-icon { margin: 0 !important; flex: none; width: 48px !important; height: 48px !important; }
+    html body main .course-head-text { min-width: 0; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+    html body main .course-head .course-title { margin: 0 !important; font-size: 21px !important; font-weight: 700 !important; line-height: 1.15 !important; }
+    html body main .course-head .course-validity { margin: 0 !important; background: #fff; border: 2px solid var(--nb-ink); padding: 1px 6px; font-size: 10.5px !important; letter-spacing: .03em; }
+    html body main .course-topics-label { font-family: var(--nb-mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; color: var(--nb-ink); }
+    html body main .course-topics { display: flex !important; flex-direction: column !important; gap: 7px !important; margin-bottom: 0 !important; }
+    html body main .course-topic { background: none !important; border: 0 !important; padding: 0 0 0 18px !important; position: relative; font-size: 14.5px !important; font-weight: 500; width: auto !important; }
+    html body main .course-topic::before { content: '' !important; position: absolute !important; left: 0 !important; top: .45em !important; width: 8px !important; height: 8px !important; border-radius: 0 !important; background: var(--nb-ink) !important; transform: none !important; }
+    html body main .course-price-row { margin-top: auto !important; padding-top: 18px !important; border-top: 3px solid var(--nb-ink); display: flex !important; align-items: baseline; flex-wrap: wrap; gap: 6px 10px; }
+    html body main .course-topics { margin-bottom: 20px !important; }
+    html body main .course-price { font-family: 'Poppins', sans-serif !important; font-weight: 700 !important; letter-spacing: -0.02em !important; }
+    html body main .course-pct { align-self: center; background: #fff; border: 2px solid var(--nb-ink); font: 700 12px/1 'Poppins', sans-serif; padding: 4px 6px; color: var(--nb-ink) !important; }
+    html body main .course-card .btn { background: var(--nb-yellow) !important; }
+    html body main .courses-grid > :nth-child(6n+3) .course-card .btn { background: #fff !important; }
+    html body main .course-head-text { flex: 1; }
+    html body main .course-head .course-validity { max-width: 100%; white-space: normal; }
+    @media (max-width: 768px) {
+      html body main .course-head { gap: 12px; }
+      html body main .course-head .course-icon { width: 42px !important; height: 42px !important; }
+      html body main .course-head .course-title { font-size: 19px !important; }
+      html body main .course-head .course-validity { font-size: 10.5px !important; letter-spacing: 0; background: none; border: 0; padding: 0; }
+    }
     @media (max-width: 600px) {
       main { --nb-shadow: 4px 4px 0 var(--nb-ink); --nb-shadow-sm: 3px 3px 0 var(--nb-ink); }
     }
@@ -4499,12 +4524,18 @@ const CourseCard = React.memo(function CourseCard({ c, pricing }) {
   const price    = p.price    ? fmtPrice(p.price)    : '-';
   const priceOld = p.priceOld ? fmtPrice(p.priceOld) : null;
   const validity = p.validity ? fmtValidity(p.validity) : '-';
+  const pct = (Number(p.price) > 0 && Number(p.priceOld) > Number(p.price)) ? Math.round((1 - Number(p.price) / Number(p.priceOld)) * 100) : null;
   return (
     <div id={c.id} className="course-card card" style={{ '--course-grad': c.grad, '--course-shadow': c.shadow }}>
       <div className="course-accent" style={{ background: c.grad }} />
-      <div className="course-icon" style={{ background: c.grad }}>{c.icon}</div>
-      <div className="course-title">{c.title}</div>
-      <div className={`course-validity mono${p.validity ? ' data-fade-in' : ''}`}>{validity}</div>
+      <div className="course-head">
+        <div className="course-icon" style={{ background: c.grad }}>{c.icon}</div>
+        <div className="course-head-text">
+          <div className="course-title">{c.title}</div>
+          <div className={`course-validity mono${p.validity ? ' data-fade-in' : ''}`}>{validity}</div>
+        </div>
+      </div>
+      <div className="course-topics-label">What you'll cover</div>
       <div className="course-topics">
         {c.topics.map((t, i) => (
           <div key={i} className="course-topic" style={{ '--td': `${i * 55}ms` }}>{t}</div>
@@ -4513,6 +4544,7 @@ const CourseCard = React.memo(function CourseCard({ c, pricing }) {
       <div className={`course-price-row${p.price ? ' price-loaded' : ''}`}>
         <div className="course-price">{price}</div>
         {priceOld && <div className="course-price-old">{priceOld}</div>}
+        {pct && <div className="course-pct">{pct}% off</div>}
       </div>
       <div className="ticket-notch"><div className="ticket-notch-line" /></div>
       <a target="_blank" rel="noopener noreferrer" href={p.enrollUrl || c.href} className="btn btn-ghost btn-full">Get course <Icon.ArrowRight /></a>
