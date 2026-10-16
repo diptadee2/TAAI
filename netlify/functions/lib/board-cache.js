@@ -15,20 +15,20 @@
 // Concurrent requests share one in-flight computation, and a failed
 // computation is never cached.
 import {
-  weekStartIST, weekBefore, todayIST, fetchAllRows, fetchFlaggedEmails, fetchLiveCount,
+  weekStartIST, weekBefore, todayIST, fetchAllRows, fetchFlaggedEmails, fetchLiveCount, fetchHourlyActivity,
   fetchLiveStatusByEmail, fetchAllTimeMinutesByEmail, fetchAboutTextByEmail, notInEmailList,
 } from './supabase.js';
 
 export const TTL_MS = 30000;
 const store = new Map();
 
-function cached(key, fn) {
+function cached(key, fn, ttl = TTL_MS) {
   const hit = store.get(key);
-  if (hit && Date.now() - hit.at < TTL_MS) return hit.promise;
+  if (hit && Date.now() - hit.at < (hit.ttl || TTL_MS)) return hit.promise;
   const promise = fn().catch((err) => { if (store.get(key)?.promise === promise) store.delete(key); throw err; });
-  store.set(key, { at: Date.now(), promise });
+  store.set(key, { at: Date.now(), promise, ttl });
   // Keep the map tiny: drop anything stale.
-  for (const [k, v] of store) if (Date.now() - v.at > TTL_MS * 4) store.delete(k);
+  for (const [k, v] of store) if (Date.now() - v.at > (v.ttl || TTL_MS) * 4) store.delete(k);
   return promise;
 }
 
@@ -175,4 +175,110 @@ export function mergeViewerRow(sorted, email, fresh) {
   const rest = sorted.filter((s) => s.email !== email);
   if (fresh && fresh.total_minutes > 0) rest.push(fresh);
   return rest.sort(byMinutesThenEmail);
+}
+
+// ── Page-load helpers (tracker-data.js), added 2026-10-17 ─────────────
+
+// The Today card's hourly chart is the same for everyone.
+export function getSharedHourly(supabase) {
+  return cached('hourly', () => fetchHourlyActivity(supabase));
+}
+
+// A batch's whole schedule and its lesson links are the same for every
+// student and only change when someone runs load-schedule/load-task-links,
+// so they're cached for SCHEDULE_TTL_MS. A newly loaded schedule shows
+// within that time. rows keep the database's natural order (what the old
+// per-request queries returned).
+export const SCHEDULE_TTL_MS = 5 * 60 * 1000;
+export function getBatchSchedule(supabase, batch) {
+  return cached('schedule:' + batch, async () => {
+    const [rows, linksResult] = await Promise.all([
+      fetchAllRows(() => supabase.from('schedule_tasks').select('date, subject, task_text, position').eq('batch', batch)),
+      supabase.from('schedule_task_links').select('subject, task_text, url').eq('batch', batch).then((r) => r, () => ({ data: null, error: true })),
+    ]);
+    let links = null;
+    if (!linksResult.error) {
+      links = {};
+      for (const r of linksResult.data || []) {
+        if (!/^https:\/\/learn\.taai\.live\//.test(r.url)) continue;
+        (links[r.subject] = links[r.subject] || {})[r.task_text] = r.url;
+      }
+    }
+    let latest = null;
+    for (const r of rows) if (!latest || r.date > latest) latest = r.date;
+    return { rows, latestMonth: latest ? latest.slice(0, 7) : null, links };
+  }, SCHEDULE_TTL_MS);
+}
+
+// Same output as lib fetchTodayLeaders(supabase, viewerEmail), built from
+// the shared weekly cache plus the viewer's own details. Shared by
+// pomodoro-leaderboard.js and tracker-data.js.
+export function buildTodayLeaders(sh, viewerEmail, viewer, viewerFlagged, nameFor) {
+  const todaySorted = viewerFlagged ? sh.todaySorted : mergeViewerRow(sh.todaySorted, viewerEmail, viewer?.today);
+  if (!todaySorted.length) return { date: sh.today, leaders: [], viewerRank: null };
+  const isViewer = (email) => !!viewerEmail && email === viewerEmail && !!viewer;
+  const liveFor = (email) => (isViewer(email) ? viewer.live : sh.liveByEmail[email]);
+  const leaders = todaySorted.slice(0, 10).map((s) => ({
+    display_name: nameFor(s.email),
+    total_minutes: s.total_minutes,
+    all_time_minutes: isViewer(s.email) ? viewer.allTime : (sh.allTimeByEmail[s.email] || 0),
+    about: (isViewer(s.email) && viewer.aboutRow ? viewer.aboutRow.about_text : sh.aboutTextByEmail[s.email]) || null,
+    is_me: !!viewerEmail && s.email === viewerEmail,
+    ...liveFor(s.email),
+  }));
+  let viewerRank = null;
+  if (viewerEmail && !leaders.some((l) => l.is_me)) {
+    const idx = todaySorted.findIndex((s) => s.email === viewerEmail);
+    if (idx !== -1) {
+      viewerRank = {
+        rank: idx + 1,
+        total_minutes: todaySorted[idx].total_minutes,
+        all_time_minutes: viewer ? viewer.allTime : 0,
+        about: viewer?.aboutRow?.about_text || null,
+        ...(viewer?.live || {}),
+      };
+    }
+  }
+  return { date: sh.today, leaders, viewerRank };
+}
+
+// Same output as lib fetchLastWeekLeaders(supabase, email) (plus liveCount),
+// from the shared last-week cache. known = { live, allTime } for the
+// viewer, when the caller already has them, skips those two lookups.
+export async function buildLastWeekLeaders(supabase, email, known) {
+  const sh = await getSharedLastWeek(supabase);
+  const liveCount = sh.liveCount;
+  if (!sh.top.length) return { weekStart: sh.weekStart, leaders: [], viewerRank: null, liveCount };
+
+  const topEmails = sh.top.map((s) => s.email);
+  const viewerInTop = !!email && topEmails.includes(email);
+  let viewerLive = null, viewerAllTime = null;
+  if (email) {
+    if (known) {
+      viewerLive = known.live;
+      viewerAllTime = viewerInTop ? null : (known.allTime || 0);
+    } else {
+      const [live, allTime] = await Promise.all([fetchLiveStatusByEmail(supabase, [email]), viewerInTop ? Promise.resolve(null) : fetchAllTimeMinutesByEmail(supabase, [email])]);
+      viewerLive = live[email];
+      viewerAllTime = allTime ? (allTime[email] || 0) : null;
+    }
+  }
+
+  const leaders = sh.top.map((s) => ({
+    display_name: sh.nameByEmail[s.email] || 'Anonymous',
+    total_minutes: s.total_minutes,
+    all_time_minutes: sh.allTimeByEmail[s.email] || 0,
+    is_me: !!email && s.email === email,
+    previous_week_rank: sh.prevRankByEmail[s.email] ?? null,
+    ...(s.email === email && viewerLive ? viewerLive : sh.liveByEmail[s.email]),
+  }));
+
+  let viewerRank = null;
+  const viewerEligible = !!email && !sh.flagged.has(email);
+  const viewerStats = viewerEligible ? sh.eligibleWeekRows.find((r) => r.email === email) : null;
+  if (viewerStats && !viewerInTop) {
+    const greater = sh.eligibleWeekRows.filter((r) => r.total_minutes > viewerStats.total_minutes).length;
+    viewerRank = { rank: greater + 1, total_minutes: viewerStats.total_minutes, all_time_minutes: viewerAllTime || 0, previous_week_rank: sh.prevRankByEmail[email] ?? null, ...viewerLive };
+  }
+  return { weekStart: sh.weekStart, leaders, viewerRank, liveCount };
 }
