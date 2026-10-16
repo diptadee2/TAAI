@@ -932,7 +932,7 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
       letter-spacing: -0.03em !important; line-height: 1 !important; padding: 8px 14px !important; border: 0 !important; border-radius: 0 !important;
     }
     html body #root .testi-rank-badge span { font: inherit !important; color: var(--nb-paper) !important; -webkit-text-fill-color: var(--nb-paper) !important; }
-    html body #root .feat-rank-num .topper-tag { font-size: 13px !important; letter-spacing: .04em; -webkit-text-fill-color: var(--nb-ink) !important; }
+    html body #root .feat-rank-num .topper-tag { background: var(--nb-yellow) !important; color: var(--nb-ink) !important; -webkit-text-fill-color: var(--nb-ink) !important; border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; font-family: var(--nb-mono, 'DM Mono', monospace) !important; font-size: 13px !important; font-weight: 600 !important; letter-spacing: .04em; padding: 3px 8px !important; margin-left: 12px; vertical-align: middle; white-space: nowrap; }
     html body #root .feat-quote, html body #root .testi-quote {
       font-family: var(--font-display) !important; font-style: normal !important; font-weight: 600 !important;
       font-size: 16.5px !important; line-height: 1.45 !important; letter-spacing: -0.01em; margin-top: 22px !important;
@@ -1322,7 +1322,7 @@ function ThisYearGallery() {
               onMouseMove={e=>{const r=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');e.currentTarget.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%');}}
               onMouseLeave={e=>{e.currentTarget.style.setProperty('--mx','-200%');e.currentTarget.style.setProperty('--my','-200%');}}>
               <div>
-                <div className="feat-rank-num">AIR {s.air}{s.exam && <span className={`topper-tag topper-tag--${s.exam.toLowerCase()}`}>{s.exam}</span>}</div>
+                <div className="feat-rank-num">AIR {s.air}{s.exam && <span className={`topper-tag topper-tag--${s.exam.toLowerCase()}`}>GATE {s.exam}</span>}</div>
               </div>
               {s.quote && <QuoteClamp cls="feat-quote" text={s.quote} />}
               <div className="feat-author">
