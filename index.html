@@ -1932,6 +1932,23 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
       /* Home headline "GATE DA: the paper India can't ignore anymore." (2026-10-17): smaller and airier than the old two-line headline it replaced */
     html body #root .hero h1.hero-h1-statement { font-size: clamp(36px, 4.6vw, 64px) !important; line-height: 1.1 !important; letter-spacing: -0.03em !important; max-width: 13em; }
     html body #root .hero h1.hero-h1-statement em { margin-bottom: .14em; }
+    /* "Why India needs this paper" video section (2026-10-17) */
+    html body #root .why-india { background: var(--nb-paper); border-top: 3px solid var(--nb-ink); padding: 72px 0; }
+    html body #root .why-india-inner { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 48px; align-items: center; }
+    html body #root .why-india h2 { font-size: clamp(30px, 3.6vw, 48px); line-height: 1.1; letter-spacing: -0.03em; margin: 0 0 18px; }
+    html body #root .why-india-sub { font-size: 17px; line-height: 1.6; color: #333; margin: 0 0 16px; }
+    html body #root .why-india-credit { font-family: var(--nb-mono); font-size: 12px; line-height: 1.5; color: #555; margin: 0; }
+    html body #root .why-india-video { position: relative; aspect-ratio: 16 / 9; border: 3px solid var(--nb-ink); box-shadow: var(--nb-shadow); background: #000; }
+    html body #root .why-india-video iframe, html body #root .why-india-poster { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; padding: 0; margin: 0; display: block; cursor: pointer; background: #000; }
+    html body #root .why-india-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    html body #root .why-india-play { position: absolute; left: 50%; top: 50%; width: 72px; height: 72px; margin: -36px 0 0 -36px; display: flex; align-items: center; justify-content: center; background: var(--nb-yellow); color: var(--nb-ink); border: 3px solid var(--nb-ink); box-shadow: 4px 4px 0 var(--nb-ink); }
+    html body #root .why-india-poster:hover .why-india-play { background: #fff; }
+    html body #root .why-india-poster:focus-visible { outline: 3px solid var(--nb-ink); outline-offset: 3px; }
+    @media (max-width: 900px) {
+      html body #root .why-india { padding: 52px 0; }
+      html body #root .why-india-inner { grid-template-columns: 1fr; gap: 26px; }
+      html body #root .why-india-play { width: 60px; height: 60px; margin: -30px 0 0 -30px; }
+    }
 </style>
 <script type="application/ld+json">
 {
@@ -3149,6 +3166,42 @@ function MobileContactBar() {
   );
 }
 
+// ============ WHY INDIA NEEDS THIS PAPER (2026-10-17) ============
+// Embeds the official GATE 2027 (IIT Madras) channel's video. Click-to-play:
+// only the poster image loads until someone presses play, then the real
+// YouTube player (privacy-enhanced domain) replaces it. Credit is to the
+// channel; nothing here should suggest IIT Madras endorses TAAI.
+const WHY_INDIA_VIDEO = 'PuvmWSErh-o';
+function WhyIndia() {
+  const [playing, setPlaying] = React.useState(false);
+  return (
+    <section className="section why-india" id="why-india">
+      <div className="container why-india-inner">
+        <div className="why-india-text fade-in">
+          <h2>Why India needs <em>this paper.</em></h2>
+          <p className="why-india-sub">GATE DA isn&rsquo;t just another branch of GATE. Hear it from IIT Madras faculty: India needs people who understand data science and AI from the fundamentals up, and this exam is how the IITs find them.</p>
+          <p className="why-india-credit">Video: &ldquo;IITM Faculty Speaks: Why India needs fundamental researchers in data science and AI&rdquo;, from the official GATE 2027 channel (IIT Madras) on YouTube.</p>
+        </div>
+        <div className="why-india-video fade-in">
+          {playing ? (
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/${WHY_INDIA_VIDEO}?autoplay=1&rel=0`}
+              title="IITM Faculty Speaks: Why India needs fundamental researchers in data science and AI"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          ) : (
+            <button type="button" className="why-india-poster" onClick={() => setPlaying(true)} aria-label="Play video: Why India needs fundamental researchers in data science and AI">
+              <img src={`https://i.ytimg.com/vi/${WHY_INDIA_VIDEO}/maxresdefault.jpg`} alt="" loading="lazy" />
+              <span className="why-india-play" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z" fill="currentColor"/></svg></span>
+            </button>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function App() {
   React.useEffect(() => { try { sessionStorage.removeItem('_eb'); } catch(e) {} }, []);
   React.useEffect(() => {
@@ -3179,6 +3232,7 @@ function App() {
         <Hero />
         <Stats />
       </div>
+      <WhyIndia />
       <WhyStrip />
       <Instructor />
       <Testimonials />
