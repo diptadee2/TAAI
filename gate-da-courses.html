@@ -3167,6 +3167,31 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     .chal-row { grid-template-columns: 1fr; }
     .chal-modal h3 { font-size: 21px; }
   }
+  /* "Which path fits you?" cards (2026-10-19). Square corners, static hard
+     shadows (the cards fade in, so no radius + shadow on a moving box). */
+  html body main .fit-section { padding-top: 56px; padding-bottom: 56px; }
+  html body main .fit-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+  html body main .fit-card { display: flex; flex-direction: column; gap: 10px; padding: 26px 26px 22px; color: #111; text-decoration: none; border: 3px solid #111; box-shadow: 6px 6px 0 #111; transition: transform .15s ease, box-shadow .15s ease; }
+  html body main .fit-pink { background: #F9A8D4; } html body main .fit-sky { background: #7DD3FC; }
+  html body main .fit-lime { background: #BEF264; } html body main .fit-lilac { background: #C4B5FD; }
+  html body main .fit-tag { align-self: flex-start; background: #111; color: #FFF4D6; font-family: 'DM Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; padding: 4px 9px; }
+  html body main .fit-title { font-size: 22px; font-weight: 800; line-height: 1.2; letter-spacing: -0.01em; }
+  html body main .fit-text { font-size: 15px; line-height: 1.55; color: #222; }
+  html body main .fit-link { margin-top: auto; padding-top: 8px; font-weight: 700; font-size: 14.5px; text-decoration: underline; text-underline-offset: 3px; }
+  @media (hover: hover) and (pointer: fine) {
+    html body main .fit-card:hover { transform: translate(-2px, -2px); box-shadow: 8px 8px 0 #111; }
+  }
+  @media (max-width: 768px) {
+    html body main .fit-grid {
+      display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+      margin-left: calc(-1 * max(var(--gutter), 24px)); margin-right: calc(-1 * max(var(--gutter), 24px));
+      padding: 4px max(var(--gutter), 24px) 16px; scroll-padding-left: max(var(--gutter), 24px); scrollbar-width: none;
+    }
+    html body main .fit-grid::-webkit-scrollbar { display: none; }
+    html body main .fit-card { flex: 0 0 min(84%, 340px); scroll-snap-align: start; min-width: 0; padding: 22px 20px 18px; opacity: 1 !important; transform: none !important; }
+    html body main .fit-title { font-size: 19px; }
+    html body main .fit-text { font-size: 14px; }
+  }
   </style>
 <script type="application/ld+json" id="course-jsonld">
 {
@@ -5085,6 +5110,38 @@ const COURSE_JSONLD_IDS = {
   4: 'statistics', 5: 'calculus', 6: 'linear-algebra', 7: 'probability', 8: 'machine-learning',
 };
 
+// "Which path fits you?" (2026-10-19, direct request: a "who should join"
+// section, written our own way). Each situation points to the TAAI product
+// that fits it, using only facts already stated elsewhere on this page.
+const FIT_PATHS = [
+  { tag: 'Final year', title: 'Writing GATE DA in February 2027', text: 'The GATE 2028 Full Course unlocks content covering 65+ marks of GATE DA 2027 the day you join, and your 2028 attempt is covered too. Pair it with the free 120-day roadmap.', link: 'See the GATE 2028 Full Course', href: '#full-course-2028', tone: 'pink' },
+  { tag: '2nd or 3rd year', title: 'Starting a year or two early', text: 'One enrolment covers GATE DA 2027 and 2028: take 2027 as a real attempt, then go all in for 2028. The 5 portfolio projects help with internships along the way.', link: 'How the course builds a portfolio', href: '#projects-map', tone: 'sky' },
+  { tag: 'Non-CS branch', title: 'From maths, stats, ECE or another branch', text: 'Every subject is taught from scratch, Python and DSA included, so no coding background is assumed. Want to build up slowly? Start with a single subject or a maths bundle.', link: 'See single subjects', href: '#individual', tone: 'lime' },
+  { tag: 'Second attempt', title: 'Writing GATE DA again', text: 'You know the syllabus. What moves your rank is practice under exam conditions: the test series runs from topic-wise tests to full-length GATE-pattern papers.', link: 'See the test series', href: '/gate-da-test-series', tone: 'lilac' },
+];
+function WhoItsFor() {
+  return (
+    <section className="section fit-section" id="who-its-for">
+      <div className="container">
+        <div className="section-header fade-in">
+          <h2 className="section-h2">Which path <em>fits you?</em></h2>
+          <p className="section-sub">Where you are right now decides where to start.</p>
+        </div>
+        <div className="fit-grid">
+          {FIT_PATHS.map(f => (
+            <a key={f.tag} href={f.href} className={`fit-card fit-${f.tone} fade-in`}>
+              <span className="fit-tag">{f.tag}</span>
+              <span className="fit-title">{f.title}</span>
+              <span className="fit-text">{f.text}</span>
+              <span className="fit-link">{f.link} <span aria-hidden="true">&rarr;</span></span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function App() {
   const [pricingMap, setPricingMap] = React.useState(() => _pricingCache || {});
   const [sitePricing, setSitePricing] = React.useState(() => _sitePricingCache || {});
@@ -5347,6 +5404,8 @@ function App() {
           </div>
         </div>
       </section>
+
+      <WhoItsFor />
 
       <ProjectsMap />
 
