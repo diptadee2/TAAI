@@ -275,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-16-1';
+  var CLIENT_VERSION = '2026-10-18-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -663,6 +663,50 @@
       return null;
     }
   }
+
+  // One driving tab per browser (2026-10-18). Real bug, reproduced: with
+  // the tracker open in two tabs (Focus Mode in one, the checklist in the
+  // other), the second tab restored the running session at its own load
+  // and then ran its own copy of the timer in the background. When that
+  // copy's phase ended it claimed and advanced on its own: its 15-minute
+  // break ran alongside the real tab's new session, then it overwrote the
+  // shared localStorage state (and could take over the server's record),
+  // so the real tab's session was credited at the other copy's length or,
+  // after the real tab reloaded (Arc/Chrome put it to sleep in the
+  // background), came back as a fresh idle timer with the time already
+  // done lost (ganesh.deulkar1509@gmail.com, 2026-10-17).
+  // The tab the student acts in (Start/Pause/Reset/Skip/settings) becomes
+  // the driver, recorded in localStorage by its device token (per tab,
+  // stable across reloads); a running driver refreshes `at` every 15s.
+  // Every other tab is a follower while that record is fresh: it mirrors
+  // the driver's state through the storage event, never writes the shared
+  // state, never claims and never advances a phase. If the driver goes
+  // silent for 3 minutes (closed, frozen or discarded) a follower may act
+  // again, so a session still gets credited.
+  var POMO_DRIVER_KEY = 'taai_pomo_driver';
+  var POMO_DRIVER_STALE_MS = 3 * 60 * 1000;
+  var POMO_DRIVER_BEAT_MS = 15000;
+  function readPomoDriver() {
+    try { var raw = localStorage.getItem(POMO_DRIVER_KEY); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
+  }
+  function isPomoFollower() {
+    var d = readPomoDriver(), me = getPomoDeviceToken();
+    if (!d || !d.id || !me || d.id === me) return false;
+    return Date.now() - (d.at || 0) < POMO_DRIVER_STALE_MS;
+  }
+  function claimPomoDriver() {
+    var me = getPomoDeviceToken();
+    if (!me) return;
+    try { localStorage.setItem(POMO_DRIVER_KEY, JSON.stringify({ id: me, at: Date.now() })); } catch (e) { /* no localStorage: every tab acts on its own, the old behavior */ }
+  }
+  // Called while a running timer ticks in a tab that isn't a follower:
+  // claims the driver role if nobody holds it (or it went stale), and
+  // keeps it fresh without writing localStorage every second.
+  function beatPomoDriver() {
+    var d = readPomoDriver(), me = getPomoDeviceToken();
+    if (!me) return;
+    if (!d || d.id !== me || Date.now() - (d.at || 0) > POMO_DRIVER_BEAT_MS) claimPomoDriver();
+  }
   // Tracks the freshness (epoch ms) of whatever's currently applied to
   // `pomo`, whether it came from this device's own localStorage or a sync
   // from the server (see applyPomoActiveState/loadMonth) — lets the
@@ -817,6 +861,7 @@
   // actually running on a different device.
   function sendPomoStoppedBeacon() {
     if (!state.student || !pomoStateKnown || typeof navigator.sendBeacon !== 'function') return;
+    if (isPomoFollower()) return; // another tab drives this session (see isPomoFollower)
     // Same reason as savePomoActiveRemote's hold: don't overwrite the
     // finished phase a pending claim still needs. Its end time has passed,
     // so the server already shows this student as not live.
@@ -1111,7 +1156,11 @@
     // that's a harmless no-op re-save of identical data; for the
     // cross-device path it's what makes this device the freshest known
     // copy going forward.
-    savePomoActiveLocalOnly();
+    // A follower tab (see isPomoFollower) only mirrors: it must not write
+    // the shared localStorage state, or a slightly stale copy could
+    // overwrite the driving tab's.
+    if (isPomoFollower()) { pomoStateAsOf = saved.savedAt || Date.now(); pomoStateKnown = true; }
+    else savePomoActiveLocalOnly();
     updatePomoDisplay();
   }
 
@@ -1122,7 +1171,7 @@
     // is in fact still running here, say so again, so the server's record
     // (live dot, and the session the completion is checked against) matches.
     // From a tab that doesn't own the session, the server ignores this.
-    if (saved && saved.running && state.student) savePomoActiveRemote(buildPomoActivePayload());
+    if (saved && saved.running && state.student && !isPomoFollower()) savePomoActiveRemote(buildPomoActivePayload());
   }
 
   // Focus Mode is intentionally NOT restored on a fresh visit or a real
@@ -3678,6 +3727,15 @@
   function pomoTickCore() {
     if (!pomo.running) { updatePomoDisplay(); return Promise.resolve(); }
     pomo.secondsLeft = Math.max(0, Math.round((pomo.phaseEndAt - Date.now()) / 1000));
+    var follower = isPomoFollower();
+    if (!follower) beatPomoDriver();
+    // A follower tab waits at 00:00 for the driving tab's next state (it
+    // arrives through the storage event); it never claims or advances.
+    if (pomo.secondsLeft <= 0 && follower) {
+      updatePomoDisplay();
+      pomo.timerId = setTimeout(pomoTick, 1000);
+      return Promise.resolve();
+    }
     if (pomo.secondsLeft > 0) {
       updatePomoDisplay();
       pomo.timerId = setTimeout(pomoTick, 1000);
@@ -3785,6 +3843,7 @@
   // synchronous (already granted) and asynchronous (just granted via the
   // prompt below) paths in pomoToggleRun share it instead of duplicating it.
   function pomoActuallyStart() {
+    claimPomoDriver();
     ensurePomoAudioCtx(); // real click — unlocks audio for the chime that fires later, unattended
     // A fresh phase starts its real clock now (the server stamps the same
     // moment as phase_started_at); resuming after a pause keeps the
@@ -3802,6 +3861,7 @@
     // gates and synced settings come from the server response.
     if (!pomo.running && state.stale) return;
     if (pomo.running) {
+      claimPomoDriver();
       clearTimeout(pomo.timerId);
       pomo.running = false;
       flashPomoRing();
@@ -3875,6 +3935,7 @@
   }
 
   function pomoReset() {
+    claimPomoDriver();
     clearTimeout(pomo.timerId);
     pomo.running = false;
     pomo.mode = 'work';
@@ -3893,6 +3954,7 @@
     // alone to be the only thing enforcing a rule the underlying function
     // itself can check for free.
     if (pomo.mode === 'work') return;
+    claimPomoDriver();
     ensurePomoAudioCtx(); // real click — Skip can fire a chime even if Start was never pressed
     clearTimeout(pomo.timerId);
     flashPomoRing();
@@ -6488,6 +6550,14 @@
   // students' leaderboard view showing this student as live/recently-seen
   // off a stale timestamp until the original phase would have ended.
   window.addEventListener('pagehide', sendPomoStoppedBeacon);
+
+  // Follower tabs mirror the driving tab (see isPomoFollower). The storage
+  // event only fires in OTHER tabs, never the one that wrote.
+  window.addEventListener('storage', function (e) {
+    if (e.key === POMO_SETTINGS_KEY) { pomoSettings = loadPomoSettings(); return; }
+    if (e.key !== POMO_ACTIVE_KEY || !e.newValue || !isPomoFollower()) return;
+    try { applyPomoActiveState(JSON.parse(e.newValue)); } catch (er) { /* malformed: keep the current state */ }
+  });
 
   // Focus Mode is desktop-only (same 1080px breakpoint that hides
   // .focus-toggle-wrap in CSS) — the button being hidden stops someone from
