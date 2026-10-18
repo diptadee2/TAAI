@@ -2659,6 +2659,13 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     html body main .hero-result:nth-child(2) { background: var(--nb-sky); }
     html body main .hero-result:nth-child(3) { background: var(--nb-lime); }
     html body main .hero-result span { color: var(--nb-ink) !important; }
+    /* Not buttons, so they shouldn't look like them (2026-10-19, "the clickable
+       and unclickable buttons look the same"): no box, no hard shadow, just a
+       thick colour bar on the left of each figure. */
+    html body main .hero-result { background: none !important; border: 0 !important; box-shadow: none !important; border-left: 6px solid var(--nb-ink) !important; padding: 2px 0 2px 12px !important; }
+    html body main .hero-result:nth-child(1) { border-left-color: #EC4899 !important; }
+    html body main .hero-result:nth-child(2) { border-left-color: #0EA5E9 !important; }
+    html body main .hero-result:nth-child(3) { border-left-color: #65A30D !important; }
     @media (max-width: 600px) {
       html body main .hero-results-row { gap: 10px !important; }
       html body main .hero-result { padding: 8px 9px; }
@@ -5115,8 +5122,10 @@ const COURSE_JSONLD_IDS = {
 // that fits it, using only facts already stated elsewhere on this page.
 const FIT_PATHS = [
   { tag: 'Final year', title: 'Writing GATE DA in February 2027', text: 'The GATE 2028 Full Course unlocks content covering 65+ marks of GATE DA 2027 the day you join, and your 2028 attempt is covered too. Pair it with the free 120-day roadmap.', link: 'See the GATE 2028 Full Course', href: '#full-course-2028', tone: 'pink' },
-  { tag: '2nd or 3rd year', title: 'Starting a year or two early', text: 'One enrolment covers GATE DA 2027 and 2028: take 2027 as a real attempt, then go all in for 2028. The 5 portfolio projects help with internships along the way.', link: 'How the course builds a portfolio', href: '#projects-map', tone: 'sky' },
-  { tag: 'Non-CS branch', title: 'From maths, stats, ECE or another branch', text: 'Every subject is taught from scratch, Python and DSA included, so no coding background is assumed. Want to build up slowly? Start with a single subject or a maths bundle.', link: 'See single subjects', href: '#individual', tone: 'lime' },
+  // GATE needs 3rd year or above (gate2027.iitm.ac.in/eligibility_criteria,
+  // checked 2026-10-19), so a 2nd year today can't sit GATE DA 2027.
+  { tag: '2nd or 3rd year', title: 'Starting early', text: 'In 3rd year? One enrolment covers your 2027 and 2028 attempts. In 2nd year? 2028 is your first eligible attempt, so start now.', link: 'See the GATE 2028 Full Course', href: '#full-course-2028', tone: 'sky' },
+  { tag: 'Non-CS branch', title: 'From maths, stats, ECE or another branch', text: 'GATE is open to every discipline from 3rd year on. Everything here starts from scratch, Python included.', link: 'See single subjects', href: '#individual', tone: 'lime' },
   { tag: 'Second attempt', title: 'Writing GATE DA again', text: 'You know the syllabus. What moves your rank is practice under exam conditions: the test series runs from topic-wise tests to full-length GATE-pattern papers.', link: 'See the test series', href: '/gate-da-test-series', tone: 'lilac' },
 ];
 function WhoItsFor() {
