@@ -1758,11 +1758,14 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
        bottom edge, a coloured name panel per card, bigger name, white product tag */
     html body #root .topper-card { display: flex; flex-direction: column; }
     html body #root .topper-info { position: relative; flex: 1; padding: 0 14px 14px !important; display: flex; flex-direction: column; align-items: flex-start; }
-    html body #root .toppers-scroll > .topper-card:nth-child(5n+1) .topper-info { background: var(--nb-pink); }
-    html body #root .toppers-scroll > .topper-card:nth-child(5n+2) .topper-info { background: var(--nb-sky); }
-    html body #root .toppers-scroll > .topper-card:nth-child(5n+3) .topper-info { background: var(--nb-lime); }
-    html body #root .toppers-scroll > .topper-card:nth-child(5n+4) .topper-info { background: var(--nb-lilac); }
-    html body #root .toppers-scroll > .topper-card:nth-child(5n+5) .topper-info { background: var(--nb-orange); }
+    /* Colour fixed per card (topper-c0..c4, set at render), not by position:
+       the marquee moves the first card to the end as it scrolls, which made
+       every card change colour each time (2026-10-19). */
+    html body #root .toppers-scroll > .topper-card.topper-c0 .topper-info { background: var(--nb-pink); }
+    html body #root .toppers-scroll > .topper-card.topper-c1 .topper-info { background: var(--nb-sky); }
+    html body #root .toppers-scroll > .topper-card.topper-c2 .topper-info { background: var(--nb-lime); }
+    html body #root .toppers-scroll > .topper-card.topper-c3 .topper-info { background: var(--nb-lilac); }
+    html body #root .toppers-scroll > .topper-card.topper-c4 .topper-info { background: var(--nb-orange); }
     html body #root .topper-info .topper-air {
       display: inline-flex !important; align-items: center; gap: 6px; margin-top: -22px; position: relative; z-index: 2;
       background: var(--nb-yellow) !important; color: var(--nb-ink) !important; -webkit-text-fill-color: var(--nb-ink) !important;
@@ -2442,7 +2445,7 @@ const TopperMarquee = React.memo(function TopperMarquee() {
         {sets.map((t, i) => (
           <div
             key={i}
-            className={`topper-card${t.yt ? ' has-yt' : ''}`}
+            className={`topper-card topper-c${i % 5}${t.yt ? ' has-yt' : ''}`}
             data-idx={i % TOPPERS.length}
             onClick={t.yt ? () => window.open(t.yt, '_blank', 'noopener') : undefined}
           >
