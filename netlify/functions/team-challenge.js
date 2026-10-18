@@ -15,7 +15,7 @@ export async function handler(event, context) {
   if (event.httpMethod === 'GET') {
     const cutoff = await fetchChallengeCutoff(supabase);
     const { data, error } = await supabase.from('challenge_registrations')
-      .select('id, full_name, email, phone, gate_enrollment_id, dob, submitted_at')
+      .select('*')
       .order('submitted_at', { ascending: false });
     if (error) return json(200, { rows: [], cutoff, open: isChallengeOpen(cutoff), error: error.message });
     return json(200, { rows: data || [], cutoff, open: isChallengeOpen(cutoff) });

@@ -2529,7 +2529,7 @@
     if (ch.loading && !ch.loaded) return '<div class="field-hint">Loading…</div>';
     var rowsHtml = ch.rows.length ? (
       '<div class="students-table-wrap"><table class="students-table sitedata-table"><thead><tr>' +
-        '<th>Name</th><th>Email</th><th>Mobile</th><th>GATE enrollment ID</th><th>Date of birth</th><th>Submitted</th><th></th>' +
+        '<th>Name</th><th>Email</th><th>Mobile</th><th>GATE enrollment ID</th><th>Date of birth</th><th>UPI ID</th><th>Submitted</th><th></th>' +
       '</tr></thead><tbody>' +
       ch.rows.map(function (r) {
         return '<tr>' +
@@ -2538,6 +2538,7 @@
           '<td>' + escapeHtml(r.phone) + '</td>' +
           '<td><code>' + escapeHtml(r.gate_enrollment_id) + '</code></td>' +
           '<td>' + escapeHtml(String(r.dob || '')) + '</td>' +
+          '<td><code>' + escapeHtml(r.upi_id || '') + '</code></td>' +
           '<td>' + escapeHtml(fmtIstDateTime(r.submitted_at)) + '</td>' +
           '<td><button class="btn btn-small btn-danger js-chal-delete" data-id="' + escapeHtml(r.id) + '" data-name="' + escapeHtml(r.full_name) + '">Delete</button></td>' +
         '</tr>';

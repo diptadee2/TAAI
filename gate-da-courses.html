@@ -4267,13 +4267,13 @@ function ChallengeTerms({ cutoff }) {
       <li>One registration per person and per GATE enrollment ID. <b>Details are locked once submitted</b>.</li>
       <li>To claim, you need an AIR under 100 (AIR 1 to 99) in GATE DA 2027. Show your scorecard from the GOAPS account with the enrollment ID you registered, with your name and date of birth matching this form, plus a government photo ID. We may verify on a video call.</li>
       <li>The email here must be the one you bought the course with. Claims are made by emailing support@taai.live within 30 days of the GATE DA 2027 results.</li>
-      <li>The refund is the course fee you actually paid, to the original payment method, after verification. You keep full access to the course.</li>
+      <li>The refund is the course fee you actually paid, sent to the UPI ID you give in this form after verification. You keep full access to the course.</li>
     </ol>
   );
 }
 
 function ChallengeForm({ cutoff, open, onClose }) {
-  const [form, setForm] = React.useState({ full_name: '', email: '', phone: '', gate_enrollment_id: '', dob: '', agree: false, confirm: false, website: '' });
+  const [form, setForm] = React.useState({ full_name: '', email: '', phone: '', gate_enrollment_id: '', dob: '', upi_id: '', agree: false, confirm: false, website: '' });
   const [state, setState] = React.useState({ sending: false, error: '', done: false });
   const firstRef = React.useRef(null);
   React.useEffect(() => {
@@ -4335,6 +4335,10 @@ function ChallengeForm({ cutoff, open, onClose }) {
             <label>GATE DA 2027 enrollment ID
               <input type="text" required maxLength="20" autoCapitalize="characters" spellCheck="false" value={form.gate_enrollment_id} onChange={set('gate_enrollment_id')} />
               <span className="chal-hint">From your GOAPS account (gate2027.iitm.ac.in).</span>
+            </label>
+            <label>UPI ID for the refund
+              <input type="text" required maxLength="320" autoCapitalize="none" autoCorrect="off" spellCheck="false" placeholder="yourname@okaxis" value={form.upi_id} onChange={set('upi_id')} />
+              <span className="chal-hint">If you qualify, the refund is sent here. Double-check it: it's locked with the rest.</span>
             </label>
             <input type="text" className="chal-hp" tabIndex="-1" autoComplete="off" aria-hidden="true" value={form.website} onChange={set('website')} />
             <details className="chal-terms-box">

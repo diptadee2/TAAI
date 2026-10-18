@@ -856,7 +856,7 @@ function generateRefundPolicy() {
           <li>Only a GATE DA 2027 result counts. A GATE 2028 or later result can't be used to claim it.</li>
           <li>One registration per person and per GATE enrollment ID. Registration details are locked once submitted.</li>
           <li>To claim, you need an AIR under 100 (AIR 1 to 99). You must show the scorecard from the GOAPS account with the enrollment ID you registered, with matching name and date of birth, and a government photo ID. We may verify on a video call.</li>
-          <li>Claims are made by emailing support@taai.live within 30 days of the GATE DA 2027 results, from the email you bought the course with. The refund is the fee you actually paid, to the original payment method, and you keep access to the course.</li>
+          <li>Claims are made by emailing support@taai.live within 30 days of the GATE DA 2027 results, from the email you bought the course with. The refund is the fee you actually paid, sent to the UPI ID given in the challenge form, and you keep access to the course.</li>
         </ul>
         <h2>Questions</h2>
         <p>Write to us at <a href="mailto:support@taai.live">support@taai.live</a>.</p>
@@ -886,7 +886,7 @@ function generatePrivacyPolicy() {
         <div class="policy-updated">Last updated: 18 October 2026</div>
         <h2>What we collect</h2>
         <p>If you use the free progress tracker, we store the name and email you sign up with, the tasks you tick, your focus timer sessions and timer settings, and the About line you choose to show. This is what powers your streak, your progress and the leaderboards. We do not ask for passwords.</p>
-        <p>If you register for the 100 pe 100% off challenge, we store the name, email, mobile number, date of birth and GATE enrollment ID you enter. We use them only to check eligibility and verify a refund claim against your GATE scorecard.</p>
+        <p>If you register for the 100 pe 100% off challenge, we store the name, email, mobile number, date of birth, GATE enrollment ID and UPI ID you enter. We use them only to check eligibility, verify a refund claim against your GATE scorecard, and send the refund.</p>
         <h2>How the site is used</h2>
         <p>We use <a href="https://clarity.microsoft.com" target="_blank" rel="noopener noreferrer">Microsoft Clarity</a> to see how visitors use taai.live, for example which sections get read and where people click, so we can improve the site. Clarity records page activity such as clicks, scrolling and mouse movement. Anything you type into forms is hidden from it, and student names on the leaderboards are hidden too. Clarity sets cookies to do this; see <a href="https://privacy.microsoft.com/privacystatement" target="_blank" rel="noopener noreferrer">Microsoft's privacy statement</a>.</p>
         <h2>What we don't do</h2>

@@ -1,5 +1,5 @@
 // GET  /api/challenge-register -> { open, cutoff }
-// POST /api/challenge-register { full_name, email, phone, gate_enrollment_id, dob, agree }
+// POST /api/challenge-register { full_name, email, phone, gate_enrollment_id, dob, upi_id, agree }
 //
 // Public, unauthenticated: the "100 pe 100% off" registration form on the
 // courses page. Insert-only by design. There is no update path, so once
@@ -19,6 +19,7 @@ function validate(body) {
   let phone = clean(body.phone).replace(/[\s\-()+]/g, '');
   const enrollment = clean(body.gate_enrollment_id).toUpperCase().replace(/\s+/g, '');
   const dob = clean(body.dob);
+  const upi = clean(body.upi_id).replace(/\s+/g, '');
 
   if (fullName.length < 2 || fullName.length > 100) return { error: 'Enter your full name exactly as on your GATE application.' };
   if (!EMAIL_RE.test(email) || email.length > 200) return { error: 'Enter a valid email address.' };
@@ -29,8 +30,10 @@ function validate(body) {
   const year = Number(dob.slice(0, 4));
   const d = new Date(dob + 'T00:00:00Z');
   if (Number.isNaN(d.getTime()) || year < 1950 || year > 2012) return { error: 'Enter your date of birth as on your GATE application.' };
+  // UPI IDs look like name@bank (handle 2-256 chars, provider letters/digits).
+  if (!/^[a-zA-Z0-9._-]{2,256}@[a-zA-Z0-9]{2,64}$/.test(upi)) return { error: 'Enter a valid UPI ID, like yourname@okaxis.' };
   if (body.agree !== true) return { error: 'Please accept the challenge terms.' };
-  return { row: { full_name: fullName, email, phone, gate_enrollment_id: enrollment, dob } };
+  return { row: { full_name: fullName, email, phone, gate_enrollment_id: enrollment, dob, upi_id: upi } };
 }
 
 export async function handler(event) {
@@ -62,7 +65,7 @@ export async function handler(event) {
       const which = /enrollment/.test(error.message || '') ? 'This GATE enrollment ID' : 'This email';
       return json(409, { error: which + ' is already registered for the challenge. Registrations can\'t be changed; email support@taai.live if something is wrong.' });
     }
-    if (error.code === '42P01' || error.code === 'PGRST205' || /does not exist|Could not find the table/.test(error.message || '')) {
+    if (error.code === '42P01' || error.code === 'PGRST205' || error.code === 'PGRST204' || /does not exist|Could not find the/.test(error.message || '')) {
       return json(503, { error: 'Registration isn\'t available just yet. Please try again later.' });
     }
     return json(500, { error: 'Something went wrong. Please try again.' });

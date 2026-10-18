@@ -1110,3 +1110,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON challenge_registrations TO service_role;
 -- built-in default in challenge-register.js (2027-01-04, the admit card
 -- date on gate2027.iitm.ac.in as of 2026-10-18). Set from /team.
 ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS challenge_cutoff DATE;
+-- UPI ID the refund is paid to (2026-10-18, direct request: refunds go to a
+-- UPI ID the student gives, not the original payment method). Required by
+-- challenge-register.js; nullable here only because the table already
+-- existed when this was added.
+ALTER TABLE challenge_registrations ADD COLUMN IF NOT EXISTS upi_id TEXT;
