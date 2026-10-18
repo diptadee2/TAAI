@@ -1206,8 +1206,8 @@
         '<div class="daycard-caption-head"><strong>Caption prompt</strong>' +
           '<button class="btn btn-primary" id="dc-prompt-copy"' + (tasks && tasks.length ? '' : ' disabled') + '>Copy prompt</button>' +
         '</div>' +
-        '<div class="sub">Filled in for the day above. Paste it into any AI chat to get the caption.</div>' +
-        '<textarea id="dc-prompt-text" rows="16" readonly>' + escapeHtml(tasks && tasks.length ? dcCaptionPrompt(dc.batch, iso, tasks) : '') + '</textarea>' +
+        '<div class="sub">Filled in for the day above. You can edit it here before copying; paste it into any AI chat to get the caption.</div>' +
+        '<textarea id="dc-prompt-text" rows="16">' + escapeHtml(tasks && tasks.length ? dcCaptionPrompt(dc.batch, iso, tasks) : '') + '</textarea>' +
         '<div class="daycard-caption-head"><span class="sub">' + (dc.template ? 'Using your saved template.' : 'Using the built-in template.') + '</span>' +
           '<button class="btn" id="dc-tpl-toggle">' + (dc.editingTemplate ? 'Close editor' : 'Edit template') + '</button>' +
         '</div>' +
@@ -1483,6 +1483,7 @@
 
   function loadOfferPoster() {
     var op = state.offerPoster;
+    loadOfferPosterTemplate();
     if (op.pricing || op.loading) { drawOfferPoster(); return; }
     op.loading = true; op.error = null; render();
     Promise.all([
@@ -1508,42 +1509,71 @@
     return new Date(iso + 'T00:00:00+05:30').toLocaleDateString('en-US', withYear ? { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Kolkata' } : { month: 'short', day: 'numeric', timeZone: 'Asia/Kolkata' });
   }
 
-  function opCaptionPrompt() {
+  // Editable caption template (2026-10-19, "make all the prompts editable"):
+  // stored in site_settings.offer_prompt_template (NULL = this built-in
+  // default), {{placeholders}} filled for the chosen post day.
+  var OP_PROMPT_PLACEHOLDERS = ['post_date', 'when_line', 'price', 'offer_end', 'next_price_date', 'next_price', 'challenge_cutoff', 'challenge_link', 'course_link'];
+  var OP_DEFAULT_PROMPT = [
+    'Write a short social media caption (Instagram / LinkedIn / WhatsApp channel) for TAAI, a GATE DA (Data Science and AI) exam-prep brand in India. It goes with a poster that already shows the countdown, the prices and the challenge, so keep the caption short and don\'t repeat everything.',
+    '',
+    'Goal: get people to buy the GATE 2028 Full Course before the super early bird offer ends, and then fill the "100 pe 100% off" challenge form.',
+    '',
+    'This post goes out on {{post_date}}: {{when_line}}.',
+    '',
+    'Facts you may use (use nothing else):',
+    '- Super early bird price of the GATE 2028 Full Course: {{price}} until {{offer_end}}. From {{next_price_date}} it goes up to {{next_price}}.',
+    '- "100 pe 100% off": get an AIR under 100 in GATE DA 2027 and TAAI refunds your full GATE 2028 course fee, and you keep full access to the course.',
+    '- To be eligible you must buy the GATE 2028 Full Course and fill the challenge form by {{challenge_cutoff}}. Only a GATE DA 2027 result counts.',
+    '- GATE DA 2026: 65 marks got AIR 90.',
+    '- The course also prepares you for GATE DA 2028 and includes 5 portfolio projects (machine learning, computer vision, LLMs).',
+    '',
+    'Voice: sounds like a real person (a mentor) typing quickly, not a brand. Plain, direct, urgent but honest. Short sentences. No corporate words (journey, unlock, elevate, game-changer, dive in), no "Here\'s what...", no exclamation spam.',
+    '',
+    'Structure:',
+    '1. Start with the 🔴 emoji followed by "100 pe 100% off", then a first line about the deadline that makes someone stop scrolling.',
+    '2. One or two short lines: the price going up, and the challenge.',
+    '3. A clear call to action to fill the challenge form after buying.',
+    '4. These two links, each on its own line, exactly:',
+    '   Challenge form: {{challenge_link}}',
+    '   Course: {{course_link}}',
+    '5. At most 3 hashtags on the last line.',
+    '',
+    'Rules:',
+    '- Under 60 words before the links.',
+    '- Create urgency only from the real deadline and price rise. Never invent seat limits, numbers of students, other deadlines, results, ranks or quotes.',
+    '- Never say the refund is guaranteed or that filling the form alone earns it.',
+    '- No em dashes or en dashes. Apart from the opening 🔴, at most 1 emoji.',
+    '- Output only the caption.',
+  ].join('\n');
+
+  function opPromptValues() {
     var op = state.offerPoster, pr = op.pricing, left = opDaysLeft();
     var deadline = String(pr.discount_deadline).slice(0, 10);
-    var whenLine = left <= 1 ? 'today is the LAST day of the offer (it ends tonight, ' + opDate(deadline) + ')' : left + ' days are left in the offer, counting today (it ends ' + opDate(deadline) + ')';
-    return [
-      'Write a short social media caption (Instagram / LinkedIn / WhatsApp channel) for TAAI, a GATE DA (Data Science and AI) exam-prep brand in India. It goes with a poster that already shows the countdown, the prices and the challenge, so keep the caption short and don\'t repeat everything.',
-      '',
-      'Goal: get people to buy the GATE 2028 Full Course before the super early bird offer ends, and then fill the "100 pe 100% off" challenge form.',
-      '',
-      'This post goes out on ' + new Date(opPostDate() + 'T00:00:00+05:30').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Asia/Kolkata' }) + ': ' + whenLine + '.',
-      '',
-      'Facts you may use (use nothing else):',
-      '- Super early bird price of the GATE 2028 Full Course: ' + opRupees(pr.price) + ' until ' + opDate(deadline) + '. From ' + opDate(dcAddDays(deadline, 1)) + ' it goes up to ' + opRupees(OP_NEXT_PRICE) + '.',
-      '- "100 pe 100% off": get an AIR under 100 in GATE DA 2027 and TAAI refunds your full GATE 2028 course fee, and you keep full access to the course.',
-      '- To be eligible you must buy the GATE 2028 Full Course and fill the challenge form by ' + opDate(op.cutoff, true) + '. Only a GATE DA 2027 result counts.',
-      '- GATE DA 2026: 65 marks got AIR 90.',
-      '- The course also prepares you for GATE DA 2028 and includes 5 portfolio projects (machine learning, computer vision, LLMs).',
-      '',
-      'Voice: sounds like a real person (a mentor) typing quickly, not a brand. Plain, direct, urgent but honest. Short sentences. No corporate words (journey, unlock, elevate, game-changer, dive in), no "Here\'s what...", no exclamation spam.',
-      '',
-      'Structure:',
-      '1. Start with the 🔴 emoji followed by "100 pe 100% off", then a first line about the deadline that makes someone stop scrolling.',
-      '2. One or two short lines: the price going up, and the challenge.',
-      '3. A clear call to action to fill the challenge form after buying.',
-      '4. These two links, each on its own line, exactly:',
-      '   Challenge form: ' + OP_CHALLENGE_LINK,
-      '   Course: ' + OP_COURSE_LINK,
-      '5. At most 3 hashtags on the last line.',
-      '',
-      'Rules:',
-      '- Under 60 words before the links.',
-      '- Create urgency only from the real deadline and price rise. Never invent seat limits, numbers of students, other deadlines, results, ranks or quotes.',
-      '- Never say the refund is guaranteed or that filling the form alone earns it.',
-      '- No em dashes or en dashes. Apart from the opening 🔴, at most 1 emoji.',
-      '- Output only the caption.',
-    ].join('\n');
+    return {
+      post_date: new Date(opPostDate() + 'T00:00:00+05:30').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Asia/Kolkata' }),
+      when_line: left <= 1 ? 'today is the LAST day of the offer (it ends tonight, ' + opDate(deadline) + ')'
+        : left === 2 ? 'the offer ends TOMORROW (' + opDate(deadline) + ', 11:59 PM)'
+        : left + ' days are left in the offer, counting today (it ends ' + opDate(deadline) + ')',
+      price: opRupees(pr.price),
+      offer_end: opDate(deadline),
+      next_price_date: opDate(dcAddDays(deadline, 1)),
+      next_price: opRupees(OP_NEXT_PRICE),
+      challenge_cutoff: opDate(op.cutoff, true),
+      challenge_link: OP_CHALLENGE_LINK,
+      course_link: OP_COURSE_LINK,
+    };
+  }
+  function opCaptionPrompt() {
+    var tpl = state.offerPoster.template || OP_DEFAULT_PROMPT, vals = opPromptValues();
+    return tpl.replace(/\{\{\s*(\w+)\s*\}\}/g, function (m, k) { return Object.prototype.hasOwnProperty.call(vals, k) ? vals[k] : m; });
+  }
+  function loadOfferPosterTemplate() {
+    var op = state.offerPoster;
+    if (op.templateLoaded) return;
+    op.templateLoaded = true;
+    api('/site-settings').then(function (d) { op.template = (d.row && d.row.offer_prompt_template) || null; })
+      .catch(function () { op.template = null; })
+      .then(function () { if (state.tab === 'offer-poster') render(); });
   }
 
   function renderOfferPoster() {
@@ -1562,13 +1592,25 @@
       '</div>' +
       status +
       '<div class="daycard-preview"><canvas id="offer-canvas" width="1080" height="1080"></canvas></div>' +
-      '<div class="sub">1080 × 1080. Price, offer deadline and challenge cutoff come live from Site data.' + (ready ? ' Countdown: ' + (left === 1 ? 'last day' : left + ' days left') + ' on the post day.' : '') + '</div>' +
+      '<div class="sub">1080 × 1080. Price, offer deadline and challenge cutoff come live from Site data.' + (ready ? ' Countdown: ' + (left === 1 ? 'offer ends today' : left === 2 ? 'offer ends tomorrow' : left + ' days left') + ' on the post day.' : '') + '</div>' +
       '<div class="daycard-caption">' +
         '<div class="daycard-caption-head"><strong>Caption prompt</strong>' +
           '<button class="btn btn-primary" id="op-prompt-copy"' + (ready ? '' : ' disabled') + '>Copy prompt</button>' +
         '</div>' +
-        '<div class="sub">Filled in for the post day above. Paste it into any AI chat to get the caption.</div>' +
-        '<textarea id="op-prompt-text" rows="18" readonly>' + escapeHtml(ready ? opCaptionPrompt() : '') + '</textarea>' +
+        '<div class="sub">Filled in for the post day above. You can edit it here before copying; paste it into any AI chat to get the caption.</div>' +
+        '<textarea id="op-prompt-text" rows="18">' + escapeHtml(ready ? opCaptionPrompt() : '') + '</textarea>' +
+        '<div class="daycard-caption-head"><span class="sub">' + (op.template ? 'Using your saved template.' : 'Using the built-in template.') + '</span>' +
+          '<button class="btn" id="op-tpl-toggle">' + (op.editingTemplate ? 'Close editor' : 'Edit template') + '</button>' +
+        '</div>' +
+        (op.editingTemplate
+          ? '<div class="sub">Placeholders filled in for each post day: ' + OP_PROMPT_PLACEHOLDERS.map(function (k) { return '<code>{{' + k + '}}</code>'; }).join(' ') + '. Saved for everyone on /team, no deploy needed.</div>' +
+            '<textarea id="op-tpl-text" rows="22">' + escapeHtml(op.templateDraft != null ? op.templateDraft : (op.template || OP_DEFAULT_PROMPT)) + '</textarea>' +
+            '<div class="daycard-caption-head">' +
+              (op.templateMsg ? '<span class="sub">' + escapeHtml(op.templateMsg) + '</span>' : '<span></span>') +
+              '<button class="btn" id="op-tpl-reset"' + (op.templateSaving ? ' disabled' : '') + '>Reset to default</button>' +
+              '<button class="btn btn-primary" id="op-tpl-save"' + (op.templateSaving ? ' disabled' : '') + '>' + (op.templateSaving ? 'Saving…' : 'Save template') + '</button>' +
+            '</div>'
+          : '') +
       '</div>' +
     '</div>';
   }
@@ -1588,6 +1630,23 @@
         setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
       }, 'image/png');
     });
+    var tt = document.getElementById('op-tpl-toggle');
+    if (tt) tt.addEventListener('click', function () { op.editingTemplate = !op.editingTemplate; op.templateMsg = null; op.templateDraft = null; render(); });
+    var saveTpl = function (value) {
+      var ta2 = document.getElementById('op-tpl-text'); if (ta2) op.templateDraft = ta2.value;
+      op.templateSaving = true; op.templateMsg = null; render();
+      api('/site-settings', { method: 'PUT', body: JSON.stringify({ offer_prompt_template: value }) })
+        .then(function (d) { op.template = (d.row && d.row.offer_prompt_template) || null; op.templateDraft = null; op.templateMsg = value ? 'Saved.' : 'Back to the built-in template.'; })
+        .catch(function (e) { op.templateMsg = 'Could not save: ' + e.message; })
+        .then(function () { op.templateSaving = false; render(); });
+    };
+    var ts = document.getElementById('op-tpl-save');
+    if (ts) ts.addEventListener('click', function () {
+      var v = (document.getElementById('op-tpl-text') || {}).value || '';
+      saveTpl(v.trim() === OP_DEFAULT_PROMPT.trim() ? '' : v);
+    });
+    var tr = document.getElementById('op-tpl-reset');
+    if (tr) tr.addEventListener('click', function () { if (confirm('Reset the caption prompt to the built-in template?')) saveTpl(''); });
     var cp = document.getElementById('op-prompt-copy');
     if (cp) cp.addEventListener('click', function () {
       var ta = document.getElementById('op-prompt-text'); if (!ta) return;
@@ -1637,9 +1696,15 @@
       var HOT = last ? '#FCA5A5' : left === 2 ? '#FDBA74' : '#F9A8D4';
       box(P, heroTop, hbW, hbH, HOT, 10);
       ctx.fillStyle = INK; ctx.font = '500 26px ' + MONO;
-      ctx.fillText(last ? 'OFFER ENDS' : 'ONLY', P + 32, heroTop + 54);
-      if (last) {
-        ctx.font = '800 136px ' + FONT; ctx.fillText('TODAY', P + 26, heroTop + 204);
+      // The last two days read "OFFER ENDS TODAY / TOMORROW" (2026-10-19,
+      // direct request), earlier days "ONLY N DAYS LEFT".
+      var endsWord = last ? 'TODAY' : left === 2 ? 'TOMORROW' : null;
+      ctx.fillText(endsWord ? 'OFFER ENDS' : 'ONLY', P + 32, heroTop + 54);
+      if (endsWord) {
+        var fsz = 136;
+        ctx.font = '800 ' + fsz + 'px ' + FONT;
+        while (ctx.measureText(endsWord).width > hbW - 56 && fsz > 60) { fsz -= 4; ctx.font = '800 ' + fsz + 'px ' + FONT; }
+        ctx.fillText(endsWord, P + 26, heroTop + 158 + fsz * 0.34);
       } else {
         ctx.font = '800 190px ' + FONT; ctx.fillText(String(left), P + 24, heroTop + 222);
         var nw = ctx.measureText(String(left)).width;
