@@ -949,6 +949,19 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     @media (max-width: 600px) {
       html body #root .feat-quote, html body #root .testi-quote { font-size: 15.5px !important; }
     }
+    /* Shorter quotes print bigger so they fill a card that's as tall as its
+       longer neighbour (classes set by QuoteClamp from the quote length). */
+    html body #root .q-len-xl { font-size: 18px !important; }
+    html body #root .q-len-l { font-size: 20px !important; line-height: 1.42 !important; }
+    html body #root .q-len-m { font-size: 24px !important; line-height: 1.36 !important; }
+    html body #root .q-len-s { font-size: 27px !important; line-height: 1.3 !important; letter-spacing: -0.015em; }
+    html body #root .q-len-xs { font-size: 30px !important; line-height: 1.28 !important; letter-spacing: -0.02em; }
+    @media (max-width: 600px) {
+      html body #root .q-len-xl { font-size: 16px !important; }
+      html body #root .q-len-l { font-size: 17px !important; }
+      html body #root .q-len-m { font-size: 19px !important; }
+      html body #root .q-len-s, html body #root .q-len-xs { font-size: 21px !important; }
+    }
     html body #root .quote-more { display: none; }
     /* Phones and small tablets: each batch's testimonials as its own horizontal swipe row (next card peeks in), 2026-10-16 */
     @media (max-width: 768px) {
@@ -1296,9 +1309,14 @@ function Hero() {
 function QuoteClamp({ text, cls }) {
   const [open, setOpen] = React.useState(false);
   const long = text.length > 300;
+  // Shorter quotes print bigger (2026-10-18, "fill the negative spaces"):
+  // cards in a row share the longest quote's height, so a short quote at
+  // the base size left a large empty band. Sizes are in the neo layer.
+  const n = text.length;
+  const size = n <= 210 ? ' q-len-xs' : n <= 260 ? ' q-len-s' : n <= 340 ? ' q-len-m' : n <= 480 ? ' q-len-l' : n <= 600 ? ' q-len-xl' : '';
   return (
     <>
-      <p className={cls + (long && !open ? ' is-clamped' : '')}>"{withDiscordLink(text)}"</p>
+      <p className={cls + size + (long && !open ? ' is-clamped' : '')}>"{withDiscordLink(text)}"</p>
       {long && <button type="button" className="quote-more" aria-expanded={open} onClick={() => setOpen(v => !v)}>{open ? 'Show less' : 'Read more'}</button>}
     </>
   );
