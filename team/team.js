@@ -308,6 +308,7 @@
     renameStatus: null, // { webhookUrl, saving } | { webhookUrl, error } | null
     tab: 'announcements', // 'announcements' | 'students' — mutually exclusive views, not stacked panels
     dayCard: { batch: 'D', which: 'today', theme: 'auto', date: '', months: {}, loading: false, error: null }, // Day card tab (2026-10-09)
+    offerPoster: { which: 'today', pricing: null, cutoff: null, loading: false, error: null }, // Offer poster tab (2026-10-18)
     students: null, // null = not loaded yet; array once fetched
     studentsLoading: false,
     studentsError: null,
@@ -986,6 +987,7 @@
         '<button class="tab-btn' + (isStudents ? ' active' : '') + '" data-tab="students">👥 Students' + studentsCountLabel + '</button>' +
         '<button class="tab-btn' + (isSiteData ? ' active' : '') + '" data-tab="site-data">🗂️ Site data</button>' +
         '<button class="tab-btn' + (state.tab === 'day-card' ? ' active' : '') + '" data-tab="day-card">📸 Day card</button>' +
+        '<button class="tab-btn' + (state.tab === 'offer-poster' ? ' active' : '') + '" data-tab="offer-poster">🔥 Offer poster</button>' +
       '</div>';
 
     var actionsHtml = isAnnouncements
@@ -1015,7 +1017,9 @@
         ? renderStudents()
         : state.tab === 'day-card'
           ? renderDayCard()
-          : (msgHtml + renderSiteData());
+          : state.tab === 'offer-poster'
+            ? renderOfferPoster()
+            : (msgHtml + renderSiteData());
 
     root.innerHTML =
       '<div class="wrap">' +
@@ -1032,6 +1036,7 @@
 
     bindEvents();
     if (state.tab === 'day-card') bindDayCard();
+    if (state.tab === 'offer-poster') bindOfferPoster();
   }
 
   // ── Day card (2026-10-09) ────────────────────────────────────────────
@@ -1448,6 +1453,245 @@
     };
     if (document.fonts && document.fonts.load) {
       Promise.all(['800 150px Poppins', '700 38px Poppins', '600 30px Poppins', '500 26px Poppins', '500 21px "Geist Mono"'].map(function (f) { return document.fonts.load(f); })).then(go, go);
+    } else go();
+  }
+
+  // ── Offer poster (2026-10-18) ─────────────────────────────────────────
+  // "Super early bird is expiring" poster: a countdown to the GATE 2028
+  // Full Course offer deadline that asks people to fill the "100 pe 100%
+  // off" challenge form (taai.live/challenge), plus a copyable caption
+  // prompt. Price and deadline come live from /api/site-pricing-public
+  // (full-course-2028); the challenge cutoff from /api/challenge-register.
+  // OP_NEXT_PRICE mirrors netlify/functions/pricing-2028-cutover.js (the
+  // automatic switch after Oct 20): update both together.
+  var OP_COURSE_ID = 'full-course-2028';
+  var OP_NEXT_PRICE = 11999;
+  var OP_CHALLENGE_LINK = 'https://taai.live/challenge';
+  var OP_COURSE_LINK = 'https://taai.live/gate-da-courses';
+
+  function loadOfferPoster() {
+    var op = state.offerPoster;
+    if (op.pricing || op.loading) { drawOfferPoster(); return; }
+    op.loading = true; op.error = null; render();
+    Promise.all([
+      fetch('/api/site-pricing-public').then(function (r) { if (!r.ok) throw new Error('pricing ' + r.status); return r.json(); }),
+      fetch('/api/challenge-register').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }),
+    ]).then(function (res) {
+      var rows = (res[0] && res[0].rows) || {};
+      op.pricing = rows[OP_COURSE_ID] || {};
+      op.cutoff = (res[1] && res[1].cutoff) || '2027-01-04';
+    }).catch(function (e) { op.error = 'Could not load the course price: ' + e.message; })
+      .then(function () { op.loading = false; if (state.tab === 'offer-poster') render(); });
+  }
+
+  function opPostDate() { var t = dcTodayIST(); return state.offerPoster.which === 'tomorrow' ? dcAddDays(t, 1) : t; }
+  // Days left counting the post date itself: deadline day = 1 ("Last day").
+  function opDaysLeft() {
+    var pr = state.offerPoster.pricing;
+    if (!pr || !pr.discount_deadline) return null;
+    return dcDiffDays(String(pr.discount_deadline).slice(0, 10), opPostDate()) + 1;
+  }
+  function opRupees(n) { return '₹' + Number(n).toLocaleString('en-IN'); }
+  function opDate(iso, withYear) {
+    return new Date(iso + 'T00:00:00+05:30').toLocaleDateString('en-US', withYear ? { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Kolkata' } : { month: 'short', day: 'numeric', timeZone: 'Asia/Kolkata' });
+  }
+
+  function opCaptionPrompt() {
+    var op = state.offerPoster, pr = op.pricing, left = opDaysLeft();
+    var deadline = String(pr.discount_deadline).slice(0, 10);
+    var whenLine = left <= 1 ? 'today is the LAST day of the offer (it ends tonight, ' + opDate(deadline) + ')' : left + ' days are left in the offer, counting today (it ends ' + opDate(deadline) + ')';
+    return [
+      'Write a short social media caption (Instagram / LinkedIn / WhatsApp channel) for TAAI, a GATE DA (Data Science and AI) exam-prep brand in India. It goes with a poster that already shows the countdown, the prices and the challenge, so keep the caption short and don\'t repeat everything.',
+      '',
+      'Goal: get people to buy the GATE 2028 Full Course before the super early bird offer ends, and then fill the "100 pe 100% off" challenge form.',
+      '',
+      'This post goes out on ' + new Date(opPostDate() + 'T00:00:00+05:30').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Asia/Kolkata' }) + ': ' + whenLine + '.',
+      '',
+      'Facts you may use (use nothing else):',
+      '- Super early bird price of the GATE 2028 Full Course: ' + opRupees(pr.price) + ' until ' + opDate(deadline) + '. From ' + opDate(dcAddDays(deadline, 1)) + ' it goes up to ' + opRupees(OP_NEXT_PRICE) + '.',
+      '- "100 pe 100% off": get an AIR under 100 in GATE DA 2027 and TAAI refunds your full GATE 2028 course fee, and you keep full access to the course.',
+      '- To be eligible you must buy the GATE 2028 Full Course and fill the challenge form by ' + opDate(op.cutoff, true) + '. Only a GATE DA 2027 result counts.',
+      '- GATE DA 2026: 65 marks got AIR 90.',
+      '- The course also prepares you for GATE DA 2028 and includes 5 portfolio projects (machine learning, computer vision, LLMs).',
+      '',
+      'Voice: sounds like a real person (a mentor) typing quickly, not a brand. Plain, direct, urgent but honest. Short sentences. No corporate words (journey, unlock, elevate, game-changer, dive in), no "Here\'s what...", no exclamation spam.',
+      '',
+      'Structure:',
+      '1. Start with the 🔴 emoji followed by "100 pe 100% off", then a first line about the deadline that makes someone stop scrolling.',
+      '2. One or two short lines: the price going up, and the challenge.',
+      '3. A clear call to action to fill the challenge form after buying.',
+      '4. These two links, each on its own line, exactly:',
+      '   Challenge form: ' + OP_CHALLENGE_LINK,
+      '   Course: ' + OP_COURSE_LINK,
+      '5. At most 3 hashtags on the last line.',
+      '',
+      'Rules:',
+      '- Under 60 words before the links.',
+      '- Create urgency only from the real deadline and price rise. Never invent seat limits, numbers of students, other deadlines, results, ranks or quotes.',
+      '- Never say the refund is guaranteed or that filling the form alone earns it.',
+      '- No em dashes or en dashes. Apart from the opening 🔴, at most 1 emoji.',
+      '- Output only the caption.',
+    ].join('\n');
+  }
+
+  function renderOfferPoster() {
+    var op = state.offerPoster, left = opDaysLeft();
+    var ready = op.pricing && left != null && left >= 1;
+    var opt = function (v, label) { return '<option value="' + v + '"' + (v === op.which ? ' selected' : '') + '>' + label + '</option>'; };
+    var status = op.error ? '<div class="msg msg-error">' + escapeHtml(op.error) + '</div>'
+      : op.loading || !op.pricing ? '<div class="sub">Loading the offer…</div>'
+      : left == null ? '<div class="msg msg-error">The GATE 2028 Full Course has no offer deadline set in Site data > Pricing.</div>'
+      : left < 1 ? '<div class="msg msg-error">The super early bird offer ended on ' + escapeHtml(opDate(String(op.pricing.discount_deadline).slice(0, 10), true)) + '. Nothing to count down to.</div>'
+      : '';
+    return '<div class="card daycard">' +
+      '<div class="daycard-controls">' +
+        '<label class="field">Post day<select id="op-which">' + opt('today', 'Today') + opt('tomorrow', 'Tomorrow') + '</select></label>' +
+        '<button class="btn btn-primary" id="op-download"' + (ready ? '' : ' disabled') + '>Download PNG</button>' +
+      '</div>' +
+      status +
+      '<div class="daycard-preview"><canvas id="offer-canvas" width="1080" height="1080"></canvas></div>' +
+      '<div class="sub">1080 × 1080. Price, offer deadline and challenge cutoff come live from Site data.' + (ready ? ' Countdown: ' + (left === 1 ? 'last day' : left + ' days left') + ' on the post day.' : '') + '</div>' +
+      '<div class="daycard-caption">' +
+        '<div class="daycard-caption-head"><strong>Caption prompt</strong>' +
+          '<button class="btn btn-primary" id="op-prompt-copy"' + (ready ? '' : ' disabled') + '>Copy prompt</button>' +
+        '</div>' +
+        '<div class="sub">Filled in for the post day above. Paste it into any AI chat to get the caption.</div>' +
+        '<textarea id="op-prompt-text" rows="18" readonly>' + escapeHtml(ready ? opCaptionPrompt() : '') + '</textarea>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function bindOfferPoster() {
+    var op = state.offerPoster;
+    var w = document.getElementById('op-which');
+    if (w) w.addEventListener('change', function () { op.which = w.value; render(); });
+    var dl = document.getElementById('op-download');
+    if (dl) dl.addEventListener('click', function () {
+      var c = document.getElementById('offer-canvas'); if (!c) return;
+      c.toBlob(function (blob) {
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'taai-early-bird-' + opPostDate() + '.png';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+      }, 'image/png');
+    });
+    var cp = document.getElementById('op-prompt-copy');
+    if (cp) cp.addEventListener('click', function () {
+      var ta = document.getElementById('op-prompt-text'); if (!ta) return;
+      var done = function () { cp.textContent = 'Copied'; setTimeout(function () { cp.textContent = 'Copy prompt'; }, 1500); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(done, function () { ta.select(); document.execCommand('copy'); done(); });
+      else { ta.select(); document.execCommand('copy'); done(); }
+    });
+    drawOfferPoster();
+  }
+
+  function drawOfferPoster() {
+    var c = document.getElementById('offer-canvas'); if (!c) return;
+    var op = state.offerPoster;
+    if (!dcLogo) { dcLogo = new Image(); dcLogo.onload = function () { drawOfferPoster(); }; dcLogo.src = '/logo.webp'; }
+    var FONT = '"Poppins", "Geist", system-ui, sans-serif', MONO = '"Geist Mono", ui-monospace, monospace';
+    var go = function () {
+      var ctx = c.getContext('2d'), S = 1080, P = 72, INK = '#111111', PAPER = '#FFF4D6', YEL = '#FDE047';
+      ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
+      var box = function (x, y, w, h, fill, sh, shCol, bw) {
+        sh = sh == null ? 8 : sh; bw = bw || 4;
+        if (sh) { ctx.fillStyle = shCol || INK; ctx.fillRect(x + sh, y + sh, w, h); }
+        ctx.fillStyle = fill; ctx.fillRect(x, y, w, h);
+        ctx.strokeStyle = INK; ctx.lineWidth = bw; ctx.strokeRect(x + bw / 2, y + bw / 2, w - bw, h - bw);
+      };
+      ctx.fillStyle = PAPER; ctx.fillRect(0, 0, S, S);
+      ctx.fillStyle = 'rgba(17,17,17,0.09)';
+      for (var gx = 18; gx < S; gx += 36) for (var gy = 18; gy < S; gy += 36) { ctx.beginPath(); ctx.arc(gx, gy, 1.6, 0, Math.PI * 2); ctx.fill(); }
+
+      var pr = op.pricing, left = opDaysLeft();
+      if (!pr || left == null || left < 1) {
+        ctx.fillStyle = INK; ctx.font = '600 34px ' + FONT;
+        ctx.fillText(op.loading || !pr ? 'Loading…' : 'The super early bird offer has ended.', P, S / 2);
+        return;
+      }
+      var deadline = String(pr.discount_deadline).slice(0, 10);
+      var last = left === 1;
+
+      // Header: logo + black tag.
+      if (dcLogo && dcLogo.complete && dcLogo.naturalWidth) ctx.drawImage(dcLogo, 104, 68, 150, 80, P, P - 2, 56 * 150 / 80, 56);
+      ctx.font = '500 22px ' + MONO;
+      var tag = 'SUPER EARLY BIRD · GATE 2028 FULL COURSE', tgw = ctx.measureText(tag).width + 36;
+      ctx.fillStyle = INK; ctx.fillRect(S - P - tgw, P + 2, tgw, 50);
+      ctx.fillStyle = PAPER; ctx.textBaseline = 'middle'; ctx.fillText(tag, S - P - tgw + 18, P + 28); ctx.textBaseline = 'alphabetic';
+
+      // Hero: the countdown (urgency colour) + price box.
+      var heroTop = 168, hbW = 540, hbH = 300;
+      var HOT = last ? '#FCA5A5' : left === 2 ? '#FDBA74' : '#F9A8D4';
+      box(P, heroTop, hbW, hbH, HOT, 10);
+      ctx.fillStyle = INK; ctx.font = '500 26px ' + MONO;
+      ctx.fillText(last ? 'OFFER ENDS' : 'ONLY', P + 32, heroTop + 54);
+      if (last) {
+        ctx.font = '800 136px ' + FONT; ctx.fillText('TODAY', P + 26, heroTop + 204);
+      } else {
+        ctx.font = '800 190px ' + FONT; ctx.fillText(String(left), P + 24, heroTop + 222);
+        var nw = ctx.measureText(String(left)).width;
+        ctx.font = '800 54px ' + FONT; ctx.fillText('DAYS', P + 24 + nw + 24, heroTop + 150);
+        ctx.fillText('LEFT', P + 24 + nw + 24, heroTop + 208);
+      }
+      ctx.fillStyle = INK; ctx.fillRect(P, heroTop + hbH - 48, hbW, 48);
+      ctx.fillStyle = PAPER; ctx.font = '600 24px ' + FONT; ctx.textBaseline = 'middle';
+      ctx.fillText('Offer ends ' + opDate(deadline) + ', 11:59 PM', P + 28, heroTop + hbH - 24); ctx.textBaseline = 'alphabetic';
+
+      var bx = P + hbW + 40, bw2 = S - P - bx - 10;
+      box(bx, heroTop, bw2, hbH, '#FFFFFF', 10);
+      ctx.fillStyle = INK; ctx.font = '500 20px ' + MONO; ctx.fillText('NOW', bx + 28, heroTop + 50);
+      ctx.font = '800 64px ' + FONT; ctx.fillText(opRupees(pr.price), bx + 26, heroTop + 120);
+      ctx.font = '500 20px ' + MONO; ctx.fillStyle = 'rgba(17,17,17,0.65)';
+      ctx.fillText('FROM ' + opDate(dcAddDays(deadline, 1)).toUpperCase() + ' IT GOES UP TO', bx + 28, heroTop + 172);
+      ctx.font = '700 44px ' + FONT; ctx.fillStyle = '#B91C1C';
+      ctx.fillText(opRupees(OP_NEXT_PRICE), bx + 26, heroTop + 222);
+      ctx.font = '700 22px ' + FONT;
+      var save = 'Save ' + opRupees(OP_NEXT_PRICE - pr.price), sw2 = ctx.measureText(save).width + 24;
+      ctx.fillStyle = '#BEF264'; ctx.fillRect(bx + 26, heroTop + 244, sw2, 36);
+      ctx.strokeStyle = INK; ctx.lineWidth = 3; ctx.strokeRect(bx + 27.5, heroTop + 245.5, sw2 - 3, 33);
+      ctx.fillStyle = INK; ctx.textBaseline = 'middle'; ctx.fillText(save, bx + 38, heroTop + 263); ctx.textBaseline = 'alphabetic';
+
+      // Challenge panel: black block with a yellow hard shadow.
+      var panelY = heroTop + hbH + 48, panelH = 214;
+      box(P, panelY, S - 2 * P - 10, panelH, INK, 10, YEL);
+      var px = P + 34;
+      ctx.font = '700 22px ' + FONT;
+      var ptag = '100 pe 100% off', ptw = ctx.measureText(ptag).width + 28;
+      ctx.fillStyle = YEL; ctx.fillRect(px, panelY + 26, ptw, 38);
+      ctx.fillStyle = INK; ctx.textBaseline = 'middle'; ctx.fillText(ptag, px + 14, panelY + 45); ctx.textBaseline = 'alphabetic';
+      ctx.font = '600 22px ' + FONT; ctx.fillStyle = 'rgba(255,244,214,0.85)';
+      ctx.fillText('the GATE DA 2027 challenge', px + ptw + 16, panelY + 53);
+      ctx.font = '700 40px ' + FONT; ctx.fillStyle = '#FFFFFF';
+      ctx.fillText('AIR under 100 in GATE DA 2027', px, panelY + 110);
+      ctx.fillStyle = YEL; ctx.fillText('= 100% of your fee back.', px, panelY + 156);
+      ctx.font = '500 21px ' + FONT; ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.fillText('You keep the course. Last year, 65 marks got AIR 90.', px, panelY + 193);
+
+      // Two steps.
+      var stY = panelY + panelH + 44, stH = 108, gap = 28, stW = (S - 2 * P - 10 - gap) / 2;
+      [['1', 'Buy the course', 'at ' + opRupees(pr.price) + ' by ' + opDate(deadline)], ['2', 'Fill the challenge form', 'by ' + opDate(op.cutoff, true)]].forEach(function (st, i) {
+        var sx = P + i * (stW + gap);
+        box(sx, stY, stW, stH, i === 1 ? YEL : '#FFFFFF', 6);
+        ctx.fillStyle = INK; ctx.fillRect(sx + 20, stY + 24, 56, 56);
+        ctx.fillStyle = PAPER; ctx.font = '800 34px ' + FONT; ctx.textAlign = 'center'; ctx.fillText(st[0], sx + 48, stY + 64); ctx.textAlign = 'left';
+        ctx.fillStyle = INK; ctx.font = '700 27px ' + FONT; ctx.fillText(st[1], sx + 96, stY + 50);
+        ctx.font = '500 21px ' + FONT; ctx.fillStyle = '#3A3A3A'; ctx.fillText(st[2], sx + 96, stY + 82);
+      });
+
+      // Footer: the form link.
+      var footY = S - P + 4;
+      ctx.font = '600 28px ' + FONT; ctx.fillStyle = INK;
+      ctx.fillText('Fill the form at', P, footY);
+      ctx.font = '800 34px ' + FONT;
+      var url = 'taai.live/challenge', uw = ctx.measureText(url).width;
+      var ux = P + 236;
+      ctx.fillStyle = YEL; ctx.fillRect(ux - 10, footY - 36, uw + 20, 48);
+      ctx.strokeStyle = INK; ctx.lineWidth = 3; ctx.strokeRect(ux - 8.5, footY - 34.5, uw + 17, 45);
+      ctx.fillStyle = INK; ctx.fillText(url, ux, footY);
+    };
+    if (document.fonts && document.fonts.load) {
+      Promise.all(['800 190px Poppins', '700 40px Poppins', '600 28px Poppins', '500 21px Poppins', '500 22px "Geist Mono"'].map(function (f) { return document.fonts.load(f); })).then(go, go);
     } else go();
   }
 
@@ -2651,6 +2895,7 @@
         if (tab === 'students' && state.students === null) { loadStudents(); return; }
         if (tab === 'site-data' && ensureSiteDataLoaded(state.siteData.subTab)) return;
         if (tab === 'day-card') { render(); loadDayCardMonth(); loadDayCardTemplate(); return; }
+        if (tab === 'offer-poster') { render(); loadOfferPoster(); return; }
         render();
       });
     });
