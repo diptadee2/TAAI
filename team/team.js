@@ -342,6 +342,9 @@
       error: null,
       hideFinancialAssistance: false,
     },
+    // Site data > Challenge (2026-10-18): "100 pe 100% off" registrations
+    // and the registration cutoff date.
+    challenge: { loaded: false, loading: false, saving: false, error: null, rows: [], cutoff: null, open: true, msg: null },
     msg: null,
     msgType: null,
   };
@@ -1872,6 +1875,11 @@
   // and reports back whether a load was kicked off (so the caller knows
   // whether to skip its own render(), since the loader already renders).
   function ensureSiteDataLoaded(type) {
+    if (type === 'challenge') {
+      if (state.challenge.loaded || state.challenge.loading) return false;
+      loadChallenge();
+      return true;
+    }
     if (type === 'settings') {
       if (state.siteSettings.loaded || state.siteSettings.loading) return false;
       loadSiteSettings();
@@ -1893,6 +1901,8 @@
     }).join('');
     var settingsActive = state.siteData.subTab === 'settings';
     html += '<button class="tab-btn' + (settingsActive ? ' active' : '') + '" data-sitetab="settings">⚙️ Settings</button>';
+    var ch = state.challenge;
+    html += '<button class="tab-btn' + (state.siteData.subTab === 'challenge' ? ' active' : '') + '" data-sitetab="challenge">🏆 Challenge' + (ch.loaded ? ' (' + ch.rows.length + ')' : '') + '</button>';
     return html;
   }
 
@@ -2165,6 +2175,7 @@
     notes: 'Downloadable PDF notes, organized by subject.',
     lectures: 'Video lectures and their slides, organized by subject.',
     settings: 'Site-wide switches for what shows on taai.live.',
+    challenge: 'Students who registered for the "100 pe 100% off" challenge on the courses page. Details are locked for students; deleting a row here lets them submit again (only do that when they emailed about a genuine mistake).',
   };
   // Pricing went live 2026-09-23 and Notes/Lectures on 2026-10-15 (the
   // Resources page reads them via /api/site-resources-public; the Google
@@ -2176,6 +2187,7 @@
     notes: 'Changes here show on the taai.live Resources page within about a minute. No deploy needed.',
     lectures: 'Changes here show on the taai.live Resources page within about a minute. No deploy needed.',
     settings: 'Changes here go live on taai.live immediately — no deploy needed.',
+    challenge: 'The cutoff applies to the courses page form immediately.',
   };
   var SITE_DATA_NEW_LABEL = { pricing: '+ New course', notes: '+ New note', lectures: '+ New lecture' };
   var SITE_DATA_SINGULAR = { pricing: 'course', notes: 'note', lectures: 'lecture' };
@@ -2193,16 +2205,16 @@
     // is a deliberate two-step, code-first action, not a one-click /team
     // form. Notes/Lectures have no such constraint and keep their own
     // "+ New" button. Settings has no rows to create at all.
-    var showNewButton = type !== 'pricing' && type !== 'settings';
+    var showNewButton = type !== 'pricing' && type !== 'settings' && type !== 'challenge';
 
     return (
       '<div class="card">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px;">' +
-          '<div class="tabs" style="margin:0;">' + renderSiteDataTabs() + '</div>' +
+          '<div class="tabs sitedata-tabs" style="margin:0;">' + renderSiteDataTabs() + '</div>' +
           (editingThis || !showNewButton ? '' : '<button class="btn btn-primary" id="sitedata-new">' + SITE_DATA_NEW_LABEL[type] + '</button>') +
         '</div>' +
         '<div class="field-hint" style="margin-bottom:16px;">' + SITE_DATA_INTRO[type] + ' ' + SITE_DATA_LIVE_NOTE[type] + '</div>' +
-        (type === 'settings' ? renderSiteSettingsPanel() : (editingThis ? renderSiteDataForm(type, editingThis) : renderSiteDataList(type))) +
+        (type === 'challenge' ? renderChallengePanel() : type === 'settings' ? renderSiteSettingsPanel() : (editingThis ? renderSiteDataForm(type, editingThis) : renderSiteDataList(type))) +
       '</div>'
     );
   }
@@ -2224,6 +2236,85 @@
           '<span class="site-setting-switch-track"></span>' +
         '</label>' +
       '</div>'
+    );
+  }
+
+  // ── Site data > Challenge ────────────────────────────────────────────
+  function loadChallenge() {
+    var ch = state.challenge;
+    ch.loading = true; ch.error = null;
+    render();
+    api('/team-challenge').then(function (data) {
+      ch.rows = data.rows || [];
+      ch.cutoff = data.cutoff;
+      ch.open = !!data.open;
+      ch.error = data.error || null;
+      ch.loaded = true; ch.loading = false;
+      render();
+    }).catch(function (err) { ch.loading = false; ch.error = err.message; render(); });
+  }
+
+  function saveChallengeCutoff(value) {
+    var ch = state.challenge;
+    ch.saving = true; ch.error = null; ch.msg = null;
+    render();
+    api('/site-settings', { method: 'PUT', body: JSON.stringify({ challenge_cutoff: value }) }).then(function () {
+      ch.saving = false; ch.msg = 'Cutoff saved.';
+      ch.loaded = false;
+      loadChallenge();
+    }).catch(function (err) { ch.saving = false; ch.error = err.message; render(); });
+  }
+
+  function deleteChallengeRow(id, name) {
+    if (!window.confirm('Delete the challenge registration for ' + name + '? They will be able to submit the form again.')) return;
+    var ch = state.challenge;
+    api('/team-challenge?id=' + encodeURIComponent(id), { method: 'DELETE' }).then(function () {
+      ch.rows = ch.rows.filter(function (r) { return r.id !== id; });
+      ch.msg = 'Deleted.';
+      render();
+    }).catch(function (err) { ch.error = err.message; render(); });
+  }
+
+  function fmtIstDateTime(iso) {
+    if (!iso) return '';
+    return new Date(iso).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' IST';
+  }
+
+  function renderChallengePanel() {
+    var ch = state.challenge;
+    if (ch.loading && !ch.loaded) return '<div class="field-hint">Loading…</div>';
+    var rowsHtml = ch.rows.length ? (
+      '<div class="students-table-wrap"><table class="students-table sitedata-table"><thead><tr>' +
+        '<th>Name</th><th>Email</th><th>Mobile</th><th>GATE enrollment ID</th><th>Date of birth</th><th>Submitted</th><th></th>' +
+      '</tr></thead><tbody>' +
+      ch.rows.map(function (r) {
+        return '<tr>' +
+          '<td>' + escapeHtml(r.full_name) + '</td>' +
+          '<td><a href="mailto:' + escapeHtml(r.email) + '">' + escapeHtml(r.email) + '</a></td>' +
+          '<td>' + escapeHtml(r.phone) + '</td>' +
+          '<td><code>' + escapeHtml(r.gate_enrollment_id) + '</code></td>' +
+          '<td>' + escapeHtml(String(r.dob || '')) + '</td>' +
+          '<td>' + escapeHtml(fmtIstDateTime(r.submitted_at)) + '</td>' +
+          '<td><button class="btn btn-small btn-danger js-chal-delete" data-id="' + escapeHtml(r.id) + '" data-name="' + escapeHtml(r.full_name) + '">Delete</button></td>' +
+        '</tr>';
+      }).join('') +
+      '</tbody></table></div>'
+    ) : '<div class="field-hint">No registrations yet.</div>';
+    return (
+      (ch.error ? '<div class="msg msg-error">' + escapeHtml(ch.error) + '</div>' : '') +
+      (ch.msg ? '<div class="msg msg-ok">' + escapeHtml(ch.msg) + '</div>' : '') +
+      '<div class="site-setting-row chal-cutoff-row">' +
+        '<div class="site-setting-info">' +
+          '<div class="site-setting-title">Registration cutoff: ' + escapeHtml(ch.cutoff || '') + ' (' + (ch.open ? 'open' : 'closed') + ')</div>' +
+          '<div class="field-hint">The form closes at 11:59 PM IST on this date. It should be the GATE DA 2027 admit card day (4 Jan 2027 on gate2027.iitm.ac.in as of 18 Oct 2026). Change it here if IIT Madras moves that date. Clear it to go back to 4 Jan 2027.</div>' +
+        '</div>' +
+        '<form id="chal-cutoff-form" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
+          '<input type="date" name="cutoff" value="' + escapeHtml(ch.cutoff || '') + '"' + (ch.saving ? ' disabled' : '') + '>' +
+          '<button type="submit" class="btn btn-primary"' + (ch.saving ? ' disabled' : '') + '>' + (ch.saving ? 'Saving…' : 'Save') + '</button>' +
+        '</form>' +
+      '</div>' +
+      '<h3 style="margin:22px 0 10px;font-size:15px;">Registrations (' + ch.rows.length + ')</h3>' +
+      rowsHtml
     );
   }
 
@@ -2569,6 +2660,15 @@
       input.addEventListener('change', function () {
         saveSiteSettingsToggle(input.getAttribute('data-setting-field'), input.checked);
       });
+    });
+
+    var chalCutoffForm = document.getElementById('chal-cutoff-form');
+    if (chalCutoffForm) chalCutoffForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      saveChallengeCutoff((new FormData(chalCutoffForm).get('cutoff') || '').toString());
+    });
+    document.querySelectorAll('.js-chal-delete').forEach(function (btn) {
+      btn.addEventListener('click', function () { deleteChallengeRow(btn.getAttribute('data-id'), btn.getAttribute('data-name')); });
     });
 
     var lmsCheckBtn = document.getElementById('lms-check-now');

@@ -49,6 +49,14 @@ export async function handler(event, context) {
       patch.daycard_prompt_template = t ? t : null;
     }
 
+    // "100 pe 100% off" registration cutoff (2026-10-18). Empty string means
+    // "back to the default" (lib/challenge.js) and is stored as NULL.
+    if (typeof body.challenge_cutoff === 'string') {
+      const c = body.challenge_cutoff.trim();
+      if (c && !/^\d{4}-\d{2}-\d{2}$/.test(c)) return json(400, { error: 'cutoff must be a date (YYYY-MM-DD)' });
+      patch.challenge_cutoff = c || null;
+    }
+
     // upsert, not update-only — self-heals even if the schema
     // migration's own seed INSERT was skipped or the row was somehow
     // deleted, rather than requiring that manual step to have gone

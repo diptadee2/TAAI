@@ -1082,3 +1082,31 @@ CREATE TABLE IF NOT EXISTS lms_price_log (
 );
 ALTER TABLE lms_price_log ENABLE ROW LEVEL SECURITY;
 GRANT SELECT, INSERT, UPDATE, DELETE ON lms_price_log TO service_role;
+
+-- "100 pe 100% off" challenge registrations (2026-10-18). A student who
+-- buys the GATE 2028 Full Course registers their GATE identity BEFORE the
+-- cutoff (GATE DA 2027 admit card release day), so a refund can only be
+-- claimed with the scorecard of the person who registered. Insert-only from
+-- netlify/functions/challenge-register.js (no student edit path: details
+-- are locked once submitted; a correction is an admin delete via /team,
+-- then the student submits again). email and gate_enrollment_id are each
+-- unique so one person = one registration and one GATE ID = one claimant.
+CREATE TABLE IF NOT EXISTS challenge_registrations (
+  id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email               TEXT NOT NULL,
+  phone               TEXT NOT NULL,
+  full_name           TEXT NOT NULL,
+  gate_enrollment_id  TEXT NOT NULL,
+  dob                 DATE NOT NULL,
+  submitted_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+  ip                  TEXT,
+  user_agent          TEXT,
+  CONSTRAINT challenge_registrations_email_key UNIQUE (email),
+  CONSTRAINT challenge_registrations_enrollment_key UNIQUE (gate_enrollment_id)
+);
+ALTER TABLE challenge_registrations ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON challenge_registrations TO service_role;
+-- Cutoff date (IST; the form closes at the end of this day). NULL means the
+-- built-in default in challenge-register.js (2027-01-04, the admit card
+-- date on gate2027.iitm.ac.in as of 2026-10-18). Set from /team.
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS challenge_cutoff DATE;

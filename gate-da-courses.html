@@ -3119,6 +3119,54 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     @media (max-width: 600px) {
       main { --nb-shadow: 4px 4px 0 var(--nb-ink); --nb-shadow-sm: 3px 3px 0 var(--nb-ink); }
     }
+  /* "100 pe 100% off" registration (2026-10-18): the deadline line and
+     button on the challenge card, and the registration modal (rendered
+     into <body>, so it carries its own neo-brutalist colours instead of
+     the main-scoped --nb-* tokens). Square corners, static shadows. */
+  html body main .challenge-register { display: flex; flex-direction: column; gap: 10px; padding-top: 12px; border-top: 2px solid var(--nb-ink); }
+  html body main .challenge-deadline { font-size: 13.5px; line-height: 1.45; color: var(--nb-ink); }
+  html body main .challenge-deadline b { font-weight: 800; white-space: nowrap; }
+  html body main .challenge-register-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
+    padding: 12px 14px; font-weight: 700; font-size: 14.5px; line-height: 1.2; font-family: inherit; color: #FFF4D6 !important; background: #111 !important;
+    border: 3px solid #111; border-radius: 0; box-shadow: 4px 4px 0 #fff; cursor: pointer;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  html body main .challenge-register-btn:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 #fff; }
+  html body main .challenge-register-btn:active { transform: translate(2px,2px); box-shadow: 2px 2px 0 #fff; }
+  html body main .challenge-register-btn:focus-visible { outline: 3px solid #111; outline-offset: 3px; }
+
+  .chal-backdrop { position: fixed; inset: 0; z-index: 2147483000; background: rgba(17,17,17,0.6); display: flex; align-items: flex-start; justify-content: center; padding: 24px 16px; overflow-y: auto; }
+  .chal-modal { position: relative; width: 100%; max-width: 520px; margin: auto 0; background: #FFF4D6; color: #111; border: 3px solid #111; box-shadow: 8px 8px 0 #111; padding: 26px 24px 24px; font-family: inherit; }
+  .chal-close { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border: 2px solid #111; background: #fff; color: #111; font-size: 22px; line-height: 1; cursor: pointer; }
+  .chal-tag { display: inline-block; background: #FDE047; border: 2px solid #111; padding: 3px 8px; font: 500 11px/1.2 'DM Mono', ui-monospace, monospace; text-transform: uppercase; letter-spacing: .06em; }
+  .chal-modal h3 { margin: 12px 44px 12px 0; font-size: 24px; font-weight: 800; line-height: 1.2; color: #111; }
+  .chal-lead, .chal-done p { margin: 0 0 14px; font-size: 14.5px; line-height: 1.5; }
+  .chal-form { display: flex; flex-direction: column; gap: 12px; }
+  .chal-form > label:not(.chal-check), .chal-row > label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; }
+  .chal-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .chal-form input[type=text], .chal-form input[type=email], .chal-form input[type=tel], .chal-form input[type=date] {
+    width: 100%; box-sizing: border-box; padding: 11px 12px; font-weight: 500; font-size: 16px; line-height: 1.2; font-family: inherit; color: #111;
+    background: #fff; border: 2px solid #111; border-radius: 0; min-height: 46px;
+  }
+  .chal-form input:focus { outline: 3px solid #FDE047; outline-offset: 0; box-shadow: 3px 3px 0 #111; }
+  .chal-hint { font-weight: 500; font-size: 12px; color: #444; }
+  .chal-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+  .chal-terms-box { border: 2px solid #111; background: #fff; padding: 10px 12px; }
+  .chal-terms-box summary { cursor: pointer; font-weight: 700; font-size: 14px; }
+  .chal-terms { margin: 10px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 13px; line-height: 1.5; }
+  .chal-done .chal-terms { margin-bottom: 16px; background: #fff; border: 2px solid #111; padding: 12px 12px 12px 30px; }
+  .chal-check { display: grid; grid-template-columns: 20px 1fr; gap: 10px; align-items: start; font-size: 13.5px; line-height: 1.45; cursor: pointer; }
+  .chal-check input { width: 18px; height: 18px; margin: 1px 0 0; accent-color: #111; }
+  .chal-error { margin: 0; padding: 10px 12px; background: #FCA5A5; border: 2px solid #111; font-size: 13.5px; font-weight: 600; }
+  .chal-btn { width: 100%; padding: 13px 16px; font-weight: 800; font-size: 15px; line-height: 1.2; font-family: inherit; color: #111; background: #FDE047; border: 3px solid #111; border-radius: 0; box-shadow: 4px 4px 0 #111; cursor: pointer; }
+  .chal-btn:disabled { opacity: .6; cursor: progress; }
+  .chal-btn:focus-visible, .chal-close:focus-visible { outline: 3px solid #111; outline-offset: 3px; }
+  @media (max-width: 480px) {
+    .chal-modal { padding: 22px 16px 18px; box-shadow: 5px 5px 0 #111; }
+    .chal-row { grid-template-columns: 1fr; }
+    .chal-modal h3 { font-size: 21px; }
+  }
   </style>
 <script type="application/ld+json" id="course-jsonld">
 {
@@ -4188,6 +4236,136 @@ function EnrolNote({ href, onClose }) {
   );
 }
 
+// "100 pe 100% off" registration (2026-10-18, direct request: stop
+// backtracking / using someone else's scorecard, and close the "buy after
+// GATE 2027, claim next year" loophole). The cutoff comes from
+// /api/challenge-register (default: the GATE DA 2027 admit card day,
+// 2027-01-04; editable in /team). Submissions are insert-only server side.
+const CHALLENGE_DEFAULT_CUTOFF = '2027-01-04';
+const _challengeFetch = fetch('/api/challenge-register')
+  .then(r => r.ok ? r.json() : null)
+  .catch(() => null);
+function fmtChallengeDate(iso) {
+  const d = new Date((iso || CHALLENGE_DEFAULT_CUTOFF) + 'T00:00:00+05:30');
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Kolkata' });
+}
+function useChallengeStatus() {
+  const [status, setStatus] = React.useState(null);
+  React.useEffect(() => { _challengeFetch.then(s => { if (s) setStatus(s); }); }, []);
+  const cutoff = (status && status.cutoff) || CHALLENGE_DEFAULT_CUTOFF;
+  // Until the API answers, decide from the default cutoff on the client.
+  const open = status ? !!status.open : Date.now() <= new Date(cutoff + 'T23:59:59.999+05:30').getTime();
+  return { cutoff, open };
+}
+
+function ChallengeTerms({ cutoff }) {
+  const date = fmtChallengeDate(cutoff);
+  return (
+    <ol className="chal-terms">
+      <li>Open only to students who <b>buy the GATE 2028 Full Course and submit this form by {date}</b> (the GATE DA 2027 admit card day). Buying or registering after that, including after the GATE DA 2027 exam or results, is not eligible.</li>
+      <li>Only a <b>GATE DA 2027</b> result counts. A GATE 2028 or later result can't be used to claim the refund.</li>
+      <li>One registration per person and per GATE enrollment ID. <b>Details are locked once submitted</b>.</li>
+      <li>To claim, you need an AIR under 100 (AIR 1 to 99) in GATE DA 2027. Show your scorecard from the GOAPS account with the enrollment ID you registered, with your name and date of birth matching this form, plus a government photo ID. We may verify on a video call.</li>
+      <li>The email here must be the one you bought the course with. Claims are made by emailing support@taai.live within 30 days of the GATE DA 2027 results.</li>
+      <li>The refund is the course fee you actually paid, to the original payment method, after verification. You keep full access to the course.</li>
+    </ol>
+  );
+}
+
+function ChallengeForm({ cutoff, open, onClose }) {
+  const [form, setForm] = React.useState({ full_name: '', email: '', phone: '', gate_enrollment_id: '', dob: '', agree: false, confirm: false, website: '' });
+  const [state, setState] = React.useState({ sending: false, error: '', done: false });
+  const firstRef = React.useRef(null);
+  React.useEffect(() => {
+    const onKey = e => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    if (firstRef.current) firstRef.current.focus();
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prev; };
+  }, [onClose]);
+  const set = k => e => setForm(f => ({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }));
+  const submit = e => {
+    e.preventDefault();
+    if (!form.agree || !form.confirm) { setState({ sending: false, error: 'Please tick both boxes to continue.', done: false }); return; }
+    setState({ sending: true, error: '', done: false });
+    fetch('/api/challenge-register', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...form, agree: true }),
+    }).then(r => r.json().catch(() => ({})).then(d => ({ ok: r.ok, d })))
+      .then(({ ok, d }) => setState(ok ? { sending: false, error: '', done: true } : { sending: false, error: d.error || 'Something went wrong. Please try again.', done: false }))
+      .catch(() => setState({ sending: false, error: 'Couldn\'t reach the server. Check your connection and try again.', done: false }));
+  };
+  const date = fmtChallengeDate(cutoff);
+  return ReactDOM.createPortal(
+    <div className="chal-backdrop" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="chal-modal" role="dialog" aria-modal="true" aria-labelledby="chal-title">
+        <button type="button" className="chal-close" onClick={onClose} aria-label="Close">×</button>
+        <span className="chal-tag">100 pe 100% off</span>
+        <h3 id="chal-title">{state.done ? 'You\'re registered' : 'Register for the challenge'}</h3>
+        {state.done ? (
+          <div className="chal-done">
+            <p>Your details are saved and locked. Keep the same GATE enrollment ID and email until your claim.</p>
+            <p>Bought the GATE 2028 Full Course with this email? Then you're all set. If not, buy it by <b>{date}</b> or this registration won't count.</p>
+            <button type="button" className="chal-btn" onClick={onClose}>Done</button>
+          </div>
+        ) : !open ? (
+          <div className="chal-done">
+            <p>Registration closed on <b>{date}</b> (the GATE DA 2027 admit card day). Late registrations and course purchases after that aren't eligible.</p>
+            <ChallengeTerms cutoff={cutoff} />
+            <button type="button" className="chal-btn" onClick={onClose}>Close</button>
+          </div>
+        ) : (
+          <form className="chal-form" onSubmit={submit} noValidate>
+            <p className="chal-lead">Fill this in by <b>{date}</b>, after buying the GATE 2028 Full Course. Use your details exactly as on your GATE DA 2027 application. You can't change them later.</p>
+            <label>Full name (as on GATE application)
+              <input ref={firstRef} type="text" autoComplete="name" required maxLength="100" value={form.full_name} onChange={set('full_name')} />
+            </label>
+            <label>Email (the one you bought the course with)
+              <input type="email" autoComplete="email" required maxLength="200" value={form.email} onChange={set('email')} />
+            </label>
+            <div className="chal-row">
+              <label>Mobile number
+                <input type="tel" inputMode="numeric" autoComplete="tel" required maxLength="15" placeholder="10 digits" value={form.phone} onChange={set('phone')} />
+              </label>
+              <label>Date of birth
+                <input type="date" required min="1950-01-01" max="2012-12-31" value={form.dob} onChange={set('dob')} />
+              </label>
+            </div>
+            <label>GATE DA 2027 enrollment ID
+              <input type="text" required maxLength="20" autoCapitalize="characters" spellCheck="false" value={form.gate_enrollment_id} onChange={set('gate_enrollment_id')} />
+              <span className="chal-hint">From your GOAPS account (gate2027.iitm.ac.in).</span>
+            </label>
+            <input type="text" className="chal-hp" tabIndex="-1" autoComplete="off" aria-hidden="true" value={form.website} onChange={set('website')} />
+            <details className="chal-terms-box">
+              <summary>Challenge terms</summary>
+              <ChallengeTerms cutoff={cutoff} />
+            </details>
+            <label className="chal-check"><input type="checkbox" checked={form.agree} onChange={set('agree')} /> <span>I've read and accept the challenge terms.</span></label>
+            <label className="chal-check"><input type="checkbox" checked={form.confirm} onChange={set('confirm')} /> <span>These are my own details, and I understand they're locked once I submit.</span></label>
+            {state.error && <p className="chal-error" role="alert">{state.error}</p>}
+            <button type="submit" className="chal-btn" disabled={state.sending}>{state.sending ? 'Submitting…' : 'Submit registration'}</button>
+          </form>
+        )}
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+function ChallengeRegister() {
+  const { cutoff, open } = useChallengeStatus();
+  const [show, setShow] = React.useState(false);
+  const close = React.useCallback(() => setShow(false), []);
+  return (
+    <div className="challenge-register">
+      <span className="challenge-deadline">{open ? <>Buy the course and register by <b>{fmtChallengeDate(cutoff)}</b>. Late purchases aren't eligible.</> : <>Registration closed on <b>{fmtChallengeDate(cutoff)}</b>.</>}</span>
+      <button type="button" className="challenge-register-btn" onClick={() => setShow(true)}>{open ? 'Register for the challenge' : 'View challenge terms'} <span aria-hidden="true">&rarr;</span></button>
+      {show && <ChallengeForm cutoff={cutoff} open={open} onClose={close} />}
+    </div>
+  );
+}
+
 // Small line drawings for the 2028 card's project tiles (2026-10-11).
 // Plain inline SVG in the tile's accent colour (currentColor), no images.
 function ProjectArt({ kind }) {
@@ -5254,6 +5432,7 @@ function App() {
                             </div>
                             <span className="challenge-sub">Get an AIR under 100 in <b>GATE DA 2027</b> and we refund your full GATE 2028 course fee. You keep full access to the course.</span>
                             <span className="challenge-fact">In GATE DA 2026, <b>65 marks</b> got an <b>AIR of 90</b>.</span>
+                            <ChallengeRegister />
                             <div className="challenge-why">
                               <span className="challenge-why-title">How does the course help after you crack GATE DA?</span>
                               <ul>

@@ -422,6 +422,12 @@
   .daycard-caption-head { display: flex; align-items: center; gap: 10px; }
   .daycard-caption-head strong { margin-right: auto; }
   .daycard-caption textarea { width: 100%; max-width: 760px; font: inherit; font-size: 14px; line-height: 1.55; padding: 12px; border-radius: 10px; background: var(--card); color: var(--ink); border: 1px solid var(--line); resize: vertical; }
+  /* Site data sub-tabs wrap on phones now that there are five (Challenge
+     added 2026-10-18); the cutoff row stacks there too. */
+  @media (max-width: 600px) {
+    .sitedata-tabs { flex-wrap: wrap; max-width: 100%; }
+    .chal-cutoff-row { flex-direction: column; align-items: stretch; }
+  }
 </style>
 </head>
 <body>
