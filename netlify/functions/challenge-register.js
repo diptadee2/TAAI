@@ -1,5 +1,5 @@
 // GET  /api/challenge-register -> { open, cutoff }
-// POST /api/challenge-register { full_name, email, phone, gate_enrollment_id, dob, upi_id, agree }
+// POST /api/challenge-register { full_name, email, phone, gate_enrollment_id, dob, upi_id, registration_pdf_url, agree }
 //
 // Public, unauthenticated: the "100 pe 100% off" registration form on the
 // courses page. Insert-only by design. There is no update path, so once
@@ -20,6 +20,7 @@ function validate(body) {
   const enrollment = clean(body.gate_enrollment_id).toUpperCase().replace(/\s+/g, '');
   const dob = clean(body.dob);
   const upi = clean(body.upi_id).replace(/\s+/g, '');
+  const pdfUrl = clean(body.registration_pdf_url);
 
   if (fullName.length < 2 || fullName.length > 100) return { error: 'Enter your full name exactly as on your GATE application.' };
   if (!EMAIL_RE.test(email) || email.length > 200) return { error: 'Enter a valid email address.' };
@@ -32,8 +33,12 @@ function validate(body) {
   if (Number.isNaN(d.getTime()) || year < 1950 || year > 2012) return { error: 'Enter your date of birth as on your GATE application.' };
   // UPI IDs look like name@bank (handle 2-256 chars, provider letters/digits).
   if (!/^[a-zA-Z0-9._-]{2,256}@[a-zA-Z0-9]{2,64}$/.test(upi)) return { error: 'Enter a valid UPI ID, like yourname@okaxis.' };
+  // GATE application PDF as a Google Drive link (no uploads).
+  let pdfHost = '';
+  try { const u = new URL(pdfUrl); if (u.protocol === 'https:') pdfHost = u.hostname; } catch { /* invalid */ }
+  if (!['drive.google.com', 'docs.google.com'].includes(pdfHost) || pdfUrl.length > 500) return { error: 'Paste a Google Drive link to your GATE application PDF.' };
   if (body.agree !== true) return { error: 'Please accept the challenge terms.' };
-  return { row: { full_name: fullName, email, phone, gate_enrollment_id: enrollment, dob, upi_id: upi } };
+  return { row: { full_name: fullName, email, phone, gate_enrollment_id: enrollment, dob, upi_id: upi, registration_pdf_url: pdfUrl } };
 }
 
 export async function handler(event) {

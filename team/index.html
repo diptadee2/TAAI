@@ -424,7 +424,19 @@
   .daycard-caption textarea { width: 100%; max-width: 760px; font: inherit; font-size: 14px; line-height: 1.55; padding: 12px; border-radius: 10px; background: var(--card); color: var(--ink); border: 1px solid var(--line); resize: vertical; }
   /* Site data sub-tabs wrap on phones now that there are five (Challenge
      added 2026-10-18); the cutoff row stacks there too. */
+  /* Challenge tab (2026-10-18). */
+  .chal-stats { display: flex; gap: 12px; flex-wrap: wrap; }
+  .chal-stat { flex: 1 1 140px; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
+  .chal-stat b { font-size: 20px; }
+  .chal-stat span { font-size: 12px; color: var(--ink-soft, #999); }
+  .chal-toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .chal-toolbar input { flex: 1 1 240px; min-width: 0; }
+  .chal-toolbar input, #chal-cutoff-form input { height: 36px; padding: 0 12px; font: inherit; font-size: 14px; color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 8px; color-scheme: dark; }
+  .chal-toolbar input:focus, #chal-cutoff-form input:focus { outline: none; border-color: var(--ink-soft, #888); box-shadow: 0 0 0 3px rgba(255,255,255,0.12); }
+  .chal-table td { white-space: nowrap; }
+  /* Six main tabs from 2026-10-18: three per row on phones. */
   @media (max-width: 600px) {
+    .tabs-main { grid-auto-flow: row; grid-template-columns: repeat(3, 1fr); }
     .sitedata-tabs { flex-wrap: wrap; max-width: 100%; }
     .chal-cutoff-row { flex-direction: column; align-items: stretch; }
   }

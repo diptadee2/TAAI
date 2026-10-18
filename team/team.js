@@ -345,7 +345,7 @@
     },
     // Site data > Challenge (2026-10-18): "100 pe 100% off" registrations
     // and the registration cutoff date.
-    challenge: { loaded: false, loading: false, saving: false, error: null, rows: [], cutoff: null, open: true, msg: null },
+    challenge: { loaded: false, loading: false, saving: false, error: null, rows: [], cutoff: null, open: true, msg: null, q: '' },
     msg: null,
     msgType: null,
   };
@@ -973,6 +973,16 @@
     var isAnnouncements = state.tab === 'announcements';
     var isStudents = state.tab === 'students';
     var isSiteData = state.tab === 'site-data';
+    // Day card and Offer poster share one "Marketing" main tab (2026-10-18,
+    // direct request). state.tab still holds the sub-tab ('day-card' or
+    // 'offer-poster') so each poster's own loaders keep working unchanged.
+    var isMarketing = state.tab === 'day-card' || state.tab === 'offer-poster';
+    var marketingTabs = isMarketing
+      ? '<div class="tabs" style="margin:0 0 14px;">' +
+          '<button class="tab-btn' + (state.tab === 'day-card' ? ' active' : '') + '" data-mktab="day-card">📸 Day card</button>' +
+          '<button class="tab-btn' + (state.tab === 'offer-poster' ? ' active' : '') + '" data-mktab="offer-poster">🔥 Offer poster</button>' +
+        '</div>'
+      : '';
     // Counts right on the tab itself — knowing "there are 12 announcements,
     // 334 students" without having to click in first is a small thing, but
     // it's also the kind of at-a-glance orientation a two-tab page with no
@@ -986,8 +996,8 @@
         '<button class="tab-btn' + (isAnnouncements ? ' active' : '') + '" data-tab="announcements">📣 Announcements' + postsCountLabel + '</button>' +
         '<button class="tab-btn' + (isStudents ? ' active' : '') + '" data-tab="students">👥 Students' + studentsCountLabel + '</button>' +
         '<button class="tab-btn' + (isSiteData ? ' active' : '') + '" data-tab="site-data">🗂️ Site data</button>' +
-        '<button class="tab-btn' + (state.tab === 'day-card' ? ' active' : '') + '" data-tab="day-card">📸 Day card</button>' +
-        '<button class="tab-btn' + (state.tab === 'offer-poster' ? ' active' : '') + '" data-tab="offer-poster">🔥 Offer poster</button>' +
+        '<button class="tab-btn' + (isMarketing ? ' active' : '') + '" data-tab="marketing">🎨 Marketing</button>' +
+        '<button class="tab-btn' + (state.tab === 'challenge' ? ' active' : '') + '" data-tab="challenge">🏆 Challenge' + (state.challenge.loaded ? ' (' + state.challenge.rows.length + ')' : '') + '</button>' +
       '</div>';
 
     var actionsHtml = isAnnouncements
@@ -1016,10 +1026,12 @@
       : isStudents
         ? renderStudents()
         : state.tab === 'day-card'
-          ? renderDayCard()
+          ? marketingTabs + renderDayCard()
           : state.tab === 'offer-poster'
-            ? renderOfferPoster()
-            : (msgHtml + renderSiteData());
+            ? marketingTabs + renderOfferPoster()
+            : state.tab === 'challenge'
+              ? renderChallengePanel()
+              : (msgHtml + renderSiteData());
 
     root.innerHTML =
       '<div class="wrap">' +
@@ -2119,11 +2131,6 @@
   // and reports back whether a load was kicked off (so the caller knows
   // whether to skip its own render(), since the loader already renders).
   function ensureSiteDataLoaded(type) {
-    if (type === 'challenge') {
-      if (state.challenge.loaded || state.challenge.loading) return false;
-      loadChallenge();
-      return true;
-    }
     if (type === 'settings') {
       if (state.siteSettings.loaded || state.siteSettings.loading) return false;
       loadSiteSettings();
@@ -2145,8 +2152,6 @@
     }).join('');
     var settingsActive = state.siteData.subTab === 'settings';
     html += '<button class="tab-btn' + (settingsActive ? ' active' : '') + '" data-sitetab="settings">⚙️ Settings</button>';
-    var ch = state.challenge;
-    html += '<button class="tab-btn' + (state.siteData.subTab === 'challenge' ? ' active' : '') + '" data-sitetab="challenge">🏆 Challenge' + (ch.loaded ? ' (' + ch.rows.length + ')' : '') + '</button>';
     return html;
   }
 
@@ -2419,7 +2424,6 @@
     notes: 'Downloadable PDF notes, organized by subject.',
     lectures: 'Video lectures and their slides, organized by subject.',
     settings: 'Site-wide switches for what shows on taai.live.',
-    challenge: 'Students who registered for the "100 pe 100% off" challenge on the courses page. Details are locked for students; deleting a row here lets them submit again (only do that when they emailed about a genuine mistake).',
   };
   // Pricing went live 2026-09-23 and Notes/Lectures on 2026-10-15 (the
   // Resources page reads them via /api/site-resources-public; the Google
@@ -2431,7 +2435,6 @@
     notes: 'Changes here show on the taai.live Resources page within about a minute. No deploy needed.',
     lectures: 'Changes here show on the taai.live Resources page within about a minute. No deploy needed.',
     settings: 'Changes here go live on taai.live immediately — no deploy needed.',
-    challenge: 'The cutoff applies to the courses page form immediately.',
   };
   var SITE_DATA_NEW_LABEL = { pricing: '+ New course', notes: '+ New note', lectures: '+ New lecture' };
   var SITE_DATA_SINGULAR = { pricing: 'course', notes: 'note', lectures: 'lecture' };
@@ -2449,7 +2452,7 @@
     // is a deliberate two-step, code-first action, not a one-click /team
     // form. Notes/Lectures have no such constraint and keep their own
     // "+ New" button. Settings has no rows to create at all.
-    var showNewButton = type !== 'pricing' && type !== 'settings' && type !== 'challenge';
+    var showNewButton = type !== 'pricing' && type !== 'settings';
 
     return (
       '<div class="card">' +
@@ -2458,7 +2461,7 @@
           (editingThis || !showNewButton ? '' : '<button class="btn btn-primary" id="sitedata-new">' + SITE_DATA_NEW_LABEL[type] + '</button>') +
         '</div>' +
         '<div class="field-hint" style="margin-bottom:16px;">' + SITE_DATA_INTRO[type] + ' ' + SITE_DATA_LIVE_NOTE[type] + '</div>' +
-        (type === 'challenge' ? renderChallengePanel() : type === 'settings' ? renderSiteSettingsPanel() : (editingThis ? renderSiteDataForm(type, editingThis) : renderSiteDataList(type))) +
+        (type === 'settings' ? renderSiteSettingsPanel() : (editingThis ? renderSiteDataForm(type, editingThis) : renderSiteDataList(type))) +
       '</div>'
     );
   }
@@ -2524,20 +2527,29 @@
     return new Date(iso).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' IST';
   }
 
+  function chalRowText(r) {
+    return [r.full_name, r.email, r.phone, r.gate_enrollment_id, r.upi_id].join(' ').toLowerCase();
+  }
   function renderChallengePanel() {
     var ch = state.challenge;
-    if (ch.loading && !ch.loaded) return '<div class="field-hint">Loading…</div>';
+    if (ch.loading && !ch.loaded) return '<div class="card"><div class="field-hint">Loading…</div></div>';
     var rowsHtml = ch.rows.length ? (
-      '<div class="students-table-wrap"><table class="students-table sitedata-table"><thead><tr>' +
-        '<th>Name</th><th>Email</th><th>Mobile</th><th>GATE enrollment ID</th><th>Date of birth</th><th>UPI ID</th><th>Submitted</th><th></th>' +
+      '<div class="chal-toolbar">' +
+        '<input type="search" id="chal-search" placeholder="Search name, email, phone, GATE ID or UPI" value="' + escapeHtml(ch.q || '') + '">' +
+        '<button type="button" class="btn" id="chal-csv">Download CSV</button>' +
+      '</div>' +
+      '<div class="students-table-wrap"><table class="students-table sitedata-table chal-table"><thead><tr>' +
+        '<th>Name</th><th>Email</th><th>Mobile</th><th>GATE enrollment ID</th><th>Date of birth</th><th>GATE application</th><th>UPI ID</th><th>Submitted</th><th></th>' +
       '</tr></thead><tbody>' +
       ch.rows.map(function (r) {
-        return '<tr>' +
+        var hide = ch.q && chalRowText(r).indexOf(ch.q.toLowerCase()) === -1;
+        return '<tr data-chal-text="' + escapeHtml(chalRowText(r)) + '"' + (hide ? ' hidden' : '') + '>' +
           '<td>' + escapeHtml(r.full_name) + '</td>' +
           '<td><a href="mailto:' + escapeHtml(r.email) + '">' + escapeHtml(r.email) + '</a></td>' +
           '<td>' + escapeHtml(r.phone) + '</td>' +
           '<td><code>' + escapeHtml(r.gate_enrollment_id) + '</code></td>' +
           '<td>' + escapeHtml(String(r.dob || '')) + '</td>' +
+          '<td>' + (r.registration_pdf_url ? '<a href="' + escapeHtml(r.registration_pdf_url) + '" target="_blank" rel="noopener noreferrer">Open PDF ↗</a>' : '<span class="field-hint">None</span>') + '</td>' +
           '<td><code>' + escapeHtml(r.upi_id || '') + '</code></td>' +
           '<td>' + escapeHtml(fmtIstDateTime(r.submitted_at)) + '</td>' +
           '<td><button class="btn btn-small btn-danger js-chal-delete" data-id="' + escapeHtml(r.id) + '" data-name="' + escapeHtml(r.full_name) + '">Delete</button></td>' +
@@ -2546,12 +2558,22 @@
       '</tbody></table></div>'
     ) : '<div class="field-hint">No registrations yet.</div>';
     return (
+      '<div class="card">' +
+      '<div class="field-hint" style="margin-bottom:12px;">Students who filled the "100 pe 100% off" challenge form. Their details are locked; deleting a row lets them submit again (only do that when they emailed about a genuine mistake). Check each PDF opens, and check their course purchase date on learn.taai.live.</div>' +
       (ch.error ? '<div class="msg msg-error">' + escapeHtml(ch.error) + '</div>' : '') +
       (ch.msg ? '<div class="msg msg-ok">' + escapeHtml(ch.msg) + '</div>' : '') +
+      '<div class="chal-stats">' +
+        '<div class="chal-stat"><b>' + ch.rows.length + '</b><span>registered</span></div>' +
+        '<div class="chal-stat"><b>' + (ch.open ? 'Open' : 'Closed') + '</b><span>form status</span></div>' +
+        '<div class="chal-stat"><b>' + escapeHtml(ch.cutoff || '') + '</b><span>cutoff (11:59 PM IST)</span></div>' +
+      '</div>' +
+      '<h3 style="margin:18px 0 10px;font-size:15px;">Registrations</h3>' +
+      rowsHtml +
+      '<h3 style="margin:26px 0 4px;font-size:15px;">Settings</h3>' +
       '<div class="site-setting-row chal-cutoff-row">' +
         '<div class="site-setting-info">' +
-          '<div class="site-setting-title">Registration cutoff: ' + escapeHtml(ch.cutoff || '') + ' (' + (ch.open ? 'open' : 'closed') + ')</div>' +
-          '<div class="field-hint">The form closes at 11:59 PM IST on this date. It should be the GATE DA 2027 admit card day (4 Jan 2027 on gate2027.iitm.ac.in as of 18 Oct 2026). Change it here if IIT Madras moves that date. Clear it to go back to 4 Jan 2027.</div>' +
+          '<div class="site-setting-title">Registration cutoff</div>' +
+          '<div class="field-hint">The form closes at 11:59 PM IST on this date. It should be the GATE DA 2027 admit card day (4 Jan 2027 on gate2027.iitm.ac.in as of 18 Oct 2026). Change it if IIT Madras moves that date. Clear it to go back to 4 Jan 2027.</div>' +
         '</div>' +
         '<form id="chal-cutoff-form" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
           '<input type="date" name="cutoff" value="' + escapeHtml(ch.cutoff || '') + '"' + (ch.saving ? ' disabled' : '') + '>' +
@@ -2568,9 +2590,20 @@
           '<button type="button" class="btn" id="chal-copy-link">Copy link</button>' +
         '</div>' +
       '</div>' +
-      '<h3 style="margin:22px 0 10px;font-size:15px;">Registrations (' + ch.rows.length + ')</h3>' +
-      rowsHtml
+      '</div>'
     );
+  }
+
+  function downloadChallengeCsv() {
+    var cols = ['full_name', 'email', 'phone', 'gate_enrollment_id', 'dob', 'registration_pdf_url', 'upi_id', 'submitted_at'];
+    var esc = function (v) { v = v == null ? '' : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+    var lines = [cols.join(',')].concat(state.challenge.rows.map(function (r) { return cols.map(function (k) { return esc(r[k]); }).join(','); }));
+    var blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'challenge-registrations-' + dcTodayIST() + '.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
   }
 
   function readSiteDataPayload(type, form) {
@@ -2891,12 +2924,14 @@
       // instead — skip those here, they get their own handler below.
       if (!tab) return;
       btn.addEventListener('click', function () {
+        if (tab === 'marketing') tab = state.lastMarketing || 'day-card';
         if (tab === state.tab) return;
         state.tab = tab;
         if (tab === 'students' && state.students === null) { loadStudents(); return; }
         if (tab === 'site-data' && ensureSiteDataLoaded(state.siteData.subTab)) return;
         if (tab === 'day-card') { render(); loadDayCardMonth(); loadDayCardTemplate(); return; }
         if (tab === 'offer-poster') { render(); loadOfferPoster(); return; }
+        if (tab === 'challenge') { if (!state.challenge.loaded && !state.challenge.loading) { loadChallenge(); return; } render(); return; }
         render();
       });
     });
@@ -2918,6 +2953,24 @@
       });
     });
 
+    document.querySelectorAll('[data-mktab]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var tab = btn.getAttribute('data-mktab');
+        if (tab === state.tab) return;
+        state.tab = tab; state.lastMarketing = tab;
+        if (tab === 'day-card') { render(); loadDayCardMonth(); loadDayCardTemplate(); return; }
+        render(); loadOfferPoster();
+      });
+    });
+
+    var chalSearch = document.getElementById('chal-search');
+    if (chalSearch) chalSearch.addEventListener('input', function () {
+      var q = chalSearch.value.trim().toLowerCase();
+      state.challenge.q = q;
+      document.querySelectorAll('tr[data-chal-text]').forEach(function (tr) { tr.hidden = !!q && tr.getAttribute('data-chal-text').indexOf(q) === -1; });
+    });
+    var chalCsv = document.getElementById('chal-csv');
+    if (chalCsv) chalCsv.addEventListener('click', downloadChallengeCsv);
     var chalCopy = document.getElementById('chal-copy-link');
     if (chalCopy) chalCopy.addEventListener('click', function () {
       var url = 'https://taai.live/challenge';

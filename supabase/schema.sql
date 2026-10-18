@@ -1115,3 +1115,7 @@ ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS challenge_cutoff DATE;
 -- challenge-register.js; nullable here only because the table already
 -- existed when this was added.
 ALTER TABLE challenge_registrations ADD COLUMN IF NOT EXISTS upi_id TEXT;
+-- Google Drive link to the student's GATE DA 2027 application PDF
+-- (2026-10-18, direct request; links, not uploads). Required by
+-- challenge-register.js; only drive.google.com / docs.google.com accepted.
+ALTER TABLE challenge_registrations ADD COLUMN IF NOT EXISTS registration_pdf_url TEXT;

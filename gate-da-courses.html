@@ -3145,7 +3145,7 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
   .chal-form { display: flex; flex-direction: column; gap: 12px; }
   .chal-form > label:not(.chal-check), .chal-row > label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; }
   .chal-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .chal-form input[type=text], .chal-form input[type=email], .chal-form input[type=tel], .chal-form input[type=date] {
+  .chal-form input[type=text], .chal-form input[type=email], .chal-form input[type=tel], .chal-form input[type=date], .chal-form input[type=url] {
     width: 100%; box-sizing: border-box; padding: 11px 12px; font-weight: 500; font-size: 16px; line-height: 1.2; font-family: inherit; color: #111;
     background: #fff; border: 2px solid #111; border-radius: 0; min-height: 46px;
   }
@@ -4264,7 +4264,7 @@ function ChallengeTerms({ cutoff }) {
     <ol className="chal-terms">
       <li>Open only to students who <b>buy the GATE 2028 Full Course and submit this form by {date}</b> (the GATE DA 2027 admit card day). Buying or registering after that, including after the GATE DA 2027 exam or results, is not eligible.</li>
       <li>Only a <b>GATE DA 2027</b> result counts. A GATE 2028 or later result can't be used to claim the refund.</li>
-      <li>One registration per person and per GATE enrollment ID. <b>Details are locked once submitted</b>.</li>
+      <li>One registration per person and per GATE enrollment ID. <b>Details are locked once submitted</b>. The Google Drive link to your GATE application PDF must stay open to us until your claim is settled.</li>
       <li>To claim, you need an AIR under 100 (AIR 1 to 99) in GATE DA 2027. Show your scorecard from the GOAPS account with the enrollment ID you registered, with your name and date of birth matching this form, plus a government photo ID. We may verify on a video call.</li>
       <li>The email here must be the one you bought the course with. Claims are made by emailing support@taai.live within 30 days of the GATE DA 2027 results.</li>
       <li>The refund is the course fee you actually paid, sent to the UPI ID you give in this form after verification. You keep full access to the course.</li>
@@ -4273,7 +4273,7 @@ function ChallengeTerms({ cutoff }) {
 }
 
 function ChallengeForm({ cutoff, open, onClose }) {
-  const [form, setForm] = React.useState({ full_name: '', email: '', phone: '', gate_enrollment_id: '', dob: '', upi_id: '', agree: false, confirm: false, website: '' });
+  const [form, setForm] = React.useState({ full_name: '', email: '', phone: '', gate_enrollment_id: '', dob: '', upi_id: '', registration_pdf_url: '', agree: false, confirm: false, website: '' });
   const [state, setState] = React.useState({ sending: false, error: '', done: false });
   const firstRef = React.useRef(null);
   React.useEffect(() => {
@@ -4335,6 +4335,10 @@ function ChallengeForm({ cutoff, open, onClose }) {
             <label>GATE DA 2027 enrollment ID
               <input type="text" required maxLength="20" autoCapitalize="characters" spellCheck="false" value={form.gate_enrollment_id} onChange={set('gate_enrollment_id')} />
               <span className="chal-hint">From your GOAPS account (gate2027.iitm.ac.in).</span>
+            </label>
+            <label>GATE application PDF (Google Drive link)
+              <input type="url" required maxLength="500" autoCapitalize="none" autoCorrect="off" spellCheck="false" placeholder="https://drive.google.com/..." value={form.registration_pdf_url} onChange={set('registration_pdf_url')} />
+              <span className="chal-hint">Download your application PDF from GOAPS, upload it to Google Drive and set sharing to "Anyone with the link".</span>
             </label>
             <label>UPI ID for the refund
               <input type="text" required maxLength="320" autoCapitalize="none" autoCorrect="off" spellCheck="false" placeholder="yourname@okaxis" value={form.upi_id} onChange={set('upi_id')} />
