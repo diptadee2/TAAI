@@ -2864,7 +2864,8 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     html body main .challenge-fact, html body main .challenge-why { border-color: var(--nb-ink) !important; }
     html body main .plan120-cta { background: var(--nb-lime) !important; }
     html body main .plan120-list li { border-color: var(--nb-ink) !important; }
-    html body main .plan120-go { text-decoration: underline; text-decoration-thickness: 2px; font-weight: 700; }
+    /* One continuous line under text and arrow (an underline stopped at the flex gap before the arrow, 2026-10-19). */
+    html body main .plan120-go { text-decoration: none; border-bottom: 2px solid currentColor; padding-bottom: 2px; font-weight: 700; align-self: flex-start; width: max-content; }
 
     /* Comparison table */
     html body main .compare-wrap { background: #fff !important; }
