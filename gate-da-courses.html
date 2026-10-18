@@ -3096,12 +3096,12 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     html body main .c28-attempts { margin-top: 22px; display: flex; flex-direction: column; gap: 10px; }
     html body main #combos .c28-attempts-label { font-family: var(--nb-mono); font-size: 12.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--nb-ink) !important; }
     html body main .c28-attempt-row { display: flex; flex-wrap: wrap; gap: 10px; }
-    html body main #combos .c28-attempt { display: inline-flex; align-items: center; gap: 8px; background: var(--nb-yellow); border: 3px solid var(--nb-ink); box-shadow: 4px 4px 0 var(--nb-ink); padding: 9px 14px; font-weight: 800; font-size: 17px; color: var(--nb-ink) !important; }
+    html body main #combos .c28-attempt { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.55); border: 2px solid var(--nb-ink); padding: 7px 12px; font-weight: 800; font-size: 17px; color: var(--nb-ink) !important; } /* flat tag, no hard shadow: not clickable */
     html body main #combos .c28-attempt svg { width: 16px; height: 16px; stroke: var(--nb-ink); }
     html body main #combos .c28-attempts-note { font-size: 14px; font-weight: 600; color: var(--nb-ink) !important; max-width: 44ch; }
     @media (max-width: 600px) {
       html body main .c28-attempts { margin-top: 16px; gap: 8px; }
-      html body main #combos .c28-attempt { font-size: 15px; padding: 7px 11px; box-shadow: 3px 3px 0 var(--nb-ink); }
+      html body main #combos .c28-attempt { font-size: 15px; padding: 6px 10px; }
     }
     /* Side column beside it: content packed to the top, link at the bottom */
     @media (min-width: 1280px) {
@@ -4664,7 +4664,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
                 <span className="c28-attempt"><svg viewBox="0 0 24 24" fill="none" strokeWidth="3" strokeLinecap="square" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg> GATE DA 2027</span>
                 <span className="c28-attempt"><svg viewBox="0 0 24 24" fill="none" strokeWidth="3" strokeLinecap="square" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg> GATE DA 2028</span>
               </div>
-              <span className="c28-attempts-note">Content for 65+ marks of GATE DA 2027 unlocks the day you join.</span>
+              <span className="c28-attempts-note">Your entry point to an ML research profile: a master's at an IIT through GATE DA, then research.</span>
             </div>
           </div>
           <div className="c28-buy">
