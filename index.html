@@ -1971,6 +1971,25 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
   html body #root .fit-option.is-sel .fit-option-arrow { opacity: 1; transform: none; }
   html body #root .fit-panels { display: grid; }
   html body #root .fit-panel { grid-area: 1 / 1; display: flex; flex-direction: column; justify-content: center; gap: 14px; padding: 40px 44px; visibility: hidden; opacity: 0; transition: opacity .25s ease, visibility 0s linear .25s; }
+  /* Desktop: text column left, "What you get" box right (fills the space the
+     text used to leave empty). Hidden on phones, where the panel is tall. */
+  html body #root .fit-points { display: none; }
+  @media (min-width: 769px) and (max-width: 1199px) {
+    html body #root .fit-points { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; background: #fff; border: 3px solid #111; padding: 16px 18px; }
+  }
+  @media (min-width: 769px) {
+    html body #root .fit-points-label { font-family: 'DM Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: #111; }
+    html body #root .fit-points ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+    html body #root .fit-points li { position: relative; padding-left: 28px; font-size: 15px; line-height: 1.4; font-weight: 600; color: #111; }
+    html body #root .fit-points li::before { content: ''; position: absolute; left: 0; top: 2px; width: 18px; height: 18px; background: #FDE047; border: 2px solid #111; }
+    html body #root .fit-points li::after { content: ''; position: absolute; left: 6px; top: 5px; width: 5px; height: 9px; border: solid #111; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg); }
+  }
+  @media (min-width: 1200px) {
+    html body #root .fit-panel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 290px); grid-template-rows: auto auto auto 1fr; column-gap: 36px; row-gap: 14px; align-content: center; }
+    html body #root .fit-panel > :not(.fit-points) { grid-column: 1; }
+    html body #root .fit-points { display: flex; flex-direction: column; gap: 10px; grid-column: 2; grid-row: 1 / -1; align-self: center; background: #fff; border: 3px solid #111; padding: 18px 20px; }
+    html body #root .fit-tag, html body #root .fit-cta { justify-self: start; }
+  }
   html body #root .fit-panel.is-sel { visibility: visible; opacity: 1; transition: opacity .25s ease; }
   html body #root .fit-pink { background: #F9A8D4; } html body #root .fit-sky { background: #7DD3FC; }
   html body #root .fit-lime { background: #BEF264; } html body #root .fit-lilac { background: #C4B5FD; } html body #root .fit-orange { background: #FDBA74; }
@@ -3248,17 +3267,23 @@ function WhyIndia() {
 // that fits it, using only facts already stated on the site. Moved here
 // from the courses page the same day, between the reviews and the FAQ.
 const FIT_PATHS = [
-  { tag: 'Final year', option: "I'm in final year", title: 'Writing GATE DA in February 2027', text: 'The GATE 2028 Full Course unlocks content covering 65+ marks of GATE DA 2027 the day you join, and your 2028 attempt is covered too. Pair it with the free 120-day roadmap.', link: 'See the GATE 2028 Full Course', href: '/gate-da-courses#full-course-2028', tone: 'pink' },
+  { tag: 'Final year', points: ["65+ marks of GATE DA 2027 content, unlocked now", "Free 120-day roadmap on the progress tracker", "Your GATE DA 2028 attempt covered too"], option: "I'm in final year", title: 'Writing GATE DA in February 2027', text: 'The GATE 2028 Full Course unlocks content covering 65+ marks of GATE DA 2027 the day you join, and your 2028 attempt is covered too. Pair it with the free 120-day roadmap.', link: 'See the GATE 2028 Full Course', href: '/gate-da-courses#full-course-2028', tone: 'pink' },
   // GATE needs 3rd year or above (gate2027.iitm.ac.in/eligibility_criteria,
   // checked 2026-10-19), so a 2nd year today can't sit GATE DA 2027.
-  { tag: '2nd or 3rd year', option: "I'm in 2nd or 3rd year", title: 'Starting early', text: 'In 3rd year? One enrolment covers your 2027 and 2028 attempts. In 2nd year? 2028 is your first eligible attempt, so start now.', link: 'See the GATE 2028 Full Course', href: '/gate-da-courses#full-course-2028', tone: 'sky' },
-  // Disciplines from gate2027.iitm.ac.in/eligibility_criteria (any UG degree,
-  // 3rd year or higher, or completed), checked 2026-10-19.
-  { tag: 'Non-CS branch', option: "I'm from a non-CS branch", title: 'From any branch or degree', text: 'Any engineering branch, B.Sc, BCA, B.Com or BA: GATE is open to all of them from 3rd year on. Everything here starts from scratch, Python included.', link: 'See single subjects', href: '/gate-da-courses#individual', tone: 'lime' },
+  { tag: '2nd or 3rd year', points: ["One enrolment, valid until Feb 15, 2028", "Weekly quizzes from day one", "5 portfolio projects for internships"], option: "I'm in 2nd or 3rd year", title: 'Starting early', text: 'In 3rd year? One enrolment covers your 2027 and 2028 attempts. In 2nd year? 2028 is your first eligible attempt, so start now.', link: 'See the GATE 2028 Full Course', href: '/gate-da-courses#full-course-2028', tone: 'sky' },
+  // Checked 2026-10-19 on gate2027.iitm.ac.in: any discipline can sit GATE
+  // from 3rd year (eligibility_criteria); candidates are "free to choose any
+  // of the papers" (faqs); with DA as the main paper the allowed second
+  // papers are CS, EC, EE, MA, ME, PH, RA, ST, XE (two_paper_combinations);
+  // admission is "solely subject to that institute's own eligibility" (faqs).
+  { tag: 'Branch switcher', points: ["Every subject from scratch, Python included", "DA pairs with your own branch's paper", "5 portfolio projects in ML, vision and LLMs"], option: "I'm switching from another branch", title: 'From electrical, mechanical, ECE or any other branch', text: 'GATE lets you choose any paper, and DA pairs with EE, ME, EC, MA, ST, PH, XE, RA or CS, so you can sit it next to your own. Each institute sets its own admission rules, so check your target programme. Everything here starts from scratch, Python included.', link: 'See the GATE 2028 Full Course', href: '/gate-da-courses#full-course-2028', tone: 'lime' },
   // Working professionals (2026-10-19, direct request). Kept to what holds
   // up: no forecast of how many jobs get automated, by design.
-  { tag: 'Working professional', option: "I'm working", title: 'Moving from software into ML', text: 'AI tools already write much of the routine code. Building and judging the models themselves is the harder skill to automate, and GATE DA is the way into IIT M.Tech programmes in data science and AI. Recorded lectures fit around a job.', link: 'See the GATE 2028 Full Course', href: '/gate-da-courses#full-course-2028', tone: 'orange' },
-  { tag: 'Second attempt', option: "I'm writing GATE DA again", title: 'Writing GATE DA again', text: 'You know the syllabus. What moves your rank is practice under exam conditions: the test series runs from topic-wise tests to full-length GATE-pattern papers.', link: 'See the test series', href: '/gate-da-test-series', tone: 'lilac' },
+  { tag: 'Working professional', points: ["Recorded lectures, watch at any hour", "Weekly quizzes keep you on pace", "A route to IIT M.Tech in data science and AI"], option: "I'm working", title: 'Moving from software into ML', text: 'AI tools already write much of the routine code. Building and judging the models themselves is the harder skill to automate, and GATE DA is the way into IIT M.Tech programmes in data science and AI. Recorded lectures fit around a job.', link: 'See the GATE 2028 Full Course', href: '/gate-da-courses#full-course-2028', tone: 'orange' },
+  // Points to the Full Course, not the test series (2026-10-19, direct
+  // request: sending repeaters straight to the test series undersells the
+  // higher-tier course). Facts from the GATE 2028 card's own includes.
+  { tag: 'Second attempt', points: ["Every subject taught again", "Weekly quizzes to find your gaps", "Personal guidance from Manoj Kumar"], option: "I'm writing GATE DA again", title: 'Writing GATE DA again', text: "You know the syllabus; the gaps are what cost you rank. The GATE 2028 Full Course closes them with every subject taught again, weekly quizzes and personal guidance from Manoj Kumar, and your 2028 attempt is covered too.", link: 'See the GATE 2028 Full Course', href: '/gate-da-courses#full-course-2028', tone: 'lilac' },
 ];
 // An "I'm..." chooser rather than a grid of cards (2026-10-19, "make it four
 // cards, or don't make them cards, make something better"): pick your
@@ -3302,6 +3327,10 @@ function WhoItsFor() {
                 <span className="fit-tag">{p.tag}</span>
                 <h3 className="fit-title">{p.title}</h3>
                 <p className="fit-text">{p.text}</p>
+                <div className="fit-points">
+                  <span className="fit-points-label">What you get</span>
+                  <ul>{p.points.map(t => <li key={t}>{t}</li>)}</ul>
+                </div>
                 <a className="fit-cta" href={p.href} tabIndex={i === sel ? 0 : -1}>{p.link} <span aria-hidden="true">&rarr;</span></a>
               </div>
             ))}
