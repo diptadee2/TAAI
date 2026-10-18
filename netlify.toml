@@ -137,6 +137,14 @@
   status = 302
   force = true
 
+# "100 pe 100% off" registration form (2026-10-18): opens the courses page
+# with the form already open (handled by ChallengeRegister's hash check).
+[[redirects]]
+  from = "/challenge"
+  to = "/gate-da-courses#register-challenge"
+  status = 302
+  force = true
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"

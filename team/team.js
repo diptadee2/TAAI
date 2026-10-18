@@ -2313,6 +2313,16 @@
           '<button type="submit" class="btn btn-primary"' + (ch.saving ? ' disabled' : '') + '>' + (ch.saving ? 'Saving…' : 'Save') + '</button>' +
         '</form>' +
       '</div>' +
+      '<div class="site-setting-row chal-cutoff-row">' +
+        '<div class="site-setting-info">' +
+          '<div class="site-setting-title">Form link</div>' +
+          '<div class="field-hint">Opens the courses page with the registration form already open. Share it anywhere.</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
+          '<code>https://taai.live/challenge</code>' +
+          '<button type="button" class="btn" id="chal-copy-link">Copy link</button>' +
+        '</div>' +
+      '</div>' +
       '<h3 style="margin:22px 0 10px;font-size:15px;">Registrations (' + ch.rows.length + ')</h3>' +
       rowsHtml
     );
@@ -2660,6 +2670,14 @@
       input.addEventListener('change', function () {
         saveSiteSettingsToggle(input.getAttribute('data-setting-field'), input.checked);
       });
+    });
+
+    var chalCopy = document.getElementById('chal-copy-link');
+    if (chalCopy) chalCopy.addEventListener('click', function () {
+      var url = 'https://taai.live/challenge';
+      var done = function () { chalCopy.textContent = 'Copied'; setTimeout(function () { chalCopy.textContent = 'Copy link'; }, 1600); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, function () { window.prompt('Copy this link:', url); });
+      else window.prompt('Copy this link:', url);
     });
 
     var chalCutoffForm = document.getElementById('chal-cutoff-form');

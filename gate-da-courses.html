@@ -4356,7 +4356,24 @@ function ChallengeForm({ cutoff, open, onClose }) {
 function ChallengeRegister() {
   const { cutoff, open } = useChallengeStatus();
   const [show, setShow] = React.useState(false);
-  const close = React.useCallback(() => setShow(false), []);
+  // Shareable link (2026-10-18): taai.live/challenge redirects to
+  // /gate-da-courses#register-challenge, which opens the form directly.
+  // Closing clears the hash so the same link works again on this page.
+  React.useEffect(() => {
+    const check = () => {
+      if (location.hash !== '#register-challenge') return;
+      const card = document.getElementById('challenge');
+      if (card) card.scrollIntoView({ block: 'center' });
+      setShow(true);
+    };
+    check();
+    window.addEventListener('hashchange', check);
+    return () => window.removeEventListener('hashchange', check);
+  }, []);
+  const close = React.useCallback(() => {
+    setShow(false);
+    if (location.hash === '#register-challenge') history.replaceState(null, '', location.pathname + location.search);
+  }, []);
   return (
     <div className="challenge-register">
       <span className="challenge-deadline">{open ? <>Buy the course and register by <b>{fmtChallengeDate(cutoff)}</b>. Late purchases aren't eligible.</> : <>Registration closed on <b>{fmtChallengeDate(cutoff)}</b>.</>}</span>
@@ -5420,7 +5437,7 @@ function App() {
                         <div className="combo-with-side">
                           <ComboCard c={{ ...c, saving }} pricing={effectivePricingMap[c.id] || null} />
                           <div className="combo-side-col">
-                          <div className="challenge-card fade-in-touch">
+                          <div className="challenge-card fade-in-touch" id="challenge">
                             <div className="challenge-head">
                               <span className="challenge-icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 6H4.5v1.5A3.5 3.5 0 0 0 8 11M17 6h2.5v1.5A3.5 3.5 0 0 1 16 11"/></svg>
