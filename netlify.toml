@@ -137,12 +137,13 @@
   status = 302
   force = true
 
-# "100 pe 100% off" registration form (2026-10-18): opens the courses page
-# with the form already open (handled by ChallengeRegister's hash check).
+# "100 pe 100% off" registration form (2026-10-18): serves challenge.html,
+# which carries the link-preview tags and forwards people to the courses
+# page with the form open (ChallengeRegister's #register-challenge check).
 [[redirects]]
   from = "/challenge"
-  to = "/gate-da-courses#register-challenge"
-  status = 302
+  to = "/challenge.html"
+  status = 200
   force = true
 
 [[redirects]]

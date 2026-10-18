@@ -3119,23 +3119,10 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     @media (max-width: 600px) {
       main { --nb-shadow: 4px 4px 0 var(--nb-ink); --nb-shadow-sm: 3px 3px 0 var(--nb-ink); }
     }
-  /* "100 pe 100% off" registration (2026-10-18): the deadline line and
-     button on the challenge card, and the registration modal (rendered
-     into <body>, so it carries its own neo-brutalist colours instead of
-     the main-scoped --nb-* tokens). Square corners, static shadows. */
-  html body main .challenge-register { display: flex; flex-direction: column; gap: 10px; padding-top: 12px; border-top: 2px solid var(--nb-ink); }
-  html body main .challenge-deadline { font-size: 13.5px; line-height: 1.45; color: var(--nb-ink); }
-  html body main .challenge-deadline b { font-weight: 800; white-space: nowrap; }
-  html body main .challenge-register-btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
-    padding: 12px 14px; font-weight: 700; font-size: 14.5px; line-height: 1.2; font-family: inherit; color: #FFF4D6 !important; background: #111 !important;
-    border: 3px solid #111; border-radius: 0; box-shadow: 4px 4px 0 #fff; cursor: pointer;
-    transition: transform .12s ease, box-shadow .12s ease;
-  }
-  html body main .challenge-register-btn:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 #fff; }
-  html body main .challenge-register-btn:active { transform: translate(2px,2px); box-shadow: 2px 2px 0 #fff; }
-  html body main .challenge-register-btn:focus-visible { outline: 3px solid #111; outline-offset: 3px; }
-
+  /* "100 pe 100% off" registration modal (2026-10-18), opened only from
+     the shared taai.live/challenge link. Rendered into <body>, so it carries
+     its own neo-brutalist colours instead of the main-scoped --nb-* tokens.
+     Square corners, static shadows. */
   .chal-backdrop { position: fixed; inset: 0; z-index: 2147483000; background: rgba(17,17,17,0.6); display: flex; align-items: flex-start; justify-content: center; padding: 24px 16px; overflow-y: auto; }
   .chal-modal { position: relative; width: 100%; max-width: 520px; margin: auto 0; background: #FFF4D6; color: #111; border: 3px solid #111; box-shadow: 8px 8px 0 #111; padding: 26px 24px 24px; font-family: inherit; }
   .chal-close { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border: 2px solid #111; background: #fff; color: #111; font-size: 22px; line-height: 1; cursor: pointer; }
@@ -4374,13 +4361,10 @@ function ChallengeRegister() {
     setShow(false);
     if (location.hash === '#register-challenge') history.replaceState(null, '', location.pathname + location.search);
   }, []);
-  return (
-    <div className="challenge-register">
-      <span className="challenge-deadline">{open ? <>Buy the course and register by <b>{fmtChallengeDate(cutoff)}</b>. Late purchases aren't eligible.</> : <>Registration closed on <b>{fmtChallengeDate(cutoff)}</b>.</>}</span>
-      <button type="button" className="challenge-register-btn" onClick={() => setShow(true)}>{open ? 'Register for the challenge' : 'View challenge terms'} <span aria-hidden="true">&rarr;</span></button>
-      {show && <ChallengeForm cutoff={cutoff} open={open} onClose={close} />}
-    </div>
-  );
+  // Nothing visible on the page (2026-10-18, direct request: "keep the link
+  // button in the team page ... instead of making the courses page look
+  // bad"). The form only opens from the shared link, copied in /team.
+  return show ? <ChallengeForm cutoff={cutoff} open={open} onClose={close} /> : null;
 }
 
 // Small line drawings for the 2028 card's project tiles (2026-10-11).
