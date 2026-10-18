@@ -1955,38 +1955,41 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
       html body #root .why-india-inner { grid-template-columns: 1fr; gap: 26px; }
       html body #root .why-india-play { left: 10px; bottom: 10px; padding: 7px 12px 7px 9px; font-size: 14px; }
     }
-  /* "Which path fits you?" cards (2026-10-19). Square corners, static hard
-     shadows (the cards fade in, so no radius + shadow on a moving box). */
+  /* "Which path fits you?" chooser (2026-10-19). Options on the left, one
+     panel on the right; on phones the options become a wrapping row of pills
+     above the panel. Square corners, static hard shadows. */
   html body #root .fit-section { padding-top: 56px; padding-bottom: 56px; }
-  html body #root .fit-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 22px; }
-  html body #root .fit-grid > .fit-card { grid-column: span 2; }
-  html body #root .fit-grid > .fit-card:nth-child(n+4) { grid-column: span 3; }
-  @media (max-width: 1024px) {
-    html body #root .fit-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    html body #root .fit-grid > .fit-card, html body #root .fit-grid > .fit-card:nth-child(n+4) { grid-column: auto; }
-    html body #root .fit-grid > .fit-card:last-child { grid-column: 1 / -1; }
-  }
-  html body #root .fit-card { display: flex; flex-direction: column; gap: 10px; padding: 26px 26px 22px; color: #111; text-decoration: none; border: 3px solid #111; box-shadow: 6px 6px 0 #111; transition: transform .15s ease, box-shadow .15s ease; }
+  html body #root .fit-chooser { display: grid; grid-template-columns: minmax(240px, 340px) minmax(0, 1fr); border: 3px solid #111; box-shadow: 8px 8px 0 #111; background: #fff; }
+  html body #root .fit-options { display: flex; flex-direction: column; border-right: 3px solid #111; }
+  html body #root .fit-option { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 20px 22px; background: #fff; color: #111; border: 0; border-bottom: 2px solid #111; font: inherit; font-size: 16.5px; font-weight: 600; text-align: left; cursor: pointer; transition: background .15s ease; }
+  html body #root .fit-option:last-child { border-bottom: 0; }
+  @media (min-width: 769px) { html body #root .fit-option { flex: 1 1 0; } }
+  html body #root .fit-option:hover { background: #FFF4D6; }
+  html body #root .fit-option.is-sel { background: #FDE047; font-weight: 800; }
+  html body #root .fit-option:focus-visible { outline: 3px solid #111; outline-offset: -6px; }
+  html body #root .fit-option-arrow { opacity: 0; transform: translateX(-4px); transition: opacity .15s ease, transform .15s ease; }
+  html body #root .fit-option.is-sel .fit-option-arrow { opacity: 1; transform: none; }
+  html body #root .fit-panels { display: grid; }
+  html body #root .fit-panel { grid-area: 1 / 1; display: flex; flex-direction: column; justify-content: center; gap: 14px; padding: 40px 44px; visibility: hidden; opacity: 0; transition: opacity .25s ease, visibility 0s linear .25s; }
+  html body #root .fit-panel.is-sel { visibility: visible; opacity: 1; transition: opacity .25s ease; }
   html body #root .fit-pink { background: #F9A8D4; } html body #root .fit-sky { background: #7DD3FC; }
   html body #root .fit-lime { background: #BEF264; } html body #root .fit-lilac { background: #C4B5FD; } html body #root .fit-orange { background: #FDBA74; }
   html body #root .fit-tag { align-self: flex-start; background: #111; color: #FFF4D6; font-family: 'DM Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; padding: 4px 9px; }
-  html body #root .fit-title { font-size: 22px; font-weight: 800; line-height: 1.2; letter-spacing: -0.01em; }
-  html body #root .fit-text { font-size: 15px; line-height: 1.55; color: #222; }
-  html body #root .fit-link { margin-top: auto; padding-top: 8px; font-weight: 700; font-size: 14.5px; text-decoration: underline; text-underline-offset: 3px; }
-  @media (hover: hover) and (pointer: fine) {
-    html body #root .fit-card:hover { transform: translate(-2px, -2px); box-shadow: 8px 8px 0 #111; }
-  }
+  html body #root .fit-title { margin: 0; font-size: clamp(24px, 2.4vw, 32px); font-weight: 800; line-height: 1.15; letter-spacing: -0.015em; color: #111; }
+  html body #root .fit-text { margin: 0; max-width: 560px; font-size: 16.5px; line-height: 1.6; color: #222; }
+  html body #root .fit-cta { align-self: flex-start; margin-top: 6px; display: inline-flex; align-items: center; gap: 8px; padding: 13px 20px; background: #FDE047; color: #111; font-weight: 800; font-size: 15px; text-decoration: none; border: 3px solid #111; box-shadow: 5px 5px 0 #111; transition: transform .12s ease, box-shadow .12s ease; }
+  @media (hover: hover) and (pointer: fine) { html body #root .fit-cta:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 #111; } }
+  html body #root .fit-cta:active { transform: translate(2px, 2px); box-shadow: 3px 3px 0 #111; }
   @media (max-width: 768px) {
-    html body #root .fit-grid {
-      display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
-      margin-left: calc(-1 * max(var(--gutter), 24px)); margin-right: calc(-1 * max(var(--gutter), 24px));
-      padding: 4px max(var(--gutter), 24px) 16px; scroll-padding-left: max(var(--gutter), 24px); scrollbar-width: none;
-    }
-    html body #root .fit-grid::-webkit-scrollbar { display: none; }
-    html body #root .fit-card { flex: 0 0 min(84%, 340px); scroll-snap-align: start; min-width: 0; padding: 22px 20px 18px; opacity: 1 !important; transform: none !important; }
-    html body #root .fit-title { font-size: 19px; }
-    html body #root .fit-text { font-size: 14px; }
+    html body #root .fit-chooser { grid-template-columns: 1fr; box-shadow: 6px 6px 0 #111; }
+    html body #root .fit-options { flex-direction: row; flex-wrap: wrap; gap: 8px; padding: 14px; border-right: 0; border-bottom: 3px solid #111; background: #FFF4D6; }
+    html body #root .fit-option { width: auto; padding: 9px 13px; border: 2px solid #111; font-size: 14px; }
+    html body #root .fit-option:last-child { border-bottom: 2px solid #111; }
+    html body #root .fit-option-arrow { display: none; }
+    html body #root .fit-panel { padding: 24px 20px 26px; }
+    html body #root .fit-text { font-size: 15px; }
   }
+  @media (prefers-reduced-motion: reduce) { html body #root .fit-panel { transition: none; } }
 </style>
 <script type="application/ld+json">
 {
@@ -3245,37 +3248,64 @@ function WhyIndia() {
 // that fits it, using only facts already stated on the site. Moved here
 // from the courses page the same day, between the reviews and the FAQ.
 const FIT_PATHS = [
-  { tag: 'Final year', title: 'Writing GATE DA in February 2027', text: 'The GATE 2028 Full Course unlocks content covering 65+ marks of GATE DA 2027 the day you join, and your 2028 attempt is covered too. Pair it with the free 120-day roadmap.', link: 'See the GATE 2028 Full Course', href: '/gate-da-courses#full-course-2028', tone: 'pink' },
+  { tag: 'Final year', option: "I'm in final year", title: 'Writing GATE DA in February 2027', text: 'The GATE 2028 Full Course unlocks content covering 65+ marks of GATE DA 2027 the day you join, and your 2028 attempt is covered too. Pair it with the free 120-day roadmap.', link: 'See the GATE 2028 Full Course', href: '/gate-da-courses#full-course-2028', tone: 'pink' },
   // GATE needs 3rd year or above (gate2027.iitm.ac.in/eligibility_criteria,
   // checked 2026-10-19), so a 2nd year today can't sit GATE DA 2027.
-  { tag: '2nd or 3rd year', title: 'Starting early', text: 'In 3rd year? One enrolment covers your 2027 and 2028 attempts. In 2nd year? 2028 is your first eligible attempt, so start now.', link: 'See the GATE 2028 Full Course', href: '/gate-da-courses#full-course-2028', tone: 'sky' },
+  { tag: '2nd or 3rd year', option: "I'm in 2nd or 3rd year", title: 'Starting early', text: 'In 3rd year? One enrolment covers your 2027 and 2028 attempts. In 2nd year? 2028 is your first eligible attempt, so start now.', link: 'See the GATE 2028 Full Course', href: '/gate-da-courses#full-course-2028', tone: 'sky' },
   // Disciplines from gate2027.iitm.ac.in/eligibility_criteria (any UG degree,
   // 3rd year or higher, or completed), checked 2026-10-19.
-  { tag: 'Non-CS branch', title: 'From any branch or degree', text: 'Any engineering branch, B.Sc, BCA, B.Com or BA: GATE is open to all of them from 3rd year on. Everything here starts from scratch, Python included.', link: 'See single subjects', href: '/gate-da-courses#individual', tone: 'lime' },
+  { tag: 'Non-CS branch', option: "I'm from a non-CS branch", title: 'From any branch or degree', text: 'Any engineering branch, B.Sc, BCA, B.Com or BA: GATE is open to all of them from 3rd year on. Everything here starts from scratch, Python included.', link: 'See single subjects', href: '/gate-da-courses#individual', tone: 'lime' },
   // Working professionals (2026-10-19, direct request). Kept to what holds
   // up: no forecast of how many jobs get automated, by design.
-  { tag: 'Working professional', title: 'Moving from software into ML', text: 'AI tools already write much of the routine code. Building and judging the models themselves is the harder skill to automate, and GATE DA is the way into IIT M.Tech programmes in data science and AI. Recorded lectures fit around a job.', link: 'See the GATE 2028 Full Course', href: '/gate-da-courses#full-course-2028', tone: 'orange' },
-  { tag: 'Second attempt', title: 'Writing GATE DA again', text: 'You know the syllabus. What moves your rank is practice under exam conditions: the test series runs from topic-wise tests to full-length GATE-pattern papers.', link: 'See the test series', href: '/gate-da-test-series', tone: 'lilac' },
+  { tag: 'Working professional', option: "I'm working", title: 'Moving from software into ML', text: 'AI tools already write much of the routine code. Building and judging the models themselves is the harder skill to automate, and GATE DA is the way into IIT M.Tech programmes in data science and AI. Recorded lectures fit around a job.', link: 'See the GATE 2028 Full Course', href: '/gate-da-courses#full-course-2028', tone: 'orange' },
+  { tag: 'Second attempt', option: "I'm writing GATE DA again", title: 'Writing GATE DA again', text: 'You know the syllabus. What moves your rank is practice under exam conditions: the test series runs from topic-wise tests to full-length GATE-pattern papers.', link: 'See the test series', href: '/gate-da-test-series', tone: 'lilac' },
 ];
+// An "I'm..." chooser rather than a grid of cards (2026-10-19, "make it four
+// cards, or don't make them cards, make something better"): pick your
+// situation on the left, one panel shows the advice and a real button to the
+// product. Tabs pattern (arrow keys move between options).
 function WhoItsFor() {
+  const [sel, setSel] = React.useState(0);
+  const tabsRef = React.useRef([]);
+  const onKey = (e, i) => {
+    const d = (e.key === 'ArrowDown' || e.key === 'ArrowRight') ? 1 : (e.key === 'ArrowUp' || e.key === 'ArrowLeft') ? -1 : 0;
+    if (!d) return;
+    e.preventDefault();
+    const n = (i + d + FIT_PATHS.length) % FIT_PATHS.length;
+    setSel(n); if (tabsRef.current[n]) tabsRef.current[n].focus();
+  };
   return (
     <section className="section fit-section" id="who-its-for">
       <div className="container">
         <div className="section-head fade-in">
           <div className="section-head-left">
             <h2>Which path <em>fits you?</em></h2>
-            <p className="section-sub">Where you are right now decides where to start.</p>
+            <p className="section-sub">Pick where you are right now. We'll tell you where to start.</p>
           </div>
         </div>
-        <div className="fit-grid">
-          {FIT_PATHS.map(f => (
-            <a key={f.tag} href={f.href} className={`fit-card fit-${f.tone} fade-in`}>
-              <span className="fit-tag">{f.tag}</span>
-              <span className="fit-title">{f.title}</span>
-              <span className="fit-text">{f.text}</span>
-              <span className="fit-link">{f.link} <span aria-hidden="true">&rarr;</span></span>
-            </a>
-          ))}
+        <div className="fit-chooser fade-in">
+          <div className="fit-options" role="tablist" aria-label="Where are you right now?" aria-orientation="vertical">
+            {FIT_PATHS.map((p, i) => (
+              <button key={p.tag} ref={el => { tabsRef.current[i] = el; }} type="button" role="tab" id={`fit-tab-${i}`} aria-controls="fit-panel"
+                aria-selected={i === sel} tabIndex={i === sel ? 0 : -1} className={`fit-option${i === sel ? ' is-sel' : ''}`}
+                onClick={() => setSel(i)} onKeyDown={e => onKey(e, i)}>
+                <span className="fit-option-label">{p.option}</span>
+                <span className="fit-option-arrow" aria-hidden="true">&rarr;</span>
+              </button>
+            ))}
+          </div>
+          {/* All panels share one grid cell so the box keeps the tallest one's
+              height and nothing below jumps when you switch. */}
+          <div className="fit-panels" id="fit-panel" role="tabpanel" aria-labelledby={`fit-tab-${sel}`}>
+            {FIT_PATHS.map((p, i) => (
+              <div key={p.tag} className={`fit-panel fit-${p.tone}${i === sel ? ' is-sel' : ''}`} aria-hidden={i !== sel}>
+                <span className="fit-tag">{p.tag}</span>
+                <h3 className="fit-title">{p.title}</h3>
+                <p className="fit-text">{p.text}</p>
+                <a className="fit-cta" href={p.href} tabIndex={i === sel ? 0 : -1}>{p.link} <span aria-hidden="true">&rarr;</span></a>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -3315,8 +3345,8 @@ function App() {
       <WhyIndia />
       <WhyStrip />
       <Instructor />
-      <Testimonials />
       <WhoItsFor />
+      <Testimonials />
       <FAQ />
       <CTA />
       <Footer />
