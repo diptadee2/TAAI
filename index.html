@@ -1985,7 +1985,7 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     html body #root .fit-points li::after { content: ''; position: absolute; left: 6px; top: 5px; width: 5px; height: 9px; border: solid #111; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg); }
   }
   @media (min-width: 1200px) {
-    html body #root .fit-panel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 290px); grid-template-rows: auto auto auto 1fr; column-gap: 36px; row-gap: 14px; align-content: center; }
+    html body #root .fit-panel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 290px); grid-template-rows: auto auto auto; column-gap: 40px; row-gap: 14px; align-content: center; align-items: start; }
     html body #root .fit-panel > :not(.fit-points) { grid-column: 1; }
     html body #root .fit-points { display: flex; flex-direction: column; gap: 10px; grid-column: 2; grid-row: 1 / -1; align-self: center; background: #fff; border: 3px solid #111; padding: 18px 20px; }
     html body #root .fit-tag, html body #root .fit-cta { justify-self: start; }
@@ -3331,7 +3331,6 @@ function WhoItsFor() {
                   <span className="fit-points-label">What you get</span>
                   <ul>{p.points.map(t => <li key={t}>{t}</li>)}</ul>
                 </div>
-                <a className="fit-cta" href={p.href} tabIndex={i === sel ? 0 : -1}>{p.link} <span aria-hidden="true">&rarr;</span></a>
               </div>
             ))}
           </div>
