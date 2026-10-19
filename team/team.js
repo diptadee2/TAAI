@@ -1553,7 +1553,7 @@
   // Editable caption template (2026-10-19, "make all the prompts editable"):
   // stored in site_settings.offer_prompt_template (NULL = this built-in
   // default), {{placeholders}} filled for the chosen post day.
-  var OP_PROMPT_PLACEHOLDERS = ['post_date', 'when_line', 'price', 'offer_end', 'next_price_date', 'next_price', 'challenge_cutoff', 'challenge_link', 'course_link'];
+  var OP_PROMPT_PLACEHOLDERS = ['post_date', 'when_line', 'price', 'offer_end', 'next_price_date', 'next_price', 'challenge_cutoff', 'challenge_link', 'course_link', 'roadmap_link'];
   var OP_DEFAULT_PROMPT = [
     'Write a short social media caption (Instagram / LinkedIn / WhatsApp channel) for TAAI, a GATE DA (Data Science and AI) exam-prep brand in India. It goes with a poster that already shows the countdown, the prices and the challenge, so keep the caption short and don\'t repeat everything.',
     '',
@@ -1568,6 +1568,7 @@
     '- GATE DA 2026: 65 marks got AIR 90.',
     '- Why TAAI can offer this: we are a small, independent team with no investors to answer to, so we get to celebrate merit by refunding the students who earn it. (A light, friendly tone is fine here.)',
     '- The course also prepares you for GATE DA 2028 and includes 5 portfolio projects (machine learning, computer vision, LLMs).',
+    '- TAAI\'s day-by-day roadmap to GATE DA 2027 is free for everyone on the progress tracker (the last link). Mention it only briefly.',
     '',
     'Voice: sounds like a real person (a mentor) typing quickly, not a brand. Plain, direct, urgent but honest. Short sentences. No corporate words (journey, unlock, elevate, game-changer, dive in), no "Here\'s what...", no exclamation spam.',
     '',
@@ -1575,9 +1576,10 @@
     '1. Start with the 🔴 emoji followed by "100 pe 100% off", then a first line about the deadline that makes someone stop scrolling.',
     '2. One or two short lines: the price going up, and the challenge.',
     '3. A clear call to action to fill the challenge form after buying.',
-    '4. These two links, each on its own line, exactly:',
+    '4. These three links, each on its own line, exactly:',
     '   Challenge form: {{challenge_link}}',
     '   Course: {{course_link}}',
+    '   Free roadmap: {{roadmap_link}}',
     '5. At most 3 hashtags on the last line.',
     '',
     'Rules:',
@@ -1602,6 +1604,7 @@
     '- GATE DA 2026: 65 marks got AIR 90.',
     '- Why TAAI can offer this: we are a small, independent team with no investors to answer to, so we get to celebrate merit by refunding the students who earn it. (A light, friendly tone is fine here.)',
     '- The course includes 5 portfolio projects (machine learning, computer vision, LLMs).',
+    '- TAAI\'s day-by-day roadmap to GATE DA 2027 is free for everyone on the progress tracker (the last link). Mention it only briefly.',
     '',
     'Voice: sounds like a real person (a mentor) typing quickly, not a brand. Plain, direct, a little bold. Short sentences. No corporate words (journey, unlock, elevate, game-changer, dive in), no "Here\'s what...", no exclamation spam.',
     '',
@@ -1609,9 +1612,10 @@
     '1. Start with the 🔴 emoji followed by "100 pe 100% off", then a first line about the challenge that makes someone stop scrolling.',
     '2. One or two short lines: what the challenge is and the registration deadline.',
     '3. A clear call to action to buy the course and fill the challenge form.',
-    '4. These two links, each on its own line, exactly:',
+    '4. These three links, each on its own line, exactly:',
     '   Challenge form: {{challenge_link}}',
     '   Course: {{course_link}}',
+    '   Free roadmap: {{roadmap_link}}',
     '5. At most 3 hashtags on the last line.',
     '',
     'Rules:',
@@ -1642,6 +1646,7 @@
       challenge_cutoff: opDate(op.cutoff, true),
       challenge_link: OP_CHALLENGE_LINK,
       course_link: OP_COURSE_LINK,
+      roadmap_link: 'https://taai.live/gate-da-progress-tracker',
     };
   }
   function opDefaultPrompt() { return opMode() === 'challenge' ? OP_CHALLENGE_PROMPT : OP_DEFAULT_PROMPT; }
