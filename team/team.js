@@ -1150,6 +1150,32 @@
     '- Output only the caption.',
   ].join('\n');
 
+  // One-off festival touches (2026-10-19, "do tomorrow's post with Dussehra
+  // context, just tomorrow"): keyed by the POST date, so they show only on
+  // that day's Day card / Offer poster and their caption prompts. Add a date
+  // here for another festival; past dates simply never match again.
+  var FESTIVALS = {
+    '2026-10-20': {
+      tag: 'HAPPY DUSSEHRA',
+      prompt: 'This post goes out on Dussehra (Vijayadashami), the festival of good winning over evil. Keep the required opening, then make the first line a short, warm Dussehra wish tied in lightly to studying (for example: burn your backlog along with Ravan, or a fresh start on an auspicious day). Keep it respectful: no jokes about religion. All facts and rules above still apply.',
+    },
+  };
+  function festivalFor(iso) { return FESTIVALS[iso] || null; }
+  function withFestivalPrompt(text, iso) {
+    var f = festivalFor(iso);
+    return f ? text + '\n\nFestival context for this post:\n- ' + f.prompt : text;
+  }
+  // Orange bordered tag beside the logo (logo ends at about x = 177).
+  function drawFestivalTag(ctx, iso, P, MONO) {
+    var f = festivalFor(iso); if (!f) return;
+    ctx.font = '600 22px ' + MONO;
+    var x = P + 125, y = P + 2, w = ctx.measureText(f.tag).width + 36, h = 50;
+    ctx.fillStyle = '#111111'; ctx.fillRect(x + 5, y + 5, w, h);
+    ctx.fillStyle = '#FDBA74'; ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = '#111111'; ctx.lineWidth = 3; ctx.strokeRect(x + 1.5, y + 1.5, w - 3, h - 3);
+    ctx.fillStyle = '#111111'; ctx.textBaseline = 'middle'; ctx.fillText(f.tag, x + 18, y + 26); ctx.textBaseline = 'alphabetic';
+  }
+
   function dcPromptValues(batch, iso, tasks) {
     var dayNum = dcDayNumber(batch, iso), len = DC_BATCHES[batch].length, today = dcTodayIST();
     var when = iso === today ? 'today' : iso === dcAddDays(today, 1) ? 'tomorrow' : new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -1168,7 +1194,7 @@
   function dcCaptionPrompt(batch, iso, tasks) {
     var tpl = state.dayCard.template || DC_DEFAULT_PROMPT;
     var vals = dcPromptValues(batch, iso, tasks);
-    return tpl.replace(/\{\{\s*(\w+)\s*\}\}/g, function (m, k) { return Object.prototype.hasOwnProperty.call(vals, k) ? vals[k] : m; });
+    return withFestivalPrompt(tpl.replace(/\{\{\s*(\w+)\s*\}\}/g, function (m, k) { return Object.prototype.hasOwnProperty.call(vals, k) ? vals[k] : m; }), iso);
   }
   function loadDayCardTemplate() {
     var dc = state.dayCard;
@@ -1355,6 +1381,7 @@
       var pill = DC_BATCHES[dc.batch].label, pw = ctx.measureText(pill).width + 40;
       box(S - P - pw - 6, P, pw, 54, YEL, 6);
       ctx.fillStyle = INK; ctx.textBaseline = 'middle'; ctx.fillText(pill, S - P - pw - 6 + 20, P + 28); ctx.textBaseline = 'alphabetic';
+      drawFestivalTag(ctx, iso, P, MONO);
 
       // Hero: day number in a flat colour block (left), "done before the exam" box (right).
       var heroTop = 172, hbW = 500, hbH = 250;
@@ -1621,7 +1648,7 @@
   function opSavedTemplate() { var op = state.offerPoster; return opMode() === 'challenge' ? op.challengeTemplate : op.template; }
   function opCaptionPrompt() {
     var tpl = opSavedTemplate() || opDefaultPrompt(), vals = opPromptValues();
-    return tpl.replace(/\{\{\s*(\w+)\s*\}\}/g, function (m, k) { return Object.prototype.hasOwnProperty.call(vals, k) ? vals[k] : m; });
+    return withFestivalPrompt(tpl.replace(/\{\{\s*(\w+)\s*\}\}/g, function (m, k) { return Object.prototype.hasOwnProperty.call(vals, k) ? vals[k] : m; }), opPostDate());
   }
   function loadOfferPosterTemplate() {
     var op = state.offerPoster;
@@ -1777,6 +1804,7 @@
         var ctag = '100 PE 100% OFF · GATE 2028 FULL COURSE', ctw = ctx.measureText(ctag).width + 36;
         ctx.fillStyle = INK; ctx.fillRect(S - P - ctw, P + 2, ctw, 50);
         ctx.fillStyle = PAPER; ctx.textBaseline = 'middle'; ctx.fillText(ctag, S - P - ctw + 18, P + 28); ctx.textBaseline = 'alphabetic';
+        drawFestivalTag(ctx, opPostDate(), P, MONO);
 
         var hT = 168, hW = 540, hH = 300;
         box(P, hT, hW, hH, '#C4B5FD', 10);
@@ -1825,6 +1853,7 @@
       var tag = 'SUPER EARLY BIRD · GATE 2028 FULL COURSE', tgw = ctx.measureText(tag).width + 36;
       ctx.fillStyle = INK; ctx.fillRect(S - P - tgw, P + 2, tgw, 50);
       ctx.fillStyle = PAPER; ctx.textBaseline = 'middle'; ctx.fillText(tag, S - P - tgw + 18, P + 28); ctx.textBaseline = 'alphabetic';
+      drawFestivalTag(ctx, opPostDate(), P, MONO);
 
       // Hero: the countdown (urgency colour) + price box.
       var heroTop = 168, hbW = 540, hbH = 300;
