@@ -2085,6 +2085,46 @@ body .mobile-menu-contact {
   body .mobile-menu-link:nth-of-type(7) { grid-column: 1 / -1; }
   body .mobile-menu-actions { max-width: 560px; width: 100%; justify-self: center; }
 }
+
+/* "Which path fits you?" accordion for 768px and below (2026-10-19, "can this
+   one's design be better on mobile?"): the wrapped pills and the fixed-height
+   answer box are replaced by full-width rows; the open row shows its answer
+   and "What you get" right under it. Tabs stay from 769px. */
+html body #root .fit-acc { display: none; }
+@media (max-width: 768px) {
+  html body #root .fit-chooser { display: none !important; }
+  html body #root .fit-acc { display: block; border: 3px solid #111; box-shadow: 6px 6px 0 #111; background: #fff; }
+  html body #root .fit-acc-item + .fit-acc-item { border-top: 2px solid #111; }
+  html body #root .fit-acc-btn { display: flex; align-items: center; gap: 12px; width: 100%; padding: 16px 16px; background: #fff; color: #111; border: 0; font: inherit; font-size: 16px; font-weight: 700; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  html body #root .fit-acc-btn:focus-visible { outline: 3px solid #111; outline-offset: -6px; }
+  html body #root .fit-acc-swatch { width: 16px; height: 16px; flex-shrink: 0; border: 2px solid #111; background: var(--fit-c); }
+  html body #root .fit-acc-label { flex: 1; line-height: 1.3; }
+  html body #root .fit-acc-icon { position: relative; width: 26px; height: 26px; flex-shrink: 0; border: 2px solid #111; background: #fff; }
+  html body #root .fit-acc-icon::before, html body #root .fit-acc-icon::after { content: ''; position: absolute; left: 50%; top: 50%; width: 12px; height: 2.5px; background: #111; transform: translate(-50%, -50%); transition: transform .25s ease; }
+  html body #root .fit-acc-icon::after { transform: translate(-50%, -50%) rotate(90deg); }
+  html body #root .fit-acc-item.is-open .fit-acc-icon::after { transform: translate(-50%, -50%) rotate(0deg); }
+  html body #root .fit-acc-item.is-open .fit-acc-btn, html body #root .fit-acc-item.is-open .fit-acc-body { background: var(--fit-c); }
+  html body #root .fit-acc-item.is-open .fit-acc-icon { background: #FDE047; }
+  html body #root .fit-acc-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .3s ease; }
+  html body #root .fit-acc-item.is-open .fit-acc-body { grid-template-rows: 1fr; }
+  html body #root .fit-acc-inner { overflow: hidden; min-height: 0; display: flex; flex-direction: column; gap: 10px; padding: 0 16px; }
+  html body #root .fit-acc-item.is-open .fit-acc-inner { padding-bottom: 20px; }
+  html body #root .fit-acc-title { margin: 0; font-size: 20px; font-weight: 800; line-height: 1.2; color: #111; }
+  html body #root .fit-acc-text { margin: 0; font-size: 15px; line-height: 1.55; color: #222; }
+  html body #root .fit-acc-points { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; background: #fff; border: 2px solid #111; padding: 14px 14px; }
+  html body #root .fit-acc-points ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+  html body #root .fit-acc-points li { position: relative; padding-left: 28px; font-size: 14.5px; line-height: 1.4; font-weight: 600; color: #111; }
+  html body #root .fit-acc-points li::before { content: ''; position: absolute; left: 0; top: 1px; width: 18px; height: 18px; background: #FDE047; border: 2px solid #111; }
+  html body #root .fit-acc-points li::after { content: ''; position: absolute; left: 6px; top: 4px; width: 5px; height: 9px; border: solid #111; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg); }
+  html body #root .fit-acc-pink { --fit-c: #F9A8D4; }
+  html body #root .fit-acc-sky { --fit-c: #7DD3FC; }
+  html body #root .fit-acc-lime { --fit-c: #BEF264; }
+  html body #root .fit-acc-lilac { --fit-c: #C4B5FD; }
+  html body #root .fit-acc-orange { --fit-c: #FDBA74; }
+}
+@media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+  html body #root .fit-acc-body, html body #root .fit-acc-icon::after { transition: none; }
+}
 </style>
 <script type="application/ld+json">
 {
@@ -3367,6 +3407,9 @@ const FIT_PATHS = [
 // product. Tabs pattern (arrow keys move between options).
 function WhoItsFor() {
   const [sel, setSel] = React.useState(0);
+  // Phones and small tablets (768px and below) get an accordion instead of
+  // the tabs (2026-10-19, "can this one's design be better on mobile?").
+  const [openM, setOpenM] = React.useState(0);
   const tabsRef = React.useRef([]);
   const onKey = (e, i) => {
     const d = (e.key === 'ArrowDown' || e.key === 'ArrowRight') ? 1 : (e.key === 'ArrowUp' || e.key === 'ArrowLeft') ? -1 : 0;
@@ -3409,6 +3452,31 @@ function WhoItsFor() {
               </div>
             ))}
           </div>
+        </div>
+        <div className="fit-acc fade-in">
+          {FIT_PATHS.map((p, i) => {
+            const open = i === openM;
+            return (
+              <div key={p.tag} className={`fit-acc-item fit-acc-${p.tone}${open ? ' is-open' : ''}`}>
+                <button type="button" className="fit-acc-btn" id={`fit-acc-btn-${i}`} aria-expanded={open} aria-controls={`fit-acc-body-${i}`}
+                  onClick={() => setOpenM(open ? -1 : i)}>
+                  <span className="fit-acc-swatch" aria-hidden="true" />
+                  <span className="fit-acc-label">{p.option}</span>
+                  <span className="fit-acc-icon" aria-hidden="true" />
+                </button>
+                <div className="fit-acc-body" id={`fit-acc-body-${i}`} role="region" aria-labelledby={`fit-acc-btn-${i}`} aria-hidden={!open}>
+                  <div className="fit-acc-inner">
+                    <h3 className="fit-acc-title">{p.title}</h3>
+                    <p className="fit-acc-text">{p.text}</p>
+                    <div className="fit-acc-points">
+                      <span className="fit-points-label">What you get</span>
+                      <ul>{p.points.map(t => <li key={t}>{t}</li>)}</ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
