@@ -3217,6 +3217,26 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
   .btn-nav-signin, .btn-nav-signup { padding: 10px 16px !important; font-size: 13px !important; }
   .btn-nav-contact { padding: 9px 12px !important; font-size: 13px !important; }
 }
+
+/* 2028 card "What's included" as tiles (2026-10-19, "can you make this better looking?"):
+   each item a white bordered tile with a black tick square, equal heights per row,
+   bold "Label:" prefix. Neo-brutalism, no shadow (tiles aren't clickable). */
+html body main .c28-includes .combo-includes-label { font-size: 17px !important; font-weight: 800 !important; margin-bottom: 14px !important; }
+html body main .c28-includes .combo-includes ul { gap: 10px !important; }
+html body main .c28-includes .combo-includes li {
+  background: #FFFFFF; border: 2px solid var(--nb-ink); padding: 11px 14px !important;
+  align-items: center !important; gap: 12px !important; font-size: 14.5px !important; line-height: 1.4 !important; color: var(--nb-ink) !important;
+}
+html body main .c28-includes .combo-includes li b { font-weight: 700; }
+html body main .c28-includes .combo-check {
+  width: 24px !important; height: 24px !important; border-radius: 0 !important; margin-top: 0 !important;
+  background: var(--nb-ink) !important; border: 0 !important; box-shadow: none !important;
+}
+html body main .c28-includes .combo-check svg { width: 12px !important; height: 10px !important; }
+html body main .c28-includes .combo-check svg path { stroke: #FDE047 !important; stroke-width: 2 !important; stroke-dashoffset: 0 !important; }
+@media (max-width: 600px) {
+  html body main .c28-includes .combo-includes li { font-size: 13.5px !important; padding: 9px 11px !important; }
+}
 </style>
 <script type="application/ld+json" id="course-jsonld">
 {
@@ -4614,7 +4634,13 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
                 <path d="M1 4l3 3 5-5" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </span>
-            {withDiscordLink(item)}
+            {(() => {
+              // "Label: detail" items show the label in bold (2026-10-19, "make this better looking").
+              const k = item.indexOf(': ');
+              return k > 0 && k < 32
+                ? <span className="combo-incl-text"><b>{item.slice(0, k + 1)}</b> {withDiscordLink(item.slice(k + 2))}</span>
+                : <span className="combo-incl-text">{withDiscordLink(item)}</span>;
+            })()}
           </li>
         ))}
       </ul>
