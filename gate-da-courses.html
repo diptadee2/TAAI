@@ -3112,10 +3112,18 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
        drops its 4-point list and shows its one-line description instead, so
        the side column (with the challenge card's "Why can we do this?" line)
        isn't taller than the 2028 card. Phones/iPads keep the list. */
+    /* 2026-10-19 ("this is all negative space"): once the 2028 card got its
+       tiled "What's included" it became tall enough for the list again, so
+       the 120-day card shows its 4-point list at every width. Between 1025
+       and 1279px the two side cards sit side by side under the 2028 card and
+       stretch to the taller challenge card, so the list spreads to fill. */
     @media (min-width: 1025px) {
-      html body main .combo-side-col .plan120-list { display: none !important; }
       html body main .combo-side-col .plan120-sub { display: block !important; }
-      html body main .combo-side-col > .plan120-cta .plan120-go { margin-top: 14px; }
+      html body main .combo-side-col > .plan120-cta { display: flex !important; flex-direction: column !important; }
+      html body main .combo-side-col > .plan120-cta .plan120-go { margin-top: auto !important; padding-top: 14px; }
+    }
+    @media (min-width: 1025px) and (max-width: 1279px) {
+      html body main .combo-side-col .plan120-list { flex: 1 1 auto; justify-content: space-evenly; }
     }
     /* Individual course cards reworked 2026-10-16 ("can the individual course cards look better?") */
     html body main .course-card { display: flex !important; flex-direction: column; }
