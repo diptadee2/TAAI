@@ -3312,6 +3312,32 @@ html body main #combos .c28-offer-ends--today { display: inline-flex; align-item
 html body main .c28-today-dot { width: 10px; height: 10px; background: #DC2626; flex-shrink: 0; animation: c28-today-pulse 1.1s ease-in-out infinite; }
 @keyframes c28-today-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
 @media (prefers-reduced-motion: reduce) { html body main .c28-today-dot { animation: none; } }
+
+/* 1025-1279px (2026-10-19, "why is this spread throughout the whole screen"): the
+   challenge and 120-day cards used to drop below the 2028 card here, so the 2028
+   card stretched across the whole row. They now sit beside it in a 300px column,
+   as from 1280px. To keep the two columns the same height, "What's included" is a
+   single column in this range and the challenge title is smaller. */
+@media (min-width: 1025px) and (max-width: 1279px) {
+  .combo-with-side { flex-direction: row !important; align-items: stretch !important; gap: 20px !important; }
+  .combo-with-side > .combo-featured-frame { flex: 1 1 auto !important; min-width: 0 !important; height: auto !important; }
+  html body main .combo-with-side .combo-side-col { display: flex !important; flex-direction: column !important; flex: 0 0 300px !important; width: 300px !important; gap: 20px !important; overflow: visible !important; }
+  html body main .combo-with-side .combo-side-col > * { width: auto !important; min-width: 0 !important; }
+  html body main .combo-with-side .combo-side-col > .plan120-cta { flex: 1 1 auto !important; }
+  html body main .combo-with-side .combo-side-col .plan120-list { flex: 1 1 auto !important; justify-content: space-evenly !important; }
+  html body main .combo-side-col .challenge-card, html body main .combo-side-col .plan120-cta { padding: 20px 20px !important; }
+  html body main .combo-side-col .challenge-title-main { font-size: 24px !important; }
+  html body main .c28-includes .combo-includes ul { grid-template-columns: minmax(0, 1fr) !important; }
+}
+
+/* 601-1024px: the two side cards sit side by side under the 2028 card and both
+   stretch to the taller challenge card, so the 120-day card's list spreads and
+   "View the roadmap" sits at the bottom (no empty band). */
+@media (min-width: 601px) and (max-width: 1024px) {
+  html body main .combo-side-col > .plan120-cta { display: flex !important; flex-direction: column !important; }
+  html body main .combo-side-col .plan120-list { flex: 1 1 auto !important; justify-content: space-evenly !important; }
+  html body main .combo-side-col > .plan120-cta .plan120-go { margin-top: auto !important; padding-top: 12px; }
+}
 </style>
 <script type="application/ld+json" id="course-jsonld">
 {
