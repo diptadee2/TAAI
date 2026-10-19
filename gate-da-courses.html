@@ -3305,6 +3305,13 @@ body .mobile-menu-contact {
   body .mobile-menu-link:nth-of-type(7) { grid-column: 1 / -1; }
   body .mobile-menu-actions { max-width: 560px; width: 100%; justify-self: center; }
 }
+
+/* Offer's last day on the 2028 card: "Ends today" in red with a pulsing dot (2026-10-19).
+   Only the dot's opacity animates (no transform/shadow), and it stops under reduced motion. */
+html body main #combos .c28-offer-ends--today { display: inline-flex; align-items: center; gap: 8px; color: #DC2626 !important; -webkit-text-fill-color: #DC2626 !important; font-weight: 800 !important; font-size: 17px; letter-spacing: -0.005em; }
+html body main .c28-today-dot { width: 10px; height: 10px; background: #DC2626; flex-shrink: 0; animation: c28-today-pulse 1.1s ease-in-out infinite; }
+@keyframes c28-today-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { html body main .c28-today-dot { animation: none; } }
 </style>
 <script type="application/ld+json" id="course-jsonld">
 {
@@ -4586,6 +4593,9 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   const liveOfferOver    = !!(c.liveOfferUntil && todayIST > c.liveOfferUntil) ||
                            !!(pd.discountDeadline && todayIST > pd.discountDeadline);
   const discountDeadline = pd.discountDeadline && !liveOfferOver ? fmtDeadline(pd.discountDeadline) : null;
+  // Last day of the offer (2026-10-19, "can this be ends today on october 20th in red"):
+  // the 2028 card's price box reads "Ends today" in red on the deadline date (IST).
+  const offerEndsToday   = !!(pd.discountDeadline && !liveOfferOver && todayIST === String(pd.discountDeadline).slice(0, 10));
   // The 2028 card defaults to 'Super early bird offer' once live (2026-10-05,
   // direct request); a discount reason set in /team still wins.
   const discountReason   = liveOfferOver ? null : (pd.discountReason  || (c.comingSoon && pd.price && pd.enrollUrl ? c.liveOffer : null) || null);
@@ -4797,7 +4807,9 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
               <span className="btn btn-full combo-soon-btn" aria-disabled="true">{launchUpcoming ? (daysUntilLaunch === 0 ? 'Launching today' : `Launching ${launchShort}`) : 'Coming soon'}</span>
             ) : (
               <div className="combo-live-cta">
-                {!isSoldOut && (discountReason || discountDeadline) && <div className="combo-saving c28-offer">{discountReason && <span>⏳ {discountReason}</span>}{discountDeadline && <span className="c28-offer-ends">{discountDeadline}</span>}</div>}
+                {!isSoldOut && (discountReason || discountDeadline) && <div className="combo-saving c28-offer">{discountReason && <span>⏳ {discountReason}</span>}{discountDeadline && (offerEndsToday
+                  ? <span className="c28-offer-ends c28-offer-ends--today"><span className="c28-today-dot" aria-hidden="true" />Ends today, 11:59 PM</span>
+                  : <span className="c28-offer-ends">{discountDeadline}</span>)}</div>}
                 {ctaEl}
               </div>
             )}
