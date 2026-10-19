@@ -322,11 +322,12 @@ function renderNav() {
       ${mobileLinks.map(l => `<a href="${l.href}" class="mobile-menu-link${l.active ? ' active' : ''}">
         <span class="mobile-menu-link-icon">${BLOG_MENU_ICONS[l.href] || ''}</span>
         <span class="mobile-menu-link-label">${l.label}</span>
+        <span class="mobile-menu-link-chevron"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M4.5 2.5L8.5 6.5L4.5 10.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       </a>`).join('\n      ')}
       <div class="mobile-menu-divider"></div>
       <div class="mobile-menu-actions">
-        <a target="_blank" rel="noopener noreferrer" href="https://learn.taai.live/learn/account/signin" class="btn-nav-signin"><span>Sign In</span></a>
-        <a target="_blank" rel="noopener noreferrer" href="https://learn.taai.live/learn/account/signup" class="btn-nav-signup"><span>Sign Up</span></a>
+        <a target="_blank" rel="noopener noreferrer" href="https://learn.taai.live/learn/account/signin" class="btn-nav-signin"><span>Sign In</span><span class="mobile-btn-arrow"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M13 8L8 3M13 8L8 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a>
+        <a target="_blank" rel="noopener noreferrer" href="https://learn.taai.live/learn/account/signup" class="btn-nav-signup"><span>Sign Up</span><span class="mobile-btn-arrow"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M13 8L8 3M13 8L8 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a>
       </div>
       <a href="/contact" class="mobile-menu-contact"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>Contact Us</a>
     </div>

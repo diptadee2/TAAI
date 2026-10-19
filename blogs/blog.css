@@ -164,7 +164,7 @@ a { color: inherit; }
 .mobile-menu-actions .btn-nav-signup { display: flex; justify-content: center; align-items: center; gap: 8px; flex: 1; border-radius: 14px; padding: 15px 14px; font-size: 15px; font-weight: 600; background: linear-gradient(135deg, #9333ea, #7c3aed, #6d28d9); color: #fff; border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 4px 24px rgba(109,40,217,0.42), inset 0 1px 0 rgba(255,255,255,0.2); }
 .mobile-menu-contact { display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 10px; padding: 13px 16px; font-size: 13px; font-weight: 600; color: var(--ink-dim); text-decoration: none; border-radius: 10px; letter-spacing: .04em; text-transform: uppercase; }
 
-@media (max-width: 1024px) {
+@media (max-width: 1024px), (max-width: 1300px) and (pointer: coarse) {
   .nav-hamburger { display: flex; } .nav-cta { display: none; } .nav-links { display: none; } .btn-nav-contact { display: none; }
   .nav-inner { height: 64px; padding: 0 14px; position: relative; justify-content: flex-end; }
   .mobile-menu { top: 64px; } .nav-spacer { height: 64px; }
@@ -541,4 +541,78 @@ html body .faq-item, html body .block-faq-item { border-radius: 0 !important; bo
 
 @media (max-width: 600px) {
   :root { --nb-shadow: 4px 4px 0 var(--nb-ink); --nb-shadow-sm: 3px 3px 0 var(--nb-ink); }
+}
+
+/* Compact desktop nav for laptop windows 1025-1279px (2026-10-19, "all the
+   buttons in the nav bar at MacBook Air 13 inch default width, instead of
+   hamburger"). Mouse devices keep the full nav down to 1025px; touch devices
+   (iPads) still get the hamburger up to 1300px. Measured: the full nav needs
+   ~1250px at its normal size, ~1010px with this. */
+@media (min-width: 1025px) and (max-width: 1279px) and (pointer: fine) {
+  .nav-inner { padding-left: 16px !important; padding-right: 16px !important; gap: 12px !important; }
+  .nav-logo svg, .nav-logo img { width: 138px !important; }
+  .nav-links { gap: 14px !important; font-size: 12px !important; }
+  .nav-cta { gap: 6px !important; }
+  .btn-nav-signin, .btn-nav-signup { padding: 10px 16px !important; font-size: 13px !important; }
+  .btn-nav-contact { padding: 9px 12px !important; font-size: 13px !important; }
+}
+
+/* ==== HAMBURGER MENU, neo-brutalist (2026-10-19, "improve the look of the
+   hamburger menu for all screen sizes", same block on all 7 pages and in
+   blogs/blog.css). Cream panel, black rules, bordered rows with coloured icon
+   tiles, current page in yellow, square Sign In / Sign Up. One column on
+   phones, two from 600px (iPads). No border-radius anywhere, so the hard
+   shadows never meet the Chromium shadow+radius animation leak. ==== */
+body .nav-hamburger { width: 44px; height: 44px; background: #FFFFFF; border: 2px solid #111111; border-radius: 0; box-shadow: 3px 3px 0 #111111; gap: 5px; }
+body .nav-hamburger:hover { background: #FDE047; }
+body .nav-hamburger span, body .nav-hamburger.open span { background: #111111 !important; width: 20px; border-radius: 0; }
+body .nav-hamburger.open { background: #FDE047; }
+body .menu-overlay { background: rgba(17,17,17,0.45) !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+body .mobile-menu {
+  background: #FFF4D6 !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+  border-bottom: 3px solid #111111 !important; box-shadow: none !important; border-radius: 0 !important;
+  padding: 16px 16px 20px !important; gap: 8px !important;
+  max-height: calc(100dvh - 64px); overflow-y: auto !important;
+}
+body .mobile-menu-link {
+  background: #FFFFFF !important; color: #111111 !important; border: 2px solid #111111 !important; border-radius: 0 !important;
+  padding: 10px 14px 10px 10px !important; gap: 12px !important;
+  font-family: "Poppins", system-ui, sans-serif !important; font-size: 15px !important; font-weight: 700 !important;
+  letter-spacing: 0 !important; text-transform: none !important;
+}
+body .mobile-menu-link::before { display: none !important; }
+body .mobile-menu-link.active { background: #FDE047 !important; box-shadow: 3px 3px 0 #111111; }
+@media (hover: hover) and (pointer: fine) { body .mobile-menu-link:hover { background: #FFF8E1 !important; } body .mobile-menu-link.active:hover { background: #FDE047 !important; } }
+body .mobile-menu-link-icon {
+  width: 34px; height: 34px; justify-content: center; opacity: 1 !important; color: #111111;
+  border: 2px solid #111111; background: #F9A8D4;
+}
+body .mobile-menu-link:nth-of-type(6n+2) .mobile-menu-link-icon { background: #7DD3FC; }
+body .mobile-menu-link:nth-of-type(6n+3) .mobile-menu-link-icon { background: #BEF264; }
+body .mobile-menu-link:nth-of-type(6n+4) .mobile-menu-link-icon { background: #C4B5FD; }
+body .mobile-menu-link:nth-of-type(6n+5) .mobile-menu-link-icon { background: #FDBA74; }
+body .mobile-menu-link:nth-of-type(6n) .mobile-menu-link-icon { background: #FDE047; }
+body .mobile-menu-link.active .mobile-menu-link-icon { background: #FFFFFF; }
+body .mobile-menu-link-chevron { color: #111111 !important; opacity: 1 !important; }
+body .mobile-menu-divider { height: 0 !important; background: none !important; border-top: 3px solid #111111; margin: 8px 0 6px !important; }
+body .mobile-menu-actions { gap: 12px !important; padding: 0 4px 0 0 !important; }
+body .mobile-menu-actions .btn-nav-signin, body .mobile-menu-actions .btn-nav-signup {
+  border-radius: 0 !important; border: 2px solid #111111 !important; color: #111111 !important;
+  font-family: "Poppins", system-ui, sans-serif !important; font-size: 15px !important; font-weight: 700 !important;
+  padding: 13px 14px !important; box-shadow: 4px 4px 0 #111111 !important; transform: none !important;
+}
+body .mobile-menu-actions .btn-nav-signin { background: #FFFFFF !important; }
+body .mobile-menu-actions .btn-nav-signup { background: #FDE047 !important; }
+body .mobile-menu-actions .btn-nav-signin:active, body .mobile-menu-actions .btn-nav-signup:active { box-shadow: 1px 1px 0 #111111 !important; }
+body .mobile-menu-contact {
+  color: #111111 !important; text-transform: none !important; letter-spacing: 0 !important;
+  font-family: "Poppins", system-ui, sans-serif !important; font-size: 14px !important; font-weight: 700 !important;
+  margin: 8px auto 0 !important; padding: 8px 2px 4px !important; border-radius: 0 !important; background: none !important;
+  border-bottom: 2px solid #111111 !important; width: max-content;
+}
+@media (min-width: 600px) {
+  body .mobile-menu { display: grid !important; grid-template-columns: 1fr 1fr; padding: 20px 24px 24px !important; gap: 10px !important; }
+  body .mobile-menu-divider, body .mobile-menu-actions, body .mobile-menu-contact { grid-column: 1 / -1; }
+  body .mobile-menu-link:nth-of-type(7) { grid-column: 1 / -1; }
+  body .mobile-menu-actions { max-width: 560px; width: 100%; justify-self: center; }
 }
