@@ -1504,6 +1504,10 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
       html body #root .breakdown-grid .breakdown-foot { margin: 0 -22px; padding: 14px 22px 0; }
       html body #root .breakdown-grid .breakdown-count { font-size: 52px !important; }
     }
+    /* "Not sure which to pick? Email us" as a neo-brutalist button (2026-10-19). */
+    html body #root .ts-plans-footer { color: var(--nb-ink) !important; font-size: 15px !important; font-weight: 600; flex-wrap: wrap; gap: 12px !important; }
+    html body #root .ts-plans-footer a { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; background: var(--nb-yellow); color: var(--nb-ink) !important; border: 3px solid var(--nb-ink); box-shadow: 4px 4px 0 var(--nb-ink); font-weight: 800; transition: transform .12s ease, box-shadow .12s ease; }
+    @media (hover: hover) and (pointer: fine) { html body #root .ts-plans-footer a:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--nb-ink); color: var(--nb-ink) !important; } }
     /* Phones and small tablets: the plan (price) cards as a swipe row too, 2026-10-19 */
     @media (max-width: 768px) {
       html body #root .ts-plans-grid {
@@ -1586,6 +1590,13 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     html body #root .pq-mark { background: var(--nb-lilac) !important; background-image: radial-gradient(circle at 78% 22%, #16A34A 0 3px, transparent 3.5px) !important; }
     html body #root .pq-none { background: #fff !important; }
     html body #root .pq-curr { background: var(--nb-yellow) !important; }
+    /* Phones: let the 7 squares share the card width (they used to stop at their
+       number's width and spill out at 320px), smaller numbers, dot in the corner (2026-10-19). */
+    @media (max-width: 600px) {
+      html body #root .feat-palette { grid-template-columns: repeat(7, minmax(0, 1fr)) !important; gap: 5px !important; }
+      html body #root .feat-palette-q { min-width: 0; font-size: 10px !important; border-width: 1.5px !important; letter-spacing: -0.02em; }
+      html body #root .pq-mark { background-image: radial-gradient(circle at 84% 16%, #16A34A 0 2px, transparent 2.5px) !important; }
+    }
     html body #root .feat-palette-legend { gap: 8px 12px !important; font-size: 11px !important; margin-top: 12px; }
     html body #root .feat-legend-dot { width: 11px !important; height: 11px !important; border: 1.5px solid var(--nb-ink) !important; }
     html body #root .feat-legend-dot.lg-done { background: #4ADE80 !important; }
