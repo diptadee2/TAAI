@@ -133,7 +133,7 @@
 # this line. 302 (not 301) so browsers don't cache the old invite.
 [[redirects]]
   from = "/discord"
-  to = "https://discord.com/invite/AwZqYz9wvK"
+  to = "https://discord.gg/swURpg2wdq"
   status = 302
   force = true
 
