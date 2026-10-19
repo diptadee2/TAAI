@@ -1504,10 +1504,10 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
       html body #root .breakdown-grid .breakdown-foot { margin: 0 -22px; padding: 14px 22px 0; }
       html body #root .breakdown-grid .breakdown-count { font-size: 52px !important; }
     }
-    /* "Not sure which to pick? Email us" as a neo-brutalist button (2026-10-19). */
-    html body #root .ts-plans-footer { color: var(--nb-ink) !important; font-size: 15px !important; font-weight: 600; flex-wrap: wrap; gap: 12px !important; }
-    html body #root .ts-plans-footer a { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; background: var(--nb-yellow); color: var(--nb-ink) !important; border: 3px solid var(--nb-ink); box-shadow: 4px 4px 0 var(--nb-ink); font-weight: 800; transition: transform .12s ease, box-shadow .12s ease; }
-    @media (hover: hover) and (pointer: fine) { html body #root .ts-plans-footer a:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--nb-ink); color: var(--nb-ink) !important; } }
+    /* "Not sure which to pick? Email us": bold black link with a thick underline, not a button (2026-10-19). */
+    html body #root .ts-plans-footer { color: var(--nb-ink) !important; font-size: 13.5px !important; font-weight: 500; flex-wrap: wrap; gap: 8px !important; }
+    html body #root .ts-plans-footer a { display: inline-flex; align-items: center; gap: 6px; color: var(--nb-ink) !important; font-weight: 700; border-bottom: 2px solid var(--nb-ink); padding-bottom: 0; line-height: 1.25; transition: gap .15s ease; }
+    @media (hover: hover) and (pointer: fine) { html body #root .ts-plans-footer a:hover { color: var(--nb-ink) !important; gap: 9px; } }
     /* Phones and small tablets: the plan (price) cards as a swipe row too, 2026-10-19 */
     @media (max-width: 768px) {
       html body #root .ts-plans-grid {
