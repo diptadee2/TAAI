@@ -3105,6 +3105,15 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
       html body main .combo-side-col > .plan120-cta .plan120-go { margin-top: auto; }
       html body main .combo-side-col .plan120-sub { display: block !important; }
     }
+    /* Desktop, side by side with the 2028 card (2026-10-19): the 120-day card
+       drops its 4-point list and shows its one-line description instead, so
+       the side column (with the challenge card's "Why can we do this?" line)
+       isn't taller than the 2028 card. Phones/iPads keep the list. */
+    @media (min-width: 1025px) {
+      html body main .combo-side-col .plan120-list { display: none !important; }
+      html body main .combo-side-col .plan120-sub { display: block !important; }
+      html body main .combo-side-col > .plan120-cta .plan120-go { margin-top: 14px; }
+    }
     /* Individual course cards reworked 2026-10-16 ("can the individual course cards look better?") */
     html body main .course-card { display: flex !important; flex-direction: column; }
     html body main .course-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
@@ -3150,6 +3159,9 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
   html body main .challenge-register-btn:active { transform: translate(2px,2px); box-shadow: 2px 2px 0 #fff; }
   html body main .challenge-register-btn:focus-visible { outline: 3px solid #111; outline-offset: 3px; }
 
+  html body main .challenge-why-us { display: block; padding-top: 12px; border-top: 2px solid var(--nb-ink); font-size: 13.5px; line-height: 1.5; color: var(--nb-ink); }
+  html body main .challenge-why-us b { font-weight: 800; }
+  .chal-why { font-weight: 600; background: #fff; border: 2px solid #111; padding: 10px 12px; }
   .chal-backdrop { position: fixed; inset: 0; z-index: 2147483000; background: rgba(17,17,17,0.6); display: flex; align-items: flex-start; justify-content: center; padding: 24px 16px; overflow-y: auto; }
   .chal-modal { position: relative; width: 100%; max-width: 520px; margin: auto 0; background: #FFF4D6; color: #111; border: 3px solid #111; box-shadow: 8px 8px 0 #111; padding: 26px 24px 24px; font-family: inherit; }
   .chal-close { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border: 2px solid #111; background: #fff; color: #111; font-size: 22px; line-height: 1; cursor: pointer; }
@@ -4331,6 +4343,7 @@ function ChallengeForm({ cutoff, open, onClose }) {
           </div>
         ) : (
           <form className="chal-form" onSubmit={submit} noValidate>
+            <p className="chal-lead chal-why">A small, independent team with no investors to answer to, so we get to reward merit. Get under AIR 100, and your course is on us.</p>
             <p className="chal-lead">Fill this in by <b>{date}</b>, after buying the GATE 2028 Full Course. Use your details exactly as on your GATE DA 2027 application. You can't change them later.</p>
             <label>Full name (as on GATE application)
               <input ref={firstRef} type="text" autoComplete="name" required maxLength="100" value={form.full_name} onChange={set('full_name')} />
@@ -5477,6 +5490,8 @@ function App() {
                             </div>
                             <span className="challenge-sub">Get an AIR under 100 in <b>GATE DA 2027</b> and we refund your full GATE 2028 course fee. You keep full access to the course.</span>
                             <span className="challenge-fact">In GATE DA 2026, <b>65 marks</b> got an <b>AIR of 90</b>.</span>
+                            {/* The "what's the catch?" answer (2026-10-19, direct request). */}
+                            <span className="challenge-why-us"><b>Why can we do this?</b> We're a small, independent team with no investors to answer to, so we get to reward merit. Get under AIR 100, and your course is on us.</span>
                             <ChallengeRegister />
                             <div className="challenge-why">
                               <span className="challenge-why-title">How does the course help after you crack GATE DA?</span>
