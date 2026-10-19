@@ -57,6 +57,13 @@ export async function handler(event, context) {
       patch.offer_prompt_template = t ? t : null;
     }
 
+    // Challenge-registration poster caption template (2026-10-19), same rules.
+    if (typeof body.challenge_prompt_template === 'string') {
+      const t = body.challenge_prompt_template.trim();
+      if (t.length > 8000) return json(400, { error: 'template is too long (max 8000 characters)' });
+      patch.challenge_prompt_template = t ? t : null;
+    }
+
     // "100 pe 100% off" registration cutoff (2026-10-18). Empty string means
     // "back to the default" (lib/challenge.js) and is stored as NULL.
     if (typeof body.challenge_cutoff === 'string') {

@@ -1113,6 +1113,9 @@ ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS challenge_cutoff DATE;
 -- /team Offer poster caption prompt template (2026-10-19). NULL = the
 -- built-in OP_DEFAULT_PROMPT in team/team.js.
 ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS offer_prompt_template TEXT;
+-- Challenge-registration poster caption template (2026-10-19). NULL = the
+-- built-in OP_CHALLENGE_PROMPT in team/team.js.
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS challenge_prompt_template TEXT;
 -- UPI ID the refund is paid to (2026-10-18, direct request: refunds go to a
 -- UPI ID the student gives, not the original payment method). Required by
 -- challenge-register.js; nullable here only because the table already
