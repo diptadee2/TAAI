@@ -3340,7 +3340,6 @@ function WhoItsFor() {
           <div className="fit-panels" id="fit-panel" role="tabpanel" aria-labelledby={`fit-tab-${sel}`}>
             {FIT_PATHS.map((p, i) => (
               <div key={p.tag} className={`fit-panel fit-${p.tone}${i === sel ? ' is-sel' : ''}`} aria-hidden={i !== sel}>
-                <span className="fit-tag">{p.tag}</span>
                 <h3 className="fit-title">{p.title}</h3>
                 <p className="fit-text">{p.text}</p>
                 <div className="fit-points">

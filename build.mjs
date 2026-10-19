@@ -483,7 +483,7 @@ const TREND_COLOR = { rising: 'var(--rise)', falling: 'var(--fall)', steady: 'va
 
 function renderBlockSectionHeading(f) {
   return `<div class="block-section-heading">
-    ${f.eyebrow ? `<div class="block-eyebrow">${escapeHtml(f.eyebrow)}</div>` : ''}
+    
     <h2>${escapeHtml(f.heading)}</h2>
   </div>`;
 }
@@ -766,7 +766,6 @@ function generateBlog() {
 
   const indexBody = `<section class="blog-hero">
       <div class="container">
-        <div class="blog-eyebrow fade-in">TAAI Blogs</div>
         <h1 class="fade-in">GATE DA guides, syllabus<br>breakdowns, <em>and prep tips.</em></h1>
         <p class="blog-hero-sub fade-in">Written by the TAAI team to help you prepare smarter for GATE DA.</p>
       </div>
