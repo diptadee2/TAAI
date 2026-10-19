@@ -202,7 +202,7 @@
      sweep, not guessed): the nav's rightmost edge stops overflowing at
      1290px, so 1300px gives a small safety margin. Only the iPad Pro
      12.9" (1366px landscape) is wide enough to keep the desktop nav. */
-  @media (max-width: 1300px) { .nav-hamburger { display: flex; } .nav-cta { display: none; } .nav-links { display: none; } .btn-nav-contact { display: none; } .nav-inner { height: 64px; padding: 0 14px; position: relative; justify-content: flex-end; } .mobile-menu { top: 64px; } .nav-spacer { height: 64px; } .nav-logo { position: absolute; left: 50%; transform: translateX(-50%); } .nav-logo svg, .nav-logo img { width: 150px; height: auto; filter: drop-shadow(0 0 14px rgba(255,255,255,0.22)) drop-shadow(0 0 36px rgba(255,255,255,0.12)) drop-shadow(0 0 72px rgba(255,255,255,0.07)); } .nav-hamburger span { background: var(--purple); } }
+  @media (max-width: 1024px), (max-width: 1300px) and (pointer: coarse) { .nav-hamburger { display: flex; } .nav-cta { display: none; } .nav-links { display: none; } .btn-nav-contact { display: none; } .nav-inner { height: 64px; padding: 0 14px; position: relative; justify-content: flex-end; } .mobile-menu { top: 64px; } .nav-spacer { height: 64px; } .nav-logo { position: absolute; left: 50%; transform: translateX(-50%); } .nav-logo svg, .nav-logo img { width: 150px; height: auto; filter: drop-shadow(0 0 14px rgba(255,255,255,0.22)) drop-shadow(0 0 36px rgba(255,255,255,0.12)) drop-shadow(0 0 72px rgba(255,255,255,0.07)); } .nav-hamburger span { background: var(--purple); } }
 
   /* Pared back 2026-09-08 ("too vibe coded" — dot-grid + 3 saturated,
      fast-bouncing orbs), re-upped the same day ("too boring" — the
@@ -2219,6 +2219,20 @@
   .hourly-busy-meter-scale, .pomodoro-session-label, .pomo-settings-header, .leaderboard-columns, .leaderboard-you,
   .batch-migration-col-title, .reg-field label, .about-modal-title { text-transform: none; letter-spacing: normal; }
   .subject-breakdown .weightage-marks b { font-size: 13px; font-weight: 600; }
+
+/* Compact desktop nav for laptop windows 1025-1279px (2026-10-19, "all the
+   buttons in the nav bar at MacBook Air 13 inch default width, instead of
+   hamburger"). Mouse devices keep the full nav down to 1025px; touch devices
+   (iPads) still get the hamburger up to 1300px. Measured: the full nav needs
+   ~1250px at its normal size, ~1010px with this. */
+@media (min-width: 1025px) and (max-width: 1279px) and (pointer: fine) {
+  .nav-inner { padding-left: 16px !important; padding-right: 16px !important; gap: 12px !important; }
+  .nav-logo svg, .nav-logo img { width: 138px !important; }
+  .nav-links { gap: 14px !important; font-size: 12px !important; }
+  .nav-cta { gap: 6px !important; }
+  .btn-nav-signin, .btn-nav-signup { padding: 10px 16px !important; font-size: 13px !important; }
+  .btn-nav-contact { padding: 9px 12px !important; font-size: 13px !important; }
+}
 </style>
 </head>
 <body data-float-stack>
