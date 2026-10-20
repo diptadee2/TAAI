@@ -872,6 +872,10 @@ body .mobile-menu-contact {
   body .mobile-menu-divider, body .mobile-menu-actions, body .mobile-menu-contact { grid-column: 1 / -1; }
   body .mobile-menu-actions { max-width: 560px; width: 100%; justify-self: center; }
 }
+
+/* 2026-10-20: on short phones (e.g. 360x640) this bottom bar covered the hamburger
+   menu's Contact Us link, so it's hidden while the menu is open. */
+body:has(.mobile-menu.open) .mobile-enroll-bar { display: none !important; }
 </style>
 <script type="application/ld+json">
 {
@@ -901,6 +905,13 @@ body .mobile-menu-contact {
 <script defer src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
 <script defer src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
 <script defer src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<style>
+/* Copy link button smaller (2026-10-20, direct request): 28px tall, 11.5px text,
+   12px icon, thinner border and shadow; icon-only on phones stays square. */
+html body #root .copy-link-btn { height: 28px !important; padding: 0 9px !important; gap: 5px !important; font-size: 11.5px !important; border-width: 1.5px !important; box-shadow: 2px 2px 0 var(--nb-ink) !important; }
+html body #root .copy-link-btn svg { width: 12px !important; height: 12px !important; }
+@media (max-width: 600px) { html body #root .copy-link-btn { width: 28px !important; padding: 0 !important; } }
+</style>
 <script type="text/babel" data-presets="react">
 
 // ── Nav data ──────────────────────────────────────────────────────

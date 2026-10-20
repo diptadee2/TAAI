@@ -2124,6 +2124,10 @@ html body #root .fit-acc { display: none; }
 @media (max-width: 768px) and (prefers-reduced-motion: reduce) {
   html body #root .fit-acc-body, html body #root .fit-acc-icon::after { transition: none; }
 }
+
+/* 2026-10-20: on short phones (e.g. 360x640) this bottom bar covered the hamburger
+   menu's Contact Us link, so it's hidden while the menu is open. */
+body:has(.mobile-menu.open) .mobile-sticky-cta { display: none !important; }
 </style>
 <script type="application/ld+json">
 {
