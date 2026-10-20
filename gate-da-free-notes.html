@@ -873,18 +873,6 @@ body .mobile-menu-contact {
   body .mobile-menu-link:nth-of-type(7) { grid-column: 1 / -1; }
   body .mobile-menu-actions { max-width: 560px; width: 100%; justify-self: center; }
 }
-
-/* Dividers between the desktop nav links (2026-10-20, "they are so near to each
-   other, can they at least have some partition?"): a small square dot centred in
-   each gap. The gap is a variable so the dot can sit exactly in the middle; same
-   widths as before, so the 1025px+ fit is unchanged. */
-.nav-links { --nav-gap: clamp(18px, 2.2vw, 36px); gap: var(--nav-gap); }
-.nav-links > :not(.nav-pill) { position: relative; }
-.nav-links > :not(.nav-pill) ~ :not(.nav-pill)::before {
-  content: ''; position: absolute; top: 50%; left: calc(var(--nav-gap) / -2 - 2.5px);
-  width: 5px; height: 5px; margin-top: -2.5px; background: rgba(30,22,60,0.32); pointer-events: none;
-}
-@media (min-width: 1025px) and (max-width: 1279px) and (pointer: fine) { .nav-links { --nav-gap: 14px; } }
 </style>
 <script type="application/ld+json">
 {
