@@ -3320,6 +3320,11 @@ body .mobile-menu-contact {
 html body main #combos .c28-offer-ends--today { display: inline-flex; align-items: center; gap: 8px; color: #DC2626 !important; -webkit-text-fill-color: #DC2626 !important; font-weight: 800 !important; font-size: 17px; letter-spacing: -0.005em; }
 html body main .c28-today-dot { width: 10px; height: 10px; background: #DC2626; flex-shrink: 0; animation: c28-today-pulse 1.1s ease-in-out infinite; }
 html body main .c28-countdown { font-variant-numeric: tabular-nums; font-family: 'Poppins', sans-serif; font-weight: 800; letter-spacing: .01em; }
+   /* Offer lines aligned (2026-10-20, "fix the allignments"): the hourglass and the red
+   square sit in identical 20px icon slots, so "Super early bird offer" and "Ends in"
+   start at the same x. */
+html body main #combos .c28-offer-line, html body main #combos .c28-offer-ends--today { display: flex !important; align-items: center; gap: 8px !important; }
+html body main #combos .c28-offer-icon { flex: 0 0 20px; width: 20px; display: inline-flex; align-items: center; justify-content: center; font-style: normal; font-size: 16px; line-height: 1; }
    @keyframes c28-today-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
 @media (prefers-reduced-motion: reduce) { html body main .c28-today-dot { animation: none; } }
 
@@ -4625,7 +4630,7 @@ function OfferCountdown({ deadline }) {
   const h = Math.floor(left / 3600), m = Math.floor((left % 3600) / 60), sec = left % 60;
   return (
     <span className="c28-offer-ends c28-offer-ends--today" role="timer" aria-live="off" aria-label={'Offer ends today at 11:59 PM, ' + h + ' hours ' + m + ' minutes left'}>
-      <span className="c28-today-dot" aria-hidden="true" />
+      <span className="c28-offer-icon" aria-hidden="true"><span className="c28-today-dot" /></span>
       <span>Ends in <span className="c28-countdown">{pad(h)}:{pad(m)}:{pad(sec)}</span></span>
     </span>
   );
@@ -4870,7 +4875,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
               <span className="btn btn-full combo-soon-btn" aria-disabled="true">{launchUpcoming ? (daysUntilLaunch === 0 ? 'Launching today' : `Launching ${launchShort}`) : 'Coming soon'}</span>
             ) : (
               <div className="combo-live-cta">
-                {!isSoldOut && (discountReason || discountDeadline) && <div className="combo-saving c28-offer">{discountReason && <span>⏳ {discountReason}</span>}{discountDeadline && (offerEndsToday
+                {!isSoldOut && (discountReason || discountDeadline) && <div className="combo-saving c28-offer">{discountReason && <span className="c28-offer-line"><span className="c28-offer-icon" aria-hidden="true">⏳</span><span>{discountReason}</span></span>}{discountDeadline && (offerEndsToday
                   ? <OfferCountdown deadline={pd.discountDeadline} />
                   : <span className="c28-offer-ends">{discountDeadline}</span>)}</div>}
                 {ctaEl}
