@@ -3048,6 +3048,16 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     html body main .c28-projects .combo-projects-link { margin: 0 !important; font-size: 13px; text-decoration: none !important; display: inline-flex; align-items: flex-end; gap: 6px; border-bottom: 2px solid currentColor; padding-bottom: 2px; }
     html body main .c28-projects .combo-projects-arrow { flex: none; margin-bottom: 3px; transition: transform .15s ease; }
     @media (hover: hover) and (pointer: fine) { html body main .c28-projects .combo-projects-link:hover .combo-projects-arrow { transform: translateY(-2px); } }
+    /* Phones (2026-10-20, "not looking good"): as an inline-flex box the link took the
+       full width when it wrapped, so the arrow sat at the far right and the underline
+       ran across the card. Here the link is plain block text (its flex parent blockifies
+       it anyway), the arrow follows "See how", and the underline sits on the inline text
+       span, so each wrapped line gets its own. */
+    @media (max-width: 600px) {
+      html body main .c28-projects .combo-projects-link { display: block !important; border-bottom: 0 !important; padding-bottom: 0; line-height: 1.75; }
+      html body main .c28-projects .combo-projects-link > span { border-bottom: 2px solid currentColor; padding-bottom: 1px; }
+      html body main .c28-projects .combo-projects-arrow { display: inline-block; vertical-align: -1px; margin: 0 0 0 5px; }
+    }
     html body main .c28-projects .combo-projects-list { display: grid !important; grid-template-columns: minmax(0,1fr); gap: 10px !important; margin-top: 14px !important; }
     html body main .c28-projects .combo-projects-list li { background: #fff; border: 2px solid var(--nb-ink); padding: 12px; display: flex; gap: 12px; align-items: flex-start; }
     html body main .c28-buy .combo-price { font-family: 'Poppins', sans-serif !important; font-weight: 700 !important; letter-spacing: -0.02em !important; }
@@ -3302,7 +3312,6 @@ body .mobile-menu-contact {
 @media (min-width: 600px) {
   body .mobile-menu { display: grid !important; grid-template-columns: 1fr 1fr; padding: 20px 24px 24px !important; gap: 10px !important; }
   body .mobile-menu-divider, body .mobile-menu-actions, body .mobile-menu-contact { grid-column: 1 / -1; }
-  body .mobile-menu-link:nth-of-type(7) { grid-column: 1 / -1; }
   body .mobile-menu-actions { max-width: 560px; width: 100%; justify-self: center; }
 }
 
@@ -3762,7 +3771,7 @@ function Nav() {
         </div>
       </nav>
       <div className={`mobile-menu${menuOpen ? ' open' : ''}`}>
-        {[{ label: 'Home', href: '/' }, ...NAV_LINKS].flatMap((l) => l.noClick && l.dropdown ? l.dropdown : l.href === '/gate-da-free-notes' ? [{ ...l, label: 'Free Notes & Lectures' }, { label: 'Blogs', href: '/blogs' }] : [l]).map((l, i) => (
+        {[{ label: 'Home', href: '/' }, ...NAV_LINKS].flatMap((l) => l.noClick && l.dropdown ? l.dropdown : l.href === '/gate-da-free-notes' ? [{ ...l, label: 'Free Notes & Lectures' }] : [l]).map((l, i) => (
           <a key={l.href} href={l.href} className={`mobile-menu-link${l.active ? ' active' : ''}`} style={{ animationDelay: `${0.04 + i * 0.05}s` }} onClick={() => setMenuOpen(false)}>
             <span className="mobile-menu-link-icon">{MENU_ICONS[l.href]}</span>
             <span className="mobile-menu-link-label">{l.label}</span>

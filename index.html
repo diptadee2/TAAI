@@ -2082,7 +2082,6 @@ body .mobile-menu-contact {
 @media (min-width: 600px) {
   body .mobile-menu { display: grid !important; grid-template-columns: 1fr 1fr; padding: 20px 24px 24px !important; gap: 10px !important; }
   body .mobile-menu-divider, body .mobile-menu-actions, body .mobile-menu-contact { grid-column: 1 / -1; }
-  body .mobile-menu-link:nth-of-type(7) { grid-column: 1 / -1; }
   body .mobile-menu-actions { max-width: 560px; width: 100%; justify-self: center; }
 }
 
@@ -2357,7 +2356,7 @@ function Nav() {
         </div>
       </nav>
       <div className={`mobile-menu${menuOpen ? ' open' : ''}`}>
-        {[{ label: 'Home', href: '/', active: true }, ...NAV_LINKS].flatMap((l) => l.noClick && l.dropdown ? l.dropdown : l.href === '/gate-da-free-notes' ? [{ ...l, label: 'Free Notes & Lectures' }, { label: 'Blogs', href: '/blogs' }] : [l]).map((l, i) => (
+        {[{ label: 'Home', href: '/', active: true }, ...NAV_LINKS].flatMap((l) => l.noClick && l.dropdown ? l.dropdown : l.href === '/gate-da-free-notes' ? [{ ...l, label: 'Free Notes & Lectures' }] : [l]).map((l, i) => (
           <a key={l.href} href={l.href} className={`mobile-menu-link${l.active ? ' active' : ''}`} style={{ animationDelay: `${0.04 + i * 0.05}s` }} onClick={() => setMenuOpen(false)}>
             <span className="mobile-menu-link-icon">{MENU_ICONS[l.href]}</span>
             <span className="mobile-menu-link-label">{l.label}</span>

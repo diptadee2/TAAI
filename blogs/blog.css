@@ -613,6 +613,5 @@ body .mobile-menu-contact {
 @media (min-width: 600px) {
   body .mobile-menu { display: grid !important; grid-template-columns: 1fr 1fr; padding: 20px 24px 24px !important; gap: 10px !important; }
   body .mobile-menu-divider, body .mobile-menu-actions, body .mobile-menu-contact { grid-column: 1 / -1; }
-  body .mobile-menu-link:nth-of-type(7) { grid-column: 1 / -1; }
   body .mobile-menu-actions { max-width: 560px; width: 100%; justify-self: center; }
 }

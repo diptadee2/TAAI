@@ -295,7 +295,7 @@ function renderNav() {
   // mobile menu expands Resources into its two sub-items directly
   const mobileLinks = [{ label: 'Home', href: '/' },
     ...BLOG_NAV_LINKS.flatMap(l => l.href === '/gate-da-free-notes'
-      ? [{ href: '/gate-da-free-notes', label: 'Free Notes &amp; Lectures' }, { href: '/blogs', label: 'Blogs', active: true }]
+      ? [{ href: '/gate-da-free-notes', label: 'Free Notes &amp; Lectures' }]
       : [l]
     )
   ];
