@@ -3499,6 +3499,16 @@ html body main #combos .c28-offer-icon { flex: 0 0 20px; width: 20px; display: i
   ]
 }
 </script>
+<style>
+/* Nav link spacing (2026-10-20, "the nav bar icons are too close to each other"): the
+   hovered/current link no longer grows 8% (it pushed into its neighbours), and on laptop
+   widths the gap is 20px (was 14px) with tighter letter spacing so the nav still fits.
+   Measured: the highlight box used to touch the next link at 1025-1279px. */
+.nav-links a:hover, .nav-links a.active { transform: translateY(-1px) !important; }
+@media (min-width: 1025px) and (max-width: 1279px) and (pointer: fine) {
+  .nav-links { gap: 20px !important; letter-spacing: .04em !important; }
+}
+</style>
 </head>
 <body data-float-stack>
 <div id="root"></div>
