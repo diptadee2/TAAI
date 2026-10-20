@@ -3317,7 +3317,7 @@ html body main .c28-today-dot { width: 10px; height: 10px; background: #DC2626; 
    challenge and 120-day cards used to drop below the 2028 card here, so the 2028
    card stretched across the whole row. They now sit beside it in a 300px column,
    as from 1280px. To keep the two columns the same height, "What's included" is a
-   single column in this range and the challenge title is smaller. */
+   single column in this range and the challenge title is smaller (two columns since 2026-10-20, see below). */
 @media (min-width: 1025px) and (max-width: 1279px) {
   .combo-with-side { flex-direction: row !important; align-items: stretch !important; gap: 20px !important; }
   .combo-with-side > .combo-featured-frame { flex: 1 1 auto !important; min-width: 0 !important; height: auto !important; }
@@ -3327,7 +3327,11 @@ html body main .c28-today-dot { width: 10px; height: 10px; background: #DC2626; 
   html body main .combo-with-side .combo-side-col .plan120-list { flex: 1 1 auto !important; justify-content: space-evenly !important; }
   html body main .combo-side-col .challenge-card, html body main .combo-side-col .plan120-cta { padding: 20px 20px !important; }
   html body main .combo-side-col .challenge-title-main { font-size: 24px !important; }
-  html body main .c28-includes .combo-includes ul { grid-template-columns: minmax(0, 1fr) !important; }
+  /* 2026-10-20 ("why is the 2028 card contents not divided into two columns?"):
+     the list is two columns here too; to keep the side column no taller than the
+     card, the 120-day card shows its one-line description, not its 4-point list. */
+  html body main .c28-includes .combo-includes ul { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
+  html body main .combo-with-side .combo-side-col .plan120-list { display: none !important; }
 }
 
 /* 601-1024px: the two side cards sit side by side under the 2028 card and both
