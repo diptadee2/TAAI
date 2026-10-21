@@ -924,6 +924,24 @@ html body #root .copy-link-btn svg { width: 12px !important; height: 12px !impor
 html body #root .copy-link-btn { width: 28px !important; padding: 0 !important; justify-content: center !important; }
 html body #root .copy-link-btn span { position: absolute !important; width: 1px !important; height: 1px !important; overflow: hidden !important; clip: rect(0 0 0 0) !important; white-space: nowrap !important; }
 </style>
+<style>
+/* Watched badge on lecture thumbnails (2026-10-21) */
+.lecture-card .lecture-watched {
+  position: absolute; top: 10px; right: 10px; z-index: 3;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 9px 5px 7px; margin: 0;
+  font: 700 10.5px/1 var(--font-mono, monospace); letter-spacing: .08em; text-transform: uppercase;
+  color: #111; background: #B8F36B; border: 2px solid #111; border-radius: 0;
+  box-shadow: 2px 2px 0 #111; cursor: pointer;
+  animation: lecture-watched-in .3s cubic-bezier(.34,1.56,.64,1) both;
+}
+.lecture-card .lecture-watched:hover { background: #fff; }
+.lecture-card .lecture-watched:focus-visible { outline: 3px solid #111; outline-offset: 2px; }
+.lecture-card.is-watched .lecture-thumb-bg { filter: saturate(0.55) !important; }
+@keyframes lecture-watched-in { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .lecture-card .lecture-watched { animation: none; } }
+@media (max-width: 600px) { .lecture-card .lecture-watched { top: 8px; right: 8px; font-size: 9.5px; padding: 4px 7px 4px 6px; } }
+</style>
 <script type="text/babel" data-presets="react">
 
 // ── Nav data ──────────────────────────────────────────────────────
@@ -1325,13 +1343,47 @@ function getYouTubeId(url) {
   return m ? m[1] : null;
 }
 
+// Watched marks (2026-10-21, direct request): saved in this browser only, keyed by
+// YouTube video id. A lecture counts as watched once its Play button is clicked;
+// tapping the "Watched" badge clears it.
+const WATCHED_KEY = 'taai_watched_lectures_v1';
+function readWatched() {
+  try { return JSON.parse(localStorage.getItem(WATCHED_KEY)) || {}; } catch (e) { return {}; }
+}
+function writeWatched(map) {
+  try { localStorage.setItem(WATCHED_KEY, JSON.stringify(map)); } catch (e) {}
+  window.dispatchEvent(new Event('taai-watched-change'));
+}
+function useWatched(videoId) {
+  const [watched, setWatched] = React.useState(() => !!(videoId && readWatched()[videoId]));
+  React.useEffect(() => {
+    if (!videoId) return;
+    const sync = () => setWatched(!!readWatched()[videoId]);
+    window.addEventListener('taai-watched-change', sync);
+    window.addEventListener('storage', sync);
+    return () => { window.removeEventListener('taai-watched-change', sync); window.removeEventListener('storage', sync); };
+  }, [videoId]);
+  const mark = () => { if (!videoId) return; const m = readWatched(); m[videoId] = Date.now(); writeWatched(m); };
+  const unmark = () => { if (!videoId) return; const m = readWatched(); delete m[videoId]; writeWatched(m); };
+  return [watched, mark, unmark];
+}
+
 function LectureCard({ lecture, accent, color, index = 0 }) {
+  const videoId = getYouTubeId(lecture.youtubeUrl);
+  const [watched, markWatched, unmarkWatched] = useWatched(videoId);
   const formattedDate = lecture.postedOn
     ? new Date(lecture.postedOn).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
     : null;
   return (
-    <div className="lecture-card" style={{ '--note-accent': accent, '--note-color': color, '--i': index }}>
+    <div className={'lecture-card' + (watched ? ' is-watched' : '')} style={{ '--note-accent': accent, '--note-color': color, '--i': index }}>
       <div className="card-banner">
+        {watched && (
+          <button type="button" className="lecture-watched" onClick={unmarkWatched}
+            title="Watched. Tap to mark as not watched" aria-label="Watched. Mark as not watched">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="square" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+            Watched
+          </button>
+        )}
         {getYouTubeId(lecture.youtubeUrl) && (
           <img
             className="lecture-thumb-bg"
@@ -1351,7 +1403,8 @@ function LectureCard({ lecture, accent, color, index = 0 }) {
         <div className="card-title">{lecture.title}</div>
         {formattedDate && <div className="card-date">{formattedDate}</div>}
         <div className="card-actions">
-          <a href={lecture.youtubeUrl} target="_blank" rel="noopener noreferrer" className="btn-watch">
+          <a href={lecture.youtubeUrl} target="_blank" rel="noopener noreferrer" className="btn-watch"
+            onClick={markWatched} onAuxClick={e => { if (e.button === 1) markWatched(); }}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
             Play
           </a>
