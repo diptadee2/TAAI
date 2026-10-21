@@ -2272,7 +2272,7 @@
     var btn = '<button class="btn btn-secondary btn-sm" id="lms-check-now"' + (ls.checking ? ' disabled' : '') + '>' + (ls.checking ? 'Checking…' : 'Check LMS now') + '</button>';
     var head = '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">' +
       '<div style="font-weight:600;">LMS price sync</div>' + btn + '</div>' +
-      '<div class="field-hint" style="margin:6px 0 10px;">Every 15 minutes the site checks each course\'s price on learn.taai.live. When the LMS price changes, the site\'s price follows. A price you set here stays until the LMS price changes again.</div>';
+      '<div class="field-hint" style="margin:6px 0 10px;">Every 15 minutes the site checks each course\'s price on learn.taai.live. When the LMS price changes, the site\'s price follows. A price you set here stays until the LMS price changes again. Once a course\'s discount deadline has passed, the price you set here is final: LMS changes are shown but not applied (clear the deadline, or set a new one, to follow the LMS again).</div>';
     var body;
     if (ls.error) body = '<div class="msg msg-error">' + escapeHtml(ls.error) + '</div>';
     else if (!d) body = '<div class="field-hint">Loading…</div>';
@@ -2282,7 +2282,17 @@
       var nameOf = {}, siteOf = {};
       pricing.forEach(function (r) { nameOf[r.id] = r.name; siteOf[r.id] = r.price; });
       var lines = ['<div class="field-hint">Last checked: ' + escapeHtml(fmtAgo(d.lastRun && d.lastRun.checked_at)) + (d.lastRun && d.lastRun.note ? ' (' + escapeHtml(d.lastRun.note) + ')' : '') + '</div>'];
-      var diffs = (d.courses || []).filter(function (c) { return c.lms_price != null && siteOf[c.id] != null && c.lms_price !== siteOf[c.id]; });
+      var deadlineOf = {};
+      pricing.forEach(function (r) { deadlineOf[r.id] = r.discount_deadline; });
+      var todayStr = new Date(Date.now() + 5.5 * 3600000).toISOString().slice(0, 10); // IST
+      var postDiscount = function (id) { return !!deadlineOf[id] && todayStr > String(deadlineOf[id]).slice(0, 10); };
+      var allDiffs = (d.courses || []).filter(function (c) { return c.lms_price != null && siteOf[c.id] != null && c.lms_price !== siteOf[c.id]; });
+      var kept = allDiffs.filter(function (c) { return postDiscount(c.id); });
+      var diffs = allDiffs.filter(function (c) { return !postDiscount(c.id); });
+      if (kept.length) {
+        lines.push('<div style="margin-top:8px;font-size:13px;">Discount period over, site price kept (the LMS hasn\'t been updated to match yet):</div><ul style="margin:4px 0 0 18px;font-size:13px;">' +
+          kept.map(function (c) { return '<li>' + escapeHtml(nameOf[c.id] || c.id) + ': site ' + fmtRupee(siteOf[c.id]) + ', LMS ' + fmtRupee(c.lms_price) + '</li>'; }).join('') + '</ul>');
+      }
       if (diffs.length) {
         lines.push('<div style="margin-top:8px;font-size:13px;">Different from the LMS right now (left as is; they\'ll follow the next LMS change, or edit them below):</div><ul style="margin:4px 0 0 18px;font-size:13px;">' +
           diffs.map(function (c) { return '<li>' + escapeHtml(nameOf[c.id] || c.id) + ': site ' + fmtRupee(siteOf[c.id]) + ', LMS ' + fmtRupee(c.lms_price) + '</li>'; }).join('') + '</ul>');
@@ -2301,6 +2311,7 @@
             var what = e.status === 'applied' ? 'site updated ' + fmtRupee(e.site_old) + ' → ' + fmtRupee(e.site_new)
               : e.status === 'matched' ? 'site already matched'
               : e.status === 'held' ? 'not applied (check it)'
+              : e.status === 'kept' ? 'site price kept (discount period over)'
               : 'not applied';
             return '<li>' + escapeHtml((e.course_name || e.course_id) + ': LMS ' + fmtRupee(e.lms_old) + ' → ' + fmtRupee(e.lms_new) + ', ' + what + ' · ' + fmtAgo(e.created_at)) + '</li>';
           }).join('') + '</ul>');

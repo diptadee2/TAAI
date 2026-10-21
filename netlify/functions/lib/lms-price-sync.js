@@ -10,6 +10,15 @@
 // again. The first time a course is seen, its LMS price is only recorded
 // (a baseline); the site is not touched.
 //
+// Exception, the post-discount period (2026-10-21, direct request): once a
+// course's discount_deadline (set in /team) has passed, the site price is the
+// source of truth. Updating the LMS after an offer ends is a manual step that
+// is sometimes late or wrong (the 2028 course sat at ₹15,000 on the LMS until
+// 13:15 IST on Oct 21), so in that window LMS changes are only recorded
+// (status 'kept'), never applied. Same "passed" test as the courses page
+// (deadline day itself still counts as the offer). Clearing the deadline, or
+// setting a new future one, hands the price back to the LMS.
+//
 // Called from discord-dispatch.js (every 15 minutes, no extra cron) and
 // from lms-price-check.js (/team's "Check LMS now" button).
 //
@@ -17,6 +26,8 @@
 // lesson links use, no login needed):
 //   productMetadata(seoTitle) -> product id    (only when the id isn't cached)
 //   showProduct(id).defaultProductPricing -> price (list) / discountPrice (what you pay)
+
+import { todayIST } from './supabase.js';
 
 const LMS_API = 'https://apig.learnyst.com/learn';
 const SCHOOL_ID = '182642';
@@ -30,6 +41,12 @@ const UNAVAILABLE_RETRY_MS = 24 * 60 * 60 * 1000;
 const MIN_RATIO = 0.5;
 const MAX_RATIO = 2;
 const RUN_ROW_ID = '__run__';
+
+// 'YYYY-MM-DD' -> true once that whole day (IST) is over.
+function discountPeriodOver(deadline) {
+  if (!deadline) return false;
+  return todayIST() > String(deadline).slice(0, 10);
+}
 
 async function lmsQuery(query, variables) {
   const ctrl = new AbortController();
@@ -97,7 +114,7 @@ async function logChange(supabase, entry) {
 export async function syncLmsPrices(supabase, { deadline = Date.now() + 20000 } = {}) {
   const startedAt = new Date();
   const [{ data: courses, error: coursesErr }, { data: syncRows, error: syncErr }] = await Promise.all([
-    supabase.from('site_pricing').select('id, name, price, price_old, discount, enroll_url'),
+    supabase.from('site_pricing').select('id, name, price, price_old, discount, discount_deadline, enroll_url'),
     supabase.from('lms_price_sync').select('*'),
   ]);
   if (coursesErr) throw new Error(coursesErr.message);
@@ -155,6 +172,9 @@ export async function syncLmsPrices(supabase, { deadline = Date.now() + 20000 } 
       let status, applied = false, note = null;
       if (oldSite === lms.price) {
         status = 'matched'; note = 'Site already had this price';
+      } else if (discountPeriodOver(course.discount_deadline)) {
+        status = 'kept';
+        note = 'Discount period ended ' + String(course.discount_deadline).slice(0, 10) + ': site price ₹' + oldSite + ' kept; LMS shows ₹' + lms.price;
       } else if (!(lms.price > 0) || (oldSite > 0 && (lms.price < oldSite * MIN_RATIO || lms.price > oldSite * MAX_RATIO))) {
         status = 'held'; note = 'LMS ₹' + prev.lms_price + ' → ₹' + lms.price + ' looks too large a jump; not applied, check and set it in /team if right';
       } else {
