@@ -1473,7 +1473,14 @@ function App() {
   const [active, setActive]     = React.useState('');
   const [displayActive, setDisplayActive] = React.useState('');
   const [swipePhase, setSwipePhase] = React.useState('idle');
-  const [swipeKey, setSwipeKey] = React.useState(0);
+  // The slab stays mounted between switches (it used to be re-created after each
+  // one, giving its logo a brand-new image element every time), and its logo is
+  // decoded once up front so it's ready before the first slide.
+  const slabLogoRef = React.useRef(null);
+  React.useEffect(() => {
+    const img = slabLogoRef.current;
+    if (img && img.decode) img.decode().catch(() => {});
+  }, []);
   const [heightLock, setHeightLock] = React.useState(null);
   const [loading, setLoading]   = React.useState(true);
   const contentRef = React.useRef(null);
@@ -1562,13 +1569,16 @@ function App() {
   }, [displayActive]);
 
   const handleSwipeTransitionEnd = e => {
-    if (e.propertyName !== 'transform') return;
+    // Only the slab's own slide moves the phases on. transitionend bubbles, and the
+    // logo label's 0.38s pop-in used to end the cover early: the slab turned back
+    // before covering, so on a slow phone the logo often never reached the screen
+    // (2026-10-22, "sometimes no TAAI logo on the glass slab").
+    if (e.target !== e.currentTarget || e.propertyName !== 'transform') return;
     if (swipePhase === 'cover') {
       setDisplayActive(active);
       setSwipePhase('reveal');
     } else if (swipePhase === 'reveal') {
       setSwipePhase('idle');
-      setSwipeKey(k => k + 1);
       const newH = newHRef.current;
       if (newH != null && newH !== heightLock) setHeightLock(newH);
       else setHeightLock(null);
@@ -1642,7 +1652,6 @@ function App() {
             const slabSubject = subjects.find(s => s.id === active) || subjects.find(s => s.id === displayActive);
             return (
               <div
-                key={swipeKey}
                 className={`subject-swipe phase-${swipePhase}`}
                 style={{
                   '--slab-color': slabSubject?.color,
@@ -1652,7 +1661,7 @@ function App() {
               >
                 <div className="subject-swipe-pattern" />
                 <div className="subject-swipe-label">
-                  <div className="subject-swipe-logo"><img src="logo.webp" alt="TAAI" /></div>
+                  <div className="subject-swipe-logo"><img ref={slabLogoRef} src="/logo.webp" alt="TAAI" loading="eager" decoding="sync" /></div>
                 </div>
               </div>
             );
