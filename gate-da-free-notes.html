@@ -1343,25 +1343,40 @@ function getYouTubeId(url) {
   return m ? m[1] : null;
 }
 
-// Watched marks (2026-10-21, direct request): saved in this browser only, keyed by
-// YouTube video id. A lecture counts as watched once its Play button is clicked;
-// tapping the "Watched" badge clears it.
-const WATCHED_KEY = 'taai_watched_lectures_v1';
+// Watched marks (2026-10-21, direct request): saved in a cookie in this browser
+// (taai_watched: comma-separated YouTube video ids, 1 year). A lecture counts as
+// watched once its Play button is clicked; tapping the "Watched" badge clears it.
+// ~11 chars per id keeps the cookie well under its 4KB limit for a few hundred videos.
+const WATCHED_COOKIE = 'taai_watched';
+const WATCHED_LEGACY_KEY = 'taai_watched_lectures_v1'; // first version used localStorage
 function readWatched() {
-  try { return JSON.parse(localStorage.getItem(WATCHED_KEY)) || {}; } catch (e) { return {}; }
+  const m = document.cookie.match(/(?:^|; )taai_watched=([^;]*)/);
+  const map = {};
+  if (m) decodeURIComponent(m[1]).split(',').filter(Boolean).forEach(id => { map[id] = 1; });
+  return map;
 }
 function writeWatched(map) {
-  try { localStorage.setItem(WATCHED_KEY, JSON.stringify(map)); } catch (e) {}
+  const ids = Object.keys(map).filter(id => /^[\w-]{11}$/.test(id));
+  document.cookie = WATCHED_COOKIE + '=' + encodeURIComponent(ids.join(',')) +
+    '; max-age=' + (365 * 24 * 3600) + '; path=/; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '');
   window.dispatchEvent(new Event('taai-watched-change'));
 }
+// Carry over anything saved by the localStorage version, once.
+try {
+  const legacy = JSON.parse(localStorage.getItem(WATCHED_LEGACY_KEY) || 'null');
+  if (legacy && typeof legacy === 'object') {
+    writeWatched(Object.assign(readWatched(), legacy));
+    localStorage.removeItem(WATCHED_LEGACY_KEY);
+  }
+} catch (e) {}
 function useWatched(videoId) {
   const [watched, setWatched] = React.useState(() => !!(videoId && readWatched()[videoId]));
   React.useEffect(() => {
     if (!videoId) return;
     const sync = () => setWatched(!!readWatched()[videoId]);
     window.addEventListener('taai-watched-change', sync);
-    window.addEventListener('storage', sync);
-    return () => { window.removeEventListener('taai-watched-change', sync); window.removeEventListener('storage', sync); };
+    window.addEventListener('focus', sync);
+    return () => { window.removeEventListener('taai-watched-change', sync); window.removeEventListener('focus', sync); };
   }, [videoId]);
   const mark = () => { if (!videoId) return; const m = readWatched(); m[videoId] = Date.now(); writeWatched(m); };
   const unmark = () => { if (!videoId) return; const m = readWatched(); delete m[videoId]; writeWatched(m); };
