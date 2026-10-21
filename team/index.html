@@ -491,6 +491,27 @@
   .coming-up li { grid-template-columns: minmax(0,1fr) auto; }
   .coming-what { grid-column: 1 / -1; grid-row: 2; white-space: normal; }
 }
+
+/* Notes / Lectures as cards, one section per subject (2026-10-22) */
+.res-section { margin-bottom: 26px; }
+.res-section-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.res-cards { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.res-card { padding: 0; overflow: hidden; gap: 0; }
+.res-card .pricing-card-actions { margin: 0 14px; padding: 10px 0 12px; }
+.res-thumb { position: relative; display: block; aspect-ratio: 16 / 9; background: #000; overflow: hidden; }
+.res-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.res-play { position: absolute; left: 10px; bottom: 10px; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; color: #fff; background: rgba(0,0,0,.65); }
+.res-thumb-missing { display: grid; place-items: center; font-size: 12px; color: var(--ink-soft, #777); background: var(--bg); }
+.res-card-body { padding: 12px 14px 4px; display: flex; flex-direction: column; gap: 5px; flex: 1; }
+.res-kicker { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-soft, #777); }
+.res-desc { font-size: 12.5px; color: var(--ink-dim); line-height: 1.4; }
+.res-card-date { font-size: 12px; color: var(--ink-dim); }
+.res-links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px; font-size: 12.5px; }
+.res-links a { color: var(--ink); text-decoration: underline; text-underline-offset: 2px; }
+.res-missing { color: #fbbf24; }
+.res-empty { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 14px; border-top: 1px solid var(--line); }
+.res-empty-chip { font: inherit; font-size: 12.5px; padding: 5px 11px; border-radius: 999px; border: 1px dashed var(--line); background: transparent; color: var(--ink-dim); cursor: pointer; }
+.res-empty-chip:hover { color: var(--ink); border-color: var(--ink-dim); }
 </style>
 </head>
 <body>

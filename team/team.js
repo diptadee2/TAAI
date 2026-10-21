@@ -2463,7 +2463,79 @@
         ? '<div class="empty">No pricing rows yet — these are added directly (with their matching course card), not through this page.</div>'
         : '<div class="empty">No rows yet. Click "+ New' + (type === 'notes' ? ' note' : ' lecture') + '" above to add one.</div>';
     }
-    return type === 'pricing' ? renderLmsSyncPanel() + renderPricingGroups(rows) : renderSiteDataTable(type, rows);
+    return type === 'pricing' ? renderLmsSyncPanel() + renderPricingGroups(rows) : renderResourceSections(type, rows);
+  }
+
+  // Notes and Lectures as cards, one section per subject in the same order as the
+  // Resources page's tabs (2026-10-22, was a flat table). Each section has its own
+  // "+ Add" that opens the form with that subject already picked. Subjects with
+  // nothing yet are listed at the end as quick-add chips instead of empty boxes.
+  function ytId(url) {
+    var m = String(url || '').match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/);
+    return m ? m[1] : null;
+  }
+  function fmtPostedOn(d) {
+    if (!d) return '';
+    var dt = new Date(String(d).slice(0, 10) + 'T00:00:00');
+    return isNaN(dt) ? String(d) : dt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  function resourceCardHtml(type, r) {
+    var actions = '<div class="pricing-card-actions">' + siteDataRowActionsHtml(type, r.id) + '</div>';
+    var date = r.posted_on ? '<div class="res-card-date">' + escapeHtml(fmtPostedOn(r.posted_on)) + '</div>' : '';
+    if (type === 'lectures') {
+      var vid = ytId(r.youtube_url);
+      var thumb = vid
+        ? '<a class="res-thumb" href="' + escapeHtml(r.youtube_url) + '" target="_blank" rel="noopener" title="Open on YouTube"><img src="https://i.ytimg.com/vi/' + vid + '/mqdefault.jpg" alt="" loading="lazy"><span class="res-play">▶</span></a>'
+        : '<div class="res-thumb res-thumb-missing">' + (r.youtube_url ? 'Not a YouTube link' : 'No video link') + '</div>';
+      var links = [];
+      if (r.youtube_url) links.push('<a href="' + escapeHtml(r.youtube_url) + '" target="_blank" rel="noopener">Video ↗</a>');
+      if (r.slides_url) links.push('<a href="' + escapeHtml(r.slides_url) + '" target="_blank" rel="noopener">Slides ↗</a>');
+      else links.push('<span class="res-missing">No slides</span>');
+      return '<div class="pricing-card res-card">' + thumb +
+        '<div class="res-card-body">' +
+          (r.lecture_number != null && r.lecture_number !== '' ? '<div class="res-kicker">Lecture ' + escapeHtml(r.lecture_number) + '</div>' : '') +
+          '<div class="pricing-card-name">' + escapeHtml(r.title || '(untitled)') + '</div>' + date +
+          '<div class="res-links">' + links.join('') + '</div>' +
+        '</div>' + actions + '</div>';
+    }
+    return '<div class="pricing-card res-card">' +
+      '<div class="res-card-body">' +
+        '<div class="res-kicker">PDF note</div>' +
+        '<div class="pricing-card-name">' + escapeHtml(r.title || '(untitled)') + '</div>' +
+        (r.description ? '<div class="res-desc">' + escapeHtml(r.description) + '</div>' : '') + date +
+        '<div class="res-links">' + (r.file_url ? '<a href="' + escapeHtml(r.file_url) + '" target="_blank" rel="noopener">Open PDF ↗</a>' : '<span class="res-missing">No file link</span>') + '</div>' +
+      '</div>' + actions + '</div>';
+  }
+  function renderResourceSections(type, rows) {
+    var bySubject = {};
+    rows.forEach(function (r) { (bySubject[r.subject] = bySubject[r.subject] || []).push(r); });
+    var order = SITE_SUBJECT_OPTIONS.map(function (o) { return o.id; });
+    Object.keys(bySubject).forEach(function (k) { if (order.indexOf(k) < 0) order.push(k); });
+    var noun = type === 'notes' ? 'note' : 'lecture';
+    var sortRows = function (list) {
+      return list.slice().sort(function (a, b) {
+        if (type === 'lectures') {
+          var an = Number(a.lecture_number), bn = Number(b.lecture_number);
+          if (!isNaN(an) && !isNaN(bn) && an !== bn) return an - bn;
+        }
+        return String(b.posted_on || '').localeCompare(String(a.posted_on || ''));
+      });
+    };
+    var sections = order.filter(function (id) { return bySubject[id]; }).map(function (id) {
+      var list = sortRows(bySubject[id]);
+      return '<section class="pricing-group res-section">' +
+        '<div class="res-section-head"><div class="pricing-group-heading">' + escapeHtml(subjectLabel(id)) +
+          ' <span class="field-hint" style="margin:0;font-weight:500;">' + list.length + ' ' + noun + (list.length === 1 ? '' : 's') + '</span></div>' +
+          '<button type="button" class="btn btn-small js-res-add" data-subject="' + escapeHtml(id) + '">+ Add ' + noun + '</button></div>' +
+        '<div class="pricing-cards res-cards">' + list.map(function (r) { return resourceCardHtml(type, r); }).join('') + '</div>' +
+      '</section>';
+    }).join('');
+    var empty = SITE_SUBJECT_OPTIONS.filter(function (o) { return !bySubject[o.id]; });
+    var emptyHtml = empty.length
+      ? '<div class="res-empty"><span class="field-hint" style="margin:0;">No ' + noun + 's yet:</span>' +
+        empty.map(function (o) { return '<button type="button" class="res-empty-chip js-res-add" data-subject="' + escapeHtml(o.id) + '">+ ' + escapeHtml(o.label) + '</button>'; }).join('') + '</div>'
+      : '';
+    return sections + emptyHtml;
   }
 
   // Edit/Delete — shared by every plain sitedata-table row (Notes,
@@ -3280,6 +3352,22 @@
 
     var lmsCheckBtn = document.getElementById('lms-check-now');
     if (lmsCheckBtn) lmsCheckBtn.addEventListener('click', function () { loadLmsSync(true); });
+
+    document.querySelectorAll('.js-res-add').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var type = state.siteData.subTab;
+        var row = Object.assign({}, SITE_DATA_RESOURCES[type].newRow, { subject: btn.getAttribute('data-subject') });
+        if (type === 'lectures') {
+          // Next lecture number in that subject, so it's one less thing to type.
+          var nums = (state.siteData.rows.lectures || []).filter(function (r) { return r.subject === row.subject; })
+            .map(function (r) { return Number(r.lecture_number) || 0; });
+          row.lecture_number = nums.length ? Math.max.apply(null, nums) + 1 : 1;
+        }
+        state.siteData.editing = { type: type, row: row };
+        render();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    });
 
     var sitedataNewBtn = document.getElementById('sitedata-new');
     if (sitedataNewBtn) sitedataNewBtn.addEventListener('click', function () {
