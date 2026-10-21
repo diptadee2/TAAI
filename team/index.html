@@ -399,7 +399,7 @@
      appearing never resizes a neighbour. Site data's sub-tabs (a .tabs
      nested inside the page) keep their natural widths. */
   html { scrollbar-gutter: stable; }
-  .tabs-main { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 176px; }
+  .tabs-main { display: grid; width: 100%; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); } /* full width, equal tabs: lines up with the header and cards (2026-10-22) */
   .tabs-main .tab-btn { justify-content: center; }
   @media (max-width: 600px) { .tabs-main { display: grid; width: 100%; grid-auto-columns: 1fr; align-items: stretch; } .tabs-main .tab-btn { height: auto; min-height: 36px; padding: 5px 6px; font-size: 12.5px; line-height: 1.25; white-space: normal; text-align: center; } }
   .locked-content-note { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--sc-muted); padding: 12px 14px; font-size: 13.5px; color: var(--ink-soft); line-height: 1.5; }
@@ -453,8 +453,11 @@
   }
 
 /* ==== /team usefulness pass (2026-10-22) ==== */
-/* Students tab gets a wider page so all columns (incl. Last active and Notes) fit. */
-body.tab-students .wrap { max-width: 1280px; }
+/* The Students card is wider than the page so all 10 columns fit, centred under the
+   header. Only the card breaks out: the header and tab bar keep the same width on
+   every tab, so switching tabs never moves them. */
+.students-card { --sc-w: min(1280px, calc(100vw - 48px)); width: var(--sc-w); max-width: none; margin-left: calc((100% - var(--sc-w)) / 2); }
+@media (max-width: 960px) { .students-card { --sc-w: 100%; } }
 .students-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
 .students-table td { vertical-align: middle; }
 .students-table .nowrap { white-space: nowrap; }

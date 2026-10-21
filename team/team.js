@@ -975,8 +975,6 @@
 
   function render() {
     var root = document.getElementById('root');
-    // The Students table has 10 columns; give that tab more width than the rest.
-    document.body.classList.toggle('tab-students', !!state.authorized && state.tab === 'students');
     var user = window.netlifyIdentity && window.netlifyIdentity.currentUser();
 
     if (!state.authorized) {
@@ -2241,7 +2239,7 @@
       : 'Students (' + visible.length + ' of ' + state.students.length + ')';
 
     return (
-      '<div class="card">' +
+      '<div class="card students-card">' +
         renderStudentSummary() +
         '<div class="students-head"><h2 style="font-size:16px;margin:0;">' + countLabel + '</h2>' +
           (visible.length ? '<button type="button" class="btn btn-small" id="students-csv">Download CSV (' + visible.length + ')</button>' : '') + '</div>' +
