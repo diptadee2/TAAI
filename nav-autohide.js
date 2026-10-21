@@ -3,15 +3,17 @@
 // and the blog/policy pages. Works on the shared fixed `.nav`.
 (function () {
   var TOP = 120;       // never hide this close to the top of the page
-  var IDLE = 280;      // ms without scrolling before the nav comes back
+  var IDLE = 900;      // ms without scrolling before the nav comes back (was 280, felt too instant)
   var MIN_DELTA = 4;   // ignore tiny jitters
   var css = document.createElement('style');
   css.textContent =
-    '.nav{transition:transform .28s cubic-bezier(.2,.7,.2,1)}' +
+    // Coming back is slower and softer than going away, so it eases in rather than snapping.
+    '.nav{transition:transform .5s cubic-bezier(.22,1,.36,1)}' +
+    'body.nav-autohidden .nav{transition-duration:.28s;transition-timing-function:cubic-bezier(.4,0,1,1)}' +
     // Only transform while hidden: a transform on .nav would re-anchor its
     // position:fixed children (the mobile menu), so visible means transform:none.
     'body.nav-autohidden .nav{transform:translateY(-100%);pointer-events:none}' +
-    '@media (prefers-reduced-motion: reduce){.nav{transition:none}}';
+    '@media (prefers-reduced-motion: reduce){.nav,body.nav-autohidden .nav{transition:none}}';
   document.head.appendChild(css);
 
   var lastY = window.scrollY, idleTimer = null, ticking = false;
