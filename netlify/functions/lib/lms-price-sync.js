@@ -170,9 +170,16 @@ export async function syncLmsPrices(supabase, { deadline = Date.now() + 20000 } 
         if (!applied) note = 'Site price changed at the same moment; left as is';
       }
 
+      // A skipped change keeps the previous LMS price as "last seen", so the next run
+      // sees the change again and retries. Recording the new price here meant a one-off
+      // race (2026-10-21 00:00 IST, the 2028 price cutover job writing the same row in
+      // the same minute) was never retried: every later run saw "unchanged".
       await supabase.from('lms_price_sync').upsert({
-        id: course.id, slug, lms_product_id: productId, lms_price: lms.price, lms_list_price: lms.listPrice,
-        status, checked_at: nowIso, changed_at: nowIso, note,
+        id: course.id, slug, lms_product_id: productId,
+        lms_price: status === 'skipped' ? prev.lms_price : lms.price,
+        lms_list_price: status === 'skipped' ? prev.lms_list_price : lms.listPrice,
+        status, checked_at: nowIso, changed_at: nowIso,
+        note: status === 'skipped' ? note + '; will retry next run' : note,
       });
       await logChange(supabase, {
         course_id: course.id, course_name: course.name, lms_old: prev.lms_price, lms_new: lms.price,
