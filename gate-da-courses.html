@@ -3357,6 +3357,71 @@ html body main #combos .c28-offer-icon { flex: 0 0 20px; width: 20px; display: i
   html body main .combo-side-col .plan120-list { flex: 1 1 auto !important; justify-content: space-evenly !important; }
   html body main .combo-side-col > .plan120-cta .plan120-go { margin-top: auto !important; padding-top: 12px; }
 }
+
+/* ==== 2028 row: compact pass (2026-10-21, "the 2028 card and its surroundings feel
+   too big"). One type step down and tighter spacing across the 2028 card, the
+   challenge card and the 120-day card. Kept as the LAST block so it overrides the
+   earlier layers above; nothing here changes markup, copy or layout structure.
+   Scale: card titles 24, price 30, body 13, small print 12. ==== */
+html body main .combo-with-side .combo-card.coming-soon { padding: 22px 24px !important; }
+html body main .c28 { gap: 14px !important; }
+html body main .c28-head { gap: 16px !important; }
+html body main .c28-main .combo-title { font-size: 24px !important; line-height: 1.15 !important; }
+html body main #combos .c28-main .combo-tagline { font-size: 13px !important; margin-bottom: 10px !important; }
+html body main .c28-attempts { margin-top: 12px !important; }
+html body main #combos .c28-attempts-note { font-size: 14px !important; line-height: 1.4 !important; }
+html body main .c28-buy { padding: 12px 14px 14px !important; }
+html body main .c28-buy .combo-price { font-size: 30px !important; }
+html body main #combos .c28-offer { font-size: 12.5px !important; }
+html body main #combos .c28-offer-ends--today { font-size: 15px !important; }
+html body main .c28-buy .combo-live-cta { margin-top: 8px !important; }
+html body main .c28-includes { padding-top: 12px !important; }
+html body main .c28-includes .combo-includes-label { font-size: 15px !important; margin-bottom: 10px !important; }
+html body main .c28-includes .combo-includes ul { gap: 7px !important; }
+html body main .c28-includes .combo-includes li { font-size: 13px !important; line-height: 1.35 !important; padding: 8px 11px !important; gap: 10px !important; }
+html body main .c28-includes .combo-check { width: 20px !important; height: 20px !important; }
+html body main .c28-includes .combo-check svg { width: 10px !important; height: 8px !important; }
+html body main .c28-projects { padding: 12px !important; }
+html body main .c28-projects .combo-includes-label { font-size: 12px !important; }
+html body main .c28-projects .combo-projects-link { font-size: 12px !important; }
+html body main .c28-projects .combo-projects-list { margin-top: 8px !important; gap: 7px !important; }
+html body main .c28-projects .combo-projects-list li { padding: 8px 9px !important; gap: 9px !important; }
+html body main .c28-projects .combo-projects-list li > span > b { font-size: 13px !important; }
+html body main .c28-projects .combo-projects-pitch { font-size: 12px !important; }
+html body main .c28-proj-count { height: 24px !important; min-width: 30px !important; font-size: 13px !important; }
+html body main .c28-projects .combo-projects-note { margin-top: 8px !important; font-size: 12.5px !important; }
+
+/* Side cards: same step down. */
+html body main .combo-side-col > .challenge-card { padding: 18px 20px !important; gap: 8px !important; }
+html body main .combo-side-col > .plan120-cta { padding: 18px 20px !important; gap: 12px !important; }
+html body main .challenge-title-main { font-size: 24px !important; }
+html body main .challenge-icon { width: 40px !important; height: 40px !important; }
+html body main .challenge-icon svg { width: 20px; height: 20px; }
+html body main .challenge-head { gap: 12px !important; }
+html body main #combos .challenge-sub { font-size: 13px !important; line-height: 1.45 !important; }
+html body main #combos .challenge-fact, html body main #combos .challenge-why-us,
+html body main #combos .challenge-deadline { font-size: 12.5px !important; line-height: 1.45 !important; padding-top: 10px; }
+html body main .challenge-why { padding-top: 10px !important; gap: 6px !important; }
+html body main #combos .challenge-why-title { font-size: 12.5px !important; }
+html body main #combos .challenge-why li { font-size: 12px !important; line-height: 1.4 !important; }
+html body main .challenge-register { gap: 8px !important; padding-top: 10px !important; }
+html body main .challenge-register-btn { padding: 10px 12px !important; font-size: 13.5px !important; }
+html body main #combos .plan120-title { font-size: 22px !important; }
+html body main #combos .plan120-sub { font-size: 13px !important; }
+html body main .plan120-list { gap: 8px !important; padding: 12px 0 !important; }
+html body main #combos .plan120-list span { font-size: 12.5px !important; }
+html body main #combos .plan120-go { font-size: 13px !important; }
+/* Side column stays 420px from 1280px: measured against 360/380/400, it gives the
+   shortest row (827px at 1440) that keeps every line of copy, because a narrower
+   column makes the text-heavy challenge card taller than the width it frees up. */
+@media (max-width: 600px) {
+  html body main .combo-with-side .combo-card.coming-soon { padding: 18px 16px !important; }
+  html body main .c28-main .combo-title { font-size: 22px !important; }
+  html body main .c28-buy .combo-price { font-size: 28px !important; }
+  html body main .c28-includes .combo-includes li { font-size: 12.5px !important; padding: 7px 10px !important; }
+  html body main .combo-side-col > .challenge-card, html body main .combo-side-col > .plan120-cta { padding: 16px !important; }
+  html body main .challenge-title-main { font-size: 21px !important; }
+}
 </style>
 <script type="application/ld+json" id="course-jsonld">
 {
