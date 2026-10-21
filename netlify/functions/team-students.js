@@ -70,7 +70,7 @@ export async function handler(event, context) {
       // batch is NOT added here for the exact same reason — see its own
       // best-effort query below instead.
       supabase.from('students').select('email, display_name, notes, created_at, current_streak, needs_rename'),
-      fetchAllRows(() => supabase.from('task_progress').select('email, date').eq('completed', true).lte('date', today)),
+      fetchAllRows(() => supabase.from('task_progress').select('email, date, subject, task_text').eq('completed', true).lte('date', today)),
       fetchAllRows(() => supabase.from('pomo_daily_sessions').select('email, date, total_minutes')),
       supabase.from('pomodoro_stats').select('email, total_minutes').eq('week_start', weekStartIST()),
       // Whole-schedule task count, per batch (not date-limited) — the same
@@ -93,7 +93,7 @@ export async function handler(event, context) {
       // taking down the entire Students view the way an actually-broken
       // schedule_tasks table would.
       (async () => {
-        try { return await fetchAllRows(() => supabase.from('schedule_tasks').select('batch')); }
+        try { return await fetchAllRows(() => supabase.from('schedule_tasks').select('batch, date, subject, task_text')); }
         catch { return []; }
       })(),
       // Best-effort, deliberately its own query rather than added to the
@@ -141,9 +141,16 @@ export async function handler(event, context) {
   // already-fault-tolerant fetch (empty array on failure, not a thrown
   // error), so no additional error-checking is needed here.
   const taskCountByBatch = new Map();
+  // batch -> Set of "date|subject|task_text" for every task currently in that
+  // batch's schedule. Course progress only counts ticks that match one of these
+  // (2026-10-22): a schedule reload replaces tasks, but the old ticks stay in
+  // task_progress, so counting every tick put two students at 109%.
+  const taskKeysByBatch = new Map();
   for (const row of taskBatchRows) {
     const batch = row.batch || 'C';
     taskCountByBatch.set(batch, (taskCountByBatch.get(batch) || 0) + 1);
+    if (!taskKeysByBatch.has(batch)) taskKeysByBatch.set(batch, new Set());
+    taskKeysByBatch.get(batch).add(row.date + '|' + row.subject + '|' + row.task_text);
   }
 
   const batchByEmail = new Map();
@@ -179,6 +186,9 @@ export async function handler(event, context) {
   for (const row of completed) {
     if (!completedByEmail.has(row.email)) completedByEmail.set(row.email, new Set());
     completedByEmail.get(row.email).add(row.date);
+    const keys = taskKeysByBatch.get(batchByEmail.get(row.email) || 'C');
+    // No schedule rows at all (best-effort fetch failed): count every tick, as before.
+    if (keys && !keys.has(row.date + '|' + row.subject + '|' + row.task_text)) continue;
     taskCountByEmail.set(row.email, (taskCountByEmail.get(row.email) || 0) + 1);
   }
 
@@ -250,7 +260,8 @@ export async function handler(event, context) {
       week_minutes: weekMinutesByEmail.get(s.email) || 0,
       streak: s.current_streak || 0,
       tasks_completed: taskCountByEmail.get(s.email) || 0,
-      progress_pct: batchTaskTotal > 0 ? Math.round(((taskCountByEmail.get(s.email) || 0) / batchTaskTotal) * 100) : 0,
+      progress_pct: batchTaskTotal > 0 ? Math.min(100, Math.round(((taskCountByEmail.get(s.email) || 0) / batchTaskTotal) * 100)) : 0,
+      batch: batchByEmail.get(s.email) || 'C',
       consistency_minutes: consistencyFor(s.email),
       last_active: lastActive,
       days_inactive: daysInactiveFor(lastActive),

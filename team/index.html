@@ -451,6 +451,43 @@
     .sitedata-tabs { flex-wrap: wrap; max-width: 100%; }
     .chal-cutoff-row { flex-direction: column; align-items: stretch; }
   }
+
+/* ==== /team usefulness pass (2026-10-22) ==== */
+/* Students tab gets a wider page so all columns (incl. Last active and Notes) fit. */
+body.tab-students .wrap { max-width: 1280px; }
+.students-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.students-table td { vertical-align: middle; }
+.students-table .nowrap { white-space: nowrap; }
+.students-name-cell { white-space: normal; min-width: 190px; max-width: 260px; }
+.students-name { font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+.students-name-cell .field-hint { margin-top: 1px; overflow-wrap: anywhere; }
+.batch-chip { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 600; border: 1px solid var(--line); color: var(--ink-dim); white-space: nowrap; }
+.batch-chip-D { color: #c4b5fd; border-color: rgba(196,181,253,.35); }
+.progress-cell { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.progress-bar { width: 56px; height: 5px; border-radius: 999px; background: var(--line); overflow: hidden; flex: none; }
+.progress-bar > span { display: block; height: 100%; background: var(--green, #4ade80); border-radius: inherit; }
+.students-notes-cell { min-width: 200px; }
+.note-input { width: 100%; padding: 6px 9px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--ink); font: inherit; font-size: 12.5px; transition: border-color .2s ease, background-color .2s ease; }
+.note-input:hover { border-color: var(--ink-soft, #555); }
+.note-input:focus { outline: none; border-color: var(--purple, #a78bfa); background: var(--bg-soft); }
+.note-input::placeholder { color: var(--ink-soft, #666); }
+.note-input.is-saving { border-color: #fbbf24; }
+.note-input.is-saved { border-color: #4ade80; }
+.note-input.is-error { border-color: #f87171; }
+.students-more { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+/* Announcements: "Coming up" strip */
+.coming-up { border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; margin-bottom: 20px; }
+.coming-up-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 6px; font-size: 14px; }
+.coming-up ul { list-style: none; margin: 0; padding: 0; }
+.coming-up li { display: grid; grid-template-columns: 200px minmax(0,1fr) auto; gap: 12px; padding: 7px 0; border-top: 1px solid var(--line); font-size: 13px; align-items: baseline; }
+.coming-up li:first-child { border-top: 0; }
+.coming-when { color: var(--ink); font-weight: 600; white-space: nowrap; }
+.coming-what { color: var(--ink-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.coming-where { color: var(--ink-soft, #777); font-size: 12px; white-space: nowrap; }
+@media (max-width: 600px) {
+  .coming-up li { grid-template-columns: minmax(0,1fr) auto; }
+  .coming-what { grid-column: 1 / -1; grid-row: 2; white-space: normal; }
+}
 </style>
 </head>
 <body>

@@ -303,7 +303,7 @@
     preview: null, // { loading } | { embed } | { embed: null, reason } | { error } | null (not yet previewed)
     testStatus: null, // { loading } | { posted: true } | { posted: false, reason } | { error } | null
     showReference: false,
-    showBuiltIn: false, // recurring daily/weekly/monthly posts start collapsed — see renderPostList()
+    showBuiltIn: null, // null = automatic: open when there are no custom posts, else collapsed (see renderPostList)
     renamingWebhook: null, // webhook_url of the channel group currently showing a rename input, or null
     renameStatus: null, // { webhookUrl, saving } | { webhookUrl, error } | null
     tab: 'announcements', // 'announcements' | 'students' — mutually exclusive views, not stacked panels
@@ -314,8 +314,10 @@
     studentsError: null,
     studentSort: { key: 'total_minutes', dir: 'desc' },
     studentSummary: null,
-    studentFilters: { search: '', inactive: '', minStreak: '', flaggedOnly: false }, // inactive: '' | '3' | '7' | '14' | '30' | 'never'
+    studentFilters: { search: '', inactive: '', minStreak: '', flaggedOnly: false, batch: '' }, // batch: '' | 'C' | 'D'; inactive: '' | '3' | '7' | '14' | '30' | 'never'
     noteSaving: {}, // email -> 'saving' | 'saved' | 'error', transient per-row save feedback
+    studentsShown: 50, // how many rows of the filtered list are rendered (see STUDENTS_PAGE)
+    studentsViewKey: '', // filters+sort last rendered; a change resets studentsShown
     clearBlockStatus: {}, // email -> 'saving' | 'error', transient status for the gate_escalated Clear block/Rename actions
     // Pricing/Notes/Lectures are three independent lists under one Site
     // data tab — rows/editing are keyed by resource type (see
@@ -636,16 +638,39 @@
       (customPosts.length ? renderPostGroups(customPosts)
         : '<div class="empty">No announcements or schedules yet — click "+ New announcement / schedule" above to add next week\'s.</div>');
 
+    // With no custom posts, the automatic ones are all there is, so show them
+    // instead of an empty-looking page (2026-10-22). The toggle still works.
+    var showBuiltIn = state.showBuiltIn === null ? !customPosts.length : state.showBuiltIn;
     var builtInHtml = builtInPosts.length
       ? (
         '<button type="button" class="btn" id="builtin-toggle" style="margin:20px 0 12px;">' +
-          (state.showBuiltIn ? 'Hide' : 'Show') + ' recurring leaderboards (' + builtInPosts.length + ')' +
+          (showBuiltIn ? 'Hide' : 'Show') + ' recurring leaderboards (' + builtInPosts.length + ')' +
         '</button>' +
-        (state.showBuiltIn ? renderPostGroups(builtInPosts) : '')
+        (showBuiltIn ? renderPostGroups(builtInPosts) : '')
       )
       : '';
 
-    return customHtml + builtInHtml;
+    return renderComingUp() + customHtml + builtInHtml;
+  }
+
+  // "Coming up": the next few sends across every channel, so "what goes out
+  // next, and where" is answered without opening each card (2026-10-22).
+  function renderComingUp() {
+    var upcoming = state.posts
+      .filter(function (p) { return p.enabled && p.next_fire_at; })
+      .sort(function (a, b) { return new Date(a.next_fire_at) - new Date(b.next_fire_at); })
+      .slice(0, 4);
+    var paused = state.posts.filter(function (p) { return !p.enabled; }).length;
+    if (!upcoming.length && !paused) return '';
+    var items = upcoming.map(function (p) {
+      var title = p.title || SOURCE_LABELS[p.source] || p.source;
+      var channel = p.channel_name || (p.platform === 'telegram' ? 'Telegram' : 'Discord');
+      return '<li><span class="coming-when">' + escapeHtml(formatNextFire(p.next_fire_at)) + '</span>' +
+        '<span class="coming-what">' + escapeHtml(title) + '</span><span class="coming-where">' + escapeHtml(channel) + '</span></li>';
+    }).join('');
+    return '<div class="coming-up"><div class="coming-up-head"><b>Coming up</b>' +
+      (paused ? '<span class="field-hint">' + paused + ' paused</span>' : '') + '</div>' +
+      (items ? '<ul>' + items + '</ul>' : '<div class="field-hint">Nothing scheduled.</div>') + '</div>';
   }
 
   function colorToHex(color) {
@@ -950,6 +975,8 @@
 
   function render() {
     var root = document.getElementById('root');
+    // The Students table has 10 columns; give that tab more width than the rest.
+    document.body.classList.toggle('tab-students', !!state.authorized && state.tab === 'students');
     var user = window.netlifyIdentity && window.netlifyIdentity.currentUser();
 
     if (!state.authorized) {
@@ -1989,14 +2016,17 @@
 
   var STUDENT_COLUMNS = [
     { key: 'display_name', label: 'Name' },
-    { key: 'total_minutes', label: 'All-time' },
+    { key: 'batch', label: 'Batch' },
+    { key: 'last_active', label: 'Last active' },
     { key: 'week_minutes', label: 'This week' },
+    { key: 'total_minutes', label: 'All-time' },
     { key: 'consistency_minutes', label: 'Consistency' },
     { key: 'streak', label: 'Streak' },
     { key: 'progress_pct', label: 'Course progress' },
     { key: 'tasks_completed', label: 'Tasks done' },
-    { key: 'last_active', label: 'Last active' },
   ];
+  var STUDENT_BATCH_LABELS = { C: 'Batch C', D: '120 Days' };
+  var STUDENTS_PAGE = 50; // rows rendered at once; "Show more" adds another page
 
   // Search matches name or email (case-insensitive substring). "Inactive"
   // is a days_inactive threshold computed server-side (team-students.js,
@@ -2015,6 +2045,7 @@
       if (search && s.display_name.toLowerCase().indexOf(search) === -1 && s.email.toLowerCase().indexOf(search) === -1) return false;
       if (minStreak != null && s.streak < minStreak) return false;
       if (f.flaggedOnly && !s.needs_rename) return false;
+      if (f.batch && (s.batch || 'C') !== f.batch) return false;
       if (f.inactive === 'never') return s.days_inactive == null;
       if (f.inactive) return s.days_inactive != null && s.days_inactive >= Number(f.inactive);
       return true;
@@ -2087,10 +2118,14 @@
     return (
       '<div class="students-filters">' +
         '<input type="text" id="student-search" placeholder="Search name or email…" value="' + escapeHtml(f.search) + '">' +
+        '<label>Batch <select id="student-batch-filter">' +
+          [['', 'All'], ['C', 'Batch C'], ['D', '120 Days']].map(function (o) {
+            return '<option value="' + o[0] + '"' + (f.batch === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
+          }).join('') + '</select></label>' +
         '<label>Inactive for <select id="student-inactive-filter">' + inactiveOptions + '</select></label>' +
         '<label>Min streak <input type="number" min="0" id="student-min-streak" placeholder="0" value="' + escapeHtml(f.minStreak) + '" style="width:64px;"></label>' +
         '<label><input type="checkbox" id="student-flagged-only"' + (f.flaggedOnly ? ' checked' : '') + '> 🚩 Flagged names only</label>' +
-        ((f.search || f.inactive || f.minStreak !== '' || f.flaggedOnly) ? '<button type="button" class="btn btn-small" id="student-filter-clear">Clear filters</button>' : '') +
+        ((f.search || f.inactive || f.minStreak !== '' || f.flaggedOnly || f.batch) ? '<button type="button" class="btn btn-small" id="student-filter-clear">Clear filters</button>' : '') +
       '</div>'
     );
   }
@@ -2172,26 +2207,34 @@
     }).join('') + '<th>Notes</th>';
 
     var visible = sortedStudents();
-    var rowsHtml = visible.map(function (s) {
-      var saveState = state.noteSaving[s.email];
-      var saveLabel = saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved' : saveState === 'error' ? 'Failed — retry' : 'Save';
+    var viewKey = JSON.stringify([state.studentFilters, state.studentSort]);
+    if (viewKey !== state.studentsViewKey) { state.studentsViewKey = viewKey; state.studentsShown = STUDENTS_PAGE; }
+    var shown = visible.slice(0, state.studentsShown);
+    var rowsHtml = shown.map(function (s) {
+      var saveState = state.noteSaving[s.email] || '';
       return (
         '<tr data-email="' + escapeHtml(s.email) + '">' +
-          '<td>' + escapeHtml(s.display_name) + '<div class="field-hint"><a href="mailto:' + escapeHtml(s.email) + '">' + escapeHtml(s.email) + '</a></div>' + renderNameFlagCell(s) + '</td>' +
-          '<td>' + formatHours(s.total_minutes) + '</td>' +
+          '<td class="students-name-cell"><div class="students-name">' + escapeHtml(s.display_name) + '</div><div class="field-hint"><a href="mailto:' + escapeHtml(s.email) + '">' + escapeHtml(s.email) + '</a></div>' + renderNameFlagCell(s) + '</td>' +
+          '<td><span class="batch-chip batch-chip-' + escapeHtml(s.batch || 'C') + '">' + escapeHtml(STUDENT_BATCH_LABELS[s.batch] || s.batch || 'Batch C') + '</span></td>' +
+          '<td class="nowrap"><span class="inactivity-dot ' + inactivityClass(s.days_inactive) + '"></span>' + lastActiveLabel(s) + '</td>' +
           '<td>' + formatHours(s.week_minutes) + '</td>' +
-          '<td>' + formatHours(s.consistency_minutes) + '/day</td>' +
+          '<td>' + formatHours(s.total_minutes) + '</td>' +
+          '<td class="nowrap">' + formatHours(s.consistency_minutes) + '/day</td>' +
           '<td>' + s.streak + '</td>' +
-          '<td>' + s.progress_pct + '%</td>' +
+          '<td><div class="progress-cell"><span class="progress-bar"><span style="width:' + s.progress_pct + '%"></span></span>' + s.progress_pct + '%</div></td>' +
           '<td>' + s.tasks_completed + '</td>' +
-          '<td><span class="inactivity-dot ' + inactivityClass(s.days_inactive) + '"></span>' + lastActiveLabel(s) + '</td>' +
           '<td class="students-notes-cell">' +
-            '<textarea class="js-note-input" data-email="' + escapeHtml(s.email) + '" rows="1">' + escapeHtml(s.notes) + '</textarea>' +
-            '<button type="button" class="btn btn-small js-note-save" data-email="' + escapeHtml(s.email) + '">' + saveLabel + '</button>' +
+            '<input type="text" class="js-note-input note-input' + (saveState ? ' is-' + saveState : '') + '" data-email="' + escapeHtml(s.email) + '" value="' + escapeHtml(s.notes) + '" placeholder="Add a note" maxlength="500" title="Enter or click away to save">' +
           '</td>' +
         '</tr>'
       );
     }).join('');
+    var moreLeft = visible.length - shown.length;
+    var moreHtml = moreLeft > 0
+      ? '<div class="students-more"><button type="button" class="btn" id="students-more">Show ' + Math.min(STUDENTS_PAGE, moreLeft) + ' more</button>' +
+        '<button type="button" class="btn btn-ghost" id="students-all">Show all ' + visible.length + '</button>' +
+        '<span class="field-hint">Showing ' + shown.length + ' of ' + visible.length + '</span></div>'
+      : '';
 
     var countLabel = visible.length === state.students.length
       ? 'Students (' + state.students.length + ')'
@@ -2200,11 +2243,12 @@
     return (
       '<div class="card">' +
         renderStudentSummary() +
-        '<h2 style="font-size:16px;margin-bottom:12px;">' + countLabel + '</h2>' +
+        '<div class="students-head"><h2 style="font-size:16px;margin:0;">' + countLabel + '</h2>' +
+          (visible.length ? '<button type="button" class="btn btn-small" id="students-csv">Download CSV (' + visible.length + ')</button>' : '') + '</div>' +
         renderStudentFilters() +
         renderInactivityLegend() +
-        '<div class="field-hint" style="margin:10px 0;">Sorted by All-time hours by default — click a column to re-sort. Consistency = median daily minutes this month so far (same measure as the monthly Discord post), zero-filled on quiet days, so it rewards showing up regularly over binge days. Course progress = tasks completed out of everything scheduled so far. Try sorting by Consistency for steady-but-not-flashy students, or filtering by Inactive days to see who\'s gone quiet.</div>' +
-        (visible.length ? '<div class="students-table-wrap"><table class="students-table"><thead><tr>' + headerHtml + '</tr></thead><tbody>' + rowsHtml + '</tbody></table></div>'
+        '<div class="field-hint" style="margin:10px 0;">Click a column to sort. Consistency = median daily focus time this month, counting quiet days as zero. Course progress = tasks done out of everything scheduled so far for that student\'s batch. Notes save when you press Enter or click away.</div>' +
+        (visible.length ? '<div class="students-table-wrap"><table class="students-table"><thead><tr>' + headerHtml + '</tr></thead><tbody>' + rowsHtml + '</tbody></table></div>' + moreHtml
           : '<div class="empty">No students match the current filters.</div>') +
       '</div>'
     );
@@ -3118,7 +3162,10 @@
 
     var builtinToggle = document.getElementById('builtin-toggle');
     if (builtinToggle) builtinToggle.addEventListener('click', function () {
-      state.showBuiltIn = !state.showBuiltIn;
+      var shown = state.showBuiltIn === null
+        ? !state.posts.some(function (p) { return p.source === 'custom'; })
+        : state.showBuiltIn;
+      state.showBuiltIn = !shown;
       render();
     });
 
@@ -3382,26 +3429,63 @@
     });
     var filterClearBtn = document.getElementById('student-filter-clear');
     if (filterClearBtn) filterClearBtn.addEventListener('click', function () {
-      state.studentFilters = { search: '', inactive: '', minStreak: '', flaggedOnly: false };
+      state.studentFilters = { search: '', inactive: '', minStreak: '', flaggedOnly: false, batch: '' };
       render();
     });
 
-    document.querySelectorAll('.js-note-save').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var email = btn.getAttribute('data-email');
-        var textarea = document.querySelector('.js-note-input[data-email="' + email + '"]');
-        var notes = textarea ? textarea.value : '';
-        state.noteSaving[email] = 'saving';
-        render();
-        api('/team-students', { method: 'PATCH', body: JSON.stringify({ email: email, notes: notes }) })
-          .then(function () {
-            state.noteSaving[email] = 'saved';
-            var s = (state.students || []).filter(function (x) { return x.email === email; })[0];
-            if (s) s.notes = notes;
-            render();
-          })
-          .catch(function () { state.noteSaving[email] = 'error'; render(); });
-      });
+    // Notes save on Enter or when the field loses focus, only if the text changed.
+    // Feedback is a border colour on the field itself (see .note-input.is-*), patched
+    // in place so a save never re-renders the table under the cursor.
+    function saveNote(input) {
+      var email = input.getAttribute('data-email');
+      var notes = input.value;
+      var st = (state.students || []).filter(function (x) { return x.email === email; })[0];
+      if (!st || (st.notes || '') === notes) return;
+      var mark = function (cls) {
+        state.noteSaving[email] = cls;
+        input.classList.remove('is-saving', 'is-saved', 'is-error');
+        if (cls) input.classList.add('is-' + cls);
+      };
+      mark('saving');
+      api('/team-students', { method: 'PATCH', body: JSON.stringify({ email: email, notes: notes }) })
+        .then(function () {
+          st.notes = notes; mark('saved');
+          setTimeout(function () { if (state.noteSaving[email] === 'saved') mark(''); }, 1800);
+        })
+        .catch(function () { mark('error'); });
+    }
+    document.querySelectorAll('.js-note-input').forEach(function (input) {
+      input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); input.blur(); } });
+      input.addEventListener('blur', function () { saveNote(input); });
+    });
+    var batchFilter = document.getElementById('student-batch-filter');
+    if (batchFilter) batchFilter.addEventListener('change', function () {
+      state.studentFilters.batch = batchFilter.value;
+      render();
+    });
+    var moreBtn = document.getElementById('students-more');
+    if (moreBtn) moreBtn.addEventListener('click', function () { state.studentsShown += STUDENTS_PAGE; render(); });
+    var allBtn = document.getElementById('students-all');
+    if (allBtn) allBtn.addEventListener('click', function () { state.studentsShown = Infinity; render(); });
+    var csvBtn = document.getElementById('students-csv');
+    if (csvBtn) csvBtn.addEventListener('click', function () {
+      var cols = ['display_name', 'email', 'batch', 'last_active', 'days_inactive', 'week_minutes', 'total_minutes', 'consistency_minutes', 'streak', 'progress_pct', 'tasks_completed', 'needs_rename', 'notes'];
+      var head = ['Name', 'Email', 'Batch', 'Last active', 'Days inactive', 'This week (min)', 'All-time (min)', 'Consistency (min/day)', 'Streak', 'Course progress %', 'Tasks done', 'Name flagged', 'Notes'];
+      var cell = function (v) {
+        if (v == null) return '';
+        v = String(v);
+        if (/^[=+\-@]/.test(v)) v = "'" + v; // keep spreadsheets from running a cell as a formula
+        return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+      };
+      var lines = [head.join(',')].concat(sortedStudents().map(function (st) {
+        return cols.map(function (c) { return cell(c === 'batch' ? (STUDENT_BATCH_LABELS[st.batch] || st.batch) : st[c]); }).join(',');
+      }));
+      var blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'taai-students-' + new Date(Date.now() + 5.5 * 3600000).toISOString().slice(0, 10) + '.csv'; // IST date
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
     });
 
     function clearNameCheckBlock(email, newDisplayName) {
