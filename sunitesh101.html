@@ -189,44 +189,39 @@
   .empty-notes { padding: 18px; font-size: 14.5px; line-height: 1.5; }
   .linkish { font: inherit; background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; color: var(--ink); font-weight: 700; }
 
-  /* Revision map: takeaways and confidence (2026-10-23) */
-  .tk { margin-top: 8px; font-size: 13.5px; line-height: 1.45; }
-  .tk-text { background: #FFFBEA; border-left: 4px solid var(--ink); padding: 6px 10px; white-space: pre-wrap; }
-  .tk-meta { font-size: 11.5px; color: var(--ink-dim); margin-top: 3px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  .tk-edit { font: inherit; font-size: 12px; font-weight: 700; background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; color: var(--ink); }
-  .tk-form textarea { font: inherit; font-size: 14px; width: 100%; min-height: 64px; border: 2px solid var(--ink); padding: 7px 9px; background: #fff; resize: vertical; }
-  .tk-form .tk-actions { display: flex; gap: 6px; margin-top: 6px; align-items: center; flex-wrap: wrap; }
-  .tk-count { font-size: 11.5px; color: var(--ink-dim); margin-left: auto; }
-  .conf { margin-top: 8px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; }
-  .conf-label { font-weight: 700; color: var(--ink-dim); }
-  .conf-seg { display: inline-flex; border: 2px solid var(--ink); }
-  .conf-seg button { font: inherit; font-size: 12px; font-weight: 700; padding: 2px 8px; border: 0; background: #fff; cursor: pointer; color: var(--ink); }
-  .conf-seg button + button { border-left: 2px solid var(--ink); }
-  .conf-seg button[aria-pressed="true"][data-level="1"] { background: var(--lime); }
-  .conf-seg button[aria-pressed="true"][data-level="2"] { background: var(--yellow); }
-  .conf-seg button[aria-pressed="true"][data-level="3"] { background: #FDA4AF; }
-  .conf-other { color: var(--ink-dim); }
-  .lvl { display: inline-block; font-size: 11px; font-weight: 800; padding: 0 6px; border: 1.5px solid var(--ink); }
-  .lvl-1 { background: var(--lime); } .lvl-2 { background: var(--yellow); } .lvl-3 { background: #FDA4AF; }
+  /* Revision map (2026-10-23) */
+  .map-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin-bottom: 12px; }
+  .map-tile { font: inherit; text-align: left; color: var(--ink); background: #fff; border: 2px solid var(--ink); padding: 10px 12px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; }
+  .map-tile:hover { background: #FFFBEA; }
+  .map-tile[aria-pressed="true"] { background: var(--yellow); box-shadow: 3px 3px 0 var(--ink); }
+  .tile-name { font-weight: 800; font-size: 14px; line-height: 1.25; }
+  .tile-status { font-size: 11.5px; font-weight: 700; color: var(--ink-dim); }
+  .st-now .tile-status { color: var(--ink); }
+  .st-now .tile-status::before { content: '● '; color: #16A34A; }
+  .tile-bar { height: 7px; border: 1.5px solid var(--ink); background: #fff; margin-top: 4px; }
+  .tile-bar > span { display: block; height: 100%; background: var(--lime); }
+  .tile-cov { font-size: 11.5px; font-weight: 600; color: var(--ink-dim); }
+  .map-bar { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+  .map-bar .map-intro { margin: 0; }
   .map-sec { margin-bottom: 16px; }
   .map-head { padding: 10px 16px; border-bottom: 2px solid var(--ink); background: var(--lilac); display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: baseline; }
   .map-head b { font-size: 15px; }
   .map-stats { font-size: 12px; font-weight: 600; color: var(--ink-dim); }
-  .trow { padding: 10px 16px; border-bottom: 1.5px solid #E5DCC8; border-left: 6px solid transparent; }
+  .gap-count { color: #B45309; font-weight: 800; }
+  .trow { display: grid; grid-template-columns: 12px 84px minmax(0, 1fr); gap: 10px; align-items: start; padding: 10px 16px; border-bottom: 1.5px solid #E5DCC8; }
   .trow:last-child { border-bottom: 0; }
-  .trow.w-3 { border-left-color: #FB7185; } .trow.w-2 { border-left-color: #EAB308; } .trow.w-1 { border-left-color: #84CC16; }
-  .trow-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
-  .trow-date { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--ink-dim); white-space: nowrap; }
-  .trow-text { font-weight: 700; font-size: 14.5px; }
-  .trow.upcoming .trow-text { color: var(--ink-dim); font-weight: 600; }
-  .gap-tag { font-size: 11px; font-weight: 800; padding: 0 6px; border: 1.5px dashed var(--ink); color: var(--ink-dim); }
-  .map-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
-  .toggle-btn { font: inherit; font-size: 13px; font-weight: 700; background: #fff; border: 2px solid var(--ink); padding: 4px 10px; cursor: pointer; }
-  .toggle-btn[aria-pressed="true"] { background: #FDA4AF; }
-  .map-intro { font-size: 13.5px; margin-bottom: 12px; color: var(--ink-dim); }
+  .t-dot { width: 12px; height: 12px; border: 2px solid var(--ink); margin-top: 4px; background: #fff; }
+  .t-ok .t-dot { background: #84CC16; }
+  .t-gap .t-dot { background: #FDBA74; }
+  .t-next .t-dot { border-style: dashed; border-color: #A8A29E; }
+  .trow-date { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--ink-dim); padding-top: 2px; white-space: nowrap; }
+  .trow-text { font-weight: 700; font-size: 14.5px; line-height: 1.35; }
+  .t-next .trow-text { color: var(--ink-dim); font-weight: 600; }
+  .trow .links { margin-top: 6px; }
+  .t-gap-note { font-size: 11.5px; font-weight: 700; color: #B45309; margin-top: 3px; }
+  .map-intro { font-size: 13.5px; color: var(--ink-dim); }
   .today-map { margin-top: 10px; border: 2px solid var(--ink); background: #fff; }
   .today-map .map-head { background: #fff; }
-  .today-map-more { padding: 8px 16px; border-top: 2px solid var(--ink); }
 
   @media (max-width: 640px) {
     .stats { grid-template-columns: 1fr 1fr; }
@@ -240,6 +235,11 @@
     .today-text { font-size: 16.5px; }
     .note-chip a { max-width: 230px; }
     .trow, .map-head { padding-left: 12px; padding-right: 12px; }
+    .trow { grid-template-columns: 12px minmax(0, 1fr); }
+    .trow-date { grid-column: 2; padding-top: 0; }
+    .trow-main { grid-column: 2; }
+    .map-tiles { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .map-tile { padding: 8px 10px; }
     .plan > li { grid-template-columns: 22px minmax(0, 1fr); gap: 8px; }
     .plan > li::before { width: 22px; height: 22px; font-size: 12px; }
   }
@@ -255,7 +255,7 @@
   var KEY_CODE = 'pairboard:' + BOARD + ':code', KEY_ME = 'pairboard:' + BOARD + ':me', KEY_OPEN = 'pairboard:' + BOARD + ':open', KEY_VIEW = 'pairboard:' + BOARD + ':view';
   var POLL_MS = 20000;
   var app = document.getElementById('app');
-  var S = { code: null, data: null, me: null, open: {}, busy: {}, renaming: false, lastSync: null, view: read('pairboard:sunitesh101:view') === 'notes' ? 'notes' : 'schedule', notesFilter: null, addingFor: null, editingTk: null, weakOnly: false };
+  var S = { code: null, data: null, me: null, open: {}, busy: {}, renaming: false, lastSync: null, view: read('pairboard:sunitesh101:view') === 'notes' ? 'notes' : 'schedule', notesFilter: null, addingFor: null };
 
   function store(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} }
   function read(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
@@ -299,7 +299,6 @@
     return api({ action: 'load' }).then(function (d) {
       d.tickMap = groupTicks(d.ticks);
       d.linkMap = groupLinks(d.links);
-      d.topicMap = groupTopics(d.topics);
       var first = !S.data;
       S.data = d; S.lastSync = new Date();
       if (first) {
@@ -322,18 +321,8 @@
     (rows || []).forEach(function (n) { (map[n.task_id] = map[n.task_id] || []).push(n); });
     return map;
   }
-  // topicMap[taskId] = { takeaway, takeaway_by, takeaway_at, conf0, conf1 }
-  function groupTopics(rows) {
-    var map = {};
-    (rows || []).forEach(function (r) { map[r.task_id] = r; });
-    return map;
-  }
   function isRevisionSection(i) { return /revision/i.test(S.data.sections[i].title); }
   function topicSections() { return S.data.sections.map(function (s, i) { return i; }).filter(function (i) { return !isRevisionSection(i); }); }
-  // Worst rating either person gave a topic (3 weak > 2 shaky > 1 got it); 0 = not rated.
-  function worstConf(id) { var r = S.data.topicMap[id]; if (!r) return 0; return Math.max(r.conf0 || 0, r.conf1 || 0); }
-  var CONF_LABEL = { 1: 'Got it', 2: 'Shaky', 3: 'Weak' };
-  var WEAK_ORDER = { 3: 0, 2: 1, 0: 2, 1: 3 };
   function allTasks() { var out = []; S.data.sections.forEach(function (s, i) { s.tasks.forEach(function (t) { out.push(Object.assign({ section: i }, t)); }); }); return out; }
   function taskById(id) { var l = allTasks(); for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i]; return null; }
   function currentSectionIndex() {
@@ -414,7 +403,7 @@
             return '<div class="' + cls + '" data-task="' + t.id + '">' + checkHtml(t, true) +
               '<div class="task-date"><b>' + f.wd + '</b>' + f.dm + '</div>' +
               '<div class="task-body"><div class="task-text">' + esc(t.text) + '</div>' + metaHtml(t, today, false) +
-                testHtml(t) + reviseSubjectsHtml(t) + (isRevisionSection(i) ? '' : takeawayHtml(t.id) + confHtml(t.id)) + linksHtml(t.id, true) + revisionHtml(t) + '</div></div>';
+                testHtml(t) + reviseSubjectsHtml(t) + linksHtml(t.id, true) + revisionHtml(t) + '</div></div>';
           }).join('') + '</div></div>';
       });
     }
@@ -440,9 +429,9 @@
     }
     var steps = [];
     steps.push('<li><div class="step-row">' + checkHtml(t, false) + '<div><div class="step-kicker">' + esc(d.sections[t.section].title) + '</div><div class="today-text">' + esc(t.text) + '</div>' +
-      metaHtml(t, today, true) + (isRevisionSection(t.section) ? '' : takeawayHtml(t.id) + confHtml(t.id)) + linksHtml(t.id, true) + '</div></div></li>');
-    // Revision days: the subjects to revise open right here, weakest topics first.
-    if (t.reviseSubjects) steps.push('<li>' + todayMapHtml(t) + '</li>');
+      metaHtml(t, today, true) + linksHtml(t.id, true) + '</div></div></li>');
+    // Revision days: the subjects to revise open right here with their notes.
+    if (t.reviseSubjects && !t.reviseAll) steps.push('<li>' + todayMapHtml(t) + '</li>');
     if (t.revision) steps.push('<li>' + revisionHtml(t, true) + '</li>');
     if (t.testCovers) steps.push('<li>' + testHtml(t, true) + '</li>');
     if (everyDayNote()) steps.push('<li><div class="plain-step"><span class="kind-tag kind-apt">Aptitude</span> ' + esc(everyDayNote()) + '</div></li>');
@@ -478,83 +467,36 @@
     if (!t.reviseSubjects) return '';
     var d = S.data;
     if (t.reviseAll) {
-      return '<div class="extra"><span class="kind-tag kind-notes">Revision map</span> <button type="button" class="note-jump" data-jump="all" data-weak="1">Weak &amp; shaky topics →</button> <button type="button" class="note-jump" data-jump="all">Everything →</button></div>';
+      return '<div class="extra"><span class="kind-tag kind-notes">Revision map</span> <button type="button" class="note-jump" data-jump="all">All subjects →</button></div>';
     }
     return '<div class="extra"><span class="kind-tag kind-notes">Revision map</span> ' + t.reviseSubjects.map(function (i) {
       return '<button type="button" class="note-jump" data-jump="' + i + '">' + esc(d.sections[i].title) + ' →</button>';
     }).join(' ') + '</div>';
   }
-  // Today card on a revision day: the subjects to revise, every topic with its
-  // takeaway, notes and confidence, weakest first. Mock days (all subjects)
-  // show only the weak and shaky topics, since the whole syllabus is too long.
+  // Today card on a revision day: the subjects to revise, every topic in
+  // order with its notes and the gaps marked.
   function todayMapHtml(t) {
-    var d = S.data, today = todayIST(), html = '';
-    if (t.reviseAll) {
-      var weak = [];
-      topicSections().forEach(function (i) { d.sections[i].tasks.forEach(function (x) { if (worstConf(x.id) >= 2) weak.push(Object.assign({ section: i }, x)); }); });
-      weak.sort(function (a, b) { return WEAK_ORDER[worstConf(a.id)] - WEAK_ORDER[worstConf(b.id)]; });
-      html = '<div class="today-map"><div class="map-head"><b>Weak &amp; shaky topics, all subjects</b><span class="map-stats">' + weak.length + ' topic' + (weak.length === 1 ? '' : 's') + '</span></div>' +
-        (weak.length ? weak.map(function (x) { return topicRowHtml(x, today, true); }).join('') : '<div class="hint" style="padding:10px 16px">Nothing rated weak or shaky. Rate topics as you go and they collect here.</div>') +
-        '<div class="today-map-more"><button type="button" class="linkish" data-jump="all">Open the full revision map →</button></div></div>';
-      return html;
-    }
+    var d = S.data, today = todayIST();
     return t.reviseSubjects.map(function (i) {
-      var tasks = d.sections[i].tasks.map(function (x) { return Object.assign({ section: i }, x); })
-        .sort(function (a, b) { return WEAK_ORDER[worstConf(a.id)] - WEAK_ORDER[worstConf(b.id)] || (a.id < b.id ? -1 : 1); });
       return '<div class="today-map"><div class="map-head"><b>' + esc(d.sections[i].title) + '</b><span class="map-stats">' + subjectStats(i) + '</span></div>' +
-        tasks.map(function (x) { return topicRowHtml(x, today, true); }).join('') + '</div>';
+        d.sections[i].tasks.map(function (x) { return topicRowHtml(Object.assign({ section: i }, x), today); }).join('') + '</div>';
     }).join('');
   }
   function subjectStats(i) {
-    var d = S.data, tasks = d.sections[i].tasks, today = todayIST();
-    var notes = 0, tks = 0, weak = 0, shaky = 0, gaps = 0;
-    tasks.forEach(function (t) {
-      var hasN = (d.linkMap[t.id] || []).length > 0, r = d.topicMap[t.id], hasT = !!(r && r.takeaway);
-      if (hasN) notes += 1; if (hasT) tks += 1;
-      var w = worstConf(t.id); if (w === 3) weak += 1; if (w === 2) shaky += 1;
-      if (t.id <= today && !hasN && !hasT) gaps += 1;
-    });
-    var bits = [tasks.length + ' topics', notes + ' with notes'];
-    if (d.topicsReady) bits.push(tks + (tks === 1 ? ' takeaway' : ' takeaways'));
-    if (weak) bits.push(weak + ' weak'); if (shaky) bits.push(shaky + ' shaky');
-    if (gaps) bits.push(gaps + ' studied with nothing saved');
-    return bits.join(' · ');
+    var cov = subjectCoverage(i);
+    return S.data.sections[i].tasks.length + ' topics · notes for ' + cov.withNotes + ' of ' + cov.studied + ' studied';
   }
-  // One topic in the revision map: date, topic, takeaway, notes, confidence.
-  function topicRowHtml(t, today, compact) {
-    var d = S.data, r = d.topicMap[t.id], w = worstConf(t.id);
-    var hasN = (d.linkMap[t.id] || []).length > 0, hasT = !!(r && r.takeaway);
-    var gap = t.id <= today && !hasN && !hasT;
-    return '<div class="trow' + (w ? ' w-' + w : '') + (t.id > today ? ' upcoming' : '') + '" data-trow="' + t.id + '">' +
-      '<div class="trow-head"><span class="trow-date">' + dayLabel(t.id) + '</span><span class="trow-text">' + esc(t.text) + '</span>' +
-        (gap ? '<span class="gap-tag">Nothing saved yet</span>' : '') + (t.id > today ? '<span class="gap-tag">Coming up</span>' : '') + '</div>' +
-      takeawayHtml(t.id) + linksHtml(t.id, true) + confHtml(t.id) + '</div>';
-  }
-  // Shared 1-2 line takeaway for a topic day; anyone can write or edit it.
-  function takeawayHtml(id) {
-    var d = S.data;
-    if (!d.topicsReady) return '';
-    var r = d.topicMap[id], text = r && r.takeaway;
-    if (S.editingTk === id) {
-      return '<form class="tk tk-form" data-tk-form="' + id + '"><textarea name="text" maxlength="400" placeholder="1-2 lines worth remembering: a formula, a trap, a trick">' + esc(text || '') + '</textarea>' +
-        '<div class="tk-actions"><button class="btn btn-yellow" type="submit">Save takeaway</button><button class="btn" type="button" data-tk-cancel>Cancel</button><span class="tk-count">' + (text || '').length + ' / 400</span></div></form>';
-    }
-    if (!text) return '<div class="tk"><button type="button" class="add-link" data-tk="' + id + '">+ Add takeaway</button></div>';
-    return '<div class="tk"><div class="tk-text">' + esc(text) + '</div><div class="tk-meta"><span>' + esc(d.names[r.takeaway_by] || '') + (r.takeaway_at ? ' · ' + fmtDay(String(r.takeaway_at).slice(0, 10)).dm : '') + '</span>' +
-      '<button type="button" class="tk-edit" data-tk="' + id + '">Edit</button></div></div>';
-  }
-  // Your own confidence on a topic, plus the other person's.
-  function confHtml(id) {
-    var d = S.data;
-    if (!d.topicsReady) return '';
-    var r = d.topicMap[id] || {};
-    var mine = S.me != null ? r['conf' + S.me] : null, otherIdx = S.me === 1 ? 0 : 1;
-    var other = S.me != null ? r['conf' + otherIdx] : null;
-    var html = '<div class="conf"><span class="conf-label">' + (S.me != null ? 'Your confidence' : 'Confidence') + '</span><span class="conf-seg" role="group">' +
-      [1, 2, 3].map(function (l) { return '<button type="button" data-conf="' + id + '" data-level="' + l + '" aria-pressed="' + (mine === l) + '">' + CONF_LABEL[l] + '</button>'; }).join('') + '</span>';
-    if (S.me != null && other) html += '<span class="conf-other">' + esc(d.names[otherIdx]) + ': <span class="lvl lvl-' + other + '">' + CONF_LABEL[other] + '</span></span>';
-    if (S.me == null) [0, 1].forEach(function (k) { if (r['conf' + k]) html += '<span class="conf-other">' + esc(d.names[k]) + ': <span class="lvl lvl-' + r['conf' + k] + '">' + CONF_LABEL[r['conf' + k]] + '</span></span>'; });
-    return html + '</div>';
+  // One topic in the revision map: a status dot (notes saved / studied
+  // without notes / not yet studied), the date, the topic and its notes.
+  function topicRowHtml(t, today) {
+    var hasN = (S.data.linkMap[t.id] || []).length > 0;
+    var st = t.id > today ? 'next' : hasN ? 'ok' : 'gap';
+    var label = st === 'ok' ? 'Notes saved' : st === 'gap' ? 'No notes yet' : 'Not studied yet';
+    return '<div class="trow t-' + st + '" data-trow="' + t.id + '">' +
+      '<span class="t-dot" title="' + label + '" aria-label="' + label + '"></span>' +
+      '<span class="trow-date">' + dayLabel(t.id) + '</span>' +
+      '<div class="trow-main"><div class="trow-text">' + esc(t.text) + '</div>' +
+        (st === 'gap' ? '<div class="t-gap-note">No notes yet</div>' : '') + (st === 'next' ? '' : linksHtml(t.id, true)) + '</div></div>';
   }
   // The day's revision: ONE specific earlier topic, with the notes saved that day.
   function revisionHtml(t, big) {
@@ -565,9 +507,7 @@
     return '<div class="rev' + (tk ? ' is-done' : '') + (big ? ' big' : '') + '">' + checkHtml(Object.assign({ text: 'Revise ' + r.text }, r), true) +
       '<div class="rev-body"><div><span class="kind-tag kind-rev">Revision</span> <b class="rev-subject">' + esc(d.sections[r.subject].title) + '</b></div>' +
       '<div class="rev-text">' + esc(r.text) + ' <span class="rev-from">(from ' + dayLabel(r.fromId) + ')</span></div>' +
-      (d.topicMap[r.fromId] && d.topicMap[r.fromId].takeaway ? '<div class="tk"><div class="tk-text">' + esc(d.topicMap[r.fromId].takeaway) + '</div></div>' : '') +
-      '<div class="rev-notes">' + (saved.length ? saved.map(function (n) { return chipHtml(n, false); }).join('') : (d.linksReady && !(d.topicMap[r.fromId] && d.topicMap[r.fromId].takeaway) ? '<span class="hint">No notes or takeaway saved that day.</span>' : '')) + '</div>' +
-      (worstConf(r.fromId) ? '<div class="tk-meta">Rated ' + [0, 1].filter(function (k) { return d.topicMap[r.fromId]['conf' + k]; }).map(function (k) { return esc(d.names[k]) + ' <span class="lvl lvl-' + d.topicMap[r.fromId]['conf' + k] + '">' + CONF_LABEL[d.topicMap[r.fromId]['conf' + k]] + '</span>'; }).join(' ') + '</div>' : '') +
+      '<div class="rev-notes">' + (saved.length ? saved.map(function (n) { return chipHtml(n, false); }).join('') : (d.linksReady ? '<span class="hint">No notes saved that day.</span>' : '')) + '</div>' +
       (tk ? '<div class="task-meta">' + whoTicked(tk, false) + '</div>' : '') + '</div></div>';
   }
   function chipHtml(n, canRemove) {
@@ -593,28 +533,43 @@
     return html + '</div>';
   }
 
-  // Revision map: every topic of every subject in order, with its takeaway,
-  // notes and confidence, and the gaps (studied, nothing saved) marked. Built
-  // for revision days and the last weeks: one scroll per subject.
+  // Revision map: a tile per subject (status + how many studied topics have
+  // notes), and below it the chosen subject's topics in order with their notes.
+  // Defaults to the subject being studied now.
+  function subjectStatus(i) {
+    var tasks = S.data.sections[i].tasks, today = todayIST(), first = tasks[0].id, last = tasks[tasks.length - 1].id;
+    if (last < today) return { key: 'done', text: 'Done' };
+    if (first <= today) return { key: 'now', text: 'Studying now' };
+    return { key: 'next', text: 'Starts ' + fmtDay(first).dm };
+  }
+  function subjectCoverage(i) {
+    var d = S.data, today = todayIST(), studied = 0, withNotes = 0;
+    d.sections[i].tasks.forEach(function (t) { if (t.id <= today) { studied += 1; if ((d.linkMap[t.id] || []).length) withNotes += 1; } });
+    return { studied: studied, withNotes: withNotes };
+  }
   function renderNotesView() {
-    var d = S.data, filter = S.notesFilter, today = todayIST();
-    var subs = topicSections();
-    var chips = '<div class="map-tools"><div class="filters" style="margin:0"><button type="button" data-filter="" aria-pressed="' + !filter + '">All subjects</button>' +
-      subs.map(function (i) { return '<button type="button" data-filter="' + i + '" aria-pressed="' + (!!filter && filter.length === 1 && filter[0] === i) + '">' + esc(d.sections[i].title) + '</button>'; }).join('') + '</div>' +
-      (d.topicsReady ? '<button type="button" class="toggle-btn" data-weak-toggle aria-pressed="' + S.weakOnly + '">Weak &amp; shaky only</button>' : '') + '</div>';
-    var intro = '<div class="map-intro">Every topic, its takeaway, saved notes and how confident you each feel. ' +
-      (d.topicsReady ? 'Rate topics as you study; in the last weeks, switch on "Weak &amp; shaky only".' : '') + '</div>';
-    var shown = filter ? filter : subs;
+    var d = S.data, today = todayIST(), subs = topicSections();
+    var cur = currentSectionIndex();
+    var shown = S.notesFilter || [subs.indexOf(cur) >= 0 ? cur : subs[0]];
+    var tiles = '<div class="map-tiles">' + subs.map(function (i) {
+      var st = subjectStatus(i), cov = subjectCoverage(i), on = shown.indexOf(i) >= 0;
+      var pct = cov.studied ? Math.round(cov.withNotes / cov.studied * 100) : 0;
+      return '<button type="button" class="map-tile st-' + st.key + '" data-filter="' + i + '" aria-pressed="' + on + '">' +
+        '<span class="tile-name">' + esc(d.sections[i].title) + '</span>' +
+        '<span class="tile-status">' + st.text + '</span>' +
+        (cov.studied ? '<span class="tile-bar"><span style="width:' + pct + '%"></span></span><span class="tile-cov">Notes for ' + cov.withNotes + ' of ' + cov.studied + ' topic' + (cov.studied === 1 ? '' : 's') + '</span>'
+          : '<span class="tile-cov">' + d.sections[i].tasks.length + ' topics</span>') + '</button>';
+    }).join('') + '</div>';
+    var allOn = shown.length === subs.length;
+    var bar = '<div class="map-bar"><span class="map-intro">Tap a subject to see its topics and notes.</span>' +
+      '<button type="button" class="linkish" data-filter="' + (allOn ? '' : 'all') + '">' + (allOn ? 'Show one subject' : 'Show all subjects') + '</button></div>';
     var body = shown.map(function (i) {
-      var tasks = d.sections[i].tasks.map(function (x) { return Object.assign({ section: i }, x); });
-      if (S.weakOnly) tasks = tasks.filter(function (x) { return worstConf(x.id) >= 2; })
-        .sort(function (a, b) { return WEAK_ORDER[worstConf(a.id)] - WEAK_ORDER[worstConf(b.id)]; });
-      if (S.weakOnly && !tasks.length) return '';
-      return '<div class="box map-sec" id="map-' + i + '"><div class="map-head"><b>' + esc(d.sections[i].title) + '</b><span class="map-stats">' + subjectStats(i) + '</span></div>' +
-        tasks.map(function (x) { return topicRowHtml(x, today, false); }).join('') + '</div>';
+      var cov = subjectCoverage(i), gaps = cov.studied - cov.withNotes, st = subjectStatus(i);
+      return '<div class="box map-sec" id="map-' + i + '"><div class="map-head"><b>' + esc(d.sections[i].title) + '</b><span class="map-stats">' + esc(d.sections[i].range) + ' · ' + st.text +
+        (gaps > 0 ? ' · <span class="gap-count">' + gaps + ' without notes</span>' : '') + '</span></div>' +
+        d.sections[i].tasks.map(function (x) { return topicRowHtml(Object.assign({ section: i }, x), today); }).join('') + '</div>';
     }).join('');
-    if (S.weakOnly && !body) body = '<div class="box empty-notes">Nothing rated weak or shaky' + (filter ? ' here' : '') + '. Rate topics with Got it / Shaky / Weak and they show up here.</div>';
-    return intro + chips + (filter ? '<div class="hint" style="margin:-6px 0 12px">Showing ' + esc(filter.map(function (i) { return d.sections[i].title; }).join(', ')) + '. <button type="button" class="linkish" data-filter="">Show all</button></div>' : '') + body;
+    return tiles + bar + body;
   }
 
   function syncText() {
@@ -642,59 +597,24 @@
       b.addEventListener('click', function () { S.view = b.getAttribute('data-view'); S.notesFilter = null; store(KEY_VIEW, S.view); S.addingFor = null; render(); });
     });
     app.querySelectorAll('[data-filter]').forEach(function (b) {
-      b.addEventListener('click', function () { var v = b.getAttribute('data-filter'); S.notesFilter = v === '' ? null : [Number(v)]; render(); });
+      b.addEventListener('click', function () {
+        var v = b.getAttribute('data-filter');
+        S.notesFilter = v === 'all' ? topicSections() : v === '' ? null : [Number(v)];
+        render();
+      });
     });
     app.querySelectorAll('[data-jump]').forEach(function (b) {
       b.addEventListener('click', function () {
         S.view = 'notes'; store(KEY_VIEW, S.view);
         var j = b.getAttribute('data-jump');
-        S.notesFilter = j === 'all' ? null : j.split(',').map(Number);
-        S.weakOnly = b.hasAttribute('data-weak');
+        S.notesFilter = j === 'all' ? topicSections() : j.split(',').map(Number);
         render(); window.scrollTo({ top: 0, behavior: 'smooth' });
-      });
-    });
-    app.querySelectorAll('[data-weak-toggle]').forEach(function (b) {
-      b.addEventListener('click', function () { S.weakOnly = !S.weakOnly; render(); });
-    });
-    app.querySelectorAll('[data-tk]').forEach(function (b) {
-      b.addEventListener('click', function () {
-        if (needMe()) return;
-        S.editingTk = b.getAttribute('data-tk'); S.addingFor = null; render();
-        var f = app.querySelector('[data-tk-form] textarea'); if (f) { f.focus(); f.setSelectionRange(f.value.length, f.value.length); }
-      });
-    });
-    app.querySelectorAll('[data-tk-cancel]').forEach(function (b) {
-      b.addEventListener('click', function () { S.editingTk = null; render(); });
-    });
-    app.querySelectorAll('[data-tk-form]').forEach(function (f) {
-      var ta = f.querySelector('textarea'), cnt = f.querySelector('.tk-count');
-      ta.addEventListener('input', function () { cnt.textContent = ta.value.length + ' / 400'; });
-      f.addEventListener('submit', function (e) {
-        e.preventDefault();
-        var id = f.getAttribute('data-tk-form'), btn = f.querySelector('button[type=submit]');
-        btn.disabled = true; btn.textContent = 'Saving…';
-        api({ action: 'takeaway', taskId: id, by: S.me, text: ta.value }).then(function (r) {
-          S.data.topicMap[id] = r.topic; S.editingTk = null; render(); toast(r.topic.takeaway ? 'Takeaway saved' : 'Takeaway cleared');
-        }).catch(function (err) { btn.disabled = false; btn.textContent = 'Save takeaway'; toast(err.status === 400 ? err.message : "Couldn't save it. Try again."); });
-      });
-    });
-    app.querySelectorAll('[data-conf]').forEach(function (b) {
-      b.addEventListener('click', function () {
-        if (needMe()) return;
-        var id = b.getAttribute('data-conf'), level = Number(b.getAttribute('data-level'));
-        var before = S.data.topicMap[id] ? Object.assign({}, S.data.topicMap[id]) : null;
-        var cur = before && before['conf' + S.me];
-        var next = cur === level ? null : level; // tap again to clear
-        var row = Object.assign({ task_id: id }, before || {}); row['conf' + S.me] = next;
-        S.data.topicMap[id] = row; render();
-        api({ action: 'confidence', taskId: id, by: S.me, level: next }).then(function (r) { S.data.topicMap[id] = r.topic; render(); })
-          .catch(function () { if (before) S.data.topicMap[id] = before; else delete S.data.topicMap[id]; render(); toast("Couldn't save that. Try again."); });
       });
     });
     app.querySelectorAll('[data-add]').forEach(function (b) {
       b.addEventListener('click', function () {
         if (needMe()) return;
-        S.addingFor = b.getAttribute('data-add'); S.editingTk = null; render();
+        S.addingFor = b.getAttribute('data-add'); render();
         var f = app.querySelector('[data-add-form] input[name=url]'); if (f) f.focus();
       });
     });
@@ -760,11 +680,11 @@
 
   // Poll so one person's ticks show up for the other.
   setInterval(function () {
-    if (!S.data || document.hidden || S.renaming || S.addingFor || S.editingTk || Object.keys(S.busy).length) return;
+    if (!S.data || document.hidden || S.renaming || S.addingFor || Object.keys(S.busy).length) return;
     load().catch(function () {});
   }, POLL_MS);
   document.addEventListener('visibilitychange', function () {
-    if (!document.hidden && S.data && !S.renaming && !S.addingFor && !S.editingTk && !Object.keys(S.busy).length) load().catch(function () {});
+    if (!document.hidden && S.data && !S.renaming && !S.addingFor && !Object.keys(S.busy).length) load().catch(function () {});
   });
 
   // Start
