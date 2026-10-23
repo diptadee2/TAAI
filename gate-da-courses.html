@@ -3135,6 +3135,17 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     @media (min-width: 1025px) and (max-width: 1279px) {
       html body main .combo-side-col .plan120-list { flex: 1 1 auto; justify-content: space-evenly; }
     }
+    /* 2026-10-24 ("a bit of negative space here"): on desktop the 120-day card
+       stretches to the 2028 card's height and left a 69-128px empty band above
+       "View the roadmap". The list now spreads to fill it at every desktop width,
+       and is shown again at 1025-1279px (it fits; the description alone left
+       128px empty there). */
+    @media (min-width: 1025px) {
+      html body main .combo-with-side .combo-side-col .plan120-list { flex: 1 1 auto !important; justify-content: space-evenly !important; }
+    }
+    @media (min-width: 1280px) {
+      html body main .combo-with-side .combo-side-col .plan120-list { display: flex !important; }
+    }
     /* Individual course cards reworked 2026-10-16 ("can the individual course cards look better?") */
     html body main .course-card { display: flex !important; flex-direction: column; }
     html body main .course-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
@@ -3356,6 +3367,16 @@ html body main #combos .c28-offer-icon { flex: 0 0 20px; width: 20px; display: i
   html body main .combo-side-col > .plan120-cta { display: flex !important; flex-direction: column !important; }
   html body main .combo-side-col .plan120-list { flex: 1 1 auto !important; justify-content: space-evenly !important; }
   html body main .combo-side-col > .plan120-cta .plan120-go { margin-top: auto !important; padding-top: 12px; }
+}
+/* 2026-10-24: show the 120-day list again at 1025-1279px too (overrides the
+   hide above): the description alone left a 128px empty band there. */
+@media (min-width: 1025px) and (max-width: 1179px) {
+  html body main .combo-with-side .combo-side-col > .plan120-cta .plan120-list { display: flex !important; }
+}
+/* From 1100px the list plus the description is taller than the 2028 card,
+   so there the list replaces the description. */
+@media (min-width: 1100px) and (max-width: 1179px) {
+  html body main .combo-with-side .combo-side-col > .plan120-cta .plan120-sub { display: none !important; }
 }
 
 /* ==== 2028 row: compact pass (2026-10-21, "the 2028 card and its surroundings feel
@@ -3849,6 +3870,25 @@ html body main #combos .orient-btn .orient-text span { font-family: 'IBM Plex Mo
 .nav-links a:hover, .nav-links a.active { transform: translateY(-1px) !important; }
 @media (min-width: 1025px) and (max-width: 1279px) and (pointer: fine) {
   .nav-links { gap: 20px !important; letter-spacing: .04em !important; }
+}
+</style>
+<style>
+/* Floating contact buttons on phones (2026-10-24, "they interfere with the
+   content too much ... a bit of blur in the surrounding"): smaller, see-through
+   and frosted, so the page shows through and stays readable around them. */
+@media (max-width: 768px) {
+  html body .mobile-contact-bar { right: 12px; gap: 8px; }
+  html body .mobile-contact-bar a, html body .back-to-top { width: 40px; height: 40px; border: 1.5px solid rgba(255,255,255,0.55); -webkit-backdrop-filter: blur(10px) saturate(160%); backdrop-filter: blur(10px) saturate(160%); }
+  html body .mobile-contact-bar a.mcb-mail { background: rgba(107,75,255,0.62); box-shadow: 0 2px 10px rgba(30,20,80,0.18); }
+  html body .mobile-contact-bar a.mcb-discord { background: rgba(88,101,242,0.62); box-shadow: 0 2px 10px rgba(30,20,80,0.18); }
+  html body .back-to-top { right: 12px; background: rgba(13,148,136,0.62); box-shadow: 0 2px 10px rgba(10,60,60,0.18); }
+  html body .mobile-contact-bar a svg, html body .back-to-top svg { width: 18px; height: 18px; }
+  /* A soft frosted pad behind the pair, so the text around them blurs
+     instead of colliding with them; only while the buttons are showing. */
+  html body .mobile-contact-bar { padding: 6px; border-radius: 999px; transition: background-color .3s ease, opacity .3s ease; }
+  html body.buttons-visible:not(.footer-in-view) .mobile-contact-bar { background: rgba(255,251,240,0.45); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  html body.footer-in-view .mobile-contact-bar { opacity: 0; }
+  html body .back-to-top.visible { box-shadow: 0 0 0 6px rgba(255,251,240,0.45), 0 2px 10px rgba(10,60,60,0.18); }
 }
 </style>
 </head>
