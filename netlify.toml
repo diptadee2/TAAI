@@ -146,6 +146,21 @@
   status = 200
   force = true
 
+# Private pair-study tracker (2026-10-23): passcode-protected, not linked,
+# not in the sitemap, never indexed or cached.
+[[redirects]]
+  from = "/sunitesh101"
+  to = "/sunitesh101.html"
+  status = 200
+  force = true
+
+[[headers]]
+  for = "/sunitesh101*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+    Cache-Control = "no-store"
+    Referrer-Policy = "no-referrer"
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"

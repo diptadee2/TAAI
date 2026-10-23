@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="referrer" content="no-referrer">
+<title>Private</title>
+<link rel="icon" href="/favicon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+<!-- Private pair-study tracker (2026-10-23). Passcode-protected: this file holds no
+     roadmap content; everything comes from /api/pair-board after unlocking.
+     Not linked anywhere, not in the sitemap, noindex. -->
+<style>
+  :root {
+    --paper: #FFF4D6; --card: #FFFFFF; --ink: #111111; --ink-dim: #4A4A4A; --ink-soft: #6B6B6B;
+    --yellow: #FDE047; --lime: #BEF264; --pink: #F9A8D4; --sky: #7DD3FC; --lilac: #C4B5FD; --orange: #FDBA74;
+    --amber: #F59E0B; --green: #16A34A; --red: #DC2626;
+    --shadow: 4px 4px 0 var(--ink); --shadow-sm: 3px 3px 0 var(--ink);
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: 'Poppins', system-ui, sans-serif; font-size: 15px; line-height: 1.45; }
+  button { font: inherit; color: inherit; }
+  .mono { font-family: 'DM Mono', ui-monospace, monospace; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 24px 16px 80px; }
+  .box { background: var(--card); border: 3px solid var(--ink); box-shadow: var(--shadow); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 14px; border: 2px solid var(--ink); background: var(--card); font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: var(--shadow-sm); transition: transform .1s ease, box-shadow .1s ease; }
+  .btn:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--ink); }
+  .btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+  .btn-yellow { background: var(--yellow); }
+  .btn-ghost { box-shadow: none; border-color: transparent; background: transparent; text-decoration: underline; padding: 6px 4px; font-weight: 600; }
+  .btn-ghost:hover { transform: none; box-shadow: none; }
+  .hint { color: var(--ink-soft); font-size: 13px; }
+
+  /* Lock screen */
+  .lock { min-height: 100svh; display: grid; place-items: center; padding: 16px; }
+  .lock-card { width: min(380px, 100%); padding: 26px 22px; }
+  .lock-card h1 { margin: 0 0 6px; font-size: 22px; }
+  .lock-card form { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+  .lock-card input { width: 100%; padding: 12px; font: inherit; font-size: 16px; border: 2px solid var(--ink); background: #fff; }
+  .lock-card input:focus { outline: 3px solid var(--yellow); outline-offset: 0; }
+  .err { color: var(--red); font-weight: 600; font-size: 14px; min-height: 20px; }
+
+  /* Header */
+  .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
+  .top h1 { margin: 0; font-size: clamp(22px, 5vw, 30px); line-height: 1.15; letter-spacing: -.01em; }
+  .top .sub { margin-top: 4px; color: var(--ink-dim); font-size: 14px; }
+  .who { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+  .who-label { font-size: 12px; font-weight: 600; color: var(--ink-dim); }
+  .seg { display: inline-flex; border: 2px solid var(--ink); background: #fff; }
+  .seg button { border: 0; background: transparent; padding: 7px 12px; font-weight: 700; font-size: 13.5px; cursor: pointer; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .seg button + button { border-left: 2px solid var(--ink); }
+  .seg button[aria-pressed="true"] { background: var(--yellow); }
+  .tools { display: flex; gap: 4px; }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 14px; margin-bottom: 22px; }
+  .stat { padding: 14px 16px; }
+  .stat-big { font-size: 34px; font-weight: 800; line-height: 1; }
+  .stat-label { font-size: 12.5px; font-weight: 600; color: var(--ink-dim); margin-top: 6px; }
+  .bar { height: 12px; border: 2px solid var(--ink); background: #fff; margin-top: 12px; overflow: hidden; }
+  .bar > span { display: block; height: 100%; background: var(--lime); border-right: 2px solid var(--ink); transition: width .4s ease; }
+  .bar > span[style*="width: 0%"] { border-right: 0; }
+  .split { display: flex; gap: 12px; margin-top: 8px; font-size: 12.5px; color: var(--ink-dim); flex-wrap: wrap; }
+  .split b { color: var(--ink); }
+  .stat.behind { background: #FFE4C2; }
+  .stat.ontrack { background: #E3F9C5; }
+
+  /* Today */
+  .today { padding: 18px; background: var(--yellow); margin-bottom: 26px; }
+  .today-tag { display: inline-block; background: var(--ink); color: var(--paper); font-size: 12px; font-weight: 700; padding: 3px 8px; letter-spacing: .03em; }
+  .today-subject { margin-top: 10px; font-size: 13px; font-weight: 700; color: var(--ink-dim); }
+  .today-row { display: flex; gap: 14px; align-items: flex-start; margin-top: 6px; }
+  .today-text { font-size: 18px; font-weight: 700; line-height: 1.35; }
+  .notes { margin-top: 14px; padding-top: 12px; border-top: 2px solid var(--ink); display: flex; flex-direction: column; gap: 4px; font-size: 13.5px; }
+  .notes b { font-weight: 700; }
+
+  /* Check */
+  .check { flex: none; width: 30px; height: 30px; border: 3px solid var(--ink); background: #fff; display: grid; place-items: center; cursor: pointer; padding: 0; }
+  .check svg { opacity: 0; transform: scale(.4); transition: opacity .15s ease, transform .2s cubic-bezier(.34,1.56,.64,1); }
+  .check[aria-checked="true"] { background: var(--ink); }
+  .check[aria-checked="true"] svg { opacity: 1; transform: none; }
+  .check:focus-visible { outline: 3px solid var(--sky); outline-offset: 2px; }
+  .check.small { width: 24px; height: 24px; border-width: 2px; }
+  .check.busy { opacity: .5; pointer-events: none; }
+
+  /* Sections */
+  .section { margin-bottom: 16px; }
+  .sec-head { width: 100%; display: grid; grid-template-columns: 1fr auto 26px; align-items: center; gap: 12px; padding: 14px 16px; border: 0; background: transparent; cursor: pointer; text-align: left; }
+  .sec-title { font-weight: 800; font-size: 16px; line-height: 1.25; }
+  .sec-range { font-size: 12.5px; color: var(--ink-dim); font-weight: 500; margin-top: 2px; }
+  .sec-count { font-weight: 700; font-size: 13.5px; white-space: nowrap; text-align: right; }
+  .sec-mini { width: 84px; height: 7px; border: 2px solid var(--ink); background: #fff; margin-top: 5px; margin-left: auto; overflow: hidden; }
+  .sec-mini > span { display: block; height: 100%; background: var(--ink); }
+  .chev { width: 26px; height: 26px; border: 2px solid var(--ink); display: grid; place-items: center; font-weight: 800; transition: transform .2s ease; }
+  .section.open .chev { transform: rotate(180deg); }
+  .section.done .sec-head { background: #E3F9C5; }
+  .section.current .sec-head { background: #FFF7B3; }
+  .tasks { display: none; border-top: 3px solid var(--ink); }
+  .section.open .tasks { display: block; }
+  .task { display: grid; grid-template-columns: 24px 92px 1fr; gap: 12px; align-items: start; padding: 11px 16px; border-top: 1.5px solid #E4DCC4; }
+  .task:first-child { border-top: 0; }
+  .task-date { font-size: 12.5px; font-weight: 600; color: var(--ink-dim); padding-top: 2px; line-height: 1.3; }
+  .task-date b { display: block; color: var(--ink); font-size: 13px; }
+  .task-text { font-size: 14.5px; }
+  .task-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; font-size: 12px; }
+  .chip { display: inline-block; padding: 1px 7px; border: 1.5px solid var(--ink); font-weight: 700; font-size: 11.5px; background: #fff; }
+  .chip-test { background: var(--sky); }
+  .chip-today { background: var(--yellow); }
+  .chip-late { background: #FFD7A8; }
+  .by { color: var(--green); font-weight: 600; }
+  .task.is-done .task-text { color: var(--ink-soft); text-decoration: line-through; text-decoration-thickness: 1.5px; }
+  .task.is-late { box-shadow: inset 5px 0 0 var(--amber); }
+  .task.is-today { background: #FFFBE0; }
+
+  /* Rename */
+  .rename { padding: 16px; margin-bottom: 20px; display: none; }
+  .rename.show { display: block; }
+  .rename form { display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 10px; align-items: end; }
+  .rename label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; font-weight: 600; }
+  .rename input { padding: 9px 10px; font: inherit; font-size: 15px; border: 2px solid var(--ink); }
+
+  .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 10px 14px; font-size: 14px; font-weight: 600; opacity: 0; pointer-events: none; transition: opacity .2s ease; max-width: calc(100vw - 32px); }
+  .toast.show { opacity: 1; }
+  .sync { font-size: 12px; color: var(--ink-soft); text-align: right; margin-top: 18px; }
+
+  @media (max-width: 640px) {
+    .stats { grid-template-columns: 1fr 1fr; }
+    .stat-main { grid-column: 1 / -1; }
+    .who { align-items: flex-start; }
+    .task { grid-template-columns: 24px 1fr; gap: 6px 12px; }
+    .task-date { grid-column: 2; padding-top: 0; }
+    .task-date b { display: inline; margin-right: 6px; }
+    .task-body { grid-column: 2; }
+    .rename form { grid-template-columns: 1fr 1fr; }
+    .today-text { font-size: 16.5px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+(function () {
+  var BOARD = 'sunitesh101';
+  var KEY_CODE = 'pairboard:' + BOARD + ':code', KEY_ME = 'pairboard:' + BOARD + ':me', KEY_OPEN = 'pairboard:' + BOARD + ':open';
+  var POLL_MS = 20000;
+  var app = document.getElementById('app');
+  var S = { code: null, data: null, me: null, open: {}, busy: {}, renaming: false, lastSync: null };
+
+  function store(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} }
+  function read(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
+  function todayIST() { return new Date(Date.now() + 5.5 * 3600000).toISOString().slice(0, 10); }
+  function fmtDay(id) { var d = new Date(id + 'T12:00:00Z'); return { wd: d.toLocaleDateString('en-GB', { weekday: 'short', timeZone: 'UTC' }), dm: d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }) }; }
+  function daysBetween(a, b) { return Math.round((Date.parse(b + 'T00:00:00Z') - Date.parse(a + 'T00:00:00Z')) / 86400000); }
+  var CHECK_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FDE047" stroke-width="3.5" stroke-linecap="square" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+  var toastTimer;
+  function toast(msg) { var t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.classList.remove('show'); }, 2600); }
+
+  function api(payload) {
+    return fetch('/api/pair-board', { method: 'POST', headers: { 'Content-Type': 'application/json' }, cache: 'no-store',
+      body: JSON.stringify(Object.assign({ board: BOARD, code: S.code }, payload)) })
+      .then(function (r) { return r.json().then(function (b) { if (!r.ok) { var e = new Error(b.error || 'error'); e.status = r.status; throw e; } return b; }); });
+  }
+
+  // ── Lock ────────────────────────────────────────────────────────────
+  function renderLock(msg) {
+    document.title = 'Private';
+    app.innerHTML = '<div class="lock"><div class="box lock-card">' +
+      '<h1>Private page</h1><div class="hint">Enter the passcode to continue.</div>' +
+      '<form id="lock-form" autocomplete="off"><input id="code" type="password" placeholder="Passcode" autocomplete="current-password" required>' +
+      '<div class="err" id="lock-err">' + esc(msg || '') + '</div>' +
+      '<button class="btn btn-yellow" type="submit" id="unlock">Unlock</button></form></div></div>';
+    var input = document.getElementById('code');
+    input.focus();
+    document.getElementById('lock-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var btn = document.getElementById('unlock');
+      btn.disabled = true; btn.textContent = 'Checking…';
+      S.code = input.value.trim();
+      load().then(function () { store(KEY_CODE, S.code); })
+        .catch(function (err) { S.code = null; renderLock(err.status === 401 ? "That passcode isn't right." : "Couldn't reach the server. Try again."); });
+    });
+  }
+
+  // ── Data ────────────────────────────────────────────────────────────
+  function load() {
+    return api({ action: 'load' }).then(function (d) {
+      var ticks = {};
+      d.ticks.forEach(function (t) { ticks[t.task_id] = t; });
+      d.tickMap = ticks;
+      var first = !S.data;
+      S.data = d; S.lastSync = new Date();
+      if (first) {
+        try { S.open = JSON.parse(read(KEY_OPEN) || 'null') || null; } catch (e) { S.open = null; }
+        if (!S.open) { S.open = {}; var cur = currentSectionIndex(); if (cur >= 0) S.open[cur] = true; }
+      }
+      render();
+    });
+  }
+  function allTasks() { var out = []; S.data.sections.forEach(function (s, i) { s.tasks.forEach(function (t) { out.push(Object.assign({ section: i }, t)); }); }); return out; }
+  function currentSectionIndex() {
+    var today = todayIST(), list = allTasks();
+    for (var i = 0; i < list.length; i++) if (list[i].id >= today) return list[i].section;
+    return list.length ? list[list.length - 1].section : -1;
+  }
+
+  // ── Render ──────────────────────────────────────────────────────────
+  function render() {
+    var d = S.data, names = d.names, today = todayIST(), list = allTasks();
+    document.title = 'Roadmap · ' + names.join(' & ');
+    var done = list.filter(function (t) { return d.tickMap[t.id]; });
+    var pct = list.length ? Math.round(done.length / list.length * 100) : 0;
+    var byCount = [0, 0]; done.forEach(function (t) { byCount[d.tickMap[t.id].done_by] += 1; });
+    var due = list.filter(function (t) { return t.id < today; });
+    var late = due.filter(function (t) { return !d.tickMap[t.id]; });
+    var last = list[list.length - 1], first = list[0];
+    var daysLeft = last ? Math.max(0, daysBetween(today, last.id)) : 0;
+    var todayTask = list.filter(function (t) { return t.id === today; })[0];
+
+    var html = '<div class="wrap">';
+    html += '<div class="top"><div><h1>' + esc(d.title) + '</h1><div class="sub">' + esc(names[0]) + ' &amp; ' + esc(names[1]) +
+      ' · ' + list.length + ' days, ' + fmtDay(first.id).dm + ' to ' + fmtDay(last.id).dm + '</div></div>' +
+      '<div class="who"><span class="who-label">Ticking as</span><div class="seg" role="group" aria-label="Who is ticking">' +
+        [0, 1].map(function (i) { return '<button type="button" data-me="' + i + '" aria-pressed="' + (S.me === i) + '">' + esc(names[i]) + '</button>'; }).join('') +
+      '</div><div class="tools"><button class="btn-ghost btn" id="rename-btn" type="button">Rename</button><button class="btn-ghost btn" id="lock-btn" type="button">Lock</button></div></div></div>';
+
+    html += '<div class="box rename' + (S.renaming ? ' show' : '') + '"><form id="rename-form"><label>Person 1<input name="n0" maxlength="24" value="' + esc(names[0]) + '" required></label>' +
+      '<label>Person 2<input name="n1" maxlength="24" value="' + esc(names[1]) + '" required></label>' +
+      '<button class="btn btn-yellow" type="submit">Save</button><button class="btn" type="button" id="rename-cancel">Cancel</button></form></div>';
+
+    html += '<div class="stats">' +
+      '<div class="box stat stat-main"><div class="stat-big">' + pct + '%</div><div class="stat-label">' + done.length + ' of ' + list.length + ' days done</div>' +
+        '<div class="bar"><span style="width: ' + pct + '%"></span></div>' +
+        '<div class="split"><span>' + esc(names[0]) + ' ticked <b>' + byCount[0] + '</b></span><span>' + esc(names[1]) + ' ticked <b>' + byCount[1] + '</b></span></div></div>' +
+      '<div class="box stat ' + (late.length ? 'behind' : 'ontrack') + '"><div class="stat-big">' + (late.length || '✓') + '</div><div class="stat-label">' +
+        (late.length ? (late.length === 1 ? 'day to catch up' : 'days to catch up') : (due.length ? 'On track' : 'Not started yet')) + '</div></div>' +
+      '<div class="box stat"><div class="stat-big">' + daysLeft + '</div><div class="stat-label">' + (daysLeft === 1 ? 'day left' : 'days left') + '</div></div>' +
+    '</div>';
+
+    // Today card
+    var notesHtml = (d.notes || []).map(function (n) { return '<div><b>' + esc(n.label) + ':</b> ' + esc(n.text) + '</div>'; }).join('');
+    if (todayTask) {
+      html += '<div class="box today"><span class="today-tag">TODAY · ' + fmtDay(today).wd.toUpperCase() + ' ' + fmtDay(today).dm.toUpperCase() + '</span>' +
+        '<div class="today-subject">' + esc(d.sections[todayTask.section].title) + '</div>' +
+        '<div class="today-row">' + checkHtml(todayTask, false) + '<div><div class="today-text">' + esc(todayTask.text) + '</div>' + metaHtml(todayTask, today, true) + '</div></div>' +
+        (notesHtml ? '<div class="notes">' + notesHtml + '</div>' : '') + '</div>';
+    } else if (first && today < first.id) {
+      var n = daysBetween(today, first.id);
+      html += '<div class="box today"><span class="today-tag">STARTS IN ' + n + (n === 1 ? ' DAY' : ' DAYS') + '</span><div class="today-text" style="margin-top:10px;">First up (' + fmtDay(first.id).wd + ' ' + fmtDay(first.id).dm + '): ' + esc(first.text) + '</div>' + (notesHtml ? '<div class="notes">' + notesHtml + '</div>' : '') + '</div>';
+    } else {
+      html += '<div class="box today"><span class="today-tag">ROADMAP FINISHED</span><div class="today-text" style="margin-top:10px;">' +
+        (late.length ? late.length + ' day' + (late.length === 1 ? '' : 's') + ' still unticked below.' : 'Every day is ticked. Well done, both of you.') + '</div></div>';
+    }
+
+    // Sections
+    var cur = currentSectionIndex();
+    d.sections.forEach(function (s, i) {
+      var sd = s.tasks.filter(function (t) { return d.tickMap[t.id]; }).length;
+      var isDone = sd === s.tasks.length;
+      var open = !!S.open[i];
+      html += '<div class="box section' + (open ? ' open' : '') + (isDone ? ' done' : '') + (i === cur && !isDone ? ' current' : '') + '" data-sec="' + i + '">' +
+        '<button class="sec-head" type="button" data-toggle="' + i + '" aria-expanded="' + open + '"><div><div class="sec-title">' + (i + 1) + '. ' + esc(s.title) + (isDone ? ' ✓' : '') + '</div>' +
+          '<div class="sec-range">' + esc(s.range) + (i === cur && !isDone ? ' · now' : '') + '</div></div>' +
+          '<div><div class="sec-count">' + sd + ' / ' + s.tasks.length + '</div><div class="sec-mini"><span style="width:' + Math.round(sd / s.tasks.length * 100) + '%"></span></div></div>' +
+          '<span class="chev" aria-hidden="true">⌄</span></button>' +
+        '<div class="tasks">' + s.tasks.map(function (t) {
+          var tk = d.tickMap[t.id], f = fmtDay(t.id);
+          var cls = 'task' + (tk ? ' is-done' : '') + (!tk && t.id < today ? ' is-late' : '') + (t.id === today ? ' is-today' : '');
+          return '<div class="' + cls + '" data-task="' + t.id + '">' + checkHtml(t, true) +
+            '<div class="task-date"><b>' + f.wd + '</b>' + f.dm + '</div>' +
+            '<div class="task-body"><div class="task-text">' + esc(t.text) + '</div>' + metaHtml(t, today, false) + '</div></div>';
+        }).join('') + '</div></div>';
+    });
+
+    html += '<div class="sync" id="sync">' + syncText() + '</div></div>';
+    app.innerHTML = html;
+    bind();
+  }
+
+  function checkHtml(t, small) {
+    var on = !!S.data.tickMap[t.id];
+    return '<button type="button" class="check' + (small ? ' small' : '') + (S.busy[t.id] ? ' busy' : '') + '" role="checkbox" aria-checked="' + on + '" data-tick="' + t.id + '" aria-label="' + esc((on ? 'Done: ' : 'Mark done: ') + t.text) + '">' + CHECK_SVG + '</button>';
+  }
+  function metaHtml(t, today, onToday) {
+    var tk = S.data.tickMap[t.id], bits = [];
+    if (!onToday && t.id === today) bits.push('<span class="chip chip-today">Today</span>');
+    if (t.weeklyTest) bits.push('<span class="chip chip-test">Weekly test</span>');
+    if (!tk && t.id < today) bits.push('<span class="chip chip-late">Catch up</span>');
+    if (tk) bits.push('<span class="by">✓ ' + esc(S.data.names[tk.done_by]) + ' · ' + fmtDay(String(tk.done_at).slice(0, 10)).dm + '</span>');
+    return bits.length ? '<div class="task-meta">' + bits.join('') + '</div>' : '';
+  }
+  function syncText() {
+    if (!S.lastSync) return '';
+    return 'Synced ' + S.lastSync.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }) + ' · updates every 20 seconds';
+  }
+
+  function bind() {
+    app.querySelectorAll('[data-me]').forEach(function (b) {
+      b.addEventListener('click', function () { S.me = Number(b.getAttribute('data-me')); store(KEY_ME, String(S.me)); render(); });
+    });
+    app.querySelectorAll('[data-toggle]').forEach(function (b) {
+      b.addEventListener('click', function () { var i = b.getAttribute('data-toggle'); S.open[i] = !S.open[i]; store(KEY_OPEN, JSON.stringify(S.open)); render(); });
+    });
+    app.querySelectorAll('[data-tick]').forEach(function (b) {
+      b.addEventListener('click', function () { tick(b.getAttribute('data-tick')); });
+    });
+    document.getElementById('lock-btn').addEventListener('click', function () {
+      store(KEY_CODE, null); S.code = null; S.data = null; renderLock();
+    });
+    document.getElementById('rename-btn').addEventListener('click', function () { S.renaming = !S.renaming; render(); });
+    document.getElementById('rename-cancel').addEventListener('click', function () { S.renaming = false; render(); });
+    document.getElementById('rename-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var f = e.target, names = [f.n0.value.trim(), f.n1.value.trim()];
+      api({ action: 'names', names: names }).then(function (r) { S.data.names = r.names; S.renaming = false; render(); toast('Names saved'); })
+        .catch(function () { toast("Couldn't save the names. Try again."); });
+    });
+  }
+
+  function tick(id) {
+    if (S.me == null) { toast('First pick who you are at the top (Ticking as).'); var seg = app.querySelector('.seg'); if (seg) seg.scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
+    var was = S.data.tickMap[id], want = !was;
+    S.data.tickMap[id] = want ? { task_id: id, done_by: S.me, done_at: new Date().toISOString() } : undefined;
+    if (!want) delete S.data.tickMap[id];
+    S.busy[id] = true; render();
+    api({ action: 'tick', taskId: id, done: want, by: S.me }).then(function (r) {
+      delete S.busy[id];
+      if (r.tick) S.data.tickMap[id] = r.tick; else delete S.data.tickMap[id];
+      render();
+    }).catch(function (err) {
+      delete S.busy[id];
+      if (was) S.data.tickMap[id] = was; else delete S.data.tickMap[id];
+      render();
+      if (err.status === 401) { store(KEY_CODE, null); S.code = null; S.data = null; renderLock('The passcode changed. Enter the new one.'); return; }
+      toast("Couldn't save that tick. Check your connection and try again.");
+    });
+  }
+
+  // Poll so one person's ticks show up for the other.
+  setInterval(function () {
+    if (!S.data || document.hidden || S.renaming || Object.keys(S.busy).length) return;
+    load().catch(function () {});
+  }, POLL_MS);
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && S.data && !S.renaming && !Object.keys(S.busy).length) load().catch(function () {});
+  });
+
+  // Start
+  var savedMe = read(KEY_ME);
+  S.me = savedMe === '0' || savedMe === '1' ? Number(savedMe) : null;
+  S.code = read(KEY_CODE);
+  if (S.code) {
+    app.innerHTML = '<div class="lock"><div class="hint">Loading…</div></div>';
+    load().catch(function (err) { store(KEY_CODE, null); S.code = null; renderLock(err.status === 401 ? '' : "Couldn't reach the server. Try again."); });
+  } else {
+    renderLock();
+  }
+})();
+</script>
+</body>
+</html>

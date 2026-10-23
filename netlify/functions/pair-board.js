@@ -1,0 +1,88 @@
+// POST /api/pair-board  — a private, passcode-protected shared checklist for a
+// pair of people studying the same roadmap together (added 2026-10-23, used by
+// /sunitesh101). One shared tick per task: either person can tick it and it
+// counts for both; the tick records who ticked it.
+//
+// Nothing private lives in this file or the page, because the repo is public:
+// the roadmap text and a SHA-256 hash of the passcode are stored only in the
+// pair_boards row (loaded by scripts/seed-pair-board.mjs from a gitignored
+// file). Every action, including reading the roadmap, needs the passcode.
+//
+// Body: { board, code, action, ... }
+//   action 'load'                      -> { title, notes, sections, names, ticks }
+//   action 'tick'   { taskId, by, done } -> { ok, tick }   (by: 0 or 1)
+//   action 'names'  { names: [a, b] }  -> { ok, names }
+import crypto from 'node:crypto';
+import { getSupabase, json } from './lib/supabase.js';
+
+const NO_STORE = { 'cache-control': 'no-store', 'x-robots-tag': 'noindex, nofollow' };
+const reply = (status, body) => {
+  const r = json(status, body);
+  r.headers = Object.assign({}, r.headers, NO_STORE);
+  return r;
+};
+
+export function passcodeHash(board, code) {
+  return crypto.createHash('sha256').update(String(board) + ':' + String(code)).digest('hex');
+}
+
+function sameHash(a, b) {
+  const x = Buffer.from(String(a || ''), 'hex'), y = Buffer.from(String(b || ''), 'hex');
+  return x.length === y.length && x.length > 0 && crypto.timingSafeEqual(x, y);
+}
+
+const cleanName = n => String(n || '').replace(/\s+/g, ' ').trim().slice(0, 24);
+
+export async function handler(event) {
+  if (event.httpMethod !== 'POST') return reply(405, { error: 'method not allowed' });
+  let body;
+  try { body = JSON.parse(event.body || '{}'); } catch { return reply(400, { error: 'invalid JSON' }); }
+  const board = String(body.board || '').slice(0, 60);
+  const code = String(body.code || '').slice(0, 100);
+  if (!board || !code) return reply(401, { error: 'locked' });
+
+  const supabase = getSupabase();
+  const { data: row, error } = await supabase.from('pair_boards').select('*').eq('slug', board).maybeSingle();
+  // A missing board and a wrong passcode look the same from outside, and both
+  // wait a moment so guessing is slow.
+  if (error || !row || !sameHash(passcodeHash(board, code), row.passcode_hash)) {
+    await new Promise(r => setTimeout(r, 600));
+    return reply(401, { error: 'locked' });
+  }
+
+  const taskIds = new Set();
+  for (const s of row.roadmap.sections || []) for (const t of s.tasks || []) taskIds.add(t.id);
+
+  if (body.action === 'load') {
+    const { data: ticks, error: tErr } = await supabase.from('pair_ticks').select('task_id, done_by, done_at').eq('board', board);
+    if (tErr) return reply(500, { error: tErr.message });
+    return reply(200, { title: row.roadmap.title, notes: row.roadmap.notes || [], sections: row.roadmap.sections, names: row.names, ticks: ticks || [] });
+  }
+
+  if (body.action === 'tick') {
+    const taskId = String(body.taskId || '');
+    if (!taskIds.has(taskId)) return reply(400, { error: 'unknown task' });
+    if (body.done) {
+      const by = body.by === 1 ? 1 : 0;
+      const tick = { board, task_id: taskId, done_by: by, done_at: new Date().toISOString() };
+      const { error: e } = await supabase.from('pair_ticks').upsert(tick, { onConflict: 'board,task_id', ignoreDuplicates: true });
+      if (e) return reply(500, { error: e.message });
+      // ignoreDuplicates keeps the first person's tick if both tick at once.
+      const { data: kept } = await supabase.from('pair_ticks').select('task_id, done_by, done_at').eq('board', board).eq('task_id', taskId).maybeSingle();
+      return reply(200, { ok: true, tick: kept || tick });
+    }
+    const { error: e } = await supabase.from('pair_ticks').delete().eq('board', board).eq('task_id', taskId);
+    if (e) return reply(500, { error: e.message });
+    return reply(200, { ok: true, tick: null });
+  }
+
+  if (body.action === 'names') {
+    const names = Array.isArray(body.names) ? body.names.map(cleanName) : [];
+    if (names.length !== 2 || !names[0] || !names[1]) return reply(400, { error: 'two names needed' });
+    const { error: e } = await supabase.from('pair_boards').update({ names, updated_at: new Date().toISOString() }).eq('slug', board);
+    if (e) return reply(500, { error: e.message });
+    return reply(200, { ok: true, names });
+  }
+
+  return reply(400, { error: 'unknown action' });
+}

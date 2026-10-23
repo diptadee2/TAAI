@@ -1125,3 +1125,26 @@ ALTER TABLE challenge_registrations ADD COLUMN IF NOT EXISTS upi_id TEXT;
 -- (2026-10-18, direct request; links, not uploads). Required by
 -- challenge-register.js; only drive.google.com / docs.google.com accepted.
 ALTER TABLE challenge_registrations ADD COLUMN IF NOT EXISTS registration_pdf_url TEXT;
+
+-- ── Private pair-study boards (2026-10-23, /sunitesh101) ──────────────────
+-- A passcode-protected shared checklist for two people following one roadmap.
+-- The roadmap text and only a SHA-256 hash of the passcode live here (the repo
+-- is public); netlify/functions/pair-board.js checks the passcode on every
+-- request. Loaded by scripts/seed-pair-board.mjs. One shared tick per task.
+CREATE TABLE IF NOT EXISTS pair_boards (
+  slug          TEXT PRIMARY KEY,
+  passcode_hash TEXT NOT NULL,
+  roadmap       JSONB NOT NULL,
+  names         JSONB NOT NULL DEFAULT '["Person 1","Person 2"]',
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS pair_ticks (
+  board    TEXT NOT NULL REFERENCES pair_boards(slug) ON DELETE CASCADE,
+  task_id  TEXT NOT NULL,
+  done_by  SMALLINT NOT NULL CHECK (done_by IN (0, 1)),
+  done_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (board, task_id)
+);
+ALTER TABLE pair_boards ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pair_ticks ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON pair_boards, pair_ticks TO service_role;
