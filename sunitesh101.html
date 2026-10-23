@@ -190,38 +190,38 @@
   .linkish { font: inherit; background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; color: var(--ink); font-weight: 700; }
 
   /* Revision map (2026-10-23) */
-  .map-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin-bottom: 12px; }
-  .map-tile { font: inherit; text-align: left; color: var(--ink); background: #fff; border: 2px solid var(--ink); padding: 10px 12px; cursor: pointer; display: flex; flex-direction: column; gap: 4px; }
-  .map-tile:hover { background: #FFFBEA; }
-  .map-tile[aria-pressed="true"] { background: var(--yellow); box-shadow: 3px 3px 0 var(--ink); }
-  .tile-name { font-weight: 800; font-size: 14px; line-height: 1.25; }
-  .tile-status { font-size: 11.5px; font-weight: 700; color: var(--ink-dim); }
-  .st-now .tile-status { color: var(--ink); }
-  .st-now .tile-status::before { content: '● '; color: #16A34A; }
-  .tile-bar { height: 7px; border: 1.5px solid var(--ink); background: #fff; margin-top: 4px; }
-  .tile-bar > span { display: block; height: 100%; background: var(--lime); }
-  .tile-cov { font-size: 11.5px; font-weight: 600; color: var(--ink-dim); }
-  .map-bar { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
-  .map-bar .map-intro { margin: 0; }
-  .map-sec { margin-bottom: 16px; }
-  .map-head { padding: 10px 16px; border-bottom: 2px solid var(--ink); background: var(--lilac); display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: baseline; }
-  .map-head b { font-size: 15px; }
-  .map-stats { font-size: 12px; font-weight: 600; color: var(--ink-dim); }
-  .gap-count { color: #B45309; font-weight: 800; }
-  .trow { display: grid; grid-template-columns: 12px 84px minmax(0, 1fr); gap: 10px; align-items: start; padding: 10px 16px; border-bottom: 1.5px solid #E5DCC8; }
-  .trow:last-child { border-bottom: 0; }
-  .t-dot { width: 12px; height: 12px; border: 2px solid var(--ink); margin-top: 4px; background: #fff; }
-  .t-ok .t-dot { background: #84CC16; }
-  .t-gap .t-dot { background: #FDBA74; }
-  .t-next .t-dot { border-style: dashed; border-color: #A8A29E; }
-  .trow-date { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--ink-dim); padding-top: 2px; white-space: nowrap; }
-  .trow-text { font-weight: 700; font-size: 14.5px; line-height: 1.35; }
-  .t-next .trow-text { color: var(--ink-dim); font-weight: 600; }
-  .trow .links { margin-top: 6px; }
-  .t-gap-note { font-size: 11.5px; font-weight: 700; color: #B45309; margin-top: 3px; }
-  .map-intro { font-size: 13.5px; color: var(--ink-dim); }
+  .grid-top { display: flex; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+  .grid-sum { font-size: 14px; }
+  .hl-row { display: flex; align-items: center; gap: 0; flex-wrap: wrap; }
+  .hl-label { font-size: 12px; font-weight: 700; color: var(--ink-dim); margin-right: 8px; }
+  .hl-btn { font: inherit; font-size: 12.5px; font-weight: 700; padding: 4px 10px; background: #fff; border: 2px solid var(--ink); cursor: pointer; color: var(--ink); }
+  .hl-btn + .hl-btn { border-left: 0; }
+  .hl-btn[aria-pressed="true"] { background: var(--ink); color: var(--yellow); }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--ink-dim); margin-bottom: 12px; align-items: center; }
+  .legend > span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend .sq { width: 16px; height: 16px; font-size: 10px; cursor: default; }
+  .grid-filter { font-size: 13px; margin-bottom: 10px; }
+  .grid-box { padding: 6px 0; }
+  .grid { display: flex; flex-direction: column; }
+  .grow { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 4px 14px; padding: 10px 16px; border-bottom: 1.5px solid #E5DCC8; align-items: center; }
+  .grow:last-child { border-bottom: 0; }
+  .grow-label b { display: block; font-size: 13.5px; line-height: 1.25; }
+  .grow-label span { font-size: 11.5px; color: var(--ink-dim); font-weight: 600; }
+  .grow-cells { display: flex; flex-wrap: wrap; gap: 5px; }
+  .sq { width: 26px; height: 26px; padding: 0; border: 2px solid var(--ink); background: #fff; cursor: pointer; display: inline-grid; place-items: center; font: inherit; font-size: 11px; font-weight: 800; color: var(--ink); flex: none; }
+  .sq-notes { background: #84CC16; }
+  .sq-empty { background: #fff; border-color: #EA580C; }
+  .sq-next { background: transparent; border: 2px dashed #C4BBA8; }
+  .sq-today { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .sq-sel { box-shadow: 0 0 0 3px var(--yellow), 0 0 0 5px var(--ink); }
+  .sq-dim { opacity: .18; }
+  .sq:hover:not(.sq-dim) { transform: translateY(-1px); }
+  .sq-panel { grid-column: 1 / -1; position: relative; margin-top: 8px; border: 2px solid var(--ink); background: #FFFBEA; padding: 10px 40px 12px 12px; }
+  .sq-close { position: absolute; top: 4px; right: 6px; font: inherit; font-size: 20px; font-weight: 800; background: none; border: 0; cursor: pointer; color: var(--ink); line-height: 1; padding: 4px 6px; }
+  .sq-panel-text { font-weight: 800; font-size: 15px; line-height: 1.35; }
+  .sq-panel-meta { font-size: 12.5px; color: var(--ink-dim); margin-top: 3px; }
   .today-map { margin-top: 10px; border: 2px solid var(--ink); background: #fff; }
-  .today-map .map-head { background: #fff; }
+  .today-map .grow { grid-template-columns: 1fr; padding: 10px 12px; }
 
   @media (max-width: 640px) {
     .stats { grid-template-columns: 1fr 1fr; }
@@ -234,12 +234,9 @@
     .rename form { grid-template-columns: 1fr 1fr; }
     .today-text { font-size: 16.5px; }
     .note-chip a { max-width: 230px; }
-    .trow, .map-head { padding-left: 12px; padding-right: 12px; }
-    .trow { grid-template-columns: 12px minmax(0, 1fr); }
-    .trow-date { grid-column: 2; padding-top: 0; }
-    .trow-main { grid-column: 2; }
-    .map-tiles { grid-template-columns: 1fr 1fr; gap: 8px; }
-    .map-tile { padding: 8px 10px; }
+    .grow { grid-template-columns: 1fr; padding: 10px 12px; }
+    .grow-label { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+    .grow-label b { display: inline; }
     .plan > li { grid-template-columns: 22px minmax(0, 1fr); gap: 8px; }
     .plan > li::before { width: 22px; height: 22px; font-size: 12px; }
   }
@@ -255,7 +252,7 @@
   var KEY_CODE = 'pairboard:' + BOARD + ':code', KEY_ME = 'pairboard:' + BOARD + ':me', KEY_OPEN = 'pairboard:' + BOARD + ':open', KEY_VIEW = 'pairboard:' + BOARD + ':view';
   var POLL_MS = 20000;
   var app = document.getElementById('app');
-  var S = { code: null, data: null, me: null, open: {}, busy: {}, renaming: false, lastSync: null, view: read('pairboard:sunitesh101:view') === 'notes' ? 'notes' : 'schedule', notesFilter: null, addingFor: null };
+  var S = { code: null, data: null, me: null, open: {}, busy: {}, renaming: false, lastSync: null, view: read('pairboard:sunitesh101:view') === 'notes' ? 'notes' : 'schedule', notesFilter: null, addingFor: null, selTopic: null, mapHl: '' };
 
   function store(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} }
   function read(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
@@ -380,7 +377,7 @@
     // Schedule / Notes switch
     html += '<div class="views" role="tablist">' +
       '<button type="button" role="tab" data-view="schedule" aria-selected="' + (S.view !== 'notes') + '">Schedule</button>' +
-      '<button type="button" role="tab" data-view="notes" aria-selected="' + (S.view === 'notes') + '">Revision map' + (linkTotal ? ' (' + linkTotal + ' notes)' : '') + '</button></div>';
+      '<button type="button" role="tab" data-view="notes" aria-selected="' + (S.view === 'notes') + '">Revision map' + (linkTotal ? ' (' + linkTotal + (linkTotal === 1 ? ' note)' : ' notes)') : '') + '</button></div>';
 
     if (S.view === 'notes') {
       html += renderNotesView();
@@ -473,30 +470,61 @@
       return '<button type="button" class="note-jump" data-jump="' + i + '">' + esc(d.sections[i].title) + ' →</button>';
     }).join(' ') + '</div>';
   }
-  // Today card on a revision day: the subjects to revise, every topic in
-  // order with its notes and the gaps marked.
+  // Today card on a revision day: the grid for the subjects to revise.
   function todayMapHtml(t) {
-    var d = S.data, today = todayIST();
-    return t.reviseSubjects.map(function (i) {
-      return '<div class="today-map"><div class="map-head"><b>' + esc(d.sections[i].title) + '</b><span class="map-stats">' + subjectStats(i) + '</span></div>' +
-        d.sections[i].tasks.map(function (x) { return topicRowHtml(Object.assign({ section: i }, x), today); }).join('') + '</div>';
-    }).join('');
+    return '<div class="today-map">' + gridHtml(t.reviseSubjects, 'today') + '</div>';
   }
-  function subjectStats(i) {
-    var cov = subjectCoverage(i);
-    return S.data.sections[i].tasks.length + ' topics · notes for ' + cov.withNotes + ' of ' + cov.studied + ' studied';
+
+  // ── Revision grid ───────────────────────────────────────────────────
+  // How many times each topic has been revised, from the ticks you already
+  // make: a ticked daily revision slot counts for the topic it points at, and
+  // a ticked "Revise <subjects>" day counts for every topic of those subjects.
+  function revisionCounts() {
+    // Only days up to today count (a future day ticked early is most likely a slip).
+    var d = S.data, counts = {}, last = {}, today = todayIST();
+    function add(id, day) { counts[id] = (counts[id] || 0) + 1; if (!last[id] || day > last[id]) last[id] = day; }
+    allTasks().forEach(function (t) {
+      if (t.id > today) return;
+      if (t.revision && d.tickMap[t.revision.id]) add(t.revision.fromId, t.id);
+      if (t.reviseSubjects && !t.reviseAll && d.tickMap[t.id]) t.reviseSubjects.forEach(function (i) { d.sections[i].tasks.forEach(function (x) { add(x.id, t.id); }); });
+    });
+    return { counts: counts, last: last };
   }
-  // One topic in the revision map: a status dot (notes saved / studied
-  // without notes / not yet studied), the date, the topic and its notes.
-  function topicRowHtml(t, today) {
-    var hasN = (S.data.linkMap[t.id] || []).length > 0;
-    var st = t.id > today ? 'next' : hasN ? 'ok' : 'gap';
-    var label = st === 'ok' ? 'Notes saved' : st === 'gap' ? 'No notes yet' : 'Not studied yet';
-    return '<div class="trow t-' + st + '" data-trow="' + t.id + '">' +
-      '<span class="t-dot" title="' + label + '" aria-label="' + label + '"></span>' +
-      '<span class="trow-date">' + dayLabel(t.id) + '</span>' +
-      '<div class="trow-main"><div class="trow-text">' + esc(t.text) + '</div>' +
-        (st === 'gap' ? '<div class="t-gap-note">No notes yet</div>' : '') + (st === 'next' ? '' : linksHtml(t.id, true)) + '</div></div>';
+  function topicState(t, today, rc) {
+    var hasN = (S.data.linkMap[t.id] || []).length > 0, studied = t.id <= today, rev = rc.counts[t.id] || 0;
+    return { hasN: hasN, studied: studied, rev: rev, today: t.id === today };
+  }
+  function matchesHl(st) {
+    if (S.mapHl === 'unrevised') return st.studied && st.rev === 0;
+    if (S.mapHl === 'nonotes') return st.studied && !st.hasN;
+    return true;
+  }
+  // Rows of squares, one row per subject, one square per topic in study order.
+  // ctx keeps the map tab and the Today card's copy from sharing a panel.
+  function gridHtml(subs, ctx) {
+    var d = S.data, today = todayIST(), rc = revisionCounts();
+    var sel = S.selTopic && S.selTopic.ctx === ctx ? S.selTopic.id : null;
+    return '<div class="grid">' + subs.map(function (i) {
+      var tasks = d.sections[i].tasks, studied = 0, withN = 0;
+      var cells = tasks.map(function (t) {
+        var st = topicState(t, today, rc);
+        if (st.studied) { studied += 1; if (st.hasN) withN += 1; }
+        var cls = 'sq ' + (!st.studied ? 'sq-next' : st.hasN ? 'sq-notes' : 'sq-empty') + (st.today ? ' sq-today' : '') + (sel === t.id ? ' sq-sel' : '') + (S.mapHl && !matchesHl(st) ? ' sq-dim' : '');
+        var label = t.text + '. ' + (!st.studied ? 'Not studied yet' : (st.hasN ? 'Notes saved' : 'No notes') + ', ' + (st.rev ? 'revised ' + st.rev + (st.rev === 1 ? ' time' : ' times') : 'not revised yet'));
+        return '<button type="button" class="' + cls + '" data-sq="' + t.id + '" data-ctx="' + ctx + '" aria-pressed="' + (sel === t.id) + '" aria-label="' + esc(label) + '" title="' + esc(dayLabel(t.id) + ': ' + t.text) + '">' + (st.rev ? '<span>' + st.rev + '</span>' : '') + '</button>';
+      }).join('');
+      var selTask = sel && tasks.filter(function (t) { return t.id === sel; })[0];
+      return '<div class="grow"><div class="grow-label"><b>' + esc(d.sections[i].title) + '</b><span>' + (studied ? 'notes ' + withN + '/' + studied : 'starts ' + fmtDay(tasks[0].id).dm) + '</span></div>' +
+        '<div class="grow-cells">' + cells + '</div>' + (selTask ? topicPanelHtml(Object.assign({ section: i }, selTask), today, rc, ctx) : '') + '</div>';
+    }).join('') + '</div>';
+  }
+  function topicPanelHtml(t, today, rc, ctx) {
+    var d = S.data, st = topicState(t, today, rc);
+    var rev = !st.studied ? 'Not studied yet' : st.rev ? 'Revised ' + st.rev + (st.rev === 1 ? ' time' : ' times') + ', last ' + dayLabel(rc.last[t.id]) : 'Not revised yet';
+    return '<div class="sq-panel"><button type="button" class="sq-close" data-sq-close aria-label="Close">×</button>' +
+      '<div class="sq-panel-text">' + esc(t.text) + '</div>' +
+      '<div class="sq-panel-meta">' + esc(d.sections[t.section].title) + ' · ' + (st.studied ? 'studied ' : 'on ') + dayLabel(t.id) + ' · ' + rev + '</div>' +
+      (st.studied ? linksHtml(t.id, true) : '') + '</div>';
   }
   // The day's revision: ONE specific earlier topic, with the notes saved that day.
   function revisionHtml(t, big) {
@@ -535,43 +563,22 @@
     return html + '</div>';
   }
 
-  // Revision map: a tile per subject (status + how many studied topics have
-  // notes), and below it the chosen subject's topics in order with their notes.
-  // Defaults to the subject being studied now.
-  function subjectStatus(i) {
-    var tasks = S.data.sections[i].tasks, today = todayIST(), first = tasks[0].id, last = tasks[tasks.length - 1].id;
-    if (last < today) return { key: 'done', text: 'Done' };
-    if (first <= today) return { key: 'now', text: 'Studying now' };
-    return { key: 'next', text: 'Starts ' + fmtDay(first).dm };
-  }
-  function subjectCoverage(i) {
-    var d = S.data, today = todayIST(), studied = 0, withNotes = 0;
-    d.sections[i].tasks.forEach(function (t) { if (t.id <= today) { studied += 1; if ((d.linkMap[t.id] || []).length) withNotes += 1; } });
-    return { studied: studied, withNotes: withNotes };
-  }
+  // Revision map: the whole syllabus as one grid. Squares show whether a
+  // topic has notes and how often it has been revised; two highlights pick
+  // out the gaps near the exam; tap a square for its notes.
   function renderNotesView() {
-    var d = S.data, today = todayIST(), subs = topicSections();
-    var cur = currentSectionIndex();
-    var shown = S.notesFilter || [subs.indexOf(cur) >= 0 ? cur : subs[0]];
-    var tiles = '<div class="map-tiles">' + subs.map(function (i) {
-      var st = subjectStatus(i), cov = subjectCoverage(i), on = shown.indexOf(i) >= 0;
-      var pct = cov.studied ? Math.round(cov.withNotes / cov.studied * 100) : 0;
-      return '<button type="button" class="map-tile st-' + st.key + '" data-filter="' + i + '" aria-pressed="' + on + '">' +
-        '<span class="tile-name">' + esc(d.sections[i].title) + '</span>' +
-        '<span class="tile-status">' + st.text + '</span>' +
-        (cov.studied ? '<span class="tile-bar"><span style="width:' + pct + '%"></span></span><span class="tile-cov">Notes for ' + cov.withNotes + ' of ' + cov.studied + ' topic' + (cov.studied === 1 ? '' : 's') + '</span>'
-          : '<span class="tile-cov">' + d.sections[i].tasks.length + ' topics</span>') + '</button>';
-    }).join('') + '</div>';
-    var allOn = shown.length === subs.length;
-    var bar = '<div class="map-bar"><span class="map-intro">Tap a subject to see its topics and notes.</span>' +
-      '<button type="button" class="linkish" data-filter="' + (allOn ? '' : 'all') + '">' + (allOn ? 'Show one subject' : 'Show all subjects') + '</button></div>';
-    var body = shown.map(function (i) {
-      var cov = subjectCoverage(i), gaps = cov.studied - cov.withNotes, st = subjectStatus(i);
-      return '<div class="box map-sec" id="map-' + i + '"><div class="map-head"><b>' + esc(d.sections[i].title) + '</b><span class="map-stats">' + esc(d.sections[i].range) + ' · ' + st.text +
-        (gaps > 0 ? ' · <span class="gap-count">' + gaps + ' without notes</span>' : '') + '</span></div>' +
-        d.sections[i].tasks.map(function (x) { return topicRowHtml(Object.assign({ section: i }, x), today); }).join('') + '</div>';
-    }).join('');
-    return tiles + bar + body;
+    var d = S.data, today = todayIST(), rc = revisionCounts(), subs = topicSections();
+    var shown = S.notesFilter && S.notesFilter.length ? S.notesFilter : subs;
+    var studied = 0, withN = 0, unrevised = 0;
+    subs.forEach(function (i) { d.sections[i].tasks.forEach(function (t) { var st = topicState(t, today, rc); if (st.studied) { studied += 1; if (st.hasN) withN += 1; if (!st.rev) unrevised += 1; } }); });
+    var hl = function (key, text) { return '<button type="button" class="hl-btn" data-hl="' + key + '" aria-pressed="' + (S.mapHl === key) + '">' + text + '</button>'; };
+    return '<div class="grid-top">' +
+        '<div class="grid-sum">' + (studied ? '<b>' + withN + '</b> of ' + studied + ' studied topics have notes · <b>' + unrevised + '</b> not revised yet' : 'Nothing studied yet. Squares fill in as you go.') + '</div>' +
+        '<div class="hl-row"><span class="hl-label">Highlight</span>' + hl('', 'Everything') + hl('nonotes', 'No notes') + hl('unrevised', 'Not revised') + '</div>' +
+      '</div>' +
+      '<div class="legend"><span><i class="sq sq-notes"></i>Notes saved</span><span><i class="sq sq-empty"></i>Studied, no notes</span><span><i class="sq sq-next"></i>Not studied yet</span><span><i class="sq sq-notes"><span>2</span></i>Times revised</span><span>Tap a square for its notes</span></div>' +
+      (S.notesFilter && S.notesFilter.length !== subs.length ? '<div class="grid-filter">Showing ' + esc(shown.map(function (i) { return d.sections[i].title; }).join(', ')) + ' · <button type="button" class="linkish" data-filter="">Show all subjects</button></div>' : '') +
+      '<div class="box grid-box">' + gridHtml(shown, 'map') + '</div>';
   }
 
   function syncText() {
@@ -596,12 +603,12 @@
       b.addEventListener('click', function () { tick(b.getAttribute('data-tick')); });
     });
     app.querySelectorAll('[data-view]').forEach(function (b) {
-      b.addEventListener('click', function () { S.view = b.getAttribute('data-view'); S.notesFilter = null; store(KEY_VIEW, S.view); S.addingFor = null; render(); });
+      b.addEventListener('click', function () { S.view = b.getAttribute('data-view'); S.notesFilter = null; S.selTopic = null; store(KEY_VIEW, S.view); S.addingFor = null; render(); });
     });
     app.querySelectorAll('[data-filter]').forEach(function (b) {
       b.addEventListener('click', function () {
         var v = b.getAttribute('data-filter');
-        S.notesFilter = v === 'all' ? topicSections() : v === '' ? null : [Number(v)];
+        S.notesFilter = v === 'all' || v === '' ? null : [Number(v)];
         render();
       });
     });
@@ -609,9 +616,22 @@
       b.addEventListener('click', function () {
         S.view = 'notes'; store(KEY_VIEW, S.view);
         var j = b.getAttribute('data-jump');
-        S.notesFilter = j === 'all' ? topicSections() : j.split(',').map(Number);
+        S.notesFilter = j === 'all' ? null : j.split(',').map(Number); S.selTopic = null;
         render(); window.scrollTo({ top: 0, behavior: 'smooth' });
       });
+    });
+    app.querySelectorAll('[data-sq]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var id = b.getAttribute('data-sq'), ctx = b.getAttribute('data-ctx');
+        S.selTopic = S.selTopic && S.selTopic.id === id && S.selTopic.ctx === ctx ? null : { id: id, ctx: ctx };
+        S.addingFor = null; render();
+      });
+    });
+    app.querySelectorAll('[data-sq-close]').forEach(function (b) {
+      b.addEventListener('click', function () { S.selTopic = null; S.addingFor = null; render(); });
+    });
+    app.querySelectorAll('[data-hl]').forEach(function (b) {
+      b.addEventListener('click', function () { S.mapHl = b.getAttribute('data-hl'); render(); });
     });
     app.querySelectorAll('[data-add]').forEach(function (b) {
       b.addEventListener('click', function () {
