@@ -128,6 +128,18 @@
   .toast.show { opacity: 1; }
   .sync { font-size: 12px; color: var(--ink-soft); text-align: right; margin-top: 18px; }
 
+
+  /* Cumulative revision line under each day (2026-10-23) */
+  .rev { display: flex; gap: 10px; align-items: flex-start; margin-top: 10px; padding: 8px 10px; border: 1.5px dashed var(--ink); background: #F5EEFF; }
+  .rev .check.small { width: 20px; height: 20px; }
+  .rev .check.small svg { width: 13px; height: 13px; }
+  .rev-tag { display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; background: var(--lilac); border: 1.5px solid var(--ink); padding: 0 6px; margin-right: 4px; }
+  .rev-text { font-size: 13.5px; font-weight: 600; }
+  .rev.is-done .rev-text { color: var(--ink-soft); text-decoration: line-through; }
+  .today .rev { background: #fff; margin-top: 12px; }
+  .task.is-done .rev:not(.is-done) .rev-text { text-decoration: none; color: var(--ink); }
+  .stat-head { font-size: 11.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-dim); margin-bottom: 8px; }
+  .stat-big-sm { font-size: 22px; }
   @media (max-width: 640px) {
     .stats { grid-template-columns: 1fr 1fr; }
     .stat-main { grid-column: 1 / -1; }
@@ -226,6 +238,8 @@
     var byCount = [0, 0]; done.forEach(function (t) { var m = d.tickMap[t.id]; if (m[0]) byCount[0] += 1; if (m[1]) byCount[1] += 1; });
     var due = list.filter(function (t) { return t.id < today; });
     var late = due.filter(function (t) { return !d.tickMap[t.id]; });
+    var revs = list.filter(function (t) { return t.revision; });
+    var revDone = revs.filter(function (t) { return d.tickMap[t.revision.id]; }).length;
     var last = list[list.length - 1], first = list[0];
     // Days of the roadmap still ahead, counting today (all of them before it starts).
     var daysLeft = !last ? 0 : today < first.id ? list.length : Math.max(0, daysBetween(today, last.id) + 1);
@@ -243,12 +257,16 @@
       '<button class="btn btn-yellow" type="submit">Save</button><button class="btn" type="button" id="rename-cancel">Cancel</button></form></div>';
 
     html += '<div class="stats">' +
-      '<div class="box stat stat-main"><div class="stat-big">' + pct + '%</div><div class="stat-label">' + done.length + ' of ' + list.length + ' days done</div>' +
+      '<div class="box stat stat-main"><div class="stat-head">Progress</div><div class="stat-big">' + pct + '%</div><div class="stat-label">' + done.length + ' of ' + list.length + ' days done' +
+          (revs.length ? ' · revision ' + revDone + ' of ' + revs.length : '') + '</div>' +
         '<div class="bar"><span style="width: ' + pct + '%"></span></div>' +
         '<div class="split"><span>' + esc(names[0]) + ' ticked <b>' + byCount[0] + '</b></span><span>' + esc(names[1]) + ' ticked <b>' + byCount[1] + '</b></span></div></div>' +
-      '<div class="box stat ' + (late.length ? 'behind' : 'ontrack') + '"><div class="stat-big">' + (late.length || '✓') + '</div><div class="stat-label">' +
-        (late.length ? (late.length === 1 ? 'day to catch up' : 'days to catch up') : (due.length ? 'On track' : 'Not started yet')) + '</div></div>' +
-      '<div class="box stat"><div class="stat-big">' + daysLeft + '</div><div class="stat-label">' + (daysLeft === 1 ? 'day left' : 'days left') + '</div></div>' +
+      // Catch-up: past days nobody has ticked yet. Before day 1 it says when it starts.
+      (due.length
+        ? '<div class="box stat ' + (late.length ? 'behind' : 'ontrack') + '"><div class="stat-head">Catch-up</div><div class="stat-big">' + (late.length || '✓') + '</div><div class="stat-label">' +
+            (late.length ? (late.length === 1 ? 'past day not ticked' : 'past days not ticked') : 'On track, nothing missed') + '</div></div>'
+        : '<div class="box stat"><div class="stat-head">Catch-up</div><div class="stat-big stat-big-sm">' + fmtDay(first.id).wd + ' ' + fmtDay(first.id).dm + '</div><div class="stat-label">Starts then. Missed days show up here.</div></div>') +
+      '<div class="box stat"><div class="stat-head">Countdown</div><div class="stat-big">' + daysLeft + '</div><div class="stat-label">' + (daysLeft === 1 ? 'day left' : 'days left') + '</div></div>' +
     '</div>';
 
     // Today card
@@ -257,6 +275,7 @@
       html += '<div class="box today"><span class="today-tag">TODAY · ' + fmtDay(today).wd.toUpperCase() + ' ' + fmtDay(today).dm.toUpperCase() + '</span>' +
         '<div class="today-subject">' + esc(d.sections[todayTask.section].title) + '</div>' +
         '<div class="today-row">' + checkHtml(todayTask, false) + '<div><div class="today-text">' + esc(todayTask.text) + '</div>' + metaHtml(todayTask, today, true) + '</div></div>' +
+        revisionHtml(todayTask, today) +
         (notesHtml ? '<div class="notes">' + notesHtml + '</div>' : '') + '</div>';
     } else if (first && today < first.id) {
       var n = daysBetween(today, first.id);
@@ -282,7 +301,7 @@
           var cls = 'task' + (tk ? ' is-done' : '') + (!tk && t.id < today ? ' is-late' : '') + (t.id === today ? ' is-today' : '');
           return '<div class="' + cls + '" data-task="' + t.id + '">' + checkHtml(t, true) +
             '<div class="task-date"><b>' + f.wd + '</b>' + f.dm + '</div>' +
-            '<div class="task-body"><div class="task-text">' + esc(t.text) + '</div>' + metaHtml(t, today, false) + '</div></div>';
+            '<div class="task-body"><div class="task-text">' + esc(t.text) + '</div>' + metaHtml(t, today, false) + revisionHtml(t, today) + '</div></div>';
         }).join('') + '</div></div>';
     });
 
@@ -305,6 +324,16 @@
       if (tk[k]) bits.push('<span class="by">✓ ' + esc(S.data.names[k]) + ' · ' + fmtDay(String(tk[k].done_at).slice(0, 10)).dm + '</span>');
     });
     return bits.length ? '<div class="task-meta">' + bits.join('') + '</div>' : '';
+  }
+  // The day's cumulative revision item: its own checkbox and names, under the topic.
+  function revisionHtml(t, today) {
+    var r = t.revision;
+    if (!r) return '';
+    var tk = S.data.tickMap[r.id], names = '';
+    if (tk) [0, 1].forEach(function (k) { if (tk[k]) names += '<span class="by">✓ ' + esc(S.data.names[k]) + '</span>'; });
+    return '<div class="rev' + (tk ? ' is-done' : '') + '">' + checkHtml(r, true) +
+      '<div><span class="rev-tag">Revision</span> <span class="rev-text">' + esc(r.text) + '</span>' +
+      (names ? '<div class="task-meta">' + names + '</div>' : '') + '</div></div>';
   }
   function syncText() {
     if (!S.lastSync) return '';

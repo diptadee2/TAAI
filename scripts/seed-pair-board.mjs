@@ -13,7 +13,8 @@
 //
 // Roadmap format (markdown): "## <n>. <Subject> (<range>)" headings, then
 // "- [ ] **Oct 23 (Fri):** task text" lines. "**Every day:**" / "**Every
-// Sunday:**" lines become notes. Months Aug-Dec are read as START_YEAR, Jan-Jul
+// Sunday:**" lines become notes. A "**Cumulative revision:**" line also adds a
+// revision item to each day (see addRevision below). Months Aug-Dec are read as START_YEAR, Jan-Jul
 // as START_YEAR + 1.
 import fs from 'node:fs';
 import crypto from 'node:crypto';
@@ -29,7 +30,7 @@ if (!slug || !file) { console.error('usage: seed-pair-board.mjs <board-slug> <ro
 
 const md = fs.readFileSync(file, 'utf8');
 const title = (md.match(/^#\s+(.+)$/m) || [, 'Roadmap'])[1].trim();
-const notes = [...md.matchAll(/^\*\*(Every [^*]+):\*\*\s*(.+)$/gm)].map(m => ({ label: m[1].trim(), text: m[2].trim() }));
+const notes = [...md.matchAll(/^\*\*(Every [^*]+|Cumulative revision):\*\*\s*(.+)$/gm)].map(m => ({ label: m[1].trim(), text: m[2].trim() }));
 const sections = [];
 for (const line of md.split('\n')) {
   const h = line.match(/^##\s+(?:\d+\.\s*)?(.+?)(?:\s+\(([^)]+)\))?\s*$/);
@@ -45,6 +46,24 @@ for (const line of md.split('\n')) {
     const text = t[4].trim();
     sections[sections.length - 1].tasks.push({ id, text, weeklyTest: /weekly test/i.test(text) });
   }
+}
+// Cumulative revision (2026-10-23): every day gets its own "Revise ..." item
+// (id "<date>:rev") for the subjects already finished, one per day in rotation,
+// most recently finished first, restarting the rotation when a new subject
+// starts. During the first subject it's that subject's topics so far (none on
+// day 1). Sections that are themselves revision ("Revision & Full Mocks") get none.
+if (notes.some(n => /^cumulative revision$/i.test(n.label))) {
+  sections.forEach((sec, k) => {
+    if (/revision/i.test(sec.title)) return;
+    const finished = sections.slice(0, k).filter(x => !/revision/i.test(x.title)).map(x => x.title).reverse();
+    sec.tasks.forEach((t, j) => {
+      if (!finished.length) {
+        if (j > 0) t.revision = { id: t.id + ':rev', text: 'Revise ' + sec.title + ' topics so far' };
+        return;
+      }
+      t.revision = { id: t.id + ':rev', text: 'Revise ' + finished[j % finished.length] };
+    });
+  });
 }
 const all = sections.flatMap(s => s.tasks);
 const ids = new Set(all.map(x => x.id));

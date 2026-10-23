@@ -54,7 +54,10 @@ export async function handler(event) {
   }
 
   const taskIds = new Set();
-  for (const s of row.roadmap.sections || []) for (const t of s.tasks || []) taskIds.add(t.id);
+  for (const s of row.roadmap.sections || []) for (const t of s.tasks || []) {
+    taskIds.add(t.id);
+    if (t.revision) taskIds.add(t.revision.id); // the day's cumulative revision item, ticked separately
+  }
 
   if (body.action === 'load') {
     const { data: ticks, error: tErr } = await supabase.from('pair_ticks').select('task_id, done_by, done_at').eq('board', board);
