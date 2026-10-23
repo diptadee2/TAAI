@@ -1,7 +1,7 @@
 // POST /api/pair-board  — a private, passcode-protected shared checklist for a
 // pair of people studying the same roadmap together (added 2026-10-23, used by
-// /sunitesh101). One shared tick per task: either person can tick it and it
-// counts for both; the tick records who ticked it.
+// /sunitesh101). Each person ticks a task for themselves; a task counts as done
+// for the pair once either has ticked it, and the page shows both names.
 //
 // Nothing private lives in this file or the page, because the repo is public:
 // the roadmap text and a SHA-256 hash of the passcode are stored only in the
@@ -12,7 +12,7 @@
 //
 // Body: { board, code, action, ... }
 //   action 'load'                      -> { title, notes, sections, names, ticks }
-//   action 'tick'   { taskId, by, done } -> { ok, tick }   (by: 0 or 1)
+//   action 'tick'   { taskId, by, done } -> { ok, ticks }  (by: 0 or 1; that person's own tick)
 //   action 'names'  { names: [a, b] }  -> { ok, names }
 import crypto from 'node:crypto';
 import { getSupabase, json } from './lib/supabase.js';
@@ -63,20 +63,24 @@ export async function handler(event) {
   }
 
   if (body.action === 'tick') {
+    // Each person has their own tick on a task (2026-10-23: "it should show both
+    // the names when clicked by both"). done:true adds the caller's tick (a repeat
+    // is a no-op), done:false removes only the caller's. Returns every tick on the
+    // task so the page shows both names.
     const taskId = String(body.taskId || '');
     if (!taskIds.has(taskId)) return reply(400, { error: 'unknown task' });
+    const by = body.by === 1 ? 1 : 0;
     if (body.done) {
-      const by = body.by === 1 ? 1 : 0;
       const tick = { board, task_id: taskId, done_by: by, done_at: new Date().toISOString() };
-      const { error: e } = await supabase.from('pair_ticks').upsert(tick, { onConflict: 'board,task_id', ignoreDuplicates: true });
+      const { error: e } = await supabase.from('pair_ticks').upsert(tick, { onConflict: 'board,task_id,done_by', ignoreDuplicates: true });
       if (e) return reply(500, { error: e.message });
-      // ignoreDuplicates keeps the first person's tick if both tick at once.
-      const { data: kept } = await supabase.from('pair_ticks').select('task_id, done_by, done_at').eq('board', board).eq('task_id', taskId).maybeSingle();
-      return reply(200, { ok: true, tick: kept || tick });
+    } else {
+      const { error: e } = await supabase.from('pair_ticks').delete().eq('board', board).eq('task_id', taskId).eq('done_by', by);
+      if (e) return reply(500, { error: e.message });
     }
-    const { error: e } = await supabase.from('pair_ticks').delete().eq('board', board).eq('task_id', taskId);
-    if (e) return reply(500, { error: e.message });
-    return reply(200, { ok: true, tick: null });
+    const { data: ticks, error: tErr } = await supabase.from('pair_ticks').select('task_id, done_by, done_at').eq('board', board).eq('task_id', taskId);
+    if (tErr) return reply(500, { error: tErr.message });
+    return reply(200, { ok: true, ticks: ticks || [] });
   }
 
   if (body.action === 'names') {

@@ -193,9 +193,7 @@
   // ── Data ────────────────────────────────────────────────────────────
   function load() {
     return api({ action: 'load' }).then(function (d) {
-      var ticks = {};
-      d.ticks.forEach(function (t) { ticks[t.task_id] = t; });
-      d.tickMap = ticks;
+      d.tickMap = groupTicks(d.ticks);
       var first = !S.data;
       S.data = d; S.lastSync = new Date();
       if (first) {
@@ -204,6 +202,13 @@
       }
       render();
     });
+  }
+  // tickMap[taskId] = { 0: tick, 1: tick }: each person's own tick on that day.
+  // A day counts as done for the pair once either of them has ticked it.
+  function groupTicks(rows) {
+    var map = {};
+    (rows || []).forEach(function (t) { (map[t.task_id] = map[t.task_id] || {})[t.done_by] = t; });
+    return map;
   }
   function allTasks() { var out = []; S.data.sections.forEach(function (s, i) { s.tasks.forEach(function (t) { out.push(Object.assign({ section: i }, t)); }); }); return out; }
   function currentSectionIndex() {
@@ -218,7 +223,7 @@
     document.title = 'Roadmap · ' + names.join(' & ');
     var done = list.filter(function (t) { return d.tickMap[t.id]; });
     var pct = list.length ? Math.round(done.length / list.length * 100) : 0;
-    var byCount = [0, 0]; done.forEach(function (t) { byCount[d.tickMap[t.id].done_by] += 1; });
+    var byCount = [0, 0]; done.forEach(function (t) { var m = d.tickMap[t.id]; if (m[0]) byCount[0] += 1; if (m[1]) byCount[1] += 1; });
     var due = list.filter(function (t) { return t.id < today; });
     var late = due.filter(function (t) { return !d.tickMap[t.id]; });
     var last = list[list.length - 1], first = list[0];
@@ -287,7 +292,8 @@
   }
 
   function checkHtml(t, small) {
-    var on = !!S.data.tickMap[t.id];
+    // Your own tick (the person picked under "Ticking as").
+    var m = S.data.tickMap[t.id], on = !!(m && S.me != null && m[S.me]);
     return '<button type="button" class="check' + (small ? ' small' : '') + (S.busy[t.id] ? ' busy' : '') + '" role="checkbox" aria-checked="' + on + '" data-tick="' + t.id + '" aria-label="' + esc((on ? 'Done: ' : 'Mark done: ') + t.text) + '">' + CHECK_SVG + '</button>';
   }
   function metaHtml(t, today, onToday) {
@@ -295,7 +301,9 @@
     if (!onToday && t.id === today) bits.push('<span class="chip chip-today">Today</span>');
     if (t.weeklyTest) bits.push('<span class="chip chip-test">Weekly test</span>');
     if (!tk && t.id < today) bits.push('<span class="chip chip-late">Catch up</span>');
-    if (tk) bits.push('<span class="by">✓ ' + esc(S.data.names[tk.done_by]) + ' · ' + fmtDay(String(tk.done_at).slice(0, 10)).dm + '</span>');
+    if (tk) [0, 1].forEach(function (k) {
+      if (tk[k]) bits.push('<span class="by">✓ ' + esc(S.data.names[k]) + ' · ' + fmtDay(String(tk[k].done_at).slice(0, 10)).dm + '</span>');
+    });
     return bits.length ? '<div class="task-meta">' + bits.join('') + '</div>' : '';
   }
   function syncText() {
@@ -329,17 +337,20 @@
 
   function tick(id) {
     if (S.me == null) { toast('First pick who you are at the top (Ticking as).'); var seg = app.querySelector('.seg'); if (seg) seg.scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
-    var was = S.data.tickMap[id], want = !was;
-    S.data.tickMap[id] = want ? { task_id: id, done_by: S.me, done_at: new Date().toISOString() } : undefined;
-    if (!want) delete S.data.tickMap[id];
+    var before = S.data.tickMap[id] ? Object.assign({}, S.data.tickMap[id]) : null;
+    var want = !(before && before[S.me]);
+    var next = Object.assign({}, before || {});
+    if (want) next[S.me] = { task_id: id, done_by: S.me, done_at: new Date().toISOString() }; else delete next[S.me];
+    if (next[0] || next[1]) S.data.tickMap[id] = next; else delete S.data.tickMap[id];
     S.busy[id] = true; render();
     api({ action: 'tick', taskId: id, done: want, by: S.me }).then(function (r) {
       delete S.busy[id];
-      if (r.tick) S.data.tickMap[id] = r.tick; else delete S.data.tickMap[id];
+      var m = groupTicks(r.ticks)[id];
+      if (m) S.data.tickMap[id] = m; else delete S.data.tickMap[id];
       render();
     }).catch(function (err) {
       delete S.busy[id];
-      if (was) S.data.tickMap[id] = was; else delete S.data.tickMap[id];
+      if (before) S.data.tickMap[id] = before; else delete S.data.tickMap[id];
       render();
       if (err.status === 401) { store(KEY_CODE, null); S.code = null; S.data = null; renderLock('The passcode changed. Enter the new one.'); return; }
       toast("Couldn't save that tick. Check your connection and try again.");

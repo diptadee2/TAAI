@@ -1143,8 +1143,12 @@ CREATE TABLE IF NOT EXISTS pair_ticks (
   task_id  TEXT NOT NULL,
   done_by  SMALLINT NOT NULL CHECK (done_by IN (0, 1)),
   done_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-  PRIMARY KEY (board, task_id)
+  PRIMARY KEY (board, task_id, done_by)
 );
 ALTER TABLE pair_boards ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pair_ticks ENABLE ROW LEVEL SECURITY;
 GRANT SELECT, INSERT, UPDATE, DELETE ON pair_boards, pair_ticks TO service_role;
+-- One tick per person per task (2026-10-23, "show both the names when clicked by
+-- both"). For a pair_ticks table created with the earlier (board, task_id) key:
+ALTER TABLE pair_ticks DROP CONSTRAINT IF EXISTS pair_ticks_pkey;
+ALTER TABLE pair_ticks ADD PRIMARY KEY (board, task_id, done_by);
