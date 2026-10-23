@@ -16,6 +16,8 @@
 //   action 'names'  { names: [a, b] }  -> { ok, names }
 //   action 'note-add'    { taskId, by, url, label } -> { ok, note }
 //   action 'note-remove' { id }                     -> { ok }   (either person can remove any link)
+//   action 'claim'      { who, device }            -> { ok, claims, mine }  (pick who you are; a name taken by another device is refused)
+//   action 'reset-claims'                           -> { ok }  (frees both names, e.g. one person on a new device)
 //   action 'takeaway'   { taskId, by, text }        -> { ok, topic }  (shared 1-2 line summary, '' clears)
 //   action 'confidence' { taskId, by, level }       -> { ok, topic }  (that person's own: 1 got it, 2 shaky, 3 weak, null)
 import crypto from 'node:crypto';
@@ -38,6 +40,14 @@ function sameHash(a, b) {
 }
 
 const cleanName = n => String(n || '').replace(/\s+/g, ' ').trim().slice(0, 24);
+const cleanDevice = d => String(d || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
+// [bool, bool] for the page: which names are taken, and which one is this device's.
+function claimView(claims, device) {
+  const c = Array.isArray(claims) ? claims : [null, null];
+  const taken = [0, 1].map(i => !!(c[i] && c[i].device));
+  const mine = device ? [0, 1].find(i => c[i] && c[i].device === device) : undefined;
+  return { taken, mine: mine === undefined ? null : mine };
+}
 
 export async function handler(event) {
   if (event.httpMethod !== 'POST') return reply(405, { error: 'method not allowed' });
@@ -71,7 +81,10 @@ export async function handler(event) {
     ]);
     if (tErr) return reply(500, { error: tErr.message });
     // links: [] (not an error) until the pair_notes table exists.
-    return reply(200, { open, title: row.roadmap.title, notes: row.roadmap.notes || [], sections: row.roadmap.sections, names: row.names, ticks: ticks || [],
+    // claimsReady: false until the pair_boards.claims column exists (no enforcement then).
+    const claimsReady = Object.prototype.hasOwnProperty.call(row, 'claims');
+    const cv = claimView(row.claims, cleanDevice(body.device));
+    return reply(200, { open, claimsReady, taken: cv.taken, mine: cv.mine, title: row.roadmap.title, notes: row.roadmap.notes || [], sections: row.roadmap.sections, names: row.names, ticks: ticks || [],
       links: notesRes.error ? [] : (notesRes.data || []), linksReady: !notesRes.error,
       // topics: [] until the pair_topics table exists (takeaways and confidence hidden).
       topics: topicsRes.error ? [] : (topicsRes.data || []), topicsReady: !topicsRes.error });
@@ -104,6 +117,36 @@ export async function handler(event) {
     const { error: e } = await supabase.from('pair_boards').update({ names, updated_at: new Date().toISOString() }).eq('slug', board);
     if (e) return reply(500, { error: e.message });
     return reply(200, { ok: true, names });
+  }
+
+  // Who is who (2026-10-24): each device picks a person once; a name another
+  // device holds is refused, so the second person can only pick the other one.
+  if (body.action === 'claim') {
+    const device = cleanDevice(body.device);
+    const who = body.who === 1 ? 1 : body.who === 0 ? 0 : null;
+    if (!device || who === null) return reply(400, { error: 'bad request' });
+    if (!Object.prototype.hasOwnProperty.call(row, 'claims')) return reply(200, { ok: true, enforced: false, taken: [false, false], mine: who });
+    const claims = Array.isArray(row.claims) ? row.claims.slice(0, 2) : [null, null];
+    while (claims.length < 2) claims.push(null);
+    if (claims[who] && claims[who].device && claims[who].device !== device) {
+      return reply(409, Object.assign({ error: 'taken' }, claimView(claims, device)));
+    }
+    const other = who === 1 ? 0 : 1;
+    if (claims[other] && claims[other].device === device) claims[other] = null; // switching sides frees the old one
+    claims[who] = { device, at: new Date().toISOString() };
+    // Guarded on the claims just read, so two devices claiming at once can't both win.
+    let q = supabase.from('pair_boards').update({ claims, updated_at: new Date().toISOString() }).eq('slug', board);
+    q = row.updated_at ? q.eq('updated_at', row.updated_at) : q;
+    const { data: upd, error: e } = await q.select('slug');
+    if (e) return reply(500, { error: e.message });
+    if (!upd || !upd.length) return reply(409, { error: 'changed, try again' });
+    return reply(200, Object.assign({ ok: true, enforced: true }, claimView(claims, device)));
+  }
+  if (body.action === 'reset-claims') {
+    if (!Object.prototype.hasOwnProperty.call(row, 'claims')) return reply(200, { ok: true });
+    const { error: e } = await supabase.from('pair_boards').update({ claims: [null, null], updated_at: new Date().toISOString() }).eq('slug', board);
+    if (e) return reply(500, { error: e.message });
+    return reply(200, { ok: true });
   }
 
   // Notes links (2026-10-23): each person attaches links (usually Google Drive) to

@@ -50,11 +50,6 @@
   .top h1 { margin: 0; font-size: clamp(22px, 5vw, 30px); line-height: 1.15; letter-spacing: -.01em; }
   .top .sub { margin-top: 4px; color: var(--ink-dim); font-size: 14px; }
   .who { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
-  .who-label { font-size: 12px; font-weight: 600; color: var(--ink-dim); }
-  .seg { display: inline-flex; border: 2px solid var(--ink); background: #fff; }
-  .seg button { border: 0; background: transparent; padding: 7px 12px; font-weight: 700; font-size: 13.5px; cursor: pointer; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .seg button + button { border-left: 2px solid var(--ink); }
-  .seg button[aria-pressed="true"] { background: var(--yellow); }
   .tools { display: flex; gap: 4px; }
 
   /* Stats */
@@ -234,6 +229,24 @@
   .today-map { margin-top: 10px; border: 2px solid var(--ink); background: #fff; }
   .today-map .grow { grid-template-columns: 1fr; padding: 10px 12px; }
 
+  /* Who are you? popup (2026-10-24) */
+  .who-me { font-size: 13.5px; }
+  .who-modal { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; }
+  .who-modal[hidden] { display: none; }
+  .who-backdrop { position: absolute; inset: 0; background: rgba(18,19,22,.45); }
+  .who-box { position: relative; width: min(420px, 100%); padding: 22px 20px 18px; background: var(--paper); }
+  .who-title { font-size: 22px; font-weight: 800; }
+  .who-sub { font-size: 13.5px; color: var(--ink-dim); margin-top: 4px; }
+  .who-msg { margin-top: 10px; font-size: 13px; font-weight: 700; color: #B45309; }
+  .who-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+  .who-btn { font: inherit; text-align: center; padding: 16px 10px; border: 2px solid var(--ink); background: #fff; cursor: pointer; display: flex; flex-direction: column; gap: 4px; align-items: center; box-shadow: 3px 3px 0 var(--ink); color: var(--ink); }
+  .who-btn b { font-size: 17px; }
+  .who-btn:hover:not([disabled]) { background: var(--yellow); }
+  .who-btn[disabled] { opacity: .45; cursor: not-allowed; box-shadow: none; }
+  .who-btn span { font-size: 11px; font-weight: 600; color: var(--ink-dim); }
+  .who-reset { margin-top: 14px; font-size: 12.5px; color: var(--ink-dim); }
+  .who-x { position: absolute; top: 6px; right: 8px; font: inherit; font-size: 22px; font-weight: 800; background: none; border: 0; cursor: pointer; color: var(--ink); padding: 4px 8px; }
+
   @media (max-width: 640px) {
     .stats { grid-template-columns: 1fr 1fr; }
     .stat-main { grid-column: 1 / -1; }
@@ -276,9 +289,12 @@
   var toastTimer;
   function toast(msg) { var t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.classList.remove('show'); }, 2600); }
 
+  // A random id for this browser, so the server knows which device picked which name.
+  var DEVICE = read('pairboard:' + BOARD + ':device');
+  if (!DEVICE) { DEVICE = 'd' + Math.random().toString(36).slice(2) + Date.now().toString(36); store('pairboard:' + BOARD + ':device', DEVICE); }
   function api(payload) {
     return fetch('/api/pair-board', { method: 'POST', headers: { 'Content-Type': 'application/json' }, cache: 'no-store',
-      body: JSON.stringify(Object.assign({ board: BOARD, code: S.code }, payload)) })
+      body: JSON.stringify(Object.assign({ board: BOARD, code: S.code, device: DEVICE }, payload)) })
       .then(function (r) { return r.json().then(function (b) { if (!r.ok) { var e = new Error(b.error || 'error'); e.status = r.status; throw e; } return b; }); });
   }
 
@@ -309,12 +325,25 @@
       d.linkMap = groupLinks(d.links);
       var first = !S.data;
       S.data = d; S.lastSync = new Date();
+      syncMe(d);
       if (first) {
         try { S.open = JSON.parse(read(KEY_OPEN) || 'null') || null; } catch (e) { S.open = null; }
         if (!S.open) { S.open = {}; var cur = currentSectionIndex(); if (cur >= 0) S.open[cur] = true; }
       }
       render();
     });
+  }
+  // Who this device is, from the server's claims: the server's answer wins.
+  // A name another device holds can't be used here; an old local pick from
+  // before claims existed is claimed quietly if it's still free.
+  function syncMe(d) {
+    if (!d.claimsReady) return;
+    if (d.mine === 0 || d.mine === 1) { if (S.me !== d.mine) { S.me = d.mine; store(KEY_ME, String(S.me)); } return; }
+    if (S.me != null && d.taken[S.me]) { S.me = null; store(KEY_ME, null); return; }
+    if (S.me != null && !d.taken[S.me]) {
+      var who = S.me;
+      api({ action: 'claim', who: who }).then(function (r) { d.taken = r.taken || d.taken; }).catch(function () { S.me = null; store(KEY_ME, null); render(); });
+    }
   }
   // tickMap[taskId] = { 0: tick, 1: tick }: each person's own tick on that day.
   // A day counts as done for the pair once either of them has ticked it.
@@ -364,9 +393,10 @@
     var html = '<div class="wrap">';
     html += '<div class="top"><div><h1>' + esc(d.title) + '</h1><div class="sub">' + esc(names[0]) + ' &amp; ' + esc(names[1]) +
       ' · ' + list.length + ' days, ' + fmtDay(first.id).dm + ' to ' + fmtDay(last.id).dm + '</div></div>' +
-      '<div class="who"><span class="who-label">Ticking as</span><div class="seg" role="group" aria-label="Who is ticking">' +
-        [0, 1].map(function (i) { return '<button type="button" data-me="' + i + '" aria-pressed="' + (S.me === i) + '">' + esc(names[i]) + '</button>'; }).join('') +
-      '</div><div class="tools"><button class="btn-ghost btn" id="rename-btn" type="button">Rename</button>' + (d.open ? '' : '<button class="btn-ghost btn" id="lock-btn" type="button">Lock</button>') + '</div></div></div>';
+      '<div class="who">' + (S.me != null
+          ? '<span class="who-me">You\'re <b>' + esc(names[S.me]) + '</b> · <button type="button" class="linkish" data-who>Not you?</button></span>'
+          : '<button type="button" class="btn btn-yellow" data-who>Pick who you are</button>') +
+      '<div class="tools"><button class="btn-ghost btn" id="rename-btn" type="button">Rename</button>' + (d.open ? '' : '<button class="btn-ghost btn" id="lock-btn" type="button">Lock</button>') + '</div></div></div>';
 
     html += '<div class="box rename' + (S.renaming ? ' show' : '') + '"><form id="rename-form"><label>Person 1<input name="n0" maxlength="24" value="' + esc(names[0]) + '" required></label>' +
       '<label>Person 2<input name="n1" maxlength="24" value="' + esc(names[1]) + '" required></label>' +
@@ -605,16 +635,60 @@
     if (!S.lastSync) return '';
     return 'Synced ' + S.lastSync.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }) + ' · updates every 20 seconds';
   }
-  function needMe() {
+  // Ask who this is the first time they do something (tick, add notes).
+  // `then` runs the action once they've picked.
+  function needMe(then) {
     if (S.me != null) return false;
-    toast('First pick who you are at the top (Ticking as).');
-    var seg = app.querySelector('.seg'); if (seg) seg.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    openWho(then);
     return true;
   }
+  var whoEl = null, whoThen = null;
+  function openWho(then, msg) {
+    whoThen = then || null;
+    var d = S.data, taken = (d && d.claimsReady && d.taken) || [false, false];
+    if (!whoEl) { whoEl = document.createElement('div'); whoEl.className = 'who-modal'; document.body.appendChild(whoEl); }
+    whoEl.innerHTML = '<div class="who-backdrop" data-who-close></div><div class="who-box box" role="dialog" aria-modal="true" aria-labelledby="who-title">' +
+      '<div class="who-title" id="who-title">Who are you?</div>' +
+      '<div class="who-sub">Pick once on this device. Your ticks and notes go under your name.</div>' +
+      (msg ? '<div class="who-msg">' + esc(msg) + '</div>' : '') +
+      '<div class="who-pick">' + [0, 1].map(function (i) {
+        var lock = taken[i] && S.me !== i;
+        return '<button type="button" class="who-btn" data-pick="' + i + '"' + (lock ? ' disabled' : '') + '><b>' + esc(d.names[i]) + '</b>' + (lock ? '<span>Already picked on another device</span>' : '') + '</button>';
+      }).join('') + '</div>' +
+      (taken[0] || taken[1] ? '<div class="who-reset">Same person on a new device? <button type="button" class="linkish" data-who-reset>Reset both names</button></div>' : '') +
+      '<button type="button" class="who-x" data-who-close aria-label="Close">×</button></div>';
+    whoEl.hidden = false;
+    whoEl.querySelectorAll('[data-who-close]').forEach(function (b) { b.addEventListener('click', closeWho); });
+    whoEl.querySelectorAll('[data-pick]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var who = Number(b.getAttribute('data-pick'));
+        whoEl.querySelectorAll('[data-pick]').forEach(function (x) { x.disabled = true; });
+        api({ action: 'claim', who: who }).then(function (r) {
+          S.me = who; store(KEY_ME, String(who));
+          if (r.taken) S.data.taken = r.taken;
+          var then = whoThen; closeWho(); render();
+          toast("You're " + S.data.names[who]);
+          if (then) then();
+        }).catch(function (err) {
+          if (err.status === 409) { load().then(function () { openWho(whoThen, S.data.names[who] + ' was just picked on another device.'); }).catch(function () {}); return; }
+          openWho(whoThen, "Couldn't save that. Try again.");
+        });
+      });
+    });
+    var r = whoEl.querySelector('[data-who-reset]');
+    if (r) r.addEventListener('click', function () {
+      if (!confirm('Free both names? Each of you then picks again on your own device.')) return;
+      api({ action: 'reset-claims' }).then(function () { S.me = null; store(KEY_ME, null); return load(); })
+        .then(function () { openWho(whoThen); }).catch(function () { toast("Couldn't reset. Try again."); });
+    });
+    var first = whoEl.querySelector('.who-btn:not([disabled])'); if (first) first.focus();
+  }
+  function closeWho() { if (whoEl) { whoEl.hidden = true; whoEl.innerHTML = ''; } whoThen = null; }
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && whoEl && !whoEl.hidden) closeWho(); });
 
   function bind() {
-    app.querySelectorAll('[data-me]').forEach(function (b) {
-      b.addEventListener('click', function () { S.me = Number(b.getAttribute('data-me')); store(KEY_ME, String(S.me)); render(); });
+    app.querySelectorAll('[data-who]').forEach(function (b) {
+      b.addEventListener('click', function () { openWho(null); });
     });
     app.querySelectorAll('[data-toggle]').forEach(function (b) {
       b.addEventListener('click', function () { var i = b.getAttribute('data-toggle'); S.open[i] = !S.open[i]; store(KEY_OPEN, JSON.stringify(S.open)); render(); });
@@ -655,8 +729,10 @@
     });
     app.querySelectorAll('[data-add]').forEach(function (b) {
       b.addEventListener('click', function () {
-        if (needMe()) return;
-        S.addingFor = b.getAttribute('data-add'); render();
+        var addId = b.getAttribute('data-add');
+        function go() { S.addingFor = addId; render(); var f = app.querySelector('[data-add-form] input[name=url]'); if (f) f.focus(); }
+        if (needMe(go)) return;
+        S.addingFor = addId; render();
         var f = app.querySelector('[data-add-form] input[name=url]'); if (f) f.focus();
       });
     });
@@ -699,7 +775,7 @@
   }
 
   function tick(id) {
-    if (needMe()) return;
+    if (needMe(function () { tick(id); })) return;
     var before = S.data.tickMap[id] ? Object.assign({}, S.data.tickMap[id]) : null;
     var want = !(before && before[S.me]);
     var next = Object.assign({}, before || {});
@@ -722,7 +798,7 @@
 
   // Poll so one person's ticks show up for the other.
   setInterval(function () {
-    if (!S.data || document.hidden || S.renaming || S.addingFor || Object.keys(S.busy).length) return;
+    if (!S.data || document.hidden || S.renaming || S.addingFor || (whoEl && !whoEl.hidden) || Object.keys(S.busy).length) return;
     load().catch(function () {});
   }, POLL_MS);
   document.addEventListener('visibilitychange', function () {

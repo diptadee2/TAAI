@@ -1183,3 +1183,8 @@ CREATE TABLE IF NOT EXISTS pair_topics (
 );
 ALTER TABLE pair_topics ENABLE ROW LEVEL SECURITY;
 GRANT SELECT, INSERT, UPDATE, DELETE ON pair_topics TO service_role;
+
+-- Pair tracker identities (2026-10-24): which device picked which person, so
+-- once one of the two names is taken the other device can only pick the other.
+-- claims = [ {device, at} | null, {device, at} | null ] for person 0 and 1.
+ALTER TABLE pair_boards ADD COLUMN IF NOT EXISTS claims JSONB NOT NULL DEFAULT '[null, null]'::jsonb;
