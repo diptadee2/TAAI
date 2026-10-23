@@ -3561,6 +3561,76 @@ html body main #combos .combo-side-col .plan120-go { font-size: 13px !important;
   html body main #combos #full-course-2028 .c28-proj-count { font-size: 22px !important; min-width: 34px !important; }
   html body main #combos .combo-side-col .challenge-title-main { font-size: 22px !important; }
 }
+
+/* ── SCORE LINE STYLE, the other price cards (2026-10-23) ─────────────────
+   Direct request: "make all the other price cards in this fashion, smartly
+   blending in with the other neo brutalist elements around". Same recipe as
+   the 2028 card above (rounded card, wide Archivo title and price, IBM Plex
+   Mono labels, hairline rows, black pill button), but each card keeps its own
+   neo-brutalist colour as a light tint with a matching darker hairline border,
+   so the colours still tie them to the page. Delete this block to undo. */
+html body main #combos .combo-card:not(#full-course-2028), html body main .courses-grid > * > .course-card.card {
+  --sl-ink: #121316; --sl-dim: #4F5058; --sl-faint: #7A7B82;
+  --sl-bg: color-mix(in srgb, var(--tint) 22%, #FBFBF8);
+  --sl-line: color-mix(in srgb, var(--tint) 70%, #121316 18%);
+  --sl-hair: color-mix(in srgb, var(--tint) 45%, #FBFBF8);
+  background: var(--sl-bg) !important; border: 1px solid var(--sl-line) !important; border-radius: 22px !important;
+  box-shadow: 0 1px 0 rgba(18,19,22,.03), 0 20px 40px -30px rgba(18,19,22,.30) !important; transform: none !important; color: var(--sl-ink) !important;
+}
+html body main #combos #full-course { --tint: #FDBA74; }
+html body main #combos #maths-ml-bundle { --tint: #7DD3FC; }
+html body main #combos #maths-bundle { --tint: #F9A8D4; }
+html body main .courses-grid > :nth-child(6n+1) .course-card { --tint: #F9A8D4; }
+html body main .courses-grid > :nth-child(6n+2) .course-card { --tint: #7DD3FC; }
+html body main .courses-grid > :nth-child(6n+3) .course-card { --tint: #FDE047; }
+html body main .courses-grid > :nth-child(6n+4) .course-card { --tint: #BEF264; }
+html body main .courses-grid > :nth-child(6n+5) .course-card { --tint: #C4B5FD; }
+html body main .courses-grid > :nth-child(6n+6) .course-card { --tint: #FDBA74; }
+html body main #combos .combo-card:not(#full-course-2028) *, html body main .courses-grid > * > .course-card.card * { -webkit-text-fill-color: currentColor; }
+html body main #combos .combo-featured-frame:not(.coming-soon) { background: none !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; }
+html body main #combos .combo-card:not(#full-course-2028) .combo-num, html body main #combos .combo-card:not(#full-course-2028) .combo-accent, html body main .courses-grid > * > .course-card.card .course-accent, html body main .courses-grid > * > .course-card.card .ticket-notch { display: none !important; }
+/* Bundle cards */
+html body main #combos .combo-card:not(#full-course-2028) .combo-badge { background: var(--sl-ink) !important; color: #fff !important; -webkit-text-fill-color: #fff !important; border-radius: 999px !important; font-family: 'IBM Plex Mono', ui-monospace, monospace !important; font-size: 11px !important; font-weight: 500 !important; letter-spacing: .02em !important; padding: 4px 10px !important; }
+html body main #combos .combo-card:not(#full-course-2028) .combo-badge * { color: #fff !important; -webkit-text-fill-color: #fff !important; }
+html body main #combos .combo-card:not(#full-course-2028) .combo-title, html body main .courses-grid > * > .course-card.card .course-title { font-family: 'Archivo', system-ui, sans-serif !important; font-stretch: 125%; font-weight: 900 !important; letter-spacing: -0.015em !important; line-height: 1.05 !important; color: var(--sl-ink) !important; }
+html body main #combos .combo-card:not(#full-course-2028) .combo-title { font-size: 27px !important; }
+html body main #combos .combo-card:not(#full-course-2028) .combo-tagline { font-family: 'Archivo', system-ui, sans-serif !important; font-size: 14.5px !important; line-height: 1.45 !important; font-weight: 400 !important; color: var(--sl-dim) !important; }
+html body main #combos .combo-card:not(#full-course-2028) .combo-validity, html body main .courses-grid > * > .course-card.card .course-validity { background: none !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; font-family: 'IBM Plex Mono', ui-monospace, monospace !important; font-size: 12px !important; font-weight: 400 !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--sl-faint) !important; }
+html body main #combos .combo-card:not(#full-course-2028) .combo-deadline { background: #fff !important; border: 1px solid var(--sl-line) !important; border-radius: 14px !important; box-shadow: none !important; font-family: 'IBM Plex Mono', ui-monospace, monospace !important; font-size: 12px !important; }
+html body main #combos .combo-card:not(#full-course-2028) .combo-divider { background: var(--sl-hair) !important; height: 1px !important; border: 0 !important; }
+html body main #combos .combo-card:not(#full-course-2028) .combo-includes-label, html body main .courses-grid > * > .course-card.card .course-topics-label { font-family: 'Archivo', system-ui, sans-serif !important; font-size: 13.5px !important; font-weight: 500 !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--sl-dim) !important; background: none !important; border: 0 !important; padding: 0 !important; box-shadow: none !important; }
+html body main #combos .combo-card:not(#full-course-2028) .combo-includes li { background: none !important; border: 0 !important; border-bottom: 1px solid var(--sl-hair) !important; border-radius: 0 !important; box-shadow: none !important; padding: 8px 0 !important; font-family: 'Archivo', system-ui, sans-serif !important; font-size: 13.5px !important; line-height: 1.4 !important; color: var(--sl-dim) !important; }
+html body main #combos .combo-card:not(#full-course-2028) .combo-includes li b { color: var(--sl-ink) !important; font-weight: 600 !important; }
+html body main #combos .combo-card:not(#full-course-2028) .combo-check { width: 18px !important; height: 18px !important; min-width: 18px !important; border-radius: 999px !important; background: #fff !important; border: 1px solid var(--sl-line) !important; box-shadow: none !important; }
+html body main #combos .combo-card:not(#full-course-2028) .combo-check svg path { stroke: var(--sl-ink) !important; }
+html body main #combos .combo-card:not(#full-course-2028) .combo-price-row, html body main .courses-grid > * > .course-card.card .course-price-row { border-top: 1px solid var(--sl-hair) !important; }
+html body main #combos .combo-card:not(#full-course-2028) .combo-price, html body main .courses-grid > * > .course-card.card .course-price { font-family: 'Archivo', system-ui, sans-serif !important; font-stretch: 125%; font-weight: 900 !important; letter-spacing: -0.025em !important; line-height: 1 !important; color: var(--sl-ink) !important; }
+html body main #combos .combo-card:not(#full-course-2028) .combo-price { font-size: 36px !important; }
+html body main #combos .combo-card:not(#full-course-2028) .combo-price-old, html body main .courses-grid > * > .course-card.card .course-price-old { font-family: 'IBM Plex Mono', ui-monospace, monospace !important; font-size: 13px !important; font-weight: 400 !important; color: var(--sl-faint) !important; }
+html body main #combos .combo-card:not(#full-course-2028) .combo-discount, html body main .courses-grid > * > .course-card.card .course-pct { transform: none !important; background: #fff !important; color: var(--sl-ink) !important; border: 1px solid var(--sl-line) !important; box-shadow: none !important; border-radius: 999px !important; padding: 2px 9px !important; font-family: 'IBM Plex Mono', ui-monospace, monospace !important; font-size: 11.5px !important; font-weight: 500 !important; }
+html body main #combos .combo-card:not(#full-course-2028) .combo-saving { font-family: 'IBM Plex Mono', ui-monospace, monospace !important; font-size: 12px !important; font-weight: 400 !important; color: var(--sl-dim) !important; font-style: normal !important; }
+html body main #combos .combo-card:not(#full-course-2028) .combo-final-price > span { font-family: 'IBM Plex Mono', ui-monospace, monospace !important; color: var(--sl-faint) !important; }
+html body main #combos .combo-card:not(#full-course-2028) .btn, html body main .courses-grid > * > .course-card.card .btn { background: var(--sl-ink) !important; color: #fff !important; -webkit-text-fill-color: #fff !important; border: 0 !important; border-radius: 999px !important; box-shadow: none !important; transform: none !important; font-family: 'Archivo', system-ui, sans-serif !important; font-weight: 600 !important; font-size: 14.5px !important; padding: 12px 18px !important; }
+html body main #combos .combo-card:not(#full-course-2028) .btn *, html body main .courses-grid > * > .course-card.card .btn * { color: #fff !important; -webkit-text-fill-color: #fff !important; }
+@media (hover: hover) and (pointer: fine) { html body main #combos .combo-card:not(#full-course-2028) .btn:hover, html body main .courses-grid > * > .course-card.card .btn:hover { background: #2A2B30 !important; } }
+html body main #combos .combo-card:not(#full-course-2028) .combo-incl-toggle { border-radius: 999px !important; box-shadow: none !important; border: 1px solid var(--sl-line) !important; background: #fff !important; }
+/* Price row: price, struck-out price and the % pill centred on one line
+   ("all these don't seem to be in a straight line"). */
+html body main #combos .combo-card:not(#full-course-2028) .combo-price-row, html body main .courses-grid > * > .course-card.card .course-price-row { display: flex !important; flex-wrap: wrap; align-items: center !important; column-gap: 10px !important; row-gap: 6px !important; }
+html body main #combos .combo-card:not(#full-course-2028) .combo-price-row > *, html body main .courses-grid > * > .course-card.card .course-price-row > * { margin: 0 !important; align-self: center !important; line-height: 1 !important; transform: none !important; }
+html body main #combos .combo-card:not(#full-course-2028) .combo-discount, html body main .courses-grid > * > .course-card.card .course-pct { padding: 4px 9px !important; }
+/* Subject cards */
+html body main .courses-grid > * > .course-card.card .course-title { font-size: 19px !important; }
+html body main .courses-grid > * > .course-card.card .course-icon { border-radius: 12px !important; border: 1px solid var(--sl-line) !important; box-shadow: none !important; }
+html body main .courses-grid > * > .course-card.card .course-topic { font-family: 'Archivo', system-ui, sans-serif !important; font-size: 13.5px !important; color: var(--sl-dim) !important; }
+html body main .courses-grid > * > .course-card.card .course-topic::before { background: var(--sl-line) !important; border-radius: 999px !important; }
+html body main .courses-grid > * > .course-card.card .course-price { font-size: 28px !important; }
+@media (max-width: 600px) {
+  html body main #combos .combo-card:not(#full-course-2028) .combo-title { font-size: 24px !important; }
+  html body main #combos .combo-card:not(#full-course-2028) .combo-price { font-size: 32px !important; }
+  html body main .courses-grid > * > .course-card.card .course-price { font-size: 26px !important; }
+  html body main .courses-grid > * > .course-card.card .course-title { font-size: 16.5px !important; overflow-wrap: anywhere; }
+}
 </style>
 <script type="application/ld+json" id="course-jsonld">
 {
