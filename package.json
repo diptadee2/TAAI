@@ -8,11 +8,13 @@
     "load-schedule": "node scripts/load-schedule.mjs",
     "seed-scheduled-posts": "node scripts/seed-scheduled-posts.mjs",
     "seed-site-data": "node scripts/seed-site-data.mjs",
-    "load-task-links": "node scripts/load-task-links.mjs"
+    "load-task-links": "node scripts/load-task-links.mjs",
+    "prerender": "node scripts/prerender.mjs"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
-    "@babel/preset-react": "^7.26.0"
+    "@babel/preset-react": "^7.26.0",
+    "playwright": "1.63.0"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

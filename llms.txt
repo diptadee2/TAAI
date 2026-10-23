@@ -1,0 +1,28 @@
+# TAAI
+
+> TAAI is an online exam-preparation platform for GATE DA (the GATE paper in Data Science and Artificial Intelligence), run by Manoj Kumar (GATE AIR 13). Courses are recorded lectures that start from scratch, with weekly quizzes, a GATE-pattern test series, mentorship and a Discord community. Students have ranked in GATE DA 2025 and 2026 (see the testimonials page). Current prices, discounts and validity dates are on the course pages.
+
+## Courses
+
+- [GATE DA courses](https://taai.live/gate-da-courses): all bundles and single subjects, with prices and what each includes
+- GATE 2028 Full Course: covers GATE DA 2027 and 2028, all subjects, 300+ hours of lectures from scratch, weekly quizzes, personal mentorship over Zoom, and 5 portfolio projects (2 machine learning, 1 computer vision, 2 with large language models)
+- Maths & ML Bundle and Maths Bundle: Linear Algebra, Probability, Statistics, Calculus (plus Machine Learning in the Maths & ML Bundle)
+- Single subjects: Linear Algebra, Probability, Statistics, Calculus, Machine Learning, Python Programming
+- "100 pe 100% off": students on the GATE 2028 Full Course who register for the challenge and get an AIR under 100 in GATE DA 2027 get their course fee back. Terms: https://taai.live/refund-policy
+
+## Test series
+
+- [GATE DA test series](https://taai.live/gate-da-test-series): topic-wise tests, mixed-subject mini tests and full-length GATE-pattern papers, plus a weekly quiz pack
+
+## Free resources
+
+- [Free notes and lectures](https://taai.live/gate-da-free-notes): subject-wise notes and recorded lectures, including a Machine Learning from scratch series (being added lecture by lecture)
+- [Progress tracker](https://taai.live/gate-da-progress-tracker): a free day-by-day GATE DA study roadmap with a focus timer, streaks and leaderboards
+- [GATE DA 2027 syllabus and subject-wise weightage](https://taai.live/blogs/gate-da-syllabus-2027/): weightage from the 2024, 2025 and 2026 papers
+
+## About
+
+- [Student results and testimonials](https://taai.live/gate-da-toppers)
+- [Contact](https://taai.live/contact): support@taai.live
+- [Refund policy](https://taai.live/refund-policy) and [Privacy](https://taai.live/privacy)
+- Course platform (LMS): https://learn.taai.live

@@ -1,5 +1,7 @@
 [build]
-  command = "npm run build"
+  # prerender saves a drawn copy of each React page into dist/ for crawlers
+  # that don't run JavaScript; it never fails the build (scripts/prerender.mjs).
+  command = "npm run build && node scripts/prerender.mjs"
   publish = "dist"
 
 [build.environment]
