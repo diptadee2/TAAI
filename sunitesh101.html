@@ -443,7 +443,7 @@
       (tk ? '<div class="task-meta">' + whoTicked(tk, false) + '</div>' : '') + '</div></div>';
   }
   function chipHtml(n, canRemove) {
-    var mine = canRemove && S.me === n.added_by;
+    var mine = canRemove; // shared notes: either person can remove any link
     var host = ''; try { host = new URL(n.url).hostname.replace(/^www\./, ''); } catch (e) {}
     var icon = /drive\.google|docs\.google/.test(host) ? '📄' : '🔗';
     return '<span class="note-chip"><a href="' + esc(n.url) + '" target="_blank" rel="noopener noreferrer" title="' + esc(n.url) + '">' + icon + ' <b>' + esc(S.data.names[n.added_by]) + '</b>' +
@@ -546,7 +546,7 @@
       b.addEventListener('click', function () {
         if (!confirm('Remove this notes link?')) return;
         var id = b.getAttribute('data-remove');
-        api({ action: 'note-remove', id: id, by: S.me }).then(function () {
+        api({ action: 'note-remove', id: id }).then(function () {
           S.data.links = (S.data.links || []).filter(function (n) { return n.id !== id; }); S.data.linkMap = groupLinks(S.data.links);
           render(); toast('Link removed');
         }).catch(function () { toast("Couldn't remove it. Try again."); });

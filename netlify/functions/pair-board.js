@@ -15,7 +15,7 @@
 //   action 'tick'   { taskId, by, done } -> { ok, ticks }  (by: 0 or 1; that person's own tick)
 //   action 'names'  { names: [a, b] }  -> { ok, names }
 //   action 'note-add'    { taskId, by, url, label } -> { ok, note }
-//   action 'note-remove' { id, by }                 -> { ok }   (only the person who added it)
+//   action 'note-remove' { id }                     -> { ok }   (either person can remove any link)
 import crypto from 'node:crypto';
 import { getSupabase, json } from './lib/supabase.js';
 
@@ -118,7 +118,7 @@ export async function handler(event) {
 
   if (body.action === 'note-remove') {
     const id = String(body.id || '');
-    const { error: e } = await supabase.from('pair_notes').delete().eq('board', board).eq('id', id).eq('added_by', body.by === 1 ? 1 : 0);
+    const { error: e } = await supabase.from('pair_notes').delete().eq('board', board).eq('id', id);
     if (e) return reply(500, { error: e.message });
     return reply(200, { ok: true });
   }
