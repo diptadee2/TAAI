@@ -28,8 +28,8 @@
 <meta name="twitter:image" content="https://taai.live/og-banner.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@400;500;600&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&display=swap" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@400;500;600&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet"></noscript>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500&family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@400;500;600&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500&family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@400;500;600&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet"></noscript>
 <style>
 :root {
   --bg: #FFFFFF;
@@ -3422,6 +3422,100 @@ html body main #combos .plan120-go { font-size: 13px !important; }
   html body main .combo-side-col > .challenge-card, html body main .combo-side-col > .plan120-cta { padding: 16px !important; }
   html body main .challenge-title-main { font-size: 21px !important; }
 }
+
+/* ── SCORE LINE STYLE, GATE 2028 card only (2026-10-23) ──────────────────
+   Direct request: the 2028 card in the look of score-line.pages.dev:
+   off-white rounded card with a hairline border, wide heavy Archivo for the
+   title and price, small IBM Plex Mono labels, hairline list rows, a black
+   pill button and one purple accent. Everything is scoped to #full-course-2028
+   and its frame; the rest of the page keeps the neo-brutalist layer.
+   Delete this block to undo. */
+html body main #combos .combo-featured-frame.coming-soon { background: none !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; transform: none !important; }
+html body main #combos #full-course-2028 {
+  --sl-ink: #121316; --sl-dim: #5E6067; --sl-faint: #8A8C92; --sl-line: #E4E4DC; --sl-card: #FBFBF8; --sl-purple: #4F3CC9; --sl-lav: #ECE9FB;
+  background: var(--sl-card) !important; border: 1px solid var(--sl-line) !important; border-radius: 24px !important;
+  box-shadow: 0 1px 0 rgba(18,19,22,.03), 0 24px 48px -32px rgba(18,19,22,.28) !important;
+  padding: 32px !important; color: var(--sl-ink) !important; transform: none !important; overflow: hidden;
+}
+html body main #combos #full-course-2028 * { -webkit-text-fill-color: currentColor; }
+html body main #combos #full-course-2028 .combo-num, html body main #combos #full-course-2028 .combo-accent { display: none !important; }
+html body main #combos #full-course-2028 .combo-title {
+  font-family: 'Archivo', system-ui, sans-serif !important; font-stretch: 125%; font-weight: 900 !important;
+  font-size: 40px !important; line-height: 1.02 !important; letter-spacing: -0.015em !important; color: var(--sl-ink) !important; margin-bottom: 12px !important;
+}
+html body main #combos #full-course-2028 .combo-tagline { font-family: 'Archivo', system-ui, sans-serif !important; font-size: 16.5px !important; line-height: 1.5 !important; font-weight: 400 !important; color: var(--sl-dim) !important; max-width: 42ch !important; }
+html body main #combos #full-course-2028 .combo-validity {
+  display: inline-flex !important; margin-top: 16px !important; background: none !important; border: 0 !important; padding: 0 !important; box-shadow: none !important;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace !important; font-size: 12.5px !important; font-weight: 400 !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--sl-faint) !important;
+}
+html body main #combos #full-course-2028 .c28-attempts-note { font-family: 'Archivo', system-ui, sans-serif !important; font-size: 19px !important; line-height: 1.4 !important; font-weight: 500 !important; color: var(--sl-ink) !important; max-width: 36ch !important; }
+html body main #combos #full-course-2028 .combo-deadline { background: none !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; font-family: 'IBM Plex Mono', ui-monospace, monospace !important; font-size: 12.5px !important; color: var(--sl-dim) !important; }
+/* Price box */
+html body main #combos #full-course-2028 .c28-buy { background: #fff !important; border: 1px solid var(--sl-line) !important; border-radius: 20px !important; box-shadow: none !important; padding: 22px !important; }
+html body main #combos #full-course-2028 .combo-price {
+  font-family: 'Archivo', system-ui, sans-serif !important; font-stretch: 125%; font-weight: 900 !important; font-size: 44px !important;
+  line-height: 1 !important; letter-spacing: -0.025em !important; color: var(--sl-ink) !important;
+}
+html body main #combos #full-course-2028 .combo-price-old { font-family: 'IBM Plex Mono', ui-monospace, monospace !important; font-size: 14px !important; font-weight: 400 !important; color: var(--sl-faint) !important; }
+html body main #combos #full-course-2028 .combo-discount {
+  transform: none !important; background: var(--sl-lav) !important; color: var(--sl-purple) !important; border: 0 !important; box-shadow: none !important;
+  border-radius: 999px !important; padding: 3px 10px !important; font-family: 'IBM Plex Mono', ui-monospace, monospace !important; font-size: 12px !important; font-weight: 500 !important;
+}
+html body main #combos #full-course-2028 .c28-offer { font-family: 'IBM Plex Mono', ui-monospace, monospace !important; font-size: 12.5px !important; font-weight: 400 !important; color: var(--sl-dim) !important; margin-top: 14px !important; gap: 4px !important; }
+html body main #combos #full-course-2028 .c28-offer-ends { color: var(--sl-faint) !important; }
+html body main #combos #full-course-2028 .c28-offer-ends--today, html body main #combos #full-course-2028 .c28-offer-ends--today * { color: #DC2626 !important; -webkit-text-fill-color: #DC2626 !important; }
+html body main #combos #full-course-2028 .c28-buy .btn, html body main #combos #full-course-2028 .combo-soon-btn {
+  background: var(--sl-ink) !important; color: #fff !important; -webkit-text-fill-color: #fff !important; border: 0 !important; border-radius: 999px !important; box-shadow: none !important;
+  font-family: 'Archivo', system-ui, sans-serif !important; font-weight: 600 !important; font-size: 15px !important; padding: 14px 22px !important; transform: none !important; margin-top: 16px !important;
+}
+html body main #combos #full-course-2028 .c28-buy .btn * { color: #fff !important; -webkit-text-fill-color: #fff !important; }
+@media (hover: hover) and (pointer: fine) { html body main #combos #full-course-2028 .c28-buy .btn:hover { background: #2A2B30 !important; } }
+/* What's included: hairline rows */
+html body main #combos #full-course-2028 .c28-includes { border-top: 1px solid var(--sl-line) !important; padding-top: 22px !important; }
+html body main #combos #full-course-2028 .combo-includes-label {
+  font-family: 'Archivo', system-ui, sans-serif !important; font-size: 14px !important; font-weight: 500 !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--sl-dim) !important; margin-bottom: 6px !important;
+  background: none !important; border: 0 !important; padding: 0 !important; box-shadow: none !important;
+}
+html body main #combos #full-course-2028 .c28-includes .combo-includes ul { gap: 0 28px !important; }
+html body main #combos #full-course-2028 .c28-includes .combo-includes li {
+  background: none !important; border: 0 !important; border-bottom: 1px solid var(--sl-line) !important; box-shadow: none !important; border-radius: 0 !important;
+  padding: 12px 0 !important; font-family: 'Archivo', system-ui, sans-serif !important; font-size: 14.5px !important; line-height: 1.45 !important; color: var(--sl-dim) !important; align-items: flex-start !important;
+}
+html body main #combos #full-course-2028 .c28-includes .combo-includes li b { color: var(--sl-ink) !important; font-weight: 600 !important; }
+html body main #combos #full-course-2028 .c28-includes .combo-check { width: 20px !important; height: 20px !important; min-width: 20px !important; border-radius: 999px !important; background: var(--sl-lav) !important; border: 0 !important; box-shadow: none !important; margin-top: 1px !important; }
+html body main #combos #full-course-2028 .c28-includes .combo-check svg path { stroke: var(--sl-purple) !important; }
+/* Projects: like the reference's "Findings" cards */
+html body main #combos #full-course-2028 .c28-projects { background: none !important; border: 0 !important; border-top: 1px solid var(--sl-line) !important; box-shadow: none !important; padding: 22px 0 0 !important; border-radius: 0 !important; }
+html body main #combos #full-course-2028 .c28-projects .combo-projects-link { color: var(--sl-purple) !important; font-family: 'Archivo', system-ui, sans-serif !important; font-weight: 600 !important; border-bottom: 0 !important; }
+html body main #combos #full-course-2028 .c28-projects .combo-projects-link > span { border-bottom: 0 !important; }
+html body main #combos #full-course-2028 .c28-projects .combo-projects-list li {
+  background: #fff !important; border: 1px solid var(--sl-line) !important; border-radius: 18px !important; box-shadow: none !important; padding: 18px !important; gap: 10px !important;
+}
+html body main #combos #full-course-2028 .c28-proj-count {
+  background: none !important; color: var(--sl-ink) !important; -webkit-text-fill-color: var(--sl-ink) !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; height: auto !important; min-width: 0 !important;
+  font-family: 'Archivo', system-ui, sans-serif !important; font-stretch: 125%; font-weight: 900 !important; font-size: 34px !important; line-height: 1 !important; place-items: start !important; display: block !important;
+}
+html body main #combos #full-course-2028 .c28-projects .combo-projects-list li > span > b { font-family: 'Archivo', system-ui, sans-serif !important; font-weight: 700 !important; font-size: 15.5px !important; color: var(--sl-ink) !important; }
+html body main #combos #full-course-2028 .c28-projects .combo-projects-pitch { font-family: 'Archivo', system-ui, sans-serif !important; color: var(--sl-dim) !important; font-size: 13.5px !important; }
+html body main #combos #full-course-2028 .c28-projects .combo-projects-note { font-family: 'Archivo', system-ui, sans-serif !important; font-weight: 500 !important; color: var(--sl-ink) !important; }
+html body main #combos #full-course-2028 .combo-proj-toggle { background: #fff !important; border: 1px solid var(--sl-line) !important; border-radius: 999px !important; box-shadow: none !important; font-family: 'Archivo', system-ui, sans-serif !important; }
+html body main #combos #full-course-2028 .combo-incl-toggle { border-radius: 999px !important; box-shadow: none !important; border: 1px solid var(--sl-line) !important; background: #fff !important; }
+html body main #combos #full-course-2028 .c28-projects .combo-projects-link { display: inline !important; line-height: 1.5 !important; }
+html body main .combo-projects-link .nowrap-tail { white-space: nowrap; }
+html body main #combos #full-course-2028 .c28-projects .combo-projects-arrow { display: inline-block !important; vertical-align: -2px; margin-left: 5px !important; }
+@media (max-width: 1279px) and (min-width: 1025px) {
+  html body main #combos #full-course-2028 .combo-title { font-size: 32px !important; }
+  html body main #combos #full-course-2028 .combo-price { font-size: 38px !important; }
+}
+@media (max-width: 600px) {
+  html body main #combos #full-course-2028 { padding: 20px !important; border-radius: 20px !important; }
+  html body main #combos #full-course-2028 .combo-title { font-size: 30px !important; }
+  html body main #combos #full-course-2028 .combo-price { font-size: 42px !important; }
+  html body main #combos #full-course-2028 .c28-attempts-note { font-size: 17px !important; }
+  html body main #combos #full-course-2028 .c28-buy { padding: 18px !important; }
+  html body main #combos #full-course-2028 .c28-projects .combo-projects-list li { padding: 12px 14px !important; flex-direction: row !important; align-items: center !important; }
+  html body main #combos #full-course-2028 .c28-proj-count { font-size: 24px !important; min-width: 36px !important; }
+}
 </style>
 <script type="application/ld+json" id="course-jsonld">
 {
@@ -4969,7 +5063,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
           <div className="combo-projects c28-projects">
             <div className="c28-projects-top">
               <div className="combo-includes-label">{c.projectsLabel}</div>
-              <a href="#projects-map" className="combo-projects-link"><span>All built on the maths you study for GATE. See how</span><svg className="combo-projects-arrow" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="square" aria-hidden="true"><path d="M8 13.5V3M3.5 7.5L8 3l4.5 4.5" /></svg></a>
+              <a href="#projects-map" className="combo-projects-link"><span>All built on the maths you study for GATE. <span className="nowrap-tail">See how<svg className="combo-projects-arrow" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="square" aria-hidden="true"><path d="M8 13.5V3M3.5 7.5L8 3l4.5 4.5" /></svg></span></span></a>
             </div>
             <ul className={'combo-projects-list' + (projOpen ? ' is-open' : '')}>
               {c.projects.map(p => (
