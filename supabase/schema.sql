@@ -1167,3 +1167,19 @@ CREATE TABLE IF NOT EXISTS pair_notes (
 CREATE INDEX IF NOT EXISTS pair_notes_board_idx ON pair_notes (board);
 ALTER TABLE pair_notes ENABLE ROW LEVEL SECURITY;
 GRANT SELECT, INSERT, UPDATE, DELETE ON pair_notes TO service_role;
+
+-- Pair tracker revision map (2026-10-23): one row per topic day on a board.
+-- takeaway is a shared 1-2 line summary (anyone can edit it); conf0/conf1 are
+-- each person's own confidence: 1 got it, 2 shaky, 3 weak, NULL not rated.
+CREATE TABLE IF NOT EXISTS pair_topics (
+  board TEXT NOT NULL REFERENCES pair_boards(slug) ON DELETE CASCADE,
+  task_id TEXT NOT NULL,
+  takeaway TEXT,
+  takeaway_by SMALLINT CHECK (takeaway_by IN (0, 1)),
+  takeaway_at TIMESTAMPTZ,
+  conf0 SMALLINT CHECK (conf0 IN (1, 2, 3)),
+  conf1 SMALLINT CHECK (conf1 IN (1, 2, 3)),
+  PRIMARY KEY (board, task_id)
+);
+ALTER TABLE pair_topics ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON pair_topics TO service_role;

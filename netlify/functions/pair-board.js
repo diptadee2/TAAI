@@ -16,6 +16,8 @@
 //   action 'names'  { names: [a, b] }  -> { ok, names }
 //   action 'note-add'    { taskId, by, url, label } -> { ok, note }
 //   action 'note-remove' { id }                     -> { ok }   (either person can remove any link)
+//   action 'takeaway'   { taskId, by, text }        -> { ok, topic }  (shared 1-2 line summary, '' clears)
+//   action 'confidence' { taskId, by, level }       -> { ok, topic }  (that person's own: 1 got it, 2 shaky, 3 weak, null)
 import crypto from 'node:crypto';
 import { getSupabase, json } from './lib/supabase.js';
 
@@ -62,14 +64,17 @@ export async function handler(event) {
   }
 
   if (body.action === 'load') {
-    const [{ data: ticks, error: tErr }, notesRes] = await Promise.all([
+    const [{ data: ticks, error: tErr }, notesRes, topicsRes] = await Promise.all([
       supabase.from('pair_ticks').select('task_id, done_by, done_at').eq('board', board),
       supabase.from('pair_notes').select('id, task_id, added_by, url, label, created_at').eq('board', board).order('created_at'),
+      supabase.from('pair_topics').select('task_id, takeaway, takeaway_by, takeaway_at, conf0, conf1').eq('board', board),
     ]);
     if (tErr) return reply(500, { error: tErr.message });
     // links: [] (not an error) until the pair_notes table exists.
     return reply(200, { open, title: row.roadmap.title, notes: row.roadmap.notes || [], sections: row.roadmap.sections, names: row.names, ticks: ticks || [],
-      links: notesRes.error ? [] : (notesRes.data || []), linksReady: !notesRes.error });
+      links: notesRes.error ? [] : (notesRes.data || []), linksReady: !notesRes.error,
+      // topics: [] until the pair_topics table exists (takeaways and confidence hidden).
+      topics: topicsRes.error ? [] : (topicsRes.data || []), topicsReady: !topicsRes.error });
   }
 
   if (body.action === 'tick') {
@@ -121,6 +126,27 @@ export async function handler(event) {
     const { error: e } = await supabase.from('pair_notes').delete().eq('board', board).eq('id', id);
     if (e) return reply(500, { error: e.message });
     return reply(200, { ok: true });
+  }
+
+  // Revision map (2026-10-23): a shared takeaway and each person's confidence
+  // per topic day. Revision items (<date>:rev) don't get their own.
+  if (body.action === 'takeaway' || body.action === 'confidence') {
+    const taskId = String(body.taskId || '');
+    if (!taskIds.has(taskId) || taskId.includes(':')) return reply(400, { error: 'unknown task' });
+    const by = body.by === 1 ? 1 : 0;
+    const row = { board, task_id: taskId };
+    if (body.action === 'takeaway') {
+      const text = String(body.text || '').replace(/\r/g, '').trim();
+      if (text.length > 400) return reply(400, { error: 'Keep the takeaway under 400 characters' });
+      Object.assign(row, { takeaway: text || null, takeaway_by: text ? by : null, takeaway_at: text ? new Date().toISOString() : null });
+    } else {
+      const level = [1, 2, 3].includes(body.level) ? body.level : null;
+      row['conf' + by] = level;
+    }
+    const { data, error: e } = await supabase.from('pair_topics').upsert(row, { onConflict: 'board,task_id' })
+      .select('task_id, takeaway, takeaway_by, takeaway_at, conf0, conf1').single();
+    if (e) return reply(500, { error: e.message });
+    return reply(200, { ok: true, topic: data });
   }
 
   return reply(400, { error: 'unknown action' });
