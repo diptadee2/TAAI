@@ -3631,6 +3631,73 @@ html body main .courses-grid > * > .course-card.card .course-price { font-size: 
   html body main .courses-grid > * > .course-card.card .course-price { font-size: 26px !important; }
   html body main .courses-grid > * > .course-card.card .course-title { font-size: 16.5px !important; overflow-wrap: anywhere; }
 }
+
+/* ── SCORE LINE STYLE, the elements around the cards (2026-10-24) ─────────
+   Direct request ("any other neo brutalist elements to change around the
+   cards to blend in?" then "yes"): the challenge and 120-day cards beside the
+   2028 card, the "What's included in each bundle" table, the "Valid till GATE
+   2027" tag and the orientation button. Section headings (yellow highlighter)
+   and the "For GATE ..." divider lines stay neo-brutalist on purpose: they are
+   the page's frame. Delete this block to undo. */
+html body main #combos .combo-side-col > .challenge-card, html body main #combos .combo-side-col > .plan120-cta {
+  --sl-ink: #121316; --sl-dim: #4F5058;
+  --sl-bg: color-mix(in srgb, var(--tint) 30%, #FBFBF8);
+  --sl-line: color-mix(in srgb, var(--tint) 70%, #121316 18%);
+  --sl-hair: color-mix(in srgb, var(--tint) 60%, #FBFBF8);
+  background: var(--sl-bg) !important; border: 1px solid var(--sl-line) !important; border-radius: 22px !important;
+  box-shadow: 0 1px 0 rgba(18,19,22,.03), 0 20px 40px -30px rgba(18,19,22,.30) !important; transform: none !important; color: var(--sl-ink) !important;
+}
+html body main #combos .combo-side-col > .challenge-card { --tint: #FDE047; }
+html body main #combos .combo-side-col > .plan120-cta { --tint: #BEF264; }
+html body main #combos .combo-side-col > .challenge-card *, html body main #combos .combo-side-col > .plan120-cta * { -webkit-text-fill-color: currentColor; color: inherit; }
+html body main #combos .combo-side-col > .challenge-card .challenge-icon { background: #fff !important; border: 1px solid var(--sl-line) !important; border-radius: 12px !important; box-shadow: none !important; color: var(--sl-ink) !important; }
+html body main #combos .combo-side-col > .challenge-card .challenge-title-main, html body main #combos .combo-side-col > .plan120-cta .plan120-title { font-family: 'Archivo', system-ui, sans-serif !important; font-stretch: 125%; font-weight: 900 !important; letter-spacing: -0.015em !important; line-height: 1.05 !important; color: var(--sl-ink) !important; }
+html body main #combos .combo-side-col > .challenge-card .challenge-title-main b { background: none !important; color: var(--sl-ink) !important; -webkit-text-fill-color: var(--sl-ink) !important; text-decoration: none !important; border: 0 !important; box-shadow: inset 0 -0.32em 0 rgba(253,224,71,.9); }
+html body main #combos .combo-side-col > .challenge-card .challenge-title-sub { font-family: 'IBM Plex Mono', ui-monospace, monospace !important; font-weight: 500 !important; color: var(--sl-dim) !important; letter-spacing: 0 !important; }
+html body main #combos .combo-side-col > .challenge-card .challenge-sub, html body main #combos .combo-side-col > .challenge-card .challenge-fact, html body main #combos .combo-side-col > .challenge-card .challenge-why-us, html body main #combos .combo-side-col > .challenge-card .challenge-deadline, html body main #combos .combo-side-col > .challenge-card .challenge-why li, html body main #combos .combo-side-col > .plan120-cta .plan120-sub, html body main #combos .combo-side-col > .plan120-cta .plan120-list span { font-family: 'Archivo', system-ui, sans-serif !important; color: var(--sl-dim) !important; }
+html body main #combos .combo-side-col > .challenge-card b { color: var(--sl-ink) !important; }
+html body main #combos .combo-side-col > .challenge-card .challenge-sub b { color: var(--sl-ink) !important; }
+html body main #combos .combo-side-col > .challenge-card .challenge-fact, html body main #combos .combo-side-col > .challenge-card .challenge-why, html body main #combos .combo-side-col > .challenge-card .challenge-why-us, html body main #combos .combo-side-col > .challenge-card .challenge-register { border-top: 1px solid var(--sl-hair) !important; border-bottom: 0 !important; }
+html body main #combos .combo-side-col > .challenge-card .challenge-why-title { font-family: 'Archivo', system-ui, sans-serif !important; color: var(--sl-ink) !important; font-weight: 700 !important; }
+html body main #combos .combo-side-col > .challenge-card .challenge-why li::before { background: var(--sl-line) !important; }
+html body main #combos .combo-side-col > .challenge-card .challenge-register-btn { background: var(--sl-ink) !important; color: #fff !important; -webkit-text-fill-color: #fff !important; border: 0 !important; border-radius: 999px !important; box-shadow: none !important; transform: none !important; font-family: 'Archivo', system-ui, sans-serif !important; font-weight: 600 !important; }
+html body main #combos .combo-side-col > .challenge-card .challenge-register-btn * { color: #fff !important; -webkit-text-fill-color: #fff !important; }
+html body main #combos .combo-side-col > .plan120-cta .plan120-list { border-top: 1px solid var(--sl-hair) !important; border-bottom: 1px solid var(--sl-hair) !important; }
+html body main #combos .combo-side-col > .plan120-cta .plan120-list span::before { background: var(--sl-line) !important; border-radius: 999px !important; }
+html body main #combos .combo-side-col > .plan120-cta .plan120-go { font-family: 'Archivo', system-ui, sans-serif !important; color: var(--sl-ink) !important; border-bottom: 1px solid var(--sl-ink) !important; }
+@media (hover: hover) and (pointer: fine) { html body main #combos .combo-side-col > .plan120-cta:hover { background: color-mix(in srgb, var(--tint) 40%, #FBFBF8) !important; } }
+@media (max-width: 400px) { html body main #combos .combo-side-col > .challenge-card .challenge-title-main { font-size: 19px !important; font-stretch: 112%; } }
+/* Comparison table */
+html body main .compare-wrap { background: #FBFBF8 !important; border: 1px solid #E4E4DC !important; border-radius: 24px !important; box-shadow: 0 1px 0 rgba(18,19,22,.03), 0 24px 48px -32px rgba(18,19,22,.28) !important; transform: none !important; }
+html body main .compare-wrap .compare-label { font-family: 'Archivo', system-ui, sans-serif !important; font-stretch: 125%; font-weight: 900 !important; letter-spacing: -0.01em !important; color: #121316 !important; }
+html body main .compare-wrap .compare-outer, html body main .compare-wrap .compare-scroll, html body main .compare-wrap .compare-table { border: 0 !important; box-shadow: none !important; background: transparent !important; border-radius: 16px; }
+html body main .compare-wrap .compare-head, html body main .compare-wrap .compare-head-cell { background: transparent !important; border: 0 !important; box-shadow: none !important; }
+html body main .compare-wrap .compare-head { border-bottom: 1px solid #E4E4DC !important; }
+html body main .compare-wrap .compare-head-cell { font-family: 'Archivo', system-ui, sans-serif !important; color: #121316 !important; }
+html body main .compare-wrap .compare-head-cell.featured, html body main .compare-wrap .compare-cell.featured, html body main .compare-wrap .compare-footer-cell.featured { background: #F3F1FC !important; }
+html body main .compare-wrap .compare-head-cell.featured { border-radius: 16px 16px 0 0 !important; }
+html body main .compare-wrap .compare-footer-cell.featured { border-radius: 0 0 16px 16px !important; }
+html body main .compare-wrap .compare-table .compare-row .compare-cell.featured, html body main .compare-wrap .compare-table .compare-row:nth-child(odd) .compare-cell.featured, html body main .compare-wrap .compare-table .compare-row:nth-child(even) .compare-cell.featured { background: #F3F1FC !important; }
+html body main .compare-wrap .compare-head-cell.featured::before, html body main .compare-wrap .compare-head-cell.featured::after, html body main .compare-wrap .compare-footer-cell.featured::before, html body main .compare-wrap .compare-footer-cell.featured::after { display: none !important; }
+html body main .compare-wrap .compare-head-cell span { background: #ECE9FB !important; color: #4F3CC9 !important; -webkit-text-fill-color: #4F3CC9 !important; border: 0 !important; border-radius: 999px !important; box-shadow: none !important; font-family: 'IBM Plex Mono', ui-monospace, monospace !important; }
+html body main .compare-wrap .compare-head-sub { font-family: 'IBM Plex Mono', ui-monospace, monospace !important; font-style: normal !important; color: #7A7B82 !important; }
+html body main .compare-wrap .compare-row, html body main .compare-wrap .compare-cell { background: transparent !important; box-shadow: none !important; }
+html body main .compare-wrap .compare-row { border: 0 !important; border-bottom: 1px solid #ECECE5 !important; }
+html body main .compare-wrap .compare-cell { border: 0 !important; font-family: 'Archivo', system-ui, sans-serif !important; color: #4F5058 !important; }
+html body main .compare-wrap .compare-cell.feat-name { color: #121316 !important; }
+html body main .compare-wrap .compare-val-text { font-family: 'IBM Plex Mono', ui-monospace, monospace !important; color: #4F5058 !important; }
+html body main .compare-wrap .compare-footer, html body main .compare-wrap .compare-footer-cell { background: transparent !important; border: 0 !important; box-shadow: none !important; }
+html body main .compare-wrap .compare-price { font-family: 'Archivo', system-ui, sans-serif !important; font-stretch: 125%; font-weight: 900 !important; letter-spacing: -0.02em !important; color: #121316 !important; font-size: 24px !important; }
+html body main .compare-wrap .compare-enroll-btn { background: #121316 !important; color: #fff !important; -webkit-text-fill-color: #fff !important; border: 0 !important; border-radius: 999px !important; box-shadow: none !important; transform: none !important; font-family: 'Archivo', system-ui, sans-serif !important; font-weight: 600 !important; padding: 10px 18px !important; }
+@media (hover: hover) and (pointer: fine) { html body main .compare-wrap .compare-enroll-btn:hover { background: #2A2B30 !important; } }
+/* Small pieces */
+html body main .valid-tag { background: #fff !important; border: 1px solid #DCDCD3 !important; border-radius: 999px !important; box-shadow: none !important; transform: none !important; padding: 5px 12px !important; font-family: 'IBM Plex Mono', ui-monospace, monospace !important; font-size: 12px !important; font-weight: 500 !important; letter-spacing: 0 !important; text-transform: none !important; color: #121316 !important; }
+html body main #combos .orient-btn { background: #fff !important; border: 1px solid #DCDCD3 !important; border-radius: 999px !important; box-shadow: 0 12px 28px -20px rgba(18,19,22,.35) !important; transform: none !important; padding: 8px 18px 8px 8px !important; }
+html body main #combos .orient-btn .orient-play { border-radius: 999px !important; background: #121316 !important; border: 0 !important; }
+html body main #combos .orient-btn .orient-play svg path { fill: #fff !important; }
+html body main #combos .orient-btn .orient-text b { font-family: 'Archivo', system-ui, sans-serif !important; color: #121316 !important; }
+html body main #combos .orient-btn .orient-text span { font-family: 'IBM Plex Mono', ui-monospace, monospace !important; color: #7A7B82 !important; font-weight: 400 !important; }
+@media (hover: hover) and (pointer: fine) { html body main #combos .orient-btn:hover { border-color: #121316 !important; } }
 </style>
 <script type="application/ld+json" id="course-jsonld">
 {
