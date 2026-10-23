@@ -222,7 +222,8 @@
     var due = list.filter(function (t) { return t.id < today; });
     var late = due.filter(function (t) { return !d.tickMap[t.id]; });
     var last = list[list.length - 1], first = list[0];
-    var daysLeft = last ? Math.max(0, daysBetween(today, last.id)) : 0;
+    // Days of the roadmap still ahead, counting today (all of them before it starts).
+    var daysLeft = !last ? 0 : today < first.id ? list.length : Math.max(0, daysBetween(today, last.id) + 1);
     var todayTask = list.filter(function (t) { return t.id === today; })[0];
 
     var html = '<div class="wrap">';
