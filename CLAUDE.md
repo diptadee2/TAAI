@@ -605,12 +605,12 @@ Push reaches **both** `github.com/taai2025/TAAI` (primary) and `github.com/dipta
 - **Home financial assistance card**: priority now reads "recent GATE DA droppers" (was "GATE droppers"), and its two em dashes became full stops.
 - **Pomodoro Start/Reset/Skip redesigned 2026-10-03** ("too ai slop"): Start/Pause is a solid 46px rounded-rectangle in the picked theme's middle color (`--pomo-g2`, break color during breaks) with dark text, no gradient or glow; Reset and Skip are 46px round outline icon buttons either side (labels kept for screen readers, `title` tooltips), markup reordered to Reset, Start, Skip. Other `.pomo-btn-primary` buttons (Save changes, gate buttons, About Save) take the same solid style.
 
-## Open items as of 2026-10-09 (pick up here)
+## Open items as of 2026-10-24 (pick up here)
 
-**Deploy timing (the user deploys; check `curl https://taai.live/api/version` against `CLIENT_VERSION` to see what's live):**
-- **Before 00:00 IST Oct 11**: the sold-out 2027 card's "Final price ₹15,000" and the "Last day to enrol Oct 10" countdown need to be live.
-- **Before 00:00 IST Oct 21**: `pricing-2028-cutover.js` (2028 card 9999 to 11999, 33% to 20%) and the 2028 offer line hiding itself both need to be deployed.
-- Everything since 2026-10-02 is committed and pushed but not necessarily deployed. The biggest pieces: the leaderboard cache, the refund policy, the /team Day card tab, Oct 9 = Day 1 for 120 Days, and the mobile courses-page work.
+**Deploy state (the user deploys; check `curl https://taai.live/api/version` against `CLIENT_VERSION` to see what's live):**
+- As of 2026-10-24 everything is committed and pushed; the next deploy ships the courses-page Score Line restyle, the /sunitesh101 who-is-who popup and labelled revision map, and the leaderboard snapshot functions (their SQL is already run in production, see "Leaderboard data in one database request each"). Production was on `CLIENT_VERSION` 2026-10-18-1, the same as the code, so open tracker tabs won't reload.
+- The Oct 11 and Oct 21 pricing deadlines have passed; `pricing-2028-cutover.js` and its `netlify.toml` cron can be removed once the 2028 price is confirmed at 11999 on the live site.
+- Deploy from git, not `netlify deploy` from the project folder: untracked screenshots in the root (`hero-*.png`, `umesh-*.png`, ...) would be published.
 
 **Watch after deploying:**
 - **Supabase Log Ingestion** (was 3.35 GB / 1 GB, enforcement from early 2027): the leaderboard cache (see "Leaderboard polls share a 30s server-side cache") should cut it sharply. If it's still high, check Supabase Logs > API Gateway for the top request paths. Next candidates: `tracker-data` page loads, `pomo-active` syncs.
@@ -635,6 +635,7 @@ Push reaches **both** `github.com/taai2025/TAAI` (primary) and `github.com/dipta
 - **Comparing old and new function code**: copy the old file to the scratchpad, rewrite its `./lib/supabase.js` import to an absolute path, and call both `handler()`s with the same event. Strip second-by-second fields (`pomo_last_seen_at`, `liveCount`) before comparing.
 - **Faking the date for date-gated UI**: `page.clock.install({ time: new Date('2026-10-11T01:00:00+05:30') })` before `goto`, then `page.clock.runFor(...)`.
 - **Courses page smooth scroll**: set `document.documentElement.style.scrollBehavior = 'auto'` before measuring positions or taking screenshots after scrolling; otherwise they can be caught mid-scroll.
+- **Testing new SQL before the user runs it in production**: there's no database URL locally, but Homebrew Postgres 14 is installed. Make a throwaway cluster in the scratchpad (`initdb -D <dir> -U postgres -A trust`, then `pg_ctl -D <dir> -o "-p 55432 -k '' -c listen_addresses=127.0.0.1" start`; the Unix socket path is too long in the scratchpad, so TCP only), create just the tables the SQL touches with the same column types, copy the relevant production rows in via supabase-js (`jsonb_populate_recordset`), and run the real handlers with `client.rpc` patched to call the local function through `psql`. Compare against the committed code in separate processes run at the same moment. Stop the cluster after.
 - **Skills**: installed with `npx skills add <owner/repo> -s '*' -a claude-code -y` into `.claude/skills/` (untracked in git). `agricidaniel/claude-ads` (34 `ads-*` skills) was added 2026-10-09; `ads-create` shaped the Day card poster.
 - **Commit messages**: no `Co-Authored-By` trailer (the user's rule overrides the tooling reminder). Never stage `package.json` / `package-lock.json` (two deps added outside these sessions).
 
