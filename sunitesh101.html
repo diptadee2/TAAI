@@ -10,9 +10,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
-<!-- Private pair-study tracker (2026-10-23). Passcode-protected: this file holds no
-     roadmap content; everything comes from /api/pair-board after unlocking.
-     Not linked anywhere, not in the sitemap, noindex. -->
+<!-- Private pair-study tracker (2026-10-23). This file holds no roadmap content;
+     everything comes from /api/pair-board. Open to anyone with the link (no
+     passcode, at the user's request), but not linked anywhere, not in the
+     sitemap, and noindex. -->
 <style>
   :root {
     --paper: #FFF4D6; --card: #FFFFFF; --ink: #111111; --ink-dim: #4A4A4A; --ink-soft: #6B6B6B;
@@ -229,7 +230,7 @@
       ' · ' + list.length + ' days, ' + fmtDay(first.id).dm + ' to ' + fmtDay(last.id).dm + '</div></div>' +
       '<div class="who"><span class="who-label">Ticking as</span><div class="seg" role="group" aria-label="Who is ticking">' +
         [0, 1].map(function (i) { return '<button type="button" data-me="' + i + '" aria-pressed="' + (S.me === i) + '">' + esc(names[i]) + '</button>'; }).join('') +
-      '</div><div class="tools"><button class="btn-ghost btn" id="rename-btn" type="button">Rename</button><button class="btn-ghost btn" id="lock-btn" type="button">Lock</button></div></div></div>';
+      '</div><div class="tools"><button class="btn-ghost btn" id="rename-btn" type="button">Rename</button>' + (d.open ? '' : '<button class="btn-ghost btn" id="lock-btn" type="button">Lock</button>') + '</div></div></div>';
 
     html += '<div class="box rename' + (S.renaming ? ' show' : '') + '"><form id="rename-form"><label>Person 1<input name="n0" maxlength="24" value="' + esc(names[0]) + '" required></label>' +
       '<label>Person 2<input name="n1" maxlength="24" value="' + esc(names[1]) + '" required></label>' +
@@ -311,7 +312,8 @@
     app.querySelectorAll('[data-tick]').forEach(function (b) {
       b.addEventListener('click', function () { tick(b.getAttribute('data-tick')); });
     });
-    document.getElementById('lock-btn').addEventListener('click', function () {
+    var lockBtn = document.getElementById('lock-btn');
+    if (lockBtn) lockBtn.addEventListener('click', function () {
       store(KEY_CODE, null); S.code = null; S.data = null; renderLock();
     });
     document.getElementById('rename-btn').addEventListener('click', function () { S.renaming = !S.renaming; render(); });
@@ -355,13 +357,15 @@
   // Start
   var savedMe = read(KEY_ME);
   S.me = savedMe === '0' || savedMe === '1' ? Number(savedMe) : null;
-  S.code = read(KEY_CODE);
-  if (S.code) {
-    app.innerHTML = '<div class="lock"><div class="hint">Loading…</div></div>';
-    load().catch(function (err) { store(KEY_CODE, null); S.code = null; renderLock(err.status === 401 ? '' : "Couldn't reach the server. Try again."); });
-  } else {
-    renderLock();
-  }
+  // The board is open (no passcode) since 2026-10-23; the lock screen only
+  // appears if a passcode is ever set on it again.
+  S.code = read(KEY_CODE) || '';
+  app.innerHTML = '<div class="lock"><div class="hint">Loading…</div></div>';
+  load().catch(function (err) {
+    store(KEY_CODE, null); S.code = null;
+    if (err.status === 401) renderLock();
+    else app.innerHTML = '<div class="lock"><div class="box lock-card"><h1>Couldn\'t load</h1><div class="hint">Check your connection.</div><button class="btn btn-yellow" style="margin-top:14px" onclick="location.reload()">Try again</button></div></div>';
+  });
 })();
 </script>
 </body>

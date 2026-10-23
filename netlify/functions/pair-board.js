@@ -6,7 +6,9 @@
 // Nothing private lives in this file or the page, because the repo is public:
 // the roadmap text and a SHA-256 hash of the passcode are stored only in the
 // pair_boards row (loaded by scripts/seed-pair-board.mjs from a gitignored
-// file). Every action, including reading the roadmap, needs the passcode.
+// file). Every action, including reading the roadmap, needs the passcode,
+// unless the board has none: an empty passcode_hash means an open board
+// (/sunitesh101 since 2026-10-23, at the user's request; it stays noindex).
 //
 // Body: { board, code, action, ... }
 //   action 'load'                      -> { title, notes, sections, names, ticks }
@@ -39,13 +41,14 @@ export async function handler(event) {
   try { body = JSON.parse(event.body || '{}'); } catch { return reply(400, { error: 'invalid JSON' }); }
   const board = String(body.board || '').slice(0, 60);
   const code = String(body.code || '').slice(0, 100);
-  if (!board || !code) return reply(401, { error: 'locked' });
+  if (!board) return reply(401, { error: 'locked' });
 
   const supabase = getSupabase();
   const { data: row, error } = await supabase.from('pair_boards').select('*').eq('slug', board).maybeSingle();
   // A missing board and a wrong passcode look the same from outside, and both
   // wait a moment so guessing is slow.
-  if (error || !row || !sameHash(passcodeHash(board, code), row.passcode_hash)) {
+  const open = !!row && !row.passcode_hash;
+  if (error || !row || (!open && !sameHash(passcodeHash(board, code), row.passcode_hash))) {
     await new Promise(r => setTimeout(r, 600));
     return reply(401, { error: 'locked' });
   }
@@ -56,7 +59,7 @@ export async function handler(event) {
   if (body.action === 'load') {
     const { data: ticks, error: tErr } = await supabase.from('pair_ticks').select('task_id, done_by, done_at').eq('board', board);
     if (tErr) return reply(500, { error: tErr.message });
-    return reply(200, { title: row.roadmap.title, notes: row.roadmap.notes || [], sections: row.roadmap.sections, names: row.names, ticks: ticks || [] });
+    return reply(200, { open, title: row.roadmap.title, notes: row.roadmap.notes || [], sections: row.roadmap.sections, names: row.names, ticks: ticks || [] });
   }
 
   if (body.action === 'tick') {
