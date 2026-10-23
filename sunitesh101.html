@@ -207,7 +207,18 @@
   .grow:last-child { border-bottom: 0; }
   .grow-label b { display: block; font-size: 13.5px; line-height: 1.25; }
   .grow-label span { font-size: 11.5px; color: var(--ink-dim); font-weight: 600; }
-  .grow-cells { display: flex; flex-wrap: wrap; gap: 5px; }
+  .grow-cells { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tl { position: relative; font: inherit; text-align: left; color: var(--ink); background: #fff; border: 2px solid var(--ink); padding: 5px 9px 4px; cursor: pointer; display: inline-flex; flex-direction: column; gap: 1px; min-width: 0; max-width: 190px; }
+  .tl-name { font-size: 12.5px; font-weight: 700; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tl-meta { font-family: 'DM Mono', monospace; font-size: 10.5px; color: var(--ink-dim); }
+  .tl-rev { position: absolute; top: -8px; right: -6px; background: var(--ink); color: var(--yellow); font-size: 10px; font-weight: 800; padding: 1px 5px; line-height: 1.3; font-family: 'DM Mono', monospace; }
+  .tl.sq-notes { background: #D9F99D; }
+  .tl.sq-empty { background: #fff; border-color: #EA580C; }
+  .tl.sq-next { background: transparent; border: 2px dashed #C4BBA8; }
+  .tl.sq-next .tl-name { color: var(--ink-dim); font-weight: 600; }
+  .legend .sw { width: 16px; height: 16px; display: inline-block; border: 2px solid var(--ink); }
+  .legend .sw.sq-notes { background: #D9F99D; } .legend .sw.sq-empty { border-color: #EA580C; } .legend .sw.sq-next { border: 2px dashed #C4BBA8; }
+  .tl-rev-legend { position: static; display: inline-block; }
   .sq { width: 26px; height: 26px; padding: 0; border: 2px solid var(--ink); background: #fff; cursor: pointer; display: inline-grid; place-items: center; font: inherit; font-size: 11px; font-weight: 800; color: var(--ink); flex: none; }
   .sq-notes { background: #84CC16; }
   .sq-empty { background: #fff; border-color: #EA580C; }
@@ -215,7 +226,7 @@
   .sq-today { outline: 2px solid var(--ink); outline-offset: 2px; }
   .sq-sel { box-shadow: 0 0 0 3px var(--yellow), 0 0 0 5px var(--ink); }
   .sq-dim { opacity: .18; }
-  .sq:hover:not(.sq-dim) { transform: translateY(-1px); }
+  .sq:hover:not(.sq-dim), .tl:hover:not(.sq-dim) { transform: translateY(-1px); }
   .sq-panel { grid-column: 1 / -1; position: relative; margin-top: 8px; border: 2px solid var(--ink); background: #FFFBEA; padding: 10px 40px 12px 12px; }
   .sq-close { position: absolute; top: 4px; right: 6px; font: inherit; font-size: 20px; font-weight: 800; background: none; border: 0; cursor: pointer; color: var(--ink); line-height: 1; padding: 4px 6px; }
   .sq-panel-text { font-weight: 800; font-size: 15px; line-height: 1.35; }
@@ -490,6 +501,13 @@
     });
     return { counts: counts, last: last };
   }
+  // Short name for a topic tile: the text before the first ':', ',', ';', '(' or ' + '
+  // ("Sorting I: bubble, ..." -> "Sorting I"), capped at 26 characters.
+  function shortTopic(text) {
+    var cut = String(text).split(/:|,|;|\(| \+ /)[0].trim();
+    if (cut.length < 3) cut = String(text);
+    return cut.length > 26 ? cut.slice(0, 25).trim() + '…' : cut;
+  }
   function topicState(t, today, rc) {
     var hasN = (S.data.linkMap[t.id] || []).length > 0, studied = t.id <= today, rev = rc.counts[t.id] || 0;
     return { hasN: hasN, studied: studied, rev: rev, today: t.id === today };
@@ -509,9 +527,11 @@
       var cells = tasks.map(function (t) {
         var st = topicState(t, today, rc);
         if (st.studied) { studied += 1; if (st.hasN) withN += 1; }
-        var cls = 'sq ' + (!st.studied ? 'sq-next' : st.hasN ? 'sq-notes' : 'sq-empty') + (st.today ? ' sq-today' : '') + (sel === t.id ? ' sq-sel' : '') + (S.mapHl && !matchesHl(st) ? ' sq-dim' : '');
+        var cls = 'tl ' + (!st.studied ? 'sq-next' : st.hasN ? 'sq-notes' : 'sq-empty') + (st.today ? ' sq-today' : '') + (sel === t.id ? ' sq-sel' : '') + (S.mapHl && !matchesHl(st) ? ' sq-dim' : '');
         var label = t.text + '. ' + (!st.studied ? 'Not studied yet' : (st.hasN ? 'Notes saved' : 'No notes') + ', ' + (st.rev ? 'revised ' + st.rev + (st.rev === 1 ? ' time' : ' times') : 'not revised yet'));
-        return '<button type="button" class="' + cls + '" data-sq="' + t.id + '" data-ctx="' + ctx + '" aria-pressed="' + (sel === t.id) + '" aria-label="' + esc(label) + '" title="' + esc(dayLabel(t.id) + ': ' + t.text) + '">' + (st.rev ? '<span>' + st.rev + '</span>' : '') + '</button>';
+        return '<button type="button" class="' + cls + '" data-sq="' + t.id + '" data-ctx="' + ctx + '" aria-pressed="' + (sel === t.id) + '" aria-label="' + esc(label) + '" title="' + esc(dayLabel(t.id) + ': ' + t.text) + '">' +
+          '<span class="tl-name">' + esc(shortTopic(t.text)) + '</span><span class="tl-meta">' + fmtDay(t.id).dm + (st.today ? ' · today' : '') + '</span>' +
+          (st.rev ? '<span class="tl-rev" title="Times revised">↻' + st.rev + '</span>' : '') + '</button>';
       }).join('');
       var selTask = sel && tasks.filter(function (t) { return t.id === sel; })[0];
       return '<div class="grow"><div class="grow-label"><b>' + esc(d.sections[i].title) + '</b><span>' + (studied ? 'notes ' + withN + '/' + studied : 'starts ' + fmtDay(tasks[0].id).dm) + '</span></div>' +
@@ -576,7 +596,7 @@
         '<div class="grid-sum">' + (studied ? '<b>' + withN + '</b> of ' + studied + ' studied topics have notes · <b>' + unrevised + '</b> not revised yet' : 'Nothing studied yet. Squares fill in as you go.') + '</div>' +
         '<div class="hl-row"><span class="hl-label">Highlight</span>' + hl('', 'Everything') + hl('nonotes', 'No notes') + hl('unrevised', 'Not revised') + '</div>' +
       '</div>' +
-      '<div class="legend"><span><i class="sq sq-notes"></i>Notes saved</span><span><i class="sq sq-empty"></i>Studied, no notes</span><span><i class="sq sq-next"></i>Not studied yet</span><span><i class="sq sq-notes"><span>2</span></i>Times revised</span><span>Tap a square for its notes</span></div>' +
+      '<div class="legend"><span><i class="sw sq-notes"></i>Notes saved</span><span><i class="sw sq-empty"></i>Studied, no notes</span><span><i class="sw sq-next"></i>Not studied yet</span><span><b class="tl-rev tl-rev-legend">↻2</b>Revised twice</span><span>Tap a topic for its notes</span></div>' +
       (S.notesFilter && S.notesFilter.length !== subs.length ? '<div class="grid-filter">Showing ' + esc(shown.map(function (i) { return d.sections[i].title; }).join(', ')) + ' · <button type="button" class="linkish" data-filter="">Show all subjects</button></div>' : '') +
       '<div class="box grid-box">' + gridHtml(shown, 'map') + '</div>';
   }
