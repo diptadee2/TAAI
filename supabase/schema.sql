@@ -1152,3 +1152,18 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON pair_boards, pair_ticks TO service_role;
 -- both"). For a pair_ticks table created with the earlier (board, task_id) key:
 ALTER TABLE pair_ticks DROP CONSTRAINT IF EXISTS pair_ticks_pkey;
 ALTER TABLE pair_ticks ADD PRIMARY KEY (board, task_id, done_by);
+
+-- Notes links on the pair board (2026-10-23): each person attaches links
+-- (usually Google Drive) to a day's topic, to study later.
+CREATE TABLE IF NOT EXISTS pair_notes (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  board      TEXT NOT NULL REFERENCES pair_boards(slug) ON DELETE CASCADE,
+  task_id    TEXT NOT NULL,
+  added_by   SMALLINT NOT NULL CHECK (added_by IN (0, 1)),
+  url        TEXT NOT NULL,
+  label      TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS pair_notes_board_idx ON pair_notes (board);
+ALTER TABLE pair_notes ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON pair_notes TO service_role;

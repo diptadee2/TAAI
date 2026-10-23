@@ -47,24 +47,67 @@ for (const line of md.split('\n')) {
     sections[sections.length - 1].tasks.push({ id, text, weeklyTest: /weekly test/i.test(text) });
   }
 }
-// Cumulative revision (2026-10-23): every day gets its own "Revise ..." item
-// (id "<date>:rev") for the subjects already finished, one per day in rotation,
-// most recently finished first, restarting the rotation when a new subject
-// starts. During the first subject it's that subject's topics so far (none on
-// day 1). Sections that are themselves revision ("Revision & Full Mocks") get none.
+// Cumulative revision (2026-10-23): every day gets its own revision item
+// (id "<date>:rev", ticked on its own, per person) naming ONE specific earlier
+// topic, so 30 minutes has a clear target and the page can show that day's
+// saved notes next to it. Subjects rotate (finished ones, most recent first,
+// rotation restarting when a new subject starts); within a subject its topics
+// come up in order, then cycle. During the first subject it's the previous
+// day's topic (none on day 1). Revision sections themselves get none.
+const isRevisionSection = sec => /revision/i.test(sec.title);
 if (notes.some(n => /^cumulative revision$/i.test(n.label))) {
+  const pointer = {};
   sections.forEach((sec, k) => {
-    if (/revision/i.test(sec.title)) return;
-    const finished = sections.slice(0, k).filter(x => !/revision/i.test(x.title)).map(x => x.title).reverse();
+    if (isRevisionSection(sec)) return;
+    const finished = sections.map((x, i) => i).slice(0, k).filter(i => !isRevisionSection(sections[i])).reverse();
     sec.tasks.forEach((t, j) => {
+      let from, subj;
       if (!finished.length) {
-        if (j > 0) t.revision = { id: t.id + ':rev', text: 'Revise ' + sec.title + ' topics so far' };
-        return;
+        if (j === 0) return;
+        subj = k; from = sec.tasks[j - 1];
+      } else {
+        subj = finished[j % finished.length];
+        const list = sections[subj].tasks;
+        pointer[subj] = pointer[subj] || 0;
+        from = list[pointer[subj] % list.length];
+        pointer[subj] += 1;
       }
-      t.revision = { id: t.id + ':rev', text: 'Revise ' + finished[j % finished.length] };
+      t.revision = { id: t.id + ':rev', subject: subj, fromId: from.id, text: from.text };
     });
   });
 }
+
+// Weekly tests say what they cover: subjects finished so far plus the current one.
+sections.forEach((sec, k) => {
+  sec.tasks.forEach(t => {
+    if (!t.weeklyTest) return;
+    t.testCovers = sections.slice(0, k + 1).map((x, i) => i).filter(i => !isRevisionSection(sections[i]));
+  });
+});
+
+// Days in a revision section that name subjects ("Revise PDS + Algorithms") get
+// those subjects' indexes, so the page can link straight to their saved notes.
+// A subject matches by its full title, first word, first two words, or acronym
+// (Programming & Data Structures -> PDS, Theory of Computation -> TOC).
+const aliases = sections.map(sec => {
+  const words = sec.title.replace(/&/g, ' ').split(/\s+/).filter(Boolean);
+  const acr = words.filter(w => /^[A-Z]/.test(w) && !/^(of|and)$/i.test(w)).map(w => w[0]).join('');
+  const acrAll = words.map(w => w[0]).join('').toUpperCase(); // Theory of Computation -> TOC
+  return [sec.title, words[0], words.slice(0, 2).join(' '), acr, acrAll].filter(a => a && a.length >= 2);
+});
+sections.forEach(sec => {
+  if (!isRevisionSection(sec)) return;
+  sec.tasks.forEach(t => {
+    const hits = [];
+    aliases.forEach((list, i) => {
+      if (isRevisionSection(sections[i])) return;
+      if (list.some(a => new RegExp('(^|[^A-Za-z])' + a.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '([^A-Za-z]|$)', 'i').test(t.text))) hits.push(i);
+    });
+    // Mock-analysis and last-day revision name no subject: link all of them.
+    t.reviseSubjects = hits.length ? hits : sections.map((x, i) => i).filter(i => !isRevisionSection(sections[i]));
+    if (!hits.length) t.reviseAll = true;
+  });
+});
 const all = sections.flatMap(s => s.tasks);
 const ids = new Set(all.map(x => x.id));
 if (ids.size !== all.length) throw new Error('two tasks share a date');

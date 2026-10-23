@@ -14,6 +14,8 @@
 //   action 'load'                      -> { title, notes, sections, names, ticks }
 //   action 'tick'   { taskId, by, done } -> { ok, ticks }  (by: 0 or 1; that person's own tick)
 //   action 'names'  { names: [a, b] }  -> { ok, names }
+//   action 'note-add'    { taskId, by, url, label } -> { ok, note }
+//   action 'note-remove' { id, by }                 -> { ok }   (only the person who added it)
 import crypto from 'node:crypto';
 import { getSupabase, json } from './lib/supabase.js';
 
@@ -60,9 +62,14 @@ export async function handler(event) {
   }
 
   if (body.action === 'load') {
-    const { data: ticks, error: tErr } = await supabase.from('pair_ticks').select('task_id, done_by, done_at').eq('board', board);
+    const [{ data: ticks, error: tErr }, notesRes] = await Promise.all([
+      supabase.from('pair_ticks').select('task_id, done_by, done_at').eq('board', board),
+      supabase.from('pair_notes').select('id, task_id, added_by, url, label, created_at').eq('board', board).order('created_at'),
+    ]);
     if (tErr) return reply(500, { error: tErr.message });
-    return reply(200, { open, title: row.roadmap.title, notes: row.roadmap.notes || [], sections: row.roadmap.sections, names: row.names, ticks: ticks || [] });
+    // links: [] (not an error) until the pair_notes table exists.
+    return reply(200, { open, title: row.roadmap.title, notes: row.roadmap.notes || [], sections: row.roadmap.sections, names: row.names, ticks: ticks || [],
+      links: notesRes.error ? [] : (notesRes.data || []), linksReady: !notesRes.error });
   }
 
   if (body.action === 'tick') {
@@ -92,6 +99,28 @@ export async function handler(event) {
     const { error: e } = await supabase.from('pair_boards').update({ names, updated_at: new Date().toISOString() }).eq('slug', board);
     if (e) return reply(500, { error: e.message });
     return reply(200, { ok: true, names });
+  }
+
+  // Notes links (2026-10-23): each person attaches links (usually Google Drive) to
+  // a day's topic, to study later. Any https link is accepted.
+  if (body.action === 'note-add') {
+    const taskId = String(body.taskId || '');
+    if (!taskIds.has(taskId)) return reply(400, { error: 'unknown task' });
+    const url = String(body.url || '').trim();
+    let ok = false;
+    try { const u = new URL(url); ok = u.protocol === 'https:' && url.length <= 600; } catch {}
+    if (!ok) return reply(400, { error: 'Paste a full link starting with https://' });
+    const note = { board, task_id: taskId, added_by: body.by === 1 ? 1 : 0, url, label: String(body.label || '').replace(/\s+/g, ' ').trim().slice(0, 80) || null };
+    const { data, error: e } = await supabase.from('pair_notes').insert(note).select('id, task_id, added_by, url, label, created_at').single();
+    if (e) return reply(500, { error: e.message });
+    return reply(200, { ok: true, note: data });
+  }
+
+  if (body.action === 'note-remove') {
+    const id = String(body.id || '');
+    const { error: e } = await supabase.from('pair_notes').delete().eq('board', board).eq('id', id).eq('added_by', body.by === 1 ? 1 : 0);
+    if (e) return reply(500, { error: e.message });
+    return reply(200, { ok: true });
   }
 
   return reply(400, { error: 'unknown action' });

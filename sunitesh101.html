@@ -140,6 +140,55 @@
   .task.is-done .rev:not(.is-done) .rev-text { text-decoration: none; color: var(--ink); }
   .stat-head { font-size: 11.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-dim); margin-bottom: 8px; }
   .stat-big-sm { font-size: 22px; }
+  /* Plan, extras, notes links (2026-10-23) */
+  .plan { list-style: none; margin: 12px 0 0; padding: 0; counter-reset: step; display: flex; flex-direction: column; gap: 10px; }
+  .plan > li { counter-increment: step; display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; align-items: start; }
+  .plan > li::before { content: counter(step); width: 24px; height: 24px; display: grid; place-items: center; background: var(--ink); color: var(--yellow); font-weight: 800; font-size: 13px; margin-top: 2px; }
+  .step-row { display: flex; gap: 12px; align-items: flex-start; background: #fff; border: 2px solid var(--ink); padding: 10px 12px; }
+  .step-kicker { font-size: 12px; font-weight: 700; color: var(--ink-dim); margin-bottom: 2px; }
+  .plain-step { background: #fff; border: 2px solid var(--ink); padding: 9px 12px; font-size: 14px; font-weight: 600; }
+  .plan .rev, .plan .extra { margin-top: 0; }
+  .plan .rev { background: #fff; border-style: solid; border-width: 2px; }
+  .plan .extra-test { background: #fff; border: 2px solid var(--ink); padding: 9px 12px; }
+  .kind-tag { display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; border: 1.5px solid var(--ink); padding: 0 6px; vertical-align: 1px; }
+  .kind-rev { background: var(--lilac); }
+  .kind-test { background: var(--sky); }
+  .kind-notes { background: var(--lime); }
+  .kind-apt { background: #FFD7A8; }
+  .rev-subject { font-size: 13.5px; }
+  .rev-from { color: var(--ink-dim); font-weight: 500; white-space: nowrap; }
+  .rev-notes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .rev-notes:empty { display: none; }
+  .extra { margin-top: 8px; font-size: 13.5px; font-weight: 600; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .note-jump { font: inherit; font-size: 13px; font-weight: 700; background: #fff; border: 2px solid var(--ink); padding: 3px 9px; cursor: pointer; box-shadow: 2px 2px 0 var(--ink); }
+  .note-jump:hover { background: var(--yellow); }
+  .links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; align-items: center; }
+  .links:empty { display: none; }
+  .note-chip { display: inline-flex; align-items: stretch; border: 2px solid var(--ink); background: #fff; font-size: 12.5px; max-width: 100%; }
+  .note-chip a { color: var(--ink); text-decoration: none; padding: 3px 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 320px; }
+  .note-chip a:hover { background: var(--yellow); }
+  .note-x { font: inherit; font-weight: 800; border: 0; border-left: 2px solid var(--ink); background: #fff; cursor: pointer; padding: 0 8px; }
+  .note-x:hover { background: #FFD7A8; }
+  .add-link { font: inherit; font-size: 12.5px; font-weight: 700; background: transparent; border: 2px dashed var(--ink); padding: 3px 9px; cursor: pointer; color: var(--ink); }
+  .add-link:hover { background: #fff; border-style: solid; }
+  .add-note { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; margin-top: 2px; }
+  .add-note input { font: inherit; font-size: 14px; border: 2px solid var(--ink); padding: 7px 9px; background: #fff; flex: 1 1 220px; min-width: 0; }
+  .add-note-actions { display: flex; gap: 6px; }
+  .views { display: flex; gap: 0; margin: 0 0 18px; border: 2px solid var(--ink); width: max-content; max-width: 100%; }
+  .views button { font: inherit; font-size: 14px; font-weight: 700; padding: 8px 16px; background: #fff; border: 0; cursor: pointer; color: var(--ink); }
+  .views button + button { border-left: 2px solid var(--ink); }
+  .views button[aria-selected="true"] { background: var(--ink); color: var(--yellow); }
+  .filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .filters button { font: inherit; font-size: 13px; font-weight: 700; background: #fff; border: 2px solid var(--ink); padding: 4px 10px; cursor: pointer; }
+  .filters button[aria-pressed="true"] { background: var(--yellow); }
+  .notes-sec { margin-bottom: 14px; }
+  .notes-sec-head { padding: 10px 16px; font-weight: 800; border-bottom: 2px solid var(--ink); background: var(--lilac); }
+  .notes-day { padding: 10px 16px; border-bottom: 1.5px solid #E5DCC8; }
+  .notes-day:last-child { border-bottom: 0; }
+  .notes-day-head { font-size: 13.5px; }
+  .empty-notes { padding: 18px; font-size: 14.5px; line-height: 1.5; }
+  .linkish { font: inherit; background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; color: var(--ink); font-weight: 700; }
+
   @media (max-width: 640px) {
     .stats { grid-template-columns: 1fr 1fr; }
     .stat-main { grid-column: 1 / -1; }
@@ -150,6 +199,9 @@
     .task-body { grid-column: 2; }
     .rename form { grid-template-columns: 1fr 1fr; }
     .today-text { font-size: 16.5px; }
+    .note-chip a { max-width: 230px; }
+    .plan > li { grid-template-columns: 22px minmax(0, 1fr); gap: 8px; }
+    .plan > li::before { width: 22px; height: 22px; font-size: 12px; }
   }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
@@ -160,10 +212,10 @@
 <script>
 (function () {
   var BOARD = 'sunitesh101';
-  var KEY_CODE = 'pairboard:' + BOARD + ':code', KEY_ME = 'pairboard:' + BOARD + ':me', KEY_OPEN = 'pairboard:' + BOARD + ':open';
+  var KEY_CODE = 'pairboard:' + BOARD + ':code', KEY_ME = 'pairboard:' + BOARD + ':me', KEY_OPEN = 'pairboard:' + BOARD + ':open', KEY_VIEW = 'pairboard:' + BOARD + ':view';
   var POLL_MS = 20000;
   var app = document.getElementById('app');
-  var S = { code: null, data: null, me: null, open: {}, busy: {}, renaming: false, lastSync: null };
+  var S = { code: null, data: null, me: null, open: {}, busy: {}, renaming: false, lastSync: null, view: read('pairboard:sunitesh101:view') === 'notes' ? 'notes' : 'schedule', notesFilter: null, addingFor: null };
 
   function store(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} }
   function read(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
@@ -206,6 +258,7 @@
   function load() {
     return api({ action: 'load' }).then(function (d) {
       d.tickMap = groupTicks(d.ticks);
+      d.linkMap = groupLinks(d.links);
       var first = !S.data;
       S.data = d; S.lastSync = new Date();
       if (first) {
@@ -222,12 +275,24 @@
     (rows || []).forEach(function (t) { (map[t.task_id] = map[t.task_id] || {})[t.done_by] = t; });
     return map;
   }
+  // linkMap[taskId] = [notes links attached to that day, oldest first]
+  function groupLinks(rows) {
+    var map = {};
+    (rows || []).forEach(function (n) { (map[n.task_id] = map[n.task_id] || []).push(n); });
+    return map;
+  }
   function allTasks() { var out = []; S.data.sections.forEach(function (s, i) { s.tasks.forEach(function (t) { out.push(Object.assign({ section: i }, t)); }); }); return out; }
+  function taskById(id) { var l = allTasks(); for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i]; return null; }
   function currentSectionIndex() {
     var today = todayIST(), list = allTasks();
     for (var i = 0; i < list.length; i++) if (list[i].id >= today) return list[i].section;
     return list.length ? list[list.length - 1].section : -1;
   }
+  function notesCountForSection(i) {
+    return S.data.sections[i].tasks.reduce(function (n, t) { return n + (S.data.linkMap[t.id] || []).length; }, 0);
+  }
+  function dayLabel(id) { var f = fmtDay(id); return f.wd + ' ' + f.dm; }
+  function everyDayNote() { var n = (S.data.notes || []).filter(function (x) { return /^every day$/i.test(x.label); })[0]; return n ? n.text.replace(/\.$/, '') : ''; }
 
   // ── Render ──────────────────────────────────────────────────────────
   function render() {
@@ -244,6 +309,7 @@
     // Days of the roadmap still ahead, counting today (all of them before it starts).
     var daysLeft = !last ? 0 : today < first.id ? list.length : Math.max(0, daysBetween(today, last.id) + 1);
     var todayTask = list.filter(function (t) { return t.id === today; })[0];
+    var linkTotal = (d.links || []).length;
 
     var html = '<div class="wrap">';
     html += '<div class="top"><div><h1>' + esc(d.title) + '</h1><div class="sub">' + esc(names[0]) + ' &amp; ' + esc(names[1]) +
@@ -265,79 +331,170 @@
       (due.length
         ? '<div class="box stat ' + (late.length ? 'behind' : 'ontrack') + '"><div class="stat-head">Catch-up</div><div class="stat-big">' + (late.length || '✓') + '</div><div class="stat-label">' +
             (late.length ? (late.length === 1 ? 'past day not ticked' : 'past days not ticked') : 'On track, nothing missed') + '</div></div>'
-        : '<div class="box stat"><div class="stat-head">Catch-up</div><div class="stat-big stat-big-sm">' + fmtDay(first.id).wd + ' ' + fmtDay(first.id).dm + '</div><div class="stat-label">Starts then. Missed days show up here.</div></div>') +
+        : '<div class="box stat"><div class="stat-head">Catch-up</div><div class="stat-big stat-big-sm">' + dayLabel(first.id) + '</div><div class="stat-label">Starts then. Missed days show up here.</div></div>') +
       '<div class="box stat"><div class="stat-head">Countdown</div><div class="stat-big">' + daysLeft + '</div><div class="stat-label">' + (daysLeft === 1 ? 'day left' : 'days left') + '</div></div>' +
     '</div>';
 
-    // Today card
-    var notesHtml = (d.notes || []).map(function (n) { return '<div><b>' + esc(n.label) + ':</b> ' + esc(n.text) + '</div>'; }).join('');
-    if (todayTask) {
-      html += '<div class="box today"><span class="today-tag">TODAY · ' + fmtDay(today).wd.toUpperCase() + ' ' + fmtDay(today).dm.toUpperCase() + '</span>' +
-        '<div class="today-subject">' + esc(d.sections[todayTask.section].title) + '</div>' +
-        '<div class="today-row">' + checkHtml(todayTask, false) + '<div><div class="today-text">' + esc(todayTask.text) + '</div>' + metaHtml(todayTask, today, true) + '</div></div>' +
-        revisionHtml(todayTask, today) +
-        (notesHtml ? '<div class="notes">' + notesHtml + '</div>' : '') + '</div>';
-    } else if (first && today < first.id) {
-      var n = daysBetween(today, first.id);
-      html += '<div class="box today"><span class="today-tag">STARTS IN ' + n + (n === 1 ? ' DAY' : ' DAYS') + '</span><div class="today-text" style="margin-top:10px;">First up (' + fmtDay(first.id).wd + ' ' + fmtDay(first.id).dm + '): ' + esc(first.text) + '</div>' + (notesHtml ? '<div class="notes">' + notesHtml + '</div>' : '') + '</div>';
-    } else {
-      html += '<div class="box today"><span class="today-tag">ROADMAP FINISHED</span><div class="today-text" style="margin-top:10px;">' +
-        (late.length ? late.length + ' day' + (late.length === 1 ? '' : 's') + ' still unticked below.' : 'Every day is ticked. Well done, both of you.') + '</div></div>';
-    }
+    // Schedule / Notes switch
+    html += '<div class="views" role="tablist">' +
+      '<button type="button" role="tab" data-view="schedule" aria-selected="' + (S.view !== 'notes') + '">Schedule</button>' +
+      '<button type="button" role="tab" data-view="notes" aria-selected="' + (S.view === 'notes') + '">Saved notes' + (linkTotal ? ' (' + linkTotal + ')' : '') + '</button></div>';
 
-    // Sections
-    var cur = currentSectionIndex();
-    d.sections.forEach(function (s, i) {
-      var sd = s.tasks.filter(function (t) { return d.tickMap[t.id]; }).length;
-      var isDone = sd === s.tasks.length;
-      var open = !!S.open[i];
-      html += '<div class="box section' + (open ? ' open' : '') + (isDone ? ' done' : '') + (i === cur && !isDone ? ' current' : '') + '" data-sec="' + i + '">' +
-        '<button class="sec-head" type="button" data-toggle="' + i + '" aria-expanded="' + open + '"><div><div class="sec-title">' + (i + 1) + '. ' + esc(s.title) + (isDone ? ' ✓' : '') + '</div>' +
-          '<div class="sec-range">' + esc(s.range) + (i === cur && !isDone ? ' · now' : '') + '</div></div>' +
-          '<div><div class="sec-count">' + sd + ' / ' + s.tasks.length + '</div><div class="sec-mini"><span style="width:' + Math.round(sd / s.tasks.length * 100) + '%"></span></div></div>' +
-          '<span class="chev" aria-hidden="true">⌄</span></button>' +
-        '<div class="tasks">' + s.tasks.map(function (t) {
-          var tk = d.tickMap[t.id], f = fmtDay(t.id);
-          var cls = 'task' + (tk ? ' is-done' : '') + (!tk && t.id < today ? ' is-late' : '') + (t.id === today ? ' is-today' : '');
-          return '<div class="' + cls + '" data-task="' + t.id + '">' + checkHtml(t, true) +
-            '<div class="task-date"><b>' + f.wd + '</b>' + f.dm + '</div>' +
-            '<div class="task-body"><div class="task-text">' + esc(t.text) + '</div>' + metaHtml(t, today, false) + revisionHtml(t, today) + '</div></div>';
-        }).join('') + '</div></div>';
-    });
+    if (S.view === 'notes') {
+      html += renderNotesView();
+    } else {
+      html += renderTodayCard(todayTask, today, first, late);
+      var cur = currentSectionIndex();
+      d.sections.forEach(function (s, i) {
+        var sd = s.tasks.filter(function (t) { return d.tickMap[t.id]; }).length;
+        var isDone = sd === s.tasks.length;
+        var open = !!S.open[i];
+        var nCount = notesCountForSection(i);
+        html += '<div class="box section' + (open ? ' open' : '') + (isDone ? ' done' : '') + (i === cur && !isDone ? ' current' : '') + '" data-sec="' + i + '">' +
+          '<button class="sec-head" type="button" data-toggle="' + i + '" aria-expanded="' + open + '"><div><div class="sec-title">' + (i + 1) + '. ' + esc(s.title) + (isDone ? ' ✓' : '') + '</div>' +
+            '<div class="sec-range">' + esc(s.range) + (i === cur && !isDone ? ' · now' : '') + (nCount ? ' · ' + nCount + ' saved note' + (nCount === 1 ? '' : 's') : '') + '</div></div>' +
+            '<div><div class="sec-count">' + sd + ' / ' + s.tasks.length + '</div><div class="sec-mini"><span style="width:' + Math.round(sd / s.tasks.length * 100) + '%"></span></div></div>' +
+            '<span class="chev" aria-hidden="true">⌄</span></button>' +
+          '<div class="tasks">' + s.tasks.map(function (t) {
+            var tk = d.tickMap[t.id], f = fmtDay(t.id);
+            var cls = 'task' + (tk ? ' is-done' : '') + (!tk && t.id < today ? ' is-late' : '') + (t.id === today ? ' is-today' : '');
+            return '<div class="' + cls + '" data-task="' + t.id + '">' + checkHtml(t, true) +
+              '<div class="task-date"><b>' + f.wd + '</b>' + f.dm + '</div>' +
+              '<div class="task-body"><div class="task-text">' + esc(t.text) + '</div>' + metaHtml(t, today, false) +
+                testHtml(t) + reviseSubjectsHtml(t) + linksHtml(t.id, true) + revisionHtml(t) + '</div></div>';
+          }).join('') + '</div></div>';
+      });
+    }
 
     html += '<div class="sync" id="sync">' + syncText() + '</div></div>';
     app.innerHTML = html;
     bind();
   }
 
+  // Today: a numbered plan, so the extras (revision, test, aptitude) read as
+  // part of the day rather than notes at the bottom.
+  function renderTodayCard(t, today, first, late) {
+    var d = S.data;
+    if (!t) {
+      if (first && today < first.id) {
+        var n = daysBetween(today, first.id);
+        return '<div class="box today"><span class="today-tag">STARTS IN ' + n + (n === 1 ? ' DAY' : ' DAYS') + '</span>' +
+          '<div class="today-text" style="margin-top:10px;">First up (' + dayLabel(first.id) + '): ' + esc(first.text) + '</div>' +
+          (everyDayNote() ? '<div class="hint" style="margin-top:8px;color:var(--ink)">Every day also: ' + esc(everyDayNote()) + '. Each day gets a revision slot once there is something to revise.</div>' : '') + '</div>';
+      }
+      return '<div class="box today"><span class="today-tag">ROADMAP FINISHED</span><div class="today-text" style="margin-top:10px;">' +
+        (late.length ? late.length + ' day' + (late.length === 1 ? '' : 's') + ' still unticked below.' : 'Every day is ticked. Well done, both of you.') + '</div></div>';
+    }
+    var steps = [];
+    steps.push('<li><div class="step-row">' + checkHtml(t, false) + '<div><div class="step-kicker">' + esc(d.sections[t.section].title) + '</div><div class="today-text">' + esc(t.text) + '</div>' +
+      metaHtml(t, today, true) + reviseSubjectsHtml(t) + linksHtml(t.id, true) + '</div></div></li>');
+    if (t.revision) steps.push('<li>' + revisionHtml(t, true) + '</li>');
+    if (t.testCovers) steps.push('<li>' + testHtml(t, true) + '</li>');
+    if (everyDayNote()) steps.push('<li><div class="plain-step"><span class="kind-tag kind-apt">Aptitude</span> ' + esc(everyDayNote()) + '</div></li>');
+    return '<div class="box today"><span class="today-tag">TODAY · ' + dayLabel(today).toUpperCase() + '</span><ol class="plan">' + steps.join('') + '</ol></div>';
+  }
+
   function checkHtml(t, small) {
     // Your own tick (the person picked under "Ticking as").
     var m = S.data.tickMap[t.id], on = !!(m && S.me != null && m[S.me]);
-    return '<button type="button" class="check' + (small ? ' small' : '') + (S.busy[t.id] ? ' busy' : '') + '" role="checkbox" aria-checked="' + on + '" data-tick="' + t.id + '" aria-label="' + esc((on ? 'Done: ' : 'Mark done: ') + t.text) + '">' + CHECK_SVG + '</button>';
+    return '<button type="button" class="check' + (small ? ' small' : '') + (S.busy[t.id] ? ' busy' : '') + '" role="checkbox" aria-checked="' + on + '" data-tick="' + t.id + '" aria-label="' + esc((on ? 'Done: ' : 'Mark done: ') + (t.text || 'revision')) + '">' + CHECK_SVG + '</button>';
+  }
+  function whoTicked(tk, withDate) {
+    var out = '';
+    if (tk) [0, 1].forEach(function (k) { if (tk[k]) out += '<span class="by">✓ ' + esc(S.data.names[k]) + (withDate ? ' · ' + fmtDay(String(tk[k].done_at).slice(0, 10)).dm : '') + '</span>'; });
+    return out;
   }
   function metaHtml(t, today, onToday) {
     var tk = S.data.tickMap[t.id], bits = [];
     if (!onToday && t.id === today) bits.push('<span class="chip chip-today">Today</span>');
-    if (t.weeklyTest) bits.push('<span class="chip chip-test">Weekly test</span>');
     if (!tk && t.id < today) bits.push('<span class="chip chip-late">Catch up</span>');
-    if (tk) [0, 1].forEach(function (k) {
-      if (tk[k]) bits.push('<span class="by">✓ ' + esc(S.data.names[k]) + ' · ' + fmtDay(String(tk[k].done_at).slice(0, 10)).dm + '</span>');
-    });
+    var who = whoTicked(tk, true);
+    if (who) bits.push(who);
     return bits.length ? '<div class="task-meta">' + bits.join('') + '</div>' : '';
   }
-  // The day's cumulative revision item: its own checkbox and names, under the topic.
-  function revisionHtml(t, today) {
+  // Weekly test: what it covers.
+  function testHtml(t, big) {
+    if (!t.testCovers) return '';
+    var subjects = t.testCovers.map(function (i) { return S.data.sections[i].title; });
+    return '<div class="extra extra-test' + (big ? ' big' : '') + '"><span class="kind-tag kind-test">Weekly test</span> <span>covers ' + esc(subjects.join(', ')) + '</span></div>';
+  }
+  // Final revision days: one tap to those subjects' saved notes.
+  function reviseSubjectsHtml(t) {
+    if (!t.reviseSubjects) return '';
+    var d = S.data;
+    if (t.reviseAll) {
+      var all = (d.links || []).length;
+      return '<div class="extra"><span class="kind-tag kind-notes">Your notes</span> <button type="button" class="note-jump" data-jump="' + t.reviseSubjects.join(',') + '">All saved notes (' + all + ') →</button></div>';
+    }
+    return '<div class="extra"><span class="kind-tag kind-notes">Your notes</span> ' + t.reviseSubjects.map(function (i) {
+      return '<button type="button" class="note-jump" data-jump="' + i + '">' + esc(d.sections[i].title) + ' (' + notesCountForSection(i) + ') →</button>';
+    }).join(' ') + '</div>';
+  }
+  // The day's revision: ONE specific earlier topic, with the notes saved that day.
+  function revisionHtml(t, big) {
     var r = t.revision;
     if (!r) return '';
-    var tk = S.data.tickMap[r.id], names = '';
-    if (tk) [0, 1].forEach(function (k) { if (tk[k]) names += '<span class="by">✓ ' + esc(S.data.names[k]) + '</span>'; });
-    return '<div class="rev' + (tk ? ' is-done' : '') + '">' + checkHtml(r, true) +
-      '<div><span class="rev-tag">Revision</span> <span class="rev-text">' + esc(r.text) + '</span>' +
-      (names ? '<div class="task-meta">' + names + '</div>' : '') + '</div></div>';
+    var d = S.data, tk = d.tickMap[r.id];
+    var saved = d.linkMap[r.fromId] || [];
+    return '<div class="rev' + (tk ? ' is-done' : '') + (big ? ' big' : '') + '">' + checkHtml(Object.assign({ text: 'Revise ' + r.text }, r), true) +
+      '<div class="rev-body"><div><span class="kind-tag kind-rev">Revision</span> <b class="rev-subject">' + esc(d.sections[r.subject].title) + '</b></div>' +
+      '<div class="rev-text">' + esc(r.text) + ' <span class="rev-from">(from ' + dayLabel(r.fromId) + ')</span></div>' +
+      '<div class="rev-notes">' + (saved.length ? saved.map(function (n) { return chipHtml(n, false); }).join('') : (d.linksReady ? '<span class="hint">No notes saved that day.</span>' : '')) + '</div>' +
+      (tk ? '<div class="task-meta">' + whoTicked(tk, false) + '</div>' : '') + '</div></div>';
   }
+  function chipHtml(n, canRemove) {
+    var mine = canRemove && S.me === n.added_by;
+    var host = ''; try { host = new URL(n.url).hostname.replace(/^www\./, ''); } catch (e) {}
+    var icon = /drive\.google|docs\.google/.test(host) ? '📄' : '🔗';
+    return '<span class="note-chip"><a href="' + esc(n.url) + '" target="_blank" rel="noopener noreferrer" title="' + esc(n.url) + '">' + icon + ' <b>' + esc(S.data.names[n.added_by]) + '</b>' +
+      (n.label ? ' · ' + esc(n.label) : '') + ' ↗</a>' + (mine ? '<button type="button" class="note-x" data-remove="' + esc(n.id) + '" aria-label="Remove this link">×</button>' : '') + '</span>';
+  }
+  function linksHtml(taskId, canAdd) {
+    var d = S.data, list = d.linkMap[taskId] || [];
+    if (!d.linksReady && !list.length) return '';
+    var html = '<div class="links">' + list.map(function (n) { return chipHtml(n, true); }).join('');
+    if (canAdd && d.linksReady) {
+      if (S.addingFor === taskId) {
+        html += '<form class="add-note" data-add-form="' + taskId + '"><input name="url" type="url" inputmode="url" placeholder="Paste a Google Drive link" required maxlength="600">' +
+          '<input name="label" type="text" placeholder="Title (optional), e.g. Pointers handwritten" maxlength="80">' +
+          '<div class="add-note-actions"><button class="btn btn-yellow" type="submit">Save link</button><button class="btn" type="button" data-add-cancel>Cancel</button></div></form>';
+      } else {
+        html += '<button type="button" class="add-link" data-add="' + taskId + '">+ Add notes</button>';
+      }
+    }
+    return html + '</div>';
+  }
+
+  // Saved notes view: every link, by subject and day, to study from later.
+  function renderNotesView() {
+    var d = S.data, filter = S.notesFilter;
+    if (!d.linksReady) return '<div class="box empty-notes">Saving notes links isn\'t switched on yet.</div>';
+    var withNotes = d.sections.map(function (s, i) { return i; }).filter(function (i) { return notesCountForSection(i) > 0; });
+    var chips = '<div class="filters"><button type="button" data-filter="" aria-pressed="' + !filter + '">All</button>' +
+      withNotes.map(function (i) { return '<button type="button" data-filter="' + i + '" aria-pressed="' + (!!filter && filter.length === 1 && filter[0] === i) + '">' + esc(d.sections[i].title) + ' (' + notesCountForSection(i) + ')</button>'; }).join('') + '</div>';
+    var shown = filter ? filter : withNotes;
+    var body = shown.map(function (i) {
+      var s = d.sections[i];
+      var days = s.tasks.filter(function (t) { return (d.linkMap[t.id] || []).length; });
+      return '<div class="box notes-sec"><div class="notes-sec-head">' + esc(s.title) + '</div>' +
+        (days.length ? days.map(function (t) {
+          return '<div class="notes-day"><div class="notes-day-head"><b>' + dayLabel(t.id) + '</b> · ' + esc(t.text) + '</div><div class="links">' +
+            d.linkMap[t.id].map(function (n) { return chipHtml(n, true); }).join('') + '</div></div>';
+        }).join('') : '<div class="hint" style="padding:12px 16px">No notes saved for this subject yet.</div>') + '</div>';
+    }).join('');
+    if (!withNotes.length && !filter) body = '<div class="box empty-notes">No notes yet. On any day in the schedule, tap <b>+ Add notes</b> and paste your Google Drive link. Everything you add collects here, by subject.</div>';
+    return chips + (filter ? '<div class="hint" style="margin:-6px 0 12px">Showing ' + esc(filter.map(function (i) { return d.sections[i].title; }).join(', ')) + '. <button type="button" class="linkish" data-filter="">Show all</button></div>' : '') + body;
+  }
+
   function syncText() {
     if (!S.lastSync) return '';
     return 'Synced ' + S.lastSync.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' }) + ' · updates every 20 seconds';
+  }
+  function needMe() {
+    if (S.me != null) return false;
+    toast('First pick who you are at the top (Ticking as).');
+    var seg = app.querySelector('.seg'); if (seg) seg.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    return true;
   }
 
   function bind() {
@@ -349,6 +506,51 @@
     });
     app.querySelectorAll('[data-tick]').forEach(function (b) {
       b.addEventListener('click', function () { tick(b.getAttribute('data-tick')); });
+    });
+    app.querySelectorAll('[data-view]').forEach(function (b) {
+      b.addEventListener('click', function () { S.view = b.getAttribute('data-view'); S.notesFilter = null; store(KEY_VIEW, S.view); S.addingFor = null; render(); });
+    });
+    app.querySelectorAll('[data-filter]').forEach(function (b) {
+      b.addEventListener('click', function () { var v = b.getAttribute('data-filter'); S.notesFilter = v === '' ? null : [Number(v)]; render(); });
+    });
+    app.querySelectorAll('[data-jump]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        S.view = 'notes'; store(KEY_VIEW, S.view);
+        S.notesFilter = b.getAttribute('data-jump').split(',').map(Number);
+        if (S.notesFilter.length > 3) S.notesFilter = null; // "all"
+        render(); window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    });
+    app.querySelectorAll('[data-add]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        if (needMe()) return;
+        S.addingFor = b.getAttribute('data-add'); render();
+        var f = app.querySelector('[data-add-form] input[name=url]'); if (f) f.focus();
+      });
+    });
+    app.querySelectorAll('[data-add-cancel]').forEach(function (b) {
+      b.addEventListener('click', function () { S.addingFor = null; render(); });
+    });
+    app.querySelectorAll('[data-add-form]').forEach(function (f) {
+      f.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var taskId = f.getAttribute('data-add-form'), btn = f.querySelector('button[type=submit]');
+        btn.disabled = true; btn.textContent = 'Saving…';
+        api({ action: 'note-add', taskId: taskId, by: S.me, url: f.url.value.trim(), label: f.label.value.trim() }).then(function (r) {
+          S.data.links = (S.data.links || []).concat([r.note]); S.data.linkMap = groupLinks(S.data.links);
+          S.addingFor = null; render(); toast('Notes link saved');
+        }).catch(function (err) { btn.disabled = false; btn.textContent = 'Save link'; toast(err.message && err.status === 400 ? err.message : "Couldn't save the link. Try again."); });
+      });
+    });
+    app.querySelectorAll('[data-remove]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        if (!confirm('Remove this notes link?')) return;
+        var id = b.getAttribute('data-remove');
+        api({ action: 'note-remove', id: id, by: S.me }).then(function () {
+          S.data.links = (S.data.links || []).filter(function (n) { return n.id !== id; }); S.data.linkMap = groupLinks(S.data.links);
+          render(); toast('Link removed');
+        }).catch(function () { toast("Couldn't remove it. Try again."); });
+      });
     });
     var lockBtn = document.getElementById('lock-btn');
     if (lockBtn) lockBtn.addEventListener('click', function () {
@@ -365,7 +567,7 @@
   }
 
   function tick(id) {
-    if (S.me == null) { toast('First pick who you are at the top (Ticking as).'); var seg = app.querySelector('.seg'); if (seg) seg.scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
+    if (needMe()) return;
     var before = S.data.tickMap[id] ? Object.assign({}, S.data.tickMap[id]) : null;
     var want = !(before && before[S.me]);
     var next = Object.assign({}, before || {});
@@ -388,11 +590,11 @@
 
   // Poll so one person's ticks show up for the other.
   setInterval(function () {
-    if (!S.data || document.hidden || S.renaming || Object.keys(S.busy).length) return;
+    if (!S.data || document.hidden || S.renaming || S.addingFor || Object.keys(S.busy).length) return;
     load().catch(function () {});
   }, POLL_MS);
   document.addEventListener('visibilitychange', function () {
-    if (!document.hidden && S.data && !S.renaming && !Object.keys(S.busy).length) load().catch(function () {});
+    if (!document.hidden && S.data && !S.renaming && !S.addingFor && !Object.keys(S.busy).length) load().catch(function () {});
   });
 
   // Start
