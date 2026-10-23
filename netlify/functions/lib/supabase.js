@@ -425,9 +425,13 @@ export async function fetchLiveStatusByEmail(supabase, emails) {
     .select('email, running, phase_end_at, mode, total_seconds, updated_at')
     .in('email', emails);
   if (error) throw new Error(error.message);
+  return liveStatusFromSessions(emails, activeSessions, Date.now());
+}
 
-  const now = Date.now();
-  const sessionByEmail = Object.fromEntries(activeSessions.map(r => [r.email, r]));
+// The same computation from already-fetched pomo_active_session rows (also
+// used by lib/board-cache.js, whose snapshot functions return these rows).
+export function liveStatusFromSessions(emails, activeSessions, now) {
+  const sessionByEmail = Object.fromEntries((activeSessions || []).map(r => [r.email, r]));
   const result = {};
   for (const email of emails) {
     const session = sessionByEmail[email];

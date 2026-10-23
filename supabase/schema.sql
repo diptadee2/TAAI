@@ -1188,3 +1188,115 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON pair_topics TO service_role;
 -- once one of the two names is taken the other device can only pick the other.
 -- claims = [ {device, at} | null, {device, at} | null ] for person 0 and 1.
 ALTER TABLE pair_boards ADD COLUMN IF NOT EXISTS claims JSONB NOT NULL DEFAULT '[null, null]'::jsonb;
+
+-- ── Leaderboard snapshots in one request each (2026-10-24) ──────────────
+-- Supabase's "Log Ingestion" meter counts one log line per database
+-- request. Rebuilding the shared weekly snapshot (lib/board-cache.js) took
+-- about 10 requests, the last-week one about 9, and each viewer's own
+-- details 5. These three functions return the same raw rows in ONE request
+-- each; all ranking, tie-breaking and filtering stays in the JavaScript, so
+-- the output is unchanged. board-cache.js falls back to the old queries if
+-- a function doesn't exist yet. Emails are picked with a margin (top 30
+-- this week, top 20 today) so the JavaScript always has every row it needs.
+CREATE OR REPLACE FUNCTION board_weekly_snapshot(p_week DATE, p_last_week DATE, p_today DATE, p_now BIGINT)
+RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE
+  v_flagged TEXT[];
+  v_live    INTEGER;
+  v_max     INTEGER;
+  v_lookup  TEXT[];
+BEGIN
+  SELECT coalesce(array_agg(email), '{}') INTO v_flagged FROM students WHERE needs_rename = true;
+  SELECT count(*) INTO v_live FROM pomo_active_session WHERE running AND phase_end_at > p_now;
+  SELECT u.max_count INTO v_max FROM update_live_count_max(v_live) u;
+  SELECT coalesce(array_agg(DISTINCT e), '{}') INTO v_lookup FROM (
+    (SELECT email AS e FROM pomodoro_stats WHERE week_start = p_week AND NOT (email = ANY(v_flagged))
+      ORDER BY total_minutes DESC, email COLLATE "C" LIMIT 30)
+    UNION
+    (SELECT email AS e FROM pomo_daily_sessions WHERE date = p_today AND NOT (email = ANY(v_flagged))
+      ORDER BY total_minutes DESC, email COLLATE "C" LIMIT 20)
+  ) x;
+  RETURN jsonb_build_object(
+    'flagged', to_jsonb(v_flagged),
+    'lookup', to_jsonb(v_lookup),
+    'live_count', v_live,
+    'max_count', coalesce(v_max, v_live),
+    'week_rows', (SELECT coalesce(jsonb_agg(jsonb_build_object('email', email, 'total_minutes', total_minutes, 'total_sessions', total_sessions)), '[]'::jsonb)
+                  FROM pomodoro_stats WHERE week_start = p_week),
+    'today_rows', (SELECT coalesce(jsonb_agg(jsonb_build_object('email', email, 'total_minutes', total_minutes)), '[]'::jsonb)
+                   FROM pomo_daily_sessions WHERE date = p_today),
+    'students', (SELECT coalesce(jsonb_agg(jsonb_build_object('email', email, 'display_name', display_name, 'current_streak', current_streak,
+                   'all_time_minutes', all_time_minutes, 'about_text', about_text, 'about_changed_month', about_changed_month,
+                   'about_check_count', about_check_count, 'about_check_month', about_check_month)), '[]'::jsonb)
+                 FROM students WHERE email = ANY(v_lookup)),
+    'sessions', (SELECT coalesce(jsonb_agg(jsonb_build_object('email', email, 'running', running, 'phase_end_at', phase_end_at, 'mode', mode,
+                   'total_seconds', total_seconds, 'updated_at', updated_at)), '[]'::jsonb)
+                 FROM pomo_active_session WHERE email = ANY(v_lookup)),
+    'last_week_ranks', (SELECT coalesce(jsonb_agg(jsonb_build_object('email', email, 'final_rank', final_rank)), '[]'::jsonb)
+                        FROM pomodoro_stats WHERE week_start = p_last_week AND email = ANY(v_lookup) AND final_rank IS NOT NULL)
+  );
+END $$;
+
+CREATE OR REPLACE FUNCTION board_lastweek_snapshot(p_week DATE, p_prev_week DATE, p_now BIGINT)
+RETURNS jsonb LANGUAGE plpgsql AS $$
+DECLARE
+  v_flagged TEXT[];
+  v_live    INTEGER;
+  v_max     INTEGER;
+  v_top     jsonb;
+  v_emails  TEXT[];
+BEGIN
+  SELECT coalesce(array_agg(email), '{}') INTO v_flagged FROM students WHERE needs_rename = true;
+  SELECT count(*) INTO v_live FROM pomo_active_session WHERE running AND phase_end_at > p_now;
+  SELECT u.max_count INTO v_max FROM update_live_count_max(v_live) u;
+  SELECT coalesce(jsonb_agg(jsonb_build_object('email', email, 'total_minutes', total_minutes) ORDER BY rn), '[]'::jsonb),
+         coalesce(array_agg(email ORDER BY rn), '{}')
+    INTO v_top, v_emails
+    FROM (SELECT email, total_minutes, row_number() OVER (ORDER BY total_minutes DESC, email COLLATE "C") AS rn
+            FROM pomodoro_stats WHERE week_start = p_week AND NOT (email = ANY(v_flagged))) t
+   WHERE rn <= 5;
+  RETURN jsonb_build_object(
+    'flagged', to_jsonb(v_flagged),
+    'live_count', v_live,
+    'max_count', coalesce(v_max, v_live),
+    'top', v_top,
+    'week_rows', (SELECT coalesce(jsonb_agg(jsonb_build_object('email', email, 'total_minutes', total_minutes)), '[]'::jsonb)
+                  FROM pomodoro_stats WHERE week_start = p_week),
+    'prev_order', (SELECT coalesce(jsonb_agg(email ORDER BY total_minutes DESC, email COLLATE "C"), '[]'::jsonb)
+                   FROM pomodoro_stats WHERE week_start = p_prev_week),
+    'students', (SELECT coalesce(jsonb_agg(jsonb_build_object('email', email, 'display_name', display_name, 'all_time_minutes', all_time_minutes)), '[]'::jsonb)
+                 FROM students WHERE email = ANY(v_emails)),
+    'sessions', (SELECT coalesce(jsonb_agg(jsonb_build_object('email', email, 'running', running, 'phase_end_at', phase_end_at, 'mode', mode,
+                   'total_seconds', total_seconds, 'updated_at', updated_at)), '[]'::jsonb)
+                 FROM pomo_active_session WHERE email = ANY(v_emails))
+  );
+END $$;
+
+-- One viewer's own details. Any date may be NULL (that part is then null).
+CREATE OR REPLACE FUNCTION board_viewer(p_email TEXT, p_last_week DATE, p_week DATE, p_today DATE)
+RETURNS jsonb LANGUAGE sql STABLE AS $$
+  SELECT jsonb_build_object(
+    'student', (SELECT jsonb_build_object('email', email, 'display_name', display_name, 'current_streak', current_streak,
+                  'all_time_minutes', all_time_minutes, 'about_text', about_text, 'about_changed_month', about_changed_month,
+                  'about_check_count', about_check_count, 'about_check_month', about_check_month,
+                  'about_banned_until', about_banned_until, 'about_reset_allowed', about_reset_allowed)
+                FROM students WHERE email = p_email),
+    'session', (SELECT jsonb_build_object('email', email, 'running', running, 'phase_end_at', phase_end_at, 'mode', mode,
+                  'total_seconds', total_seconds, 'updated_at', updated_at)
+                FROM pomo_active_session WHERE email = p_email),
+    'final_rank', (SELECT final_rank FROM pomodoro_stats WHERE email = p_email AND week_start = p_last_week),
+    'week', (SELECT jsonb_build_object('email', email, 'total_minutes', total_minutes, 'total_sessions', total_sessions)
+             FROM pomodoro_stats WHERE email = p_email AND week_start = p_week),
+    'today', (SELECT jsonb_build_object('email', email, 'total_minutes', total_minutes)
+              FROM pomo_daily_sessions WHERE email = p_email AND date = p_today)
+  );
+$$;
+
+-- Only the server (service_role) may run these: board_viewer returns one
+-- student's details by email, so the browser-facing roles must not.
+REVOKE EXECUTE ON FUNCTION board_weekly_snapshot(DATE, DATE, DATE, BIGINT) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION board_lastweek_snapshot(DATE, DATE, BIGINT) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION board_viewer(TEXT, DATE, DATE, DATE) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION board_weekly_snapshot(DATE, DATE, DATE, BIGINT) TO service_role;
+GRANT EXECUTE ON FUNCTION board_lastweek_snapshot(DATE, DATE, BIGINT) TO service_role;
+GRANT EXECUTE ON FUNCTION board_viewer(TEXT, DATE, DATE, DATE) TO service_role;

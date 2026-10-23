@@ -16,7 +16,7 @@
 // computation is never cached.
 import {
   weekStartIST, weekBefore, todayIST, fetchAllRows, fetchFlaggedEmails, fetchLiveCount, fetchHourlyActivity,
-  fetchLiveStatusByEmail, fetchAllTimeMinutesByEmail, fetchAboutTextByEmail, notInEmailList,
+  fetchLiveStatusByEmail, fetchAllTimeMinutesByEmail, fetchAboutTextByEmail, notInEmailList, liveStatusFromSessions,
 } from './supabase.js';
 
 export const TTL_MS = 30000;
@@ -32,6 +32,31 @@ function cached(key, fn, ttl = TTL_MS) {
   return promise;
 }
 
+// One request instead of ~10 (2026-10-24, Log Ingestion again): the
+// board_* Postgres functions (supabase/schema.sql) return the same raw rows
+// the separate queries below fetch; everything after that is the same
+// JavaScript. Any RPC error falls back to the separate queries. A function
+// that doesn't exist yet (before the SQL is run) isn't retried for
+// RPC_MISSING_RETRY_MS, so the fallback doesn't cost an extra request each time.
+const RPC_MISSING_RETRY_MS = 10 * 60 * 1000;
+const rpcMissingAt = {};
+async function callRpc(supabase, name, args) {
+  if (rpcMissingAt[name] && Date.now() - rpcMissingAt[name] < RPC_MISSING_RETRY_MS) return null;
+  try {
+    const { data, error } = await supabase.rpc(name, args);
+    if (error) {
+      if (error.code === 'PGRST202' || /could not find the function/i.test(error.message || '')) rpcMissingAt[name] = Date.now();
+      else console.error(name + ' failed, using separate queries:', error.message);
+      return null;
+    }
+    delete rpcMissingAt[name];
+    return data || null;
+  } catch (e) {
+    console.error(name + ' threw, using separate queries:', e.message);
+    return null;
+  }
+}
+
 export const byMinutesThenEmail = (a, b) => b.total_minutes - a.total_minutes || (a.email < b.email ? -1 : a.email > b.email ? 1 : 0);
 
 // Everything the weekly board (and the "today" board riding on it) needs
@@ -41,6 +66,8 @@ export function getSharedWeekly(supabase) {
   const today = todayIST();
   return cached('weekly:' + weekStart + ':' + today, async () => {
     const lastWeekStart = weekBefore(weekStart);
+    const snap = await callRpc(supabase, 'board_weekly_snapshot', { p_week: weekStart, p_last_week: lastWeekStart, p_today: today, p_now: Date.now() });
+    if (snap) return weeklyFromSnapshot(snap, weekStart, lastWeekStart, today);
     const [flagged, weekRows, todayResult, liveCount] = await Promise.all([
       fetchFlaggedEmails(supabase),
       fetchAllRows(() => supabase.from('pomodoro_stats').select('email, total_minutes, total_sessions').eq('week_start', weekStart)),
@@ -87,6 +114,27 @@ export function getSharedWeekly(supabase) {
   });
 }
 
+function weeklyFromSnapshot(snap, weekStart, lastWeekStart, today) {
+  const flagged = new Set(snap.flagged || []);
+  const liveCount = { count: snap.live_count || 0, maxCount: snap.max_count ?? (snap.live_count || 0) };
+  const weekSorted = (snap.week_rows || []).filter((s) => !flagged.has(s.email)).sort(byMinutesThenEmail);
+  const todayAll = snap.today_rows || [];
+  const todaySorted = todayAll.filter((s) => !flagged.has(s.email)).sort(byMinutesThenEmail);
+  const students = snap.students || [];
+  return {
+    weekStart, lastWeekStart, today, flagged, liveCount, weekSorted, top: weekSorted.slice(0, 20), todayAll, todaySorted, todayTop: todaySorted.slice(0, 10),
+    nameByEmail: Object.fromEntries(students.map((s) => [s.email, s.display_name])),
+    streakByEmail: Object.fromEntries(students.map((s) => [s.email, s.current_streak || 0])),
+    liveByEmail: liveStatusFromSessions(snap.lookup || [], snap.sessions || [], Date.now()),
+    lastWeekRankByEmail: Object.fromEntries((snap.last_week_ranks || []).filter((r) => r.final_rank != null).map((r) => [r.email, r.final_rank])),
+    allTimeByEmail: Object.fromEntries(students.map((s) => [s.email, s.all_time_minutes || 0])),
+    aboutRowByEmail: Object.fromEntries(students.map((s) => [s.email, {
+      email: s.email, about_text: s.about_text, about_changed_month: s.about_changed_month, about_check_count: s.about_check_count, about_check_month: s.about_check_month,
+    }])),
+    aboutTextByEmail: Object.fromEntries(students.filter((s) => s.about_text != null).map((s) => [s.email, s.about_text])),
+  };
+}
+
 // Everything the last-week champions card needs that doesn't depend on
 // who is looking. Same queries as lib fetchLastWeekLeaders, minus the
 // viewer's own.
@@ -94,6 +142,21 @@ export function getSharedLastWeek(supabase) {
   const weekStart = weekBefore(weekStartIST());
   return cached('lastweek:' + weekStart, async () => {
     const prevWeekStart = weekBefore(weekStart);
+    const snap = await callRpc(supabase, 'board_lastweek_snapshot', { p_week: weekStart, p_prev_week: prevWeekStart, p_now: Date.now() });
+    if (snap) {
+      const flagged = new Set(snap.flagged || []);
+      const top = snap.top || [];
+      const students = snap.students || [];
+      return {
+        weekStart, flagged, top,
+        liveCount: { count: snap.live_count || 0, maxCount: snap.max_count ?? (snap.live_count || 0) },
+        eligibleWeekRows: (snap.week_rows || []).filter((s) => !flagged.has(s.email)),
+        prevRankByEmail: Object.fromEntries((snap.prev_order || []).map((email, i) => [email, i + 1])),
+        nameByEmail: Object.fromEntries(students.map((s) => [s.email, s.display_name])),
+        allTimeByEmail: Object.fromEntries(students.map((s) => [s.email, s.all_time_minutes || 0])),
+        liveByEmail: liveStatusFromSessions(top.map((s) => s.email), snap.sessions || [], Date.now()),
+      };
+    }
     const [flagged, prevWeekResult, liveCount] = await Promise.all([
       fetchFlaggedEmails(supabase),
       supabase.from('pomodoro_stats').select('email, total_minutes').eq('week_start', prevWeekStart).order('total_minutes', { ascending: false }),
@@ -130,6 +193,21 @@ export function getSharedLastWeek(supabase) {
 // the viewer's own week/today minutes, so their own row and rank are never
 // up to TTL_MS stale right after they finish a session.
 export async function getViewerDetails(supabase, email, lastWeekStart, weekStart, today) {
+  const v = await callRpc(supabase, 'board_viewer', { p_email: email, p_last_week: lastWeekStart || null, p_week: weekStart || null, p_today: today || null });
+  if (v) {
+    const row = v.student || null;
+    return {
+      exists: !!row,
+      name: row?.display_name || null,
+      week: v.week || null,
+      today: v.today || null,
+      streak: row?.current_streak || 0,
+      allTime: row?.all_time_minutes || 0,
+      aboutRow: row,
+      live: liveStatusFromSessions([email], v.session ? [v.session] : [], Date.now())[email],
+      lastWeekFinalRank: v.final_rank ?? null,
+    };
+  }
   const [studentResult, liveByEmail, finalRankResult, weekResult, todayResult] = await Promise.all([
     supabase.from('students').select('email, display_name, current_streak, all_time_minutes, about_text, about_changed_month, about_check_count, about_check_month, about_banned_until, about_reset_allowed').eq('email', email).maybeSingle().then((r) => r, () => ({ data: null, error: true })),
     fetchLiveStatusByEmail(supabase, [email]),
@@ -258,6 +336,14 @@ export async function buildLastWeekLeaders(supabase, email, known) {
       viewerLive = known.live;
       viewerAllTime = viewerInTop ? null : (known.allTime || 0);
     } else {
+      // One request (board_viewer with no dates) instead of two, when available.
+      const v = await callRpc(supabase, 'board_viewer', { p_email: email, p_last_week: null, p_week: null, p_today: null });
+      if (v) {
+        viewerLive = liveStatusFromSessions([email], v.session ? [v.session] : [], Date.now())[email];
+        viewerAllTime = viewerInTop ? null : (v.student?.all_time_minutes || 0);
+      }
+    }
+    if (email && !known && viewerLive === null) {
       const [live, allTime] = await Promise.all([fetchLiveStatusByEmail(supabase, [email]), viewerInTop ? Promise.resolve(null) : fetchAllTimeMinutesByEmail(supabase, [email])]);
       viewerLive = live[email];
       viewerAllTime = allTime ? (allTime[email] || 0) : null;
