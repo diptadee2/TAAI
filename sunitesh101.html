@@ -167,7 +167,8 @@
   .add-link { font: inherit; font-size: 12.5px; font-weight: 700; background: transparent; border: 0; padding: 2px 0; cursor: pointer; color: var(--ink-dim); text-decoration: underline; text-underline-offset: 3px; }
   .add-link:hover { color: var(--ink); }
   .add-note { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; margin-top: 2px; }
-  .add-note input { font: inherit; font-size: 14px; border: 2px solid var(--ink); padding: 7px 9px; background: #fff; flex: 1 1 220px; min-width: 0; }
+  .add-note input, .add-note textarea { font: inherit; font-size: 14px; border: 2px solid var(--ink); padding: 7px 9px; background: #fff; flex: 1 1 220px; min-width: 0; }
+  .add-note textarea { flex-basis: 100%; resize: vertical; line-height: 1.4; }
   .add-note-actions { display: flex; gap: 6px; }
   .views { display: flex; gap: 0; margin: 0 0 18px; border: 2px solid var(--ink); width: max-content; max-width: 100%; }
   .views button { font: inherit; font-size: 14px; font-weight: 700; padding: 8px 16px; background: #fff; border: 0; cursor: pointer; color: var(--ink); }
@@ -603,11 +604,11 @@
     var html = '<div class="links">' + list.map(function (n) { return chipHtml(n, true); }).join('');
     if (canAdd && d.linksReady) {
       if (S.addingFor === taskId) {
-        html += '<form class="add-note" data-add-form="' + taskId + '"><input name="url" type="url" inputmode="url" placeholder="Paste a Google Drive link" required maxlength="600">' +
+        html += '<form class="add-note" data-add-form="' + taskId + '"><textarea name="url" rows="2" inputmode="url" placeholder="Paste Google Drive links, one per line (add as many as you like)" required></textarea>' +
           '<input name="label" type="text" placeholder="Title (optional), e.g. Pointers handwritten" maxlength="80">' +
-          '<div class="add-note-actions"><button class="btn btn-yellow" type="submit">Save link</button><button class="btn" type="button" data-add-cancel>Cancel</button></div></form>';
+          '<div class="add-note-actions"><button class="btn btn-yellow" type="submit">Save</button><button class="btn" type="button" data-add-cancel>Cancel</button></div></form>';
       } else {
-        html += '<button type="button" class="add-link" data-add="' + taskId + '">+ Add notes</button>';
+        html += '<button type="button" class="add-link" data-add="' + taskId + '">' + (list.length ? '+ Add more notes' : '+ Add notes') + '</button>';
       }
     }
     return html + '</div>';
@@ -730,10 +731,10 @@
     app.querySelectorAll('[data-add]').forEach(function (b) {
       b.addEventListener('click', function () {
         var addId = b.getAttribute('data-add');
-        function go() { S.addingFor = addId; render(); var f = app.querySelector('[data-add-form] input[name=url]'); if (f) f.focus(); }
+        function go() { S.addingFor = addId; render(); var f = app.querySelector('[data-add-form] [name=url]'); if (f) f.focus(); }
         if (needMe(go)) return;
         S.addingFor = addId; render();
-        var f = app.querySelector('[data-add-form] input[name=url]'); if (f) f.focus();
+        var f = app.querySelector('[data-add-form] [name=url]'); if (f) f.focus();
       });
     });
     app.querySelectorAll('[data-add-cancel]').forEach(function (b) {
@@ -743,11 +744,27 @@
       f.addEventListener('submit', function (e) {
         e.preventDefault();
         var taskId = f.getAttribute('data-add-form'), btn = f.querySelector('button[type=submit]');
+        // Several links at once: one per line (or separated by spaces).
+        var urls = f.url.value.split(/\s+/).map(function (u) { return u.trim(); }).filter(Boolean);
+        var label = f.label.value.trim();
+        if (!urls.length) return;
         btn.disabled = true; btn.textContent = 'Saving…';
-        api({ action: 'note-add', taskId: taskId, by: S.me, url: f.url.value.trim(), label: f.label.value.trim() }).then(function (r) {
-          S.data.links = (S.data.links || []).concat([r.note]); S.data.linkMap = groupLinks(S.data.links);
-          S.addingFor = null; render(); toast('Notes link saved');
-        }).catch(function (err) { btn.disabled = false; btn.textContent = 'Save link'; toast(err.message && err.status === 400 ? err.message : "Couldn't save the link. Try again."); });
+        var saved = 0;
+        urls.reduce(function (p, u, i) {
+          return p.then(function () {
+            return api({ action: 'note-add', taskId: taskId, by: S.me, url: u, label: label && urls.length > 1 ? label + ' (' + (i + 1) + ')' : label }).then(function (r) {
+              S.data.links = (S.data.links || []).concat([r.note]); saved++;
+            });
+          });
+        }, Promise.resolve()).then(function () {
+          S.data.linkMap = groupLinks(S.data.links);
+          S.addingFor = null; render(); toast(saved === 1 ? 'Notes link saved' : saved + ' notes links saved');
+        }).catch(function (err) {
+          S.data.linkMap = groupLinks(S.data.links);
+          var msg = err.message && err.status === 400 ? err.message : "Couldn't save the link. Try again.";
+          if (saved) { S.addingFor = null; render(); toast(saved + ' saved, then: ' + msg); }
+          else { btn.disabled = false; btn.textContent = 'Save'; toast(msg); }
+        });
       });
     });
     app.querySelectorAll('[data-remove]').forEach(function (b) {
