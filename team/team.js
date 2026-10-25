@@ -101,6 +101,7 @@
       { id: 'probability', label: 'Probability (probability)' },
       { id: 'machine-learning', label: 'Machine Learning (machine-learning)' },
       { id: 'python-programming', label: 'Python Programming (python-programming)' },
+      { id: 'artificial-intelligence', label: 'Artificial Intelligence, no Logic (artificial-intelligence)' },
     ] },
     { label: 'Test series', options: [
       { id: 'test-series', label: 'GATE DA Test Series (test-series)' },

@@ -3890,6 +3890,15 @@ html body main #combos .orient-btn .orient-text span { font-family: 'IBM Plex Mo
   html body.footer-in-view .mobile-contact-bar { opacity: 0; }
   html body .back-to-top.visible { box-shadow: 0 0 0 6px rgba(255,251,240,0.45), 0 2px 10px rgba(10,60,60,0.18); }
 }
+
+/* AI course (2026-10-25): coming-soon state, and a lone 7th card centred
+   in the 3-column grid instead of stranded on the left. */
+html body main .courses-grid > * > .course-card.card .course-note { font-size: 12.5px; color: var(--sl-dim, #555); margin: 2px 0 10px; }
+html body main .courses-grid > * > .course-card.card .course-price-soon { font-size: 22px !important; }
+html body main .courses-grid > * > .course-card.card .course-btn-soon { cursor: default; opacity: .6; pointer-events: none; }
+@media (min-width: 769px) {
+  html body main .courses-grid > :last-child:nth-child(3n+1) { grid-column: 2; }
+}
 </style>
 </head>
 <body data-float-stack>
@@ -4363,6 +4372,13 @@ const INDIVIDUAL = [
     icon: <Icon.Code />, grad: 'linear-gradient(145deg,#10B981,#34D399)', shadow: 'rgba(16,185,129,0.32)',
     href: 'https://learn.taai.live/learn/Python-Programming',
     topics: ['Basics & syntax', 'Strings, I/O & branching', 'Loops & iteration'] },
+  // Coming soon until /team (Site data > Pricing > artificial-intelligence)
+  // has a price: then the card goes live by itself, no deploy (2026-10-25).
+  // No LMS link yet, so the button uses the enrol link set in /team.
+  { id: 'artificial-intelligence', num: '07', title: 'Artificial Intelligence',
+    icon: <Icon.Sparkle />, grad: 'linear-gradient(145deg,#F59E0B,#FBBF24)', shadow: 'rgba(245,158,11,0.3)',
+    comingSoon: true, note: 'Logic is not part of this course.',
+    topics: ['Uninformed & informed search', 'Adversarial search', 'Reasoning under uncertainty'] },
 ];
 
 // ── DOT FIELD (Canvas2D + SVG glow, no external deps) ──────────────
@@ -5351,14 +5367,17 @@ const CourseCard = React.memo(function CourseCard({ c, pricing }) {
   const priceOld = p.priceOld ? fmtPrice(p.priceOld) : null;
   const validity = p.validity ? fmtValidity(p.validity) : '-';
   const pct = (Number(p.price) > 0 && Number(p.priceOld) > Number(p.price)) ? Math.round((1 - Number(p.price) / Number(p.priceOld)) * 100) : null;
+  // A comingSoon card goes live the moment /team gives it a price.
+  const soon = !!c.comingSoon && !(Number(p.price) > 0);
+  const enrollHref = p.enrollUrl || c.href;
   return (
-    <div id={c.id} className="course-card card" style={{ '--course-grad': c.grad, '--course-shadow': c.shadow }}>
+    <div id={c.id} className={`course-card card${soon ? ' course-soon' : ''}`} style={{ '--course-grad': c.grad, '--course-shadow': c.shadow }}>
       <div className="course-accent" style={{ background: c.grad }} />
       <div className="course-head">
         <div className="course-icon" style={{ background: c.grad }}>{c.icon}</div>
         <div className="course-head-text">
           <div className="course-title">{c.title}</div>
-          <div className={`course-validity mono${p.validity ? ' data-fade-in' : ''}`}>{validity}</div>
+          {!(soon && !p.validity) && <div className={`course-validity mono${p.validity ? ' data-fade-in' : ''}`}>{validity}</div>}
         </div>
       </div>
       <div className="course-topics-label">What you'll cover</div>
@@ -5367,13 +5386,18 @@ const CourseCard = React.memo(function CourseCard({ c, pricing }) {
           <div key={i} className="course-topic" style={{ '--td': `${i * 55}ms` }}>{t}</div>
         ))}
       </div>
+      {c.note && <div className="course-note">{c.note}</div>}
       <div className={`course-price-row${p.price ? ' price-loaded' : ''}`}>
-        <div className="course-price">{price}</div>
-        {priceOld && <div className="course-price-old">{priceOld}</div>}
-        {pct && <div className="course-pct">{pct}% off</div>}
+        {soon ? <div className="course-price course-price-soon">Coming soon</div> : <>
+          <div className="course-price">{price}</div>
+          {priceOld && <div className="course-price-old">{priceOld}</div>}
+          {pct && <div className="course-pct">{pct}% off</div>}
+        </>}
       </div>
       <div className="ticket-notch"><div className="ticket-notch-line" /></div>
-      <a target="_blank" rel="noopener noreferrer" href={p.enrollUrl || c.href} className="btn btn-ghost btn-full">Get course <Icon.ArrowRight /></a>
+      {(!soon && enrollHref)
+        ? <a target="_blank" rel="noopener noreferrer" href={enrollHref} className="btn btn-ghost btn-full">Get course <Icon.ArrowRight /></a>
+        : <span className="btn btn-ghost btn-full course-btn-soon" aria-disabled="true">{soon ? 'Opens soon' : 'Enrolment opens soon'}</span>}
     </div>
   );
 });
