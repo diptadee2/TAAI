@@ -3893,7 +3893,8 @@ html body main #combos .orient-btn .orient-text span { font-family: 'IBM Plex Mo
 
 /* AI course (2026-10-25): coming-soon state, and a lone 7th card centred
    in the 3-column grid instead of stranded on the left. */
-html body main .courses-grid > * > .course-card.card .course-note { font-size: 12.5px; color: var(--sl-dim, #555); margin: 2px 0 10px; }
+html body main .courses-grid > * > .course-card.card .course-note { display: inline-flex; align-items: center; gap: 7px; align-self: flex-start; margin: 4px 0 12px; padding: 6px 11px; border-radius: 10px; background: #FEF3C7; border: 1px solid #F59E0B; color: #92400E !important; font-size: 12.5px; font-weight: 700; line-height: 1.3; }
+html body main .courses-grid > * > .course-card.card .course-note svg { flex: none; }
 html body main .courses-grid > * > .course-card.card .course-price-soon { font-size: 22px !important; }
 html body main .courses-grid > * > .course-card.card .course-btn-soon { cursor: default; opacity: .6; pointer-events: none; }
 @media (min-width: 769px) {
@@ -4377,7 +4378,7 @@ const INDIVIDUAL = [
   // No LMS link yet, so the button uses the enrol link set in /team.
   { id: 'artificial-intelligence', num: '07', title: 'Artificial Intelligence',
     icon: <Icon.Sparkle />, grad: 'linear-gradient(145deg,#F59E0B,#FBBF24)', shadow: 'rgba(245,158,11,0.3)',
-    comingSoon: true, note: 'Logic is not part of this course.',
+    comingSoon: true, note: 'Logic is not included',
     topics: ['Uninformed & informed search', 'Adversarial search', 'Reasoning under uncertainty'] },
 ];
 
@@ -5386,7 +5387,7 @@ const CourseCard = React.memo(function CourseCard({ c, pricing }) {
           <div key={i} className="course-topic" style={{ '--td': `${i * 55}ms` }}>{t}</div>
         ))}
       </div>
-      {c.note && <div className="course-note">{c.note}</div>}
+      {c.note && <div className="course-note"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.6"/><path d="M8 7.2v4M8 4.6v.1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg><span>{c.note}</span></div>}
       <div className={`course-price-row${p.price ? ' price-loaded' : ''}`}>
         {soon ? <div className="course-price course-price-soon">Coming soon</div> : <>
           <div className="course-price">{price}</div>
