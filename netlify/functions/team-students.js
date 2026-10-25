@@ -196,7 +196,11 @@ export async function handler(event, context) {
   const lastActiveByEmail = new Map(); // email -> latest date seen
   const monthMinutesByEmailDate = new Map(); // email -> { 'YYYY-MM-DD': minutes }, this month only
   const currentMonth = today.slice(0, 7);
+  // Rolling last 30 days: today and the 29 days before it (IST dates).
+  const last30Start = new Date(Date.parse(today + 'T00:00:00Z') - 29 * 86400000).toISOString().slice(0, 10);
+  const last30MinutesByEmail = new Map();
   for (const row of sessions) {
+    if (row.date >= last30Start && row.date <= today) last30MinutesByEmail.set(row.email, (last30MinutesByEmail.get(row.email) || 0) + (row.total_minutes || 0));
     minutesByEmail.set(row.email, (minutesByEmail.get(row.email) || 0) + (row.total_minutes || 0));
     const prev = lastActiveByEmail.get(row.email);
     if (!prev || row.date > prev) lastActiveByEmail.set(row.email, row.date);
@@ -258,6 +262,7 @@ export async function handler(event, context) {
       created_at: s.created_at,
       total_minutes: minutesByEmail.get(s.email) || 0,
       week_minutes: weekMinutesByEmail.get(s.email) || 0,
+      last30_minutes: last30MinutesByEmail.get(s.email) || 0,
       streak: s.current_streak || 0,
       tasks_completed: taskCountByEmail.get(s.email) || 0,
       progress_pct: batchTaskTotal > 0 ? Math.min(100, Math.round(((taskCountByEmail.get(s.email) || 0) / batchTaskTotal) * 100)) : 0,

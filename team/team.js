@@ -315,7 +315,7 @@
     studentsError: null,
     studentSort: { key: 'total_minutes', dir: 'desc' },
     studentSummary: null,
-    studentFilters: { search: '', inactive: '', minStreak: '', flaggedOnly: false, batch: '' }, // batch: '' | 'C' | 'D'; inactive: '' | '3' | '7' | '14' | '30' | 'never'
+    studentFilters: { search: '', inactive: '', active: '', minStreak: '', flaggedOnly: false, batch: '' }, // active: '' | '7' | '14' | '30' (active within the last N days) // batch: '' | 'C' | 'D'; inactive: '' | '3' | '7' | '14' | '30' | 'never'
     noteSaving: {}, // email -> 'saving' | 'saved' | 'error', transient per-row save feedback
     studentsShown: 50, // how many rows of the filtered list are rendered (see STUDENTS_PAGE)
     studentsViewKey: '', // filters+sort last rendered; a change resets studentsShown
@@ -2018,6 +2018,7 @@
     { key: 'batch', label: 'Batch' },
     { key: 'last_active', label: 'Last active' },
     { key: 'week_minutes', label: 'This week' },
+    { key: 'last30_minutes', label: 'Last 30 days' },
     { key: 'total_minutes', label: 'All-time' },
     { key: 'consistency_minutes', label: 'Consistency' },
     { key: 'streak', label: 'Streak' },
@@ -2045,6 +2046,8 @@
       if (minStreak != null && s.streak < minStreak) return false;
       if (f.flaggedOnly && !s.needs_rename) return false;
       if (f.batch && (s.batch || 'C') !== f.batch) return false;
+      // "Active in last N days": last session today or within the N-1 days before.
+      if (f.active && !(s.days_inactive != null && s.days_inactive < Number(f.active))) return false;
       if (f.inactive === 'never') return s.days_inactive == null;
       if (f.inactive) return s.days_inactive != null && s.days_inactive >= Number(f.inactive);
       return true;
@@ -2121,10 +2124,14 @@
           [['', 'All'], ['C', 'Batch C'], ['D', '120 Days']].map(function (o) {
             return '<option value="' + o[0] + '"' + (f.batch === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
           }).join('') + '</select></label>' +
+        '<label>Active in last <select id="student-active-filter">' +
+          [['', 'Any'], ['7', '7 days'], ['14', '14 days'], ['30', '30 days']].map(function (o) {
+            return '<option value="' + o[0] + '"' + (f.active === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
+          }).join('') + '</select></label>' +
         '<label>Inactive for <select id="student-inactive-filter">' + inactiveOptions + '</select></label>' +
         '<label>Min streak <input type="number" min="0" id="student-min-streak" placeholder="0" value="' + escapeHtml(f.minStreak) + '" style="width:64px;"></label>' +
         '<label><input type="checkbox" id="student-flagged-only"' + (f.flaggedOnly ? ' checked' : '') + '> 🚩 Flagged names only</label>' +
-        ((f.search || f.inactive || f.minStreak !== '' || f.flaggedOnly || f.batch) ? '<button type="button" class="btn btn-small" id="student-filter-clear">Clear filters</button>' : '') +
+        ((f.search || f.inactive || f.active || f.minStreak !== '' || f.flaggedOnly || f.batch) ? '<button type="button" class="btn btn-small" id="student-filter-clear">Clear filters</button>' : '') +
       '</div>'
     );
   }
@@ -2217,6 +2224,7 @@
           '<td><span class="batch-chip batch-chip-' + escapeHtml(s.batch || 'C') + '">' + escapeHtml(STUDENT_BATCH_LABELS[s.batch] || s.batch || 'Batch C') + '</span></td>' +
           '<td class="nowrap"><span class="inactivity-dot ' + inactivityClass(s.days_inactive) + '"></span>' + lastActiveLabel(s) + '</td>' +
           '<td>' + formatHours(s.week_minutes) + '</td>' +
+          '<td>' + formatHours(s.last30_minutes || 0) + '</td>' +
           '<td>' + formatHours(s.total_minutes) + '</td>' +
           '<td class="nowrap">' + formatHours(s.consistency_minutes) + '/day</td>' +
           '<td>' + s.streak + '</td>' +
@@ -3502,6 +3510,11 @@
       state.studentFilters.inactive = inactiveFilter.value;
       render();
     });
+    var activeFilter = document.getElementById('student-active-filter');
+    if (activeFilter) activeFilter.addEventListener('change', function () {
+      state.studentFilters.active = activeFilter.value;
+      render();
+    });
     var minStreakInput = document.getElementById('student-min-streak');
     if (minStreakInput) minStreakInput.addEventListener('input', function () {
       var pos = minStreakInput.selectionStart;
@@ -3516,7 +3529,7 @@
     });
     var filterClearBtn = document.getElementById('student-filter-clear');
     if (filterClearBtn) filterClearBtn.addEventListener('click', function () {
-      state.studentFilters = { search: '', inactive: '', minStreak: '', flaggedOnly: false, batch: '' };
+      state.studentFilters = { search: '', inactive: '', active: '', minStreak: '', flaggedOnly: false, batch: '' };
       render();
     });
 
@@ -3556,8 +3569,8 @@
     if (allBtn) allBtn.addEventListener('click', function () { state.studentsShown = Infinity; render(); });
     var csvBtn = document.getElementById('students-csv');
     if (csvBtn) csvBtn.addEventListener('click', function () {
-      var cols = ['display_name', 'email', 'batch', 'last_active', 'days_inactive', 'week_minutes', 'total_minutes', 'consistency_minutes', 'streak', 'progress_pct', 'tasks_completed', 'needs_rename', 'notes'];
-      var head = ['Name', 'Email', 'Batch', 'Last active', 'Days inactive', 'This week (min)', 'All-time (min)', 'Consistency (min/day)', 'Streak', 'Course progress %', 'Tasks done', 'Name flagged', 'Notes'];
+      var cols = ['display_name', 'email', 'batch', 'last_active', 'days_inactive', 'week_minutes', 'last30_minutes', 'total_minutes', 'consistency_minutes', 'streak', 'progress_pct', 'tasks_completed', 'needs_rename', 'notes'];
+      var head = ['Name', 'Email', 'Batch', 'Last active', 'Days inactive', 'This week (min)', 'Last 30 days (min)', 'All-time (min)', 'Consistency (min/day)', 'Streak', 'Course progress %', 'Tasks done', 'Name flagged', 'Notes'];
       var cell = function (v) {
         if (v == null) return '';
         v = String(v);
