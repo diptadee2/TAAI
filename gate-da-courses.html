@@ -3921,6 +3921,13 @@ html body main #combos .combo-side-col > .challenge-card, html body main #combos
 @media (max-width: 400px) {
   html body main #combos .combo-side-col > .challenge-card .challenge-title-main { font-size: min(19px, max(13px, calc((100cqi - 56px) / 8.6))) !important; }
 }
+
+/* Projects map a bit smaller (2026-10-26, "the whole thing is alright, can
+   be a bit smaller"): same design, scaled to 85% with CSS zoom (phones stay
+   full size, the text would get too small). The line
+   drawing in ProjectsMap converts its screen measurements back by the same
+   factor, so the wires still meet the boxes. */
+@media (min-width: 601px) { html body main #projects-map .pmap { zoom: 0.85; } }
 </style>
 </head>
 <body data-float-stack>
@@ -5588,7 +5595,11 @@ function ProjectsMap() {
     const wrap = wrapRef.current; if (!wrap) return;
     const measure = () => {
       const W = wrap.getBoundingClientRect();
-      setBox({ w: W.width, h: W.height });
+      // The map is drawn scaled down (CSS zoom, 2026-10-26): screen
+      // measurements come back scaled, the SVG's own units don't, so
+      // convert back to the map's own px.
+      const k = W.width ? wrap.offsetWidth / W.width : 1;
+      setBox({ w: W.width * k, h: W.height * k });
       const out = [];
       MAP_STAGES.forEach((st, si) => {
         const T = stageRefs.current[si] && stageRefs.current[si].getBoundingClientRect();
@@ -5611,7 +5622,7 @@ function ProjectsMap() {
           out.push({ si, panel: true, d: `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}` });
         }
       });
-      setPaths(out);
+      setPaths(k === 1 ? out : out.map(o => Object.assign({}, o, { d: o.d.replace(/-?\d+(\.\d+)?/g, n => +(n * k).toFixed(2)) })));
     };
     measure();
     const ro = new ResizeObserver(measure); ro.observe(wrap);
