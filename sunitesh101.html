@@ -230,6 +230,36 @@
   .today-map { margin-top: 10px; border: 2px solid var(--ink); background: #fff; }
   .today-map .grow { grid-template-columns: 1fr; padding: 10px 12px; }
 
+  /* Revision map tab, organised (2026-10-26) */
+  .grid-map { gap: 0; }
+  .gblock { border-bottom: 1.5px solid #E5DCC8; }
+  .gblock:last-child { border-bottom: 0; }
+  .ghead { width: 100%; font: inherit; color: var(--ink); background: none; border: 0; cursor: pointer; text-align: left; display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 12px 16px; }
+  .gmain { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .gline { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+  .gline-2 { gap: 2px 8px; }
+  .gsep { color: var(--ink-dim); }
+  .ghead:hover { background: rgba(253,224,71,.18); }
+  .gtitle { font-size: 15px; font-weight: 800; }
+  .gchip { font-size: 11px; font-weight: 800; padding: 2px 7px; border: 2px solid var(--ink); background: #fff; white-space: nowrap; }
+  .gchip-now { background: var(--yellow); }
+  .gchip-done { background: #D9F99D; }
+  .gdates { font-family: 'DM Mono', monospace; font-size: 11.5px; color: var(--ink-dim); white-space: nowrap; }
+  .gcounts { font-size: 12.5px; color: var(--ink-dim); }
+  .gcounts b { color: var(--ink); }
+  .gcaret { flex: none; width: 26px; height: 26px; display: grid; place-items: center; border: 2px solid var(--ink); font-weight: 800; font-size: 16px; background: #fff; }
+  .gblock-next .gtitle { color: var(--ink-dim); }
+  .gcells { display: grid; grid-template-columns: repeat(auto-fill, minmax(138px, 1fr)); gap: 8px; padding: 2px 16px 16px; }
+  .gcells .tl { max-width: none; width: 100%; }
+  .gblock .sq-panel { margin: 0 16px 16px; }
+  @media (max-width: 560px) {
+    .ghead { padding: 12px; }
+    .gsep { display: none; }
+    .gline-2 .gcounts { flex-basis: 100%; }
+    .gcells { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 2px 12px 14px; }
+    .gblock .sq-panel { margin: 0 12px 14px; }
+  }
+
   /* Who are you? popup (2026-10-24) */
   .who-me { font-size: 13.5px; }
   .who-modal { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; }
@@ -553,11 +583,11 @@
   function gridHtml(subs, ctx) {
     var d = S.data, today = todayIST(), rc = revisionCounts();
     var sel = S.selTopic && S.selTopic.ctx === ctx ? S.selTopic.id : null;
-    return '<div class="grid">' + subs.map(function (i) {
-      var tasks = d.sections[i].tasks, studied = 0, withN = 0;
+    return '<div class="grid' + (ctx === 'map' ? ' grid-map' : '') + '">' + subs.map(function (i) {
+      var tasks = d.sections[i].tasks, studied = 0, withN = 0, revised = 0;
       var cells = tasks.map(function (t) {
         var st = topicState(t, today, rc);
-        if (st.studied) { studied += 1; if (st.hasN) withN += 1; }
+        if (st.studied) { studied += 1; if (st.hasN) withN += 1; if (st.rev) revised += 1; }
         var cls = 'tl ' + (!st.studied ? 'sq-next' : st.hasN ? 'sq-notes' : 'sq-empty') + (st.today ? ' sq-today' : '') + (sel === t.id ? ' sq-sel' : '') + (S.mapHl && !matchesHl(st) ? ' sq-dim' : '');
         var label = t.text + '. ' + (!st.studied ? 'Not studied yet' : (st.hasN ? 'Notes saved' : 'No notes') + ', ' + (st.rev ? 'revised ' + st.rev + (st.rev === 1 ? ' time' : ' times') : 'not revised yet'));
         return '<button type="button" class="' + cls + '" data-sq="' + t.id + '" data-ctx="' + ctx + '" aria-pressed="' + (sel === t.id) + '" aria-label="' + esc(label) + '" title="' + esc(dayLabel(t.id) + ': ' + t.text) + '">' +
@@ -565,6 +595,26 @@
           (st.rev ? '<span class="tl-rev" title="Times revised">↻' + st.rev + '</span>' : '') + '</button>';
       }).join('');
       var selTask = sel && tasks.filter(function (t) { return t.id === sel; })[0];
+      if (ctx === 'map') {
+        // Revision map tab (2026-10-26, "can be a bit more organised"): one
+        // block per subject with a header (dates, where it stands, counts)
+        // over an even grid of tiles. Subjects not started yet fold into
+        // their header line; tap to open. Picked via "Revise ..." buttons
+        // (notesFilter) always open.
+        var first = tasks[0].id.slice(0, 10), last = tasks[tasks.length - 1].id.slice(0, 10);
+        var stage = last < today ? 'done' : first <= today ? 'now' : 'next';
+        var forced = S.notesFilter && S.notesFilter.length && S.notesFilter.length < topicSections().length;
+        var open = forced || selTask || (S.mapOpen && S.mapOpen[i] != null ? S.mapOpen[i] : stage !== 'next');
+        var chip = stage === 'done' ? '<span class="gchip gchip-done">Done</span>' : stage === 'now' ? '<span class="gchip gchip-now">Studying now</span>' : '<span class="gchip">Starts ' + fmtDay(first).dm + '</span>';
+        var counts = studied ? '<span class="gcounts"><b>' + studied + '/' + tasks.length + '</b> studied · <b>' + withN + '</b> with notes · <b>' + revised + '</b> revised</span>' : '<span class="gcounts">' + tasks.length + ' topics</span>';
+        return '<div class="gblock gblock-' + stage + (open ? ' is-open' : '') + '">' +
+          '<button type="button" class="ghead" data-gtoggle="' + i + '" aria-expanded="' + !!open + '">' +
+            '<span class="gmain"><span class="gline"><span class="gtitle">' + esc(d.sections[i].title) + '</span>' + chip + '</span>' +
+            '<span class="gline gline-2"><span class="gdates">' + fmtDay(first).dm + ' to ' + fmtDay(last).dm + '</span><span class="gsep">·</span>' + counts + '</span></span>' +
+            '<span class="gcaret" aria-hidden="true">' + (open ? '−' : '+') + '</span></button>' +
+          (open ? '<div class="gcells">' + cells + '</div>' + (selTask ? topicPanelHtml(Object.assign({ section: i }, selTask), today, rc, ctx) : '') : '') +
+          '</div>';
+      }
       return '<div class="grow"><div class="grow-label"><b>' + esc(d.sections[i].title) + '</b><span>' + (studied ? 'notes ' + withN + '/' + studied : 'starts ' + fmtDay(tasks[0].id).dm) + '</span></div>' +
         '<div class="grow-cells">' + cells + '</div>' + (selTask ? topicPanelHtml(Object.assign({ section: i }, selTask), today, rc, ctx) : '') + '</div>';
     }).join('') + '</div>';
@@ -713,6 +763,14 @@
         var j = b.getAttribute('data-jump');
         S.notesFilter = j === 'all' ? null : j.split(',').map(Number); S.selTopic = null;
         render(); window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    });
+    app.querySelectorAll('[data-gtoggle]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var i = Number(b.getAttribute('data-gtoggle'));
+        S.mapOpen = S.mapOpen || {};
+        S.mapOpen[i] = b.getAttribute('aria-expanded') !== 'true';
+        render();
       });
     });
     app.querySelectorAll('[data-sq]').forEach(function (b) {
