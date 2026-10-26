@@ -2890,6 +2890,9 @@ function PrepToProjects() {
   const [paths, setPaths] = React.useState([]);
   const [box, setBox] = React.useState({ w: 0, h: 0 });
   const [shown, setShown] = React.useState(false);
+  // Mouse hover lights up the subjects a project uses (2026-10-26: mouse only;
+  // on phones a tap lit subjects that were already scrolled off-screen, and each
+  // tile lists its subjects anyway).
   const [hover, setHover] = React.useState(-1);
   React.useLayoutEffect(() => {
     const wrap = wrapRef.current, prep = prepRef.current; if (!wrap || !prep) return;
@@ -2953,7 +2956,7 @@ function PrepToProjects() {
         <div className="prep-tiles">
           {projects.map((p, i) => (
             <div key={i} ref={el => tileRefs.current[i] = el} className={'project-tile project-tile--' + p.art} style={{ '--d': (0.5 + i * 0.18) + 's' }}
-              onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(-1)}>
+              onPointerEnter={e => { if (e.pointerType === 'mouse') setHover(i); }} onPointerLeave={e => { if (e.pointerType === 'mouse') setHover(-1); }}>
               <div className="project-art"><ProjectArt kind={p.art} /><span className="project-count" aria-label={p.count + (p.count === 1 ? ' project' : ' projects')}>×{p.count}</span></div>
               <div className="project-text">
                 <div className="project-title">{p.title}</div>
