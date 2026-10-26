@@ -76,7 +76,7 @@ export async function handler(event, context) {
       // batch is NOT added here for the exact same reason — see its own
       // best-effort query below instead.
       supabase.from('students').select('email, display_name, notes, created_at, current_streak, needs_rename'),
-      fetchAllRows(() => supabase.from('task_progress').select('email, date, subject, task_text').eq('completed', true).lte('date', today)),
+      fetchAllRows(() => supabase.from('task_progress').select('email, date, subject, task_text, completed_at').eq('completed', true).lte('date', today)),
       fetchAllRows(() => supabase.from('pomo_daily_sessions').select('email, date, total_minutes')),
       supabase.from('pomodoro_stats').select('email, total_minutes').eq('week_start', weekStartIST()),
       // Whole-schedule task count, per batch (not date-limited) — the same
@@ -234,6 +234,18 @@ export async function handler(event, context) {
       monthMinutesByEmailDate.get(row.email)[row.date] = row.total_minutes;
     }
   }
+  // "Last active" also counts ticking a task (2026-10-26): the day they
+  // ticked it (IST), not the task's own date, so catching up on old days
+  // still counts as being active today. Before this only focus sessions
+  // counted, and students who tick but never use the timer showed "Never".
+  for (const row of completed) {
+    if (!row.completed_at) continue;
+    const d = new Date(new Date(row.completed_at).getTime() + 5.5 * 3600000).toISOString().slice(0, 10);
+    if (d > today) continue;
+    const prev = lastActiveByEmail.get(row.email);
+    if (!prev || d > prev) lastActiveByEmail.set(row.email, d);
+  }
+
 
   // "Consistency" here means the same thing the monthly Discord post
   // means by it — median daily minutes, zero-filled per day (a quiet day
@@ -320,7 +332,7 @@ export async function handler(event, context) {
     const span = Math.max(1, (Date.parse(today + 'T00:00:00Z') - Date.parse(batchStart + 'T00:00:00Z')) / 86400000);
     const inFor = Math.max(0, (Date.parse(today + 'T00:00:00Z') - Date.parse((joined > batchStart ? joined : batchStart) + 'T00:00:00Z')) / 86400000);
     const tenure = Math.min(1, inFor / span);
-    perf.set(s.email, { batch, focusMedian, tenure, progress: keys.size ? Math.min(1, (dueDoneByEmail.get(s.email) || 0) / keys.size) : 0, tickRatio, focusRatio, longest, current: s.current_streak || 0 });
+    perf.set(s.email, { batch, focusMedian, tenure, daysInactive: daysInactiveFor(lastActiveByEmail.get(s.email) || null), progress: keys.size ? Math.min(1, (dueDoneByEmail.get(s.email) || 0) / keys.size) : 0, tickRatio, focusRatio, longest, current: s.current_streak || 0 });
   }
   const bestLongest = new Map();
   for (const v of perf.values()) bestLongest.set(v.batch, Math.max(bestLongest.get(v.batch) || 1, v.longest));
@@ -331,7 +343,12 @@ export async function handler(event, context) {
     // time in batch and by how far under 50% progress they are; nothing at
     // 50% progress or more, nothing for someone who just joined.
     v.penalty = Math.round(15 * v.tenure * Math.max(0, (0.5 - v.progress) / 0.5));
-    v.score = Math.max(0, Math.round(100 * (0.4 * v.progress + 0.4 * (0.5 * v.tickRatio + 0.5 * v.focusRatio) + 0.2 * (0.7 * v.longest / best + 0.3 * Math.min(1, v.current / best)))) - v.penalty);
+    // Gone quiet (2026-10-26, "recent activity"): no tick and no focus
+    // session for 7+ days costs 3 points, rising to 10 at 30+ days; never
+    // active at all, 10.
+    const di = v.daysInactive;
+    v.inactivePenalty = di == null ? 10 : di < 7 ? 0 : Math.round(3 + 7 * Math.min(1, (di - 7) / 23));
+    v.score = Math.max(0, -v.inactivePenalty + Math.round(100 * (0.4 * v.progress + 0.4 * (0.5 * v.tickRatio + 0.5 * v.focusRatio) + 0.2 * (0.7 * v.longest / best + 0.3 * Math.min(1, v.current / best)))) - v.penalty);
   }
 
   const rows = students.map(s => {
@@ -357,6 +374,7 @@ export async function handler(event, context) {
       focus_day_pct: Math.round(perf.get(s.email).focusRatio * 100),
       focus_median_45_minutes: Math.round(perf.get(s.email).focusMedian),
       score_penalty: perf.get(s.email).penalty,
+      inactive_penalty: perf.get(s.email).inactivePenalty,
       longest_streak: perf.get(s.email).longest,
       rankers_batch: rankersByEmail.has(s.email),
       rankers_batch_at: typeof rankersByEmail.get(s.email) === 'string' ? rankersByEmail.get(s.email) : null,
