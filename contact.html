@@ -855,6 +855,11 @@ body .mobile-menu.open .mobile-menu-contact { animation: nbMenuFade .35s ease .5
   body .mobile-menu.open .mobile-menu-actions .btn-nav-signin, body .mobile-menu.open .mobile-menu-actions .btn-nav-signup, body .mobile-menu.open .mobile-menu-contact { animation: none !important; }
 }
 </style>
+<style>
+/* Back-to-top hidden while the hamburger menu is open (2026-10-26), same as
+   the other pages. */
+body:has(.mobile-menu.open) .back-to-top { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
+</style>
 </head>
 <body data-float-stack>
 <div id="root"></div>
