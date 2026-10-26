@@ -2303,6 +2303,48 @@ body .mobile-menu-contact {
   .nav-links { gap: 20px !important; letter-spacing: .04em !important; }
 }
 </style>
+<style>
+/* Hamburger menu opening animation (2026-10-26, "can the hamburger opening
+   animation be better?"). Same block on all 7 pages and in blogs/blog.css.
+   The panel unrolls downward (clip-path), the rows drop in one after another
+   with a small overshoot, each icon tile pops, the divider draws across,
+   then the buttons and Contact Us. Uses the individual translate/scale
+   properties, not transform: the neo-brutalist block sets transform: none
+   !important on the buttons, which blocked their old slide-in. Closing just
+   rolls the panel back up. */
+body .mobile-menu {
+  transform: none !important;
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path .34s cubic-bezier(.4,0,.2,1), opacity .2s ease .12s !important;
+}
+body .mobile-menu.open {
+  clip-path: inset(0 0 -12px 0);
+  transition: clip-path .46s cubic-bezier(.22,1,.36,1), opacity .12s ease !important;
+}
+body .mobile-menu.open .mobile-menu-link { animation: nbMenuRowIn .5s cubic-bezier(.34,1.35,.64,1) both !important; }
+body .mobile-menu.open .mobile-menu-link:nth-of-type(1) { animation-delay: .06s !important; }
+body .mobile-menu.open .mobile-menu-link:nth-of-type(2) { animation-delay: .10s !important; }
+body .mobile-menu.open .mobile-menu-link:nth-of-type(3) { animation-delay: .14s !important; }
+body .mobile-menu.open .mobile-menu-link:nth-of-type(4) { animation-delay: .18s !important; }
+body .mobile-menu.open .mobile-menu-link:nth-of-type(5) { animation-delay: .22s !important; }
+body .mobile-menu.open .mobile-menu-link:nth-of-type(6) { animation-delay: .26s !important; }
+body .mobile-menu.open .mobile-menu-link:nth-of-type(n+7) { animation-delay: .30s !important; }
+body .mobile-menu.open .mobile-menu-link-icon { animation: nbMenuIconPop .5s cubic-bezier(.34,1.56,.64,1) both; animation-delay: inherit; }
+body .mobile-menu.open .mobile-menu-divider { transform-origin: left center; animation: nbMenuDraw .4s cubic-bezier(.22,1,.36,1) .30s both !important; }
+body .mobile-menu.open .mobile-menu-actions .btn-nav-signin { animation: nbMenuBtnIn .5s cubic-bezier(.34,1.35,.64,1) .36s both !important; }
+body .mobile-menu.open .mobile-menu-actions .btn-nav-signup { animation: nbMenuBtnIn .5s cubic-bezier(.34,1.35,.64,1) .42s both !important; }
+body .mobile-menu.open .mobile-menu-contact { animation: nbMenuFade .35s ease .50s both !important; }
+@keyframes nbMenuRowIn { from { opacity: 0; translate: 0 -14px; } to { opacity: 1; translate: 0 0; } }
+@keyframes nbMenuIconPop { 0% { scale: .3; rotate: -14deg; } 100% { scale: 1; rotate: 0deg; } }
+@keyframes nbMenuDraw { from { scale: 0 1; } to { scale: 1 1; } }
+@keyframes nbMenuBtnIn { from { opacity: 0; translate: 0 16px; } to { opacity: 1; translate: 0 0; } }
+@keyframes nbMenuFade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  body .mobile-menu, body .mobile-menu.open { clip-path: none; transition: opacity .15s ease !important; }
+  body .mobile-menu.open .mobile-menu-link, body .mobile-menu.open .mobile-menu-link-icon, body .mobile-menu.open .mobile-menu-divider,
+  body .mobile-menu.open .mobile-menu-actions .btn-nav-signin, body .mobile-menu.open .mobile-menu-actions .btn-nav-signup, body .mobile-menu.open .mobile-menu-contact { animation: none !important; }
+}
+</style>
 </head>
 <body data-float-stack>
 
