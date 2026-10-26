@@ -53,6 +53,19 @@ export async function handler() {
   // un-advanced.
   const results = [];
   for (const row of due) {
+    // Claim the row BEFORE posting (2026-10-26): two dispatcher runs that
+    // overlap used to both see a row as due and both post it (the weekly
+    // batch trend appeared twice in one channel on 2026-10-26). The update
+    // below only matches while next_fire_at/enabled are still what this run
+    // read, so exactly one run wins; the other skips the row.
+    const claim = { last_fired_at: now.toISOString() };
+    if (row.schedule_type === 'once') claim.enabled = false;
+    else claim.next_fire_at = computeNextFireAt(row, now).toISOString();
+    const { data: claimed, error: claimError } = await supabase.from('scheduled_posts').update(claim)
+      .eq('id', row.id).eq('enabled', true).eq('next_fire_at', row.next_fire_at).select('id');
+    if (claimError) { results.push({ id: row.id, source: row.source, error: claimError.message }); continue; }
+    if (!claimed || !claimed.length) { results.push({ id: row.id, source: row.source, skipped: 'claimed by another run' }); continue; }
+
     try {
       let posted;
       if (row.platform === 'telegram') {
@@ -64,26 +77,17 @@ export async function handler() {
         if (embeds) await postToDiscordWebhook(embeds, buildMentionContent(row), row.webhook_url);
         posted = !!embeds;
       }
-
-      const updates = { last_fired_at: now.toISOString() };
-      if (row.schedule_type === 'once') {
-        updates.enabled = false;
-      } else {
-        updates.next_fire_at = computeNextFireAt(row, now).toISOString();
-      }
-      const { error: updateError } = await supabase.from('scheduled_posts').update(updates).eq('id', row.id);
-      if (updateError) throw new Error(updateError.message);
-
       results.push({ id: row.id, source: row.source, platform: row.platform, posted });
     } catch (err) {
+      // Posting failed: give the row back so the next run retries it, as
+      // before. Guarded on our own claim so it can't undo a later change.
+      await supabase.from('scheduled_posts')
+        .update({ enabled: row.enabled, next_fire_at: row.next_fire_at, last_fired_at: row.last_fired_at })
+        .eq('id', row.id).eq('last_fired_at', claim.last_fired_at);
       results.push({ id: row.id, source: row.source, error: err.message });
     }
   }
 
-  // LMS price sync rides on this same 15-minute run instead of its own cron
-  // (see lib/lms-price-sync.js). Runs after the posts so they're never
-  // delayed, stops starting new courses after ~22s of this function's run,
-  // and can never fail the dispatch result.
   let lmsPrices;
   try {
     lmsPrices = await syncLmsPrices(supabase, { deadline: now.getTime() + 22000 });
