@@ -3958,6 +3958,17 @@ html body main #combos #full-course-2028 .c28-seehow-arrow { width: 22px; height
   html body main #combos #full-course-2028 .c28-seehow-btn:hover .c28-seehow-arrow { transform: translateY(-2px); }
 }
 @media (max-width: 600px) { html body main #combos #full-course-2028 .c28-seehow { justify-content: flex-start; } }
+
+  /* Challenge form: date of birth box ran past the form edge on iPhone
+     (2026-10-26). iOS Safari gives date inputs a native minimum width that
+     ignores width:100%; drop the native look so it sizes like the others. */
+  .chal-form input[type=date] {
+    -webkit-appearance: none; appearance: none;
+    display: block; min-width: 0; max-width: 100%;
+    min-height: 51px; text-align: left;
+  }
+  .chal-form input[type=date]::-webkit-date-and-time-value { text-align: left; margin: 0; }
+  .chal-row > label { min-width: 0; }
 </style>
 </head>
 <body data-float-stack>
