@@ -3885,6 +3885,10 @@ html body main #combos .orient-btn .orient-text span { font-family: 'IBM Plex Mo
   }
   html body.footer-in-view .mobile-contact-bar { opacity: 0; }
 }
+/* Hidden while the hamburger menu is open (2026-10-26), so they never sit
+   on top of the menu's links or Contact Us. */
+body:has(.mobile-menu.open) .mobile-contact-bar,
+body:has(.mobile-menu.open) .back-to-top { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
 </style>
 <style>
 /* Courses page additions, 2026-10-25 onwards (own block on purpose: these

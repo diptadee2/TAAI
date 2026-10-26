@@ -628,3 +628,7 @@ body .mobile-menu-contact {
    gaps here pushed Contact Us 3px past the edge at 1280px. */
 .nav-links { gap: clamp(18px, 2.2vw, 36px); }
 .nav-inner { gap: clamp(14px, 1.6vw, 28px); }
+
+/* Floating Discord and back-to-top buttons hidden while the hamburger menu is open (2026-10-26). */
+body:has(.mobile-menu.open) .dn-fab,
+body:has(.mobile-menu.open) .back-to-top { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }

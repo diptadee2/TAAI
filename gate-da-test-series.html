@@ -1772,6 +1772,10 @@ body .mobile-menu-contact {
   }
   html body.footer-in-view .mobile-contact-bar { opacity: 0; }
 }
+/* Hidden while the hamburger menu is open (2026-10-26), so they never sit
+   on top of the menu's links or Contact Us. */
+body:has(.mobile-menu.open) .mobile-contact-bar,
+body:has(.mobile-menu.open) .back-to-top { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
 </style>
 </head>
 <body data-float-stack>
