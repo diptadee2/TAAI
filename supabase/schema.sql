@@ -1300,3 +1300,9 @@ REVOKE EXECUTE ON FUNCTION board_viewer(TEXT, DATE, DATE, DATE) FROM PUBLIC, ano
 GRANT EXECUTE ON FUNCTION board_weekly_snapshot(DATE, DATE, DATE, BIGINT) TO service_role;
 GRANT EXECUTE ON FUNCTION board_lastweek_snapshot(DATE, DATE, BIGINT) TO service_role;
 GRANT EXECUTE ON FUNCTION board_viewer(TEXT, DATE, DATE, DATE) TO service_role;
+
+-- Ranker's batch tag (2026-10-26): students the team has already picked into
+-- the ranker's batch, set by hand in /team > Students so they aren't
+-- shortlisted again. Never set automatically.
+ALTER TABLE students ADD COLUMN IF NOT EXISTS rankers_batch BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS rankers_batch_at TIMESTAMPTZ;

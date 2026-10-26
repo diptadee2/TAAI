@@ -45,7 +45,13 @@ export async function handler(event, context) {
     const email = String(body.email || '').trim().toLowerCase();
     if (!email) return json(400, { error: 'email is required' });
 
-    const { error } = await supabase.from('students').update({ notes: body.notes || null }).eq('email', email);
+    // Only the fields sent are changed: notes, and/or the Ranker's batch tag
+    // (2026-10-26; rankers_batch_at records when it was added).
+    const patch = {};
+    if ('notes' in body) patch.notes = body.notes || null;
+    if ('rankers_batch' in body) { patch.rankers_batch = !!body.rankers_batch; patch.rankers_batch_at = body.rankers_batch ? new Date().toISOString() : null; }
+    if (!Object.keys(patch).length) return json(400, { error: 'nothing to update' });
+    const { error } = await supabase.from('students').update(patch).eq('email', email);
     if (error) return json(500, { error: error.message });
     return json(200, { ok: true });
   }
@@ -54,9 +60,9 @@ export async function handler(event, context) {
 
   const today = todayForStreak();
 
-  let studentsResult, completed, sessions, weekStatsResult, taskBatchRows, malpracticeResult, nameCheckResult, reviewNoteResult, batchResult;
+  let studentsResult, completed, sessions, weekStatsResult, taskBatchRows, malpracticeResult, nameCheckResult, reviewNoteResult, batchResult, rankersResult;
   try {
-    [studentsResult, completed, sessions, weekStatsResult, taskBatchRows, malpracticeResult, nameCheckResult, reviewNoteResult, batchResult] = await Promise.all([
+    [studentsResult, completed, sessions, weekStatsResult, taskBatchRows, malpracticeResult, nameCheckResult, reviewNoteResult, batchResult, rankersResult] = await Promise.all([
       // needs_rename itself is included directly here, not in the
       // best-effort query below — it was already migrated in a prior
       // session (see schema.sql's own comment on it) and is stable, so
@@ -127,6 +133,9 @@ export async function handler(event, context) {
       // whole Students view, it just leaves every student defaulting to
       // 'C' below (batchByEmail) until the migration runs.
       supabase.from('students').select('email, batch'),
+      // Ranker's batch tag (2026-10-26), own best-effort query: before the
+      // column exists nobody is tagged and nothing else breaks.
+      supabase.from('students').select('email, rankers_batch, rankers_batch_at'),
     ]);
   } catch (err) {
     return json(500, { error: err.message });
@@ -151,6 +160,22 @@ export async function handler(event, context) {
     taskCountByBatch.set(batch, (taskCountByBatch.get(batch) || 0) + 1);
     if (!taskKeysByBatch.has(batch)) taskKeysByBatch.set(batch, new Set());
     taskKeysByBatch.get(batch).add(row.date + '|' + row.subject + '|' + row.task_text);
+  }
+
+  // For the performance score (2026-10-26): each batch's scheduled tasks and
+  // days up to today only, so future, not-yet-due tasks don't count against
+  // anyone.
+  const keysToDateByBatch = new Map(), datesToDateByBatch = new Map();
+  for (const row of taskBatchRows) {
+    if (row.date > today) continue;
+    const batch = row.batch || 'C';
+    if (!keysToDateByBatch.has(batch)) { keysToDateByBatch.set(batch, new Set()); datesToDateByBatch.set(batch, new Set()); }
+    keysToDateByBatch.get(batch).add(row.date + '|' + row.subject + '|' + row.task_text);
+    datesToDateByBatch.get(batch).add(row.date);
+  }
+  const rankersByEmail = new Map();
+  if (rankersResult && !rankersResult.error) {
+    for (const row of rankersResult.data || []) if (row.rankers_batch) rankersByEmail.set(row.email, row.rankers_batch_at || true);
   }
 
   const batchByEmail = new Map();
@@ -246,6 +271,46 @@ export async function handler(event, context) {
     return Math.round((todayMs - Date.parse(lastActive + 'T00:00:00Z')) / 86400000);
   }
 
+  // Performance score (2026-10-26, for picking high performers): 40% progress
+  // on tasks due so far, 40% consistency (half: share of scheduled days since
+  // joining with at least one tick; half: share of the last 45 days, or since
+  // joining, with 30+ focus minutes), 20% streak (70% longest streak ever
+  // relative to the batch's best, 30% current streak). Compared within each
+  // student's own batch.
+  const last45 = new Date(Date.parse(today + 'T00:00:00Z') - 44 * 86400000).toISOString().slice(0, 10);
+  const tickDaysByEmail = new Map(), dueDoneByEmail = new Map();
+  for (const row of completed) {
+    const keys = keysToDateByBatch.get(batchByEmail.get(row.email) || 'C');
+    if (!keys || !keys.has(row.date + '|' + row.subject + '|' + row.task_text)) continue;
+    dueDoneByEmail.set(row.email, (dueDoneByEmail.get(row.email) || 0) + 1);
+    if (!tickDaysByEmail.has(row.email)) tickDaysByEmail.set(row.email, new Set());
+    tickDaysByEmail.get(row.email).add(row.date);
+  }
+  const focusDays45ByEmail = new Map();
+  for (const row of sessions) if (row.date >= last45 && row.date <= today && (row.total_minutes || 0) >= 30) focusDays45ByEmail.set(row.email, (focusDays45ByEmail.get(row.email) || 0) + 1);
+  const perf = new Map();
+  for (const s of students) {
+    const batch = batchByEmail.get(s.email) || 'C';
+    const keys = keysToDateByBatch.get(batch) || new Set(), dates = datesToDateByBatch.get(batch) || new Set();
+    const ticks = tickDaysByEmail.get(s.email) || new Set();
+    const joined = String(s.created_at || today).slice(0, 10);
+    const all = [...new Set([...dates, ...ticks])].sort();
+    const eligible = all.filter(d => d >= joined && (d < today || ticks.has(d)));
+    const tickRatio = eligible.length ? eligible.filter(d => ticks.has(d)).length / eligible.length : 0;
+    let run = 0, longest = 0;
+    for (const d of all) { if (ticks.has(d)) { run++; if (run > longest) longest = run; } else if (d !== today) run = 0; }
+    const winStart = joined > last45 ? joined : last45;
+    const winDays = Math.max(1, Math.round((Date.parse(today + 'T00:00:00Z') - Date.parse(winStart + 'T00:00:00Z')) / 86400000) + 1);
+    const focusRatio = Math.min(1, (focusDays45ByEmail.get(s.email) || 0) / winDays);
+    perf.set(s.email, { batch, progress: keys.size ? Math.min(1, (dueDoneByEmail.get(s.email) || 0) / keys.size) : 0, tickRatio, focusRatio, longest, current: s.current_streak || 0 });
+  }
+  const bestLongest = new Map();
+  for (const v of perf.values()) bestLongest.set(v.batch, Math.max(bestLongest.get(v.batch) || 1, v.longest));
+  for (const v of perf.values()) {
+    const best = bestLongest.get(v.batch) || 1;
+    v.score = Math.round(100 * (0.4 * v.progress + 0.4 * (0.5 * v.tickRatio + 0.5 * v.focusRatio) + 0.2 * (0.7 * v.longest / best + 0.3 * Math.min(1, v.current / best))));
+  }
+
   const rows = students.map(s => {
     const lastActive = lastActiveByEmail.get(s.email) || null;
     const malpractice = malpracticeByEmail.get(s.email);
@@ -263,6 +328,13 @@ export async function handler(event, context) {
       total_minutes: minutesByEmail.get(s.email) || 0,
       week_minutes: weekMinutesByEmail.get(s.email) || 0,
       last30_minutes: last30MinutesByEmail.get(s.email) || 0,
+      score: perf.get(s.email).score,
+      due_progress_pct: Math.round(perf.get(s.email).progress * 100),
+      tick_day_pct: Math.round(perf.get(s.email).tickRatio * 100),
+      focus_day_pct: Math.round(perf.get(s.email).focusRatio * 100),
+      longest_streak: perf.get(s.email).longest,
+      rankers_batch: rankersByEmail.has(s.email),
+      rankers_batch_at: typeof rankersByEmail.get(s.email) === 'string' ? rankersByEmail.get(s.email) : null,
       streak: s.current_streak || 0,
       tasks_completed: taskCountByEmail.get(s.email) || 0,
       progress_pct: batchTaskTotal > 0 ? Math.min(100, Math.round(((taskCountByEmail.get(s.email) || 0) / batchTaskTotal) * 100)) : 0,

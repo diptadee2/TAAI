@@ -315,7 +315,7 @@
     studentsError: null,
     studentSort: { key: 'total_minutes', dir: 'desc' },
     studentSummary: null,
-    studentFilters: { search: '', inactive: '', active: '', minStreak: '', flaggedOnly: false, batch: '' }, // active: '' | '7' | '14' | '30' (active within the last N days) // batch: '' | 'C' | 'D'; inactive: '' | '3' | '7' | '14' | '30' | 'never'
+    studentFilters: { search: '', inactive: '', active: '', minScore: '', rankers: '', minStreak: '', flaggedOnly: false, batch: '' }, // active: '' | '7' | '14' | '30' (active within the last N days) // batch: '' | 'C' | 'D'; inactive: '' | '3' | '7' | '14' | '30' | 'never'
     noteSaving: {}, // email -> 'saving' | 'saved' | 'error', transient per-row save feedback
     studentsShown: 50, // how many rows of the filtered list are rendered (see STUDENTS_PAGE)
     studentsViewKey: '', // filters+sort last rendered; a change resets studentsShown
@@ -2016,6 +2016,7 @@
   var STUDENT_COLUMNS = [
     { key: 'display_name', label: 'Name' },
     { key: 'batch', label: 'Batch' },
+    { key: 'score', label: 'Score' },
     { key: 'created_at', label: 'Joined' },
     { key: 'last_active', label: 'Last active' },
     { key: 'week_minutes', label: 'This week' },
@@ -2046,6 +2047,9 @@
       if (search && s.display_name.toLowerCase().indexOf(search) === -1 && s.email.toLowerCase().indexOf(search) === -1) return false;
       if (minStreak != null && s.streak < minStreak) return false;
       if (f.flaggedOnly && !s.needs_rename) return false;
+      if (f.minScore && (s.score || 0) < Number(f.minScore)) return false;
+      if (f.rankers === 'hide' && s.rankers_batch) return false;
+      if (f.rankers === 'only' && !s.rankers_batch) return false;
       if (f.batch && (s.batch || 'C') !== f.batch) return false;
       // "Active in last N days": last session today or within the N-1 days before.
       if (f.active && !(s.days_inactive != null && s.days_inactive < Number(f.active))) return false;
@@ -2135,6 +2139,14 @@
     }).join('') + '</div>';
   }
 
+  // Ranker's batch tag (2026-10-26): students already picked into the
+  // ranker's batch, so the team can hide them and not shortlist them again.
+  function renderRankersCell(s) {
+    var busy = state.rankersSaving && state.rankersSaving[s.email];
+    return '<div class="rankers-cell">' + (s.rankers_batch ? '<span class="rankers-badge" title="' + escapeHtml(s.rankers_batch_at ? 'Added ' + joinedLabel(s.rankers_batch_at) : '') + '">🏅 Ranker\'s batch</span>' : '') +
+      '<button type="button" class="linkish js-rankers" data-email="' + escapeHtml(s.email) + '" data-on="' + (s.rankers_batch ? '0' : '1') + '"' + (busy ? ' disabled' : '') + '>' + (busy ? 'Saving…' : s.rankers_batch ? 'Remove from ranker\'s batch' : '+ Add to ranker\'s batch') + '</button></div>';
+  }
+
   function renderStudentFilters() {
     var f = state.studentFilters;
     var inactiveOptions = [
@@ -2154,9 +2166,14 @@
             return '<option value="' + o[0] + '"' + (f.active === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
           }).join('') + '</select></label>' +
         '<label>Inactive for <select id="student-inactive-filter">' + inactiveOptions + '</select></label>' +
+        '<label>Min score <input type="number" min="0" max="100" id="student-min-score" placeholder="0" value="' + escapeHtml(f.minScore || '') + '" style="width:64px;"></label>' +
+        '<label>Ranker\'s batch <select id="student-rankers-filter">' +
+          [['', 'Any'], ['hide', 'Hide tagged'], ['only', 'Only tagged']].map(function (o) {
+            return '<option value="' + o[0] + '"' + ((f.rankers || '') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
+          }).join('') + '</select></label>' +
         '<label>Min streak <input type="number" min="0" id="student-min-streak" placeholder="0" value="' + escapeHtml(f.minStreak) + '" style="width:64px;"></label>' +
         '<label><input type="checkbox" id="student-flagged-only"' + (f.flaggedOnly ? ' checked' : '') + '> 🚩 Flagged names only</label>' +
-        ((f.search || f.inactive || f.active || f.minStreak !== '' || f.flaggedOnly || f.batch) ? '<button type="button" class="btn btn-small" id="student-filter-clear">Clear filters</button>' : '') +
+        ((f.search || f.inactive || f.active || f.minScore || f.rankers || f.minStreak !== '' || f.flaggedOnly || f.batch) ? '<button type="button" class="btn btn-small" id="student-filter-clear">Clear filters</button>' : '') +
       '</div>'
     );
   }
@@ -2245,8 +2262,9 @@
       var saveState = state.noteSaving[s.email] || '';
       return (
         '<tr data-email="' + escapeHtml(s.email) + '">' +
-          '<td class="students-name-cell"><div class="students-name">' + escapeHtml(s.display_name) + '</div><div class="field-hint"><a href="mailto:' + escapeHtml(s.email) + '">' + escapeHtml(s.email) + '</a></div>' + renderNameFlagCell(s) + '</td>' +
+          '<td class="students-name-cell"><div class="students-name">' + escapeHtml(s.display_name) + '</div><div class="field-hint"><a href="mailto:' + escapeHtml(s.email) + '">' + escapeHtml(s.email) + '</a></div>' + renderNameFlagCell(s) + renderRankersCell(s) + '</td>' +
           '<td><span class="batch-chip batch-chip-' + escapeHtml(s.batch || 'C') + '">' + escapeHtml(STUDENT_BATCH_LABELS[s.batch] || s.batch || 'Batch C') + '</span></td>' +
+          '<td class="nowrap" title="' + escapeHtml('Progress ' + (s.due_progress_pct || 0) + '% · days ticked ' + (s.tick_day_pct || 0) + '% · focus days (45d) ' + (s.focus_day_pct || 0) + '% · longest streak ' + (s.longest_streak || 0) + ' · current ' + s.streak) + '"><b class="score-num">' + (s.score || 0) + '</b><div class="field-hint score-parts">' + (s.due_progress_pct || 0) + '% · ' + (s.tick_day_pct || 0) + '% · ' + (s.focus_day_pct || 0) + '% · ' + (s.longest_streak || 0) + 'd</div></td>' +
           '<td class="nowrap">' + joinedLabel(s.created_at) + '</td>' +
           '<td class="nowrap"><span class="inactivity-dot ' + inactivityClass(s.days_inactive) + '"></span>' + lastActiveLabel(s) + '</td>' +
           '<td>' + formatHours(s.week_minutes) + '</td>' +
@@ -2280,7 +2298,7 @@
           (visible.length ? '<button type="button" class="btn btn-small" id="students-csv">Download CSV (' + visible.length + ')</button>' : '') + '</div>' +
         renderStudentFilters() +
         renderInactivityLegend() +
-        '<div class="field-hint" style="margin:10px 0;">Click a column to sort. Consistency = median daily focus time this month, counting quiet days as zero. Course progress = tasks done out of everything scheduled so far for that student\'s batch. Notes save when you press Enter or click away.</div>' +
+        '<div class="field-hint" style="margin:10px 0;">Click a column to sort. Score (0-100) = 40% progress on tasks due so far + 40% consistency (days ticked since joining, and days with 30+ focus minutes in the last 45) + 20% streak (mostly the longest ever), compared within each batch; the small line under it shows progress · days ticked · focus days · longest streak. Consistency = median daily focus time this month, counting quiet days as zero. Course progress = tasks done out of everything scheduled so far for that student\'s batch. Notes save when you press Enter or click away.</div>' +
         (visible.length ? '<div class="students-table-wrap"><table class="students-table"><thead><tr>' + headerHtml + '</tr></thead><tbody>' + rowsHtml + '</tbody></table></div>' + moreHtml
           : '<div class="empty">No students match the current filters.</div>') +
       '</div>'
@@ -3541,6 +3559,30 @@
       state.studentFilters.active = activeFilter.value;
       render();
     });
+    var minScoreInput = document.getElementById('student-min-score');
+    if (minScoreInput) minScoreInput.addEventListener('input', function () {
+      var pos = minScoreInput.selectionStart;
+      state.studentFilters.minScore = minScoreInput.value;
+      render();
+      refocusFilterInput('student-min-score', pos);
+    });
+    var rankersFilter = document.getElementById('student-rankers-filter');
+    if (rankersFilter) rankersFilter.addEventListener('change', function () { state.studentFilters.rankers = rankersFilter.value; render(); });
+    document.querySelectorAll('.js-rankers').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var email = btn.getAttribute('data-email'), on = btn.getAttribute('data-on') === '1';
+        var st = (state.students || []).filter(function (x) { return x.email === email; })[0];
+        if (!st) return;
+        if (!on && !confirm('Remove ' + st.display_name + ' from the ranker\'s batch?')) return;
+        state.rankersSaving = state.rankersSaving || {};
+        state.rankersSaving[email] = true; render();
+        api('/team-students', { method: 'PATCH', body: JSON.stringify({ email: email, rankers_batch: on }) }).then(function () {
+          st.rankers_batch = on; st.rankers_batch_at = on ? new Date().toISOString() : null;
+        }).catch(function (err) { alert('Couldn\'t save: ' + err.message); }).then(function () {
+          delete state.rankersSaving[email]; render();
+        });
+      });
+    });
     var minStreakInput = document.getElementById('student-min-streak');
     if (minStreakInput) minStreakInput.addEventListener('input', function () {
       var pos = minStreakInput.selectionStart;
@@ -3555,7 +3597,7 @@
     });
     var filterClearBtn = document.getElementById('student-filter-clear');
     if (filterClearBtn) filterClearBtn.addEventListener('click', function () {
-      state.studentFilters = { search: '', inactive: '', active: '', minStreak: '', flaggedOnly: false, batch: '' };
+      state.studentFilters = { search: '', inactive: '', active: '', minScore: '', rankers: '', minStreak: '', flaggedOnly: false, batch: '' };
       render();
     });
 
@@ -3595,8 +3637,8 @@
     if (allBtn) allBtn.addEventListener('click', function () { state.studentsShown = Infinity; render(); });
     var csvBtn = document.getElementById('students-csv');
     if (csvBtn) csvBtn.addEventListener('click', function () {
-      var cols = ['display_name', 'email', 'batch', 'created_at', 'last_active', 'days_inactive', 'week_minutes', 'last30_minutes', 'total_minutes', 'consistency_minutes', 'streak', 'progress_pct', 'tasks_completed', 'needs_rename', 'notes'];
-      var head = ['Name', 'Email', 'Batch', 'Joined', 'Last active', 'Days inactive', 'This week (min)', 'Last 30 days (min)', 'All-time (min)', 'Consistency (min/day)', 'Streak', 'Course progress %', 'Tasks done', 'Name flagged', 'Notes'];
+      var cols = ['display_name', 'email', 'batch', 'created_at', 'last_active', 'days_inactive', 'score', 'due_progress_pct', 'tick_day_pct', 'focus_day_pct', 'longest_streak', 'rankers_batch', 'week_minutes', 'last30_minutes', 'total_minutes', 'consistency_minutes', 'streak', 'progress_pct', 'tasks_completed', 'needs_rename', 'notes'];
+      var head = ['Name', 'Email', 'Batch', 'Joined', 'Last active', 'Days inactive', 'Score', 'Progress to date %', 'Days ticked %', 'Focus days 45d %', 'Longest streak', 'In ranker\'s batch', 'This week (min)', 'Last 30 days (min)', 'All-time (min)', 'Consistency (min/day)', 'Streak', 'Course progress %', 'Tasks done', 'Name flagged', 'Notes'];
       var cell = function (v) {
         if (v == null) return '';
         v = String(v);

@@ -512,6 +512,15 @@
 .res-empty { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 14px; border-top: 1px solid var(--line); }
 .res-empty-chip { font: inherit; font-size: 12.5px; padding: 5px 11px; border-radius: 999px; border: 1px dashed var(--line); background: transparent; color: var(--ink-dim); cursor: pointer; }
 .res-empty-chip:hover { color: var(--ink); border-color: var(--ink-dim); }
+
+/* Students: performance score + Ranker's batch tag (2026-10-26) */
+.score-num { font-size: 16px; }
+.score-parts { font-size: 11px; white-space: nowrap; }
+.rankers-cell { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 4px; }
+.rankers-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: rgba(250, 204, 21, 0.16); color: #FACC15; border: 1px solid rgba(250, 204, 21, 0.35); white-space: nowrap; }
+.rankers-cell .linkish { font: inherit; font-size: 12px; background: none; border: 0; padding: 0; color: var(--ink-dim, #a1a1aa); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.rankers-cell .linkish:hover { color: var(--ink, #fafafa); }
+.rankers-cell .linkish[disabled] { opacity: .6; cursor: default; }
 </style>
 </head>
 <body>
