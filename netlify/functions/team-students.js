@@ -284,9 +284,12 @@ export async function handler(event, context) {
   }
 
   // Performance score (2026-10-26, for picking high performers): 40% progress
-  // on tasks due so far, 40% consistency (half: share of scheduled days since
-  // joining with at least one tick; half: typical daily focus time, the median
-  // over the last 45 days or since joining, quiet days as 0, 2h+ = full marks),
+  // on tasks due so far, 40% consistency (half: share of the batch's scheduled
+  // days, from its first day, with at least one tick; half: typical daily
+  // focus time, the median over the last 45 days, quiet days as 0, 2h+ = full
+  // marks). Both consistency halves count days before a student joined as
+  // missed, so a late joiner can't match months of steady work in a few
+  // weeks (2026-10-26),
   // 20% streak (70% longest streak ever
   // relative to the batch's best, 30% current streak). Compared within each
   // student's own batch.
@@ -315,13 +318,13 @@ export async function handler(event, context) {
     const ticks = tickDaysByEmail.get(s.email) || new Set();
     const joined = String(s.created_at || today).slice(0, 10);
     const all = [...new Set([...dates, ...ticks])].sort();
-    const eligible = all.filter(d => d >= joined && (d < today || ticks.has(d)));
+    const eligible = all.filter(d => d < today || ticks.has(d));
     const tickRatio = eligible.length ? eligible.filter(d => ticks.has(d)).length / eligible.length : 0;
     let run = 0, longest = 0;
     for (const d of all) { if (ticks.has(d)) { run++; if (run > longest) longest = run; } else if (d !== today) run = 0; }
-    // Median daily focus minutes over the last 45 days (or since joining),
-    // quiet days counted as 0, the same idea as the Consistency column.
-    const winStart = joined > last45 ? joined : last45;
+    // Median daily focus minutes over the last 45 days, quiet days (and days
+    // before joining) counted as 0, the same idea as the Consistency column.
+    const winStart = last45;
     const fm = focus45ByEmail.get(s.email) || {}, perDay = [];
     for (let t = Date.parse(winStart + 'T00:00:00Z'); t <= Date.parse(today + 'T00:00:00Z'); t += 86400000) perDay.push(fm[new Date(t).toISOString().slice(0, 10)] || 0);
     const focusMedian = median(perDay);
