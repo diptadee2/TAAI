@@ -314,13 +314,24 @@ export async function handler(event, context) {
     for (let t = Date.parse(winStart + 'T00:00:00Z'); t <= Date.parse(today + 'T00:00:00Z'); t += 86400000) perDay.push(fm[new Date(t).toISOString().slice(0, 10)] || 0);
     const focusMedian = median(perDay);
     const focusRatio = Math.min(1, focusMedian / FOCUS_FULL_MARKS_MIN);
-    perf.set(s.email, { batch, focusMedian, progress: keys.size ? Math.min(1, (dueDoneByEmail.get(s.email) || 0) / keys.size) : 0, tickRatio, focusRatio, longest, current: s.current_streak || 0 });
+    // Time in batch, for the early-joiner penalty: days since joining over
+    // days since the batch's first scheduled day (0 = just joined, 1 = from day one).
+    const batchStart = all.length ? all[0] : today;
+    const span = Math.max(1, (Date.parse(today + 'T00:00:00Z') - Date.parse(batchStart + 'T00:00:00Z')) / 86400000);
+    const inFor = Math.max(0, (Date.parse(today + 'T00:00:00Z') - Date.parse((joined > batchStart ? joined : batchStart) + 'T00:00:00Z')) / 86400000);
+    const tenure = Math.min(1, inFor / span);
+    perf.set(s.email, { batch, focusMedian, tenure, progress: keys.size ? Math.min(1, (dueDoneByEmail.get(s.email) || 0) / keys.size) : 0, tickRatio, focusRatio, longest, current: s.current_streak || 0 });
   }
   const bestLongest = new Map();
   for (const v of perf.values()) bestLongest.set(v.batch, Math.max(bestLongest.get(v.batch) || 1, v.longest));
   for (const v of perf.values()) {
     const best = bestLongest.get(v.batch) || 1;
-    v.score = Math.round(100 * (0.4 * v.progress + 0.4 * (0.5 * v.tickRatio + 0.5 * v.focusRatio) + 0.2 * (0.7 * v.longest / best + 0.3 * Math.min(1, v.current / best))));
+    // Early joiners who are behind lose up to 15 points (2026-10-26, "if they
+    // joined early but are underperforming, negative marking"): scaled by
+    // time in batch and by how far under 50% progress they are; nothing at
+    // 50% progress or more, nothing for someone who just joined.
+    v.penalty = Math.round(15 * v.tenure * Math.max(0, (0.5 - v.progress) / 0.5));
+    v.score = Math.max(0, Math.round(100 * (0.4 * v.progress + 0.4 * (0.5 * v.tickRatio + 0.5 * v.focusRatio) + 0.2 * (0.7 * v.longest / best + 0.3 * Math.min(1, v.current / best)))) - v.penalty);
   }
 
   const rows = students.map(s => {
@@ -345,6 +356,7 @@ export async function handler(event, context) {
       tick_day_pct: Math.round(perf.get(s.email).tickRatio * 100),
       focus_day_pct: Math.round(perf.get(s.email).focusRatio * 100),
       focus_median_45_minutes: Math.round(perf.get(s.email).focusMedian),
+      score_penalty: perf.get(s.email).penalty,
       longest_streak: perf.get(s.email).longest,
       rankers_batch: rankersByEmail.has(s.email),
       rankers_batch_at: typeof rankersByEmail.get(s.email) === 'string' ? rankersByEmail.get(s.email) : null,
