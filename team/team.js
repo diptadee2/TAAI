@@ -2162,9 +2162,9 @@
         '<span class="field-hint">' + (hpOn ? 'Showing Batch C, best first. Click again to go back to all students.' : 'Batch C students ranked best first, for picking the ranker\'s batch.') + '</span></div>' +
       (hpOn ? '<div class="hp-explain"><b>How the score (out of 100) is worked out</b>' +
         '<ul><li><b>Course progress, 40 points:</b> how many of the tasks due so far they have ticked.</li>' +
-        '<li><b>Showing up regularly, 40 points:</b> on how many study days since they joined they ticked at least one task, and on how many of the last 45 days they used the focus timer for 30 minutes or more.</li>' +
+        '<li><b>Showing up regularly, 40 points:</b> half for how many study days since they joined they ticked at least one task, half for their usual daily focus time on the timer over the last 45 days (a typical day of 2 hours or more gets full marks; days with no study count as zero).</li>' +
         '<li><b>Streak, 20 points:</b> their best run of days in a row (it doesn\'t need to be going now), plus a little for their current run.</li></ul>' +
-        '<p>The small line under each score shows these: progress · days ticked · focus days · best streak. Students already added to the ranker\'s batch are left out, so each person is only picked once.</p></div>' : '') +
+        '<p>The small line under each score shows these: progress · days ticked · usual focus time a day · best streak. Students already added to the ranker\'s batch are left out, so each person is only picked once.</p></div>' : '') +
       '<div class="students-filters">' +
         '<input type="text" id="student-search" placeholder="Search name or email…" value="' + escapeHtml(f.search) + '">' +
         '<label>Batch <select id="student-batch-filter">' +
@@ -2274,7 +2274,7 @@
         '<tr data-email="' + escapeHtml(s.email) + '">' +
           '<td class="students-name-cell"><div class="students-name">' + escapeHtml(s.display_name) + '</div><div class="field-hint"><a href="mailto:' + escapeHtml(s.email) + '">' + escapeHtml(s.email) + '</a></div>' + renderNameFlagCell(s) + renderRankersCell(s) + '</td>' +
           '<td><span class="batch-chip batch-chip-' + escapeHtml(s.batch || 'C') + '">' + escapeHtml(STUDENT_BATCH_LABELS[s.batch] || s.batch || 'Batch C') + '</span></td>' +
-          '<td class="nowrap" title="' + escapeHtml('Progress ' + (s.due_progress_pct || 0) + '% · days ticked ' + (s.tick_day_pct || 0) + '% · focus days (45d) ' + (s.focus_day_pct || 0) + '% · longest streak ' + (s.longest_streak || 0) + ' · current ' + s.streak) + '"><b class="score-num">' + (s.score || 0) + '</b><div class="field-hint score-parts">' + (s.due_progress_pct || 0) + '% · ' + (s.tick_day_pct || 0) + '% · ' + (s.focus_day_pct || 0) + '% · ' + (s.longest_streak || 0) + 'd</div></td>' +
+          '<td class="nowrap" title="' + escapeHtml('Progress ' + (s.due_progress_pct || 0) + '% · days ticked ' + (s.tick_day_pct || 0) + '% · usual focus time ' + formatHours(s.focus_median_45_minutes || 0) + '/day (last 45 days) · longest streak ' + (s.longest_streak || 0) + ' · current ' + s.streak) + '"><b class="score-num">' + (s.score || 0) + '</b><div class="field-hint score-parts">' + (s.due_progress_pct || 0) + '% · ' + (s.tick_day_pct || 0) + '% · ' + formatHours(s.focus_median_45_minutes || 0) + '/day · ' + (s.longest_streak || 0) + 'd</div></td>' +
           '<td class="nowrap">' + joinedLabel(s.created_at) + '</td>' +
           '<td class="nowrap"><span class="inactivity-dot ' + inactivityClass(s.days_inactive) + '"></span>' + lastActiveLabel(s) + '</td>' +
           '<td>' + formatHours(s.week_minutes) + '</td>' +
@@ -2308,7 +2308,7 @@
           (visible.length ? '<button type="button" class="btn btn-small" id="students-csv">Download CSV (' + visible.length + ')</button>' : '') + '</div>' +
         renderStudentFilters() +
         renderInactivityLegend() +
-        '<div class="field-hint" style="margin:10px 0;">Click a column to sort. Score (0-100) = 40% progress on tasks due so far + 40% consistency (days ticked since joining, and days with 30+ focus minutes in the last 45) + 20% streak (mostly the longest ever), compared within each batch; the small line under it shows progress · days ticked · focus days · longest streak. Consistency = median daily focus time this month, counting quiet days as zero. Course progress = tasks done out of everything scheduled so far for that student\'s batch. Notes save when you press Enter or click away.</div>' +
+        '<div class="field-hint" style="margin:10px 0;">Click a column to sort. Score (0-100) = 40% progress on tasks due so far + 40% consistency (days ticked since joining, and usual daily focus time over the last 45 days, 2h+ = full) + 20% streak (mostly the longest ever), compared within each batch; the small line under it shows progress · days ticked · usual focus a day · longest streak. Consistency = median daily focus time this month, counting quiet days as zero. Course progress = tasks done out of everything scheduled so far for that student\'s batch. Notes save when you press Enter or click away.</div>' +
         (visible.length ? '<div class="students-table-wrap"><table class="students-table"><thead><tr>' + headerHtml + '</tr></thead><tbody>' + rowsHtml + '</tbody></table></div>' + moreHtml
           : '<div class="empty">No students match the current filters.</div>') +
       '</div>'
@@ -3659,8 +3659,8 @@
     if (allBtn) allBtn.addEventListener('click', function () { state.studentsShown = Infinity; render(); });
     var csvBtn = document.getElementById('students-csv');
     if (csvBtn) csvBtn.addEventListener('click', function () {
-      var cols = ['display_name', 'email', 'batch', 'created_at', 'last_active', 'days_inactive', 'score', 'due_progress_pct', 'tick_day_pct', 'focus_day_pct', 'longest_streak', 'rankers_batch', 'week_minutes', 'last30_minutes', 'total_minutes', 'consistency_minutes', 'streak', 'progress_pct', 'tasks_completed', 'needs_rename', 'notes'];
-      var head = ['Name', 'Email', 'Batch', 'Joined', 'Last active', 'Days inactive', 'Score', 'Progress to date %', 'Days ticked %', 'Focus days 45d %', 'Longest streak', 'In ranker\'s batch', 'This week (min)', 'Last 30 days (min)', 'All-time (min)', 'Consistency (min/day)', 'Streak', 'Course progress %', 'Tasks done', 'Name flagged', 'Notes'];
+      var cols = ['display_name', 'email', 'batch', 'created_at', 'last_active', 'days_inactive', 'score', 'due_progress_pct', 'tick_day_pct', 'focus_median_45_minutes', 'longest_streak', 'rankers_batch', 'week_minutes', 'last30_minutes', 'total_minutes', 'consistency_minutes', 'streak', 'progress_pct', 'tasks_completed', 'needs_rename', 'notes'];
+      var head = ['Name', 'Email', 'Batch', 'Joined', 'Last active', 'Days inactive', 'Score', 'Progress to date %', 'Days ticked %', 'Usual focus a day, last 45d (min)', 'Longest streak', 'In ranker\'s batch', 'This week (min)', 'Last 30 days (min)', 'All-time (min)', 'Consistency (min/day)', 'Streak', 'Course progress %', 'Tasks done', 'Name flagged', 'Notes'];
       var cell = function (v) {
         if (v == null) return '';
         v = String(v);

@@ -273,8 +273,9 @@ export async function handler(event, context) {
 
   // Performance score (2026-10-26, for picking high performers): 40% progress
   // on tasks due so far, 40% consistency (half: share of scheduled days since
-  // joining with at least one tick; half: share of the last 45 days, or since
-  // joining, with 30+ focus minutes), 20% streak (70% longest streak ever
+  // joining with at least one tick; half: typical daily focus time, the median
+  // over the last 45 days or since joining, quiet days as 0, 2h+ = full marks),
+  // 20% streak (70% longest streak ever
   // relative to the batch's best, 30% current streak). Compared within each
   // student's own batch.
   const last45 = new Date(Date.parse(today + 'T00:00:00Z') - 44 * 86400000).toISOString().slice(0, 10);
@@ -286,8 +287,15 @@ export async function handler(event, context) {
     if (!tickDaysByEmail.has(row.email)) tickDaysByEmail.set(row.email, new Set());
     tickDaysByEmail.get(row.email).add(row.date);
   }
-  const focusDays45ByEmail = new Map();
-  for (const row of sessions) if (row.date >= last45 && row.date <= today && (row.total_minutes || 0) >= 30) focusDays45ByEmail.set(row.email, (focusDays45ByEmail.get(row.email) || 0) + 1);
+  // Focus time per day over the last 45 days (for the consistency half that
+  // measures how much they actually study, not just whether they showed up).
+  const focus45ByEmail = new Map(); // email -> { date: minutes }
+  for (const row of sessions) {
+    if (row.date < last45 || row.date > today) continue;
+    if (!focus45ByEmail.has(row.email)) focus45ByEmail.set(row.email, {});
+    focus45ByEmail.get(row.email)[row.date] = (focus45ByEmail.get(row.email)[row.date] || 0) + (row.total_minutes || 0);
+  }
+  const FOCUS_FULL_MARKS_MIN = 120; // a typical day of 2h+ focus earns full marks for that half
   const perf = new Map();
   for (const s of students) {
     const batch = batchByEmail.get(s.email) || 'C';
@@ -299,10 +307,14 @@ export async function handler(event, context) {
     const tickRatio = eligible.length ? eligible.filter(d => ticks.has(d)).length / eligible.length : 0;
     let run = 0, longest = 0;
     for (const d of all) { if (ticks.has(d)) { run++; if (run > longest) longest = run; } else if (d !== today) run = 0; }
+    // Median daily focus minutes over the last 45 days (or since joining),
+    // quiet days counted as 0, the same idea as the Consistency column.
     const winStart = joined > last45 ? joined : last45;
-    const winDays = Math.max(1, Math.round((Date.parse(today + 'T00:00:00Z') - Date.parse(winStart + 'T00:00:00Z')) / 86400000) + 1);
-    const focusRatio = Math.min(1, (focusDays45ByEmail.get(s.email) || 0) / winDays);
-    perf.set(s.email, { batch, progress: keys.size ? Math.min(1, (dueDoneByEmail.get(s.email) || 0) / keys.size) : 0, tickRatio, focusRatio, longest, current: s.current_streak || 0 });
+    const fm = focus45ByEmail.get(s.email) || {}, perDay = [];
+    for (let t = Date.parse(winStart + 'T00:00:00Z'); t <= Date.parse(today + 'T00:00:00Z'); t += 86400000) perDay.push(fm[new Date(t).toISOString().slice(0, 10)] || 0);
+    const focusMedian = median(perDay);
+    const focusRatio = Math.min(1, focusMedian / FOCUS_FULL_MARKS_MIN);
+    perf.set(s.email, { batch, focusMedian, progress: keys.size ? Math.min(1, (dueDoneByEmail.get(s.email) || 0) / keys.size) : 0, tickRatio, focusRatio, longest, current: s.current_streak || 0 });
   }
   const bestLongest = new Map();
   for (const v of perf.values()) bestLongest.set(v.batch, Math.max(bestLongest.get(v.batch) || 1, v.longest));
@@ -332,6 +344,7 @@ export async function handler(event, context) {
       due_progress_pct: Math.round(perf.get(s.email).progress * 100),
       tick_day_pct: Math.round(perf.get(s.email).tickRatio * 100),
       focus_day_pct: Math.round(perf.get(s.email).focusRatio * 100),
+      focus_median_45_minutes: Math.round(perf.get(s.email).focusMedian),
       longest_streak: perf.get(s.email).longest,
       rankers_batch: rankersByEmail.has(s.email),
       rankers_batch_at: typeof rankersByEmail.get(s.email) === 'string' ? rankersByEmail.get(s.email) : null,
