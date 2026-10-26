@@ -2016,6 +2016,7 @@
   var STUDENT_COLUMNS = [
     { key: 'display_name', label: 'Name' },
     { key: 'batch', label: 'Batch' },
+    { key: 'created_at', label: 'Joined' },
     { key: 'last_active', label: 'Last active' },
     { key: 'week_minutes', label: 'This week' },
     { key: 'last30_minutes', label: 'Last 30 days' },
@@ -2034,9 +2035,9 @@
   // than redone client-side — 'never' is its own bucket (days_inactive
   // null, distinct from a real large number) for a student who
   // registered but never logged a session at all. Filters narrow the
-  // table only; the summary cards above it always reflect the full
-  // roster (see renderStudents) so filtering never hides the big-picture
-  // numbers.
+  // table only. The summary cards follow the Batch filter alone (since
+  // 2026-10-26, so the new 120 Days batch can be read on its own), and
+  // ignore the other filters so they stay a big-picture read.
   function filteredStudents() {
     var f = state.studentFilters;
     var search = f.search.trim().toLowerCase();
@@ -2076,6 +2077,11 @@
     if (daysInactive <= 6) return 'inactivity-warm';
     return 'inactivity-cold';
   }
+  function joinedLabel(iso) {
+    if (!iso) return '-';
+    var d = new Date(iso);
+    return isNaN(d) ? '-' : d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' });
+  }
   function lastActiveLabel(s) {
     if (s.days_inactive == null) return 'Never';
     if (s.days_inactive === 0) return 'Today';
@@ -2092,11 +2098,30 @@
   // FULL roster) rather than deriving from state.students client-side, so
   // these numbers stay stable as the true "state of the class" regardless
   // of whatever search/filter is currently narrowing the table below.
+  // Same numbers team-students.js puts in its summary, recomputed here over
+  // the selected batch's students only (all students when no batch picked).
+  function batchSummary() {
+    var b = state.studentFilters.batch;
+    if (!b) return state.studentSummary;
+    var rows = (state.students || []).filter(function (r) { return (r.batch || 'C') === b; });
+    var n = rows.length, avg = function (k) { return n ? Math.round(rows.reduce(function (a, r) { return a + (r[k] || 0); }, 0) / n) : 0; };
+    return {
+      total_students: n,
+      active_this_week: rows.filter(function (r) { return r.week_minutes > 0; }).length,
+      inactive_7d: rows.filter(function (r) { return r.days_inactive != null && r.days_inactive >= 7; }).length,
+      never_active: rows.filter(function (r) { return r.days_inactive == null; }).length,
+      avg_progress_pct: avg('progress_pct'),
+      avg_consistency_minutes: avg('consistency_minutes'),
+      needs_rename_flagged: rows.filter(function (r) { return r.needs_rename; }).length,
+      gate_escalated_count: rows.filter(function (r) { return r.gate_escalated; }).length,
+    };
+  }
+
   function renderStudentSummary() {
-    var sum = state.studentSummary;
+    var sum = batchSummary();
     if (!sum) return '';
     var cards = [
-      { label: 'Students', value: sum.total_students },
+      { label: state.studentFilters.batch ? (STUDENT_BATCH_LABELS[state.studentFilters.batch] || 'Batch') + ' students' : 'Students', value: sum.total_students },
       { label: 'Active this week', value: sum.active_this_week + ' / ' + sum.total_students },
       { label: 'Inactive 7+ days', value: sum.inactive_7d, warn: sum.inactive_7d > 0 },
       { label: 'Never logged in', value: sum.never_active, warn: sum.never_active > 0 },
@@ -2222,6 +2247,7 @@
         '<tr data-email="' + escapeHtml(s.email) + '">' +
           '<td class="students-name-cell"><div class="students-name">' + escapeHtml(s.display_name) + '</div><div class="field-hint"><a href="mailto:' + escapeHtml(s.email) + '">' + escapeHtml(s.email) + '</a></div>' + renderNameFlagCell(s) + '</td>' +
           '<td><span class="batch-chip batch-chip-' + escapeHtml(s.batch || 'C') + '">' + escapeHtml(STUDENT_BATCH_LABELS[s.batch] || s.batch || 'Batch C') + '</span></td>' +
+          '<td class="nowrap">' + joinedLabel(s.created_at) + '</td>' +
           '<td class="nowrap"><span class="inactivity-dot ' + inactivityClass(s.days_inactive) + '"></span>' + lastActiveLabel(s) + '</td>' +
           '<td>' + formatHours(s.week_minutes) + '</td>' +
           '<td>' + formatHours(s.last30_minutes || 0) + '</td>' +
@@ -3569,8 +3595,8 @@
     if (allBtn) allBtn.addEventListener('click', function () { state.studentsShown = Infinity; render(); });
     var csvBtn = document.getElementById('students-csv');
     if (csvBtn) csvBtn.addEventListener('click', function () {
-      var cols = ['display_name', 'email', 'batch', 'last_active', 'days_inactive', 'week_minutes', 'last30_minutes', 'total_minutes', 'consistency_minutes', 'streak', 'progress_pct', 'tasks_completed', 'needs_rename', 'notes'];
-      var head = ['Name', 'Email', 'Batch', 'Last active', 'Days inactive', 'This week (min)', 'Last 30 days (min)', 'All-time (min)', 'Consistency (min/day)', 'Streak', 'Course progress %', 'Tasks done', 'Name flagged', 'Notes'];
+      var cols = ['display_name', 'email', 'batch', 'created_at', 'last_active', 'days_inactive', 'week_minutes', 'last30_minutes', 'total_minutes', 'consistency_minutes', 'streak', 'progress_pct', 'tasks_completed', 'needs_rename', 'notes'];
+      var head = ['Name', 'Email', 'Batch', 'Joined', 'Last active', 'Days inactive', 'This week (min)', 'Last 30 days (min)', 'All-time (min)', 'Consistency (min/day)', 'Streak', 'Course progress %', 'Tasks done', 'Name flagged', 'Notes'];
       var cell = function (v) {
         if (v == null) return '';
         v = String(v);
