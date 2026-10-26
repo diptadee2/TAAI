@@ -170,6 +170,12 @@
   .add-note input, .add-note textarea { font: inherit; font-size: 14px; border: 2px solid var(--ink); padding: 7px 9px; background: #fff; flex: 1 1 220px; min-width: 0; }
   .add-note textarea { flex-basis: 100%; resize: vertical; line-height: 1.4; }
   .add-note-actions { display: flex; gap: 6px; }
+  .day-note-row { margin-top: 6px; }
+  .day-note { margin-top: 8px; border: 2px solid var(--ink); background: #FFFBEA; padding: 8px 10px; }
+  .day-note-text { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; line-height: 1.5; }
+  .day-note-meta { margin-top: 4px; font-size: 12px; color: var(--ink-dim); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .day-note-form { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+  .day-note-form textarea { font: inherit; font-size: 14px; line-height: 1.45; border: 2px solid var(--ink); padding: 8px 10px; background: #fff; resize: vertical; width: 100%; box-sizing: border-box; }
   .views { display: flex; gap: 0; margin: 0 0 18px; border: 2px solid var(--ink); width: max-content; max-width: 100%; }
   .views button { font: inherit; font-size: 14px; font-weight: 700; padding: 8px 16px; background: #fff; border: 0; cursor: pointer; color: var(--ink); }
   .views button + button { border-left: 2px solid var(--ink); }
@@ -307,7 +313,7 @@
   var KEY_CODE = 'pairboard:' + BOARD + ':code', KEY_ME = 'pairboard:' + BOARD + ':me', KEY_OPEN = 'pairboard:' + BOARD + ':open', KEY_VIEW = 'pairboard:' + BOARD + ':view';
   var POLL_MS = 20000;
   var app = document.getElementById('app');
-  var S = { code: null, data: null, me: null, open: {}, busy: {}, renaming: false, lastSync: null, view: read('pairboard:sunitesh101:view') === 'notes' ? 'notes' : 'schedule', notesFilter: null, addingFor: null, selTopic: null, mapHl: '' };
+  var S = { code: null, data: null, me: null, open: {}, busy: {}, renaming: false, lastSync: null, view: read('pairboard:sunitesh101:view') === 'notes' ? 'notes' : 'schedule', notesFilter: null, addingFor: null, notingFor: null, noteDraft: '', selTopic: null, mapHl: '' };
 
   function store(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} }
   function read(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
@@ -354,6 +360,7 @@
     return api({ action: 'load' }).then(function (d) {
       d.tickMap = groupTicks(d.ticks);
       d.linkMap = groupLinks(d.links);
+      d.topicMap = groupTopics(d.topics);
       var first = !S.data;
       S.data = d; S.lastSync = new Date();
       syncMe(d);
@@ -387,6 +394,12 @@
   function groupLinks(rows) {
     var map = {};
     (rows || []).forEach(function (n) { (map[n.task_id] = map[n.task_id] || []).push(n); });
+    return map;
+  }
+  // topicMap[taskId] = { takeaway, takeaway_by, takeaway_at }, the day's shared note
+  function groupTopics(rows) {
+    var map = {};
+    (rows || []).forEach(function (t) { map[t.task_id] = t; });
     return map;
   }
   function isRevisionSection(i) { return /revision/i.test(S.data.sections[i].title); }
@@ -644,7 +657,7 @@
   function chipHtml(n, canRemove) {
     var mine = canRemove; // shared notes: either person can remove any link
     var host = ''; try { host = new URL(n.url).hostname.replace(/^www\./, ''); } catch (e) {}
-    var icon = /drive\.google|docs\.google/.test(host) ? '📄' : '🔗';
+    var icon = /drive\.google|docs\.google/.test(host) ? '📄' : /youtube\.com|youtu\.be/.test(host) ? '▶️' : '🔗';
     return '<span class="note-chip"><a href="' + esc(n.url) + '" target="_blank" rel="noopener noreferrer" title="' + esc(n.url) + '">' + icon + ' <b>' + esc(S.data.names[n.added_by]) + '</b>' +
       (n.label ? ' · ' + esc(n.label) : '') + ' ↗</a>' + (mine ? '<button type="button" class="note-x" data-remove="' + esc(n.id) + '" aria-label="Remove this link">×</button>' : '') + '</span>';
   }
@@ -654,14 +667,30 @@
     var html = '<div class="links">' + list.map(function (n) { return chipHtml(n, true); }).join('');
     if (canAdd && d.linksReady) {
       if (S.addingFor === taskId) {
-        html += '<form class="add-note" data-add-form="' + taskId + '"><textarea name="url" rows="2" inputmode="url" placeholder="Paste Google Drive links, one per line (add as many as you like)" required></textarea>' +
+        html += '<form class="add-note" data-add-form="' + taskId + '"><textarea name="url" rows="2" inputmode="url" placeholder="Paste links, one per line: Drive, YouTube, any website (as many as you like)" required></textarea>' +
           '<input name="label" type="text" placeholder="Title (optional), e.g. Pointers handwritten" maxlength="80">' +
           '<div class="add-note-actions"><button class="btn btn-yellow" type="submit">Save</button><button class="btn" type="button" data-add-cancel>Cancel</button></div></form>';
       } else {
-        html += '<button type="button" class="add-link" data-add="' + taskId + '">' + (list.length ? '+ Add more notes' : '+ Add notes') + '</button>';
+        html += '<button type="button" class="add-link" data-add="' + taskId + '">' + (list.length ? '+ Add more links' : '+ Add links') + '</button>';
       }
     }
-    return html + '</div>';
+    return html + '</div>' + (canAdd ? dayNoteHtml(taskId) : '');
+  }
+  // A shared written note per day (2026-10-26, "a separate note field per
+  // day"): either person can write or edit it; stored as the day's
+  // pair_topics.takeaway.
+  function dayNoteHtml(taskId) {
+    var d = S.data;
+    if (!d.topicsReady || taskId.indexOf(':') !== -1) return '';
+    var t = (d.topicMap || {})[taskId], text = t && t.takeaway ? t.takeaway : '';
+    if (S.notingFor === taskId) {
+      return '<form class="day-note-form" data-note-form="' + taskId + '"><textarea name="note" rows="4" maxlength="2000" placeholder="Your note for this day: what clicked, what to revisit, formulas, doubts...">' + esc(S.noteDraft) + '</textarea>' +
+        '<div class="add-note-actions"><button class="btn btn-yellow" type="submit">Save note</button><button class="btn" type="button" data-note-cancel>Cancel</button></div></form>';
+    }
+    if (!text) return '<div class="day-note-row"><button type="button" class="add-link" data-note-edit="' + taskId + '">+ Write a note</button></div>';
+    var when = t.takeaway_at ? new Date(t.takeaway_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' }) : '';
+    return '<div class="day-note"><div class="day-note-text">' + esc(text) + '</div>' +
+      '<div class="day-note-meta">📝 ' + esc(d.names[t.takeaway_by] || '') + (when ? ' · ' + when : '') + ' <button type="button" class="add-link" data-note-edit="' + taskId + '">Edit</button></div></div>';
   }
 
   // Revision map: the whole syllabus as one grid. Squares show whether a
@@ -795,6 +824,37 @@
         var f = app.querySelector('[data-add-form] [name=url]'); if (f) f.focus();
       });
     });
+    app.querySelectorAll('[data-note-edit]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var id = b.getAttribute('data-note-edit');
+        function go() {
+          var t = (S.data.topicMap || {})[id];
+          S.notingFor = id; S.noteDraft = t && t.takeaway ? t.takeaway : ''; render();
+          var f = app.querySelector('[data-note-form] textarea'); if (f) { f.focus(); f.setSelectionRange(f.value.length, f.value.length); }
+        }
+        if (needMe(go)) return;
+        go();
+      });
+    });
+    app.querySelectorAll('[data-note-cancel]').forEach(function (b) {
+      b.addEventListener('click', function () { S.notingFor = null; S.noteDraft = ''; render(); });
+    });
+    app.querySelectorAll('[data-note-form]').forEach(function (f) {
+      f.note.addEventListener('input', function () { S.noteDraft = f.note.value; });
+      f.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var id = f.getAttribute('data-note-form'), btn = f.querySelector('button[type=submit]');
+        btn.disabled = true; btn.textContent = 'Saving…';
+        api({ action: 'takeaway', taskId: id, by: S.me, text: f.note.value }).then(function (r) {
+          S.data.topics = (S.data.topics || []).filter(function (t) { return t.task_id !== id; }).concat([r.topic]);
+          S.data.topicMap = groupTopics(S.data.topics);
+          S.notingFor = null; S.noteDraft = ''; render(); toast(r.topic && r.topic.takeaway ? 'Note saved' : 'Note removed');
+        }).catch(function (err) {
+          btn.disabled = false; btn.textContent = 'Save note';
+          toast(err.message && err.status === 400 ? err.message : "Couldn't save the note. Try again.");
+        });
+      });
+    });
     app.querySelectorAll('[data-add-cancel]').forEach(function (b) {
       b.addEventListener('click', function () { S.addingFor = null; render(); });
     });
@@ -816,7 +876,7 @@
           });
         }, Promise.resolve()).then(function () {
           S.data.linkMap = groupLinks(S.data.links);
-          S.addingFor = null; render(); toast(saved === 1 ? 'Notes link saved' : saved + ' notes links saved');
+          S.addingFor = null; render(); toast(saved === 1 ? 'Link saved' : saved + ' links saved');
         }).catch(function (err) {
           S.data.linkMap = groupLinks(S.data.links);
           var msg = err.message && err.status === 400 ? err.message : "Couldn't save the link. Try again.";
@@ -827,7 +887,7 @@
     });
     app.querySelectorAll('[data-remove]').forEach(function (b) {
       b.addEventListener('click', function () {
-        if (!confirm('Remove this notes link?')) return;
+        if (!confirm('Remove this link?')) return;
         var id = b.getAttribute('data-remove');
         api({ action: 'note-remove', id: id }).then(function () {
           S.data.links = (S.data.links || []).filter(function (n) { return n.id !== id; }); S.data.linkMap = groupLinks(S.data.links);
@@ -873,11 +933,11 @@
 
   // Poll so one person's ticks show up for the other.
   setInterval(function () {
-    if (!S.data || document.hidden || S.renaming || S.addingFor || (whoEl && !whoEl.hidden) || Object.keys(S.busy).length) return;
+    if (!S.data || document.hidden || S.renaming || S.addingFor || S.notingFor || (whoEl && !whoEl.hidden) || Object.keys(S.busy).length) return;
     load().catch(function () {});
   }, POLL_MS);
   document.addEventListener('visibilitychange', function () {
-    if (!document.hidden && S.data && !S.renaming && !S.addingFor && !Object.keys(S.busy).length) load().catch(function () {});
+    if (!document.hidden && S.data && !S.renaming && !S.addingFor && !S.notingFor && !Object.keys(S.busy).length) load().catch(function () {});
   });
 
   // Start

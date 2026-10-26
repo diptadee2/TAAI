@@ -18,7 +18,7 @@
 //   action 'note-remove' { id }                     -> { ok }   (either person can remove any link)
 //   action 'claim'      { who, device }            -> { ok, claims, mine }  (pick who you are; a name taken by another device is refused)
 //   action 'reset-claims'                           -> { ok }  (frees both names, e.g. one person on a new device)
-//   action 'takeaway'   { taskId, by, text }        -> { ok, topic }  (shared 1-2 line summary, '' clears)
+//   action 'takeaway'   { taskId, by, text }        -> { ok, topic }  (the day's shared written note, up to 2,000 chars, '' clears)
 //   action 'confidence' { taskId, by, level }       -> { ok, topic }  (that person's own: 1 got it, 2 shaky, 3 weak, null)
 import crypto from 'node:crypto';
 import { getSupabase, json } from './lib/supabase.js';
@@ -180,7 +180,7 @@ export async function handler(event) {
     const row = { board, task_id: taskId };
     if (body.action === 'takeaway') {
       const text = String(body.text || '').replace(/\r/g, '').trim();
-      if (text.length > 400) return reply(400, { error: 'Keep the takeaway under 400 characters' });
+      if (text.length > 2000) return reply(400, { error: 'Keep the note under 2,000 characters' });
       Object.assign(row, { takeaway: text || null, takeaway_by: text ? by : null, takeaway_at: text ? new Date().toISOString() : null });
     } else {
       const level = [1, 2, 3].includes(body.level) ? body.level : null;
