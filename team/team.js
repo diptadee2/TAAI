@@ -2154,7 +2154,17 @@
     ].map(function (o) {
       return '<option value="' + o[0] + '"' + (f.inactive === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
     }).join('');
+    // One-click view for picking high performers (2026-10-26): Batch C,
+    // students already in the ranker's batch hidden, best score first.
+    var hpOn = f.batch === 'C' && f.rankers === 'hide' && state.studentSort.key === 'score' && state.studentSort.dir === 'desc';
     return (
+      '<div class="hp-row"><button type="button" class="btn hp-btn' + (hpOn ? ' is-on' : '') + '" id="student-hp" aria-pressed="' + hpOn + '">⭐ High performers' + (hpOn ? ' ✓' : '') + '</button>' +
+        '<span class="field-hint">' + (hpOn ? 'Showing Batch C, best first. Click again to go back to all students.' : 'Batch C students ranked best first, for picking the ranker\'s batch.') + '</span></div>' +
+      (hpOn ? '<div class="hp-explain"><b>How the score (out of 100) is worked out</b>' +
+        '<ul><li><b>Course progress, 40 points:</b> how many of the tasks due so far they have ticked.</li>' +
+        '<li><b>Showing up regularly, 40 points:</b> on how many study days since they joined they ticked at least one task, and on how many of the last 45 days they used the focus timer for 30 minutes or more.</li>' +
+        '<li><b>Streak, 20 points:</b> their best run of days in a row (it doesn\'t need to be going now), plus a little for their current run.</li></ul>' +
+        '<p>The small line under each score shows these: progress · days ticked · focus days · best streak. Students already added to the ranker\'s batch are left out, so each person is only picked once.</p></div>' : '') +
       '<div class="students-filters">' +
         '<input type="text" id="student-search" placeholder="Search name or email…" value="' + escapeHtml(f.search) + '">' +
         '<label>Batch <select id="student-batch-filter">' +
@@ -3557,6 +3567,18 @@
     var activeFilter = document.getElementById('student-active-filter');
     if (activeFilter) activeFilter.addEventListener('change', function () {
       state.studentFilters.active = activeFilter.value;
+      render();
+    });
+    var hpBtn = document.getElementById('student-hp');
+    if (hpBtn) hpBtn.addEventListener('click', function () {
+      var on = hpBtn.getAttribute('aria-pressed') === 'true';
+      if (on) {
+        state.studentFilters = { search: '', inactive: '', active: '', minScore: '', rankers: '', minStreak: '', flaggedOnly: false, batch: '' };
+        state.studentSort = { key: 'total_minutes', dir: 'desc' };
+      } else {
+        state.studentFilters = { search: '', inactive: '', active: '', minScore: '', rankers: 'hide', minStreak: '', flaggedOnly: false, batch: 'C' };
+        state.studentSort = { key: 'score', dir: 'desc' };
+      }
       render();
     });
     var minScoreInput = document.getElementById('student-min-score');
