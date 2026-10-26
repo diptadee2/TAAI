@@ -910,25 +910,15 @@ body:has(.mobile-menu.open) .mobile-enroll-bar { display: none !important; }
 }
 </style>
 <style>
-/* Floating contact buttons on phones. 2026-10-24: smaller and tucked to the
-   edge. 2026-10-26: a hard-edged frosted pad was dropped ("looks terrible"),
-   then a feathered blur came back on request ("a decent feather", "sizes can
-   be smaller"): 34px buttons, and one soft haze behind all three, a radial
-   mask fading it to nothing at the edges. The haze hangs off the contact
-   pair (::before) and reaches down behind back-to-top, which is lifted above
-   it so it isn't blurred itself. */
+/* Floating contact buttons on phones. 2026-10-24 to 10-26: smaller,
+   see-through and blurred versions were all rejected ("looking terrible").
+   2026-10-26: back to each page's original sizes and positions, no blur;
+   a white ring plus a soft dark shadow separates them from whatever is
+   behind. Still hidden while the footer is on screen. */
 @media (max-width: 768px) {
-  html body .mobile-contact-bar { right: 12px; gap: 8px; }
-  html body .mobile-contact-bar a, html body .back-to-top { width: 34px; height: 34px; box-shadow: 0 2px 6px rgba(17,17,17,0.16); }
-  html body .back-to-top { right: 12px; z-index: 210; }
-  html body .mobile-contact-bar a svg, html body .back-to-top svg { width: 15px; height: 15px; }
-  html body .mobile-contact-bar::before {
-    content: ''; position: absolute; z-index: -1; pointer-events: none;
-    left: -26px; right: -26px; top: -26px; bottom: -84px;
-    background: rgba(255,251,240,0.32);
-    -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px);
-    -webkit-mask-image: radial-gradient(ellipse closest-side, #000 35%, rgba(0,0,0,.6) 65%, transparent 100%);
-    mask-image: radial-gradient(ellipse closest-side, #000 35%, rgba(0,0,0,.6) 65%, transparent 100%);
+  html body .mobile-contact-bar a, html body .back-to-top {
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1px rgba(17,17,17,0.10), 0 4px 12px rgba(17,17,17,0.28), 0 1px 3px rgba(17,17,17,0.20);
   }
   html body.footer-in-view .mobile-contact-bar { opacity: 0; }
 }
