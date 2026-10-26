@@ -3996,6 +3996,34 @@ html body main #combos #full-course-2028 .c28-seehow-arrow { width: 22px; height
   @container (max-width: 560px) {
     html body main .pmap .pmap-uses li { grid-template-columns: 1fr; gap: 8px; align-items: start; }
   }
+
+  /* Projects map on phones and iPads (2026-10-26, "users won't know they have
+     to click on top"): a "Tap a stage" hint above the tabs, a pointer from the
+     selected tab into the panel, and a Next stage button at the bottom of the
+     panel that switches and scrolls back up to the tabs. Desktop unchanged. */
+  .pmap-tap-hint, .pmap-next { display: none; }
+  @media (max-width: 1099px) {
+    html body main .pmap-tap-hint { display: block; margin: 0 0 10px; font-size: 14px; font-weight: 700; color: var(--nb-ink); }
+    html body main .pmap-detail { display: flex; flex-direction: column; }
+    html body main .pmap .pmap-next {
+      display: inline-flex; align-items: center; gap: 8px; align-self: flex-start;
+      margin: auto 24px 24px; padding: 11px 16px; cursor: pointer;
+      font: inherit; font-size: 14.5px; font-weight: 700; color: var(--nb-ink);
+      background: var(--nb-yellow); border: 2px solid var(--nb-ink); box-shadow: 4px 4px 0 var(--nb-ink);
+    }
+    html body main .pmap .pmap-next:active { translate: 2px 2px; box-shadow: 2px 2px 0 var(--nb-ink); }
+    html body main .pmap .pmap-detail-link { margin-bottom: 18px !important; }
+    html body main .pmap-stage { position: relative; }
+    html body main .pmap-stage.is-sel::after {
+      content: ''; position: absolute; left: 50%; bottom: -13px; width: 18px; height: 18px; margin-left: -9px;
+      background: inherit; border-right: 3px solid var(--nb-ink); border-bottom: 3px solid var(--nb-ink);
+      transform: rotate(45deg); z-index: 2;
+    }
+    html body main .pmap-stages { overflow: visible !important; position: relative; z-index: 3 !important; }
+  }
+  @media (max-width: 600px) {
+    html body main .pmap .pmap-next { margin: auto 16px 16px; width: calc(100% - 32px); justify-content: center; }
+  }
 </style>
 <style>
 /* Hamburger menu opening animation (2026-10-26, "can the hamburger opening
@@ -5759,7 +5787,9 @@ function ProjectsMap() {
   }, []);
   // Cycle through the stages while the map is on screen, until someone picks one.
   React.useEffect(() => {
-    if (!auto || !shown || reduce) return;
+    // Not on phones/iPads (2026-10-26): there the panel changing on its own
+    // mid-read was confusing; they get a Next stage button instead.
+    if (!auto || !shown || reduce || window.matchMedia('(max-width: 1099px)').matches) return;
     const t = setInterval(() => setSel(v => (v + 1) % MAP_STAGES.length), 5500);
     return () => clearInterval(t);
   }, [auto, shown, reduce]);
@@ -5771,6 +5801,15 @@ function ProjectsMap() {
     row.scrollTo({ left: btn.offsetLeft - row.offsetLeft - 8, behavior: reduce ? 'auto' : 'smooth' });
   }, [sel]);
   const pick = i => { setAuto(false); setSel(i); };
+  // Next stage from the bottom of the panel (phones/iPads): switch, then bring
+  // the stage tabs back into view so the new stage is read from the top.
+  const goNext = k => {
+    pick((k + 1) % MAP_STAGES.length);
+    const row = stageRefs.current[0] && stageRefs.current[0].parentElement;
+    if (!row) return;
+    const top = row.getBoundingClientRect().top;
+    if (top < 90) window.scrollTo({ top: window.scrollY + top - 100, behavior: reduce ? 'auto' : 'smooth' });
+  };
   const st = MAP_STAGES[sel];
   const subName = id => (MAP_SUBJECTS.find(x => x.id === id) || {}).name;
   const subColor = id => (MAP_SUBJECTS.find(x => x.id === id) || {}).color;
@@ -5804,6 +5843,7 @@ function ProjectsMap() {
           <span className="pmap-cta-arrow" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M6 13l6 6 6-6" /></svg></span>
         </a>
         </div>
+        <p className="pmap-tap-hint"><span aria-hidden="true">👇</span> Tap a stage to see the subjects it uses</p>
         <div className={'pmap' + (shown ? ' is-shown' : '')} ref={wrapRef}>
           <svg className="pmap-lines" width={box.w} height={box.h} viewBox={`0 0 ${box.w || 1} ${box.h || 1}`} aria-hidden="true">
             {paths.map((p, i) => {
@@ -5864,6 +5904,9 @@ function ProjectsMap() {
                 </ul>
                 {sg.builds && <p className="pmap-detail-link"><b>Builds on stage {k}.</b> {sg.builds}</p>}
                 {sg.leads && <p className="pmap-detail-link"><b>Leads into stage 2.</b> {sg.leads}</p>}
+                <button type="button" className="pmap-next" tabIndex={k === sel ? 0 : -1} onClick={() => goNext(k)}>
+                  {k < MAP_STAGES.length - 1 ? <>Next: Stage {k + 2}, {MAP_STAGES[k + 1].tab || MAP_STAGES[k + 1].title} <span aria-hidden="true">→</span></> : <>Back to stage 1 <span aria-hidden="true">↺</span></>}
+                </button>
               </div>
             ))}
           </div>
