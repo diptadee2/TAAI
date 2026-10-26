@@ -910,16 +910,17 @@ body:has(.mobile-menu.open) .mobile-enroll-bar { display: none !important; }
 }
 </style>
 <style>
-/* Floating contact buttons on phones. 2026-10-24 to 10-26: smaller,
-   see-through and blurred versions were all rejected ("looking terrible").
-   2026-10-26: back to each page's original sizes and positions, no blur;
-   a white ring plus a soft dark shadow separates them from whatever is
-   behind. Still hidden while the footer is on screen. */
+/* Floating contact buttons. 2026-10-24 to 10-26: smaller, see-through and
+   blurred versions were all rejected ("looking terrible"). Now: each page's
+   original sizes, a 2px white ring, and a soft glow in each button's own
+   colour plus a dark drop shadow (2026-10-26, "a bit of glow behind the
+   contact icons to separate it further"), at every screen size. Still hidden
+   while the footer is on screen or the hamburger menu is open. */
+html body .mobile-contact-bar a, html body .back-to-top { border: 2px solid #fff; }
+html body .mobile-contact-bar a.mcb-mail { box-shadow: 0 0 0 1px rgba(17,17,17,.10), 0 0 22px 6px rgba(107,75,255,.42), 0 4px 12px rgba(17,17,17,.26) !important; }
+html body .mobile-contact-bar a.mcb-discord { box-shadow: 0 0 0 1px rgba(17,17,17,.10), 0 0 22px 6px rgba(88,101,242,.42), 0 4px 12px rgba(17,17,17,.26) !important; }
+html body .back-to-top { box-shadow: 0 0 0 1px rgba(17,17,17,.10), 0 0 22px 6px rgba(8,145,178,.40), 0 4px 12px rgba(17,17,17,.26) !important; }
 @media (max-width: 768px) {
-  html body .mobile-contact-bar a, html body .back-to-top {
-    border: 2px solid #fff;
-    box-shadow: 0 0 0 1px rgba(17,17,17,0.10), 0 4px 12px rgba(17,17,17,0.28), 0 1px 3px rgba(17,17,17,0.20);
-  }
   html body.footer-in-view .mobile-contact-bar { opacity: 0; }
 }
 /* Hidden while the hamburger menu is open (2026-10-26), so they never sit

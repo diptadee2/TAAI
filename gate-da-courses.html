@@ -3873,16 +3873,17 @@ html body main #combos .orient-btn .orient-text span { font-family: 'IBM Plex Mo
 }
 </style>
 <style>
-/* Floating contact buttons on phones. 2026-10-24 to 10-26: smaller,
-   see-through and blurred versions were all rejected ("looking terrible").
-   2026-10-26: back to each page's original sizes and positions, no blur;
-   a white ring plus a soft dark shadow separates them from whatever is
-   behind. Still hidden while the footer is on screen. */
+/* Floating contact buttons. 2026-10-24 to 10-26: smaller, see-through and
+   blurred versions were all rejected ("looking terrible"). Now: each page's
+   original sizes, a 2px white ring, and a soft glow in each button's own
+   colour plus a dark drop shadow (2026-10-26, "a bit of glow behind the
+   contact icons to separate it further"), at every screen size. Still hidden
+   while the footer is on screen or the hamburger menu is open. */
+html body .mobile-contact-bar a, html body .back-to-top { border: 2px solid #fff; }
+html body .mobile-contact-bar a.mcb-mail { box-shadow: 0 0 0 1px rgba(17,17,17,.10), 0 0 22px 6px rgba(107,75,255,.42), 0 4px 12px rgba(17,17,17,.26) !important; }
+html body .mobile-contact-bar a.mcb-discord { box-shadow: 0 0 0 1px rgba(17,17,17,.10), 0 0 22px 6px rgba(88,101,242,.42), 0 4px 12px rgba(17,17,17,.26) !important; }
+html body .back-to-top { box-shadow: 0 0 0 1px rgba(17,17,17,.10), 0 0 22px 6px rgba(8,145,178,.40), 0 4px 12px rgba(17,17,17,.26) !important; }
 @media (max-width: 768px) {
-  html body .mobile-contact-bar a, html body .back-to-top {
-    border: 2px solid #fff;
-    box-shadow: 0 0 0 1px rgba(17,17,17,0.10), 0 4px 12px rgba(17,17,17,0.28), 0 1px 3px rgba(17,17,17,0.20);
-  }
   html body.footer-in-view .mobile-contact-bar { opacity: 0; }
 }
 /* Hidden while the hamburger menu is open (2026-10-26), so they never sit
@@ -3963,6 +3964,38 @@ html body main #combos #full-course-2028 .c28-seehow-arrow { width: 22px; height
   }
   .chal-form input[type=date]::-webkit-date-and-time-value { text-align: left; margin: 0; }
   .chal-row > label { min-width: 0; }
+
+  /* Projects map detail card, refreshed (2026-10-26, "can this card also be
+     better looking"). iPad/desktop only; phones keep their compact layout.
+     Header bar carries a yellow project-count tag, the stage's drawing sits
+     beside the title, subjects are bordered colour chips on plain white rows,
+     and the callout gets a hard shadow. */
+  html body main .pmap .pmap-detail-badge { display: none; }
+  html body main .pmap .pmap-detail-art { display: none; }
+  @media (min-width: 601px) {
+    html body main .pmap .pmap-detail { background: #fff !important; }
+    html body main .pmap .pmap-detail-step { display: flex !important; align-items: center; justify-content: space-between; gap: 12px; }
+    html body main .pmap .pmap-detail-badge { display: inline-block; background: var(--nb-yellow); color: var(--nb-ink); border: 2px solid var(--nb-ink); padding: 3px 8px; font-size: 11.5px; line-height: 1.2; }
+    html body main .pmap .pmap-detail-head { display: flex; align-items: center; gap: 18px; margin: 4px 24px 0; }
+    html body main .pmap .pmap-detail-head h3, html body main .pmap .pmap-detail-head .pmap-detail-cap { margin-left: 0 !important; margin-right: 0 !important; }
+    html body main .pmap .pmap-detail-art { display: flex; flex: 0 0 auto; width: 92px; height: 70px; box-shadow: 3px 3px 0 var(--nb-ink); }
+    html body main .pmap .pmap-detail-art svg { width: 74px; height: 56px; }
+    html body main .pmap .pmap-detail-label { margin-top: 22px !important; }
+    html body main .pmap .pmap-uses li { background: #fff !important; box-shadow: none !important; padding: 12px 4px !important; grid-template-columns: 190px 1fr; align-items: center; border-top: 2px solid var(--nb-ink) !important; }
+    html body main .pmap .pmap-uses li + li { border-top: 1.5px dashed rgba(17,17,17,.35) !important; }
+    html body main .pmap .pmap-uses b {
+      justify-self: start; display: inline-block; padding: 5px 9px; line-height: 1.25;
+      background: color-mix(in srgb, var(--c) 30%, #fff); color: var(--nb-ink) !important;
+      border: 2px solid var(--nb-ink); font-size: 13.5px;
+    }
+    html body main .pmap .pmap-detail-link { box-shadow: 4px 4px 0 var(--nb-ink); }
+  }
+  /* Chips stack above their text only when the card itself is narrow
+     (e.g. 1025-1239px, where the card sits in a slim column). */
+  @media (min-width: 601px) { html body main .pmap .pmap-detail { container-type: inline-size; } }
+  @container (max-width: 560px) {
+    html body main .pmap .pmap-uses li { grid-template-columns: 1fr; gap: 8px; align-items: start; }
+  }
 </style>
 <style>
 /* Hamburger menu opening animation (2026-10-26, "can the hamburger opening
@@ -5815,9 +5848,14 @@ function ProjectsMap() {
           <div className="pmap-detail-stack" ref={panelRef} style={{ '--sc': MAP_STAGE_COLORS[sel] }}>
             {MAP_STAGES.map((sg, k) => (
               <div key={k} className={'pmap-detail' + (k === sel ? ' is-sel' : '')} role="tabpanel" aria-hidden={k !== sel}>
-                <div className="pmap-detail-step">Stage {k + 1} of 3 · {sg.count} {sg.count === 1 ? 'project' : 'projects'}</div>
-                <h3>{sg.title}</h3>
-                <p className="pmap-detail-cap">{sg.caption}</p>
+                <div className="pmap-detail-step"><span>Stage {k + 1} of 3</span><span className="pmap-detail-badge">{sg.count} {sg.count === 1 ? 'project' : 'projects'}</span></div>
+                <div className="pmap-detail-head">
+                  <span className="project-art pmap-detail-art"><ProjectArt kind={sg.art} /></span>
+                  <div className="pmap-detail-headtext">
+                    <h3>{sg.title}</h3>
+                    <p className="pmap-detail-cap">{sg.caption}</p>
+                  </div>
+                </div>
                 <div className="pmap-detail-label">What it uses from GATE DA</div>
                 <ul className="pmap-uses">
                   {sg.uses.map(([sid, how], j) => (
