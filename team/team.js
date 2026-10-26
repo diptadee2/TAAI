@@ -1583,14 +1583,14 @@
   var OP_DEFAULT_PROMPT = [
     'Write a short social media caption (Instagram / LinkedIn / WhatsApp channel) for TAAI, a GATE DA (Data Science and AI) exam-prep brand in India. It goes with a poster that already shows the countdown, the prices and the challenge, so keep the caption short and don\'t repeat everything.',
     '',
-    'Goal: get people to buy the GATE 2028 Full Course before the super early bird offer ends, and then fill the "100 pe 100% off" challenge form.',
+    'Goal: get people to enrol in the GATE 2028 Full Course before the super early bird offer ends, and then fill the "100 pe 100% off" challenge form.',
     '',
     'This post goes out on {{post_date}}: {{when_line}}.',
     '',
     'Facts you may use (use nothing else):',
     '- Super early bird price of the GATE 2028 Full Course: {{price}} until {{offer_end}}. From {{next_price_date}} it goes up to {{next_price}}.',
     '- "100 pe 100% off": get an AIR under 100 in GATE DA 2027 and TAAI refunds your full GATE 2028 course fee, and you keep full access to the course.',
-    '- To be eligible you must buy the GATE 2028 Full Course and fill the challenge form by {{challenge_cutoff}}. Only a GATE DA 2027 result counts.',
+    '- To be eligible you must enrol in the GATE 2028 Full Course and fill the challenge form by {{challenge_cutoff}}. Only a GATE DA 2027 result counts.',
     '- GATE DA 2026: 65 marks got AIR 90.',
     '- Why TAAI can offer this: we are a small, independent team with no investors to answer to, so we get to celebrate merit by refunding the students who earn it. (A light, friendly tone is fine here.)',
     '- The course also prepares you for GATE DA 2028 and includes 5 portfolio projects (machine learning, computer vision, LLMs).',
@@ -1601,7 +1601,7 @@
     'Structure:',
     '1. Start with the 🔴 emoji followed by "100 pe 100% off", then a first line about the deadline that makes someone stop scrolling.',
     '2. One or two short lines: the price going up, and the challenge.',
-    '3. A clear call to action to fill the challenge form after buying.',
+    '3. A clear call to action to fill the challenge form after enrolling.',
     '4. These three links, each on its own line, exactly:',
     '   Challenge form: {{challenge_link}}',
     '   Course: {{course_link}}',
@@ -1619,13 +1619,13 @@
   var OP_CHALLENGE_PROMPT = [
     'Write a short social media caption (Instagram / LinkedIn / WhatsApp channel) for TAAI, a GATE DA (Data Science and AI) exam-prep brand in India. It goes with a poster that already shows the challenge, the registration deadline and the steps, so keep the caption short and don\'t repeat everything.',
     '',
-    'Goal: get people to buy the GATE 2028 Full Course and fill the "100 pe 100% off" challenge form before registration closes.',
+    'Goal: get people to enrol in the GATE 2028 Full Course and fill the "100 pe 100% off" challenge form before registration closes.',
     '',
     'This post goes out on {{post_date}}: {{when_line}}.',
     '',
     'Facts you may use (use nothing else):',
     '- "100 pe 100% off": get an AIR under 100 in GATE DA 2027 and TAAI refunds your full GATE 2028 course fee, and you keep full access to the course.',
-    '- To be eligible you must buy the GATE 2028 Full Course and fill the challenge form by {{challenge_cutoff}}. Only a GATE DA 2027 result counts.',
+    '- To be eligible you must enrol in the GATE 2028 Full Course and fill the challenge form by {{challenge_cutoff}}. Only a GATE DA 2027 result counts.',
     '- The GATE 2028 Full Course covers both GATE DA 2027 and 2028, and content for 65+ marks of GATE DA 2027 unlocks the day you join. Its price is {{price}}.',
     '- GATE DA 2026: 65 marks got AIR 90.',
     '- Why TAAI can offer this: we are a small, independent team with no investors to answer to, so we get to celebrate merit by refunding the students who earn it. (A light, friendly tone is fine here.)',
@@ -1637,7 +1637,7 @@
     'Structure:',
     '1. Start with the 🔴 emoji followed by "100 pe 100% off", then a first line about the challenge that makes someone stop scrolling.',
     '2. One or two short lines: what the challenge is and the registration deadline.',
-    '3. A clear call to action to buy the course and fill the challenge form.',
+    '3. A clear call to action to enrol in the course and fill the challenge form.',
     '4. These three links, each on its own line, exactly:',
     '   Challenge form: {{challenge_link}}',
     '   Course: {{course_link}}',
@@ -1871,7 +1871,7 @@
         ctx.font = '500 21px ' + FONT; ctx.fillStyle = 'rgba(255,255,255,0.7)';
         ctx.fillText('Last year, 65 marks got AIR 90.', qx, pY + 193);
 
-        steps(pY + pH + 44, ['Buy the course', 'at ' + opRupees(pr.price)], ['Fill the challenge form', 'by ' + opDate(op.cutoff, true)]);
+        steps(pY + pH + 44, ['Enrol in the course', 'at ' + opRupees(pr.price)], ['Fill the challenge form', 'by ' + opDate(op.cutoff, true)]);
         foot();
         return;
       }
@@ -1942,7 +1942,7 @@
 
       // Two steps.
       var stY = panelY + panelH + 44, stH = 108, gap = 28, stW = (S - 2 * P - 10 - gap) / 2;
-      [['1', 'Buy the course', 'at ' + opRupees(pr.price) + ' by ' + opDate(deadline)], ['2', 'Fill the challenge form', 'by ' + opDate(op.cutoff, true)]].forEach(function (st, i) {
+      [['1', 'Enrol in the course', 'at ' + opRupees(pr.price) + ' by ' + opDate(deadline)], ['2', 'Fill the challenge form', 'by ' + opDate(op.cutoff, true)]].forEach(function (st, i) {
         var sx = P + i * (stW + gap);
         box(sx, stY, stW, stH, i === 1 ? YEL : '#FFFFFF', 6);
         ctx.fillStyle = INK; ctx.fillRect(sx + 20, stY + 24, 56, 56);

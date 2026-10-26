@@ -4861,11 +4861,11 @@ function ChallengeTerms({ cutoff }) {
   const date = fmtChallengeDate(cutoff);
   return (
     <ol className="chal-terms">
-      <li>Open only to students who <b>buy the GATE 2028 Full Course and submit this form by {date}</b> (the GATE DA 2027 admit card day). Buying or registering after that, including after the GATE DA 2027 exam or results, is not eligible.</li>
+      <li>Open only to students who <b>enrol in the GATE 2028 Full Course and submit this form by {date}</b> (the GATE DA 2027 admit card day). Enrolling or registering after that, including after the GATE DA 2027 exam or results, is not eligible.</li>
       <li>Only a <b>GATE DA 2027</b> result counts. A GATE 2028 or later result can't be used to claim the refund.</li>
       <li>One registration per person and per GATE enrollment ID. <b>Details are locked once submitted</b>. The Google Drive link to your GATE application PDF must stay open to us until your claim is settled.</li>
       <li>To claim, you need an AIR under 100 (AIR 1 to 99) in GATE DA 2027. Show your scorecard from the GOAPS account with the enrollment ID you registered, with your name and date of birth matching this form, plus a government photo ID. We may verify on a video call.</li>
-      <li>The email here must be the one you bought the course with. Claims are made by emailing support@taai.live within 30 days of the GATE DA 2027 results.</li>
+      <li>The email here must be the one you enrolled with. Claims are made by emailing support@taai.live within 30 days of the GATE DA 2027 results.</li>
       <li>The refund is the course fee you actually paid, sent to the UPI ID you give in this form after verification. You keep full access to the course.</li>
     </ol>
   );
@@ -4905,7 +4905,7 @@ function ChallengeForm({ cutoff, open, onClose }) {
         {state.done ? (
           <div className="chal-done">
             <p>Your details are saved and locked. Keep the same GATE enrollment ID and email until your claim.</p>
-            <p>Bought the GATE 2028 Full Course with this email? Then you're all set. If not, buy it by <b>{date}</b> or this registration won't count.</p>
+            <p>Enrolled in the GATE 2028 Full Course with this email? Then you're all set. If not, enrol by <b>{date}</b> or this registration won't count.</p>
             <button type="button" className="chal-btn" onClick={onClose}>Done</button>
           </div>
         ) : !open ? (
@@ -4917,11 +4917,11 @@ function ChallengeForm({ cutoff, open, onClose }) {
         ) : (
           <form className="chal-form" onSubmit={submit} noValidate>
             <p className="chal-lead chal-why">A small, independent team with no investors to answer to, so we get to reward merit. Get under AIR 100, and your course is on us.</p>
-            <p className="chal-lead">Fill this in by <b>{date}</b>, after buying the GATE 2028 Full Course. Use your details exactly as on your GATE DA 2027 application. You can't change them later.</p>
+            <p className="chal-lead">Fill this in by <b>{date}</b>, after enrolling in the GATE 2028 Full Course. Use your details exactly as on your GATE DA 2027 application. You can't change them later.</p>
             <label>Full name (as on GATE application)
               <input ref={firstRef} type="text" autoComplete="name" required maxLength="100" value={form.full_name} onChange={set('full_name')} />
             </label>
-            <label>Email (the one you bought the course with)
+            <label>Email (the one you enrolled with)
               <input type="email" autoComplete="email" required maxLength="200" value={form.email} onChange={set('email')} />
             </label>
             <div className="chal-row">
@@ -4984,7 +4984,7 @@ function ChallengeRegister() {
   }, []);
   return (
     <div className="challenge-register">
-      <span className="challenge-deadline">{open ? <>Buy the course and register by <b>{fmtChallengeDate(cutoff)}</b>. Late purchases aren't eligible.</> : <>Registration closed on <b>{fmtChallengeDate(cutoff)}</b>.</>}</span>
+      <span className="challenge-deadline">{open ? <>Enrol in the course and register by <b>{fmtChallengeDate(cutoff)}</b>. Late enrolments aren't eligible.</> : <>Registration closed on <b>{fmtChallengeDate(cutoff)}</b>.</>}</span>
       <button type="button" className="challenge-register-btn" onClick={() => setShow(true)}>{open ? 'Register for the challenge' : 'View challenge terms'} <span aria-hidden="true">&rarr;</span></button>
       {show && <ChallengeForm cutoff={cutoff} open={open} onClose={close} />}
     </div>
