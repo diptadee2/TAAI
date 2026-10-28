@@ -2291,6 +2291,17 @@ body .mobile-menu.open .mobile-menu-contact { animation: nbMenuFade .35s ease .5
   body .mobile-menu.open .mobile-menu-link, body .mobile-menu.open .mobile-menu-link-icon, body .mobile-menu.open .mobile-menu-divider,
   body .mobile-menu.open .mobile-menu-actions .btn-nav-signin, body .mobile-menu.open .mobile-menu-actions .btn-nav-signup, body .mobile-menu.open .mobile-menu-contact { animation: none !important; }
 }
+
+/* Touch screens (2026-10-28): the "Watch interview" cue on Hall of Fame photos and the
+   play icon on video testimonials only appeared on mouse hover. Show a small play
+   badge permanently instead (top-right of the photo, clear of the AIR badge). */
+@media (hover: none) {
+  .topper-card.has-yt .topper-yt-overlay { opacity: 1 !important; background: none !important; justify-content: flex-start !important; align-items: flex-end !important; padding: 10px; }
+  .topper-card.has-yt .topper-yt-label { display: none !important; }
+  .topper-card.has-yt .topper-yt-play { transform: scale(0.7) !important; }
+  .gitem-play { opacity: 1 !important; }
+  .gitem-play-icon { transform: scale(1) !important; }
+}
 </style>
 </head>
 <body data-float-stack>
