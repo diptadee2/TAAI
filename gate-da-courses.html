@@ -3278,6 +3278,8 @@ body .nav-hamburger:hover { background: #FDE047; }
 body .nav-hamburger span, body .nav-hamburger.open span { background: #111111 !important; width: 20px; border-radius: 0; }
 body .nav-hamburger.open { background: #FDE047; }
 body .menu-overlay { background: rgba(17,17,17,0.3) !important; -webkit-backdrop-filter: blur(6px) !important; backdrop-filter: blur(6px) !important; }
+/* The dimmed, blurred backdrop behind the open hamburger menu shows wherever the hamburger does (iPads too), not only on phones. */
+@media (max-width: 1024px), (max-width: 1300px) and (pointer: coarse) { .menu-overlay { display: block; position: fixed; inset: 0; z-index: 48; opacity: 0; pointer-events: none; transition: opacity .3s ease; } .menu-overlay.open { opacity: 1; pointer-events: auto; } }
 body .mobile-menu {
   background: rgba(255,244,214,0.62) !important; -webkit-backdrop-filter: blur(22px) saturate(160%) !important; backdrop-filter: blur(22px) saturate(160%) !important;
   border-bottom: 3px solid #111111 !important; box-shadow: none !important; border-radius: 0 !important;

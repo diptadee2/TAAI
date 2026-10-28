@@ -1483,7 +1483,9 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     /* Round 2 fixes */
     html body #root section { border-image: none !important; }
     html body #root .ts-plan-badge, html body #root .ts-plan-badge * { color: var(--nb-paper) !important; -webkit-text-fill-color: var(--nb-paper) !important; }
-    html body #root .ts-testi-more { display: inline-flex !important; align-items: center; gap: 8px; padding: 10px 18px !important; margin-top: 8px; background: var(--nb-yellow) !important; }
+    html body #root .ts-testi-more { display: inline-flex !important; align-items: center; gap: 8px; padding: 10px 18px !important; margin-top: 0 !important; background: var(--nb-yellow) !important; opacity: 1 !important; }
+    html body #root .ts-testi-more-row { display: flex; justify-content: center; margin-top: 44px; }
+    @media (max-width: 768px) { html body #root .ts-testi-more-row { margin-top: 32px; } }
     html body #root .ts-testi-more * { color: var(--nb-ink) !important; }
     html body #root .trust-icon, html body #root .trust-check { background: var(--nb-yellow) !important; border: 2px solid var(--nb-ink) !important; border-radius: 0 !important; box-shadow: none !important; color: var(--nb-ink) !important; }
     html body #root .trust-icon *, html body #root .trust-check * { color: var(--nb-ink) !important; stroke: var(--nb-ink); }
@@ -1654,6 +1656,8 @@ body .nav-hamburger:hover { background: #FDE047; }
 body .nav-hamburger span, body .nav-hamburger.open span { background: #111111 !important; width: 20px; border-radius: 0; }
 body .nav-hamburger.open { background: #FDE047; }
 body .menu-overlay { background: rgba(17,17,17,0.3) !important; -webkit-backdrop-filter: blur(6px) !important; backdrop-filter: blur(6px) !important; }
+/* The dimmed, blurred backdrop behind the open hamburger menu shows wherever the hamburger does (iPads too), not only on phones. */
+@media (max-width: 1024px), (max-width: 1300px) and (pointer: coarse) { .menu-overlay { display: block; position: fixed; inset: 0; z-index: 48; opacity: 0; pointer-events: none; transition: opacity .3s ease; } .menu-overlay.open { opacity: 1; pointer-events: auto; } }
 body .mobile-menu {
   background: rgba(255,244,214,0.62) !important; -webkit-backdrop-filter: blur(22px) saturate(160%) !important; backdrop-filter: blur(22px) saturate(160%) !important;
   border-bottom: 3px solid #111111 !important; box-shadow: none !important; border-radius: 0 !important;
@@ -2582,7 +2586,7 @@ function TSTestimonials() {
             </div>
           ))}
         </div>
-        <a href="/gate-da-toppers" className="ts-testi-more fade-in">See all student stories <Icon.ArrowRight /></a>
+        <div className="ts-testi-more-row fade-in"><a href="/gate-da-toppers" className="ts-testi-more">See all student stories <Icon.ArrowRight /></a></div>
       </div>
     </section>
   );

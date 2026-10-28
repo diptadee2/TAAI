@@ -275,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-18-1';
+  var CLIENT_VERSION = '2026-10-28-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2527,8 +2527,29 @@
   // bubble and so can't be delegated this way) with a relatedTarget check
   // so a hover moving between the name text and its own child (the live
   // dot) doesn't flicker the tooltip hide/show.
+  // True while the last pointer was a finger or pen. After a tap, iPads and
+  // phones fire fake mouseover/mouseout events; the hover handlers below
+  // ignore those, otherwise a tap on an About icon would open its bubble
+  // (fake mouseover) and the click right after would toggle it shut again.
+  var lastPointerTouch = false;
+  document.addEventListener('pointerdown', function (e) { lastPointerTouch = e.pointerType !== 'mouse'; }, true);
+  document.addEventListener('pointermove', function (e) { if (e.pointerType === 'mouse') lastPointerTouch = false; }, true);
+
   function setupAllTimeTooltip() {
+    // Touch: tap a name to show its all-time hours, tap it again or
+    // anywhere else (or scroll) to hide.
+    var tappedName = null;
+    document.addEventListener('click', function (e) {
+      if (!lastPointerTouch) return;
+      var target = e.target.closest && e.target.closest('.leaderboard-name[data-alltime]');
+      if (target && !e.target.closest('.leaderboard-about-chip, .leaderboard-about-icon, [data-about-hint]') && tappedName !== target) {
+        showAllTimeTooltip(target); tappedName = target; return;
+      }
+      if (tappedName) { hideAllTimeTooltip(); tappedName = null; }
+    });
+    window.addEventListener('scroll', function () { if (tappedName) { hideAllTimeTooltip(); tappedName = null; } }, { passive: true });
     document.addEventListener('mouseover', function (e) {
+      if (lastPointerTouch) return;
       var target = e.target.closest && e.target.closest('.leaderboard-name[data-alltime]');
       // The About bubble icon sits inside the name span — hovering it
       // shows its own bubble instead, never both stacked on top of each other.
@@ -2536,6 +2557,7 @@
       if (target) showAllTimeTooltip(target);
     });
     document.addEventListener('mouseout', function (e) {
+      if (lastPointerTouch) return;
       var target = e.target.closest && e.target.closest('.leaderboard-name[data-alltime]');
       if (target && !target.contains(e.relatedTarget)) hideAllTimeTooltip();
     });
@@ -2606,11 +2628,26 @@
   // span, not the button itself — see renderIdentityLine's own comment
   // on why a disabled button won't reliably dispatch mouseover.
   function setupRenameTooltip() {
+    // Touch: a disabled Rename button can't be tapped, so tapping it shows
+    // why (out of renames/tries) for a few seconds instead.
+    var renameTipTimer = null;
+    document.addEventListener('click', function (e) {
+      if (!lastPointerTouch) return;
+      var target = e.target.closest && e.target.closest('.rename-toggle-wrap[data-renames-left], .rename-toggle-wrap[data-gate-tries-left]');
+      var btn = target && target.querySelector('#rename-toggle');
+      if (target && btn && btn.disabled) {
+        showRenameTooltip(target);
+        clearTimeout(renameTipTimer);
+        renameTipTimer = setTimeout(hideRenameTooltip, 2500);
+      }
+    });
     document.addEventListener('mouseover', function (e) {
+      if (lastPointerTouch) return;
       var target = e.target.closest && e.target.closest('.rename-toggle-wrap[data-renames-left], .rename-toggle-wrap[data-gate-tries-left]');
       if (target) showRenameTooltip(target);
     });
     document.addEventListener('mouseout', function (e) {
+      if (lastPointerTouch) return;
       var target = e.target.closest && e.target.closest('.rename-toggle-wrap[data-renames-left], .rename-toggle-wrap[data-gate-tries-left]');
       if (target && !target.contains(e.relatedTarget)) hideRenameTooltip();
     });
@@ -5450,14 +5487,17 @@
   }
   function setupAboutBubble() {
     document.addEventListener('mouseover', function (e) {
+      if (lastPointerTouch) return;
       var t = e.target.closest && e.target.closest('.leaderboard-about-chip, .leaderboard-about-icon, [data-about-hint]');
       if (t) showAboutBubble(t);
     });
     document.addEventListener('mouseout', function (e) {
+      if (lastPointerTouch) return;
       var t = e.target.closest && e.target.closest('.leaderboard-about-chip, .leaderboard-about-icon, [data-about-hint]');
       if (t && !t.contains(e.relatedTarget)) hideAboutBubble();
     });
     document.addEventListener('focusin', function (e) {
+      if (lastPointerTouch) return; // a tap also focuses the chip; the click handler below owns taps
       var t = e.target.closest && e.target.closest('.leaderboard-about-chip, .leaderboard-about-icon, [data-about-hint]');
       if (t) showAboutBubble(t);
     });
@@ -5475,7 +5515,16 @@
       }
       if (aboutBubbleAnchor) hideAboutBubble();
     });
-    window.addEventListener('scroll', hideAboutBubble, { passive: true });
+    // Mouse: any scroll closes it. Touch: the bubble follows its chip, since
+    // the browser itself may scroll a just-tapped chip into view (seen in
+    // WebKit), and only closes once the chip leaves the screen.
+    window.addEventListener('scroll', function () {
+      var a = aboutBubbleAnchor;
+      if (!a || !lastPointerTouch || !document.body.contains(a)) { hideAboutBubble(); return; }
+      var r = a.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > window.innerHeight) hideAboutBubble();
+      else showAboutBubble(a);
+    }, { passive: true });
   }
 
   function aboutEditButtonLabel() {
