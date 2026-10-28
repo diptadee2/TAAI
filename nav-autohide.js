@@ -24,7 +24,6 @@
     if (!n) return false;
     if (n.classList.contains('menu-open')) return false;                  // React pages
     if (document.querySelector('.mobile-menu.open, .mobile-menu.active')) return false; // blog
-    if (document.querySelector('.nav-dropdown-wrap.dd-open')) return false;
     if (n.matches(':hover') || n.contains(document.activeElement)) return false;
     return true;
   }
@@ -44,36 +43,12 @@
   window.addEventListener('scroll', function () {
     if (!ticking) { ticking = true; requestAnimationFrame(onScroll); }
   }, { passive: true });
-  // Touch screens: the desktop nav's Resources dropdown only opened on mouse
-  // hover, so on a wide touch screen (e.g. iPad Pro landscape, which keeps the
-  // full nav) it couldn't be reached. A tap on its label now opens it (a second
-  // tap follows the label's own link, if it has one); a tap elsewhere closes it.
+  // Touch screens (no hover) never get the nav's hover dropdowns: tapping
+  // Courses, Testimonials or Resources simply opens that page. Without this, the
+  // fake hover a tap triggers could flash a dropdown open.
   var ddCss = document.createElement('style');
-  ddCss.textContent =
-    '.nav-dropdown-wrap.dd-open .nav-dropdown{opacity:1;transform:translateY(12px) scaleY(1);pointer-events:auto}' +
-    '.nav-dropdown-wrap.dd-open .nav-dd-item{opacity:1;transform:translateY(0)}' +
-    '.nav-dropdown-wrap.dd-open .nav-dd-divider{opacity:1}';
+  ddCss.textContent = '@media (hover: none){.nav-dropdown{display:none !important}}';
   document.head.appendChild(ddCss);
-  var lastTouch = false, downTarget = null;
-  document.addEventListener('pointerdown', function (e) { lastTouch = e.pointerType !== 'mouse'; downTarget = e.target; }, true);
-  document.addEventListener('click', function (e) {
-    var open = document.querySelectorAll('.nav-dropdown-wrap.dd-open');
-    // Judge a tap by where the finger went down: the fake hover a tap triggers
-    // can slide the dropdown under the finger before the click lands.
-    var tgt = (lastTouch && downTarget && downTarget.closest) ? downTarget : e.target;
-    var wrap = tgt.closest && tgt.closest('.nav-dropdown-wrap');
-    if (wrap && lastTouch && !tgt.closest('.nav-dropdown') && !wrap.classList.contains('dd-open')) {
-      e.preventDefault();
-      for (var i = 0; i < open.length; i++) open[i].classList.remove('dd-open');
-      wrap.classList.add('dd-open');
-      return;
-    }
-    for (var j = 0; j < open.length; j++) if (open[j] !== wrap) open[j].classList.remove('dd-open');
-  }, true);
-  window.addEventListener('scroll', function () {
-    var open = document.querySelectorAll('.nav-dropdown-wrap.dd-open');
-    for (var i = 0; i < open.length; i++) open[i].classList.remove('dd-open');
-  }, { passive: true });
 
   // Keyboard users tabbing into the nav always get it back.
   document.addEventListener('focusin', function (e) { var n = nav(); if (n && n.contains(e.target)) show(); });
