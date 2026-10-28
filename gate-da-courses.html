@@ -4024,6 +4024,10 @@ html body main #combos #full-course-2028 .c28-seehow-arrow { width: 22px; height
   @media (max-width: 600px) {
     html body main .pmap .pmap-next { margin: auto 16px 16px; width: calc(100% - 32px); justify-content: center; }
   }
+/* 2028 card: "MRP goes up to ₹24,999 after GATE DA 2027" under the price (2026-10-28). */
+html body main #combos #full-course-2028 .c28-mrp-rise { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 7px 10px; border-radius: 10px; background: #FEF3C7; border: 1px solid #FCD34D; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; line-height: 1.35; color: #92400E !important; -webkit-text-fill-color: #92400E !important; }
+html body main #combos #full-course-2028 .c28-mrp-rise * { color: #92400E !important; -webkit-text-fill-color: #92400E !important; }
+html body main #combos #full-course-2028 .c28-mrp-rise-icon { flex: 0 0 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: #FCD34D; font-weight: 700; font-size: 11px; font-family: 'Poppins', sans-serif; }
 </style>
 <style>
 /* Hamburger menu opening animation (2026-10-26, "can the hamburger opening
@@ -4427,6 +4431,8 @@ const COMBOS = [
     launchDate: '2026-10-07',
     liveOffer: 'Super early bird offer',
     liveOfferUntil: '2026-10-20',
+    // On request 2026-10-28: tells buyers the MRP rises after GATE DA 2027.
+    mrpRiseNote: 'MRP goes up to ₹24,999 after GATE DA 2027',
     accent: 'linear-gradient(90deg, #F59E0B, #EC4899, var(--purple))',
     title: 'GATE 2028 Full Course',
     includes: [
@@ -5458,6 +5464,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
           </div>
           <div className="c28-buy">
             {priceRowEl}
+            {c.mrpRiseNote && !comingSoon && !isSoldOut && <div className="c28-mrp-rise"><span className="c28-mrp-rise-icon" aria-hidden="true">↑</span><span>{c.mrpRiseNote}</span></div>}
             {c.priceNote && <div className={'combo-price-note' + (comingSoon ? ' combo-includes-blurred' : '')} aria-hidden={comingSoon || undefined}>{c.priceNote}</div>}
             {comingSoon ? (
               <span className="btn btn-full combo-soon-btn" aria-disabled="true">{launchUpcoming ? (daysUntilLaunch === 0 ? 'Launching today' : `Launching ${launchShort}`) : 'Coming soon'}</span>
