@@ -1621,6 +1621,10 @@
   .alltime-tooltip-value { color: var(--pomo-g2, var(--purple)); font-weight: 700; }
   .alltime-tooltip.visible { opacity: 1; transform: translateY(0); }
   @media (prefers-reduced-motion: reduce) { .alltime-tooltip { transition: opacity .15s ease; transform: none; } }
+  /* Tap-to-show tooltip on touch screens (see setupTouchTips in progress.js): wraps instead of one long line. */
+  .touch-tip { white-space: normal; max-width: min(280px, calc(100vw - 16px)); line-height: 1.4; color: var(--ink); }
+  /* Disabled buttons swallow taps; let them pass through so the tap tip can explain why they're greyed out. */
+  @media (hover: none) { #app button[disabled][title] { pointer-events: none; } }
   /* Only present when the hovered student has earned at least one
      effort badge (see showAllTimeTooltip) — explains each one right
      next to the "All time" figure it's derived from, rather than

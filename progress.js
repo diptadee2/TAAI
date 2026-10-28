@@ -275,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-28-1';
+  var CLIENT_VERSION = '2026-10-28-2';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1274,6 +1274,7 @@
     // Mode, and correctly starts for the normal fresh-load-onto-checklist case.
     startLastWeekPoll();
     setupAllTimeTooltip();
+    setupTouchTips();
     setupRenameTooltip();
     setupAboutBubble();
   }
@@ -2535,6 +2536,62 @@
   document.addEventListener('pointerdown', function (e) { lastPointerTouch = e.pointerType !== 'mouse'; }, true);
   document.addEventListener('pointermove', function (e) { if (e.pointerType === 'mouse') lastPointerTouch = false; }, true);
 
+  // Touch screens never show the browser's hover tooltips (the `title`
+  // attribute), so on a tap this shows that same text in a small bubble:
+  // hourly bars, busy meter, timer bars, streak balls, badges, the live
+  // dot, a greyed-out Skip, a locked task. Things that already do
+  // something when tapped (links, enabled buttons, checkboxes) are left
+  // alone. Disabled buttons swallow taps, so they're found by position
+  // (CSS lets taps pass through them on touch screens).
+  var touchTipEl = null, touchTipAnchor = null, touchTipTimer = null;
+  function hideTouchTip() {
+    touchTipAnchor = null;
+    clearTimeout(touchTipTimer);
+    if (touchTipEl) touchTipEl.classList.remove('visible');
+  }
+  function showTouchTip(anchor, text) {
+    if (!touchTipEl) {
+      touchTipEl = document.createElement('div');
+      touchTipEl.className = 'alltime-tooltip touch-tip';
+      touchTipEl.setAttribute('data-clarity-mask', 'true');
+      document.body.appendChild(touchTipEl);
+    }
+    touchTipAnchor = anchor;
+    touchTipEl.textContent = text;
+    touchTipEl.classList.add('visible');
+    var rect = anchor.getBoundingClientRect();
+    var w = touchTipEl.offsetWidth, h = touchTipEl.offsetHeight;
+    var left = rect.left + rect.width / 2 - w / 2;
+    left = Math.max(8, Math.min(left, window.innerWidth - w - 8));
+    var top = rect.top - h - 8;
+    if (top < 8) top = rect.bottom + 8;
+    touchTipEl.style.left = left + 'px';
+    touchTipEl.style.top = top + 'px';
+    clearTimeout(touchTipTimer);
+    touchTipTimer = setTimeout(hideTouchTip, 3500);
+  }
+  function setupTouchTips() {
+    document.addEventListener('click', function (e) {
+      if (!lastPointerTouch) return;
+      var app = document.getElementById('app');
+      var t = e.target.closest && e.target.closest('[title]');
+      if (t && !(app && app.contains(t))) t = null;
+      if (!t && app) {
+        var x = e.clientX, y = e.clientY;
+        var dis = app.querySelectorAll('button[disabled][title]');
+        for (var i = 0; i < dis.length; i++) {
+          var r = dis[i].getBoundingClientRect();
+          if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) { t = dis[i]; break; }
+        }
+      }
+      var interactive = t && !t.disabled && t.closest('a, button, input, select, textarea, [role="button"], label:not(.locked)');
+      var text = t && !interactive ? (t.getAttribute('title') || '').trim() : '';
+      if (!text || touchTipAnchor === t) { hideTouchTip(); return; }
+      showTouchTip(t, text);
+    });
+    window.addEventListener('scroll', hideTouchTip, { passive: true });
+  }
+
   function setupAllTimeTooltip() {
     // Touch: tap a name to show its all-time hours, tap it again or
     // anywhere else (or scroll) to hide.
@@ -2542,6 +2599,8 @@
     document.addEventListener('click', function (e) {
       if (!lastPointerTouch) return;
       var target = e.target.closest && e.target.closest('.leaderboard-name[data-alltime]');
+      var titled = e.target.closest && e.target.closest('[title]');
+      if (target && titled && target.contains(titled) && titled !== target) target = null; // a badge/live dot inside the name gets its own tap tip
       if (target && !e.target.closest('.leaderboard-about-chip, .leaderboard-about-icon, [data-about-hint]') && tappedName !== target) {
         showAllTimeTooltip(target); tappedName = target; return;
       }
