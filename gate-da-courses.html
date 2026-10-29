@@ -3212,7 +3212,7 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
   .chal-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .chal-form input[type=text], .chal-form input[type=email], .chal-form input[type=tel], .chal-form input[type=date], .chal-form input[type=url] {
     width: 100%; box-sizing: border-box; padding: 11px 12px; font-weight: 500; font-size: 16px; line-height: 1.2; font-family: inherit; color: #111;
-    background: #fff; border: 2px solid #111; border-radius: 0; min-height: 46px;
+    background: #fff; border: 2px solid #111; border-radius: 0; height: 51px;
   }
   .chal-form input:focus { outline: 3px solid #FDE047; outline-offset: 0; box-shadow: 3px 3px 0 #111; }
   .chal-hint { font-weight: 500; font-size: 12px; color: #444; }
@@ -3962,9 +3962,12 @@ html body main #combos #full-course-2028 .c28-seehow-arrow { width: 22px; height
   .chal-form input[type=date] {
     -webkit-appearance: none; appearance: none;
     display: block; min-width: 0; max-width: 100%;
-    min-height: 51px; text-align: left;
+    text-align: left;
   }
   .chal-form input[type=date]::-webkit-date-and-time-value { text-align: left; margin: 0; }
+  /* Empty date shows dd/mm/yyyy in the same grey as the other placeholders (2026-10-29). */
+  .chal-form input[type=date]:invalid:not(:focus) { color: #757575; }
+  .chal-form input[type=date]:invalid:not(:focus)::-webkit-datetime-edit { color: #757575; }
   .chal-row > label { min-width: 0; }
 
   /* Projects map detail card, refreshed (2026-10-26, "can this card also be
