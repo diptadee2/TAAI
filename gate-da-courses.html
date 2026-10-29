@@ -4046,6 +4046,15 @@ html body main .pmap-cta-title { font-size: 19px !important; line-height: 1.2 !i
 html body main .pmap-cta-sub { margin-top: 3px !important; font-size: 13.5px !important; line-height: 1.4 !important; }
 html body main .pmap-cta { padding: 6px 6px 6px 16px !important; gap: 10px !important; font-size: 14px !important; }
 html body main .pmap-cta-arrow { width: 28px !important; height: 28px !important; }
+/* Black strip instead of a lilac card (2026-10-30, "confusing with the contents below"):
+   the map under it is made of lilac/pink/orange bordered cards, so this reads
+   as a call to action, not one more map piece. Same black + yellow shadow as
+   the page's other black panels. */
+html body main .pmap-cta-band { background: var(--nb-ink) !important; box-shadow: 6px 6px 0 var(--nb-yellow) !important; }
+html body main .pmap-cta-band .pmap-cta-title { color: #FFFFFF !important; -webkit-text-fill-color: #FFFFFF !important; }
+html body main .pmap-cta-band .pmap-cta-sub { color: rgba(255,255,255,0.72) !important; -webkit-text-fill-color: rgba(255,255,255,0.72) !important; }
+html body main .pmap-cta-band .pmap-cta { box-shadow: none !important; border-color: var(--nb-yellow) !important; }
+html body main .pmap-cta-band .pmap-cta, html body main .pmap-cta-band .pmap-cta-label { color: var(--nb-ink) !important; -webkit-text-fill-color: var(--nb-ink) !important; }
 @media (max-width: 600px) {
   html body main .pmap-cta-band { padding: 14px 16px !important; margin: 0 0 20px !important; }
   html body main .pmap-cta-title { font-size: 17px !important; }
@@ -4545,6 +4554,7 @@ const COMBOS = [
         'All the maths: Linear Algebra, Probability, Statistics, Calculus',
         'Core DA subjects: Machine Learning and AI',
         'Programming and data: Python, DSA, DBMS',
+        'Pro courses in the revision cycle: concise, practice-heavy courses to sharpen concepts once you have finished the first round of lectures',
       ] },
       { title: 'Practice and tests', tag: 'Test Series 2028 included', items: [
         'GATE DA 2028 Test Series: topic-wise, subject-wise and full-length mocks',
@@ -4557,7 +4567,6 @@ const COMBOS = [
         'Personal guidance from Manoj Kumar over Zoom sessions',
         'A clear study plan for every week and month',
         'Live classes to revise what you learnt',
-        'Pro courses in the revision cycle: concise, practice-heavy courses to sharpen concepts once you have finished the first round of lectures',
         'A Discord community to ask doubts anytime',
       ] },
     ],
