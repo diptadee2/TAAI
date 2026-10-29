@@ -1870,10 +1870,15 @@ html body .mobile-menu-contact {
   html body #root .ts-plans-grid > .fade-in > .ts-plan-featured-frame,
   html body #root .ts-plans-grid > .fade-in > .ts-plan-featured-frame > .ts-plan { height: 100%; box-sizing: border-box; }
   html body #root .ts-plans-grid .ts-plan { display: flex; flex-direction: column; }
-  html body #root .ts-plans-grid .ts-plan-features { justify-content: space-evenly; }
-  html body #root .ts-plans-grid .ts-plan-feat { font-size: 15px !important; }
+  html body #root .ts-plans-grid .ts-plan-features { flex: none; }
+  html body #root .ts-plans-grid .ts-plan-btn { margin-top: auto !important; }
+  html body #root .ts-plans-grid .quiz-subs { margin-bottom: 24px; }
   html body #root .ts-plans-grid .ts-plan-basic { padding-bottom: 44px !important; }
 }
+
+/* Test breakdown grid in the Test Series card: the total spans both columns. */
+html body #root .quiz-sub-total { grid-column: 1 / -1; background: var(--nb-yellow) !important; }
+html body #root .quiz-sub-total .quiz-sub-name { font-weight: 700; }
 
 /* Video play buttons on touch screens: no dark wash over the thumbnail, a
    small play square in the bottom-left corner instead of a big centred one. */
@@ -2890,6 +2895,14 @@ const BASIC_FEATS = [
   'Full-length GATE-pattern tests',
   'Performance analytics & score ranking',
 ];
+// Same counts as the "57 tests. Zero filler." breakdown cards below; keep in sync.
+const TEST_COUNTS = [
+  { name: 'Topic-wise', count: 31 },
+  { name: 'Subject-wise', count: 10 },
+  { name: 'Mini full-length', count: 6 },
+  { name: 'Full-length', count: 10 },
+  { name: 'Total tests', count: 57, total: true },
+];
 const ADDON_FEATS = [
   '55+ quizzes',
   'Topic wise weekly quizzes from Full Course',
@@ -2973,6 +2986,15 @@ function TSPricing({ pricingMap }) {
             <div className="ts-plan-features">
               {BASIC_FEATS.map((f, i) => (
                 <div key={i} className="ts-plan-feat" style={{ '--delay': `${i * 45}ms` }}><Tick /><span>{f}</span></div>
+              ))}
+            </div>
+            <div className="quiz-subs-label">Test breakdown</div>
+            <div className="quiz-subs">
+              {TEST_COUNTS.map((t, i) => (
+                <div key={i} className={'quiz-sub' + (t.total ? ' quiz-sub-total' : '')}>
+                  <span className="quiz-sub-name">{t.name}</span>
+                  <span className="quiz-sub-count">{t.count}</span>
+                </div>
               ))}
             </div>
             <a href="https://learn.taai.live/learn/Test-Series" target="_blank" rel="noopener noreferrer" className="ts-plan-btn ts-plan-btn-basic" onClick={e => e.stopPropagation()}>
