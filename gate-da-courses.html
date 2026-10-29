@@ -1928,7 +1928,8 @@ section.page-hero { padding: 48px 0 44px; }
      Enrol button used to be re-enabled, so on phones/iPads the inline
      Discord links, the 2028 card's "See how" link and its Show-all
      toggles did nothing when tapped. */
-  .combo-card a, .combo-card a *, .combo-card button, .combo-card button * { pointer-events: auto !important; }
+  .combo-card a, .combo-card a *, .combo-card button, .combo-card button *,
+  .combo-card summary, .combo-card summary * { pointer-events: auto !important; }
   .combo-card, .combo-card::before, .combo-card::after,
   .combo-card *, .combo-card *::before, .combo-card *::after,
   .combo-featured-frame, .combo-featured-frame::before, .combo-featured-frame::after {
@@ -4147,7 +4148,14 @@ html body main #combos #full-course-2028 .c28-group-list li { display: flex; ali
 html body main #combos #full-course-2028 .c28-group-list li b { font-weight: 700; }
 @media (min-width: 1280px) { html body main #combos #full-course-2028 .c28-group-list { grid-template-columns: repeat(2, minmax(0,1fr)); } }
 @media (max-width: 600px) {
-  html body main #combos #full-course-2028 .c28-group summary { font-size: 14.5px; padding: 11px 12px; }
+  html body main #combos #full-course-2028 .c28-group summary {
+    font-size: 14.5px; padding: 11px 12px;
+    display: grid; grid-template-columns: minmax(0,1fr) auto auto; column-gap: 8px; row-gap: 6px; align-items: center;
+  }
+  html body main #combos #full-course-2028 .c28-group-title { grid-column: 1; grid-row: 1; }
+  html body main #combos #full-course-2028 .c28-group-count { grid-column: 2; grid-row: 1; margin-left: 0; }
+  html body main #combos #full-course-2028 .c28-group-chev { grid-column: 3; grid-row: 1; }
+  html body main #combos #full-course-2028 .c28-group-tag { grid-column: 1 / -1; grid-row: 2; justify-self: start; font-size: 10.5px; }
   html body main #combos #full-course-2028 .c28-group-list { padding: 11px 12px 12px; }
   html body main #combos #full-course-2028 .c28-group-list li { font-size: 13.5px; }
 }
