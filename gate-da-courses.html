@@ -4046,6 +4046,56 @@ html body main .pmap-cta-title { font-size: 19px !important; line-height: 1.2 !i
 html body main .pmap-cta-sub { margin-top: 3px !important; font-size: 13.5px !important; line-height: 1.4 !important; }
 html body main .pmap-cta { padding: 6px 6px 6px 16px !important; gap: 10px !important; font-size: 14px !important; }
 html body main .pmap-cta-arrow { width: 28px !important; height: 28px !important; }
+/* Hero jump buttons (2026-10-30). Two equal neo-brutalist cards: bold title,
+   small hint, black arrow box. Shadow shrinks on mouse hover / tap press. */
+html body main .page-hero .ph-cta { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 600px; gap: 16px !important; }
+html body main .ph-jump {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  padding: 14px 14px 14px 18px; background: #FFFFFF; border: 3px solid #121316; border-radius: 0;
+  box-shadow: 6px 6px 0 #121316; color: #121316; text-decoration: none;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+html body main .ph-jump--main { background: var(--nb-yellow, #FDE047); }
+html body main .ph-jump-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+html body main .ph-jump-text b { font-family: var(--font-display); font-size: 18px; font-weight: 800; line-height: 1.15; color: #121316; }
+html body main .ph-jump-text small { font-size: 12.5px; line-height: 1.3; color: #3D3B47; }
+html body main .ph-jump-arrow { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; background: #121316; color: #FDE047; }
+@media (hover: hover) and (pointer: fine) {
+  html body main .ph-jump:hover { transform: translate(3px, 3px); box-shadow: 3px 3px 0 #121316; }
+}
+html body main .ph-jump:active { transform: translate(6px, 6px); box-shadow: 0 0 0 #121316; }
+html body main .ph-jump:focus-visible { outline: 3px solid #7C3AED; outline-offset: 4px; }
+@media (max-width: 600px) {
+  html body main .page-hero .ph-cta { grid-template-columns: minmax(0, 1fr); gap: 14px !important; }
+  html body main .ph-jump-text b { font-size: 17px; }
+}
+@media (prefers-reduced-motion: reduce) { html body main .ph-jump { transition: none; } }
+/* More room between the black GATE 2028 band and the projects map below. */
+html body main .pmap-cta-band { margin-bottom: 48px !important; width: fit-content; max-width: 100%; justify-content: flex-start !important; gap: 14px 40px !important; }
+html body main .pmap-cta-band .pmap-cta-copy { flex: 0 1 auto !important; }
+@media (max-width: 600px) { html body main .pmap-cta-band { margin-bottom: 36px !important; } }
+/* "Live practice sessions" row, made to stand out (2026-10-30). Full-width,
+   yellow with a black border, a red LIVE pill whose dot pulses (opacity only). */
+html body main #combos #full-course-2028 .c28-live-item {
+  margin: 12px 14px 0;
+  grid-column: 1 / -1; display: flex; align-items: center; gap: 12px;
+  background: #FDE047; border: 2px solid #121316; border-radius: 12px; padding: 11px 14px;
+}
+html body main #combos #full-course-2028 .c28-live-pill {
+  flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 999px;
+  background: #E11D48; color: #fff !important; -webkit-text-fill-color: #fff !important;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+}
+html body main #combos #full-course-2028 .c28-live-dot { width: 7px; height: 7px; border-radius: 50%; background: #fff; animation: c28-live-blink 1.4s ease-in-out infinite; }
+@keyframes c28-live-blink { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { html body main #combos #full-course-2028 .c28-live-dot { animation: none; } }
+html body main #combos #full-course-2028 .c28-live-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+html body main #combos #full-course-2028 .c28-live-text b { font-family: 'Archivo', system-ui, sans-serif; font-size: 16px; font-weight: 800; line-height: 1.25; color: #121316; }
+html body main #combos #full-course-2028 .c28-live-sub { font-size: 13px; line-height: 1.35; color: #3D3B47; }
+@media (max-width: 600px) {
+  html body main #combos #full-course-2028 .c28-live-item { align-items: flex-start; padding: 10px 12px; margin: 11px 12px 0; }
+  html body main #combos #full-course-2028 .c28-live-text b { font-size: 15px; }
+}
 /* Black strip instead of a lilac card (2026-10-30, "confusing with the contents below"):
    the map under it is made of lilac/pink/orange bordered cards, so this reads
    as a call to action, not one more map piece. Same black + yellow shadow as
@@ -4056,7 +4106,7 @@ html body main .pmap-cta-band .pmap-cta-sub { color: rgba(255,255,255,0.72) !imp
 html body main .pmap-cta-band .pmap-cta { box-shadow: none !important; border-color: var(--nb-yellow) !important; }
 html body main .pmap-cta-band .pmap-cta, html body main .pmap-cta-band .pmap-cta-label { color: var(--nb-ink) !important; -webkit-text-fill-color: var(--nb-ink) !important; }
 @media (max-width: 600px) {
-  html body main .pmap-cta-band { padding: 14px 16px !important; margin: 0 0 20px !important; }
+  html body main .pmap-cta-band { padding: 14px 16px !important; margin: 0 0 36px !important; }
   html body main .pmap-cta-title { font-size: 17px !important; }
   html body main .pmap-cta-sub { font-size: 13px !important; }
 }
@@ -4141,6 +4191,13 @@ html body .mobile-menu-contact {
 <style>
 /* 2028 card: "What's included" as expandable groups (2026-10-30). */
 html body main #combos #full-course-2028 .c28-groups { display: flex; flex-direction: column; gap: 8px; }
+html body main #combos #full-course-2028 .c28-promise {
+  margin: 0 0 14px; padding: 12px 16px; background: #FFFFFF; border: 1px solid var(--sl-line); border-left: 4px solid var(--sl-purple); border-radius: 12px;
+  font-family: 'Archivo', system-ui, sans-serif; font-size: 16px; line-height: 1.45; color: var(--sl-ink);
+}
+html body main #combos #full-course-2028 .c28-promise b { font-weight: 800; }
+html body main #combos #full-course-2028 .c28-promise mark { background: #FDE047; color: #121316; padding: 0 4px; border-radius: 3px; font-weight: 800; }
+@media (max-width: 600px) { html body main #combos #full-course-2028 .c28-promise { font-size: 14.5px; padding: 11px 13px; } }
 html body main #combos #full-course-2028 .c28-group { background: #fff; border: 1px solid var(--sl-line); border-radius: 14px; overflow: hidden; }
 html body main #combos #full-course-2028 .c28-group summary {
   list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
@@ -4159,15 +4216,16 @@ html body main #combos #full-course-2028 .c28-group-count {
 }
 html body main #combos #full-course-2028 .c28-group-chev { display: inline-flex; color: var(--sl-dim); transition: transform .22s ease; }
 html body main #combos #full-course-2028 .c28-group[open] .c28-group-chev { transform: rotate(180deg); }
+html body main #combos #full-course-2028 .c28-group[open] summary { border-bottom: 1px solid var(--sl-line); }
 @media (hover: hover) and (pointer: fine) { html body main #combos #full-course-2028 .c28-group summary:hover { background: #FAF9FE; } }
 html body main #combos #full-course-2028 .c28-group summary:focus-visible { outline: 2px solid var(--sl-purple); outline-offset: -2px; }
 html body main #combos #full-course-2028 .c28-group-list {
   list-style: none; margin: 0; padding: 4px 14px 14px; display: grid; grid-template-columns: minmax(0,1fr); gap: 9px 22px;
-  border-top: 1px solid var(--sl-line); padding-top: 12px;
+  padding-top: 12px;
 }
 html body main #combos #full-course-2028 .c28-group-list li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; line-height: 1.45; color: var(--sl-ink); }
 html body main #combos #full-course-2028 .c28-group-list li b { font-weight: 700; }
-@media (min-width: 1280px) { html body main #combos #full-course-2028 .c28-group-list { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+@media (min-width: 1280px) { html body main #combos #full-course-2028 .c28-group-list { grid-template-columns: repeat(2, minmax(0,1fr)); grid-auto-flow: column; grid-template-rows: repeat(var(--c28-rows, 2), auto); align-items: start; } }
 @media (max-width: 600px) {
   html body main #combos #full-course-2028 .c28-group summary {
     font-size: 14.5px; padding: 11px 12px;
@@ -4557,11 +4615,11 @@ const COMBOS = [
         'Pro courses in the revision cycle: concise, practice-heavy courses to sharpen concepts once you have finished the first round of lectures',
       ] },
       { title: 'Practice and tests', tag: 'Test Series 2028 included', items: [
+        { live: true, text: 'Live practice sessions throughout the year' },
         'GATE DA 2028 Test Series: topic-wise, subject-wise and full-length mocks',
         'A bank of 1,000+ practice questions, added weekly',
         '300+ quality questions for every subject, and even more for the maths subjects',
         'Weekly quizzes, by topic and by full subject',
-        'Live practice sessions throughout the year',
       ] },
       { title: 'Guidance and support', items: [
         'Personal guidance from Manoj Kumar over Zoom sessions',
@@ -4641,7 +4699,7 @@ const COMBOS = [
     href: 'https://learn.taai.live/learn/Mathematics-Course-by-manoj-sir-gate-2026-gateda',
   },
 ];
-COMBOS.forEach(c => { if (c.includeGroups && !c.includes) c.includes = c.includeGroups.flatMap(g => g.items); });
+COMBOS.forEach(c => { if (c.includeGroups && !c.includes) c.includes = c.includeGroups.flatMap(g => g.items.map(it => typeof it === 'string' ? it : it.text)); });
 
 // ── INDIVIDUAL COURSES ───────────────────────────────────────────
 const INDIVIDUAL = [
@@ -5611,6 +5669,10 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
         </div>
         <div className="c28-includes">
           <div className="combo-includes-label">What's included</div>
+          {/* The bundle's promise (2026-10-30, user's own words). */}
+          {c.includeGroups && !isSoldOut && (
+            <p className="c28-promise"><b>You just enrol and learn.</b> Strategy, revision and keeping you updated with AI trends in engineering are <mark>on us</mark>.</p>
+          )}
           <div className="combo-includes-wrap">
             {c.includeGroups && !isSoldOut ? (
               <div className="c28-groups">
@@ -5622,8 +5684,15 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
                       <span className="c28-group-count">{g.items.length}</span>
                       <span className="c28-group-chev" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg></span>
                     </summary>
-                    <ul className="c28-group-list">
-                      {g.items.map((item, i) => {
+                    {g.items.filter(it => typeof it !== 'string').map((item, i) => (
+                      <div key={'live' + i} className="c28-live-item">
+                        <span className="c28-live-pill"><span className="c28-live-dot" aria-hidden="true" />Live</span>
+                        <span className="c28-live-text"><b>{item.text}</b>{item.sub && <span className="c28-live-sub">{item.sub}</span>}</span>
+                      </div>
+                    ))}
+                    {/* Items fill the left column first, then the right (2026-10-30). */}
+                    <ul className="c28-group-list" style={{ '--c28-rows': Math.ceil(g.items.filter(it => typeof it === 'string').length / 2) }}>
+                      {g.items.filter(it => typeof it === 'string').map((item, i) => {
                         const k = item.indexOf(': ');
                         return (
                           <li key={i}>
@@ -6307,8 +6376,16 @@ function App() {
               The only GATE DA prep that teaches mathematics the way the exam actually tests it, visual, conceptual, and built for DA from scratch. Not repurposed CSE content.
             </p>
             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }} className="ph-cta">
-              <a href="#combos" className="btn btn-primary btn-lg">Bundled courses</a>
-              <a href="#individual" className="btn btn-ghost btn-lg btn-stories"><span>Individual courses</span></a>
+              {/* Jump buttons redesigned 2026-10-30 ("these clickable buttons can be better"):
+                  title + one-line hint + a down-arrow box, both the same size. */}
+              <a href="#combos" className="ph-jump ph-jump--main">
+                <span className="ph-jump-text"><b>Bundled courses</b><small>Full course and subject bundles</small></span>
+                <span className="ph-jump-arrow" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="square"><path d="M12 4v15M5 12l7 7 7-7" /></svg></span>
+              </a>
+              <a href="#individual" className="ph-jump">
+                <span className="ph-jump-text"><b>Individual courses</b><small>Pick a single subject</small></span>
+                <span className="ph-jump-arrow" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="square"><path d="M12 4v15M5 12l7 7 7-7" /></svg></span>
+              </a>
             </div>
             {/* What-you-get row (2026-10-08) so the left column carries content
                 instead of empty space beside the quote cards. Deliberately no
