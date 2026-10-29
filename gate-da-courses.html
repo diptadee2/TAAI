@@ -4074,6 +4074,21 @@ html body main .ph-jump:focus-visible { outline: 3px solid #7C3AED; outline-offs
 html body main .pmap-cta-band { margin-bottom: 48px !important; width: fit-content; max-width: 100%; justify-content: flex-start !important; gap: 14px 40px !important; }
 html body main .pmap-cta-band .pmap-cta-copy { flex: 0 1 auto !important; }
 @media (max-width: 600px) { html body main .pmap-cta-band { margin-bottom: 36px !important; } }
+/* The band as a small pill (2026-10-30, "it can be a smaller pill or something"). */
+html body main .pmap-cta-band {
+  display: inline-flex !important; flex-wrap: nowrap !important; align-items: center !important; width: auto !important; max-width: 100%;
+  gap: 18px !important; padding: 6px 6px 6px 22px !important; border-radius: 999px !important; box-shadow: 4px 4px 0 var(--nb-yellow) !important; border-width: 2px !important;
+}
+html body main .pmap-cta-band .pmap-cta-copy { display: flex !important; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+html body main .pmap-cta-band .pmap-cta-title { font-size: 15px !important; white-space: nowrap; }
+html body main .pmap-cta-band .pmap-cta-sub { margin: 0 !important; font-size: 13px !important; }
+html body main .pmap-cta-band .pmap-cta { padding: 5px 5px 5px 14px !important; font-size: 13.5px !important; border-radius: 999px !important; border-width: 0 !important; gap: 8px !important; }
+html body main .pmap-cta-band .pmap-cta-arrow { width: 26px !important; height: 26px !important; border-radius: 50% !important; }
+@media (max-width: 600px) {
+  html body main .pmap-cta-band { display: flex !important; flex-direction: column; align-items: stretch !important; gap: 10px !important; padding: 12px !important; border-radius: 18px !important; }
+  html body main .pmap-cta-band .pmap-cta-copy { padding: 0 4px; gap: 2px 8px; }
+  html body main .pmap-cta-band .pmap-cta { justify-content: space-between; width: 100%; }
+}
 /* "Live practice sessions" row, made to stand out (2026-10-30). Full-width,
    yellow with a black border, a red LIVE pill whose dot pulses (opacity only). */
 html body main #combos #full-course-2028 .c28-live-item {
@@ -4225,6 +4240,8 @@ html body main #combos #full-course-2028 .c28-group-list {
 }
 html body main #combos #full-course-2028 .c28-group-list li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; line-height: 1.45; color: var(--sl-ink); }
 html body main #combos #full-course-2028 .c28-group-list li b { font-weight: 700; }
+html body main #combos #full-course-2028 .c28-group-list--one { grid-template-columns: minmax(0,1fr) !important; grid-auto-flow: row !important; grid-template-rows: none !important; }
+html body main #combos #full-course-2028 .c28-group-list--wide { grid-template-columns: minmax(0,1fr) !important; grid-auto-flow: row !important; grid-template-rows: none !important; padding-top: 0 !important; margin-top: -5px !important; }
 @media (min-width: 1280px) { html body main #combos #full-course-2028 .c28-group-list { grid-template-columns: repeat(2, minmax(0,1fr)); grid-auto-flow: column; grid-template-rows: repeat(var(--c28-rows, 2), auto); align-items: start; } }
 @media (max-width: 600px) {
   html body main #combos #full-course-2028 .c28-group summary {
@@ -4612,7 +4629,7 @@ const COMBOS = [
         'All the maths: Linear Algebra, Probability, Statistics, Calculus',
         'Core DA subjects: Machine Learning and AI',
         'Programming and data: Python, DSA, DBMS',
-        'Pro courses in the revision cycle: concise, practice-heavy courses to sharpen concepts once you have finished the first round of lectures',
+        { wide: true, text: 'Pro courses in the revision cycle: concise, practice-heavy courses to sharpen concepts once you have finished the first round of lectures' },
       ] },
       { title: 'Practice and tests', tag: 'Test Series 2028 included', items: [
         { live: true, text: 'Live practice sessions throughout the year' },
@@ -5671,7 +5688,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
           <div className="combo-includes-label">What's included</div>
           {/* The bundle's promise (2026-10-30, user's own words). */}
           {c.includeGroups && !isSoldOut && (
-            <p className="c28-promise"><b>You just enrol and learn.</b> Strategy, revision and keeping you updated with AI trends in engineering are <mark>on us</mark>.</p>
+            <p className="c28-promise"><b>You just enrol, learn and practise, loads of it.</b> Strategy, revision and keeping you updated with AI trends in engineering are <mark>on us</mark>.</p>
           )}
           <div className="combo-includes-wrap">
             {c.includeGroups && !isSoldOut ? (
@@ -5684,14 +5701,14 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
                       <span className="c28-group-count">{g.items.length}</span>
                       <span className="c28-group-chev" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg></span>
                     </summary>
-                    {g.items.filter(it => typeof it !== 'string').map((item, i) => (
+                    {g.items.filter(it => typeof it !== 'string' && it.live).map((item, i) => (
                       <div key={'live' + i} className="c28-live-item">
                         <span className="c28-live-pill"><span className="c28-live-dot" aria-hidden="true" />Live</span>
                         <span className="c28-live-text"><b>{item.text}</b>{item.sub && <span className="c28-live-sub">{item.sub}</span>}</span>
                       </div>
                     ))}
                     {/* Items fill the left column first, then the right (2026-10-30). */}
-                    <ul className="c28-group-list" style={{ '--c28-rows': Math.ceil(g.items.filter(it => typeof it === 'string').length / 2) }}>
+                    <ul className={'c28-group-list' + (g.items.filter(it => typeof it === 'string').length % 2 ? ' c28-group-list--one' : '')} style={{ '--c28-rows': Math.ceil(g.items.filter(it => typeof it === 'string').length / 2) }}>
                       {g.items.filter(it => typeof it === 'string').map((item, i) => {
                         const k = item.indexOf(': ');
                         return (
@@ -5704,6 +5721,20 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
                         );
                       })}
                     </ul>
+                    {/* Long items get their own full-width row so the two columns stay even (2026-10-30). */}
+                    {g.items.some(it => typeof it !== 'string' && it.wide) && (
+                      <ul className="c28-group-list c28-group-list--wide">
+                        {g.items.filter(it => typeof it !== 'string' && it.wide).map((item, i) => {
+                          const k = item.text.indexOf(': ');
+                          return (
+                            <li key={i}>
+                              <span className="combo-check"><svg viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-5" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg></span>
+                              <span className="combo-incl-text"><b>{item.text.slice(0, k + 1)}</b> {item.text.slice(k + 2)}</span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
                   </details>
                 ))}
               </div>
@@ -6056,7 +6087,7 @@ function ProjectsMap() {
           <div className="pmap-cta-copy">
             <p className="pmap-cta-kicker">Ready when you are</p>
             <p className="pmap-cta-title">GATE 2028 Full Course</p>
-            <p className="pmap-cta-sub">One enrolment covers GATE DA 2027 and 2028, with all 5 projects included.</p>
+            <p className="pmap-cta-sub">Covers GATE DA 2027 and 2028, plus 5 projects</p>
           </div>
         <a href="#full-course-2028" className="pmap-cta" onClick={e => {
           // Land with the card's "For GATE 2027 and 2028" label just below
