@@ -3046,10 +3046,6 @@ function TSPricing({ pricingMap }) {
             <div className="ts-plan ts-plan-featured"
               onMouseMove={e=>{const r=e.currentTarget.getBoundingClientRect();e.currentTarget.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');e.currentTarget.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%');}}
               onMouseLeave={e=>{e.currentTarget.style.setProperty('--mx','-200%');e.currentTarget.style.setProperty('--my','-200%');}}>
-              <div className="ts-plan-badge ts-plan-badge-featured">
-                <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M6 0l1.35 3.18L10.8 3.9l-2.7 2.55.78 3.75L6 8.55l-2.88 1.65.78-3.75L1.2 3.9l3.45-.72L6 0z"/></svg>
-                Most Popular
-              </div>
               <div className="ts-plan-name">Test Series + Weekly Quizzes</div>
               <div className="ts-plan-tagline">Everything in one: full test series and weekly quizzes bundled together.</div>
               <div className="ts-plan-included">Have the Full Course? Choose the Test Series alone.</div>
