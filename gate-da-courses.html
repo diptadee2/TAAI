@@ -4116,6 +4116,42 @@ html body .mobile-menu-contact {
 }
 @media (hover: hover) and (pointer: fine) { html body .mobile-menu-contact:hover { background: #FFFFFF !important; border-style: solid !important; } }
 </style>
+<style>
+/* 2028 card: "What's included" as expandable groups (2026-10-30). */
+html body main #combos #full-course-2028 .c28-groups { display: flex; flex-direction: column; gap: 8px; }
+html body main #combos #full-course-2028 .c28-group { background: #fff; border: 1px solid var(--sl-line); border-radius: 14px; overflow: hidden; }
+html body main #combos #full-course-2028 .c28-group summary {
+  list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 12px 14px; font-family: 'Archivo', system-ui, sans-serif; font-weight: 700; font-size: 15.5px; color: var(--sl-ink);
+}
+html body main #combos #full-course-2028 .c28-group summary::-webkit-details-marker { display: none; }
+html body main #combos #full-course-2028 .c28-group-title { flex: 0 1 auto; }
+html body main #combos #full-course-2028 .c28-group-tag {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; font-weight: 600; letter-spacing: .02em;
+  background: #FDE047; color: #121316; border: 1px solid #121316; border-radius: 999px; padding: 3px 9px; white-space: nowrap;
+}
+html body main #combos #full-course-2028 .c28-group-count {
+  margin-left: auto; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; font-weight: 500;
+  color: var(--sl-purple); background: var(--sl-lav); border-radius: 999px; min-width: 24px; height: 22px; padding: 0 7px;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+html body main #combos #full-course-2028 .c28-group-chev { display: inline-flex; color: var(--sl-dim); transition: transform .22s ease; }
+html body main #combos #full-course-2028 .c28-group[open] .c28-group-chev { transform: rotate(180deg); }
+@media (hover: hover) and (pointer: fine) { html body main #combos #full-course-2028 .c28-group summary:hover { background: #FAF9FE; } }
+html body main #combos #full-course-2028 .c28-group summary:focus-visible { outline: 2px solid var(--sl-purple); outline-offset: -2px; }
+html body main #combos #full-course-2028 .c28-group-list {
+  list-style: none; margin: 0; padding: 4px 14px 14px; display: grid; grid-template-columns: minmax(0,1fr); gap: 9px 22px;
+  border-top: 1px solid var(--sl-line); padding-top: 12px;
+}
+html body main #combos #full-course-2028 .c28-group-list li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; line-height: 1.45; color: var(--sl-ink); }
+html body main #combos #full-course-2028 .c28-group-list li b { font-weight: 700; }
+@media (min-width: 1280px) { html body main #combos #full-course-2028 .c28-group-list { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+@media (max-width: 600px) {
+  html body main #combos #full-course-2028 .c28-group summary { font-size: 14.5px; padding: 11px 12px; }
+  html body main #combos #full-course-2028 .c28-group-list { padding: 11px 12px 12px; }
+  html body main #combos #full-course-2028 .c28-group-list li { font-size: 13.5px; }
+}
+</style>
 </head>
 <body data-float-stack>
 <div id="root"></div>
@@ -4481,17 +4517,27 @@ const COMBOS = [
     mrpRiseWhen: 'post GATE DA 2027',
     accent: 'linear-gradient(90deg, #F59E0B, #EC4899, var(--purple))',
     title: 'GATE 2028 Full Course',
-    includes: [
-      'All the maths: Linear Algebra, Probability, Statistics, Calculus',
-      'Core DA subjects: Machine Learning and AI',
-      'Programming and data: Python, DSA, DBMS',
-      'A bank of 1,000+ practice questions, added weekly',
-      '300+ quality questions for every subject, and even more for the maths subjects, if you also enrol in the test series',
-      'Personal guidance from Manoj Kumar over Zoom sessions',
-      'A clear study plan for every week and month',
-      'Weekly quizzes included, by topic and by full subject',
-      'Live classes to revise what you learnt',
-      'A Discord community to ask doubts anytime',
+    // Grouped into expandable headers (2026-10-30, direct request), with the
+    // GATE DA 2028 Test Series now part of this bundle. `includes` is the
+    // flat list derived from the groups (counts, sold-out fallback).
+    includeGroups: [
+      { title: 'Every GATE DA subject', items: [
+        'All the maths: Linear Algebra, Probability, Statistics, Calculus',
+        'Core DA subjects: Machine Learning and AI',
+        'Programming and data: Python, DSA, DBMS',
+      ] },
+      { title: 'Practice and tests', tag: 'Test Series 2028 included', items: [
+        'GATE DA 2028 Test Series: topic-wise, subject-wise and full-length mocks',
+        'A bank of 1,000+ practice questions, added weekly',
+        '300+ quality questions for every subject, and even more for the maths subjects',
+        'Weekly quizzes, by topic and by full subject',
+      ] },
+      { title: 'Guidance and support', items: [
+        'Personal guidance from Manoj Kumar over Zoom sessions',
+        'A clear study plan for every week and month',
+        'Live classes to revise what you learnt',
+        'A Discord community to ask doubts anytime',
+      ] },
     ],
     href: '#',
   },
@@ -4564,6 +4610,7 @@ const COMBOS = [
     href: 'https://learn.taai.live/learn/Mathematics-Course-by-manoj-sir-gate-2026-gateda',
   },
 ];
+COMBOS.forEach(c => { if (c.includeGroups && !c.includes) c.includes = c.includeGroups.flatMap(g => g.items); });
 
 // ── INDIVIDUAL COURSES ───────────────────────────────────────────
 const INDIVIDUAL = [
@@ -4932,6 +4979,7 @@ function BundleComparison({ pricingMap }) {
     { label: 'AI, Python, DSA and DBMS',                  full: true, ml: false, maths: false },
     { label: 'Weekly quizzes included (topic-wise & full-subject)',  full: true, ml: true,  maths: true  },
     { label: '1,000+ quiz questions',                     full: true, ml: false, maths: false },
+    { label: 'GATE DA 2028 Test Series',                  full: true, ml: false, maths: false },
     { label: '5 projects: 2 ML, 1 deep learning, 2 LLM',  full: true, ml: false, maths: false },
     { label: 'Live revision lectures',                    full: true, ml: false, maths: false },
     { label: 'GATE mentorship with Manoj Kumar',          full: true, ml: false, maths: false },
@@ -5531,7 +5579,33 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
         <div className="c28-includes">
           <div className="combo-includes-label">What's included</div>
           <div className="combo-includes-wrap">
-            {includesEl}
+            {c.includeGroups && !isSoldOut ? (
+              <div className="c28-groups">
+                {c.includeGroups.map((g, gi) => (
+                  <details key={gi} className="c28-group" open={gi === 0 || undefined}>
+                    <summary>
+                      <span className="c28-group-title">{g.title}</span>
+                      {g.tag && <span className="c28-group-tag">{g.tag}</span>}
+                      <span className="c28-group-count">{g.items.length}</span>
+                      <span className="c28-group-chev" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg></span>
+                    </summary>
+                    <ul className="c28-group-list">
+                      {g.items.map((item, i) => {
+                        const k = item.indexOf(': ');
+                        return (
+                          <li key={i}>
+                            <span className="combo-check"><svg viewBox="0 0 10 8" fill="none"><path d="M1 4l3 3 5-5" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg></span>
+                            {k > 0 && k < 40
+                              ? <span className="combo-incl-text"><b>{item.slice(0, k + 1)}</b> {withDiscordLink(item.slice(k + 2))}</span>
+                              : <span className="combo-incl-text">{withDiscordLink(item)}</span>}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </details>
+                ))}
+              </div>
+            ) : includesEl}
             {isSoldOut && soldOutStampEl}
           </div>
         </div>
