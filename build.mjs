@@ -857,7 +857,7 @@ function generateRefundPolicy() {
           <li>Only a GATE DA 2027 result counts. A GATE 2028 or later result can't be used to claim it.</li>
           <li>One registration per person and per GATE enrollment ID. Registration details are locked once submitted.</li>
           <li>To claim, you need an AIR under 100 (AIR 1 to 99). You must show the scorecard from the GOAPS account with the enrollment ID you registered, with matching name and date of birth, and a government photo ID. We may verify on a video call.</li>
-          <li>Claims are made by emailing support@taai.live within 30 days of the GATE DA 2027 results, from the email you enrolled with. The refund is the fee you actually paid, sent to the UPI ID given in the challenge form, and you keep access to the course.</li>
+          <li>Claims are made by emailing support@taai.live within 30 days of the GATE DA 2027 results, from the email you enrolled with. The refund is the course fee you paid, sent to the UPI ID given in the challenge form, and you keep access to the course.</li>
         </ul>
         <h2>Questions</h2>
         <p>Write to us at <a href="mailto:support@taai.live">support@taai.live</a>.</p>
