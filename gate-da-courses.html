@@ -4039,6 +4039,18 @@ html body main #combos #full-course-2028 .c28-mrp-rise-num { font-family: 'Archi
 html body main #combos #full-course-2028 .c28-mrp-rise-arrow { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #DC2626; color: #fff !important; -webkit-text-fill-color: #fff !important; font-weight: 800; font-size: 13px; line-height: 1; animation: c28MrpNudge 1.6s ease-in-out infinite; }
 @keyframes c28MrpNudge { 0%, 100% { translate: 0 0; } 50% { translate: 0 -3px; } }
 @media (prefers-reduced-motion: reduce) { html body main #combos #full-course-2028 .c28-mrp-rise-arrow { animation: none; } }
+/* GATE 2028 invitation band above the projects map, smaller (2026-10-30, "make this thing smaller"). */
+html body main .pmap-cta-band { padding: 14px 20px !important; gap: 12px 24px !important; margin: 0 0 28px !important; }
+html body main .pmap-cta-kicker { display: none !important; }
+html body main .pmap-cta-title { font-size: 19px !important; line-height: 1.2 !important; }
+html body main .pmap-cta-sub { margin-top: 3px !important; font-size: 13.5px !important; line-height: 1.4 !important; }
+html body main .pmap-cta { padding: 6px 6px 6px 16px !important; gap: 10px !important; font-size: 14px !important; }
+html body main .pmap-cta-arrow { width: 28px !important; height: 28px !important; }
+@media (max-width: 600px) {
+  html body main .pmap-cta-band { padding: 14px 16px !important; margin: 0 0 20px !important; }
+  html body main .pmap-cta-title { font-size: 17px !important; }
+  html body main .pmap-cta-sub { font-size: 13px !important; }
+}
 </style>
 <style>
 /* Hamburger menu opening animation (2026-10-26, "can the hamburger opening
@@ -4545,7 +4557,7 @@ const COMBOS = [
         'Personal guidance from Manoj Kumar over Zoom sessions',
         'A clear study plan for every week and month',
         'Live classes to revise what you learnt',
-        'Pro courses during the revision cycle',
+        'Pro courses in the revision cycle: concise, practice-heavy courses to sharpen concepts once you have finished the first round of lectures',
         'A Discord community to ask doubts anytime',
       ] },
     ],
