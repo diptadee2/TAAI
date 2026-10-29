@@ -1148,6 +1148,41 @@ body .mobile-menu.open .mobile-menu-contact { animation: nbMenuFade .35s ease .5
   body .mobile-menu.open .mobile-menu-actions .btn-nav-signin, body .mobile-menu.open .mobile-menu-actions .btn-nav-signup, body .mobile-menu.open .mobile-menu-contact { animation: none !important; }
 }
 </style>
+<style>
+/* HAMBURGER MENU, compact list (2026-10-29, "the hamburger menu can look better").
+   Overrides the 2026-10-19 neo-brutalist block: one bordered list with hairlines
+   between rows instead of six separate boxes, a near-solid panel, one column at
+   every width (max 560px, centred), Sign In / Sign Up and Contact the same width
+   as the list. */
+html body .mobile-menu {
+  display: flex !important; flex-direction: column !important; align-items: stretch !important;
+  gap: 0 !important; padding: 16px 16px 20px !important;
+  background: rgba(255,246,222,0.98) !important;
+}
+html body .mobile-menu > * { width: 100% !important; max-width: 560px !important; margin-left: auto !important; margin-right: auto !important; grid-column: auto !important; }
+html body .mobile-menu-link {
+  border-style: solid !important; border-color: #111111 !important; border-width: 0 2px 1.5px 2px !important;
+  box-shadow: none !important; padding: 9px 14px 9px 10px !important; min-height: 52px; box-sizing: border-box;
+}
+html body .mobile-menu-link:first-child { border-top-width: 2px !important; }
+html body .mobile-menu-link:nth-last-child(4) { border-bottom-width: 2px !important; }
+html body .mobile-menu-link.active { box-shadow: none !important; }
+html body .mobile-menu-link-icon { width: 30px !important; height: 30px !important; border-width: 1.5px !important; }
+html body .mobile-menu-link-icon svg { width: 16px; height: 16px; }
+html body .mobile-menu-divider { display: none !important; }
+html body .mobile-menu-actions {
+  display: grid !important; grid-template-columns: 1fr 1fr; gap: 12px !important;
+  padding: 0 4px 0 0 !important; margin-top: 18px !important; box-sizing: border-box;
+}
+html body .mobile-menu-actions .btn-nav-signin, html body .mobile-menu-actions .btn-nav-signup { width: 100%; justify-content: center; box-sizing: border-box; }
+html body .mobile-menu-contact {
+  display: flex !important; align-items: center; justify-content: center; gap: 8px;
+  margin-top: 14px !important; padding: 11px 14px !important; box-sizing: border-box;
+  border: 2px dashed #111111 !important; background: #FFFDF6 !important;
+  font-size: 14.5px !important;
+}
+@media (hover: hover) and (pointer: fine) { html body .mobile-menu-contact:hover { background: #FFFFFF !important; border-style: solid !important; } }
+</style>
 </head>
 <body data-float-stack>
 <div id="root"></div>
