@@ -4255,6 +4255,22 @@ html body main #combos #full-course-2028 .c28-group-list--wide { grid-template-c
   html body main #combos #full-course-2028 .c28-group-list { padding: 11px 12px 12px; }
   html body main #combos #full-course-2028 .c28-group-list li { font-size: 13.5px; }
 }
+
+/* 2026-10-30: when the 2028 card's groups are opened it grows, and the side column
+   used to stretch with it, spreading the 120-day card's 4 points over a huge empty box.
+   On desktop the side column now keeps its own height, and the list no longer spreads.
+   (Sticky was tried: the site-wide overflow on body stops it from sticking.) */
+@media (min-width: 1025px) {
+  html body main #combos .combo-with-side > .combo-side-col { align-self: flex-start !important; }
+  html body main #combos .combo-side-col > .plan120-cta { flex: 0 0 auto !important; }
+  html body main #combos .combo-side-col .plan120-list { flex: 0 0 auto !important; justify-content: flex-start !important; }
+  html body main #combos .combo-side-col > .plan120-cta .plan120-go { margin-top: 14px !important; }
+}
+@media (min-width: 601px) and (max-width: 1024px) {
+  html body main #combos .combo-side-col { align-items: start !important; }
+  html body main #combos .combo-side-col .plan120-list { flex: 0 0 auto !important; justify-content: flex-start !important; }
+  html body main #combos .combo-side-col > .plan120-cta .plan120-go { margin-top: 14px !important; }
+}
 </style>
 </head>
 <body data-float-stack>
