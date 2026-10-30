@@ -1536,6 +1536,10 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
       }
       html body #root .disc-grid { opacity: 1 !important; transform: none !important; }
       html body #root .features-bento > .feat-f { display: flex !important; }
+      /* 2026-10-30: feature cards keep their own height in the swipe row; stretching them
+         to the tallest (rank prediction) left big empty areas on phones. */
+      html body #root .features-bento { align-items: flex-start !important; }
+      html body #root .features-bento > * { height: auto !important; }
     }
     /* "57 tests" breakdown cards, reworked 2026-10-16: number + icon on one row, rows aligned across cards, a ruled footer per card */
     html body #root .breakdown-card { padding: 28px 28px 26px !important; display: flex; flex-direction: column; }

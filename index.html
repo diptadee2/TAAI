@@ -2129,7 +2129,10 @@ html body #root .fit-acc { display: none; }
 
 /* 2026-10-20: on short phones (e.g. 360x640) this bottom bar covered the hamburger
    menu's Contact Us link, so it's hidden while the menu is open. */
-body:has(.mobile-menu.open) .mobile-sticky-cta { display: none !important; }
+/* 2026-10-30: slide the bar out instead of removing it instantly when the menu opens (it looked jumpy). */
+.mobile-sticky-cta { transition: transform .32s cubic-bezier(.2,.8,.2,1), opacity .2s ease, visibility 0s linear 0s; }
+body:has(.mobile-menu.open) .mobile-sticky-cta { transform: translateY(110%); opacity: 0; visibility: hidden; pointer-events: none; transition: transform .26s cubic-bezier(.4,0,1,1), opacity .2s ease .06s, visibility 0s linear .26s; }
+@media (prefers-reduced-motion: reduce) { .mobile-sticky-cta, body:has(.mobile-menu.open) .mobile-sticky-cta { transition: none; } }
 </style>
 <script type="application/ld+json">
 {
