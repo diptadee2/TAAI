@@ -2648,8 +2648,9 @@ function Features() {
 
 // ── Discussions ──────────────────────────────────────────────────
 const DISCUSSION_VIDEOS = [
-  { id: 'V--t_3V4sCY' },
-  { id: 'UjwniiNmByI' },
+  // tag per video (2026-10-30: the first one is the test series introduction, not a live discussion)
+  { id: 'V--t_3V4sCY', tag: 'Introduction' },
+  { id: 'UjwniiNmByI', tag: 'Live Discussion', live: true },
 ];
 
 function Discussions() {
@@ -2685,7 +2686,7 @@ function Discussions() {
               </div>
               <div className="disc-meta">
                 <div className="disc-meta-left">
-                  <div className="disc-live-tag"><span className="disc-live-dot"/>Live Discussion</div>
+                  <div className="disc-live-tag">{v.live && <span className="disc-live-dot"/>}{v.tag}</div>
                   <div className="disc-title">{titles[v.id] || ' '}</div>
                 </div>
                 <div className="disc-arrow">

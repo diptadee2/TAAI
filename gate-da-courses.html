@@ -4301,6 +4301,13 @@ html body main #combos #full-course-2028 .c28-proj-art svg { display: block; }
 /* 2026-10-30: "Early bird offer" tag above the 2028 price (direct request). */
 html body main #combos #full-course-2028 .c28-price-tag { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; margin-bottom: 10px; padding: 5px 11px 5px 9px; border-radius: 999px; background: #FEF3C7; border: 1px solid #F59E0B; color: #92400E; -webkit-text-fill-color: #92400E; font: 600 12.5px/1.2 'IBM Plex Mono', ui-monospace, monospace; letter-spacing: .01em; }
 html body main #combos #full-course-2028 .c28-price-tag::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #F59E0B; }
+
+/* 2026-10-30: the orientation button never animated in on scroll ("no scroll animation"):
+   the shared button transition (transform + shadow only) dropped the reveal's opacity fade,
+   and #combos .orient-btn forced transform: none. Give it the same fade + rise as other reveals. */
+html body main #combos .orient-btn.fade-in { transition: opacity .55s ease, transform .55s cubic-bezier(.2,.8,.2,1), box-shadow .12s ease !important; }
+html body main #combos .orient-btn.fade-in:not(.visible) { opacity: 0; transform: translateY(18px) !important; }
+@media (prefers-reduced-motion: reduce) { html body main #combos .orient-btn.fade-in { transition: none !important; } html body main #combos .orient-btn.fade-in:not(.visible) { transform: none !important; } }
 </style>
 </head>
 <body data-float-stack>
