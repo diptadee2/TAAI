@@ -4271,6 +4271,31 @@ html body main #combos #full-course-2028 .c28-group-list--wide { grid-template-c
   html body main #combos .combo-side-col .plan120-list { flex: 0 0 auto !important; justify-content: flex-start !important; }
   html body main #combos .combo-side-col > .plan120-cta .plan120-go { margin-top: 14px !important; }
 }
+
+/* 2026-10-30: drawings in the 2028 card's project tiles ("these cards can have some
+   relevant illustrations"). Same ProjectArt drawings as the projects map, on a soft
+   tinted panel at the top of each tile; a small thumbnail at the row's end on phones. */
+html body main #combos #full-course-2028 .c28-proj { position: relative; }
+html body main #combos #full-course-2028 .c28-proj--ml  { --pa: #FED7AA; }
+html body main #combos #full-course-2028 .c28-proj--cv  { --pa: #FBCFE8; }
+html body main #combos #full-course-2028 .c28-proj--llm { --pa: #DDD6FE; }
+html body main #combos #full-course-2028 .c28-proj-art { display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--pa) 55%, #fff); background-image: radial-gradient(rgba(17,17,17,.10) 1px, transparent 1.2px); background-size: 10px 10px; border-radius: 12px; }
+html body main #combos #full-course-2028 .c28-proj-art svg { display: block; }
+@media (min-width: 601px) {
+  html body main #combos #full-course-2028 .c28-projects .combo-projects-list li.c28-proj { flex-wrap: wrap !important; align-items: flex-start !important; }
+  html body main #combos #full-course-2028 .c28-proj-art { flex: 0 0 100%; height: 84px; margin-bottom: 4px; }
+  html body main #combos #full-course-2028 .c28-proj-art svg { width: 84px; height: 63px; }
+  html body main #combos #full-course-2028 .c28-proj .c28-proj-count { position: absolute; top: 26px; right: 26px; font-size: 22px !important; background: #fff !important; border: 1.5px solid var(--sl-ink, #121316) !important; border-radius: 8px !important; padding: 4px 7px 3px !important; }
+}
+@media (max-width: 600px) {
+  html body main #combos #full-course-2028 .c28-proj-art { order: 3; flex: none; width: 52px; height: 40px; margin-left: auto; border-radius: 9px; }
+  html body main #combos #full-course-2028 .c28-proj-art svg { width: 40px; height: 30px; }
+  html body main #combos #full-course-2028 .combo-projects-list.is-open .c28-proj-art { align-self: flex-start; }
+}
+
+/* 2026-10-30: "Early bird offer" tag above the 2028 price (direct request). */
+html body main #combos #full-course-2028 .c28-price-tag { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; margin-bottom: 10px; padding: 5px 11px 5px 9px; border-radius: 999px; background: #FEF3C7; border: 1px solid #F59E0B; color: #92400E; -webkit-text-fill-color: #92400E; font: 600 12.5px/1.2 'IBM Plex Mono', ui-monospace, monospace; letter-spacing: .01em; }
+html body main #combos #full-course-2028 .c28-price-tag::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #F59E0B; }
 </style>
 </head>
 <body data-float-stack>
@@ -4632,6 +4657,8 @@ const COMBOS = [
     launchDate: '2026-10-07',
     liveOffer: 'Super early bird offer',
     liveOfferUntil: '2026-10-20',
+    // Shown above the price once the super early bird has ended (2026-10-30, direct request).
+    priceTag: 'Early bird offer',
     // On request 2026-10-28: tells buyers the MRP rises after GATE DA 2027.
     mrpRiseTo: 24999,
     mrpRiseWhen: 'post GATE DA 2027',
@@ -4641,7 +4668,7 @@ const COMBOS = [
     // GATE DA 2028 Test Series now part of this bundle. `includes` is the
     // flat list derived from the groups (counts, sold-out fallback).
     includeGroups: [
-      { title: 'Learn every subject', items: [
+      { title: 'Master every subject', items: [
         'All the maths, taught visually: Linear Algebra, Probability, Statistics, Calculus',
         'Core DA subjects: Machine Learning and AI, built from the ground up',
         'Programming and data: Python, DSA and DBMS, from your first line of code',
@@ -5681,6 +5708,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
             </div>
           </div>
           <div className="c28-buy">
+            {c.priceTag && !comingSoon && !isSoldOut && !discountReason && <span className="c28-price-tag">{c.priceTag}</span>}
             {priceRowEl}
             {c.mrpRiseTo && !comingSoon && !isSoldOut && <div className="c28-mrp-rise" aria-label={'MRP goes up to ' + fmtPrice(c.mrpRiseTo) + ' ' + c.mrpRiseWhen}>
               <span className="c28-mrp-rise-label" aria-hidden="true">MRP goes up to</span>
@@ -5768,7 +5796,8 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
             </div>
             <ul className={'combo-projects-list' + (projOpen ? ' is-open' : '')}>
               {c.projects.map(p => (
-                <li key={p.art}>
+                <li key={p.art} className={'c28-proj c28-proj--' + p.art}>
+                  <span className="c28-proj-art" aria-hidden="true"><ProjectArt kind={p.art} /></span>
                   <b className="c28-proj-count" aria-label={p.count + (p.count > 1 ? ' projects' : ' project')}>×{p.count}</b>
                   <span><b>{p.title}</b><span className="combo-projects-pitch">{p.caption}</span></span>
                 </li>
