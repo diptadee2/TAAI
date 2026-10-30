@@ -4308,6 +4308,10 @@ html body main #combos #full-course-2028 .c28-price-tag::before { content: ''; w
 html body main #combos .orient-btn.fade-in { transition: opacity .55s ease, transform .55s cubic-bezier(.2,.8,.2,1), box-shadow .12s ease !important; }
 html body main #combos .orient-btn.fade-in:not(.visible) { opacity: 0; transform: translateY(18px) !important; }
 @media (prefers-reduced-motion: reduce) { html body main #combos .orient-btn.fade-in { transition: none !important; } html body main #combos .orient-btn.fade-in:not(.visible) { transform: none !important; } }
+
+/* 2026-10-30: accent the key parts of the band's line ("accentuate the important parts"). */
+html body main .pmap-cta-band .pmap-cta-sub b { font-weight: 700; color: #fff !important; -webkit-text-fill-color: #fff !important; }
+html body main .pmap-cta-band .pmap-cta-sub mark { background: none; padding: 0; font-weight: 700; color: var(--nb-yellow, #FDE047) !important; -webkit-text-fill-color: var(--nb-yellow, #FDE047) !important; white-space: nowrap; }
 </style>
 </head>
 <body data-float-stack>
@@ -6144,7 +6148,7 @@ function ProjectsMap() {
           <div className="pmap-cta-copy">
             <p className="pmap-cta-kicker">Ready when you are</p>
             <p className="pmap-cta-title">GATE 2028 Full Course</p>
-            <p className="pmap-cta-sub">Covers GATE DA 2027 and 2028, plus 5 projects</p>
+            <p className="pmap-cta-sub">Covers <b>GATE DA 2027 and 2028</b>, plus <mark>5 industry-relevant projects</mark></p>
           </div>
         <a href="#full-course-2028" className="pmap-cta" onClick={e => {
           // Land with the card's "For GATE 2027 and 2028" label just below
