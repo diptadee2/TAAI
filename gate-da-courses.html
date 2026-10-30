@@ -4285,9 +4285,14 @@ html body main #combos #full-course-2028 .c28-proj-art svg { display: block; }
   html body main #combos #full-course-2028 .c28-projects .combo-projects-list li.c28-proj { flex-wrap: wrap !important; align-items: flex-start !important; }
   html body main #combos #full-course-2028 .c28-proj-art { flex: 0 0 100%; height: 84px; margin-bottom: 4px; }
   html body main #combos #full-course-2028 .c28-proj-art svg { width: 84px; height: 63px; }
-  html body main #combos #full-course-2028 .c28-proj .c28-proj-count { position: absolute; top: 26px; right: 26px; font-size: 22px !important; background: #fff !important; border: 1.5px solid var(--sl-ink, #121316) !important; border-radius: 8px !important; padding: 4px 7px 3px !important; }
+  /* The count used to sit on the drawing as a badge; it read as part of the picture
+     ("the numbers seem part of the picture"), so on tiles it's a pill after the title. */
+  html body main #combos #full-course-2028 .c28-proj .c28-proj-count { display: none !important; }
+  html body main #combos #full-course-2028 .c28-proj-n { display: inline-flex; align-items: center; margin-left: 0; padding: 3px 8px; border-radius: 999px; background: var(--sl-ink, #121316); color: #fff; -webkit-text-fill-color: #fff; font: 600 11px/1.2 'IBM Plex Mono', ui-monospace, monospace; vertical-align: 2px; white-space: nowrap; }
+  html body main #combos #full-course-2028 .c28-proj > span > b { display: flex !important; flex-direction: column-reverse; align-items: flex-start; gap: 7px; }
 }
 @media (max-width: 600px) {
+  html body main #combos #full-course-2028 .c28-proj-n { display: none; }
   html body main #combos #full-course-2028 .c28-proj-art { order: 3; flex: none; width: 52px; height: 40px; margin-left: auto; border-radius: 9px; }
   html body main #combos #full-course-2028 .c28-proj-art svg { width: 40px; height: 30px; }
   html body main #combos #full-course-2028 .combo-projects-list.is-open .c28-proj-art { align-self: flex-start; }
@@ -5799,7 +5804,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
                 <li key={p.art} className={'c28-proj c28-proj--' + p.art}>
                   <span className="c28-proj-art" aria-hidden="true"><ProjectArt kind={p.art} /></span>
                   <b className="c28-proj-count" aria-label={p.count + (p.count > 1 ? ' projects' : ' project')}>×{p.count}</b>
-                  <span><b>{p.title}</b><span className="combo-projects-pitch">{p.caption}</span></span>
+                  <span><b>{p.title}<span className="c28-proj-n" aria-hidden="true">{p.count} {p.count > 1 ? 'projects' : 'project'}</span></b><span className="combo-projects-pitch">{p.caption}</span></span>
                 </li>
               ))}
             </ul>
