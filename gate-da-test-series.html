@@ -1624,7 +1624,7 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     html body #root .feat-time-note { margin-top: 4px; background: #fff; border: 2px solid var(--nb-ink); padding: 10px 12px; font-size: 13.5px; line-height: 1.45; color: var(--nb-ink) !important; }
     html body #root .feat-time-note b { background: var(--nb-pink); padding: 0 4px; border: 1.5px solid var(--nb-ink); }
     html body #root .feat-time-key i { display: inline-block; height: 12px; border-left: 2px dashed var(--nb-ink); }
-    /* Rank prediction: label the big number and the leaderboard */
+    /* Rank among TAAI students: label the big number and the leaderboard */
     html body #root .feat-rank-big { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
     html body #root .feat-rank-cap { font-family: var(--nb-mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--nb-ink) !important; }
     html body #root .feat-rank-big .feat-rank-cap { background: var(--nb-ink); color: var(--nb-paper) !important; padding: 3px 7px; }
@@ -1893,7 +1893,7 @@ html body #root .quiz-sub-total .quiz-sub-name { font-weight: 700; }
 }
 
 /* Rank prediction card (2026-10-29, "it can look better and the animation can
-   be better"): text + predicted AIR | mock-by-mock chart | leaderboard. Plays
+   be better"; reworded 2026-10-30, we don't predict AIR): text + rank among TAAI students | test-by-test chart | leaderboard. Plays
    once when scrolled into view (.frk-play, set from Features()). */
 html body #root .features-bento > .feat-f.feat-f {
   display: grid !important; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr) 250px;
@@ -2432,12 +2432,13 @@ const RANK_BOARD = [
   { pos: '#5', name: 'Kavya M.',   score: '60.9' },
 ];
 
-const RANK_TREND = [3200, 1450, 640, 260, 105, 47];
+// Rank among TAAI students on each test (illustrative). We don't predict AIR (2026-10-30).
+const RANK_TREND = [214, 150, 92, 48, 17, 4];
 
-// Illustrative chart: predicted AIR after each mock, log scale, better rank higher.
+// Illustrative chart: rank among TAAI students after each test, log scale, better rank higher.
 function RankTrend() {
   const W = 300, H = 132, PX = 14, PT = 16, PB = 24;
-  const lo = Math.log10(30), hi = Math.log10(5000);
+  const lo = Math.log10(3), hi = Math.log10(300);
   const x = (i) => PX + i * (W - 2 * PX) / (RANK_TREND.length - 1);
   const y = (v) => PT + (Math.log10(v) - lo) / (hi - lo) * (H - PT - PB);
   const d = RANK_TREND.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ');
@@ -2445,12 +2446,12 @@ function RankTrend() {
   const last = RANK_TREND.length - 1;
   return (
     <div className="frk-trend">
-      <div className="feat-rank-cap">Your predicted AIR, mock by mock</div>
-      <svg className="frk-chart" viewBox={'0 0 ' + W + ' ' + H} role="img" aria-label="Predicted AIR falls from 3,200 after mock 1 to 47 after mock 6">
-        {[1000, 100].map(g => (
+      <div className="feat-rank-cap">Your rank among TAAI students, test by test</div>
+      <svg className="frk-chart" viewBox={'0 0 ' + W + ' ' + H} role="img" aria-label="Rank among TAAI students goes from 214 after test 1 to 4 after test 6">
+        {[100, 10].map(g => (
           <g key={g}>
             <line x1={PX} x2={W - PX} y1={y(g)} y2={y(g)} className="frk-grid" />
-            <text x={PX} y={y(g) - 4} textAnchor="start" className="frk-gridlbl">AIR {g.toLocaleString('en-IN')}</text>
+            <text x={PX} y={y(g) - 4} textAnchor="start" className="frk-gridlbl">Top {g}</text>
           </g>
         ))}
         <path d={area} className="frk-area" />
@@ -2459,7 +2460,7 @@ function RankTrend() {
           <circle key={i} cx={x(i)} cy={y(v)} r={i === last ? 6 : 4} className={'frk-dot' + (i === last ? ' frk-dot-last' : '')} style={{ '--i': i }} />
         ))}
         {RANK_TREND.map((v, i) => (
-          <text key={'m' + i} x={x(i)} y={H - 6} textAnchor="middle" className="frk-xlbl">M{i + 1}</text>
+          <text key={'m' + i} x={x(i)} y={H - 6} textAnchor="middle" className="frk-xlbl">T{i + 1}</text>
         ))}
       </svg>
     </div>
@@ -2612,15 +2613,15 @@ function Features() {
             <div className="feat-chip">See exactly where time is lost</div>
           </div>
 
-          {/* Rank prediction: plays once on scroll into view */}
+          {/* Rank among TAAI students: plays once on scroll into view */}
           <div className="feat feat-f fade-in" ref={rankRef}>
             <div className="frk-main">
-              <div className="feat-title">Rank prediction</div>
-              <div className="feat-desc">See how you rank among everyone who attempted the same test, so you know exactly where you stand within the TAAI cohort.</div>
+              <div className="feat-title">Rank among TAAI students</div>
+              <div className="feat-desc">See how you rank among every TAAI student who attempted the same test, and watch yourself climb test after test.</div>
               <div className="frk-air">
-                <div className="feat-rank-cap">Predicted AIR</div>
-                <div className="feat-rank-num">{rankNum.toLocaleString('en-IN')}</div>
-                <div className="frk-delta">Up {(RANK_TREND[0] - RANK_TREND[RANK_TREND.length - 1]).toLocaleString('en-IN')} places since mock 1</div>
+                <div className="feat-rank-cap">Your rank, this test</div>
+                <div className="feat-rank-num">#{rankNum.toLocaleString('en-IN')}</div>
+                <div className="frk-delta">Up {(RANK_TREND[0] - RANK_TREND[RANK_TREND.length - 1]).toLocaleString('en-IN')} places since test 1</div>
               </div>
             </div>
             <RankTrend />
