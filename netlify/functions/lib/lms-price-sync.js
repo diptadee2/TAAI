@@ -68,8 +68,12 @@ async function lmsQuery(query, variables) {
 
 // https://learn.taai.live/learn/Statistics -> 'Statistics'
 // https://learn.taai.live/learn/batch/GATE-2028/content -> 'GATE-2028'
+// https://learn.taai.live/learn/fast-checkout/237427?priceId=... -> 'id:237427'
+// (a checkout link already names the product id, no lookup needed)
 export function lmsSlugFromUrl(url) {
   if (!url) return null;
+  const fc = /^https:\/\/learn\.taai\.live\/learn\/fast-checkout\/(\d+)/.exec(url.trim());
+  if (fc) return 'id:' + fc[1];
   const m = /^https:\/\/learn\.taai\.live\/learn\/(?:batch\/)?([^/?#]+)/.exec(url.trim());
   return m ? decodeURIComponent(m[1]) : null;
 }
@@ -140,6 +144,7 @@ export async function syncLmsPrices(supabase, { deadline = Date.now() + 20000 } 
       }
 
       let productId = prev && prev.slug === slug ? prev.lms_product_id : null;
+      if (!productId && slug.startsWith('id:')) productId = slug.slice(3);
       if (!productId) productId = await resolveProductId(slug).catch(() => null);
       if (!productId) {
         await supabase.from('lms_price_sync').upsert({ id: course.id, slug, lms_product_id: null, status: 'unavailable', checked_at: nowIso, note: 'Not public on the LMS (private or not found)' });
