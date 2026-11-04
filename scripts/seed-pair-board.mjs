@@ -119,6 +119,20 @@ sections.forEach(sec => {
     if (!hits.length) t.reviseAll = true;
   });
 });
+// Extra items (2026-11-05): "- extra **Nov 5 (Thu):** [Tag] text | https://link"
+// lines add separately tickable items to that day (e.g. one person's backlog
+// from another course), id "<date>:x<n>". Not counted in the day's progress.
+const byId = {}; sections.forEach(sec => sec.tasks.forEach(t => { byId[t.id] = t; }));
+for (const m of md.matchAll(/^-\s*extra\s+\*\*([A-Za-z]{3})[a-z]*\s+(\d{1,2})\s*\(([A-Za-z]{3})\):\*\*\s*\[([^\]]+)\]\s*(.+)$/gm)) {
+  const mon = MONTHS[m[1].toLowerCase()], year = mon >= 8 ? START_YEAR : START_YEAR + 1;
+  const id = `${year}-${String(mon).padStart(2, '0')}-${String(Number(m[2])).padStart(2, '0')}`;
+  const day = byId[id];
+  if (!day) throw new Error('extra item on a day with no task: ' + id);
+  const [text, url] = m[5].split(/\s+\|\s+/);
+  day.extras = day.extras || [];
+  day.extras.push({ id: `${id}:x${day.extras.length + 1}`, tag: m[4].trim(), text: text.trim(), url: /^https:\/\//.test(url || '') ? url.trim() : null });
+}
+
 const all = sections.flatMap(s => s.tasks);
 const ids = new Set(all.map(x => x.id));
 if (ids.size !== all.length) throw new Error('two tasks share a date');

@@ -71,6 +71,7 @@ export async function handler(event) {
   for (const s of row.roadmap.sections || []) for (const t of s.tasks || []) {
     taskIds.add(t.id);
     if (t.revision) taskIds.add(t.revision.id); // the day's cumulative revision item, ticked separately
+    for (const x of t.extras || []) taskIds.add(x.id); // extra items (e.g. a backlog), ticked separately
   }
 
   if (body.action === 'load') {

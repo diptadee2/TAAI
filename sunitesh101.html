@@ -153,6 +153,11 @@
   .kind-notes { background: var(--lime); }
   .kind-apt { background: #FFD7A8; }
   .rev-notes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  /* Extra items on a day, e.g. one person's backlog (2026-11-05) */
+  .xitem { border-left-color: var(--sky); }
+  .xitem .rev-label { color: #0E7490; }
+  .xitem a.x-open { font-size: 12px; font-weight: 700; color: var(--ink); margin-left: 6px; white-space: nowrap; }
+  .plan .xitem { background: #fff; border: 2px solid var(--ink); border-left: 6px solid var(--sky); padding: 10px 12px; }
   .rev-notes:empty { display: none; }
   .extra { margin-top: 8px; font-size: 13.5px; font-weight: 600; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
   .note-jump { font: inherit; font-size: 13px; font-weight: 700; background: #fff; border: 2px solid var(--ink); padding: 3px 9px; cursor: pointer; box-shadow: 2px 2px 0 var(--ink); }
@@ -485,7 +490,7 @@
             return '<div class="' + cls + '" data-task="' + t.id + '">' + checkHtml(t, true) +
               '<div class="task-date"><b>' + f.wd + '</b>' + f.dm + '</div>' +
               '<div class="task-body"><div class="task-text">' + esc(t.text) + '</div>' + metaHtml(t, today, false) +
-                testHtml(t) + reviseSubjectsHtml(t) + linksHtml(t.id, true) + revisionHtml(t) + '</div></div>';
+                testHtml(t) + reviseSubjectsHtml(t) + linksHtml(t.id, true) + revisionHtml(t) + extrasHtml(t) + '</div></div>';
           }).join('') + '</div></div>';
       });
     }
@@ -515,6 +520,7 @@
     // Revision days: the subjects to revise open right here with their notes.
     if (t.reviseSubjects && !t.reviseAll) steps.push('<li>' + todayMapHtml(t) + '</li>');
     if (t.revision) steps.push('<li>' + revisionHtml(t, true) + '</li>');
+    (t.extras || []).forEach(function (x) { steps.push('<li>' + extrasHtml({ extras: [x] }, true) + '</li>'); });
     if (t.testCovers) steps.push('<li>' + testHtml(t, true) + '</li>');
     if (everyDayNote()) steps.push('<li><div class="plain-step"><span class="kind-tag kind-apt">Aptitude</span> ' + esc(everyDayNote()) + '</div></li>');
     return '<div class="box today"><span class="today-tag">TODAY · ' + dayLabel(today).toUpperCase() + '</span><ol class="plan">' + steps.join('') + '</ol></div>';
@@ -653,6 +659,19 @@
       '<div class="rev-sub">' + esc(d.sections[r.subject].title) + ' · studied ' + dayLabel(r.fromId) + '</div>' +
       (saved.length ? '<div class="rev-notes">' + saved.map(function (n) { return chipHtml(n, false); }).join('') + '</div>' : '') +
       (tk ? '<div class="task-meta">' + whoTicked(tk, false) + '</div>' : '') + '</div></div>';
+  }
+  // Extra items on a day (e.g. Dipta's 120 Days backlog): ticked on their own,
+  // not counted in the day's progress. Tag reads "Person · Course · Subject".
+  function extrasHtml(t, big) {
+    var d = S.data;
+    return (t.extras || []).map(function (x) {
+      var tk = d.tickMap[x.id], parts = String(x.tag).split(' · ');
+      return '<div class="rev xitem' + (tk ? ' is-done' : '') + (big ? ' big' : '') + '">' + checkHtml(Object.assign({ text: x.text }, x), true) +
+        '<div class="rev-body"><div class="rev-text"><span class="rev-label">' + esc(parts[parts.length - 1]) + '</span>' + esc(x.text) +
+        (x.url ? '<a class="x-open" href="' + esc(x.url) + '" target="_blank" rel="noopener noreferrer">Open lesson ↗</a>' : '') + '</div>' +
+        '<div class="rev-sub">' + esc(parts.slice(0, -1).join(' · ') || x.tag) + '</div>' +
+        (tk ? '<div class="task-meta">' + whoTicked(tk, false) + '</div>' : '') + '</div></div>';
+    }).join('');
   }
   function chipHtml(n, canRemove) {
     var mine = canRemove; // shared notes: either person can remove any link
