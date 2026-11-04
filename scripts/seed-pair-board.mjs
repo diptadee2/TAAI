@@ -54,24 +54,35 @@ for (const line of md.split('\n')) {
 // rotation restarting when a new subject starts); within a subject its topics
 // come up in order, then cycle. During the first subject it's the previous
 // day's topic (none on day 1). Revision sections themselves get none.
+// An optional "**Revision starts:** Nov 4" line (2026-11-04) holds revision
+// back until that date: earlier days get no revision item, and the rotation
+// starts fresh on it (first topic of each finished subject).
 const isRevisionSection = sec => /revision/i.test(sec.title);
+const revStartM = md.match(/^\*\*Revision starts:\*\*\s*([A-Za-z]{3})[a-z]*\s+(\d{1,2})/m);
+const revStart = revStartM ? (() => {
+  const mon = MONTHS[revStartM[1].toLowerCase()], year = mon >= 8 ? START_YEAR : START_YEAR + 1;
+  return `${year}-${String(mon).padStart(2, '0')}-${String(Number(revStartM[2])).padStart(2, '0')}`;
+})() : null;
 if (notes.some(n => /^cumulative revision$/i.test(n.label))) {
   const pointer = {};
   sections.forEach((sec, k) => {
     if (isRevisionSection(sec)) return;
     const finished = sections.map((x, i) => i).slice(0, k).filter(i => !isRevisionSection(sections[i])).reverse();
+    let n = 0; // days in this section that carry a revision item
     sec.tasks.forEach((t, j) => {
+      if (revStart && t.id < revStart) return;
       let from, subj;
       if (!finished.length) {
         if (j === 0) return;
         subj = k; from = sec.tasks[j - 1];
       } else {
-        subj = finished[j % finished.length];
+        subj = finished[n % finished.length];
         const list = sections[subj].tasks;
         pointer[subj] = pointer[subj] || 0;
         from = list[pointer[subj] % list.length];
         pointer[subj] += 1;
       }
+      n += 1;
       t.revision = { id: t.id + ':rev', subject: subj, fromId: from.id, text: from.text };
     });
   });
