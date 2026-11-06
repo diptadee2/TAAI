@@ -26,6 +26,7 @@
     weekly_leaderboard: 'Weekly — Top 5 Leaderboard',
     weekly_batch_trend: 'Weekly — Batch Median Trend',
     monthly_consistency: 'Monthly — Most Consistent Student',
+    schedule_runout: 'Daily — Schedule running out (team reminder)',
   };
   // Sources whose Body is a plain optional intro line with no
   // placeholders at all — unlike LIST_SOURCES (an intro above a computed
@@ -345,6 +346,8 @@
       saving: false,
       error: null,
       hideFinancialAssistance: false,
+      scheduleRunout: [],
+      runoutSaving: null,
     },
     // Site data > Challenge (2026-10-18): "100 pe 100% off" registrations
     // and the registration cutoff date.
@@ -2448,6 +2451,7 @@
     render();
     api('/site-settings').then(function (data) {
       ss.hideFinancialAssistance = !!(data.row && data.row.hide_financial_assistance);
+      ss.scheduleRunout = data.scheduleRunout || [];
       ss.loaded = true;
       ss.loading = false;
       render();
@@ -2481,6 +2485,56 @@
       ss.error = err.message;
       render();
     });
+  }
+
+  // "No more schedule coming" for one batch: stores that batch's current last
+  // schedule date (or clears it), then re-reads the panel so the status updates.
+  function saveScheduleRunoutOff(batch, lastDate, on) {
+    var ss = state.siteSettings;
+    var payload = { schedule_reminder_off: {} };
+    payload.schedule_reminder_off[batch] = on ? lastDate : null;
+    ss.runoutSaving = batch; ss.error = null;
+    render();
+    api('/site-settings', { method: 'PUT', body: JSON.stringify(payload) }).then(function () {
+      return api('/site-settings');
+    }).then(function (data) {
+      ss.scheduleRunout = data.scheduleRunout || [];
+      ss.runoutSaving = null;
+      render();
+    }).catch(function (err) {
+      ss.runoutSaving = null; ss.error = err.message;
+      render();
+    });
+  }
+
+  function scheduleRunoutHtml() {
+    var ss = state.siteSettings;
+    var list = ss.scheduleRunout || [];
+    if (!list.length) return '';
+    var fmt = function (d) { return new Date(d + 'T00:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }); };
+    var addDays = function (d, n) { var t = new Date(d + 'T00:00:00Z'); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); };
+    var rows = list.map(function (b) {
+      if (!b.lastDate) return '';
+      var left = b.daysLeft;
+      var leftText = left > 1 ? left + ' days left' : left === 1 ? 'ends tomorrow' : left === 0 ? 'ends today' : 'ran out ' + (-left) + ' day' + (left === -1 ? '' : 's') + ' ago';
+      var status = b.off ? 'Reminders off: marked "no more schedule coming".'
+        : left <= 5 ? 'Reminding @team and @owner every day until the next schedule is loaded.'
+        : 'Reminders start on ' + fmt(addDays(b.lastDate, -5)) + ' (5 days before it runs out).';
+      var id = 'runout-off-' + b.batch;
+      return '<div class="site-setting-row">' +
+        '<div class="site-setting-info">' +
+          '<div class="site-setting-title">' + escapeHtml(b.label) + ': no more schedule coming</div>' +
+          '<div class="field-hint">Last scheduled day: ' + escapeHtml(fmt(b.lastDate)) + ' (' + escapeHtml(leftText) + '). ' + escapeHtml(status) + '</div>' +
+        '</div>' +
+        '<label class="site-setting-switch' + (ss.runoutSaving === b.batch ? ' is-saving' : '') + '" for="' + id + '">' +
+          '<input type="checkbox" id="' + id + '" data-runout-batch="' + escapeHtml(b.batch) + '" data-runout-last="' + escapeHtml(b.lastDate) + '"' + (b.off ? ' checked' : '') + (ss.runoutSaving ? ' disabled' : '') + '>' +
+          '<span class="site-setting-switch-track"></span>' +
+        '</label>' +
+      '</div>';
+    }).join('');
+    return '<h3 style="margin:28px 0 6px;font-size:16px;">Schedule run-out reminders</h3>' +
+      '<div class="field-hint" style="margin-bottom:10px;">From 5 days before a batch\'s loaded schedule ends, a daily Discord post tags @team and @owner. Switch a batch on below if no more schedule will be uploaded for it. Loading a newer schedule turns its reminders back on by itself.</div>' +
+      rows;
   }
 
   // Shared by both places a Site data sub-tab can become the active one
@@ -2912,7 +2966,8 @@
           '<input type="checkbox" id="setting-hide-financial-assistance" data-setting-field="hideFinancialAssistance"' + (checked ? ' checked' : '') + (ss.saving ? ' disabled' : '') + '>' +
           '<span class="site-setting-switch-track"></span>' +
         '</label>' +
-      '</div>'
+      '</div>' +
+      scheduleRunoutHtml()
     );
   }
 
@@ -3377,6 +3432,12 @@
         state.siteData.editing = null;
         if (ensureSiteDataLoaded(type)) return;
         render();
+      });
+    });
+
+    document.querySelectorAll('[data-runout-batch]').forEach(function (input) {
+      input.addEventListener('change', function () {
+        saveScheduleRunoutOff(input.getAttribute('data-runout-batch'), input.getAttribute('data-runout-last'), input.checked);
       });
     });
 

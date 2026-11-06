@@ -1110,6 +1110,36 @@ function formatDateHeading(dateStr) {
   return DATE_HEADING_FORMATTER.format(new Date(dateStr + 'T00:00:00Z'));
 }
 
+
+// Schedule run-out reminder (2026-11-06). For each batch: the last date that
+// has a schedule loaded, and how many days are left until then (IST). A batch
+// is "off" while site_settings.schedule_reminder_off[batch] equals its current
+// last date: the team marked "no more schedule coming" for that schedule. A
+// newer schedule moves the last date past the stored one, so reminders come
+// back on their own. Batch labels match /team and the tracker.
+export const SCHEDULE_BATCH_LABELS = { C: '180 Days Batch C', D: '120 Days - 70 Marks' };
+export const SCHEDULE_RUNOUT_DAYS = 5;
+export async function fetchScheduleRunout(supabase) {
+  const today = todayIST();
+  let off = {};
+  try {
+    const { data } = await supabase.from('site_settings').select('*').eq('id', 'main').maybeSingle();
+    if (data && data.schedule_reminder_off && typeof data.schedule_reminder_off === 'object') off = data.schedule_reminder_off;
+  } catch (e) { /* column missing before the migration: nothing is off */ }
+  const out = [];
+  for (const batch of Object.keys(SCHEDULE_BATCH_LABELS)) {
+    const { data, error } = await supabase.from('schedule_days').select('date').eq('batch', batch)
+      .order('date', { ascending: false }).limit(1);
+    if (error) throw new Error(error.message);
+    const lastDate = data && data[0] ? data[0].date : null;
+    const daysLeft = lastDate
+      ? Math.round((Date.parse(lastDate + 'T00:00:00Z') - Date.parse(today + 'T00:00:00Z')) / 86400000)
+      : null;
+    out.push({ batch, label: SCHEDULE_BATCH_LABELS[batch], lastDate, daysLeft, off: !!lastDate && off[batch] === lastDate });
+  }
+  return out;
+}
+
 // Resolves a scheduled_posts row into an ARRAY of Discord embeds (a single
 // message can carry several — Discord renders them stacked, each
 // full-width, which is what the weekly-schedule-style post needs: one
@@ -1239,6 +1269,31 @@ export async function resolveScheduledPostEmbed(supabase, row) {
   // uses the exact same "last week" resolution fetchLastWeekLeaders uses,
   // so both posts always report on the identical week even though they're
   // two separate scheduled_posts rows that could in principle drift.
+  // Reminds the team (in a private channel, with @team/@owner role mentions
+  // set on the row) once a batch's schedule is within SCHEDULE_RUNOUT_DAYS
+  // of running out, every time the row fires, until the next schedule is
+  // loaded or the batch is marked "no more schedule coming" in /team.
+  if (row.source === 'schedule_runout') {
+    const due = (await fetchScheduleRunout(supabase))
+      .filter(b => b.lastDate && !b.off && b.daysLeft <= SCHEDULE_RUNOUT_DAYS);
+    if (!due.length) return null;
+    const plural = n => n === 1 ? '1 day' : n + ' days';
+    const lines = due.map(b => {
+      const when = formatDateHeading(b.lastDate);
+      const status = b.daysLeft > 1 ? `ends ${when}, **${plural(b.daysLeft)} left**`
+        : b.daysLeft === 1 ? `ends **tomorrow** (${when})`
+        : b.daysLeft === 0 ? `ends **today** (${when})`
+        : `**ran out ${plural(-b.daysLeft)} ago** (last day was ${when})`;
+      return `• **${b.label}**: schedule ${status}`;
+    });
+    const intro = row.body ? row.body + '\n\n' : '';
+    return [{
+      title: row.title || '⏰ Schedule running out',
+      description: `${intro}${lines.join('\n')}\n\nUpload the next schedule, or if no more is coming, switch the batch to "No more schedule coming" in /team (Site data > Settings) to stop these reminders.`,
+      color: row.color ?? 0xf59e0b,
+    }];
+  }
+
   if (row.source === 'weekly_batch_trend') {
     const weekStart = weekBefore(weekStartIST());
     const text = await weeklyBatchTrendText(supabase, weekStart);

@@ -1306,3 +1306,9 @@ GRANT EXECUTE ON FUNCTION board_viewer(TEXT, DATE, DATE, DATE) TO service_role;
 -- shortlisted again. Never set automatically.
 ALTER TABLE students ADD COLUMN IF NOT EXISTS rankers_batch BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS rankers_batch_at TIMESTAMPTZ;
+
+-- Schedule run-out reminder (2026-11-06): per batch, the last schedule date the
+-- team marked "no more schedule coming" for ({"D": "2026-11-15"}). The daily
+-- 'schedule_runout' scheduled post skips a batch while its current last date
+-- equals the stored one; a newer schedule turns reminders back on by itself.
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS schedule_reminder_off JSONB NOT NULL DEFAULT '{}'::jsonb;

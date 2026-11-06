@@ -7,7 +7,7 @@
 // site-lectures.js. Unlike those three, this isn't a list of rows — it's
 // one fixed settings row (id='main', see schema.sql), read publicly (no
 // auth) via the separate site-settings-public.js for the live page.
-import { getSupabase, json, requireAdmin } from './lib/supabase.js';
+import { getSupabase, json, requireAdmin, fetchScheduleRunout, SCHEDULE_BATCH_LABELS } from './lib/supabase.js';
 
 const ROW_ID = 'main';
 
@@ -25,7 +25,11 @@ export async function handler(event, context) {
     // erroring, same "never surprise the admin with an error for an
     // unconfigured toggle" reasoning this project already applies
     // elsewhere (e.g. site-pricing-public.js's empty-map fallback).
-    return json(200, { row: data || { id: ROW_ID, hide_financial_assistance: false, updated_at: null } });
+    // Each batch's last scheduled date and whether its run-out reminder is
+    // switched off, for the Settings panel (best-effort).
+    let scheduleRunout = [];
+    try { scheduleRunout = await fetchScheduleRunout(supabase); } catch (e) { /* panel just omits it */ }
+    return json(200, { row: data || { id: ROW_ID, hide_financial_assistance: false, updated_at: null }, scheduleRunout });
   }
 
   if (event.httpMethod === 'PUT') {
@@ -66,6 +70,18 @@ export async function handler(event, context) {
 
     // "100 pe 100% off" registration cutoff (2026-10-18). Empty string means
     // "back to the default" (lib/challenge.js) and is stored as NULL.
+    // {batch: last schedule date} marks "no more schedule coming" for that
+    // batch's current schedule; {batch: null} clears it.
+    if (body.schedule_reminder_off && typeof body.schedule_reminder_off === 'object') {
+      const { data: cur } = await supabase.from('site_settings').select('*').eq('id', ROW_ID).maybeSingle();
+      const next = Object.assign({}, (cur && cur.schedule_reminder_off) || {});
+      for (const [b, d] of Object.entries(body.schedule_reminder_off)) {
+        if (!SCHEDULE_BATCH_LABELS[b]) continue;
+        if (d === null) delete next[b];
+        else if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) next[b] = d;
+      }
+      patch.schedule_reminder_off = next;
+    }
     if (typeof body.challenge_cutoff === 'string') {
       const c = body.challenge_cutoff.trim();
       if (c && !/^\d{4}-\d{2}-\d{2}$/.test(c)) return json(400, { error: 'cutoff must be a date (YYYY-MM-DD)' });
