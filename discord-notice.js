@@ -5,7 +5,7 @@
 // "Continue to Discord" opens the invite in a new tab.
 // It also sets body.footer-in-view while the page footer is on screen (each
 // page's floating Email/Discord stack hides on it), and adds its own
-// floating Discord button on pages not marked <body data-float-stack> (the
+// floating Email + Discord buttons on pages not marked <body data-float-stack> (the
 // progress tracker and the blog). The contact page is marked too: its
 // channel cards already cover Email and Discord, so it has no floating stack.
 (function () {
@@ -40,7 +40,9 @@
     '.dn-fab:focus-visible{outline:2px solid #5865F2;outline-offset:3px}' +
     '.dn-fab-label{position:absolute;right:calc(100% + 10px);top:50%;transform:translateY(-50%);background:#14102B;color:#fff;font-size:12px;font-weight:600;padding:6px 10px;border-radius:8px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s ease}' +
     '.dn-fab:hover .dn-fab-label,.dn-fab:focus-visible .dn-fab-label{opacity:1}' +
-    '@media (max-width:768px){.dn-fab{right:27px;bottom:86px;width:44px;height:44px}.dn-fab-label{display:none}}' +
+    '.dn-fab.dn-mail{bottom:150px;background:#6B4BFF}' +
+    '.dn-fab.dn-mail:hover{background:#5A3BEA}' +
+    '@media (max-width:768px){.dn-fab{right:16px;bottom:90px;width:48px;height:48px}.dn-fab.dn-mail{bottom:148px}.dn-fab-label{display:none}}' +
     '@media print{.dn-fab{display:none}}' +
     '@media (prefers-reduced-motion:reduce){.dn-backdrop,.dn-card,.dn-fab{transition:none}}';
 
@@ -99,8 +101,7 @@
     var away = f ? f.getBoundingClientRect().top < innerHeight
                  : doc.scrollHeight > innerHeight + 200 && scrollY + innerHeight >= doc.scrollHeight - 40;
     document.body.classList.toggle('footer-in-view', away);
-    var fab = document.querySelector('.dn-fab');
-    if (fab) fab.classList.toggle('dn-fab-away', away);
+    document.querySelectorAll('.dn-fab').forEach(function (fab) { fab.classList.toggle('dn-fab-away', away); });
     if (away && document.activeElement && document.activeElement.closest &&
         document.activeElement.closest('.dn-fab, .mobile-contact-bar, .contact-float')) document.activeElement.blur();
   }
@@ -114,8 +115,16 @@
     a.rel = 'noopener noreferrer';
     a.setAttribute('aria-label', 'Join our Discord');
     a.innerHTML = ICON.replace('width="20" height="20"', 'width="22" height="22"') + '<span class="dn-fab-label">Join our Discord</span>';
+    // An Email button above it, so these pages carry the same Email + Discord
+    // stack as the main pages (2026-11-06).
+    var m = document.createElement('a');
+    m.className = 'dn-fab dn-mail';
+    m.href = 'mailto:support@taai.live';
+    m.setAttribute('aria-label', 'Email us at support@taai.live');
+    m.innerHTML = '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg><span class="dn-fab-label">Email us</span>';
+    document.body.appendChild(m);
     document.body.appendChild(a);
-    requestAnimationFrame(function () { a.classList.add('dn-fab-in'); });
+    requestAnimationFrame(function () { a.classList.add('dn-fab-in'); m.classList.add('dn-fab-in'); });
     footerInView();
   }
   function start() {

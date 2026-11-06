@@ -712,3 +712,9 @@ html body .mobile-menu-contact {
   font-size: 14.5px !important;
 }
 @media (hover: hover) and (pointer: fine) { html body .mobile-menu-contact:hover { background: #FFFFFF !important; border-style: solid !important; } }
+
+/* Floating buttons match the main pages (2026-11-06): Email + Discord + back-to-top,
+   same sizes, spots, colours and glow as the courses page. */
+.back-to-top { background: linear-gradient(135deg, #0d9488, #0891b2); border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(17,17,17,.10), 0 0 22px 6px rgba(8,145,178,.40), 0 4px 12px rgba(17,17,17,.26) !important; }
+.dn-fab.dn-mail { box-shadow: 0 0 0 1px rgba(17,17,17,.10), 0 0 22px 6px rgba(107,75,255,.42), 0 4px 12px rgba(17,17,17,.26) !important; }
+@media (max-width: 768px) { .back-to-top { bottom: 32px; right: 16px; width: 48px; height: 48px; } }
