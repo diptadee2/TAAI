@@ -897,6 +897,26 @@ html body .mobile-menu-contact {
 }
 @media (hover: hover) and (pointer: fine) { html body .mobile-menu-contact:hover { background: #FFFFFF !important; border-style: solid !important; } }
 </style>
+<style>
+/* Contact page additions, 2026-11-06 onwards. Append new contact-page CSS here.
+   No direct calls: a note under the channel cards (email/WhatsApp first, we schedule a call if needed).
+   Not clickable, so no hard shadow. */
+html body .call-note { display: flex; align-items: flex-start; gap: 14px; margin-top: 24px; padding: 16px 18px; background: #FFFFFF; border: 2px solid #111111; text-align: left; }
+html body .call-note-icon { flex-shrink: 0; width: 36px; height: 36px; display: grid; place-items: center; background: #FDE047; border: 2px solid #111111; color: #111111; }
+html body .call-note-icon svg { width: 17px; height: 17px; }
+html body .call-note-icon svg path { stroke: currentColor; }
+html body .call-note p { margin: 0; font-size: 15px; line-height: 1.55; color: #2A2440; }
+html body .call-note strong { color: #111111; }
+@media (max-width: 540px) { html body .call-note { padding: 14px; gap: 12px; } html body .call-note p { font-size: 14px; } }
+/* With WhatsApp now a main card, the collapsed "Show more" tile would sit alone on a second row: from 541px it's a slim full-width row instead. */
+@media (min-width: 541px) {
+  html body #root .channel-grid .channel-more { grid-column: 1 / -1; flex-direction: row !important; align-items: center !important; text-align: left !important; gap: 16px; padding: 16px 22px !important; min-height: 0 !important; }
+  html body #root .channel-grid .channel-more .channel-more-icons { margin: 0 !important; align-self: center; }
+  html body #root .channel-grid .channel-more .channel-name { margin: 0 !important; }
+  html body #root .channel-grid .channel-more .channel-detail { margin: 0 !important; flex: 1; }
+  html body #root .channel-grid .channel-more .channel-cta { margin: 0 0 0 auto !important; }
+}
+</style>
 </head>
 <body data-float-stack>
 <div id="root"></div>
@@ -1094,7 +1114,7 @@ function Nav() {
 function Offers() {
   const offers = [
     { cls: 'oc-1', num: '01', icon: <Icon.BookOpen />, title: 'GATE DA Courses', desc: 'Complete GATE DA coverage by Manoj Kumar, Linear Algebra, Probability, Statistics, Calculus, ML and more. Valid until GATE 2027.', href: '/gate-da-courses', cta: 'View courses' },
-    { cls: 'oc-2', num: '02', icon: <Icon.Target />, title: 'Test Series', desc: '67 tests: 45 topic-wise, 10 subject-wise, 12 full-length tests. GATE-like interface with detailed performance analytics.', href: '/gate-da-test-series', cta: 'Explore test series' },
+    { cls: 'oc-2', num: '02', icon: <Icon.Target />, title: 'Test Series', desc: '55 tests: 31 topic-wise, 10 subject-wise, 6 mini full-length and 8 full-length tests. GATE-like interface with detailed performance analytics.', href: '/gate-da-test-series', cta: 'Explore test series' },
     { cls: 'oc-3', num: '03', icon: <Icon.Briefcase />, title: 'Interview Preparation', desc: 'Career prep for DS/AI roles, projects, practice interviews, and industry mentorship. Preview available on YouTube now.', href: 'https://www.youtube.com/watch?v=iobgxxTluUc&list=PLZvuMBNC5r0UEjm31D56LdoYzd4L-vtaF', cta: 'Watch preview' },
   ];
   return (
@@ -1168,12 +1188,11 @@ function Footer() {
 }
 
 // Shown up front; the rest sit behind the grid's "Show more" tile.
-const PRIMARY_CHANNELS = ['ch-email', 'ch-discord'];
+const PRIMARY_CHANNELS = ['ch-email', 'ch-whatsapp', 'ch-discord'];
 const CHANNELS = [
-  { cls: 'ch-email',    icon: <Icon.Mail />,     label: 'Email',     name: 'support@taai.live',   detail: 'For detailed queries, billing, or anything that needs a paper trail.',                   cta: 'Send an email',   href: 'mailto:support@taai.live' },
-  { cls: 'ch-whatsapp', icon: <Icon.WhatsApp />, label: 'WhatsApp',  name: '+91 90885 53305',     detail: "Message us anytime. Available from 11 AM to 7 PM.", hours: 'Available from 11 AM to 7 PM',  cta: 'Chat now',        href: 'https://wa.me/9088553305' },
+  { cls: 'ch-email',    icon: <Icon.Mail />,     label: 'Email',     name: 'support@taai.live',   detail: 'Write to us about anything: courses, billing, access or doubts.',                   cta: 'Send an email',   href: 'mailto:support@taai.live' },
+  { cls: 'ch-whatsapp', icon: <Icon.WhatsApp />, label: 'WhatsApp',  name: '+91 90885 53305',     detail: "Text us anytime. We reply from 11 AM to 7 PM.", hours: 'We reply from 11 AM to 7 PM',  cta: 'Text us',        href: 'https://wa.me/9088553305' },
   { cls: 'ch-discord',  icon: <Icon.Discord />,  label: 'Discord',   name: 'Discord',             detail: 'Join 1K+ GATE aspirants. Mentors are active around the clock.',                       cta: 'Join server',     href: '/discord' },
-  { cls: 'ch-call',     icon: <Icon.PhoneLg />,  label: 'Call',      name: '+91 90885 53305',     detail: 'Available from 11 AM to 7 PM.', hours: 'Available from 11 AM to 7 PM',                                                       cta: 'Call now',        href: 'tel:+919088553305' },
   { cls: 'ch-telegram', icon: <Icon.Telegram />, label: 'Telegram',  name: 'Telegram',            detail: 'Announcements, free resources, and study material drops.',                             cta: 'Open channel',    href: 'https://t.me/ManojGateDA' },
   { cls: 'ch-linkedin', icon: <Icon.LinkedIn />, label: 'LinkedIn',  name: 'LinkedIn',            detail: 'Follow us for updates, GATE success stories, and AI industry news.',         cta: 'Follow us',       href: 'https://www.linkedin.com/company/taai-gate-da-placements/?viewAsMember=true' },
 ];
@@ -1259,16 +1278,18 @@ function App() {
               <button type="button" className="channel-card channel-more" aria-expanded="false" onClick={() => setShowAllChannels(true)}
                       style={{ animation: 'heroIn .62s cubic-bezier(.34,1.12,.64,1) .6s both' }}>
                 <div className="channel-more-icons" aria-hidden="true">
-                  <span className="ch-whatsapp"><Icon.WhatsApp /></span>
-                  <span className="ch-call"><Icon.PhoneLg /></span>
                   <span className="ch-telegram"><Icon.Telegram /></span>
                   <span className="ch-linkedin"><Icon.LinkedIn /></span>
                 </div>
                 <div className="channel-name">Show more</div>
-                <div className="channel-detail">WhatsApp, call, Telegram and LinkedIn.</div>
+                <div className="channel-detail">Telegram and LinkedIn.</div>
                 <div className="channel-cta"><span className="channel-more-cta-text">See all channels</span> <Icon.ArrowRight /></div>
               </button>
             )}
+          </div>
+          <div className="call-note" style={{ animation: 'heroIn .62s cubic-bezier(.34,1.12,.64,1) .58s both' }}>
+            <div className="call-note-icon" aria-hidden="true"><Icon.PhoneLg /></div>
+            <p><strong>Need to talk it through?</strong> We don't take direct calls. Text us on email or WhatsApp first. If it can't be sorted over text, we'll schedule a call with you.</p>
           </div>
           <div className="trust-strip" style={{ animation: 'heroIn .62s cubic-bezier(.34,1.12,.64,1) .62s both' }}>
             <div className="trust-item">
