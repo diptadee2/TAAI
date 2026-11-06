@@ -917,6 +917,8 @@ html body #root .ch-telegram .channel-icon, html body #root .channel-more-icons 
 html body #root .ch-linkedin .channel-icon, html body #root .channel-more-icons .ch-linkedin { background: #0A66C2 !important; }
 html body #root .ch-whatsapp .channel-icon { background: #25D366 !important; }
 html body #root .channel-icon, html body #root .channel-icon *, html body #root .channel-more-icons span, html body #root .channel-more-icons span * { color: #FFFFFF !important; }
+/* Card links: one unbroken underline (it used to skip around descenders, e.g. the g in "Send a message"). */
+html body #root .channel-cta { text-decoration-skip-ink: none; }
 </style>
 </head>
 <body data-float-stack>
@@ -1195,7 +1197,7 @@ const CHANNELS = [
   { cls: 'ch-discord',  icon: <Icon.Discord />,  label: 'Discord',   name: 'Discord',             detail: 'Join 1K+ GATE aspirants. Mentors are active around the clock.',                       cta: 'Join server',     href: '/discord' },
   { cls: 'ch-telegram', icon: <Icon.Telegram />, label: 'Telegram',  name: 'Telegram',            detail: 'Announcements, free resources, and study material drops.',                             cta: 'Open channel',    href: 'https://t.me/ManojGateDA' },
   { cls: 'ch-linkedin', icon: <Icon.LinkedIn />, label: 'LinkedIn',  name: 'LinkedIn',            detail: 'Follow us for updates, GATE success stories, and AI industry news.',         cta: 'Follow us',       href: 'https://www.linkedin.com/company/taai-gate-da-placements/?viewAsMember=true' },
-  { cls: 'ch-whatsapp', icon: <Icon.WhatsApp />, label: 'WhatsApp',  name: '+91 90885 53305',     detail: "Drop us a message whenever it suits you. We'll get back to you between 11 AM and 7 PM.", hours: 'Replies 11 AM to 7 PM',  cta: 'Send a message',        href: 'https://wa.me/9088553305' },
+  { cls: 'ch-whatsapp', icon: <Icon.WhatsApp />, label: 'WhatsApp',  name: 'WhatsApp',     detail: "Drop us a message whenever it suits you. We'll get back to you between 11 AM and 7 PM.", hours: 'Replies 11 AM to 7 PM',  cta: 'Send a message',        href: 'https://wa.me/9088553305' },
 ];
 
 function BackToTop() {
