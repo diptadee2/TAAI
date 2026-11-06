@@ -1494,7 +1494,7 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     html body #root .feat-b .feat-icon *, html body #root .feat-c .feat-icon * { stroke: var(--nb-ink); color: var(--nb-ink) !important; }
     /* Hero device mockups stay as they are, just framed */
     html body #root .mac-window { border-width: 3px !important; }
-    /* Phones and small tablets: "57 tests" breakdown cards as a horizontal swipe row (next card peeks in), 2026-10-16 */
+    /* Phones and small tablets: "55 tests" breakdown cards as a horizontal swipe row (next card peeks in), 2026-10-16 */
     @media (max-width: 768px) {
       html body #root .breakdown-grid {
         display: flex !important; gap: 14px !important; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
@@ -1541,7 +1541,7 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
       html body #root .features-bento { align-items: flex-start !important; }
       html body #root .features-bento > * { height: auto !important; }
     }
-    /* "57 tests" breakdown cards, reworked 2026-10-16: number + icon on one row, rows aligned across cards, a ruled footer per card */
+    /* "55 tests" breakdown cards, reworked 2026-10-16: number + icon on one row, rows aligned across cards, a ruled footer per card */
     html body #root .breakdown-card { padding: 28px 28px 26px !important; display: flex; flex-direction: column; }
     html body #root .breakdown-head { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 12px; min-height: 61px; margin-bottom: 14px; position: relative; z-index: 2; }
     html body #root .breakdown-count { font-family: 'Poppins', var(--font-display) !important; font-weight: 700 !important; font-size: 64px !important; letter-spacing: -0.04em !important; line-height: 0.95 !important; margin: 0 !important; font-variant-numeric: tabular-nums; }
@@ -2368,7 +2368,7 @@ function Breakdown() {
       icon:<Icon.Shuffle/>,
     },
     {
-      cls:'bd-3', count:'10', title:'Full-length Tests',
+      cls:'bd-3', count:'8', title:'Full-length Tests',
       desc:'Three-hour timed sessions matching the real GATE DA exam structure, difficulty, and marking scheme.',
       meta:'180 min each', pillsLabel:'Same as the real exam', pillStyle:'list',
       pills:['65 questions','3 hours, one sitting','GATE DA marking scheme'],
@@ -2379,7 +2379,7 @@ function Breakdown() {
     <section className="section" id="breakdown">
       <div className="container">
         <h2 className="fade-in" style={{ fontFamily:'var(--font-display)', fontSize:'clamp(32px,4vw,56px)', fontWeight:600, letterSpacing:'-0.035em', lineHeight:1, marginBottom:16 }}>
-          57 tests. <em>Zero filler.</em>
+          55 tests. <em>Zero filler.</em>
         </h2>
         <p className="section-sub fade-in">Every test is placed where it matters most in your prep timeline, not just a bulk dump of questions.</p>
         <div className="breakdown-grid">
@@ -2901,13 +2901,13 @@ const BASIC_FEATS = [
   'Full-length GATE-pattern tests',
   'Performance analytics & score ranking',
 ];
-// Same counts as the "57 tests. Zero filler." breakdown cards below; keep in sync.
+// Same counts as the "55 tests. Zero filler." breakdown cards below; keep in sync.
 const TEST_COUNTS = [
   { name: 'Topic-wise', count: 31 },
   { name: 'Subject-wise', count: 10 },
   { name: 'Mini full-length', count: 6 },
-  { name: 'Full-length', count: 10 },
-  { name: 'Total tests', count: 57, total: true },
+  { name: 'Full-length', count: 8 },
+  { name: 'Total tests', count: 55, total: true },
 ];
 const ADDON_FEATS = [
   '55+ quizzes',
