@@ -842,7 +842,7 @@ function generateRefundPolicy() {
   const body = `<article class="policy">
       <div class="container">
         <h1>Refund policy</h1>
-        <div class="policy-updated">Last updated: 18 October 2026</div>
+        <div class="policy-updated">Last updated: 6 November 2026</div>
         <p><strong>All purchases are final.</strong> Payments for TAAI courses, bundles, test series and quiz packs are non-refundable and cannot be cancelled once made. This applies regardless of how much of the content you have used, including if you change your mind, stop studying, or cannot attend live sessions.</p>
         <h2>Try before you buy</h2>
         <p>Free lectures, a free orientation and free notes are available so you can judge the teaching before you pay. Please go through them, and the course details and validity shown on each course, before purchasing.</p>
@@ -859,6 +859,10 @@ function generateRefundPolicy() {
           <li>To claim, you need an AIR under 100 (AIR 1 to 99). You must show the scorecard from the GOAPS account with the enrollment ID you registered, with matching name and date of birth, and a government photo ID. We may verify on a video call.</li>
           <li>Claims are made by emailing support@taai.live within 30 days of the GATE DA 2027 results, from the email you enrolled with. The refund is the course fee you paid, sent to the UPI ID given in the challenge form, and you keep access to the course.</li>
         </ul>
+        <h2>Our decision is final</h2>
+        <p>TAAI decides whether a refund applies, including whether a payment counts as a duplicate or failed payment and whether a challenge claim meets its terms. We may ask for any proof we consider necessary, and our decision is final.</p>
+        <p>We may change this policy and the challenge terms at any time by updating this page. The version shown here when you make a request is the one that applies.</p>
+        <p>To the fullest extent permitted by law, TAAI is not responsible for any loss beyond what this policy provides. The most we will ever refund is the amount you paid for the purchase in question.</p>
         <h2>Questions</h2>
         <p>Write to us at <a href="mailto:support@taai.live">support@taai.live</a>.</p>
       </div>
@@ -868,7 +872,7 @@ function generateRefundPolicy() {
 <head>
 ${renderHead({ title: 'Refund policy | TAAI', description: 'TAAI refund policy: all purchases of courses, bundles and test series are final.', canonicalPath: '/refund-policy/' })}
 </head>
-<body>
+<body data-float-stack>
 ${renderChrome(body)}
 </body>
 </html>`;
@@ -903,7 +907,7 @@ function generatePrivacyPolicy() {
 <head>
 ${renderHead({ title: 'Privacy | TAAI', description: 'How TAAI handles your data on taai.live and the free progress tracker.', canonicalPath: '/privacy/' })}
 </head>
-<body>
+<body data-float-stack>
 ${renderChrome(body)}
 </body>
 </html>`;
