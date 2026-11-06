@@ -1128,16 +1128,31 @@ export function scheduleDoneSig(batch, lastDate) {
   return crypto.createHmac('sha256', 'schedule-done:' + (envVar('SUPABASE_SERVICE_KEY') || ''))
     .update(batch + ':' + lastDate).digest('hex').slice(0, 32);
 }
+export function weeklyPostDoneUrl(sunday) {
+  return `https://taai.live/api/schedule-done?w=${sunday}&t=${scheduleDoneSig('weekly', sunday)}`;
+}
 export function scheduleDoneUrl(batch, lastDate) {
   return `https://taai.live/api/schedule-done?b=${encodeURIComponent(batch)}&d=${lastDate}&t=${scheduleDoneSig(batch, lastDate)}`;
 }
-export async function fetchScheduleRunout(supabase) {
-  const today = todayIST();
-  let off = {};
+// site_settings.schedule_reminder_off holds both reminders' "done" marks:
+// {batch: lastDate} for the run-out reminder, {"weekly:<sunday>": true} for
+// the weekly schedule-pictures reminder. Missing column = nothing is off.
+export async function fetchScheduleReminderOff(supabase) {
   try {
     const { data } = await supabase.from('site_settings').select('*').eq('id', 'main').maybeSingle();
-    if (data && data.schedule_reminder_off && typeof data.schedule_reminder_off === 'object') off = data.schedule_reminder_off;
-  } catch (e) { /* column missing before the migration: nothing is off */ }
+    if (data && data.schedule_reminder_off && typeof data.schedule_reminder_off === 'object') return data.schedule_reminder_off;
+  } catch (e) { /* column missing before the migration */ }
+  return {};
+}
+// The Sunday (IST date) of the current Sunday-Monday reminder pair: today if
+// it's Sunday, otherwise the most recent Sunday.
+export function weeklyPostSunday() {
+  const today = todayIST();
+  return addDaysToDateStr(today, -dateStrDayOfWeek(today));
+}
+export async function fetchScheduleRunout(supabase) {
+  const today = todayIST();
+  const off = await fetchScheduleReminderOff(supabase);
   const out = [];
   for (const batch of Object.keys(SCHEDULE_BATCH_LABELS)) {
     const { data, error } = await supabase.from('schedule_days').select('date').eq('batch', batch)
@@ -1285,6 +1300,23 @@ export async function resolveScheduledPostEmbed(supabase, row) {
   // set on the row) once a batch's schedule is within SCHEDULE_RUNOUT_DAYS
   // of running out, every time the row fires, until the next schedule is
   // loaded or the batch is marked "no more schedule coming" in /team.
+  // Weekly reminder to post the batches' schedule pictures in their public
+  // channels (2026-11-06). Two rows fire it, Sunday and Monday 00:00 IST; it
+  // stays quiet once someone taps "Done" for that week (stored as
+  // schedule_reminder_off["weekly:<sunday>"]).
+  if (row.source === 'weekly_schedule_post') {
+    const sunday = weeklyPostSunday();
+    const off = await fetchScheduleReminderOff(supabase);
+    if (off['weekly:' + sunday]) return null;
+    const isRepeat = todayIST() !== sunday;
+    const intro = row.body ? row.body + '\n\n' : '';
+    return [{
+      title: row.title || (isRepeat ? '📸 Reminder: post this week\'s schedules' : '📸 Post this week\'s schedules'),
+      description: `${intro}Time to post this week's schedule pictures for each batch in their channels.${isRepeat ? ' Not marked done yet.' : ''}\n\n${isRepeat ? 'Once they\'re posted, tap Done:' : 'Once they\'re posted, tap Done so Monday\'s reminder doesn\'t go out:'}\n[Done, schedules posted](${weeklyPostDoneUrl(sunday)})`,
+      color: row.color ?? 0x8b5cf6,
+    }];
+  }
+
   if (row.source === 'schedule_runout') {
     const due = (await fetchScheduleRunout(supabase))
       .filter(b => b.lastDate && !b.off && b.daysLeft <= SCHEDULE_RUNOUT_DAYS);

@@ -27,6 +27,7 @@
     weekly_batch_trend: 'Weekly — Batch Median Trend',
     monthly_consistency: 'Monthly — Most Consistent Student',
     schedule_runout: 'Daily — Schedule running out (team reminder)',
+    weekly_schedule_post: 'Weekly — Post the schedule pictures (team reminder)',
   };
   // Sources whose Body is a plain optional intro line with no
   // placeholders at all — unlike LIST_SOURCES (an intro above a computed
