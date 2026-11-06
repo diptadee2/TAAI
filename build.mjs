@@ -888,18 +888,21 @@ function generatePrivacyPolicy() {
   const body = `<article class="policy">
       <div class="container">
         <h1>Privacy</h1>
-        <div class="policy-updated">Last updated: 18 October 2026</div>
+        <div class="policy-updated">Last updated: 6 November 2026</div>
         <h2>What we collect</h2>
-        <p>If you use the free progress tracker, we store the name and email you sign up with, the tasks you tick, your focus timer sessions and timer settings, and the About line you choose to show. This is what powers your streak, your progress and the leaderboards. We do not ask for passwords.</p>
+        <p>If you use the free progress tracker, we store the name and email you sign up with, the tasks you tick, your focus timer sessions and timer settings, and the About line you choose to show. This is what powers your streak, your progress and the leaderboards. We do not ask for passwords: the tracker remembers you with a cookie on your device.</p>
+        <p>To keep the leaderboards friendly, the display name and About line you set are checked automatically by an AI service (Anthropic's Claude) for offensive content. Only that text is sent, not your email.</p>
         <p>If you register for the 100 pe 100% off challenge, we store the name, email, mobile number, date of birth, GATE enrollment ID and UPI ID you enter, and the Google Drive link to your GATE application PDF. We use them only to check eligibility, verify a refund claim against your GATE scorecard, and send the refund.</p>
         <h2>How the site is used</h2>
         <p>We use <a href="https://clarity.microsoft.com" target="_blank" rel="noopener noreferrer">Microsoft Clarity</a> to see how visitors use taai.live, for example which sections get read and where people click, so we can improve the site. Clarity records page activity such as clicks, scrolling and mouse movement. Anything you type into forms is hidden from it, and student names on the leaderboards are hidden too. Clarity sets cookies to do this; see <a href="https://privacy.microsoft.com/privacystatement" target="_blank" rel="noopener noreferrer">Microsoft's privacy statement</a>.</p>
         <h2>What we don't do</h2>
-        <p>We don't sell your data. Your name and focus hours appear on the tracker's public leaderboards; your email never does.</p>
+        <p>We don't sell your data. Your display name, focus hours, streak and About line appear on the tracker's public leaderboards; your email never does.</p>
+        <h2>Who stores it</h2>
+        <p>Your data is kept with the services that run the site: Supabase (database), Netlify (hosting), Microsoft Clarity (site usage) and Anthropic (name and About checks). We share it with no one else.</p>
         <h2>Courses and payments</h2>
         <p>Courses are delivered on <a href="https://learn.taai.live" target="_blank" rel="noopener noreferrer">learn.taai.live</a>, which has its own terms for accounts and payments. See also our <a href="/refund-policy">refund policy</a>.</p>
         <h2>Questions or removal</h2>
-        <p>To ask what we hold about you or to have your tracker data deleted, write to <a href="mailto:support@taai.live">support@taai.live</a>.</p>
+        <p>To ask what we hold about you, or to have your tracker or challenge data deleted, write to <a href="mailto:support@taai.live">support@taai.live</a>.</p>
       </div>
     </article>`;
   const html = `<!DOCTYPE html>
