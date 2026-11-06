@@ -28,9 +28,17 @@
 <meta name="twitter:image" content="https://taai.live/og-banner.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Poppins 400 and 600 (latin), fetched early so the page is usually drawn in its own font, not a fallback that then jumps (2026-11-06). -->
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/poppins/v24/pxiEyp8kv8JHgFVrJJfecnFHGPc.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLEj6Z1xlFd2JQEk.woff2">
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500&family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@400;500;600&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&display=swap" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500&family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@400;500;600&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet"></noscript>
 <style>
+/* Arial sized to match Poppins (2026-11-06): the page is first drawn before the
+   Google Fonts file arrives, and the plain fallback is a different size, so the
+   hero text jumped when Poppins swapped in (Lighthouse layout shift). */
+@font-face { font-family: 'Poppins Fallback'; font-weight: 100 549; src: local('Arial'), local('ArialMT'), local('Helvetica'); size-adjust: 114%; ascent-override: 92.1%; descent-override: 30.7%; line-gap-override: 8.8%; }
+@font-face { font-family: 'Poppins Fallback'; font-weight: 550 900; src: local('Arial Bold'), local('Arial-BoldMT'), local('Helvetica Bold'); size-adjust: 110%; ascent-override: 95.5%; descent-override: 31.8%; line-gap-override: 9.1%; }
 :root {
   --bg: #FFFFFF;
   --bg-soft: #FBF9FF;
@@ -56,8 +64,8 @@
   --shadow-md: 0 2px 0 rgba(20,16,43,0.03), 0 12px 32px rgba(107,75,255,0.08);
   --shadow-lg: 0 24px 60px rgba(107,75,255,0.16);
 
-  --font-display: 'Poppins', ui-sans-serif, system-ui, sans-serif;
-  --font-body: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Poppins', 'Poppins Fallback', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Poppins', 'Poppins Fallback', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'DM Mono', ui-monospace, monospace;
   --font-nav: 'Inter', ui-sans-serif, system-ui, sans-serif;
 
