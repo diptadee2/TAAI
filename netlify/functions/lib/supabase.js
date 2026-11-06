@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import ws from 'ws';
+import crypto from 'node:crypto';
 
 // The fixed set of subject ids site_notes.subject/site_lectures.subject
 // are validated against — mirrors notes-data.json's own subjects[].id
@@ -1119,6 +1120,17 @@ function formatDateHeading(dateStr) {
 // back on their own. Batch labels match /team and the tracker.
 export const SCHEDULE_BATCH_LABELS = { C: '180 Days Batch C', D: '120 Days - 70 Marks' };
 export const SCHEDULE_RUNOUT_DAYS = 5;
+// "No more schedule coming" links in the reminder post. The link carries the
+// batch and its current last date, signed with a key derived from the
+// server-only service key, so it can't be forged and stops working once a
+// newer schedule is loaded (the last date changes).
+export function scheduleDoneSig(batch, lastDate) {
+  return crypto.createHmac('sha256', 'schedule-done:' + (envVar('SUPABASE_SERVICE_KEY') || ''))
+    .update(batch + ':' + lastDate).digest('hex').slice(0, 32);
+}
+export function scheduleDoneUrl(batch, lastDate) {
+  return `https://taai.live/api/schedule-done?b=${encodeURIComponent(batch)}&d=${lastDate}&t=${scheduleDoneSig(batch, lastDate)}`;
+}
 export async function fetchScheduleRunout(supabase) {
   const today = todayIST();
   let off = {};
@@ -1286,10 +1298,11 @@ export async function resolveScheduledPostEmbed(supabase, row) {
         : `**ran out ${plural(-b.daysLeft)} ago** (last day was ${when})`;
       return `• **${b.label}**: schedule ${status}`;
     });
+    const links = due.map(b => `[No more schedule coming for ${b.label}](${scheduleDoneUrl(b.batch, b.lastDate)})`);
     const intro = row.body ? row.body + '\n\n' : '';
     return [{
       title: row.title || '⏰ Schedule running out',
-      description: `${intro}${lines.join('\n')}\n\nUpload the next schedule, or if no more is coming, switch the batch to "No more schedule coming" in /team (Site data > Settings) to stop these reminders.`,
+      description: `${intro}${lines.join('\n')}\n\nUpload the next schedule. If no more is coming, tap the link below (or use /team > Site data > Settings) to stop these reminders:\n${links.join('\n')}`,
       color: row.color ?? 0xf59e0b,
     }];
   }
