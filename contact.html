@@ -908,6 +908,14 @@ html body .call-note-icon svg path { stroke: currentColor; }
 html body .call-note p { margin: 0; font-size: 15px; line-height: 1.55; color: #2A2440; }
 html body .call-note strong { color: #111111; }
 @media (max-width: 540px) { html body .call-note { padding: 14px; gap: 12px; } html body .call-note p { font-size: 14px; } }
+/* Channel icon tiles: flat solid fills with plain hex colours (2026-11-06, "why are the icons like this": the
+   tiles showed up empty for the user; they used gradients built from CSS variables). Same on the Show more icons. */
+html body #root .ch-email .channel-icon { background: #8B5CF6 !important; }
+html body #root .ch-discord .channel-icon, html body #root .channel-more-icons .ch-discord { background: #5865F2 !important; }
+html body #root .ch-telegram .channel-icon, html body #root .channel-more-icons .ch-telegram { background: #229ED9 !important; }
+html body #root .ch-linkedin .channel-icon, html body #root .channel-more-icons .ch-linkedin { background: #0A66C2 !important; }
+html body #root .ch-whatsapp .channel-icon { background: #25D366 !important; }
+html body #root .channel-icon, html body #root .channel-icon *, html body #root .channel-more-icons span, html body #root .channel-more-icons span * { color: #FFFFFF !important; }
 </style>
 </head>
 <body data-float-stack>
@@ -1280,8 +1288,8 @@ function App() {
             )}
           </div>
           <div className="call-note" style={{ animation: 'heroIn .62s cubic-bezier(.34,1.12,.64,1) .58s both' }}>
-            <div className="call-note-icon" aria-hidden="true"><Icon.PhoneLg /></div>
-            <p><strong>Need to talk it through?</strong> We don't take direct calls. Text us on email or WhatsApp first. If it can't be sorted over text, we'll schedule a call with you.</p>
+            <div className="call-note-icon" aria-hidden="true"><Icon.Mail /></div>
+            <p><strong>Need to talk it through?</strong> We don't take direct calls. Mail us at support@taai.live first, and if it can't be sorted over email, we'll schedule a call with you.</p>
           </div>
           <div className="trust-strip" style={{ animation: 'heroIn .62s cubic-bezier(.34,1.12,.64,1) .62s both' }}>
             <div className="trust-item">

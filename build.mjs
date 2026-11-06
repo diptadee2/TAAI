@@ -872,7 +872,7 @@ function generateRefundPolicy() {
 <head>
 ${renderHead({ title: 'Refund policy | TAAI', description: 'TAAI refund policy: all purchases of courses, bundles and test series are final.', canonicalPath: '/refund-policy/' })}
 </head>
-<body data-float-stack>
+<body>
 ${renderChrome(body)}
 </body>
 </html>`;
@@ -910,7 +910,7 @@ function generatePrivacyPolicy() {
 <head>
 ${renderHead({ title: 'Privacy | TAAI', description: 'How TAAI handles your data on taai.live and the free progress tracker.', canonicalPath: '/privacy/' })}
 </head>
-<body data-float-stack>
+<body>
 ${renderChrome(body)}
 </body>
 </html>`;
