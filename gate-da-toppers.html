@@ -966,7 +966,7 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
     /* Phones and small tablets: each batch's testimonials as its own horizontal swipe row (next card peeks in), 2026-10-16 */
     @media (max-width: 768px) {
       html body #root .featured-grid, html body #root .testi-grid {
-        display: flex !important; gap: 14px !important; align-items: stretch !important; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+        display: flex !important; gap: 14px !important; align-items: flex-start !important; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
         margin-left: calc(-1 * max(var(--gutter), 24px)); margin-right: calc(-1 * max(var(--gutter), 24px));
         padding: 4px max(var(--gutter), 24px) 14px; scroll-padding-left: max(var(--gutter), 24px); scrollbar-width: none;
       }
@@ -974,7 +974,8 @@ body.footer-in-view .mobile-contact-bar a { opacity: 0 !important; pointer-event
       html body #root .is-clamped { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 8; overflow: hidden; flex: 0 0 auto !important; }
       html body #root .feat-card .quote-more, html body #root .testi-card .quote-more { margin-bottom: auto; }
       html body #root .quote-more { display: inline-block; align-self: flex-start; margin-top: -4px; background: none; border: 0; padding: 0; font: 600 14px/1.4 'Poppins', sans-serif; color: var(--nb-ink); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
-      html body #root .featured-grid > *, html body #root .testi-grid > * { flex: 0 0 min(86%, 360px); scroll-snap-align: start; min-width: 0; opacity: 1 !important; transform: none !important; }
+      html body #root .featured-grid > *, html body #root .testi-grid > * { flex: 0 0 min(86%, 360px); scroll-snap-align: start; min-width: 0; opacity: 1 !important; transform: none !important;  height: auto !important; }
+      /* 2026-11-06: cards are only as tall as their own content (no stretching to the row's tallest), so there's no empty band under "Read more". */
     }
     @media (max-width: 600px) {
       #root { --nb-shadow: 4px 4px 0 var(--nb-ink); --nb-shadow-sm: 3px 3px 0 var(--nb-ink); }
