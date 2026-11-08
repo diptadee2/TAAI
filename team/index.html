@@ -508,6 +508,18 @@
 .res-card-date { font-size: 12px; color: var(--ink-dim); }
 .res-links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px; font-size: 12.5px; }
 .res-links a { color: var(--ink); text-decoration: underline; text-underline-offset: 2px; }
+/* Resources page counters (2026-11-08) */
+.res-counts { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 8px; font-size: 12px; color: var(--ink-soft); }
+.res-counts b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.res-stats-panel { margin-bottom: 18px; }
+.res-vstats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 6px 0 12px; }
+.res-vstat { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.res-vstat b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; color: var(--ink); }
+.res-vstat span { font-size: 12px; color: var(--ink-soft); }
+.res-vbars { display: flex; align-items: flex-end; gap: 3px; height: 60px; }
+.res-vbar { flex: 1 1 0; min-width: 0; background: var(--ink-soft); opacity: .7; border-radius: 2px 2px 0 0; }
+.res-vbar:hover { opacity: 1; }
+@media (max-width: 600px) { .res-vstats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .res-missing { color: #fbbf24; }
 .res-empty { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 14px; border-top: 1px solid var(--line); }
 .res-empty-chip { font: inherit; font-size: 12.5px; padding: 5px 11px; border-radius: 999px; border: 1px dashed var(--line); background: transparent; color: var(--ink-dim); cursor: pointer; }

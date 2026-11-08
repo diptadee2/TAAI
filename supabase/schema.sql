@@ -1316,3 +1316,26 @@ ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS schedule_reminder_off JSONB N
 -- Pomodoro ring color follows the account (2026-11-08). Index into
 -- POMO_GRADIENTS in progress.js (0 Sunset .. 4 Berry); NULL = never picked.
 ALTER TABLE students ADD COLUMN IF NOT EXISTS pomo_gradient SMALLINT;
+
+-- Resources page counters (2026-11-08): visits, PDF downloads, lecture plays and
+-- slides downloads on /gate-da-free-notes. One row per IST day + kind + item, so
+-- the table stays small (no row per click). item_id is the site_notes /
+-- site_lectures id, '' for page visits. Written only through bump_resource_stat
+-- (resource-event.js), read by team-resource-stats.js.
+CREATE TABLE IF NOT EXISTS resource_stats (
+  day     DATE NOT NULL,
+  kind    TEXT NOT NULL,
+  item_id TEXT NOT NULL DEFAULT '',
+  count   INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (day, kind, item_id)
+);
+ALTER TABLE resource_stats ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON resource_stats TO service_role;
+
+CREATE OR REPLACE FUNCTION bump_resource_stat(p_day DATE, p_kind TEXT, p_item TEXT)
+RETURNS void LANGUAGE sql AS $$
+  INSERT INTO resource_stats (day, kind, item_id, count) VALUES (p_day, p_kind, p_item, 1)
+  ON CONFLICT (day, kind, item_id) DO UPDATE SET count = resource_stats.count + 1;
+$$;
+REVOKE EXECUTE ON FUNCTION bump_resource_stat(DATE, TEXT, TEXT) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION bump_resource_stat(DATE, TEXT, TEXT) TO service_role;

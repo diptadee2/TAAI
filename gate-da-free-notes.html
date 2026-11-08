@@ -1407,6 +1407,26 @@ function FilterBar({ subjects, active, setActive }) {
   );
 }
 
+// ── Usage counters (2026-11-08) ──────────────────────────────────
+// Sends a visit once per tab session, and each Download PDF / Play / Slides click
+// (at most once per item per 10 minutes in this tab) to /api/resource-event.
+// Counts show in /team Site data > Notes and Lectures. Never on localhost.
+function trackResource(kind, id) {
+  try {
+    if (location.hostname !== 'taai.live' && location.hostname !== 'www.taai.live') return;
+    if (kind !== 'visit' && !id) return;
+    const key = 'taai_res_' + kind + '_' + (id || '');
+    const last = Number(sessionStorage.getItem(key) || 0);
+    if (kind === 'visit' ? last : (Date.now() - last < 10 * 60 * 1000)) return;
+    sessionStorage.setItem(key, String(Date.now()));
+  } catch (e) {}
+  const body = JSON.stringify({ kind, id: id || '' });
+  try {
+    if (navigator.sendBeacon && navigator.sendBeacon('/api/resource-event', body)) return;
+  } catch (e) {}
+  fetch('/api/resource-event', { method: 'POST', body, keepalive: true }).catch(() => {});
+}
+
 // ── Note Card ─────────────────────────────────────────────────────
 function NoteCard({ note, accent, color, index = 0 }) {
   return (
@@ -1427,7 +1447,8 @@ function NoteCard({ note, accent, color, index = 0 }) {
         <div className="card-title">{note.title}</div>
         {note.desc && <div className="note-desc">{note.desc}</div>}
         {note.postedOn && <div className="card-date">{new Date(note.postedOn).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>}
-        <a href={note.file} target="_blank" rel="noopener noreferrer" className="btn-download">
+        <a href={note.file} target="_blank" rel="noopener noreferrer" className="btn-download"
+          onClick={() => trackResource('note', note.id)} onAuxClick={e => { if (e.button === 1) trackResource('note', note.id); }}>
           <DownloadIcon /> Download PDF
         </a>
       </div>
@@ -1518,12 +1539,13 @@ function LectureCard({ lecture, accent, color, index = 0 }) {
         {formattedDate && <div className="card-date">{formattedDate}</div>}
         <div className="card-actions">
           <a href={lecture.youtubeUrl} target="_blank" rel="noopener noreferrer" className="btn-watch"
-            onClick={markWatched} onAuxClick={e => { if (e.button === 1) markWatched(); }}>
+            onClick={() => { markWatched(); trackResource('play', lecture.id); }} onAuxClick={e => { if (e.button === 1) { markWatched(); trackResource('play', lecture.id); } }}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
             Play
           </a>
           {lecture.slidesFile && (
-            <a href={lecture.slidesFile} download className="btn-slides">
+            <a href={lecture.slidesFile} download className="btn-slides"
+              onClick={() => trackResource('slides', lecture.id)} onAuxClick={e => { if (e.button === 1) trackResource('slides', lecture.id); }}>
               <DownloadIcon /> Slides
             </a>
           )}
@@ -1613,7 +1635,7 @@ function App() {
   }, [subjects]);
 
   React.useEffect(() => {
-
+    trackResource('visit');
     Promise.all([
       fetch('notes-data.json').then(r => r.json()),
       fetch('/api/site-resources-public').then(r => r.ok ? r.json() : { notes: [], lectures: [] }).catch(() => ({ notes: [], lectures: [] })),

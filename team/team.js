@@ -337,6 +337,8 @@
     },
     // LMS price sync panel on Site data > Pricing (see lib/lms-price-sync.js)
     lmsSync: { data: null, loading: false, checking: false, error: null },
+    // Resources page counters on Site data > Notes / Lectures (team-resource-stats.js, 2026-11-08)
+    resourceStats: { data: null, loading: false, error: null },
     // A 4th Site data sub-tab (subTab: 'settings') alongside Pricing/Notes/
     // Lectures, but deliberately its own small state/functions rather than
     // shoehorned into SITE_DATA_RESOURCES' generic list-of-rows machinery
@@ -2352,6 +2354,52 @@
     });
   }
 
+  function loadResourceStats() {
+    var rs = state.resourceStats;
+    rs.loading = true; rs.error = null;
+    render();
+    api('/team-resource-stats').then(function (data) {
+      rs.data = data; rs.loading = false; render();
+    }).catch(function (err) {
+      rs.loading = false; rs.error = err.message; render();
+    });
+  }
+
+  // Visits summary shown above Notes and Lectures.
+  function renderResourceStatsPanel() {
+    var rs = state.resourceStats;
+    var refresh = '<button type="button" class="btn btn-small" id="res-stats-refresh"' + (rs.loading ? ' disabled' : '') + '>' + (rs.loading ? 'Loading…' : 'Refresh') + '</button>';
+    var body;
+    if (rs.error) body = '<div class="msg msg-error">' + escapeHtml(rs.error) + '</div>';
+    else if (!rs.data) body = '<div class="field-hint" style="margin:0;">Loading counts…</div>';
+    else if (rs.data.ready === false) body = '<div class="field-hint" style="margin:0;">Counting isn\'t set up yet (the resource_stats table is missing). ' + escapeHtml(rs.data.error || '') + '</div>';
+    else {
+      var v = rs.data.visits;
+      var max = Math.max.apply(null, v.daily.map(function (d) { return d.count; }).concat([1]));
+      var bars = v.daily.map(function (d) {
+        return '<span class="res-vbar" style="height:' + Math.max(2, Math.round(d.count / max * 100)) + '%" title="' + escapeHtml(fmtPostedOn(d.day) + ': ' + d.count + ' visit' + (d.count === 1 ? '' : 's')) + '"></span>';
+      }).join('');
+      var stat = function (n, label) { return '<div class="res-vstat"><b>' + n.toLocaleString('en-IN') + '</b><span>' + label + '</span></div>'; };
+      body = '<div class="res-vstats">' + stat(v.today, 'today') + stat(v.d7, 'last 7 days') + stat(v.d30, 'last 30 days') + stat(v.total, 'all time') + '</div>' +
+        '<div class="res-vbars" aria-label="Visits per day, last 30 days">' + bars + '</div>' +
+        '<div class="field-hint" style="margin:6px 0 0;">Visits per day, last 30 days. A visit counts once per browser tab; downloads and plays count once per item per 10 minutes. Counting started 8 Nov 2026.</div>';
+    }
+    return '<section class="pricing-group res-stats-panel"><div class="res-section-head"><div class="pricing-group-heading">Resources page visits</div>' + refresh + '</div>' + body + '</section>';
+  }
+
+  // "12 downloads · 3 this week" line on a note/lecture card.
+  function resourceCountsHtml(type, id) {
+    var d = state.resourceStats.data;
+    if (!d || d.ready === false) return '';
+    var it = (d.items || {})[String(id || '').toLowerCase()] || {};
+    var part = function (k, noun) {
+      var c = it[k] || { total: 0, d7: 0 };
+      return '<span><b>' + c.total + '</b> ' + noun + (c.total === 1 ? '' : 's') + (c.d7 ? ' · ' + c.d7 + ' this week' : '') + '</span>';
+    };
+    var parts = type === 'notes' ? [part('note', 'download')] : [part('play', 'play'), part('slides', 'slides download')];
+    return '<div class="res-counts">' + parts.join('') + '</div>';
+  }
+
   function loadLmsSync(runNow) {
     var ls = state.lmsSync;
     if (runNow) ls.checking = true; else ls.loading = true;
@@ -2550,6 +2598,7 @@
       return true;
     }
     if (type === 'pricing' && !state.lmsSync.data && !state.lmsSync.loading) loadLmsSync(false);
+    if ((type === 'notes' || type === 'lectures') && !state.resourceStats.data && !state.resourceStats.loading) loadResourceStats();
     if (state.siteData.rows[type] !== null) return false;
     loadSiteData(type);
     return true;
@@ -2589,7 +2638,7 @@
         ? '<div class="empty">No pricing rows yet — these are added directly (with their matching course card), not through this page.</div>'
         : '<div class="empty">No rows yet. Click "+ New' + (type === 'notes' ? ' note' : ' lecture') + '" above to add one.</div>';
     }
-    return type === 'pricing' ? renderLmsSyncPanel() + renderPricingGroups(rows) : renderResourceSections(type, rows);
+    return type === 'pricing' ? renderLmsSyncPanel() + renderPricingGroups(rows) : renderResourceStatsPanel() + renderResourceSections(type, rows);
   }
 
   // Notes and Lectures as cards, one section per subject in the same order as the
@@ -2621,7 +2670,7 @@
         '<div class="res-card-body">' +
           (r.lecture_number != null && r.lecture_number !== '' ? '<div class="res-kicker">Lecture ' + escapeHtml(r.lecture_number) + '</div>' : '') +
           '<div class="pricing-card-name">' + escapeHtml(r.title || '(untitled)') + '</div>' + date +
-          '<div class="res-links">' + links.join('') + '</div>' +
+          '<div class="res-links">' + links.join('') + '</div>' + resourceCountsHtml(type, r.id) +
         '</div>' + actions + '</div>';
     }
     return '<div class="pricing-card res-card">' +
@@ -2629,7 +2678,7 @@
         '<div class="res-kicker">PDF note</div>' +
         '<div class="pricing-card-name">' + escapeHtml(r.title || '(untitled)') + '</div>' +
         (r.description ? '<div class="res-desc">' + escapeHtml(r.description) + '</div>' : '') + date +
-        '<div class="res-links">' + (r.file_url ? '<a href="' + escapeHtml(r.file_url) + '" target="_blank" rel="noopener">Open PDF ↗</a>' : '<span class="res-missing">No file link</span>') + '</div>' +
+        '<div class="res-links">' + (r.file_url ? '<a href="' + escapeHtml(r.file_url) + '" target="_blank" rel="noopener">Open PDF ↗</a>' : '<span class="res-missing">No file link</span>') + '</div>' + resourceCountsHtml(type, r.id) +
       '</div>' + actions + '</div>';
   }
   function renderResourceSections(type, rows) {
@@ -3482,6 +3531,9 @@
     document.querySelectorAll('.js-chal-delete').forEach(function (btn) {
       btn.addEventListener('click', function () { deleteChallengeRow(btn.getAttribute('data-id'), btn.getAttribute('data-name')); });
     });
+
+    var resStatsBtn = document.getElementById('res-stats-refresh');
+    if (resStatsBtn) resStatsBtn.addEventListener('click', loadResourceStats);
 
     var lmsCheckBtn = document.getElementById('lms-check-now');
     if (lmsCheckBtn) lmsCheckBtn.addEventListener('click', function () { loadLmsSync(true); });
