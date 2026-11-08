@@ -1408,16 +1408,22 @@ function FilterBar({ subjects, active, setActive }) {
 }
 
 // ── Usage counters (2026-11-08) ──────────────────────────────────
-// Sends a visit once per tab session, and each Download PDF / Play / Slides click
+// Sends a visit once per tab session (plus 'new' the first time a browser ever opens the page), and each Download PDF / Play / Slides click
 // (at most once per item per 10 minutes in this tab) to /api/resource-event.
 // Counts show in /team Site data > Notes and Lectures. Never on localhost.
 function trackResource(kind, id) {
   try {
     if (location.hostname !== 'taai.live' && location.hostname !== 'www.taai.live') return;
-    if (kind !== 'visit' && !id) return;
+    // A browser that has never opened this page before also counts as a new visitor
+    // (remembered in localStorage, so clearing site data or a new browser counts again).
+    if (kind === 'visit' && !localStorage.getItem('taai_res_seen')) {
+      localStorage.setItem('taai_res_seen', String(Date.now()));
+      trackResource('new');
+    }
+    if (kind !== 'visit' && kind !== 'new' && !id) return;
     const key = 'taai_res_' + kind + '_' + (id || '');
     const last = Number(sessionStorage.getItem(key) || 0);
-    if (kind === 'visit' ? last : (Date.now() - last < 10 * 60 * 1000)) return;
+    if ((kind === 'visit' || kind === 'new') ? last : (Date.now() - last < 10 * 60 * 1000)) return;
     sessionStorage.setItem(key, String(Date.now()));
   } catch (e) {}
   const body = JSON.stringify({ kind, id: id || '' });

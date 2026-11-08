@@ -2375,14 +2375,17 @@
     else if (rs.data.ready === false) body = '<div class="field-hint" style="margin:0;">Counting isn\'t set up yet (the resource_stats table is missing). ' + escapeHtml(rs.data.error || '') + '</div>';
     else {
       var v = rs.data.visits;
+      var nv = rs.data.newVisitors || { total: 0, d7: 0, d30: 0, today: 0 };
       var max = Math.max.apply(null, v.daily.map(function (d) { return d.count; }).concat([1]));
       var bars = v.daily.map(function (d) {
-        return '<span class="res-vbar" style="height:' + Math.max(2, Math.round(d.count / max * 100)) + '%" title="' + escapeHtml(fmtPostedOn(d.day) + ': ' + d.count + ' visit' + (d.count === 1 ? '' : 's')) + '"></span>';
+        var f = Math.min(d.fresh || 0, d.count);
+        return '<span class="res-vbar" style="height:' + Math.max(2, Math.round(d.count / max * 100)) + '%" title="' + escapeHtml(fmtPostedOn(d.day) + ': ' + d.count + ' visit' + (d.count === 1 ? '' : 's') + ', ' + f + ' new') + '">' +
+          (f ? '<span class="res-vbar-new" style="height:' + Math.round(f / Math.max(d.count, 1) * 100) + '%"></span>' : '') + '</span>';
       }).join('');
-      var stat = function (n, label) { return '<div class="res-vstat"><b>' + n.toLocaleString('en-IN') + '</b><span>' + label + '</span></div>'; };
-      body = '<div class="res-vstats">' + stat(v.today, 'today') + stat(v.d7, 'last 7 days') + stat(v.d30, 'last 30 days') + stat(v.total, 'all time') + '</div>' +
+      var stat = function (n, f, label) { return '<div class="res-vstat"><b>' + n.toLocaleString('en-IN') + '</b><span>' + label + '</span><em>' + f.toLocaleString('en-IN') + ' new</em></div>'; };
+      body = '<div class="res-vstats">' + stat(v.today, nv.today, 'visits today') + stat(v.d7, nv.d7, 'last 7 days') + stat(v.d30, nv.d30, 'last 30 days') + stat(v.total, nv.total, 'all time') + '</div>' +
         '<div class="res-vbars" aria-label="Visits per day, last 30 days">' + bars + '</div>' +
-        '<div class="field-hint" style="margin:6px 0 0;">Visits per day, last 30 days. A visit counts once per browser tab; downloads and plays count once per item per 10 minutes. Counting started 8 Nov 2026.</div>';
+        '<div class="field-hint" style="margin:6px 0 0;">Visits per day, last 30 days; the brighter part of each bar is new visitors. A visit counts once per browser tab; a new visitor is a browser opening the page for the first time (a new phone, another browser or cleared site data counts again). Downloads and plays count once per item per 10 minutes. Counting started 8 Nov 2026.</div>';
     }
     return '<section class="pricing-group res-stats-panel"><div class="res-section-head"><div class="pricing-group-heading">Resources page visits</div>' + refresh + '</div>' + body + '</section>';
   }

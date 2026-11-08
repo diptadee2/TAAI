@@ -1,4 +1,5 @@
-// GET /api/team-resource-stats -> { today, visits: {total, d7, d30, today, daily: [{day, count}]},
+// GET /api/team-resource-stats -> { today, visits: {total, d7, d30, today, daily: [{day, count, fresh}]},
+//                                   newVisitors: {total, d7, d30, today},
 //                                   items: { <id>: { note|play|slides: {total, d7, d30} } } }
 //
 // Admin-only read of the Resources page counters (resource_stats, written by
@@ -27,9 +28,19 @@ export async function handler(event, context) {
   const from7 = addDays(today, -6), from30 = addDays(today, -29);
   const visits = { total: 0, d7: 0, d30: 0, today: 0, daily: [] };
   const byDay = {};
+  const fresh = { total: 0, d7: 0, d30: 0, today: 0 };
+  const newByDay = {};
   const items = {};
   for (const r of rows) {
     const c = r.count || 0;
+    if (r.kind === 'new') {
+      fresh.total += c;
+      if (r.day >= from7) fresh.d7 += c;
+      if (r.day >= from30) fresh.d30 += c;
+      if (r.day === today) fresh.today += c;
+      newByDay[r.day] = (newByDay[r.day] || 0) + c;
+      continue;
+    }
     if (r.kind === 'visit') {
       visits.total += c;
       if (r.day >= from7) visits.d7 += c;
@@ -44,6 +55,6 @@ export async function handler(event, context) {
     if (r.day >= from7) k.d7 += c;
     if (r.day >= from30) k.d30 += c;
   }
-  for (let i = 29; i >= 0; i--) { const d = addDays(today, -i); visits.daily.push({ day: d, count: byDay[d] || 0 }); }
-  return json(200, { ready: true, today, visits, items });
+  for (let i = 29; i >= 0; i--) { const d = addDays(today, -i); visits.daily.push({ day: d, count: byDay[d] || 0, fresh: newByDay[d] || 0 }); }
+  return json(200, { ready: true, today, visits, newVisitors: fresh, items });
 }
