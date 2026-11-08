@@ -1,5 +1,6 @@
 // GET  /api/pomo-settings?email=...                     -> { work, shortBreak, longBreak, cycle } (nulls if never customized)
 // POST /api/pomo-settings  { email, work, shortBreak, longBreak, cycle } -> saves and echoes them back
+// POST /api/pomo-settings  { email, gradient }  -> saves only the ring color (0-4)
 //
 // Persists a student's pomodoro timer durations so a customized setup
 // follows them across devices/browsers instead of only living in one
@@ -41,6 +42,23 @@ export async function handler(event) {
 
     const email = String(body.email || '').trim().toLowerCase();
     if (!email) return json(400, { error: 'email is required' });
+
+    // Ring color only: { email, gradient } (index into POMO_GRADIENTS in
+    // progress.js, 0-4). Its own update so a missing pomo_gradient column
+    // (before the SQL is run) can never break saving durations.
+    if (body.gradient !== undefined && body.work === undefined) {
+      const g = Math.round(Number(body.gradient));
+      if (!Number.isFinite(g) || g < 0 || g > 4) return json(400, { error: 'gradient must be 0-4' });
+      const { data, error } = await supabase
+        .from('students')
+        .update({ pomo_gradient: g })
+        .eq('email', email)
+        .select('pomo_gradient')
+        .maybeSingle();
+      if (error) return json(500, { error: error.message });
+      if (!data) return json(404, { error: 'student not found' });
+      return json(200, { gradient: data.pomo_gradient });
+    }
 
     // 120, not 180 — must match POMO_WORK_MAX_MINUTES in progress.js. Used
     // to be 180 here even after the client lowered its own cap to 120

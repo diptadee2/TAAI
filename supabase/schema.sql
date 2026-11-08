@@ -1312,3 +1312,7 @@ ALTER TABLE students ADD COLUMN IF NOT EXISTS rankers_batch_at TIMESTAMPTZ;
 -- 'schedule_runout' scheduled post skips a batch while its current last date
 -- equals the stored one; a newer schedule turns reminders back on by itself.
 ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS schedule_reminder_off JSONB NOT NULL DEFAULT '{}'::jsonb;
+
+-- Pomodoro ring color follows the account (2026-11-08). Index into
+-- POMO_GRADIENTS in progress.js (0 Sunset .. 4 Berry); NULL = never picked.
+ALTER TABLE students ADD COLUMN IF NOT EXISTS pomo_gradient SMALLINT;

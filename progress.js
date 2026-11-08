@@ -275,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-10-28-2';
+  var CLIENT_VERSION = '2026-11-08-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2070,6 +2070,25 @@
       if (!pomo.running && pomo.secondsLeft === pomo.totalSeconds) {
         pomo.totalSeconds = pomoDurationFor(pomo.mode);
         pomo.secondsLeft = pomo.totalSeconds;
+      }
+    }
+
+    // Ring color follows the account (2026-11-08): it used to live only in
+    // this browser's localStorage, so a new browser, a private window,
+    // cleared site data or Safari's 7-day storage limit silently put a
+    // student back on Sunset. The server value wins once set. If the
+    // server has none yet but this browser has a non-default pick, push
+    // that up once, so everyone's existing choice is kept.
+    if (state.student && !isStale && data.pomoSettings) {
+      var remoteGradient = data.pomoSettings.gradient;
+      if (remoteGradient != null) {
+        var g = clampPomoGradient(remoteGradient);
+        if (g !== pomoSettings.gradient) {
+          pomoSettings.gradient = g;
+          savePomoSettings();
+        }
+      } else if (pomoSettings.gradient) {
+        saveRemotePomoGradient();
       }
     }
 
@@ -4073,6 +4092,18 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: state.student.email, work: pomoSettings.work, shortBreak: pomoSettings.shortBreak, longBreak: pomoSettings.longBreak, cycle: pomoSettings.cycle }),
     }).catch(function () { /* non-critical — localStorage on this device still has it */ });
+  }
+
+  // Saves only the ring color to the account (see applyTrackerData's
+  // gradient merge). Separate from saveRemotePomoSettings so picking a
+  // color never writes durations, and a failure here never touches them.
+  function saveRemotePomoGradient() {
+    if (!state.student) return;
+    api('/pomo-settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: state.student.email, gradient: pomoSettings.gradient }),
+    }).catch(function () { /* non-critical, this browser still has it */ });
   }
 
   // Reads the settings form, clamps/validates, persists, and — only if the
@@ -6362,6 +6393,7 @@
     function selectPomoGradientSwatch(btn) {
       pomoSettings.gradient = clampPomoGradient(btn.getAttribute('data-gradient-index'));
       savePomoSettings();
+      saveRemotePomoGradient();
       applyPomoGradient();
       Array.prototype.forEach.call(document.querySelectorAll('.pomo-gradient-swatch'), function (other) {
         var isSelected = other === btn;

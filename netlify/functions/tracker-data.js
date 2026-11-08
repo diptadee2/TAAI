@@ -115,6 +115,7 @@ function studentDerived(row, readFailed) {
       shortBreak: row?.pomo_short_break_min ?? null,
       longBreak: row?.pomo_long_break_min ?? null,
       cycle: row?.pomo_cycle_sessions ?? null,
+      gradient: row?.pomo_gradient ?? null,
     },
     malpractice: {
       incidentCount: row ? row.malpractice_incident_count || 0 : 0,
