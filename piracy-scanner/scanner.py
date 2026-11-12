@@ -249,6 +249,7 @@ async def scan():
     resolves = 0
     found = {}            # link -> candidate row
     invites = {}          # invite hash -> via
+    post_hits = {}        # channel id -> posts found by the all-public-posts search
 
     def enqueue(ch, depth, via):
         if not isinstance(ch, types.Channel) or ch.id in seen_ids:
@@ -280,6 +281,38 @@ async def scan():
             res = await call(client, functions.contacts.SearchRequest(q=term, limit=50))
             for ch in (res.chats if res else []):
                 enqueue(ch, 0, "search: " + term)
+
+        # 1b. Search inside ALL public posts on Telegram (Telegram's "search public
+        # posts", 2025). Finds sale/promo posts in channels whose name has nothing
+        # to do with TAAI. Every account gets a few free searches a day; Telegram
+        # Premium gets more. Only free searches are used: it never pays Stars.
+        post_searches = 0
+        for term in terms:
+            try:
+                quota = await call(client, functions.channels.CheckSearchPostsFloodRequest(query=term))
+            except Stop:
+                raise
+            except Exception as e:
+                print("post search not available:", type(e).__name__)
+                break
+            if not quota or not (quota.query_is_free or quota.remains > 0):
+                break
+            try:
+                res = await call(client, functions.channels.SearchPostsRequest(
+                    offset_rate=0, offset_peer=types.InputPeerEmpty(), offset_id=0, limit=50, query=term))
+            except Stop:
+                raise
+            except Exception as e:
+                print("post search stopped:", type(e).__name__)
+                break
+            post_searches += 1
+            for ch in getattr(res, "chats", None) or []:
+                enqueue(ch, 0, "public post search: " + term)
+            for m in getattr(res, "messages", None) or []:
+                peer = getattr(m, "peer_id", None)
+                if isinstance(peer, types.PeerChannel):
+                    post_hits.setdefault(peer.channel_id, []).append(m)
+        print(f"public post searches used: {post_searches}")
 
         # Channels already known (takedown log, earlier finds)
         for name in sorted(db.known_usernames()):
@@ -324,6 +357,7 @@ async def scan():
             except Exception as e:
                 print("read failed:", type(e).__name__)
 
+            msgs.extend(post_hits.get(ch.id, []))
             uniq = {m.id: m for m in msgs if m}
             trail = set()
             hit_courses = set()

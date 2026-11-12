@@ -78,6 +78,15 @@ first run asks for the login code and saves `taai-scanner.session`).
 /team > Piracy > Found > "Search terms": one term per line. Saved in the
 database, read at the start of every run; no server access needed.
 
+## Telegram Premium on the spare number
+
+Optional, but it helps. Telegram's "search public posts" looks through posts
+in every public channel, so it finds sale and promo posts in channels whose
+name has nothing to do with TAAI (like "GATE ALL BRANCH" selling TAAI for
+₹2,000). Every account gets a few of these searches free each day; Premium
+gets more. The scanner uses only the free ones (it never pays Stars) and
+prints how many it used.
+
 ## How it decides something is a match
 
 Each channel gets points: TAAI (including T*AI, T.A.A.I, TAA1, fancy fonts) or
