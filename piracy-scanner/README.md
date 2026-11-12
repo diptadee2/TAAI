@@ -4,50 +4,50 @@ Finds public Telegram channels, groups and posts that look like they share
 TAAI's paid courses, and lists them in /team > Piracy > Found for the team to
 review. It never reports anything itself; notices are still sent by a person.
 
-It needs a real Telegram account (Telegram doesn't let bots or websites search),
-so it runs on a small always-on server, once a day.
+It needs a real Telegram account (Telegram doesn't let bots or websites search).
+It runs once a day on GitHub Actions, logged into a spare account.
 
 ## What you need
 
 1. **A spare SIM** with Telegram installed. Don't use anyone's personal
-   number: if Telegram limits the account, nothing else is affected.
-   Leave the account in normal use (profile name, maybe join a few public
-   channels by hand) for a few days before the first scan; brand-new accounts
+   number: if Telegram limits the account, nothing else is affected. Use the
+   account normally for a few days before the first scan; brand-new accounts
    that start searching straight away get limited faster.
 2. **Telegram API keys** for that account: log in at https://my.telegram.org
-   with the spare number, open "API development tools", create an app
-   (any name, platform "Other"). Note the `api_id` and `api_hash`.
-3. **A small Linux server** (Ubuntu 24.04, 1 GB RAM is plenty): any VPS
-   around ₹400-800 a month (Hetzner, DigitalOcean, AWS Lightsail Mumbai, …).
-4. The site's `SUPABASE_URL` and `SUPABASE_SERVICE_KEY` (same as `.env`).
-5. The SQL for `piracy_candidates` (end of `supabase/schema.sql`) run once.
+   with the spare number, open "API development tools", create an app (any
+   name, platform "Other"). Note the `api_id` and `api_hash`.
+3. The SQL for `piracy_reports` and `piracy_candidates` (end of
+   `supabase/schema.sql`) run once.
 
-## Setup on the server
+No server: it runs on GitHub Actions (free), from
+`.github/workflows/piracy-scanner.yml`, every day at 07:30 IST.
 
-```bash
-sudo apt update && sudo apt install -y python3-venv git
-sudo adduser --disabled-password --gecos "" scanner
-sudo -iu scanner
-# copy this folder to /home/scanner/piracy-scanner (scp, or git clone the repo and move it)
-cd ~/piracy-scanner
-python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-cp .env.example .env && nano .env        # fill in the five values
-.venv/bin/python scanner.py              # FIRST RUN: asks for the login code Telegram sends to the spare phone
-exit
-```
+## Setup (once, about 15 minutes)
 
-The first run creates `taai-scanner.session`, the saved Telegram login. Keep it
-private: anyone with that file is logged into the account. If the account has
-two-step verification, the first run also asks for that password.
+1. **Log in once on any computer**, with the spare phone nearby:
+   ```bash
+   pip install telethon
+   python piracy-scanner/login.py
+   ```
+   Enter the API id and hash, the spare number and the code Telegram sends.
+   It prints a long text string: the saved login.
+2. **Add five secrets** on GitHub: the taai2025/TAAI repository > Settings >
+   Secrets and variables > Actions > New repository secret:
+   - `TG_API_ID`, `TG_API_HASH`: from my.telegram.org
+   - `TG_SESSION`: the string from step 1
+   - `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`: same as the site's `.env`
+3. **Run it once by hand**: Actions tab > "Piracy scanner" > Run workflow.
+   When it finishes, finds appear in /team > Piracy > Found.
 
-Then schedule it daily (07:30 IST, give or take 15 minutes):
+The saved login string is as good as the account's password: keep it only in
+the GitHub secret. GitHub secrets are never shown in logs, and the scanner
+never prints channel names or links (the repository is public, so its Actions
+logs are too). If Telegram ever logs the scanner out, the run fails with a
+message saying so: run `login.py` again and replace `TG_SESSION`.
 
-```bash
-sudo cp /home/scanner/piracy-scanner/taai-scanner.service /home/scanner/piracy-scanner/taai-scanner.timer /etc/systemd/system/
-sudo systemctl daemon-reload && sudo systemctl enable --now taai-scanner.timer
-sudo systemctl start taai-scanner.service    # run once now
-journalctl -u taai-scanner.service -n 50     # see what it found
-```
+Running it on a computer instead also works: copy `.env.example` to `.env`,
+fill it in, `pip install -r requirements.txt`, then `python scanner.py` (the
+first run asks for the login code and saves `taai-scanner.session`).
 
 ## Changing what it searches for
 

@@ -1,0 +1,34 @@
+# Daily Telegram piracy scan (2026-11-12). Runs piracy-scanner/scanner.py on
+# GitHub's machines (free), so no server is needed. Finds go to Supabase and
+# show in /team > Piracy > Found. Needs these repository secrets:
+# TG_API_ID, TG_API_HASH, TG_SESSION (from piracy-scanner/login.py),
+# SUPABASE_URL, SUPABASE_SERVICE_KEY. The repo is public, so the scanner never
+# prints channel names or links in the log.
+name: Piracy scanner
+
+on:
+  schedule:
+    - cron: '0 2 * * *'   # 07:30 IST
+  workflow_dispatch: {}    # "Run workflow" button on GitHub
+
+jobs:
+  scan:
+    # Only the main repo has the secrets; the personal mirror skips it.
+    if: github.repository == 'taai2025/TAAI'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: piracy-scanner
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r piracy-scanner/requirements.txt
+      - run: python piracy-scanner/scanner.py
+        env:
+          TG_API_ID: ${{ secrets.TG_API_ID }}
+          TG_API_HASH: ${{ secrets.TG_API_HASH }}
+          TG_SESSION: ${{ secrets.TG_SESSION }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}

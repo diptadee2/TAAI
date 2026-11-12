@@ -3910,7 +3910,7 @@
   function renderPiracyFound() {
     var p = state.piracy;
     if (!p.candidatesReady) {
-      return '<div class="field-hint" style="font-size:14px;line-height:1.6;">The Telegram scanner isn\'t set up yet. It runs on a small server logged into a spare Telegram account and lists channels that look like they share TAAI courses here, for you to review. Setup steps are in <code>piracy-scanner/README.md</code> in the code (ask the developer). It also needs the <code>piracy_candidates</code> SQL run once.</div>';
+      return '<div class="field-hint" style="font-size:14px;line-height:1.6;">The Telegram scanner isn\'t set up yet. It runs daily on GitHub Actions, logged into a spare Telegram account, and lists channels that look like they share TAAI courses here, for you to review. Setup steps are in <code>piracy-scanner/README.md</code> in the code (ask the developer). It also needs the <code>piracy_candidates</code> SQL run once.</div>';
     }
     var inLog = {};
     p.rows.forEach(function (r) { inLog[pirKey(r.link)] = r; });

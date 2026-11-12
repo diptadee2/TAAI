@@ -1,7 +1,7 @@
 """TAAI piracy scanner (2026-11-12).
 
-Runs on a small always-on server, logged into a spare Telegram account, once a
-day (systemd timer). It never reports anything by itself: it finds public
+Runs once a day on GitHub Actions (.github/workflows/piracy-scanner.yml),
+logged into a spare Telegram account. It never reports anything by itself: it finds public
 Telegram channels, groups and posts that look like they share TAAI's paid
 courses and puts them in the `piracy_candidates` table. The team reviews them
 in /team > Piracy > Found, and sends notices by hand.
@@ -35,6 +35,7 @@ from datetime import datetime, timezone
 
 import httpx
 from telethon import TelegramClient, errors, functions, types
+from telethon.sessions import StringSession
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -57,6 +58,9 @@ API_HASH = os.environ.get("TG_API_HASH", "")
 PHONE = os.environ.get("TG_PHONE", "")
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
 SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
+# The saved Telegram login as a text string (made once with login.py). Used on
+# GitHub Actions, where there is no disk to keep a .session file between runs.
+SESSION = os.environ.get("TG_SESSION", "").strip()
 
 MIN_SCORE = 4
 MAX_RESOLVES = 60          # username lookups per run (Telegram limits these)
@@ -186,7 +190,8 @@ class Supabase:
             headers={"Prefer": "resolution=merge-duplicates,return=minimal"},
         )
         if r.status_code >= 300:
-            print("save failed", r.status_code, r.text[:500], file=sys.stderr)
+            print("save failed", r.status_code, r.text[:300], file=sys.stderr)
+            sys.exit(1)
 
 
 async def pause():
@@ -224,8 +229,14 @@ async def scan():
         sys.exit("Missing TG_API_ID / TG_API_HASH / SUPABASE_URL / SUPABASE_SERVICE_KEY in .env")
     db = Supabase()
     terms = db.terms()
-    client = TelegramClient(os.path.join(HERE, "taai-scanner"), API_ID, API_HASH)
-    await client.start(phone=PHONE)
+    if SESSION:
+        client = TelegramClient(StringSession(SESSION), API_ID, API_HASH)
+        await client.connect()
+        if not await client.is_user_authorized():
+            sys.exit("TG_SESSION is no longer logged in. Run login.py again and update the secret.")
+    else:
+        client = TelegramClient(os.path.join(HERE, "taai-scanner"), API_ID, API_HASH)
+        await client.start(phone=PHONE)
     started = time.time()
     print(f"scan started, {len(terms)} terms")
 
@@ -257,7 +268,7 @@ async def scan():
         except Stop:
             raise
         except Exception as e:
-            print("resolve", name, e)
+            print("lookup failed:", type(e).__name__)
 
     try:
         # 1. Name search
@@ -307,7 +318,7 @@ async def scan():
             except (errors.ChannelPrivateError, errors.ChatAdminRequiredError):
                 pass
             except Exception as e:
-                print("read", link, e)
+                print("read failed:", type(e).__name__)
 
             uniq = {m.id: m for m in msgs if m}
             trail = set()
