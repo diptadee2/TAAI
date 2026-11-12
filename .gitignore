@@ -17,3 +17,10 @@ deno.lock
 
 # Internal planning doc, not part of the deployed site
 /taai-technical-spec-v4.md
+
+# Piracy scanner: Telegram login session and local settings (never commit)
+piracy-scanner/*.session
+piracy-scanner/*.session-journal
+piracy-scanner/.env
+piracy-scanner/.venv/
+piracy-scanner/__pycache__/

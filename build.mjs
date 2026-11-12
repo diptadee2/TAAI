@@ -971,7 +971,7 @@ function build() {
   // should ever be able to fetch (this loop has no other allowlist, so
   // anything not named here gets copied and publicly served as-is).
   const SKIP_DIRS = new Set([
-    'dist', 'node_modules', '.git', 'content', 'netlify', 'supabase', 'scripts',
+    'dist', 'node_modules', '.git', 'content', 'netlify', 'supabase', 'scripts', 'piracy-scanner',
     'CLAUDE.md', 'build.mjs', 'package.json', 'package-lock.json', 'netlify.toml',
   ]);
   for (const entry of fs.readdirSync(SRC)) {

@@ -77,6 +77,14 @@ export async function handler(event, context) {
       patch.piracy_signature = t ? t : null;
     }
 
+    // Piracy scanner search terms, one per line (2026-11-12). Empty = the
+    // scanner's built-in list.
+    if (typeof body.piracy_terms === 'string') {
+      const t = body.piracy_terms.trim();
+      if (t.length > 6000) return json(400, { error: 'too many search terms (max 6000 characters)' });
+      patch.piracy_terms = t ? t : null;
+    }
+
     // "100 pe 100% off" registration cutoff (2026-10-18). Empty string means
     // "back to the default" (lib/challenge.js) and is stored as NULL.
     // {batch: last schedule date} marks "no more schedule coming" for that

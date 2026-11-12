@@ -357,7 +357,7 @@
     // and the registration cutoff date.
     challenge: { loaded: false, loading: false, saving: false, error: null, rows: [], cutoff: null, open: true, msg: null, q: '' },
     // Piracy takedown log + notice generator (2026-11-12).
-    piracy: { loaded: false, loading: false, error: null, msg: null, rows: [], signature: null, sub: 'log', filter: 'all', q: '', checking: false, saving: false, sigSaving: false, draft: null },
+    piracy: { loaded: false, loading: false, error: null, msg: null, rows: [], signature: null, sub: 'log', filter: 'all', q: '', checking: false, saving: false, sigSaving: false, draft: null, candidates: [], candidatesReady: false, terms: null, termsSaving: false, foundFilter: 'new' },
     msg: null,
     msgType: null,
   };
@@ -3606,6 +3606,9 @@
     api('/team-piracy').then(function (data) {
       p.rows = data.rows || [];
       p.signature = data.signature || null;
+      p.terms = data.terms || null;
+      p.candidates = data.candidates || [];
+      p.candidatesReady = !!data.candidatesReady;
       p.error = data.error || null;
       p.loaded = true; p.loading = false;
       render();
@@ -3764,11 +3767,12 @@
     return '<div class="card">' +
       '<div class="tabs" style="margin:0 0 14px;">' +
         '<button class="tab-btn' + (p.sub === 'log' ? ' active' : '') + '" data-pirtab="log">📋 Log</button>' +
+        '<button class="tab-btn' + (p.sub === 'found' ? ' active' : '') + '" data-pirtab="found">🔎 Found' + (p.candidates.filter(function (c) { return c.status === 'new'; }).length ? ' (' + p.candidates.filter(function (c) { return c.status === 'new'; }).length + ' new)' : '') + '</button>' +
         '<button class="tab-btn' + (p.sub === 'notice' ? ' active' : '') + '" data-pirtab="notice">✍️ New notice</button>' +
       '</div>' +
       (p.error ? '<div class="msg msg-error">' + escapeHtml(p.error) + '</div>' : '') +
       (p.msg ? '<div class="msg msg-ok">' + escapeHtml(p.msg) + '</div>' : '') +
-      (p.sub === 'notice' ? renderPiracyNotice() : renderPiracyLog()) +
+      (p.sub === 'notice' ? renderPiracyNotice() : p.sub === 'found' ? renderPiracyFound() : renderPiracyLog()) +
     '</div>';
   }
 
@@ -3894,6 +3898,110 @@
       }).catch(function (err) { p.sigSaving = false; p.error = err.message; render(); });
     });
     bindPiracyPreview();
+    bindPiracyFound();
+  }
+
+  // Scanner finds (piracy-scanner/scanner.py writes piracy_candidates).
+  var PIR_SCANNER_DEFAULT_TERMS = ['TAAI', 'TAAI GATE', 'TAAI GATE DA', 'Taai course', 'TAAI Manoj', 'Manoj Kumar GATE DA',
+    'GATE DA 2027 course', 'GATE DA 2028 course', 'GATE DA full course free', 'Maths ML Bundle GATE DA',
+    'Linear Algebra -GATE DA', 'Probability -GATE DA', 'Statistics - GATE DA', 'Calculus and Optimization -GATE DA',
+    'GATE DA Maths Practice Quizzes', 'TAAI Full Length Tests', 'Say Hi to ML'];
+
+  function renderPiracyFound() {
+    var p = state.piracy;
+    if (!p.candidatesReady) {
+      return '<div class="field-hint" style="font-size:14px;line-height:1.6;">The Telegram scanner isn\'t set up yet. It runs on a small server logged into a spare Telegram account and lists channels that look like they share TAAI courses here, for you to review. Setup steps are in <code>piracy-scanner/README.md</code> in the code (ask the developer). It also needs the <code>piracy_candidates</code> SQL run once.</div>';
+    }
+    var inLog = {};
+    p.rows.forEach(function (r) { inLog[pirKey(r.link)] = r; });
+    var list = p.candidates.filter(function (c) { return c.status === p.foundFilter; });
+    var counts = { 'new': 0, confirmed: 0, dismissed: 0 };
+    p.candidates.forEach(function (c) { counts[c.status] = (counts[c.status] || 0) + 1; });
+    var cards = list.length ? list.map(function (c) {
+      var logged = inLog[pirKey(c.link)];
+      var reasons = Array.isArray(c.reasons) ? c.reasons : [];
+      var samples = Array.isArray(c.sample_links) ? c.sample_links : [];
+      var files = Array.isArray(c.file_names) ? c.file_names : [];
+      return '<div class="pir-found">' +
+        '<div class="pir-found-head">' +
+          '<div><div class="pir-name">' + escapeHtml(c.title || c.username || c.link) + '</div>' +
+            '<a href="' + escapeHtml(c.link) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(c.link.replace('https://', '')) + '</a>' +
+            '<div class="field-hint">' + escapeHtml({ channel: 'Channel', group: 'Group', invite: 'Private invite' }[c.kind] || c.kind || '') +
+              (c.subscribers ? ' · ' + Number(c.subscribers).toLocaleString('en-IN') + ' members' : '') +
+              ' · found ' + escapeHtml(fmtIstDateTime(c.first_seen_at)) + '</div></div>' +
+          '<div class="pir-score" title="How strongly it matches TAAI (4 or more is shown)">' + c.score + '<span>score</span></div>' +
+        '</div>' +
+        (logged ? '<div class="pir-warn pir-warn-dup">🔁 Already in the log: reported ' + escapeHtml(pirFmtDate(logged.last_reported_on)) + ', ' + escapeHtml((PIR_STATUS[logged.status] || [logged.status])[0]) + '.</div>' : '') +
+        '<ul class="pir-reasons">' + reasons.map(function (r) { return '<li>' + escapeHtml(r) + '</li>'; }).join('') + '</ul>' +
+        (samples.length ? '<div class="field-hint">Posts: ' + samples.map(function (l) { return '<a href="' + escapeHtml(l) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(l.replace(/^https:\/\/t\.me\//, '')) + '</a>'; }).join(' · ') + '</div>' : '') +
+        (files.length ? '<div class="field-hint">Files: ' + files.map(escapeHtml).join(' · ') + '</div>' : '') +
+        (c.found_via ? '<div class="field-hint">How it was found: ' + escapeHtml(c.found_via) + '</div>' : '') +
+        '<div class="pir-found-actions">' +
+          (c.status === 'new'
+            ? '<button class="btn btn-primary btn-small js-pir-found-draft" data-id="' + escapeHtml(c.id) + '">It\'s piracy: draft a notice</button>' +
+              '<button class="btn btn-small js-pir-found-status" data-id="' + escapeHtml(c.id) + '" data-status="dismissed">Not piracy</button>'
+            : '<button class="btn btn-small js-pir-found-status" data-id="' + escapeHtml(c.id) + '" data-status="new">Move back to New</button>') +
+        '</div>' +
+      '</div>';
+    }).join('') : '<div class="field-hint">' + (p.foundFilter === 'new' ? 'Nothing new to review. The scanner runs daily around 7:30 AM IST.' : 'None.') + '</div>';
+    return (
+      '<div class="chal-toolbar">' +
+        '<select id="pir-found-filter">' +
+          [['new', 'New (' + counts['new'] + ')'], ['confirmed', 'Turned into a notice (' + counts.confirmed + ')'], ['dismissed', 'Not piracy (' + counts.dismissed + ')']].map(function (o) {
+            return '<option value="' + o[0] + '"' + (p.foundFilter === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
+          }).join('') +
+        '</select>' +
+      '</div>' +
+      '<div class="field-hint" style="margin:0 0 12px;">Found by the Telegram scanner. Open each link and check it really is TAAI content before drafting a notice: the scanner only matches names, words and file names.</div>' +
+      cards +
+      '<details class="pir-sig" style="margin-top:18px;"><summary>Search terms</summary>' +
+        '<textarea id="pir-terms-text" rows="10" placeholder="' + escapeHtml(PIR_SCANNER_DEFAULT_TERMS.join('\n')) + '">' + escapeHtml(p.terms || '') + '</textarea>' +
+        '<div style="display:flex;gap:8px;margin-top:8px;"><button type="button" class="btn btn-primary" id="pir-terms-save"' + (p.termsSaving ? ' disabled' : '') + '>' + (p.termsSaving ? 'Saving…' : 'Save search terms') + '</button></div>' +
+        '<div class="field-hint">One per line. Leave empty to use the built-in list shown in grey. Course names, odd lesson titles and the ways pirates disguise "TAAI" work best. Used from the next daily run.</div>' +
+      '</details>'
+    );
+  }
+
+  function bindPiracyFound() {
+    var p = state.piracy;
+    var ff = document.getElementById('pir-found-filter');
+    if (ff) ff.addEventListener('change', function () { p.foundFilter = ff.value; render(); });
+    function setStatus(id, status) {
+      return api('/team-piracy', { method: 'PATCH', body: JSON.stringify({ id: id, candidate: true, status: status }) }).then(function () {
+        p.candidates.forEach(function (c) { if (c.id === id) c.status = status; });
+      });
+    }
+    document.querySelectorAll('.js-pir-found-status').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        setStatus(btn.getAttribute('data-id'), btn.getAttribute('data-status')).then(render).catch(function (err) { p.error = err.message; render(); });
+      });
+    });
+    document.querySelectorAll('.js-pir-found-draft').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var c = p.candidates.filter(function (x) { return x.id === btn.getAttribute('data-id'); })[0];
+        if (!c) return;
+        var sec = pirNewSection();
+        sec.name = c.title || '';
+        sec.link = c.link;
+        sec.subs = c.subscribers ? String(c.subscribers) : '';
+        sec.scope = c.kind === 'invite' ? 'suspected' : 'whole';
+        sec.messages = (Array.isArray(c.sample_links) ? c.sample_links : []).join('\n');
+        sec.nature = (Array.isArray(c.reasons) ? c.reasons : []).join('. ') + '.';
+        var blank = p.draft.sections.length === 1 && !p.draft.sections[0].link && !p.draft.sections[0].messages;
+        if (blank) p.draft.sections = [sec]; else p.draft.sections.push(sec);
+        pirSaveDraft();
+        setStatus(c.id, 'confirmed').catch(function () {});
+        p.sub = 'notice'; p.msg = 'Added to the notice draft. Check the details and rewrite "Nature of infringement" in your own words.'; render();
+      });
+    });
+    var ts = document.getElementById('pir-terms-save');
+    if (ts) ts.addEventListener('click', function () {
+      var t = document.getElementById('pir-terms-text').value;
+      p.termsSaving = true; p.error = null; render();
+      api('/site-settings', { method: 'PUT', body: JSON.stringify({ piracy_terms: t }) }).then(function () {
+        p.termsSaving = false; p.terms = t.trim() || null; p.msg = 'Search terms saved.'; render();
+      }).catch(function (err) { p.termsSaving = false; p.error = err.message; render(); });
+    });
   }
 
   function bindEvents() {

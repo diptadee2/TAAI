@@ -1370,3 +1370,33 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON piracy_reports TO service_role;
 
 -- Signature block for takedown notices (kept out of the public repo).
 ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS piracy_signature TEXT;
+
+-- Piracy scanner finds (2026-11-12): channels/groups/invites the Telegram
+-- scanner (piracy-scanner/scanner.py, runs on a separate server) thinks share
+-- TAAI content. Reviewed in /team > Piracy > Found: status 'new' | 'confirmed'
+-- (turned into a notice) | 'dismissed' (not piracy; the scanner keeps it
+-- dismissed and only refreshes its numbers).
+CREATE TABLE IF NOT EXISTS piracy_candidates (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  link          TEXT NOT NULL UNIQUE,
+  kind          TEXT,
+  title         TEXT,
+  username      TEXT,
+  tg_id         TEXT,
+  subscribers   INTEGER,
+  score         INTEGER NOT NULL DEFAULT 0,
+  reasons       JSONB NOT NULL DEFAULT '[]'::jsonb,
+  sample_links  JSONB NOT NULL DEFAULT '[]'::jsonb,
+  file_names    JSONB NOT NULL DEFAULT '[]'::jsonb,
+  found_via     TEXT,
+  status        TEXT NOT NULL DEFAULT 'new',
+  first_seen_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_seen_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  reviewed_at   TIMESTAMPTZ
+);
+ALTER TABLE piracy_candidates ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON piracy_candidates TO service_role;
+
+-- Search terms for the scanner, one per line, edited in /team (NULL = the
+-- scanner's built-in list).
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS piracy_terms TEXT;

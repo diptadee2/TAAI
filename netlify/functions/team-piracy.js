@@ -1,5 +1,6 @@
 // /team > Piracy (2026-11-12). Admin only.
-// GET    /api/team-piracy                    -> { rows, signature }
+// GET    /api/team-piracy                    -> { rows, signature, terms, candidates, candidatesReady }
+// PATCH  /api/team-piracy {id, candidate:true, status} -> review a scanner find
 // POST   /api/team-piracy {action:'add', notice_label, reported_on, items:[...]}
 //          items: { link, kind, scope, channel_name, subscribers, role }
 //          Adds or updates one log row per link (a link reported again keeps
@@ -27,13 +28,19 @@ export async function handler(event, context) {
   if (event.httpMethod === 'GET') {
     const { data, error } = await supabase.from(PIRACY_TABLE).select('*')
       .order('last_reported_on', { ascending: false });
-    let signature = null;
+    let signature = null, terms = null, candidates = [], candidatesReady = false;
     try {
-      const { data: s } = await supabase.from('site_settings').select('piracy_signature').eq('id', 'main').maybeSingle();
+      const { data: s } = await supabase.from('site_settings').select('*').eq('id', 'main').maybeSingle();
       signature = (s && s.piracy_signature) || null;
-    } catch (e) { /* column not added yet */ }
-    if (error) return json(200, { rows: [], signature, error: error.message });
-    return json(200, { rows: data || [], signature });
+      terms = (s && s.piracy_terms) || null;
+    } catch (e) { /* columns not added yet */ }
+    try {
+      const { data: c, error: cErr } = await supabase.from('piracy_candidates').select('*')
+        .order('score', { ascending: false }).limit(500);
+      if (!cErr) { candidates = c || []; candidatesReady = true; }
+    } catch (e) { /* table not added yet */ }
+    if (error) return json(200, { rows: [], signature, terms, candidates, candidatesReady, error: error.message });
+    return json(200, { rows: data || [], signature, terms, candidates, candidatesReady });
   }
 
   let body;
@@ -93,6 +100,16 @@ export async function handler(event, context) {
       }
     }
     return json(200, { ok: true, added, updated });
+  }
+
+  // Scanner finds: mark reviewed ('confirmed' once turned into a notice,
+  // 'dismissed' when it isn't piracy, 'new' to undo).
+  if (event.httpMethod === 'PATCH' && body.candidate) {
+    if (!body.id || !['new', 'confirmed', 'dismissed'].includes(body.status)) return json(400, { error: 'id and a valid status required' });
+    const { error } = await supabase.from('piracy_candidates')
+      .update({ status: body.status, reviewed_at: body.status === 'new' ? null : new Date().toISOString() }).eq('id', body.id);
+    if (error) return json(500, { error: error.message });
+    return json(200, { ok: true });
   }
 
   if (event.httpMethod === 'PATCH') {

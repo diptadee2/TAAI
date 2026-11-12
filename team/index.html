@@ -553,8 +553,8 @@
   .pir-actions { width: 1%; }
   .pir-actions .btn { display: block; width: 100%; white-space: nowrap; }
   .pir-actions .btn + .btn { margin-top: 6px; }
-  #pir-filter { height: 36px; padding: 0 10px; font: inherit; font-size: 14px; color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 8px; }
-  #pir-filter option { color: #000; }
+  #pir-filter, #pir-found-filter { height: 36px; padding: 0 10px; font: inherit; font-size: 14px; color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 8px; }
+  #pir-filter option, #pir-found-filter option { color: #000; }
   .pir-st { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; }
   .pir-st-up { color: #fca5a5; border-color: rgba(248,113,113,0.5); background: rgba(248,113,113,0.12); }
   .pir-st-removed { color: #86efac; border-color: rgba(74,222,128,0.5); background: rgba(74,222,128,0.12); }
@@ -579,6 +579,13 @@
   .pir-warnings { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
   .pir-warn { font-size: 13px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); word-break: break-word; }
   .pir-warn-dup, .pir-warn-invite, .pir-warn-mismatch { border-color: rgba(251,191,36,0.5); background: rgba(251,191,36,0.08); }
+  .pir-found { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .pir-found a { word-break: break-all; }
+  .pir-found-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+  .pir-score { display: flex; flex-direction: column; align-items: center; font-size: 20px; font-weight: 700; line-height: 1; }
+  .pir-score span { font-size: 10px; font-weight: 500; color: var(--ink-soft, #aaa); margin-top: 3px; }
+  .pir-reasons { margin: 0; padding-left: 18px; font-size: 13px; }
+  .pir-found-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
   @media (max-width: 600px) { .pir-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
