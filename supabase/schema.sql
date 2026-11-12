@@ -1417,3 +1417,17 @@ CREATE TABLE IF NOT EXISTS piracy_scan_runs (
 );
 ALTER TABLE piracy_scan_runs ENABLE ROW LEVEL SECURITY;
 GRANT SELECT, INSERT, UPDATE, DELETE ON piracy_scan_runs TO service_role;
+
+-- Gmail auto-log of takedown notices (2026-11-13): one row per sent email
+-- that piracy-ingest.js has logged, so the Apps Script can re-send safely.
+CREATE TABLE IF NOT EXISTS piracy_ingested (
+  message_id  TEXT PRIMARY KEY,
+  subject     TEXT,
+  sent_on     DATE,
+  links       INT NOT NULL DEFAULT 0,
+  added       INT NOT NULL DEFAULT 0,
+  updated     INT NOT NULL DEFAULT 0,
+  ingested_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+ALTER TABLE piracy_ingested ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON piracy_ingested TO service_role;

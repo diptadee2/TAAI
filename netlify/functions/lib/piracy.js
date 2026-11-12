@@ -13,6 +13,8 @@
 // Private channel links (t.me/c/<id>/...) can't be seen from outside, so they
 // stay "can't check".
 
+import crypto from 'node:crypto';
+
 export const PIRACY_TABLE = 'piracy_reports';
 const UA = 'Mozilla/5.0 (compatible; TAAI-takedown-check/1.0)';
 
@@ -186,4 +188,134 @@ export async function piracyStatusEmbed(supabase, row) {
   let description = parts.join('\n\n');
   if (description.length > 4000) description = description.slice(0, 3990) + '…';
   return [{ title: row.title || '🛡️ Piracy takedown status', description, color: row.color ?? 0xef4444 }];
+}
+
+const KINDS = ['channel', 'message', 'invite', 'private', 'account'];
+const SCOPES = ['whole', 'messages', 'suspected', 'account', 'promo'];
+const clip = (v, n) => (v == null ? null : String(v).trim().slice(0, n) || null);
+
+// Adds or updates one log row per link (a link reported again keeps its row:
+// times_reported +1, last_reported_on / notice_label updated). Shared by
+// /team's "Add to log" and the Gmail auto-log (piracy-ingest.js).
+export async function addPiracyItems(supabase, { items, notice_label, reported_on }) {
+  const reportedOn = /^\d{4}-\d{2}-\d{2}$/.test(reported_on || '') ? reported_on : todayIST();
+  const notice = clip(notice_label, 120);
+  const seen = [];
+  const clean = [];
+  for (const it of (items || []).slice(0, 300)) {
+    const link = normalizeTgLink(it.link);
+    if (!link || seen.includes(tgKey(link))) continue;
+    seen.push(tgKey(link));
+    const type = tgLinkType(link);
+    clean.push({
+      link,
+      kind: KINDS.includes(it.kind) ? it.kind : type,
+      scope: SCOPES.includes(it.scope) ? it.scope : null,
+      channel_name: clip(it.channel_name, 200),
+      subscribers: Number.isFinite(+it.subscribers) && +it.subscribers > 0 ? Math.round(+it.subscribers) : null,
+      role: clip(it.role, 200),
+    });
+  }
+  if (!clean.length) return { added: 0, updated: 0, empty: true };
+  const { data: existing, error: exErr } = await supabase.from(PIRACY_TABLE).select('id, link, times_reported, status');
+  if (exErr) throw exErr;
+  const byLink = Object.fromEntries((existing || []).map(r => [tgKey(r.link), r]));
+  let added = 0, updated = 0;
+  for (const row of clean) {
+    const ex = byLink[tgKey(row.link)];
+    if (ex) {
+      const patch = { last_reported_on: reportedOn, notice_label: notice, times_reported: (ex.times_reported || 1) + 1 };
+      for (const k of ['scope', 'channel_name', 'subscribers', 'role']) if (row[k] != null) patch[k] = row[k];
+      if (ex.status === 'removed') patch.status = 'reported';
+      const { error } = await supabase.from(PIRACY_TABLE).update(patch).eq('id', ex.id);
+      if (error) throw error;
+      updated++;
+    } else {
+      const { error } = await supabase.from(PIRACY_TABLE).insert(Object.assign({}, row, {
+        notice_label: notice, first_reported_on: reportedOn, last_reported_on: reportedOn,
+        status: row.kind === 'private' ? 'unchecked' : 'reported',
+      }));
+      if (error) throw error;
+      added++;
+    }
+  }
+  return { added, updated };
+}
+
+// Reads a sent takedown notice (plain text, written in /team or in Claude
+// chat) and returns log items. Uses the notice format's headings to tell a
+// whole channel from single messages, suspected channels and accounts; a
+// notice without those headings still logs every t.me link it contains.
+export function parseNoticeText(text) {
+  let body = String(text || '').replace(/\r/g, '');
+  // Drop quoted earlier mail (replies / forwards) so it isn't logged twice.
+  body = body.split(/\n\s*On .{5,200}wrote:\s*\n/)[0];
+  body = body.split(/\n-{2,}\s*Forwarded message\s*-{2,}/i)[0];
+  const lines = body.split('\n').filter(l => !/^\s*>/.test(l));
+  const linkRe = /(?:https?:\/\/)?(?:www\.)?(?:t\.me|telegram\.me|telegram\.dog)\/[A-Za-z0-9_+\/]+/g;
+  const items = [];
+  let sections = [];
+  let sec = null;
+  let mode = null; // 'channel' | 'samples' | 'messages' | 'suspected' | 'ref' | 'accounts' | null
+  const newSec = () => { sec = { scope: null, name: null, items: [] }; sections.push(sec); };
+  let sawHeading = false;
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+    const up = line.replace(/[:.]+$/, '').toUpperCase();
+    if (/^INFRINGING CHANNEL$/.test(up)) { if (!sec || sec.scope) newSec(); sec.scope = 'whole'; mode = 'channel'; sawHeading = true; continue; }
+    if (/^SAMPLE INFRINGING MESSAGES?$/.test(up)) { if (!sec) newSec(); sec.scope = sec.scope || 'whole'; mode = 'samples'; sawHeading = true; continue; }
+    if (/^INFRINGING MESSAGES?$/.test(up)) { if (!sec || sec.scope) newSec(); sec.scope = 'messages'; mode = 'messages'; sawHeading = true; continue; }
+    if (/^SUSPECTED CHANNELS?$/.test(up)) { if (!sec || sec.scope) newSec(); sec.scope = 'suspected'; mode = 'suspected'; sawHeading = true; continue; }
+    if (/^CHANNEL$/.test(up)) { if (!sec) newSec(); mode = 'ref'; continue; }
+    if (/^ASSOCIATED ACCOUNTS?$/.test(up)) { if (!sec) newSec(); mode = 'accounts'; sawHeading = true; continue; }
+    if (/^(NATURE OF INFRINGEMENT|ORIGINAL TAAI CONTENT|SUPPORTING DOCUMENTATION)$/.test(up)) { mode = null; continue; }
+    if (!sawHeading || !mode) continue;
+    const links = line.match(linkRe) || [];
+    if (mode === 'ref') {
+      const name = line.split(/\s+[–-]\s+(?:https?:\/\/)?t\.me|\s*\((?:private channel|https?:)/)[0].trim();
+      if (name && !/^(https?:\/\/)?t\.me/.test(name)) sec.name = name;
+      const subs = line.match(/([\d,]+)\s+(subscribers|members)/);
+      if (subs) sec.subs = parseInt(subs[1].replace(/,/g, ''), 10);
+      const pid = line.match(/ID:\s*(-?\d{6,})/);
+      if (pid && !links.length) links.push(pid[1]);
+      for (const l of links) if (!sec.items.some(i => tgKey(i.link) === tgKey(l))) sec.items.push({ link: l, kind: null, chan: true });
+      mode = null;
+      continue;
+    }
+    for (const l of links) {
+      const type = tgLinkType(normalizeTgLink(l));
+      if (mode === 'accounts') {
+        const role = line.split(/\s+[–—-]\s+/).slice(1).join(' – ').trim() || null;
+        sec.items.push({ link: l, kind: 'account', scope: 'account', role });
+      } else if (mode === 'channel') {
+        sec.items.push({ link: l, kind: type === 'message' ? 'message' : type, chan: type !== 'message' });
+      } else {
+        sec.items.push({ link: l, kind: type, chan: type === 'channel' || type === 'invite' });
+      }
+    }
+  }
+  if (!sawHeading) {
+    const all = body.match(linkRe) || [];
+    return all.map(l => ({ link: l, kind: null, scope: null }));
+  }
+  for (const s of sections) {
+    for (const it of s.items) {
+      items.push({
+        link: it.link,
+        kind: it.kind || tgLinkType(normalizeTgLink(it.link)),
+        scope: it.scope || s.scope,
+        channel_name: s.name,
+        subscribers: it.chan ? s.subs : null,
+        role: it.role || null,
+      });
+    }
+  }
+  return items;
+}
+
+// Key the Gmail script sends with every notice (derived from the service
+// key, so nothing new to configure). Shown to admins in /team.
+export function piracyIngestKey(serviceKey) {
+  return crypto.createHmac('sha256', 'piracy-ingest:' + (serviceKey || '')).update('v1').digest('hex').slice(0, 32);
 }

@@ -3610,6 +3610,7 @@
       p.candidates = data.candidates || [];
       p.candidatesReady = !!data.candidatesReady;
       p.runs = data.runs || [];
+      p.ingest = data.ingest || null;
       p.error = data.error || null;
       p.loaded = true; p.loading = false;
       render();
@@ -3620,6 +3621,74 @@
     var t = null;
     rows.forEach(function (r) { if (r.checked_at && (!t || r.checked_at > t)) t = r.checked_at; });
     return t;
+  }
+
+  // Gmail auto-log (2026-11-13): an Apps Script in the support@taai.live
+  // mailbox sends every notice emailed out to piracy-ingest.js, which logs
+  // its links. This panel shows the script (with the key filled in) and the
+  // last emails it logged.
+  function pirAppsScript(key) {
+    return [
+      '// TAAI takedown auto-log. Runs inside the support@taai.live Gmail.',
+      '// Sends every takedown notice you email out to taai.live/team > Piracy.',
+      "var ENDPOINT = 'https://taai.live/api/piracy-ingest';",
+      "var KEY = '" + key + "';",
+      "var SEARCH = 'in:sent (subject:infringement OR subject:takedown) newer_than:14d';",
+      '',
+      'function logTakedownNotices() {',
+      '  var props = PropertiesService.getScriptProperties();',
+      '  GmailApp.search(SEARCH, 0, 50).forEach(function (thread) {',
+      '    thread.getMessages().forEach(function (m) {',
+      "      if (m.getFrom().toLowerCase().indexOf('telegram') !== -1) return; // Telegram's replies",
+      '      var id = m.getId();',
+      '      if (props.getProperty(id)) return;',
+      '      var res = UrlFetchApp.fetch(ENDPOINT, {',
+      "        method: 'post', contentType: 'application/json', muteHttpExceptions: true,",
+      '        payload: JSON.stringify({ key: KEY, messageId: id, subject: m.getSubject(),',
+      '          sentAt: m.getDate().toISOString(), body: m.getPlainBody() })',
+      '      });',
+      "      if (res.getResponseCode() === 200) props.setProperty(id, '1');",
+      '    });',
+      '  });',
+      '}',
+      '',
+      '// Run this once: logs recent notices now, then checks every 15 minutes.',
+      'function setup() {',
+      '  ScriptApp.getProjectTriggers().forEach(function (t) { ScriptApp.deleteTrigger(t); });',
+      "  ScriptApp.newTrigger('logTakedownNotices').timeBased().everyMinutes(15).create();",
+      '  logTakedownNotices();',
+      '}',
+    ].join('\n');
+  }
+
+  function renderPiracyIngest() {
+    var g = state.piracy.ingest;
+    if (!g) return '';
+    var recent = (g.recent || []);
+    var status = !g.ready
+      ? '<div class="msg msg-error">Not set up yet: the developer needs to run the piracy_ingested SQL first.</div>'
+      : recent.length
+        ? '<div class="field-hint" style="margin-bottom:8px;">Last emails logged:</div><ul class="pir-ingest-list">' + recent.map(function (r) {
+            return '<li><b>' + escapeHtml(pirFmtDate(r.sent_on)) + '</b> ' + escapeHtml(r.subject || '(no subject)') +
+              ' <span class="field-hint">' + r.links + ' link' + (r.links === 1 ? '' : 's') + (r.added ? ', ' + r.added + ' new' : '') + '</span></li>';
+          }).join('') + '</ul>'
+        : '<div class="field-hint">Nothing logged from Gmail yet.</div>';
+    return '<details class="pir-ingest"' + (g.ready && !recent.length ? ' open' : '') + '>' +
+      '<summary>📧 Auto-log notices you email from Gmail' + (recent.length ? ' <span class="pir-ingest-on">On</span>' : '') + '</summary>' +
+      '<div class="pir-ingest-body">' +
+        status +
+        '<p>Write the notice anywhere (Claude chat is fine) and email it from support@taai.live with "Infringement" or "Takedown" in the subject. Within 15 minutes every Telegram link in it is added to this log. The same email is never counted twice.</p>' +
+        '<p><b>One-time setup (5 minutes), signed in as support@taai.live:</b></p>' +
+        '<ol>' +
+          '<li>Open <a href="https://script.google.com/home/projects/create" target="_blank" rel="noopener noreferrer">script.google.com</a> (it opens a new project).</li>' +
+          '<li>Delete what\'s in the editor and paste the script below. Name the project "TAAI takedown log".</li>' +
+          '<li>Choose <b>setup</b> in the function menu at the top and press <b>Run</b>. Allow access to Gmail when Google asks (click Advanced, then Go to TAAI takedown log).</li>' +
+          '<li>Done. Notices already sent in the last 14 days are logged straight away.</li>' +
+        '</ol>' +
+        '<div class="pir-ingest-copy"><button type="button" class="btn btn-small" id="pir-ingest-copy">Copy script</button><span class="field-hint">Keep it private: the key lets anyone add links to this log.</span></div>' +
+        '<textarea readonly class="pir-ingest-script" id="pir-ingest-script" rows="10">' + escapeHtml(pirAppsScript(g.key)) + '</textarea>' +
+      '</div>' +
+    '</details>';
   }
 
   function renderPiracyLog() {
@@ -3662,7 +3731,7 @@
         '</tr>';
       }).join('') +
       '</tbody></table></div>'
-    ) : '<div class="field-hint">' + (p.rows.length ? 'Nothing matches.' : 'No links logged yet. Draft a notice and press "Add to log", or ask the developer to import the existing log.') + '</div>';
+    ) : '<div class="field-hint">' + (p.rows.length ? 'Nothing matches.' : 'No links logged yet. Draft a notice and press "Add to log", or set up the Gmail auto-log above.') + '</div>';
     return (
       '<div class="chal-stats">' +
         '<div class="chal-stat"><b>' + p.rows.length + '</b><span>links reported</span></div>' +
@@ -3679,6 +3748,7 @@
         '<input type="search" id="pir-search" placeholder="Search link, channel, account or notice" value="' + escapeHtml(p.q || '') + '">' +
         '<button type="button" class="btn" id="pir-check"' + (p.checking ? ' disabled' : '') + '>' + (p.checking ? 'Checking Telegram…' : '↻ Check all now') + '</button>' +
       '</div>' +
+      renderPiracyIngest() +
       '<div class="field-hint" style="margin:6px 0 12px;">Checked daily at 9 AM IST from Telegram\'s public pages' + (last ? '. Last check: ' + escapeHtml(fmtIstDateTime(last)) : '') + '. A weekly summary can go to Discord: add an Announcements post with the "Piracy takedown status" source.</div>' +
       table
     );
@@ -3838,6 +3908,8 @@
     var search = document.getElementById('pir-search');
     if (search) search.addEventListener('change', function () { p.q = search.value.trim(); render(); });
     if (search) search.addEventListener('keydown', function (e) { if (e.key === 'Enter') { p.q = search.value.trim(); render(); } });
+    var ingestCopy = document.getElementById('pir-ingest-copy');
+    if (ingestCopy) ingestCopy.addEventListener('click', function () { pirCopy('pir-ingest-script', ingestCopy); });
     var check = document.getElementById('pir-check');
     if (check) check.addEventListener('click', function () { p.msg = null; p.error = null; pirRunCheck(); });
     document.querySelectorAll('.js-pir-delete').forEach(function (btn) {

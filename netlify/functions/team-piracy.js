@@ -9,10 +9,8 @@
 // PATCH  /api/team-piracy {id, status?, notes?}  -> manual status / notes
 // DELETE /api/team-piracy?id=<uuid>
 import { getSupabase, json, requireAdmin } from './lib/supabase.js';
-import { PIRACY_TABLE, normalizeTgLink, tgKey, tgLinkType, checkPiracyLinks } from './lib/piracy.js';
+import { PIRACY_TABLE, checkPiracyLinks, addPiracyItems, piracyIngestKey } from './lib/piracy.js';
 
-const KINDS = ['channel', 'message', 'invite', 'private', 'account'];
-const SCOPES = ['whole', 'messages', 'suspected', 'account', 'promo'];
 const STATUSES = ['reported', 'up', 'removed', 'moved', 'unchecked'];
 
 function todayIST() {
@@ -45,8 +43,15 @@ export async function handler(event, context) {
         .order('ran_at', { ascending: false }).limit(60);
       if (!rErr) runs = r || [];
     } catch (e) { /* table not added yet */ }
-    if (error) return json(200, { rows: [], signature, terms, candidates, candidatesReady, runs, error: error.message });
-    return json(200, { rows: data || [], signature, terms, candidates, candidatesReady, runs });
+    let ingested = [], ingestReady = false;
+    try {
+      const { data: g, error: gErr } = await supabase.from('piracy_ingested').select('*')
+        .order('ingested_at', { ascending: false }).limit(10);
+      if (!gErr) { ingested = g || []; ingestReady = true; }
+    } catch (e) { /* table not added yet */ }
+    const ingest = { key: piracyIngestKey(process.env.SUPABASE_SERVICE_KEY), ready: ingestReady, recent: ingested };
+    if (error) return json(200, { rows: [], signature, terms, candidates, candidatesReady, runs, ingest, error: error.message });
+    return json(200, { rows: data || [], signature, terms, candidates, candidatesReady, runs, ingest });
   }
 
   let body;
@@ -61,51 +66,12 @@ export async function handler(event, context) {
   }
 
   if (event.httpMethod === 'POST' && body.action === 'add') {
-    const items = Array.isArray(body.items) ? body.items.slice(0, 300) : [];
-    if (!items.length) return json(400, { error: 'nothing to add' });
-    const reportedOn = /^\d{4}-\d{2}-\d{2}$/.test(body.reported_on || '') ? body.reported_on : todayIST();
-    const notice = clip(body.notice_label, 120);
-    const links = [];
-    const clean = [];
-    for (const it of items) {
-      const link = normalizeTgLink(it.link);
-      if (!link || links.includes(tgKey(link))) continue;
-      links.push(tgKey(link));
-      const type = tgLinkType(link);
-      clean.push({
-        link,
-        kind: KINDS.includes(it.kind) ? it.kind : (type === 'channel' ? 'channel' : type),
-        scope: SCOPES.includes(it.scope) ? it.scope : null,
-        channel_name: clip(it.channel_name, 200),
-        subscribers: Number.isFinite(+it.subscribers) && +it.subscribers > 0 ? Math.round(+it.subscribers) : null,
-        role: clip(it.role, 200),
-      });
-    }
-    if (!clean.length) return json(400, { error: 'no valid Telegram links' });
-    const { data: existing, error: exErr } = await supabase.from(PIRACY_TABLE)
-      .select('id, link, times_reported, status');
-    if (exErr) return json(500, { error: exErr.message });
-    const byLink = Object.fromEntries((existing || []).map(r => [tgKey(r.link), r]));
-    let added = 0, updated = 0;
-    for (const row of clean) {
-      const ex = byLink[tgKey(row.link)];
-      if (ex) {
-        const patch = { last_reported_on: reportedOn, notice_label: notice, times_reported: (ex.times_reported || 1) + 1 };
-        for (const k of ['scope', 'channel_name', 'subscribers', 'role']) if (row[k] != null) patch[k] = row[k];
-        if (ex.status === 'removed') patch.status = 'reported';
-        const { error } = await supabase.from(PIRACY_TABLE).update(patch).eq('id', ex.id);
-        if (error) return json(500, { error: error.message });
-        updated++;
-      } else {
-        const { error } = await supabase.from(PIRACY_TABLE).insert(Object.assign({}, row, {
-          notice_label: notice, first_reported_on: reportedOn, last_reported_on: reportedOn,
-          status: row.kind === 'private' ? 'unchecked' : 'reported',
-        }));
-        if (error) return json(500, { error: error.message });
-        added++;
-      }
-    }
-    return json(200, { ok: true, added, updated });
+    if (!Array.isArray(body.items) || !body.items.length) return json(400, { error: 'nothing to add' });
+    try {
+      const r = await addPiracyItems(supabase, { items: body.items, notice_label: body.notice_label, reported_on: body.reported_on });
+      if (r.empty) return json(400, { error: 'no valid Telegram links' });
+      return json(200, { ok: true, added: r.added, updated: r.updated });
+    } catch (e) { return json(500, { error: e.message }); }
   }
 
   // Scanner finds: mark reviewed ('confirmed' once turned into a notice,
