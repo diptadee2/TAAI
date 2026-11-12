@@ -70,6 +70,7 @@ POSTS_PER_SEARCH = 30
 RECENT_POSTS = 60
 MAX_DEPTH = 2
 PAUSE = (1.5, 3.5)         # seconds between Telegram calls
+MAX_POST_SEARCHES = 5      # "search public posts" per run (the account gets 10 free a day; leave 5 for manual use)
 
 # Used when /team has no search terms saved (site_settings.piracy_terms).
 DEFAULT_TERMS = [
@@ -288,6 +289,8 @@ async def scan():
         # Premium gets more. Only free searches are used: it never pays Stars.
         post_searches = 0
         for term in terms:
+            if post_searches >= MAX_POST_SEARCHES:
+                break
             try:
                 quota = await call(client, functions.channels.CheckSearchPostsFloodRequest(query=term))
             except Stop:

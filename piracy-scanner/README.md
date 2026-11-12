@@ -84,8 +84,10 @@ Optional, but it helps. Telegram's "search public posts" looks through posts
 in every public channel, so it finds sale and promo posts in channels whose
 name has nothing to do with TAAI (like "GATE ALL BRANCH" selling TAAI for
 ₹2,000). Every account gets a few of these searches free each day; Premium
-gets more. The scanner uses only the free ones (it never pays Stars) and
-prints how many it used.
+gets more. The scanner uses at most 5 per run (`MAX_POST_SEARCHES`), only free
+ones (it never pays Stars), so the rest of the day's searches stay
+available in the app. It prints how many it used. It spends them on the
+first 5 search terms in /team, so put the most useful terms at the top.
 
 ## How it decides something is a match
 
