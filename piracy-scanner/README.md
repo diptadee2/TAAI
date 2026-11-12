@@ -7,6 +7,30 @@ review. It never reports anything itself; notices are still sent by a person.
 It needs a real Telegram account (Telegram doesn't let bots or websites search).
 It runs once a day on GitHub Actions, logged into a spare account.
 
+## Two ways to run it
+
+- **From a computer, by hand (simplest).** Double-click
+  `run-scanner.command` on a Mac once or twice a week. Setup below.
+- **Automatically every day on GitHub Actions** (free, no computer needed).
+  Setup further down. Skipped quietly until its secrets are added.
+
+## Run it from a Mac
+
+1. Get the spare SIM and API keys (see "What you need").
+2. Copy the `piracy-scanner` folder to the Mac, double-click
+   `run-scanner.command`. The first time it opens `.env`: fill in the five
+   values (API id and hash, the spare number with +91, and the site's
+   `SUPABASE_URL` / `SUPABASE_SERVICE_KEY`), save, and double-click again.
+3. It installs what it needs, then asks for the code Telegram sends to the
+   spare phone (and the two-step password, if set). That login is saved in
+   `taai-scanner.session` next to it, so later runs need nothing.
+4. When it says "Done", open /team > Piracy > Found.
+
+If macOS says it can't be opened (unidentified developer): right-click it >
+Open > Open, once. Needs Python 3 (`python3 --version` in Terminal; if
+missing, macOS offers to install it). Keep `.env` and `taai-scanner.session`
+private: together they are a login to the spare account.
+
 ## What you need
 
 1. **A spare SIM** with Telegram installed. Don't use anyone's personal
@@ -22,7 +46,7 @@ It runs once a day on GitHub Actions, logged into a spare account.
 No server: it runs on GitHub Actions (free), from
 `.github/workflows/piracy-scanner.yml`, every day at 07:30 IST.
 
-## Setup (once, about 15 minutes)
+## Daily on GitHub Actions instead (optional)
 
 1. **Log in once on any computer**, with the spare phone nearby:
    ```bash

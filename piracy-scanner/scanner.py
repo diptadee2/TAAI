@@ -53,7 +53,8 @@ def load_env(path):
 
 load_env(os.path.join(HERE, ".env"))
 
-API_ID = int(os.environ.get("TG_API_ID", "0"))
+_api_id = os.environ.get("TG_API_ID", "").strip()
+API_ID = int(_api_id) if _api_id.isdigit() else 0
 API_HASH = os.environ.get("TG_API_HASH", "")
 PHONE = os.environ.get("TG_PHONE", "")
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
@@ -225,8 +226,11 @@ def chan_link(ch):
 
 
 async def scan():
+    if os.environ.get("GITHUB_ACTIONS") and not SESSION:
+        print("Scanner not set up on GitHub (no TG_SESSION secret); skipping.")
+        return
     if not (API_ID and API_HASH and SUPABASE_URL and SUPABASE_KEY):
-        sys.exit("Missing TG_API_ID / TG_API_HASH / SUPABASE_URL / SUPABASE_SERVICE_KEY in .env")
+        sys.exit("Missing or wrong values in .env: fill in TG_API_ID (numbers only), TG_API_HASH, TG_PHONE, SUPABASE_URL and SUPABASE_SERVICE_KEY.")
     db = Supabase()
     terms = db.terms()
     if SESSION:
