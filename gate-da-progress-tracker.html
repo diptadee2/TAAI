@@ -1433,6 +1433,12 @@
   .leaderboard-row--enter { animation: leaderboard-row-in .55s cubic-bezier(.34,1.56,.64,1) both; }
   @keyframes leaderboard-row-in { from { opacity: 0; transform: translateY(16px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
   @media (prefers-reduced-motion: reduce) { .leaderboard-row--enter { animation: none; } }
+  /* Day rollover (2026-11-13): yesterday's top-10 lifts away row by row,
+     then the card fades, before it's removed (animateTodayBoardOut). */
+  .leaderboard-row--exit { animation: leaderboard-row-out .36s cubic-bezier(.4,0,1,1) both; }
+  @keyframes leaderboard-row-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(-12px) scale(0.96); } }
+  #today-leaderboard-card.today-board--leaving { opacity: 0; transform: translateY(10px) scale(0.98); transition: opacity .42s ease, transform .42s ease; }
+  @media (prefers-reduced-motion: reduce) { .leaderboard-row--exit { animation: none; } #today-leaderboard-card.today-board--leaving { transition: none; } }
   /* Sized up across the board (row font/padding, rank, streak balls,
      status pill, timer, minutes) rather than adding another metric to
      fill the empty space in the (often-blank) Streak column for

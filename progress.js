@@ -275,7 +275,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-08-1';
+  var CLIENT_VERSION = '2026-11-13-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -370,8 +370,45 @@
         setTimeout(fire, 60000);
         return;
       }
-      reloadNowOrWhenVisible();
+      // Yesterday's "Today's leaders" board is about to vanish with the
+      // reload (a new day has no entries yet), so play it out first
+      // instead of letting it blink away (2026-11-13).
+      animateTodayBoardOut(reloadNowOrWhenVisible);
     }, nextMidnight - now);
+  }
+
+  // Plays the daily top-10 board out (rows lift away one after another,
+  // then the card fades) and removes it, then calls done. Used when the
+  // day rolls over: from the midnight reload above, and from the poll in
+  // refreshLeaderboard when the new day's board comes back empty. Skips
+  // the animation (but still calls done) when the tab is hidden, motion
+  // is reduced, or there's no board on screen.
+  var todayBoardOutCallbacks = null;
+  function animateTodayBoardOut(done) {
+    var card = document.getElementById('today-leaderboard-card');
+    if (todayBoardOutCallbacks) { if (done) todayBoardOutCallbacks.push(done); return; }
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!card || document.hidden || reduce) {
+      if (card) card.remove();
+      if (done) done();
+      return;
+    }
+    todayBoardOutCallbacks = done ? [done] : [];
+    var rows = card.querySelectorAll('#today-leaderboard-rows > *');
+    Array.prototype.forEach.call(rows, function (row, i) {
+      row.classList.remove('leaderboard-row--enter');
+      row.style.animationDelay = (i * 45) + 'ms';
+      row.classList.add('leaderboard-row--exit');
+    });
+    setTimeout(function () {
+      card.classList.add('today-board--leaving');
+      setTimeout(function () {
+        card.remove();
+        var cbs = todayBoardOutCallbacks;
+        todayBoardOutCallbacks = null;
+        cbs.forEach(function (cb) { cb(); });
+      }, 450);
+    }, 360 + rows.length * 45);
   }
 
   // Full GATE DA syllabus — shown in "Progress by subject" even before a
@@ -5871,7 +5908,10 @@
           state.todayLeaders = r.todayLeaders.leaders || [];
           state.todayViewerRank = r.todayLeaders.viewerRank || null;
           var todayRows = document.getElementById('today-leaderboard-rows');
-          if (todayRows) todayRows.innerHTML = renderTodayLeaderboardRows();
+          // A new day: the board comes back empty, so play the old one out
+          // rather than leaving a card with a title and no rows.
+          if (todayRows && !state.todayLeaders.length && todayRows.children.length) animateTodayBoardOut();
+          else if (todayRows) todayRows.innerHTML = renderTodayLeaderboardRows();
           // Same key as the initial-render arming call above (renderCalendar)
           // — see its comment for why these must not be two different keys.
           armConfetti('today-leaderboard-card', 'today-' + todayIso(),
