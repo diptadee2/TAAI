@@ -3733,7 +3733,7 @@
             '<button type="button" class="btn" id="pir-add-sec">+ Add another channel</button>' +
             '<button type="button" class="btn" id="pir-clear">Start a new notice</button>' +
           '</div>' +
-          '<details class="pir-sig"' + (p.signature ? '' : ' open') + '><summary>Signature' + (p.signature ? '' : ' (add the phone number once)') + '</summary>' +
+          '<details class="pir-sig"><summary>Signature</summary>' +
             '<textarea id="pir-sig-text" rows="6">' + escapeHtml(p.signature || PIR_DEFAULT_SIGNATURE) + '</textarea>' +
             '<div style="display:flex;gap:8px;margin-top:8px;"><button type="button" class="btn btn-primary" id="pir-sig-save"' + (p.sigSaving ? ' disabled' : '') + '>' + (p.sigSaving ? 'Saving…' : 'Save signature') + '</button></div>' +
             '<div class="field-hint">Shared by everyone on the team. Saved in the database, not the website code.</div>' +

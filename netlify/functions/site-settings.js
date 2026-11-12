@@ -69,8 +69,7 @@ export async function handler(event, context) {
     }
 
     // Signature block at the end of piracy takedown notices (2026-11-12),
-    // kept in the database rather than code because it carries a phone number
-    // and the repo is public. Empty string = back to the default.
+    // kept in the database so it can be changed without a deploy. Empty string = back to the default.
     if (typeof body.piracy_signature === 'string') {
       const t = body.piracy_signature.trim();
       if (t.length > 1000) return json(400, { error: 'signature is too long (max 1000 characters)' });
