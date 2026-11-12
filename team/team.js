@@ -3627,18 +3627,13 @@
   // mailbox sends every notice emailed out to piracy-ingest.js, which logs
   // its links. This panel shows the script (with the key filled in) and the
   // last emails it logged.
-  function pirIngestFrom() {
-    try { return localStorage.getItem('taai_piracy_ingest_from') || ''; } catch (e) { return ''; }
-  }
-  function pirValidEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v || ''); }
-
-  function pirAppsScript(key, from) {
+  function pirAppsScript(key) {
     return [
       '// TAAI takedown auto-log. Runs inside the separate Gmail you BCC on notices.',
-      '// Sends every notice BCC\'d from ' + from + ' to taai.live/team > Piracy.',
+      '// Sends every notice BCC\'d from support@taai.live to taai.live/team > Piracy.',
       "var ENDPOINT = 'https://taai.live/api/piracy-ingest';",
       "var KEY = '" + key + "';",
-      "var SEARCH = 'from:" + from + " (subject:infringement OR subject:takedown) newer_than:14d';",
+      "var SEARCH = 'from:support@taai.live (subject:infringement OR subject:takedown) newer_than:14d';",
       '',
       'function logTakedownNotices() {',
       '  var props = PropertiesService.getScriptProperties();',
@@ -3670,8 +3665,6 @@
     var g = state.piracy.ingest;
     if (!g) return '';
     var recent = (g.recent || []);
-    var from = pirIngestFrom();
-    var okFrom = pirValidEmail(from);
     var status = !g.ready
       ? '<div class="msg msg-error">Not set up yet: the developer needs to run the piracy_ingested SQL first.</div>'
       : recent.length
@@ -3684,18 +3677,17 @@
       '<summary>📧 Auto-log notices by BCC' + (recent.length ? ' <span class="pir-ingest-on">On</span>' : '') + '</summary>' +
       '<div class="pir-ingest-body">' +
         status +
-        '<p>Write the notice anywhere (Claude chat is fine), send it with "Infringement" or "Takedown" in the subject, and <b>BCC the log inbox</b>. Within 15 minutes every Telegram link in it is added to this log. The script only reads that separate inbox, and only picks up mail from the address you send notices from. The same email is never counted twice.</p>' +
-        '<label class="pir-field" style="max-width:420px;margin-bottom:12px;"><span>Address you send notices from</span><input type="email" id="pir-ingest-from" placeholder="you@example.com" value="' + escapeHtml(from) + '"><span class="field-hint">Fill this in first: it goes into the script below.</span></label>' +
+        '<p>Write the notice anywhere (Claude chat is fine), send it from support@taai.live with "Infringement" or "Takedown" in the subject, and <b>BCC the log inbox</b>. Within 15 minutes every Telegram link in it is added to this log. The script only reads that separate inbox, never the official mailbox, and only mail from support@taai.live. The same email is never counted twice.</p>' +
         '<p><b>One-time setup (5 minutes):</b></p>' +
         '<ol>' +
           '<li>Create a new Gmail account just for this, e.g. taai.takedown.log@gmail.com, and stay signed in to it.</li>' +
           '<li>Open <a href="https://script.google.com/home/projects/create" target="_blank" rel="noopener noreferrer">script.google.com</a> as that account (it opens a new project).</li>' +
           '<li>Delete what\'s in the editor and paste the script below. Name the project "TAAI takedown log".</li>' +
           '<li>Choose <b>setup</b> in the function menu at the top and press <b>Run</b>. Allow access to Gmail when Google asks (click Advanced, then Go to TAAI takedown log).</li>' +
-          '<li>From now on, send notices from the address above and BCC the log inbox.</li>' +
+          '<li>From now on, BCC that address on every takedown notice you send.</li>' +
         '</ol>' +
-        '<div class="pir-ingest-copy"><button type="button" class="btn btn-small" id="pir-ingest-copy"' + (okFrom ? '' : ' disabled') + '>Copy script</button><span class="field-hint">Keep it private: the key lets anyone add links to this log.</span></div>' +
-        '<textarea readonly class="pir-ingest-script" id="pir-ingest-script" rows="10">' + escapeHtml(pirAppsScript(g.key, okFrom ? from : 'YOUR_SENDING_ADDRESS')) + '</textarea>' +
+        '<div class="pir-ingest-copy"><button type="button" class="btn btn-small" id="pir-ingest-copy">Copy script</button><span class="field-hint">Keep it private: the key lets anyone add links to this log.</span></div>' +
+        '<textarea readonly class="pir-ingest-script" id="pir-ingest-script" rows="10">' + escapeHtml(pirAppsScript(g.key)) + '</textarea>' +
       '</div>' +
     '</details>';
   }
@@ -3917,16 +3909,6 @@
     var search = document.getElementById('pir-search');
     if (search) search.addEventListener('change', function () { p.q = search.value.trim(); render(); });
     if (search) search.addEventListener('keydown', function (e) { if (e.key === 'Enter') { p.q = search.value.trim(); render(); } });
-    var ingestFrom = document.getElementById('pir-ingest-from');
-    if (ingestFrom) ingestFrom.addEventListener('input', function () {
-      var v = ingestFrom.value.trim();
-      try { localStorage.setItem('taai_piracy_ingest_from', v); } catch (e) { /* ignore */ }
-      var ok = pirValidEmail(v);
-      var ta = document.getElementById('pir-ingest-script');
-      if (ta && state.piracy.ingest) ta.value = pirAppsScript(state.piracy.ingest.key, ok ? v : 'YOUR_SENDING_ADDRESS');
-      var btn = document.getElementById('pir-ingest-copy');
-      if (btn) btn.disabled = !ok;
-    });
     var ingestCopy = document.getElementById('pir-ingest-copy');
     if (ingestCopy) ingestCopy.addEventListener('click', function () { pirCopy('pir-ingest-script', ingestCopy); });
     var check = document.getElementById('pir-check');
