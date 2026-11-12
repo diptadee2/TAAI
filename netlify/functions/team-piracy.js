@@ -39,8 +39,14 @@ export async function handler(event, context) {
         .order('score', { ascending: false }).limit(500);
       if (!cErr) { candidates = c || []; candidatesReady = true; }
     } catch (e) { /* table not added yet */ }
-    if (error) return json(200, { rows: [], signature, terms, candidates, candidatesReady, error: error.message });
-    return json(200, { rows: data || [], signature, terms, candidates, candidatesReady });
+    let runs = [];
+    try {
+      const { data: r, error: rErr } = await supabase.from('piracy_scan_runs').select('*')
+        .order('ran_at', { ascending: false }).limit(60);
+      if (!rErr) runs = r || [];
+    } catch (e) { /* table not added yet */ }
+    if (error) return json(200, { rows: [], signature, terms, candidates, candidatesReady, runs, error: error.message });
+    return json(200, { rows: data || [], signature, terms, candidates, candidatesReady, runs });
   }
 
   let body;

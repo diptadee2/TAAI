@@ -357,7 +357,7 @@
     // and the registration cutoff date.
     challenge: { loaded: false, loading: false, saving: false, error: null, rows: [], cutoff: null, open: true, msg: null, q: '' },
     // Piracy takedown log + notice generator (2026-11-12).
-    piracy: { loaded: false, loading: false, error: null, msg: null, rows: [], signature: null, sub: 'log', filter: 'all', q: '', checking: false, saving: false, sigSaving: false, draft: null, candidates: [], candidatesReady: false, terms: null, termsSaving: false, foundFilter: 'new' },
+    piracy: { loaded: false, loading: false, error: null, msg: null, rows: [], signature: null, sub: 'log', filter: 'all', q: '', checking: false, saving: false, sigSaving: false, draft: null, candidates: [], candidatesReady: false, runs: [], terms: null, termsSaving: false, foundFilter: 'new' },
     msg: null,
     msgType: null,
   };
@@ -3609,6 +3609,7 @@
       p.terms = data.terms || null;
       p.candidates = data.candidates || [];
       p.candidatesReady = !!data.candidatesReady;
+      p.runs = data.runs || [];
       p.error = data.error || null;
       p.loaded = true; p.loading = false;
       render();
@@ -3954,12 +3955,55 @@
       '</div>' +
       '<div class="field-hint" style="margin:0 0 12px;">Found by the Telegram scanner. Open each link and check it really is TAAI content before drafting a notice: the scanner only matches names, words and file names.</div>' +
       cards +
+      renderPiracyTermStats() +
       '<details class="pir-sig" style="margin-top:18px;"><summary>Search terms</summary>' +
         '<textarea id="pir-terms-text" rows="10" placeholder="' + escapeHtml(PIR_SCANNER_DEFAULT_TERMS.join('\n')) + '">' + escapeHtml(p.terms || '') + '</textarea>' +
         '<div style="display:flex;gap:8px;margin-top:8px;"><button type="button" class="btn btn-primary" id="pir-terms-save"' + (p.termsSaving ? ' disabled' : '') + '>' + (p.termsSaving ? 'Saving…' : 'Save search terms') + '</button></div>' +
         '<div class="field-hint">One per line. Leave empty to use the built-in list shown in grey. Course names, odd lesson titles and the ways pirates disguise "TAAI" work best. Used from the next daily run.</div>' +
       '</details>'
     );
+  }
+
+  // Which search terms find things: totals over every scanner run
+  // (piracy_scan_runs) plus how the channels each term matched were judged
+  // (piracy_candidates.matched_terms + status).
+  function renderPiracyTermStats() {
+    var p = state.piracy;
+    if (!p.runs.length) return '';
+    var current = (p.terms || PIR_SCANNER_DEFAULT_TERMS.join('\n')).split('\n').map(function (t) { return t.trim(); }).filter(function (t) { return t && t.charAt(0) !== '#'; });
+    var stats = {};
+    function get(t) { return stats[t] || (stats[t] = { runs: 0, name: 0, posts: 0, inside: 0, finds: 0, confirmed: 0, dismissed: 0, last: null }); }
+    current.forEach(get);
+    p.runs.forEach(function (run, i) {
+      Object.keys(run.term_stats || {}).forEach(function (t) {
+        var x = run.term_stats[t] || {}; var st = get(t);
+        st.runs++; st.name += x.name || 0; st.posts += x.posts || 0; st.inside += x.inside || 0;
+        if (i === 0) st.last = (x.name || 0) + (x.posts || 0) + (x.inside || 0);
+      });
+    });
+    p.candidates.forEach(function (c) {
+      (Array.isArray(c.matched_terms) ? c.matched_terms : []).forEach(function (t) {
+        var st = get(t); st.finds++;
+        if (c.status === 'confirmed') st.confirmed++;
+        if (c.status === 'dismissed') st.dismissed++;
+      });
+    });
+    var rows = Object.keys(stats).map(function (t) { return [t, stats[t]]; }).sort(function (a, b) {
+      return (b[1].confirmed - a[1].confirmed) || (b[1].finds - a[1].finds) || ((b[1].name + b[1].posts + b[1].inside) - (a[1].name + a[1].posts + a[1].inside));
+    });
+    var last = p.runs[0];
+    return '<details class="pir-sig" style="margin-top:18px;" open><summary>Which search terms work</summary>' +
+      '<div class="field-hint" style="margin-bottom:8px;">' + p.runs.length + ' scan' + (p.runs.length === 1 ? '' : 's') + ' so far. Last: ' + escapeHtml(fmtIstDateTime(last.ran_at)) + ', ' + (last.candidates || 0) + ' matching channels, ' + (last.post_searches || 0) + ' public post searches used. "Piracy" counts finds you turned into a notice. Terms that find nothing after several scans can go; put the best ones at the top of the list (the first 5 also search all public posts).</div>' +
+      '<div class="students-table-wrap"><table class="students-table sitedata-table pir-table"><thead><tr>' +
+        '<th>Search term</th><th title="Channels and posts this term returned, all scans">Results</th><th title="Matching channels this term surfaced or matched">Finds</th><th>Piracy</th><th>Not piracy</th><th title="Results in the last scan">Last scan</th>' +
+      '</tr></thead><tbody>' +
+      rows.map(function (r) {
+        var st = r[1]; var inList = current.indexOf(r[0]) !== -1;
+        return '<tr' + (inList ? '' : ' style="opacity:.55"') + '><td>' + escapeHtml(r[0]) + (inList ? '' : ' <span class="field-hint">(removed)</span>') + '</td>' +
+          '<td>' + (st.name + st.posts + st.inside) + '</td><td>' + st.finds + '</td><td><b>' + st.confirmed + '</b></td><td>' + st.dismissed + '</td>' +
+          '<td>' + (st.last == null ? '–' : st.last) + '</td></tr>';
+      }).join('') +
+      '</tbody></table></div></details>';
   }
 
   function bindPiracyFound() {

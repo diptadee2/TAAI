@@ -187,13 +187,26 @@ class Supabase:
     def save(self, rows):
         if not rows:
             return
-        r = self.http.post(
-            "/piracy_candidates", params={"on_conflict": "link"}, content=json.dumps(rows),
+        post = lambda rs: self.http.post(
+            "/piracy_candidates", params={"on_conflict": "link"}, content=json.dumps(rs),
             headers={"Prefer": "resolution=merge-duplicates,return=minimal"},
         )
+        r = post(rows)
+        if r.status_code >= 300 and "matched_terms" in r.text:
+            # Column not added yet: save the finds without it.
+            r = post([{k: v for k, v in row.items() if k != "matched_terms"} for row in rows])
         if r.status_code >= 300:
             print("save failed", r.status_code, r.text[:300], file=sys.stderr)
             sys.exit(1)
+
+    def save_run(self, row):
+        """One row per run with per-term numbers, for /team's search-term stats."""
+        try:
+            r = self.http.post("/piracy_scan_runs", content=json.dumps(row), headers={"Prefer": "return=minimal"})
+            if r.status_code >= 300:
+                print("run stats not saved (piracy_scan_runs table missing?)")
+        except Exception:
+            print("run stats not saved")
 
 
 async def pause():
@@ -251,6 +264,13 @@ async def scan():
     found = {}            # link -> candidate row
     invites = {}          # invite hash -> via
     post_hits = {}        # channel id -> posts found by the all-public-posts search
+    # Which search terms turn things up (shown in /team > Piracy > Found):
+    # name = channels returned by name search, posts = posts returned by the
+    # all-public-posts search, inside = posts found when searching inside a
+    # channel. chan_terms = every term that surfaced or matched each channel.
+    term_stats = {t: {"name": 0, "posts": 0, "inside": 0, "finds": 0} for t in terms}
+    chan_terms = {}
+    post_searches = 0
 
     def enqueue(ch, depth, via):
         if not isinstance(ch, types.Channel) or ch.id in seen_ids:
@@ -280,14 +300,16 @@ async def scan():
         # 1. Name search
         for term in terms:
             res = await call(client, functions.contacts.SearchRequest(q=term, limit=50))
-            for ch in (res.chats if res else []):
+            chats = [c for c in (res.chats if res else []) if isinstance(c, types.Channel)]
+            term_stats[term]["name"] += len(chats)
+            for ch in chats:
+                chan_terms.setdefault(ch.id, set()).add(term)
                 enqueue(ch, 0, "search: " + term)
 
         # 1b. Search inside ALL public posts on Telegram (Telegram's "search public
         # posts", 2025). Finds sale/promo posts in channels whose name has nothing
         # to do with TAAI. Every account gets a few free searches a day; Telegram
         # Premium gets more. Only free searches are used: it never pays Stars.
-        post_searches = 0
         for term in terms:
             if post_searches >= MAX_POST_SEARCHES:
                 break
@@ -309,7 +331,10 @@ async def scan():
                 print("post search stopped:", type(e).__name__)
                 break
             post_searches += 1
+            term_stats[term]["posts"] += len(getattr(res, "messages", None) or [])
             for ch in getattr(res, "chats", None) or []:
+                if isinstance(ch, types.Channel):
+                    chan_terms.setdefault(ch.id, set()).add(term)
                 enqueue(ch, 0, "public post search: " + term)
             for m in getattr(res, "messages", None) or []:
                 peer = getattr(m, "peer_id", None)
@@ -351,6 +376,9 @@ async def scan():
                 for term in terms[:8]:
                     batch = await call(client.get_messages, ch, limit=POSTS_PER_SEARCH, search=term)
                     msgs.extend(batch or [])
+                    if batch:
+                        term_stats[term]["inside"] += len(batch)
+                        chan_terms.setdefault(ch.id, set()).add(term)
                 recent = await call(client.get_messages, ch, limit=RECENT_POSTS)
                 msgs.extend(recent or [])
             except Stop:
@@ -411,6 +439,7 @@ async def scan():
                     "link": link, "kind": "channel" if ch.broadcast else "group", "title": title, "username": uname,
                     "tg_id": str(ch.id), "subscribers": subs, "score": score, "reasons": reasons,
                     "sample_links": samples, "file_names": files, "found_via": via,
+                    "matched_terms": sorted(chan_terms.get(ch.id, [])),
                     "last_seen_at": datetime.now(timezone.utc).isoformat(),
                 }
                 if depth < MAX_DEPTH:
@@ -435,15 +464,23 @@ async def scan():
                 found[link] = {
                     "link": link, "kind": "invite", "title": title, "username": None, "tg_id": None,
                     "subscribers": subs, "score": score, "reasons": ["Private invite link whose name mentions TAAI"],
-                    "sample_links": [], "file_names": [], "found_via": via,
+                    "sample_links": [], "file_names": [], "found_via": via, "matched_terms": [],
                     "last_seen_at": datetime.now(timezone.utc).isoformat(),
                 }
     except Stop as e:
         print(str(e))
     finally:
         db.save(list(found.values()))
+        for row in found.values():
+            for t in row.get("matched_terms") or []:
+                if t in term_stats:
+                    term_stats[t]["finds"] += 1
+        db.save_run({
+            "duration_s": int(time.time() - started), "candidates": len(found), "lookups": resolves,
+            "post_searches": post_searches, "term_stats": term_stats,
+        })
         await client.disconnect()
-    print(f"done in {int(time.time() - started)}s: {len(found)} candidates, {resolves} lookups")
+    print(f"done in {int(time.time() - started)}s: {len(found)} candidates, {resolves} lookups, {post_searches} post searches")
 
 
 if __name__ == "__main__":

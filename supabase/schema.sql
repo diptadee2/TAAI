@@ -1400,3 +1400,20 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON piracy_candidates TO service_role;
 -- Search terms for the scanner, one per line, edited in /team (NULL = the
 -- scanner's built-in list).
 ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS piracy_terms TEXT;
+
+-- Piracy scanner: which search terms find things (2026-11-12). The scanner
+-- saves every term that surfaced or matched each find, and one row per run with
+-- per-term counts ({term: {name, posts, inside, finds}}). /team > Piracy >
+-- Found shows them per term, with how many finds were confirmed or dismissed.
+ALTER TABLE piracy_candidates ADD COLUMN IF NOT EXISTS matched_terms JSONB NOT NULL DEFAULT '[]'::jsonb;
+CREATE TABLE IF NOT EXISTS piracy_scan_runs (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  ran_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+  duration_s    INTEGER,
+  candidates    INTEGER,
+  lookups       INTEGER,
+  post_searches INTEGER,
+  term_stats    JSONB NOT NULL DEFAULT '{}'::jsonb
+);
+ALTER TABLE piracy_scan_runs ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON piracy_scan_runs TO service_role;
