@@ -3629,11 +3629,11 @@
   // last emails it logged.
   function pirAppsScript(key) {
     return [
-      '// TAAI takedown auto-log. Runs inside the support@taai.live Gmail.',
-      '// Sends every takedown notice you email out to taai.live/team > Piracy.',
+      '// TAAI takedown auto-log. Runs inside the separate Gmail you BCC on notices.',
+      '// Sends every notice BCC\'d from support@taai.live to taai.live/team > Piracy.',
       "var ENDPOINT = 'https://taai.live/api/piracy-ingest';",
       "var KEY = '" + key + "';",
-      "var SEARCH = 'in:sent (subject:infringement OR subject:takedown) newer_than:14d';",
+      "var SEARCH = 'from:support@taai.live (subject:infringement OR subject:takedown) newer_than:14d';",
       '',
       'function logTakedownNotices() {',
       '  var props = PropertiesService.getScriptProperties();',
@@ -3674,16 +3674,17 @@
           }).join('') + '</ul>'
         : '<div class="field-hint">Nothing logged from Gmail yet.</div>';
     return '<details class="pir-ingest"' + (g.ready && !recent.length ? ' open' : '') + '>' +
-      '<summary>📧 Auto-log notices you email from Gmail' + (recent.length ? ' <span class="pir-ingest-on">On</span>' : '') + '</summary>' +
+      '<summary>📧 Auto-log notices by BCC' + (recent.length ? ' <span class="pir-ingest-on">On</span>' : '') + '</summary>' +
       '<div class="pir-ingest-body">' +
         status +
-        '<p>Write the notice anywhere (Claude chat is fine) and email it from support@taai.live with "Infringement" or "Takedown" in the subject. Within 15 minutes every Telegram link in it is added to this log. The same email is never counted twice.</p>' +
-        '<p><b>One-time setup (5 minutes), signed in as support@taai.live:</b></p>' +
+        '<p>Write the notice anywhere (Claude chat is fine), send it from support@taai.live with "Infringement" or "Takedown" in the subject, and <b>BCC the log inbox</b>. Within 15 minutes every Telegram link in it is added to this log. The script only reads that separate inbox, never the official mailbox, and only mail from support@taai.live. The same email is never counted twice.</p>' +
+        '<p><b>One-time setup (5 minutes):</b></p>' +
         '<ol>' +
-          '<li>Open <a href="https://script.google.com/home/projects/create" target="_blank" rel="noopener noreferrer">script.google.com</a> (it opens a new project).</li>' +
+          '<li>Create a new Gmail account just for this, e.g. taai.takedown.log@gmail.com, and stay signed in to it.</li>' +
+          '<li>Open <a href="https://script.google.com/home/projects/create" target="_blank" rel="noopener noreferrer">script.google.com</a> as that account (it opens a new project).</li>' +
           '<li>Delete what\'s in the editor and paste the script below. Name the project "TAAI takedown log".</li>' +
           '<li>Choose <b>setup</b> in the function menu at the top and press <b>Run</b>. Allow access to Gmail when Google asks (click Advanced, then Go to TAAI takedown log).</li>' +
-          '<li>Done. Notices already sent in the last 14 days are logged straight away.</li>' +
+          '<li>From now on, BCC that address on every takedown notice you send.</li>' +
         '</ol>' +
         '<div class="pir-ingest-copy"><button type="button" class="btn btn-small" id="pir-ingest-copy">Copy script</button><span class="field-hint">Keep it private: the key lets anyone add links to this log.</span></div>' +
         '<textarea readonly class="pir-ingest-script" id="pir-ingest-script" rows="10">' + escapeHtml(pirAppsScript(g.key)) + '</textarea>' +
