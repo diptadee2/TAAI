@@ -544,6 +544,42 @@
 .hp-explain p { margin: 6px 0 0; color: var(--ink-dim, #a1a1aa); }
 .score-penalty { color: #F87171; font-weight: 600; }
 .students-filters input[type=date] { color-scheme: dark; }
+
+  /* Piracy tab (2026-11-12) */
+  .pir-table td { vertical-align: top; }
+  .pir-link-cell a { word-break: break-all; }
+  .pir-name { font-weight: 600; margin-bottom: 2px; }
+  .pir-times { font-size: 11px; padding: 1px 6px; border: 1px solid var(--line); border-radius: 999px; }
+  .pir-actions { width: 1%; }
+  .pir-actions .btn { display: block; width: 100%; white-space: nowrap; }
+  .pir-actions .btn + .btn { margin-top: 6px; }
+  #pir-filter { height: 36px; padding: 0 10px; font: inherit; font-size: 14px; color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 8px; }
+  #pir-filter option { color: #000; }
+  .pir-st { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; }
+  .pir-st-up { color: #fca5a5; border-color: rgba(248,113,113,0.5); background: rgba(248,113,113,0.12); }
+  .pir-st-removed { color: #86efac; border-color: rgba(74,222,128,0.5); background: rgba(74,222,128,0.12); }
+  .pir-st-moved { color: #fcd34d; border-color: rgba(251,191,36,0.5); background: rgba(251,191,36,0.12); }
+  .pir-st-private, .pir-st-wait { color: var(--ink-soft, #aaa); }
+  .pir-form { display: flex; flex-direction: column; gap: 12px; }
+  .pir-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+  .pir-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-size: 13px; }
+  .pir-field > span:first-child { font-weight: 600; }
+  .pir-wide { grid-column: 1 / -1; }
+  .pir-field input, .pir-field select, .pir-field textarea, .pir-sig textarea { width: 100%; box-sizing: border-box; padding: 8px 10px; font: inherit; font-size: 14px; color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 8px; }
+  .pir-field select option { color: #000; }
+  .pir-check { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+  .pir-sec { border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+  .pir-sec-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .pir-sig summary { cursor: pointer; font-weight: 600; font-size: 13px; margin: 6px 0; }
+  .pir-out { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 14px; }
+  .pir-out-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 10px 0 6px; flex-wrap: wrap; }
+  .pir-out textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; font: 13px/1.5 ui-monospace, Menlo, monospace; color: var(--ink); background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: 8px; resize: vertical; }
+  .pir-out-subject { height: 58px; }
+  .pir-out-body { height: 420px; }
+  .pir-warnings { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+  .pir-warn { font-size: 13px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); word-break: break-word; }
+  .pir-warn-dup, .pir-warn-invite, .pir-warn-mismatch { border-color: rgba(251,191,36,0.5); background: rgba(251,191,36,0.08); }
+  @media (max-width: 600px) { .pir-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>

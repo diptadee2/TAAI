@@ -1339,3 +1339,34 @@ RETURNS void LANGUAGE sql AS $$
 $$;
 REVOKE EXECUTE ON FUNCTION bump_resource_stat(DATE, TEXT, TEXT) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION bump_resource_stat(DATE, TEXT, TEXT) TO service_role;
+
+-- Piracy takedown log (2026-11-12): one row per Telegram link reported in a
+-- takedown notice (channel, message, invite, private channel or account).
+-- Written from /team > Piracy (team-piracy.js); piracy-check.js looks at
+-- Telegram's public pages daily and updates status ('reported' until first
+-- checked, then 'up' | 'removed' | 'moved' | 'unchecked' for private links).
+CREATE TABLE IF NOT EXISTS piracy_reports (
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  link              TEXT NOT NULL UNIQUE,
+  kind              TEXT NOT NULL,
+  scope             TEXT,
+  channel_name      TEXT,
+  subscribers       INTEGER,
+  role              TEXT,
+  notice_label      TEXT,
+  first_reported_on DATE NOT NULL DEFAULT (now() AT TIME ZONE 'Asia/Kolkata')::date,
+  last_reported_on  DATE NOT NULL DEFAULT (now() AT TIME ZONE 'Asia/Kolkata')::date,
+  times_reported    INTEGER NOT NULL DEFAULT 1,
+  status            TEXT NOT NULL DEFAULT 'reported',
+  check_note        TEXT,
+  checked_at        TIMESTAMPTZ,
+  removed_on        DATE,
+  expected_title    TEXT,
+  notes             TEXT,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+ALTER TABLE piracy_reports ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON piracy_reports TO service_role;
+
+-- Signature block for takedown notices (kept out of the public repo).
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS piracy_signature TEXT;

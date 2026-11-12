@@ -28,6 +28,7 @@
     monthly_consistency: 'Monthly — Most Consistent Student',
     schedule_runout: 'Daily — Schedule running out (team reminder)',
     weekly_schedule_post: 'Weekly — Post the schedule pictures (team reminder)',
+    piracy_status: 'Weekly — Piracy takedown status (team)',
   };
   // Sources whose Body is a plain optional intro line with no
   // placeholders at all — unlike LIST_SOURCES (an intro above a computed
@@ -355,6 +356,8 @@
     // Site data > Challenge (2026-10-18): "100 pe 100% off" registrations
     // and the registration cutoff date.
     challenge: { loaded: false, loading: false, saving: false, error: null, rows: [], cutoff: null, open: true, msg: null, q: '' },
+    // Piracy takedown log + notice generator (2026-11-12).
+    piracy: { loaded: false, loading: false, error: null, msg: null, rows: [], signature: null, sub: 'log', filter: 'all', q: '', checking: false, saving: false, sigSaving: false, draft: null },
     msg: null,
     msgType: null,
   };
@@ -1030,6 +1033,7 @@
         '<button class="tab-btn' + (isSiteData ? ' active' : '') + '" data-tab="site-data">🗂️ Site data</button>' +
         '<button class="tab-btn' + (isMarketing ? ' active' : '') + '" data-tab="marketing">🎨 Marketing</button>' +
         '<button class="tab-btn' + (state.tab === 'challenge' ? ' active' : '') + '" data-tab="challenge">🏆 Challenge' + (state.challenge.loaded ? ' (' + state.challenge.rows.length + ')' : '') + '</button>' +
+        '<button class="tab-btn' + (state.tab === 'piracy' ? ' active' : '') + '" data-tab="piracy">🛡️ Piracy</button>' +
       '</div>';
 
     var actionsHtml = isAnnouncements
@@ -1063,6 +1067,8 @@
             ? marketingTabs + renderOfferPoster()
             : state.tab === 'challenge'
               ? renderChallengePanel()
+              : state.tab === 'piracy'
+                ? renderPiracyPanel()
               : (msgHtml + renderSiteData());
 
     root.innerHTML =
@@ -1081,6 +1087,7 @@
     bindEvents();
     if (state.tab === 'day-card') bindDayCard();
     if (state.tab === 'offer-poster') bindOfferPoster();
+    if (state.tab === 'piracy') bindPiracy();
   }
 
   // ── Day card (2026-10-09) ────────────────────────────────────────────
@@ -3399,6 +3406,496 @@
     });
   }
 
+  // ── Piracy (2026-11-12) ───────────────────────────────────────────────
+  // Log of every Telegram link reported in a takedown notice, its live
+  // status (piracy-check.js looks at Telegram's public pages daily), and a
+  // notice generator that fills the team's agreed notice format. Notices are
+  // copied and sent by a person; nothing is emailed from here.
+  var PIR_COURSES = [
+    ['https://learn.taai.live/learn/Maths--ML---AI-Bundle---GATE-2026', 'Maths + ML Bundle'],
+    ['https://learn.taai.live/learn/batch/GATE-2028', 'GATE 2028 Full Course'],
+    ['https://learn.taai.live/learn/batch/GATE-2027/content', 'GATE 2027 Full Course'],
+    ['https://learn.taai.live/learn/Mathematics-Course-by-manoj-sir-gate-2026-gateda', 'Mathematics Bundle'],
+    ['https://learn.taai.live/learn/Probability', 'Probability'],
+    ['https://learn.taai.live/learn/Linear-Algebra--Mathematics-', 'Linear Algebra'],
+    ['https://learn.taai.live/learn/Statistics', 'Statistics'],
+    ['https://learn.taai.live/learn/Calculus-and-Optimization', 'Calculus and Optimization'],
+    ['https://learn.taai.live/learn/Python-Programming', 'Python Programming'],
+    ['https://learn.taai.live/learn/Test-Series', 'Test Series'],
+    ['', 'No specific course (all courses)'],
+  ];
+  var PIR_DEFAULT_SIGNATURE = "Best regards,\nManoj Kumar\nProprietor\nTAAI (Tomorrow's Architect of AI)\nEmail: support@taai.live";
+  var PIR_STATUS = {
+    reported: ['Not checked yet', 'pir-st-wait'],
+    up: ['Still up', 'pir-st-up'],
+    removed: ['Removed', 'pir-st-removed'],
+    moved: ['Username reused', 'pir-st-moved'],
+    unchecked: ["Private, can't check", 'pir-st-private'],
+  };
+  var PIR_DRAFT_KEY = 'taai_piracy_draft_v1';
+
+  function pirToday() {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+  }
+  function pirFmtDate(d) {
+    if (!d) return '';
+    return new Date(d + 'T00:00:00Z').toLocaleDateString('en-IN', { timeZone: 'UTC', day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  function pirNewSection() {
+    return { name: '', link: '', subs: '', scope: 'whole', messages: '', nature: '', accounts: '', actAccounts: true };
+  }
+  function pirNewDraft() {
+    return { label: pirFmtDate(pirToday()) + ' notice', kind: 'Distribution', description: '', course: PIR_COURSES[0][0], sections: [pirNewSection()] };
+  }
+  function pirLoadDraft() {
+    try { var d = JSON.parse(localStorage.getItem(PIR_DRAFT_KEY) || 'null'); if (d && d.sections && d.sections.length) return d; } catch (e) {}
+    return pirNewDraft();
+  }
+  function pirSaveDraft() {
+    try { localStorage.setItem(PIR_DRAFT_KEY, JSON.stringify(state.piracy.draft)); } catch (e) {}
+  }
+
+  // Same rules as lib/piracy.js normalizeTgLink / tgKey (kept in sync by hand).
+  function pirNorm(raw) {
+    var s = String(raw || '').trim();
+    if (!s) return '';
+    var bot = s.match(/^-100(\d{6,})$/);
+    if (bot) return 'https://t.me/c/' + bot[1];
+    if (/^\d{8,}$/.test(s)) return 'https://t.me/c/' + s;
+    if (s.charAt(0) === '@') s = 'https://t.me/' + s.slice(1);
+    s = s.replace(/^(https?:\/\/)?(www\.)?(t\.me|telegram\.me|telegram\.dog)\//i, 'https://t.me/');
+    if (!/^https:\/\/t\.me\//.test(s)) { if (/^[A-Za-z0-9_+]/.test(s)) s = 'https://t.me/' + s; else return ''; }
+    s = s.replace(/[?#].*$/, '').replace(/\/+$/, '');
+    s = s.replace(/^https:\/\/t\.me\/s\//, 'https://t.me/').replace(/^https:\/\/t\.me\/joinchat\//, 'https://t.me/+');
+    return s;
+  }
+  function pirKey(link) {
+    var s = pirNorm(link);
+    var m = s.match(/^https:\/\/t\.me\/([A-Za-z0-9_]{4,})(\/\d+)?$/);
+    if (m && m[1] !== 'c') return 'https://t.me/' + m[1].toLowerCase() + (m[2] || '');
+    return s;
+  }
+  function pirType(link) {
+    if (/^https:\/\/t\.me\/c\//.test(link)) return 'private';
+    if (/^https:\/\/t\.me\/\+/.test(link)) return 'invite';
+    if (/^https:\/\/t\.me\/[A-Za-z0-9_]+\/\d+$/.test(link)) return 'message';
+    return 'channel';
+  }
+  function pirLines(text) {
+    return String(text || '').split(/[\n,]+/).map(function (l) { return l.trim(); }).filter(Boolean);
+  }
+  // "https://t.me/x – uploader", "@x - seller", "@x: admin", "@x uploader"
+  function pirAccounts(text) {
+    return String(text || '').split('\n').map(function (l) { return l.trim(); }).filter(Boolean).map(function (l) {
+      var m = l.match(/^(\S+)\s*(?:[–—:-]\s*|\s+)(.*)$/);
+      var link = pirNorm((m ? m[1] : l).replace(/[:–—,;-]+$/, ''));
+      return link ? { link: link, role: (m ? m[2] : '').trim() } : null;
+    }).filter(Boolean);
+  }
+  function pirPrivateId(link) { var m = link.match(/^https:\/\/t\.me\/c\/(\d+)/); return m ? m[1] : null; }
+
+  function pirChannelRef(sec) {
+    var link = pirNorm(sec.link);
+    var subs = parseInt(String(sec.subs || '').replace(/[^\d]/g, ''), 10);
+    var subsTxt = subs > 0 ? subs.toLocaleString('en-IN') + ' subscribers' : '';
+    var id = link ? pirPrivateId(link) : null;
+    if (id) return (sec.name || 'Private channel') + ' (private channel, ID: ' + id + (subsTxt ? ', ' + subsTxt : '') + ')';
+    if (!link) return sec.name || '[channel]';
+    return (sec.name ? sec.name + ' – ' : '') + link + (subsTxt ? ' (' + subsTxt + ')' : '');
+  }
+
+  // Builds the notice in the team's agreed format (see the "TAAI Telegram
+  // Takedown Notices – Context & Log" doc) and lists warnings.
+  function pirBuildNotice(draft, rows) {
+    var secs = draft.sections.filter(function (s) { return s.link || s.messages || s.name; });
+    var multi = secs.length > 1;
+    var where = function (i) { return multi ? 'under section ' + (i + 1) : 'below'; };
+    var requests = [];
+    var blocks = [];
+    var anyWhole = false, anyMsgs = false;
+    secs.forEach(function (sec, i) {
+      var ref = pirChannelRef(sec);
+      var msgs = pirLines(sec.messages).map(pirNorm).filter(Boolean);
+      var accts = pirAccounts(sec.accounts);
+      var b = [];
+      if (multi) b.push((i + 1) + '. ' + (sec.name || pirNorm(sec.link) || 'Channel ' + (i + 1)).toUpperCase());
+      if (sec.scope === 'whole') {
+        anyWhole = true;
+        requests.push('Remove the channel ' + ref + ' in its entirety, as it consists of TAAI\'s paid course content.');
+        b.push('INFRINGING CHANNEL\n' + (pirNorm(sec.link) || ref));
+        if (msgs.length) b.push('SAMPLE INFRINGING MESSAGES\nThe entire channel consists of TAAI\'s paid course content. The following messages are provided as representative samples only and are not an exhaustive list:\n' + msgs.map(function (m) { return '- ' + m; }).join('\n'));
+      } else if (sec.scope === 'suspected') {
+        requests.push('Review the suspected channel ' + ref + ' and remove it if it distributes TAAI\'s paid course content.');
+        b.push('SUSPECTED CHANNEL\n' + (pirNorm(sec.link) || ref) + (msgs.length ? '\n' + msgs.map(function (m) { return '- ' + m; }).join('\n') : ''));
+      } else {
+        anyMsgs = true;
+        requests.push('Remove the infringing message' + (msgs.length === 1 ? '' : 's') + ' listed ' + where(i) + '.');
+        b.push('INFRINGING MESSAGE' + (msgs.length === 1 ? '' : 'S') + '\n' + (msgs.length ? msgs.map(function (m) { return '- ' + m; }).join('\n') : '[message links]'));
+      }
+      b.push('CHANNEL\n' + ref);
+      if (sec.nature) b.push('NATURE OF INFRINGEMENT\n' + sec.nature.trim());
+      if (accts.length) {
+        b.push('ASSOCIATED ACCOUNT' + (accts.length === 1 ? '' : 'S') + '\n' + accts.map(function (a) { return '- ' + a.link + (a.role ? ' – ' + a.role : ''); }).join('\n'));
+        if (sec.actAccounts && sec.scope === 'whole') requests.push('Take appropriate action against the account' + (accts.length === 1 ? '' : 's') + ' listed ' + where(i) + ', which run, upload to or sell through this channel.');
+      }
+      blocks.push(b.join('\n\n'));
+    });
+    var removeWhat = anyWhole && anyMsgs ? 'channels and messages' : anyWhole ? (secs.filter(function (s) { return s.scope === 'whole'; }).length > 1 ? 'channels' : 'channel') : anyMsgs ? 'messages' : 'content';
+    var desc = String(draft.description || '').trim().replace(/[.\s]+$/, '');
+    var subject = 'Copyright and Trademark Infringement Notice – Unauthorized ' + draft.kind + ' of TAAI Paid Course Content on Telegram';
+    var body = [
+      'Dear Grievance Officer,',
+      'I am Manoj Kumar, Proprietor of TAAI (Tomorrow\'s Architect of AI), and I own the rights to the educational content and trademark associated with TAAI.',
+      'It has come to our attention that ' + (desc || '[describe what the channel(s) are doing]') + ' without our authorization.',
+      'We are therefore submitting this as a formal notice of copyright and trademark infringement and request that Telegram:\n' + requests.map(function (r, i) { return (i + 1) + '. ' + r; }).join('\n'),
+    ].concat(blocks).concat([
+      'ORIGINAL TAAI CONTENT\nOur legitimate educational content is available through our official learning platform: https://learn.taai.live/learn' + (draft.course ? '\nSpecific course: ' + draft.course : ''),
+      'SUPPORTING DOCUMENTATION\nWe have attached relevant documentation establishing our rights and authority, including:\n- Trademark documentation.\n- Copyright and ownership documentation.\n- Proof of ownership of the original educational content.\n- Screenshots of the reported messages.',
+      'We request that you treat this communication as a formal infringement notice and remove the identified ' + removeWhat + ' promptly.',
+      'We would also appreciate written confirmation once the content has been removed.',
+      'Should you require any additional information or verification of our ownership, I am available to provide it. Our educational content is hosted and delivered through Learnyst, our Learning Management System (LMS) provider, and their legal team can assist with coordination and verification where necessary.',
+      'Thank you for your prompt attention to this matter.',
+      state.piracy.signature || PIR_DEFAULT_SIGNATURE,
+    ]).join('\n\n');
+
+    // Warnings: already reported, look-alike characters in invite codes,
+    // messages from a different channel than the section's.
+    var warnings = [];
+    var byKey = {};
+    (rows || []).forEach(function (r) { byKey[pirKey(r.link)] = r; });
+    var seen = {};
+    secs.forEach(function (sec, i) {
+      var chan = pirNorm(sec.link);
+      var all = [chan].concat(pirLines(sec.messages).map(pirNorm)).concat(pirAccounts(sec.accounts).map(function (a) { return a.link; })).filter(Boolean);
+      all.forEach(function (l) {
+        var k = pirKey(l);
+        if (seen[k]) return; seen[k] = true;
+        var r = byKey[k];
+        if (r) warnings.push({ type: 'dup', text: l + ' was already reported on ' + pirFmtDate(r.last_reported_on) + (r.notice_label ? ' (' + r.notice_label + ')' : '') + (r.times_reported > 1 ? ', ' + r.times_reported + ' times' : '') + '. Status: ' + (PIR_STATUS[r.status] || [r.status])[0] + '.' });
+        if (pirType(l) === 'invite' && /[lI]/.test(l.slice(15))) warnings.push({ type: 'invite', text: l + ' contains l or I. They look identical in screenshots and invite links are case-sensitive, so copy the link rather than retyping it.' });
+      });
+      var chanUser = (chan.match(/^https:\/\/t\.me\/(c\/\d+|[A-Za-z0-9_]+)$/) || [])[1];
+      if (chanUser) pirLines(sec.messages).map(pirNorm).forEach(function (m) {
+        var mu = (m.match(/^https:\/\/t\.me\/(c\/\d+|[A-Za-z0-9_]+)\/\d+$/) || [])[1];
+        if (mu && mu.toLowerCase() !== chanUser.toLowerCase()) warnings.push({ type: 'mismatch', text: (multi ? 'Section ' + (i + 1) + ': ' : '') + m + ' is from a different channel than ' + chan + '.' });
+      });
+      if (sec.scope === 'whole' && !pirLines(sec.messages).length) warnings.push({ type: 'hint', text: (multi ? 'Section ' + (i + 1) + ': ' : '') + 'add 3 to 5 sample message links so Telegram can see the content quickly.' });
+    });
+    if (!desc) warnings.push({ type: 'hint', text: 'Fill in the "It has come to our attention that…" sentence.' });
+    return { subject: subject, body: body, warnings: warnings, sections: secs };
+  }
+
+  function pirLogItems(draft) {
+    var items = [];
+    draft.sections.forEach(function (sec) {
+      var chan = pirNorm(sec.link);
+      var subs = parseInt(String(sec.subs || '').replace(/[^\d]/g, ''), 10) || null;
+      if (chan) items.push({ link: chan, kind: pirType(chan) === 'message' ? 'message' : pirType(chan), scope: sec.scope, channel_name: sec.name, subscribers: subs });
+      pirLines(sec.messages).map(pirNorm).filter(Boolean).forEach(function (m) {
+        items.push({ link: m, kind: pirType(m) === 'private' ? 'private' : 'message', scope: sec.scope, channel_name: sec.name });
+      });
+      pirAccounts(sec.accounts).forEach(function (a) { items.push({ link: a.link, kind: 'account', scope: 'account', role: a.role, channel_name: sec.name }); });
+    });
+    return items;
+  }
+
+  function loadPiracy() {
+    var p = state.piracy;
+    p.loading = true; p.error = null;
+    render();
+    api('/team-piracy').then(function (data) {
+      p.rows = data.rows || [];
+      p.signature = data.signature || null;
+      p.error = data.error || null;
+      p.loaded = true; p.loading = false;
+      render();
+    }).catch(function (err) { p.loading = false; p.error = err.message; render(); });
+  }
+
+  function pirLastChecked(rows) {
+    var t = null;
+    rows.forEach(function (r) { if (r.checked_at && (!t || r.checked_at > t)) t = r.checked_at; });
+    return t;
+  }
+
+  function renderPiracyLog() {
+    var p = state.piracy;
+    var rows = p.rows.slice();
+    var counts = { up: 0, removed: 0, unchecked: 0, moved: 0, reported: 0 };
+    rows.forEach(function (r) { counts[r.status] = (counts[r.status] || 0) + 1; });
+    var order = { up: 0, moved: 1, reported: 2, unchecked: 3, removed: 4 };
+    var q = (p.q || '').toLowerCase();
+    rows = rows.filter(function (r) {
+      if (p.filter !== 'all' && r.status !== p.filter) return false;
+      if (q && [r.link, r.channel_name, r.role, r.notice_label, r.notes].join(' ').toLowerCase().indexOf(q) === -1) return false;
+      return true;
+    }).sort(function (a, b) {
+      return (order[a.status] - order[b.status]) || String(b.last_reported_on).localeCompare(String(a.last_reported_on));
+    });
+    var last = pirLastChecked(p.rows);
+    var kindLabel = { channel: 'Channel', message: 'Message', invite: 'Invite link', private: 'Private', account: 'Account' };
+    var table = rows.length ? (
+      '<div class="students-table-wrap"><table class="students-table sitedata-table pir-table"><thead><tr>' +
+        '<th>Link</th><th>Type</th><th>Reported</th><th>Status</th><th></th>' +
+      '</tr></thead><tbody>' +
+      rows.map(function (r) {
+        var st = PIR_STATUS[r.status] || [r.status, ''];
+        return '<tr>' +
+          '<td class="pir-link-cell">' + (r.channel_name ? '<div class="pir-name">' + escapeHtml(r.channel_name) + '</div>' : '') +
+            '<a href="' + escapeHtml(r.link) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(r.link.replace('https://', '')) + '</a>' +
+            (r.role ? '<div class="field-hint">' + escapeHtml(r.role) + '</div>' : '') +
+            (r.subscribers ? '<div class="field-hint">' + Number(r.subscribers).toLocaleString('en-IN') + ' subscribers</div>' : '') + '</td>' +
+          '<td>' + escapeHtml(kindLabel[r.kind] || r.kind) + (r.scope === 'whole' ? '<div class="field-hint">whole channel</div>' : r.scope === 'suspected' ? '<div class="field-hint">suspected</div>' : '') + '</td>' +
+          '<td>' + escapeHtml(pirFmtDate(r.last_reported_on)) + (r.times_reported > 1 ? ' <span class="pir-times">×' + r.times_reported + '</span>' : '') +
+            (r.notice_label ? '<div class="field-hint">' + escapeHtml(r.notice_label) + '</div>' : '') + '</td>' +
+          '<td><span class="pir-st ' + st[1] + '">' + escapeHtml(st[0]) + '</span>' +
+            (r.check_note && r.status !== 'reported' ? '<div class="field-hint">' + escapeHtml(r.check_note) + '</div>' : '') +
+            (r.removed_on ? '<div class="field-hint">since ' + escapeHtml(pirFmtDate(r.removed_on)) + '</div>' : '') + '</td>' +
+          '<td class="pir-actions">' +
+            (r.status !== 'removed' && r.kind !== 'account' ? '<button class="btn btn-small js-pir-again" data-id="' + escapeHtml(r.id) + '">Report again</button>' : '') +
+            '<button class="btn btn-small btn-danger js-pir-delete" data-id="' + escapeHtml(r.id) + '" data-link="' + escapeHtml(r.link) + '">Delete</button>' +
+          '</td>' +
+        '</tr>';
+      }).join('') +
+      '</tbody></table></div>'
+    ) : '<div class="field-hint">' + (p.rows.length ? 'Nothing matches.' : 'No links logged yet. Draft a notice and press "Add to log", or ask the developer to import the existing log.') + '</div>';
+    return (
+      '<div class="chal-stats">' +
+        '<div class="chal-stat"><b>' + p.rows.length + '</b><span>links reported</span></div>' +
+        '<div class="chal-stat"><b>' + counts.removed + '</b><span>removed</span></div>' +
+        '<div class="chal-stat"><b>' + counts.up + '</b><span>still up</span></div>' +
+        '<div class="chal-stat"><b>' + counts.unchecked + '</b><span>private (can\'t check)</span></div>' +
+      '</div>' +
+      '<div class="chal-toolbar" style="margin-top:14px;">' +
+        '<select id="pir-filter">' +
+          [['all', 'All'], ['up', 'Still up'], ['removed', 'Removed'], ['moved', 'Username reused'], ['unchecked', 'Private'], ['reported', 'Not checked yet']].map(function (o) {
+            return '<option value="' + o[0] + '"' + (p.filter === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
+          }).join('') +
+        '</select>' +
+        '<input type="search" id="pir-search" placeholder="Search link, channel, account or notice" value="' + escapeHtml(p.q || '') + '">' +
+        '<button type="button" class="btn" id="pir-check"' + (p.checking ? ' disabled' : '') + '>' + (p.checking ? 'Checking Telegram…' : '↻ Check all now') + '</button>' +
+      '</div>' +
+      '<div class="field-hint" style="margin:6px 0 12px;">Checked daily at 9 AM IST from Telegram\'s public pages' + (last ? '. Last check: ' + escapeHtml(fmtIstDateTime(last)) : '') + '. A weekly summary can go to Discord: add an Announcements post with the "Piracy takedown status" source.</div>' +
+      table
+    );
+  }
+
+  function pirFieldHtml(i, key, label, val, opts) {
+    opts = opts || {};
+    var attrs = ' data-pir-sec="' + i + '" data-pir-key="' + key + '"';
+    var input = opts.textarea
+      ? '<textarea rows="' + (opts.rows || 3) + '"' + attrs + ' placeholder="' + escapeHtml(opts.ph || '') + '">' + escapeHtml(val) + '</textarea>'
+      : '<input type="text"' + attrs + ' value="' + escapeHtml(val) + '" placeholder="' + escapeHtml(opts.ph || '') + '">';
+    return '<label class="pir-field' + (opts.wide ? ' pir-wide' : '') + '"><span>' + label + '</span>' + input + (opts.hint ? '<span class="field-hint">' + opts.hint + '</span>' : '') + '</label>';
+  }
+
+  function renderPiracyNotice() {
+    var p = state.piracy;
+    var d = p.draft;
+    var secs = d.sections.map(function (sec, i) {
+      return '<div class="pir-sec">' +
+        '<div class="pir-sec-head"><b>' + (d.sections.length > 1 ? 'Section ' + (i + 1) : 'Channel') + '</b>' +
+          (d.sections.length > 1 ? '<button type="button" class="btn btn-small js-pir-sec-remove" data-i="' + i + '">Remove</button>' : '') + '</div>' +
+        '<div class="pir-grid">' +
+          pirFieldHtml(i, 'name', 'Channel name', sec.name, { ph: 'TAAI - Gate Da Latest 2027' }) +
+          pirFieldHtml(i, 'link', 'Channel link or private ID', sec.link, { ph: 'https://t.me/TAAIGateDA or -1002230080912' }) +
+          pirFieldHtml(i, 'subs', 'Subscribers', sec.subs, { ph: '1255' }) +
+          '<label class="pir-field"><span>What to ask for</span><select data-pir-sec="' + i + '" data-pir-key="scope">' +
+            [['whole', 'Remove the whole channel'], ['messages', 'Remove just these messages'], ['suspected', 'Suspected: ask Telegram to review']].map(function (o) {
+              return '<option value="' + o[0] + '"' + (sec.scope === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
+            }).join('') + '</select></label>' +
+          pirFieldHtml(i, 'messages', sec.scope === 'whole' ? 'Sample message links' : 'Message links', sec.messages, { textarea: true, wide: true, ph: 'One link per line\nhttps://t.me/c/4492823345/640', hint: 'For a private channel, copy the message link (it looks like https://t.me/c/ID/123).' }) +
+          pirFieldHtml(i, 'nature', 'Nature of infringement', sec.nature, { textarea: true, wide: true, ph: 'Distributes TAAI\'s paid Machine Learning lectures and PDFs, uses the TAAI logo as its profile picture, posts viewed 2,000+ times.', hint: 'Mention the TAAI logo or name, Manoj Kumar\'s photo, PDF names with "lyst…", prices it\'s sold for, views and subscribers.' }) +
+          pirFieldHtml(i, 'accounts', 'Associated accounts', sec.accounts, { textarea: true, wide: true, rows: 2, ph: 'https://t.me/DincForge – uploader\nhttps://t.me/Piratedman01 – seller' }) +
+          (sec.scope === 'whole' ? '<label class="pir-check pir-wide"><input type="checkbox" data-pir-sec="' + i + '" data-pir-key="actAccounts"' + (sec.actAccounts ? ' checked' : '') + '> Ask Telegram to act against these accounts too</label>' : '') +
+        '</div>' +
+      '</div>';
+    }).join('');
+    return (
+      '<div class="pir-notice-layout">' +
+        '<div class="pir-form">' +
+          '<div class="pir-grid">' +
+            '<label class="pir-field"><span>Notice name (for the log)</span><input type="text" data-pir-top="label" value="' + escapeHtml(d.label) + '"></label>' +
+            '<label class="pir-field"><span>Subject: unauthorized…</span><select data-pir-top="kind">' +
+              ['Distribution', 'Promotion', 'Sale', 'Distribution and Sale'].map(function (k) { return '<option' + (d.kind === k ? ' selected' : '') + '>' + k + '</option>'; }).join('') +
+            '</select></label>' +
+            '<label class="pir-field pir-wide"><span>"It has come to our attention that…"</span><textarea rows="2" data-pir-top="description" placeholder="the Telegram channels listed below are distributing TAAI\'s paid GATE DA courses for free and selling them for ₹1,000">' + escapeHtml(d.description) + '</textarea><span class="field-hint">"…without our authorization." is added after it.</span></label>' +
+            '<label class="pir-field pir-wide"><span>Course to point to</span><select data-pir-top="course">' +
+              PIR_COURSES.map(function (c) { return '<option value="' + escapeHtml(c[0]) + '"' + (d.course === c[0] ? ' selected' : '') + '>' + escapeHtml(c[1]) + '</option>'; }).join('') +
+            '</select></label>' +
+          '</div>' +
+          secs +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">' +
+            '<button type="button" class="btn" id="pir-add-sec">+ Add another channel</button>' +
+            '<button type="button" class="btn" id="pir-clear">Start a new notice</button>' +
+          '</div>' +
+          '<details class="pir-sig"' + (p.signature ? '' : ' open') + '><summary>Signature' + (p.signature ? '' : ' (add the phone number once)') + '</summary>' +
+            '<textarea id="pir-sig-text" rows="6">' + escapeHtml(p.signature || PIR_DEFAULT_SIGNATURE) + '</textarea>' +
+            '<div style="display:flex;gap:8px;margin-top:8px;"><button type="button" class="btn btn-primary" id="pir-sig-save"' + (p.sigSaving ? ' disabled' : '') + '>' + (p.sigSaving ? 'Saving…' : 'Save signature') + '</button></div>' +
+            '<div class="field-hint">Shared by everyone on the team. Saved in the database, not the website code.</div>' +
+          '</details>' +
+        '</div>' +
+        '<div class="pir-out" id="pir-out">' + renderPiracyPreview() + '</div>' +
+      '</div>'
+    );
+  }
+
+  function renderPiracyPreview() {
+    var p = state.piracy;
+    var n = pirBuildNotice(p.draft, p.rows);
+    var w = n.warnings.length ? '<div class="pir-warnings">' + n.warnings.map(function (x) {
+      return '<div class="pir-warn pir-warn-' + x.type + '">' + (x.type === 'dup' ? '🔁 ' : x.type === 'invite' ? '⚠️ ' : x.type === 'mismatch' ? '⚠️ ' : '💡 ') + escapeHtml(x.text) + '</div>';
+    }).join('') + '</div>' : '';
+    return w +
+      '<div class="pir-out-row"><b>Subject</b><button type="button" class="btn btn-small" data-pir-copy="subject">Copy subject</button></div>' +
+      '<textarea readonly class="pir-out-subject" id="pir-subject">' + escapeHtml(n.subject) + '</textarea>' +
+      '<div class="pir-out-row"><b>Notice</b><button type="button" class="btn btn-small" data-pir-copy="body">Copy notice</button></div>' +
+      '<textarea readonly class="pir-out-body" id="pir-body">' + escapeHtml(n.body) + '</textarea>' +
+      '<div class="pir-out-row" style="margin-top:12px;">' +
+        '<button type="button" class="btn btn-primary" id="pir-log-add"' + (p.saving || !n.sections.length ? ' disabled' : '') + '>' + (p.saving ? 'Adding…' : 'Sent it: add these links to the log') + '</button>' +
+      '</div>' +
+      '<div class="field-hint">Send it yourself (with screenshots and ownership documents attached), then press the button so the links are checked daily.</div>';
+  }
+
+  function renderPiracyPanel() {
+    var p = state.piracy;
+    if (!p.draft) p.draft = pirLoadDraft();
+    if (p.loading && !p.loaded) return '<div class="card"><div class="field-hint">Loading…</div></div>';
+    return '<div class="card">' +
+      '<div class="tabs" style="margin:0 0 14px;">' +
+        '<button class="tab-btn' + (p.sub === 'log' ? ' active' : '') + '" data-pirtab="log">📋 Log</button>' +
+        '<button class="tab-btn' + (p.sub === 'notice' ? ' active' : '') + '" data-pirtab="notice">✍️ New notice</button>' +
+      '</div>' +
+      (p.error ? '<div class="msg msg-error">' + escapeHtml(p.error) + '</div>' : '') +
+      (p.msg ? '<div class="msg msg-ok">' + escapeHtml(p.msg) + '</div>' : '') +
+      (p.sub === 'notice' ? renderPiracyNotice() : renderPiracyLog()) +
+    '</div>';
+  }
+
+  function pirRefreshPreview() {
+    var out = document.getElementById('pir-out');
+    if (out) { out.innerHTML = renderPiracyPreview(); bindPiracyPreview(); }
+  }
+
+  function pirCopy(id, btn) {
+    var ta = document.getElementById(id);
+    if (!ta) return;
+    var done = function () { var t = btn.textContent; btn.textContent = 'Copied ✓'; setTimeout(function () { btn.textContent = t; }, 1600); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(done, function () { ta.select(); document.execCommand('copy'); done(); });
+    else { ta.select(); document.execCommand('copy'); done(); }
+  }
+
+  function bindPiracyPreview() {
+    document.querySelectorAll('[data-pir-copy]').forEach(function (btn) {
+      btn.addEventListener('click', function () { pirCopy(btn.getAttribute('data-pir-copy') === 'subject' ? 'pir-subject' : 'pir-body', btn); });
+    });
+    var add = document.getElementById('pir-log-add');
+    if (add) add.addEventListener('click', function () {
+      var p = state.piracy;
+      var items = pirLogItems(p.draft);
+      if (!items.length) return;
+      p.saving = true; p.error = null; p.msg = null;
+      pirRefreshPreview();
+      api('/team-piracy', { method: 'POST', body: JSON.stringify({ action: 'add', notice_label: p.draft.label, reported_on: pirToday(), items: items }) }).then(function (res) {
+        p.saving = false;
+        p.msg = 'Added to the log: ' + res.added + ' new link' + (res.added === 1 ? '' : 's') + (res.updated ? ', ' + res.updated + ' already there (marked reported again)' : '') + '. Checking them on Telegram now…';
+        p.draft = pirNewDraft(); pirSaveDraft();
+        p.sub = 'log';
+        return api('/team-piracy').then(function (data) {
+          p.rows = data.rows || [];
+          render();
+          return pirRunCheck();
+        });
+      }).catch(function (err) { p.saving = false; p.error = err.message; render(); });
+    });
+  }
+
+  function pirRunCheck() {
+    var p = state.piracy;
+    p.checking = true; render();
+    return api('/team-piracy', { method: 'POST', body: JSON.stringify({ action: 'check' }) }).then(function (res) {
+      p.msg = 'Checked ' + res.checked + ' link' + (res.checked === 1 ? '' : 's') + ': ' + res.removed + ' removed, ' + res.up + ' still up' +
+        (res.newlyRemoved && res.newlyRemoved.length ? '. Newly removed: ' + res.newlyRemoved.length : '') +
+        (res.skipped ? '. ' + res.skipped + ' not checked (ran out of time), press again' : '') + '.';
+      return api('/team-piracy');
+    }).then(function (data) {
+      p.checking = false; p.rows = data.rows || []; render();
+    }).catch(function (err) { p.checking = false; p.error = err.message; render(); });
+  }
+
+  function bindPiracy() {
+    var p = state.piracy;
+    document.querySelectorAll('[data-pirtab]').forEach(function (btn) {
+      btn.addEventListener('click', function () { p.sub = btn.getAttribute('data-pirtab'); p.msg = null; render(); });
+    });
+    var filter = document.getElementById('pir-filter');
+    if (filter) filter.addEventListener('change', function () { p.filter = filter.value; render(); });
+    var search = document.getElementById('pir-search');
+    if (search) search.addEventListener('change', function () { p.q = search.value.trim(); render(); });
+    if (search) search.addEventListener('keydown', function (e) { if (e.key === 'Enter') { p.q = search.value.trim(); render(); } });
+    var check = document.getElementById('pir-check');
+    if (check) check.addEventListener('click', function () { p.msg = null; p.error = null; pirRunCheck(); });
+    document.querySelectorAll('.js-pir-delete').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (!window.confirm('Remove ' + btn.getAttribute('data-link') + ' from the log?')) return;
+        var id = btn.getAttribute('data-id');
+        api('/team-piracy?id=' + encodeURIComponent(id), { method: 'DELETE' }).then(function () {
+          p.rows = p.rows.filter(function (r) { return r.id !== id; }); p.msg = 'Removed from the log.'; render();
+        }).catch(function (err) { p.error = err.message; render(); });
+      });
+    });
+    document.querySelectorAll('.js-pir-again').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var r = p.rows.filter(function (x) { return x.id === btn.getAttribute('data-id'); })[0];
+        if (!r) return;
+        var sec = pirNewSection();
+        sec.name = r.channel_name || '';
+        if (r.kind === 'message' || /^https:\/\/t\.me\/c\/\d+\/\d+$/.test(r.link)) {
+          sec.scope = 'messages'; sec.messages = r.link;
+          sec.link = r.link.replace(/\/\d+$/, '');
+        } else { sec.link = r.link; sec.scope = r.scope === 'suspected' ? 'suspected' : 'whole'; }
+        if (r.subscribers) sec.subs = String(r.subscribers);
+        var blank = p.draft.sections.length === 1 && !p.draft.sections[0].link && !p.draft.sections[0].messages;
+        if (blank) p.draft.sections = [sec]; else p.draft.sections.push(sec);
+        pirSaveDraft();
+        p.sub = 'notice'; p.msg = null; render();
+      });
+    });
+
+    document.querySelectorAll('[data-pir-top]').forEach(function (el) {
+      var ev = el.tagName === 'SELECT' ? 'change' : 'input';
+      el.addEventListener(ev, function () { p.draft[el.getAttribute('data-pir-top')] = el.value; pirSaveDraft(); pirRefreshPreview(); });
+    });
+    document.querySelectorAll('[data-pir-sec]').forEach(function (el) {
+      var i = +el.getAttribute('data-pir-sec'); var key = el.getAttribute('data-pir-key');
+      var ev = el.tagName === 'SELECT' || el.type === 'checkbox' ? 'change' : 'input';
+      el.addEventListener(ev, function () {
+        p.draft.sections[i][key] = el.type === 'checkbox' ? el.checked : el.value;
+        pirSaveDraft();
+        if (key === 'scope') render(); else pirRefreshPreview();
+      });
+    });
+    document.querySelectorAll('.js-pir-sec-remove').forEach(function (btn) {
+      btn.addEventListener('click', function () { p.draft.sections.splice(+btn.getAttribute('data-i'), 1); pirSaveDraft(); render(); });
+    });
+    var addSec = document.getElementById('pir-add-sec');
+    if (addSec) addSec.addEventListener('click', function () { p.draft.sections.push(pirNewSection()); pirSaveDraft(); render(); });
+    var clear = document.getElementById('pir-clear');
+    if (clear) clear.addEventListener('click', function () {
+      if (!window.confirm('Clear this draft and start a new notice?')) return;
+      p.draft = pirNewDraft(); pirSaveDraft(); render();
+    });
+    var sigSave = document.getElementById('pir-sig-save');
+    if (sigSave) sigSave.addEventListener('click', function () {
+      var t = document.getElementById('pir-sig-text').value;
+      p.sigSaving = true; p.error = null; render();
+      api('/site-settings', { method: 'PUT', body: JSON.stringify({ piracy_signature: t }) }).then(function () {
+        p.sigSaving = false; p.signature = t.trim() || null; p.msg = 'Signature saved.'; render();
+      }).catch(function (err) { p.sigSaving = false; p.error = err.message; render(); });
+    });
+    bindPiracyPreview();
+  }
+
   function bindEvents() {
     var referenceToggle = document.getElementById('reference-toggle');
     if (referenceToggle) referenceToggle.addEventListener('click', function () {
@@ -3473,6 +3970,7 @@
         if (tab === 'day-card') { render(); loadDayCardMonth(); loadDayCardTemplate(); return; }
         if (tab === 'offer-poster') { render(); loadOfferPoster(); return; }
         if (tab === 'challenge') { if (!state.challenge.loaded && !state.challenge.loading) { loadChallenge(); return; } render(); return; }
+        if (tab === 'piracy') { if (!state.piracy.loaded && !state.piracy.loading) { loadPiracy(); return; } render(); return; }
         render();
       });
     });

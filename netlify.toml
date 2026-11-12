@@ -41,6 +41,11 @@
 # it. Deliberately a daily check rather than a single once-a-week firing
 # — self-healing if a run fails, and idempotent either way. See
 # weekly-rank-snapshot.js's own comment for why.
+# Daily check of reported Telegram piracy links (09:00 IST); the weekly
+# 'piracy_status' scheduled post in /team reads the results.
+[functions."piracy-check"]
+  schedule = "30 3 * * *"
+
 [functions."weekly-rank-snapshot"]
   schedule = "30 19 * * *"
 

@@ -68,6 +68,15 @@ export async function handler(event, context) {
       patch.challenge_prompt_template = t ? t : null;
     }
 
+    // Signature block at the end of piracy takedown notices (2026-11-12),
+    // kept in the database rather than code because it carries a phone number
+    // and the repo is public. Empty string = back to the default.
+    if (typeof body.piracy_signature === 'string') {
+      const t = body.piracy_signature.trim();
+      if (t.length > 1000) return json(400, { error: 'signature is too long (max 1000 characters)' });
+      patch.piracy_signature = t ? t : null;
+    }
+
     // "100 pe 100% off" registration cutoff (2026-10-18). Empty string means
     // "back to the default" (lib/challenge.js) and is stored as NULL.
     // {batch: last schedule date} marks "no more schedule coming" for that

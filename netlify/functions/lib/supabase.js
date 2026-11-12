@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import ws from 'ws';
 import crypto from 'node:crypto';
+import { piracyStatusEmbed } from './piracy.js';
 
 // The fixed set of subject ids site_notes.subject/site_lectures.subject
 // are validated against — mirrors notes-data.json's own subjects[].id
@@ -1304,6 +1305,12 @@ export async function resolveScheduledPostEmbed(supabase, row) {
   // channels (2026-11-06). Two rows fire it, Sunday and Monday 00:00 IST; it
   // stays quiet once someone taps "Done" for that week (stored as
   // schedule_reminder_off["weekly:<sunday>"]).
+  // Weekly piracy takedown summary (2026-11-12): what Telegram removed this
+  // week and what is still up, from the daily piracy-check results.
+  if (row.source === 'piracy_status') {
+    return piracyStatusEmbed(supabase, row);
+  }
+
   if (row.source === 'weekly_schedule_post') {
     const sunday = weeklyPostSunday();
     const off = await fetchScheduleReminderOff(supabase);
