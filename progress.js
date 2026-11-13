@@ -244,11 +244,12 @@
       '<span class="club-crescent-tile" aria-hidden="true"><span class="club-crescent"></span></span>' +
       '<div class="club-text">' +
         '<div class="club-name">The 2 AM Club</div>' +
-        '<div class="club-head">Your late-night study desk could win you <span class="club-amt">₹5,000</span></div>' +
-        '<div class="club-sub">One real photo of where you study + your TAAI story on LinkedIn. Top 3 win <b>₹5,000</b>, <b>₹3,000</b> and <b>₹2,000</b>.</div>' +
+        '<div class="club-head">We want to celebrate your 2 AMs</div>' +
+        '<div class="club-sub">Share a real photo of where you study and your TAAI story on LinkedIn. Your story might be the one that tells another aspirant they’re not alone.</div>' +
+        '<div class="club-note">The top 3 stories also get a prize.</div>' +
       '</div>' +
       '<div class="club-actions">' +
-        '<button type="button" class="club-join" id="club-join">Join the club <span aria-hidden="true">→</span></button>' +
+        '<button type="button" class="club-join" id="club-join">Share your story <span aria-hidden="true">→</span></button>' +
         '<span class="club-when">' + when + '</span>' +
       '</div>' +
       '<button type="button" class="club-close" id="club-close" aria-label="Hide this">&times;</button>' +
@@ -359,7 +360,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-13-9';
+  var CLIENT_VERSION = '2026-11-13-11';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -3540,6 +3541,9 @@
       // The 2 AM Club as the card's own top band (2026-11-13: "can't this be
       // integrated with the card below?").
       html += renderClubBanner(true);
+      // Permanent night-sky moon for the card; CSS hides it while the 2 AM
+      // Club band (which has its own moon) is showing.
+      html += '<span class="focus-moon" aria-hidden="true"><span class="club-crescent"></span></span>';
       // Side by side in the timer's own empty space at wide viewports, one
       // above the other on narrow ones — see .pomo-today-row. Works fine
       // with just one child too (renderTodayLeaders returns '' on a fresh
