@@ -2341,6 +2341,25 @@ html body .mobile-menu-contact {
 }
 @media (hover: hover) and (pointer: fine) { html body .mobile-menu-contact:hover { background: #FFFFFF !important; border-style: solid !important; } }
 </style>
+<style>
+/* Not clickable, so no button look (2026-11-13, Clarity showed 9.55% of sessions
+   with dead clicks). Hover lifts removed from cards that are not links (their
+   resting shadow is re-stated on hover), and the hard shadow removed from small
+   chips/badges/tiles that are not clickable. A hard shadow + lift means "clickable". */
+html body #root .testi:hover:not(#_) { transform: none !important; translate: none !important; box-shadow: 6px 6px 0 #111 !important; filter: none !important; }
+html body #root .bd-card:hover:not(#_) { transform: none !important; translate: none !important; box-shadow: 6px 6px 0 #111 !important; filter: none !important; }
+html body #root .topper-card:not(.has-yt):hover:not(#_) { transform: none !important; translate: none !important; box-shadow: 4px 4px 0 #111 !important; filter: none !important; }
+html body #root .bd-visual:hover:not(#_) { transform: none !important; translate: none !important; box-shadow: 3px 3px 0 #111 !important; filter: none !important; }
+html body #root .trust-item:hover:not(#_) { transform: none !important; translate: none !important; box-shadow: 4px 4px 0 #111 !important; filter: none !important; }
+html body #root .hero-bento-card:hover:not(#_) { filter: none !important; }
+html body #root .topper-card:not(.has-yt):hover:not(#_) .topper-img { transform: none !important; }
+html body #root .topper-air:not(#_), html body #root .topper-air:hover:not(#_) { box-shadow: none !important; transform: none !important; }
+html body #root .why-india-by:not(#_), html body #root .why-india-by:hover:not(#_) { box-shadow: none !important; transform: none !important; }
+html body #root .bd-chip:not(#_), html body #root .bd-chip:hover:not(#_) { box-shadow: none !important; transform: none !important; }
+html body #root .bd-admit:not(#_), html body #root .bd-admit:hover:not(#_) { box-shadow: none !important; transform: none !important; }
+html body #root .project-tile:not(#_), html body #root .project-tile:hover:not(#_) { box-shadow: none !important; transform: none !important; }
+html body #root .prep-card:not(#_), html body #root .prep-card:hover:not(#_) { box-shadow: none !important; transform: none !important; }
+</style>
 </head>
 <body data-float-stack>
 <div id="root"></div>

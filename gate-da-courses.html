@@ -4333,6 +4333,16 @@ html body #combos :is(#full-course, .combo-card) button.btn.combo-closed-btn:act
 }
 html body #combos :is(#full-course, .combo-card) button.btn.combo-closed-btn::before { display: none !important; }
 </style>
+<style>
+/* Not clickable, so no button look (2026-11-13, Clarity showed 9.55% of sessions
+   with dead clicks). Hover lifts removed from cards that are not links (their
+   resting shadow is re-stated on hover), and the hard shadow removed from small
+   chips/badges/tiles that are not clickable. A hard shadow + lift means "clickable". */
+html body main .hero-proof:hover:not(#_) { filter: none !important; transform: none !important; }
+html body main .pmap-subject:not(#_), html body main .pmap-subject:hover:not(#_) { box-shadow: none !important; transform: none !important; }
+html body main .pmap-detail-art:not(#_), html body main .pmap-detail-art:hover:not(#_) { box-shadow: none !important; transform: none !important; }
+html body main .pmap-detail-link:not(#_), html body main .pmap-detail-link:hover:not(#_) { box-shadow: none !important; transform: none !important; }
+</style>
 </head>
 <body data-float-stack>
 <div id="root"></div>

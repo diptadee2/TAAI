@@ -1008,6 +1008,14 @@ html body .mobile-menu-contact {
 }
 @media (hover: hover) and (pointer: fine) { html body .mobile-menu-contact:hover { background: #FFFFFF !important; border-style: solid !important; } }
 </style>
+<style>
+/* Not clickable, so no button look (2026-11-13, Clarity showed 9.55% of sessions
+   with dead clicks). Hover lifts removed from cards that are not links (their
+   resting shadow is re-stated on hover), and the hard shadow removed from small
+   chips/badges/tiles that are not clickable. A hard shadow + lift means "clickable". */
+html body #root .note-card:hover:not(#_) { transform: none !important; translate: none !important; box-shadow: 4px 4px 0 #111 !important; filter: none !important; }
+html body #root .lecture-card:hover:not(#_) { transform: none !important; translate: none !important; box-shadow: 4px 4px 0 #111 !important; filter: none !important; }
+</style>
 </head>
 <body data-float-stack>
 <div id="root"></div>

@@ -920,6 +920,14 @@ html body #root .channel-icon, html body #root .channel-icon *, html body #root 
 /* Card links: one unbroken underline (it used to skip around descenders, e.g. the g in "Send a message"). */
 html body #root .channel-cta { text-decoration-skip-ink: none; }
 </style>
+<style>
+/* Not clickable, so no button look (2026-11-13, Clarity showed 9.55% of sessions
+   with dead clicks). Hover lifts removed from cards that are not links (their
+   resting shadow is re-stated on hover), and the hard shadow removed from small
+   chips/badges/tiles that are not clickable. A hard shadow + lift means "clickable". */
+html body #root .trust-item:hover:not(#_) { transform: none !important; translate: none !important; box-shadow: 4px 4px 0 #111 !important; filter: none !important; }
+html body #root .trust-item:hover:not(#_) .trust-icon { transform: none !important; }
+</style>
 </head>
 <body data-float-stack>
 <div id="root"></div>

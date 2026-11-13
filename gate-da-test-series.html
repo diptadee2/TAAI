@@ -1948,6 +1948,18 @@ html body #root .feat-f .feat-rank-divider, html body #root .feat-f .feat-rank-b
 .ts-br-phone { display: none; }
 @media (max-width: 600px) { .ts-br-phone { display: inline; } }
 </style>
+<style>
+/* Not clickable, so no button look (2026-11-13, Clarity showed 9.55% of sessions
+   with dead clicks). Hover lifts removed from cards that are not links (their
+   resting shadow is re-stated on hover), and the hard shadow removed from small
+   chips/badges/tiles that are not clickable. A hard shadow + lift means "clickable". */
+html body #root .breakdown-card:hover:not(#_) { transform: none !important; translate: none !important; box-shadow: 6px 6px 0 #111 !important; filter: none !important; }
+html body #root .feat:not(.feat-dark):hover:not(#_) { transform: none !important; translate: none !important; box-shadow: 6px 6px 0 #111 !important; filter: none !important; }
+html body #root .feat.feat-dark:hover:not(#_) { transform: none !important; translate: none !important; box-shadow: 6px 6px 0 #FDE047, 6px 6px 0 3px #111 !important; filter: none !important; }
+html body #root .ts-testi-card:hover:not(#_) { transform: none !important; translate: none !important; box-shadow: 6px 6px 0 #111 !important; filter: none !important; }
+html body #root .trust-item:hover:not(#_) { transform: none !important; translate: none !important; box-shadow: 6px 6px 0 #111 !important; filter: none !important; }
+html body #root .ts-included-note:not(#_), html body #root .ts-included-note:hover:not(#_) { box-shadow: none !important; transform: none !important; }
+</style>
 </head>
 <body data-float-stack>
 <div id="root"></div>
