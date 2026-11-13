@@ -2360,6 +2360,17 @@ html body #root .bd-admit:not(#_), html body #root .bd-admit:hover:not(#_) { box
 html body #root .project-tile:not(#_), html body #root .project-tile:hover:not(#_) { box-shadow: none !important; transform: none !important; }
 html body #root .prep-card:not(#_), html body #root .prep-card:hover:not(#_) { box-shadow: none !important; transform: none !important; }
 </style>
+<style>
+/* "See the GATE 2028 Full Course" (Built differently > From GATE prep to a
+   portfolio), 2026-11-14: its arrow was black on the black button, and the
+   black hard shadow on a black button read as a misaligned double box. Arrow
+   now yellow like the text; shadow white so the button sits on the yellow
+   panel like the page's other buttons. */
+html body #root .prep-ctas .prep-cta-main span { color: #FDE047 !important; }
+html body #root .prep-ctas .prep-cta-main { box-shadow: 4px 4px 0 #fff, 4px 4px 0 3px #111 !important; }
+html body #root .prep-ctas .prep-cta-main:hover { box-shadow: 2px 2px 0 #fff, 2px 2px 0 3px #111 !important; }
+@media (max-width: 600px) { html body #root .prep-ctas .prep-cta-main { box-shadow: 3px 3px 0 #fff, 3px 3px 0 3px #111 !important; } }
+</style>
 </head>
 <body data-float-stack>
 <div id="root"></div>
