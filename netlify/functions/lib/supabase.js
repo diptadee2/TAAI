@@ -77,7 +77,7 @@ export async function fetchAllRows(buildQuery, pageSize = 1000) {
 // (old JS silently sending a request shape the new server no longer
 // accepts) doesn't stay stuck indefinitely waiting for someone to notice
 // and manually refresh.
-export const CLIENT_VERSION = '2026-11-14-4';
+export const CLIENT_VERSION = '2026-11-14-5';
 
 // How far the requesting device's clock is ahead of the server's (negative
 // if behind), from the clientNow (epoch ms) the tracker sends. Pomodoro end

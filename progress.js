@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-14-4';
+  var CLIENT_VERSION = '2026-11-14-5';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -4550,6 +4550,18 @@
     return html;
   }
 
+  function wallClockText() {
+    try { return new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); }
+    catch (e) { var d = new Date(); return d.getHours() + ':' + pad(d.getMinutes()); }
+  }
+  function tickWallClock() {
+    var el = document.getElementById('pomo-wallclock');
+    if (!el) return;
+    var t = wallClockText();
+    if (el.textContent !== t) el.textContent = t;
+  }
+  setInterval(tickWallClock, 1000);
+
   function renderPomodoro() {
     var frac = pomo.totalSeconds > 0 ? pomo.secondsLeft / pomo.totalSeconds : 1;
     var offset = POMO_RING_CIRCUMFERENCE * (1 - frac);
@@ -4578,6 +4590,10 @@
       renderPomoMalpracticeGateHtml(showMalpracticeGate) +
       '<div class="pomo-clock-wrap"' + (showMalpracticeGate ? ' hidden' : '') + '>' +
       '<div class="pomodoro-ring-wrap">' +
+      // The real time of day, from the device's clock (2026-11-14), mirroring
+      // the settings gear on the ring's other top corner. Kept current by
+      // tickWallClock below.
+      '<div class="pomo-wallclock" id="pomo-wallclock" aria-label="Current time">' + wallClockText() + '</div>' +
       // Anchored to the ring itself (a child of ring-wrap, not the card) —
       // sitting on the ring's own top-right edge reads as "settings for
       // this timer" the way a badge on a dial does, rather than floating
