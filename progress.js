@@ -212,6 +212,82 @@
       '</div>';
   }
 
+  // "The 2 AM Club" LinkedIn campaign (2026-11-13). A banner at the top of
+  // the checklist for signed-in students only, until the deadline (IST),
+  // dismissible per browser. "How to join" opens the full details.
+  var CLUB_DEADLINE = '2026-11-30';
+  var CLUB_DISMISS_KEY = 'taai_2am_club_dismissed_v1';
+  var CLUB_LINKEDIN_URL = 'https://www.linkedin.com/company/taai-gate-da-placements/';
+  var CLUB_MOON_ICON = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" fill="currentColor"/><circle cx="17" cy="5" r="1" fill="currentColor"/><circle cx="20.5" cy="8.5" r=".8" fill="currentColor"/></svg>';
+  function clubBannerVisible() {
+    if (!state.student || state.focus) return false;
+    if (realTodayIso() > CLUB_DEADLINE) return false;
+    try { if (localStorage.getItem(CLUB_DISMISS_KEY) === '1') return false; } catch (e) {}
+    return true;
+  }
+  function clubDaysLeft() {
+    var a = new Date(realTodayIso() + 'T00:00:00Z'), b = new Date(CLUB_DEADLINE + 'T00:00:00Z');
+    return Math.round((b - a) / 86400000);
+  }
+  function renderClubBanner() {
+    if (!clubBannerVisible()) return '';
+    var d = clubDaysLeft();
+    var when = d <= 0 ? 'Last day to enter' : d === 1 ? 'Closes tomorrow' : 'Closes Nov 30 · ' + d + ' days left';
+    return '<div class="club-banner fade-in" id="club-banner">' +
+      '<span class="club-icon">' + CLUB_MOON_ICON + '</span>' +
+      '<div class="club-text">' +
+        '<div class="club-title">The 2 AM Club</div>' +
+        '<div class="club-sub">Share your study space and your TAAI story on LinkedIn. Top 3 win up to <strong>₹5,000</strong>.</div>' +
+        '<div class="club-when">' + when + '</div>' +
+      '</div>' +
+      '<div class="club-actions">' +
+        '<button type="button" class="club-join" id="club-join">How to join</button>' +
+        '<button type="button" class="club-close" id="club-close" aria-label="Hide this">&times;</button>' +
+      '</div>' +
+    '</div>';
+  }
+  var clubModalEl = null;
+  function clubKeydown(e) { if (e.key === 'Escape') closeClubModal(); }
+  function closeClubModal() {
+    if (!clubModalEl) return;
+    clubModalEl.remove(); clubModalEl = null;
+    document.removeEventListener('keydown', clubKeydown);
+  }
+  function openClubModal() {
+    closeClubModal();
+    var el = document.createElement('div');
+    el.className = 'about-modal-backdrop';
+    el.innerHTML =
+      '<div class="about-modal club-modal" role="dialog" aria-modal="true" aria-labelledby="club-modal-title">' +
+        '<div class="club-modal-head"><span class="club-icon">' + CLUB_MOON_ICON + '</span>' +
+          '<div><div class="club-modal-title" id="club-modal-title">Welcome to The 2 AM Club</div>' +
+          '<div class="club-modal-deadline">Deadline: 30th November 2026</div></div></div>' +
+        '<p class="club-modal-p">Stacks of notes, formula-filled whiteboards, cold coffee, and one more problem before bed: that’s what GATE DA prep really looks like. Whether your “2 AM” is late at night, early morning, or a quiet hour between everything else, we’d love to celebrate it.</p>' +
+        '<p class="club-modal-p">No fancy setup needed. A bed corner, a kitchen table, a library seat all count. If you study there, it belongs here.</p>' +
+        '<div class="club-prizes"><div><span>🥇</span><b>₹5,000</b></div><div><span>🥈</span><b>₹3,000</b></div><div><span>🥉</span><b>₹2,000</b></div></div>' +
+        '<div class="club-modal-label">How to join</div>' +
+        '<ol class="club-steps">' +
+          '<li><b>Snap one real photo of your study space.</b> No tidying needed. AI-generated or AI-edited photos are not allowed.</li>' +
+          '<li><b>Tell your story in a LinkedIn post.</b> Not sure where to start? Pick any of these:' +
+            '<ul><li>When did your GATE DA journey begin, and what made you start?</li>' +
+            '<li>Which concept finally clicked for you at TAAI?</li>' +
+            '<li>A class, mentor or moment at TAAI that kept you going</li>' +
+            '<li>How you’ve grown, from exam prep to real AI/ML skills</li></ul></li>' +
+          '<li><b>Tag <a href="' + CLUB_LINKEDIN_URL + '" target="_blank" rel="noopener">TAAI</a> and use #The2AMClub.</b></li>' +
+        '</ol>' +
+        '<p class="club-modal-note">📌 LinkedIn entries only, one post per person.</p>' +
+        '<div class="about-modal-actions"><span class="about-modal-spacer"></span>' +
+          '<button type="button" class="about-modal-cancel" id="club-modal-close">Close</button>' +
+          '<a class="pomo-btn pomo-btn-primary club-modal-cta" href="https://www.linkedin.com/feed/" target="_blank" rel="noopener">Open LinkedIn</a>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(el);
+    clubModalEl = el;
+    document.addEventListener('keydown', clubKeydown);
+    el.addEventListener('mousedown', function (e) { if (e.target === el) closeClubModal(); });
+    document.getElementById('club-modal-close').addEventListener('click', closeClubModal);
+  }
+
   // Shown in place of nothing (a plain inline block, right under the
   // header) once a REGISTERED student has clicked "switch for real" in
   // renderBatchScoutBanner — see state.pendingBatchMigration. Nothing
@@ -275,7 +351,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-13-1';
+  var CLIENT_VERSION = '2026-11-13-2';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -3402,6 +3478,7 @@
     if (!state.focus) html += renderBatchScoutBanner() + renderBatchMigrationWarning();
 
     if (!state.focus) html += '<div class="page-grid"><div class="main-col">';
+    html += renderClubBanner();
 
     if (!state.focus) {
       // Was centered relative to the whole page-grid width (including
@@ -6121,6 +6198,14 @@
   }
 
   function bindCalendarEvents() {
+    var clubJoin = document.getElementById('club-join');
+    if (clubJoin) clubJoin.addEventListener('click', openClubModal);
+    var clubClose = document.getElementById('club-close');
+    if (clubClose) clubClose.addEventListener('click', function () {
+      try { localStorage.setItem(CLUB_DISMISS_KEY, '1'); } catch (e) {}
+      var b = document.getElementById('club-banner');
+      if (b) b.remove();
+    });
     var batchPicker = document.getElementById('batch-picker-select');
     if (batchPicker) batchPicker.addEventListener('change', function () {
       if (!state.student) {

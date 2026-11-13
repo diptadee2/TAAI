@@ -2399,6 +2399,44 @@ html body .mobile-menu-contact {
 }
 @media (hover: hover) and (pointer: fine) { html body .mobile-menu-contact:hover { background: #FFFFFF !important; border-style: solid !important; } }
 </style>
+<style>
+  /* The 2 AM Club campaign banner + details (2026-11-13), see renderClubBanner in progress.js. */
+  .club-banner { display: flex; align-items: center; gap: 14px; margin: 0 0 18px; padding: 14px 16px; background: linear-gradient(120deg, #1d1a3a, #241d40); border: 1px solid rgba(167,139,250,0.35); border-radius: 14px; }
+  .club-icon { flex-shrink: 0; width: 42px; height: 42px; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center; background: rgba(253,224,71,0.12); color: #FDE047; }
+  .club-text { flex: 1; min-width: 0; }
+  .club-title { font-weight: 800; font-size: 15.5px; color: var(--ink); }
+  .club-sub { font-size: 13px; line-height: 1.45; color: var(--ink-dim); margin-top: 2px; }
+  .club-sub strong { color: #FDE047; }
+  .club-when { font-size: 11.5px; font-weight: 700; color: #FBBF24; margin-top: 4px; letter-spacing: .02em; }
+  .club-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .club-join { background: var(--purple); color: #120f22; border: none; border-radius: 10px; padding: 9px 14px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .club-join:hover { filter: brightness(1.08); }
+  .club-close { background: transparent; border: none; color: var(--ink-soft); font-size: 22px; line-height: 1; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; }
+  .club-close:hover { color: var(--ink); background: rgba(255,255,255,0.06); }
+  @media (max-width: 600px) {
+    .club-banner { flex-wrap: wrap; align-items: flex-start; position: relative; padding-right: 44px; }
+    .club-actions { width: 100%; padding-left: 56px; }
+    .club-close { position: absolute; top: 8px; right: 8px; }
+  }
+  .club-modal { width: min(500px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; }
+  .club-modal-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .club-modal-title { font-weight: 800; font-size: 17px; color: var(--ink); }
+  .club-modal-deadline { font-size: 12px; font-weight: 700; color: #FBBF24; margin-top: 2px; }
+  .club-modal-p { font-size: 13.5px; line-height: 1.55; color: var(--ink-dim); margin: 0 0 10px; }
+  .club-prizes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 16px; }
+  .club-prizes div { background: var(--bg-soft, #1b1b20); border: 1px solid var(--line); border-radius: 10px; padding: 10px 6px; text-align: center; }
+  .club-prizes span { display: block; font-size: 20px; }
+  .club-prizes b { display: block; font-size: 16px; color: var(--ink); margin-top: 2px; }
+  .club-modal-label { font-size: 12px; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+  .club-steps { margin: 0 0 10px; padding-left: 20px; font-size: 13.5px; line-height: 1.55; color: var(--ink-dim); }
+  .club-steps li { margin-bottom: 8px; }
+  .club-steps b { color: var(--ink); }
+  .club-steps ul { margin: 6px 0 0; padding-left: 18px; }
+  .club-steps ul li { margin-bottom: 3px; }
+  .club-steps a { color: #A78BFA; }
+  .club-modal-note { font-size: 13px; color: var(--ink-dim); margin: 0; }
+  .club-modal-cta { text-decoration: none; padding: 9px 18px; }
+</style>
 </head>
 <body data-float-stack>
 
