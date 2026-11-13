@@ -2,6 +2,18 @@
 // or the reader scrolls up (2026-10-20, direct request). Loaded on all 7 main pages
 // and the blog/policy pages. Works on the shared fixed `.nav`.
 (function () {
+  // Touch screens (no hover) never get the nav's hover dropdowns: tapping
+  // Courses, Testimonials or Resources simply opens that page. Without this, the
+  // fake hover a tap triggers could flash a dropdown open.
+  var ddCss = document.createElement('style');
+  ddCss.textContent = '@media (hover: none){.nav-dropdown{display:none !important}}';
+  document.head.appendChild(ddCss);
+
+  // Pages can opt out of the auto-hide with <body data-nav-no-autohide>
+  // (the progress tracker, 2026-11-14: "I don't like the navbar auto hide
+  // and come back animations in the progress tracker page").
+  if (document.body && document.body.hasAttribute('data-nav-no-autohide')) return;
+
   var TOP = 120;       // never hide this close to the top of the page
   var IDLE = 900;      // ms without scrolling before the nav comes back (was 280, felt too instant)
   var MIN_DELTA = 4;   // ignore tiny jitters
@@ -43,13 +55,6 @@
   window.addEventListener('scroll', function () {
     if (!ticking) { ticking = true; requestAnimationFrame(onScroll); }
   }, { passive: true });
-  // Touch screens (no hover) never get the nav's hover dropdowns: tapping
-  // Courses, Testimonials or Resources simply opens that page. Without this, the
-  // fake hover a tap triggers could flash a dropdown open.
-  var ddCss = document.createElement('style');
-  ddCss.textContent = '@media (hover: none){.nav-dropdown{display:none !important}}';
-  document.head.appendChild(ddCss);
-
   // Keyboard users tabbing into the nav always get it back.
   document.addEventListener('focusin', function (e) { var n = nav(); if (n && n.contains(e.target)) show(); });
 })();
