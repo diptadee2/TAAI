@@ -234,24 +234,22 @@
   function renderClubBanner(compact) {
     if (!clubBannerVisible()) return '';
     var d = clubDaysLeft();
-    var when = d <= 0 ? 'Last day' : d === 1 ? 'Ends tomorrow' : d + ' days left';
+    var when = d <= 0 ? 'Last day to enter' : d === 1 ? 'Ends tomorrow' : 'Ends Nov 30 · ' + d + ' days left';
     var stars = '';
     [[6,18],[14,62],[22,30],[31,80],[44,12],[52,55],[63,25],[71,70],[80,40],[88,15],[93,60],[38,42],[58,85],[76,8]].forEach(function (xy, i) {
       stars += '<i style="left:' + xy[0] + '%;top:' + xy[1] + '%;animation-delay:' + (i * 0.37 % 3).toFixed(2) + 's"></i>';
     });
     return '<div class="club-banner' + (compact ? ' club-banner--compact' : '') + ' fade-in" id="club-banner">' +
-      '<div class="club-sky" aria-hidden="true">' + stars + '<span class="club-moon"></span></div>' +
-      '<div class="club-clock" aria-hidden="true"><span class="club-clock-time">2<b>:</b>00</span><span class="club-clock-am">AM</span></div>' +
+      '<div class="club-sky" aria-hidden="true">' + stars + '</div>' +
+      '<span class="club-crescent-tile" aria-hidden="true"><span class="club-crescent"></span></span>' +
       '<div class="club-text">' +
-        '<div class="club-title">The 2 AM Club</div>' +
-        '<div class="club-sub">' + (compact
-          ? 'Snap your study space, share your TAAI story on LinkedIn.'
-          : 'Late nights, cold coffee, one more problem before bed. Snap your study space, tell your TAAI story on LinkedIn, and win.') + '</div>' +
-        '<div class="club-prizes-row"><span>🥇 ₹5,000</span><span>🥈 ₹3,000</span><span>🥉 ₹2,000</span></div>' +
+        '<div class="club-name">The 2 AM Club</div>' +
+        '<div class="club-head">Your late-night study desk could win you <span class="club-amt">₹5,000</span></div>' +
+        '<div class="club-sub">One real photo of where you study + your TAAI story on LinkedIn. Top 3 win <b>₹5,000</b>, <b>₹3,000</b> and <b>₹2,000</b>.</div>' +
       '</div>' +
       '<div class="club-actions">' +
-        '<span class="club-when">' + when + '</span>' +
         '<button type="button" class="club-join" id="club-join">Join the club <span aria-hidden="true">→</span></button>' +
+        '<span class="club-when">' + when + '</span>' +
       '</div>' +
       '<button type="button" class="club-close" id="club-close" aria-label="Hide this">&times;</button>' +
     '</div>';
@@ -361,7 +359,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-13-8';
+  var CLIENT_VERSION = '2026-11-13-9';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
