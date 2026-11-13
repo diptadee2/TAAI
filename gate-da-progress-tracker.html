@@ -2401,23 +2401,49 @@ html body .mobile-menu-contact {
 </style>
 <style>
   /* The 2 AM Club campaign banner + details (2026-11-13), see renderClubBanner in progress.js. */
-  .club-banner { display: flex; align-items: center; gap: 14px; margin: 0 0 18px; padding: 14px 16px; background: linear-gradient(120deg, #1d1a3a, #241d40); border: 1px solid rgba(167,139,250,0.35); border-radius: 14px; }
-  .club-icon { flex-shrink: 0; width: 42px; height: 42px; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center; background: rgba(253,224,71,0.12); color: #FDE047; }
-  .club-text { flex: 1; min-width: 0; }
-  .club-title { font-weight: 800; font-size: 15.5px; color: var(--ink); }
-  .club-sub { font-size: 13px; line-height: 1.45; color: var(--ink-dim); margin-top: 2px; }
-  .club-sub strong { color: #FDE047; }
-  .club-when { font-size: 11.5px; font-weight: 700; color: #FBBF24; margin-top: 4px; letter-spacing: .02em; }
-  .club-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-  .club-join { background: var(--purple); color: #120f22; border: none; border-radius: 10px; padding: 9px 14px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
-  .club-join:hover { filter: brightness(1.08); }
-  .club-close { background: transparent; border: none; color: var(--ink-soft); font-size: 22px; line-height: 1; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; }
-  .club-close:hover { color: var(--ink); background: rgba(255,255,255,0.06); }
-  @media (max-width: 600px) {
-    .club-banner { flex-wrap: wrap; align-items: flex-start; position: relative; padding-right: 44px; }
-    .club-actions { width: 100%; padding-left: 56px; }
-    .club-close { position: absolute; top: 8px; right: 8px; }
+  .club-banner { position: relative; overflow: hidden; display: flex; align-items: center; gap: 18px; margin: 0 0 18px; padding: 18px 48px 18px 18px; border-radius: 16px; background: radial-gradient(120% 140% at 85% 0%, #3a2a78 0%, #1a1745 45%, #0c0e26 100%); border: 1px solid rgba(167,139,250,0.4); }
+  .club-sky { position: absolute; inset: 0; pointer-events: none; }
+  .club-sky i { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #fff; opacity: .25; animation: club-twinkle 3s ease-in-out infinite; }
+  .club-sky i:nth-child(3n) { width: 2px; height: 2px; }
+  @keyframes club-twinkle { 0%,100% { opacity: .15; } 50% { opacity: .9; } }
+  .club-moon { position: absolute; left: 52%; top: -42px; width: 64px; height: 64px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #fff7d1, #f5d77a 60%, #d9b450); opacity: .9; }
+  .club-moon::after { content: ''; position: absolute; inset: -30px; border-radius: 50%; background: radial-gradient(circle, rgba(253,224,71,0.18), transparent 65%); }
+  .club-clock { position: relative; flex-shrink: 0; display: flex; align-items: baseline; gap: 4px; padding: 10px 12px; background: #0a0c1c; border: 2px solid #2d2f4d; border-radius: 10px; }
+  .club-clock-time { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 30px; font-weight: 700; color: #7dd3fc; letter-spacing: .02em; line-height: 1; }
+  .club-clock-time b { font-weight: 700; animation: club-blink 1s steps(1) infinite; }
+  @keyframes club-blink { 50% { opacity: 0; } }
+  .club-clock-am { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 11px; font-weight: 700; color: #7dd3fc; opacity: .75; }
+  .club-text { position: relative; flex: 1; min-width: 0; }
+  .club-title { font-weight: 800; font-size: 21px; color: #fff; letter-spacing: -.01em; }
+  .club-sub { font-size: 13.5px; line-height: 1.45; color: rgba(255,255,255,0.75); margin-top: 3px; }
+  .club-prizes-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+  .club-prizes-row span { font-size: 12.5px; font-weight: 700; color: #fff; background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.14); border-radius: 999px; padding: 3px 10px; }
+  .club-prizes-row span:first-child { color: #FDE047; border-color: rgba(253,224,71,0.45); background: rgba(253,224,71,0.1); }
+  .club-actions { position: relative; display: flex; flex-direction: column; align-items: center; gap: 7px; flex-shrink: 0; }
+  .club-when { font-size: 11.5px; font-weight: 700; color: #FBBF24; }
+  .club-join { background: #FDE047; color: #14112b; border: none; border-radius: 10px; padding: 11px 16px; font-family: inherit; font-size: 14px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+  .club-join:hover { filter: brightness(1.06); }
+  .club-join span { display: inline-block; transition: transform .2s ease; }
+  .club-join:hover span { transform: translateX(3px); }
+  .club-close { position: absolute; top: 8px; right: 8px; z-index: 1; background: transparent; border: none; color: rgba(255,255,255,0.55); font-size: 22px; line-height: 1; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; }
+  .club-close:hover { color: #fff; background: rgba(255,255,255,0.08); }
+  .club-banner--compact { margin: 0 auto 18px; padding: 12px 46px 12px 14px; gap: 14px; }
+  .club-banner--compact .club-clock { padding: 7px 9px; }
+  .club-banner--compact .club-clock-time { font-size: 22px; }
+  .club-banner--compact .club-title { font-size: 17px; }
+  .club-banner--compact .club-sub { font-size: 12.5px; }
+  .club-banner--compact .club-prizes-row { margin-top: 6px; }
+  .club-banner--compact .club-actions { flex-direction: row; gap: 12px; }
+  .club-banner--compact .club-moon { width: 50px; height: 50px; top: -34px; left: 58%; }
+  @media (max-width: 700px) {
+    .club-banner { flex-wrap: wrap; align-items: flex-start; }
+    .club-actions { width: 100%; flex-direction: row-reverse; justify-content: flex-end; gap: 12px; }
+    .club-clock-time { font-size: 24px; }
+    .club-title { font-size: 18px; }
+    .club-text { flex-basis: 100%; }
+    .club-moon { left: auto; right: 64px; }
   }
+  @media (prefers-reduced-motion: reduce) { .club-sky i, .club-clock-time b { animation: none; } }
   .club-modal { width: min(500px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; }
   .club-modal-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
   .club-modal-title { font-weight: 800; font-size: 17px; color: var(--ink); }

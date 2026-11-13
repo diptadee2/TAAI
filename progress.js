@@ -220,7 +220,7 @@
   var CLUB_LINKEDIN_URL = 'https://www.linkedin.com/company/taai-gate-da-placements/';
   var CLUB_MOON_ICON = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" fill="currentColor"/><circle cx="17" cy="5" r="1" fill="currentColor"/><circle cx="20.5" cy="8.5" r=".8" fill="currentColor"/></svg>';
   function clubBannerVisible() {
-    if (!state.student || state.focus) return false;
+    if (!state.student) return false;
     if (realTodayIso() > CLUB_DEADLINE) return false;
     try { if (localStorage.getItem(CLUB_DISMISS_KEY) === '1') return false; } catch (e) {}
     return true;
@@ -229,21 +229,31 @@
     var a = new Date(realTodayIso() + 'T00:00:00Z'), b = new Date(CLUB_DEADLINE + 'T00:00:00Z');
     return Math.round((b - a) / 86400000);
   }
-  function renderClubBanner() {
+  // Night-sky card: twinkling stars, a desk clock stuck at 2:00 AM, the
+  // prizes up front. `compact` = the one-row version shown in Focus Mode.
+  function renderClubBanner(compact) {
     if (!clubBannerVisible()) return '';
     var d = clubDaysLeft();
-    var when = d <= 0 ? 'Last day to enter' : d === 1 ? 'Closes tomorrow' : 'Closes Nov 30 · ' + d + ' days left';
-    return '<div class="club-banner fade-in" id="club-banner">' +
-      '<span class="club-icon">' + CLUB_MOON_ICON + '</span>' +
+    var when = d <= 0 ? 'Last day' : d === 1 ? 'Ends tomorrow' : d + ' days left';
+    var stars = '';
+    [[6,18],[14,62],[22,30],[31,80],[44,12],[52,55],[63,25],[71,70],[80,40],[88,15],[93,60],[38,42],[58,85],[76,8]].forEach(function (xy, i) {
+      stars += '<i style="left:' + xy[0] + '%;top:' + xy[1] + '%;animation-delay:' + (i * 0.37 % 3).toFixed(2) + 's"></i>';
+    });
+    return '<div class="club-banner' + (compact ? ' club-banner--compact' : '') + ' fade-in" id="club-banner">' +
+      '<div class="club-sky" aria-hidden="true">' + stars + '<span class="club-moon"></span></div>' +
+      '<div class="club-clock" aria-hidden="true"><span class="club-clock-time">2<b>:</b>00</span><span class="club-clock-am">AM</span></div>' +
       '<div class="club-text">' +
         '<div class="club-title">The 2 AM Club</div>' +
-        '<div class="club-sub">Share your study space and your TAAI story on LinkedIn. Top 3 win up to <strong>₹5,000</strong>.</div>' +
-        '<div class="club-when">' + when + '</div>' +
+        '<div class="club-sub">' + (compact
+          ? 'Snap your study space, share your TAAI story on LinkedIn.'
+          : 'Late nights, cold coffee, one more problem before bed. Snap your study space, tell your TAAI story on LinkedIn, and win.') + '</div>' +
+        '<div class="club-prizes-row"><span>🥇 ₹5,000</span><span>🥈 ₹3,000</span><span>🥉 ₹2,000</span></div>' +
       '</div>' +
       '<div class="club-actions">' +
-        '<button type="button" class="club-join" id="club-join">How to join</button>' +
-        '<button type="button" class="club-close" id="club-close" aria-label="Hide this">&times;</button>' +
+        '<span class="club-when">' + when + '</span>' +
+        '<button type="button" class="club-join" id="club-join">Join the club <span aria-hidden="true">→</span></button>' +
       '</div>' +
+      '<button type="button" class="club-close" id="club-close" aria-label="Hide this">&times;</button>' +
     '</div>';
   }
   var clubModalEl = null;
@@ -351,7 +361,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-13-2';
+  var CLIENT_VERSION = '2026-11-13-3';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -3478,7 +3488,7 @@
     if (!state.focus) html += renderBatchScoutBanner() + renderBatchMigrationWarning();
 
     if (!state.focus) html += '<div class="page-grid"><div class="main-col">';
-    html += renderClubBanner();
+    if (!state.focus) html += renderClubBanner();
 
     if (!state.focus) {
       // Was centered relative to the whole page-grid width (including
@@ -3528,6 +3538,7 @@
       // divider/glow were all rejected, so this makes them genuinely two
       // separate boxes instead of one continuous card with an internal seam.
       html += buildStatsPanelHtml();
+      html += renderClubBanner(true);
       html += '<div class="focus-card fade-in" id="focus-card">';
       // Side by side in the timer's own empty space at wide viewports, one
       // above the other on narrow ones — see .pomo-today-row. Works fine
