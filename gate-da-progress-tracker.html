@@ -2482,6 +2482,8 @@ html body .mobile-menu-contact {
   .fs-ice { position: absolute; left: 9px; bottom: 520px; width: 20px; height: 20px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #bfeaff, #4aa3d8 60%, #1d4f78); opacity: .6; }
   .fs-shoot { position: absolute; left: calc(var(--pomo-right) + 16px); top: calc(var(--pomo-top) + 76px); width: 60px; height: 2px; border-radius: 2px; background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.85)); transform: rotate(-28deg); opacity: 0; animation: fs-shoot 9s ease-in-out infinite; }
   @keyframes fs-shoot { 0%, 82% { opacity: 0; translate: 0 0; } 86% { opacity: .9; } 94% { opacity: 0; translate: 28px -15px; } 100% { opacity: 0; translate: 28px -15px; } }
+  .fs-comet { position: absolute; height: 2px; border-radius: 2px; background: linear-gradient(90deg, #fff, rgba(216,204,255,0.75) 35%, rgba(255,255,255,0)); transform-origin: left center; opacity: 0; pointer-events: none; }
+  .fs-comet::before { content: ''; position: absolute; left: -2.5px; top: -1.5px; width: 5px; height: 5px; border-radius: 50%; background: #fff; box-shadow: 0 0 8px 3px rgba(230,220,255,0.75); }
   @media (prefers-reduced-motion: reduce) { .fs-shoot { animation: none; opacity: .5; } }
   @media (max-width: 1180px) { #focus-card .focus-moon { right: 12px; top: 12px; transform: scale(.8); } }
   #focus-card .club-sky i { background: #fff; }
@@ -2522,7 +2524,11 @@ html body .mobile-menu-contact {
 /* Real clock on the Pomodoro ring's top-left, mirroring the settings gear
    on its top-right (2026-11-14, "add a real clock ... according to system
    time"). */
-.pomo-wallclock { position: absolute; top: -2px; left: -4px; z-index: 1; padding: 5px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.06); color: var(--ink-dim); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: .02em; white-space: nowrap; pointer-events: none; }
+.pomo-wallclock { position: absolute; top: -4px; left: -4px; z-index: 1; display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 12px 0 9px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.14); background: rgba(10,11,30,0.55); white-space: nowrap; pointer-events: none; }
+.pomo-wallclock-icon { display: inline-flex; color: #FBBF24; }
+.pomo-wallclock-icon.is-night { color: #f3e5b5; filter: drop-shadow(0 0 4px rgba(243,229,181,0.5)); }
+.pomo-wallclock-time { font-size: 14px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+.pomo-wallclock-ampm { font-size: 10.5px; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .06em; margin-left: -3px; }
 </style>
 </head>
 <body data-float-stack>

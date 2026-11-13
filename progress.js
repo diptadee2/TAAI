@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-14-6';
+  var CLIENT_VERSION = '2026-11-14-8';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2438,6 +2438,66 @@
     }
   }
   window.addEventListener('resize', syncSkyOffset);
+
+  // Random comet showers in the Focus card (2026-11-14). Every 7 to 16s, 2 to
+  // 4 short comets streak through one of the card's empty spaces (left of the
+  // timer, between the timer and Today's leaders, right of the leaders), never
+  // across text. Paused while the tab is hidden; off under reduced motion.
+  var cometTimer = null;
+  function cometZones() {
+    var card = document.getElementById('focus-card');
+    var pomo = card && card.querySelector('.pomodoro-card');
+    if (!pomo) return [];
+    var c = card.getBoundingClientRect(), p = pomo.getBoundingClientRect();
+    var lead = card.querySelector('#today-leaderboard-card');
+    var l = lead && lead.offsetParent ? lead.getBoundingClientRect() : null;
+    var top = p.top - c.top + 10, bottom = p.bottom - c.top - 40;
+    var zones = [[8, p.left - c.left - 8]];
+    if (l) { zones.push([p.right - c.left + 8, l.left - c.left - 8]); zones.push([l.right - c.left + 8, c.width - 8]); }
+    else zones.push([p.right - c.left + 8, c.width - 8]);
+    return zones.filter(function (z) { return z[1] - z[0] >= 80; }).map(function (z) { return { x0: z[0], x1: z[1], y0: top, y1: bottom }; });
+  }
+  function spawnComet(zone) {
+    var sky = document.querySelector('#focus-card .focus-sky');
+    if (!sky || !sky.animate) return;
+    // The head starts at (x, y) and moves down-left by (dx, dy); the tail
+    // trails up-right by len. Keep the whole path inside the zone.
+    var wide = zone.x1 - zone.x0 > 180;
+    var len = wide ? 55 + Math.random() * 30 : 28 + Math.random() * 14;
+    var dx = wide ? 60 + Math.random() * 30 : 32 + Math.random() * 12, dy = dx * 0.62;
+    var tailX = len * 0.85, tailY = len * 0.53;
+    var xMin = zone.x0 + dx, xMax = zone.x1 - tailX;
+    if (xMax < xMin) return;
+    var x = xMin + Math.random() * (xMax - xMin);
+    var y = zone.y0 + tailY + Math.random() * Math.max(0, zone.y1 - zone.y0 - tailY - dy);
+    var el = document.createElement('i');
+    el.className = 'fs-comet';
+    el.style.cssText = 'left:' + Math.round(x) + 'px;top:' + Math.round(y) + 'px;width:' + Math.round(len) + 'px;';
+    sky.appendChild(el);
+    var a = el.animate([
+      { opacity: 0, transform: 'translate(0,0) rotate(-32deg)' },
+      { opacity: 0.95, offset: 0.25 },
+      { opacity: 0, transform: 'translate(' + (-dx) + 'px,' + dy + 'px) rotate(-32deg)' }
+    ], { duration: 850 + Math.random() * 300, easing: 'ease-out' });
+    a.onfinish = function () { el.remove(); };
+  }
+  function cometShower() {
+    cometTimer = null;
+    if (!state.focus || document.hidden) return scheduleComets();
+    var zones = cometZones();
+    if (zones.length) {
+      var zone = zones[Math.floor(Math.random() * zones.length)];
+      var n = 2 + Math.floor(Math.random() * 3);
+      for (var i = 0; i < n; i++) setTimeout(function () { spawnComet(zone); }, i * (180 + Math.random() * 260));
+    }
+    scheduleComets();
+  }
+  function scheduleComets() {
+    if (cometTimer) return;
+    try { if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; } catch (e) {}
+    cometTimer = setTimeout(cometShower, 7000 + Math.random() * 9000);
+  }
+  scheduleComets();
   function fitSideColSticky() {
     var side = document.querySelector('.side-col');
     if (!side) return;
@@ -4550,15 +4610,34 @@
     return html;
   }
 
-  function wallClockText() {
-    try { return new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); }
-    catch (e) { var d = new Date(); return d.getHours() + ':' + pad(d.getMinutes()); }
+  // Time of day as parts, so AM/PM can be styled smaller; a moon icon from
+  // 7 PM to 6 AM and a sun icon otherwise.
+  var WALL_MOON = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/></svg>';
+  var WALL_SUN = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2" fill="currentColor" stroke="none"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>';
+  function wallClockParts() {
+    var d = new Date(), time = '', period = '';
+    try {
+      new Intl.DateTimeFormat([], { hour: 'numeric', minute: '2-digit' }).formatToParts(d).forEach(function (p) {
+        if (p.type === 'dayPeriod') period += p.value;
+        else if (p.type === 'hour' || p.type === 'minute' || p.type === 'literal') time += p.value;
+      });
+      time = time.trim();
+    } catch (e) { time = d.getHours() + ':' + pad(d.getMinutes()); }
+    var h = d.getHours();
+    return { time: time, period: period.trim(), night: h >= 19 || h < 6 };
+  }
+  function wallClockText() { var c = wallClockParts(); return c.time + (c.period ? ' ' + c.period : ''); }
+  function wallClockInner() {
+    var c = wallClockParts();
+    return '<span class="pomo-wallclock-icon' + (c.night ? ' is-night' : '') + '">' + (c.night ? WALL_MOON : WALL_SUN) + '</span>' +
+      '<span class="pomo-wallclock-time">' + escapeHtml(c.time) + '</span>' +
+      (c.period ? '<span class="pomo-wallclock-ampm">' + escapeHtml(c.period) + '</span>' : '');
   }
   function tickWallClock() {
     var el = document.getElementById('pomo-wallclock');
     if (!el) return;
     var t = wallClockText();
-    if (el.textContent !== t) el.textContent = t;
+    if (el.getAttribute('data-t') !== t) { el.setAttribute('data-t', t); el.setAttribute('aria-label', 'Current time ' + t); el.innerHTML = wallClockInner(); }
   }
   // Wakes once a minute, right as the minute changes, instead of every
   // second; also refreshes when the tab comes back into view (browsers
@@ -4600,7 +4679,7 @@
       // The real time of day, from the device's clock (2026-11-14), mirroring
       // the settings gear on the ring's other top corner. Kept current by
       // tickWallClock below.
-      '<div class="pomo-wallclock" id="pomo-wallclock" aria-label="Current time">' + wallClockText() + '</div>' +
+      '<div class="pomo-wallclock" id="pomo-wallclock" role="img" data-t="' + wallClockText() + '" aria-label="Current time ' + wallClockText() + '">' + wallClockInner() + '</div>' +
       // Anchored to the ring itself (a child of ring-wrap, not the card) —
       // sitting on the ring's own top-right edge reads as "settings for
       // this timer" the way a badge on a dial does, rather than floating
