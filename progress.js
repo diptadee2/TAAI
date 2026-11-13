@@ -361,7 +361,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-13-3';
+  var CLIENT_VERSION = '2026-11-13-4';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -3538,8 +3538,10 @@
       // divider/glow were all rejected, so this makes them genuinely two
       // separate boxes instead of one continuous card with an internal seam.
       html += buildStatsPanelHtml();
-      html += renderClubBanner(true);
       html += '<div class="focus-card fade-in" id="focus-card">';
+      // The 2 AM Club as the card's own top band (2026-11-13: "can't this be
+      // integrated with the card below?").
+      html += renderClubBanner(true);
       // Side by side in the timer's own empty space at wide viewports, one
       // above the other on narrow ones — see .pomo-today-row. Works fine
       // with just one child too (renderTodayLeaders returns '' on a fresh
