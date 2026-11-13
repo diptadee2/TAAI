@@ -2464,9 +2464,10 @@ html body .mobile-menu-contact {
     border-color: rgba(167,139,250,0.22);
   }
   #focus-card .club-banner--compact { background: transparent; }
-  /* Moon fully inside the band, in the free space before the button. */
-  #focus-card .club-banner--compact .club-moon { top: 50%; left: auto; right: 230px; width: 46px; height: 46px; margin-top: -23px; opacity: 1; box-shadow: inset -9px -5px 0 rgba(0,0,0,0.12); }
-  #focus-card .club-banner--compact .club-moon::after { inset: -40px; background: radial-gradient(circle, rgba(253,224,71,0.22), transparent 65%); }
+  /* Moon: a pale crescent in the middle of the band, away from the yellow
+     button so it can't be mistaken for one (2026-11-13). */
+  #focus-card .club-banner--compact .club-moon { top: 18px; left: 60%; right: auto; width: 40px; height: 40px; margin: 0; background: transparent; box-shadow: 11px 7px 0 0 #efe2b4; opacity: .9; transform: rotate(-20deg); filter: drop-shadow(0 0 10px rgba(239,226,180,0.35)); }
+  #focus-card .club-banner--compact .club-moon::after { display: none; }
   #focus-card .club-sky i { background: #fff; }
   #focus-card .club-sky i { animation-name: club-twinkle-bright; }
   @keyframes club-twinkle-bright { 0%,100% { opacity: .35; } 50% { opacity: 1; } }
