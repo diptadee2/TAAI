@@ -2427,13 +2427,14 @@ html body .mobile-menu-contact {
   .club-join:hover span { transform: translateX(3px); }
   .club-close { position: absolute; top: 8px; right: 8px; z-index: 1; background: transparent; border: none; color: rgba(255,255,255,0.55); font-size: 22px; line-height: 1; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; }
   .club-close:hover { color: #fff; background: rgba(255,255,255,0.08); }
-  .club-banner--compact { margin: 0 auto 18px; padding: 12px 46px 12px 14px; gap: 14px; }
+  .club-banner--compact { width: fit-content; max-width: min(690px, 100%); margin: 0 auto 18px; padding: 14px 46px 14px 14px; gap: 16px; border-radius: 18px; }
   .club-banner--compact .club-clock { padding: 7px 9px; }
   .club-banner--compact .club-clock-time { font-size: 22px; }
   .club-banner--compact .club-title { font-size: 17px; }
   .club-banner--compact .club-sub { font-size: 12.5px; }
   .club-banner--compact .club-prizes-row { margin-top: 6px; }
-  .club-banner--compact .club-actions { flex-direction: row; gap: 12px; }
+  .club-banner--compact .club-actions { flex-direction: column; gap: 6px; }
+  .club-banner--compact .club-join { padding: 9px 14px; font-size: 13.5px; }
   .club-banner--compact .club-moon { width: 50px; height: 50px; top: -34px; left: 58%; }
   @media (max-width: 700px) {
     .club-banner { flex-wrap: wrap; align-items: flex-start; }
