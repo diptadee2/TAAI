@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-14-5';
+  var CLIENT_VERSION = '2026-11-14-6';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -4560,7 +4560,14 @@
     var t = wallClockText();
     if (el.textContent !== t) el.textContent = t;
   }
-  setInterval(tickWallClock, 1000);
+  // Wakes once a minute, right as the minute changes, instead of every
+  // second; also refreshes when the tab comes back into view (browsers
+  // delay timers in background tabs).
+  (function scheduleWallClock() {
+    tickWallClock();
+    setTimeout(scheduleWallClock, 60000 - (Date.now() % 60000) + 50);
+  })();
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) tickWallClock(); });
 
   function renderPomodoro() {
     var frac = pomo.totalSeconds > 0 ? pomo.secondsLeft / pomo.totalSeconds : 1;
