@@ -4320,6 +4320,18 @@ html body main #combos .orient-btn.fade-in:not(.visible) { opacity: 0; transform
 /* 2026-10-30: accent the key parts of the band's line ("accentuate the important parts"). */
 html body main .pmap-cta-band .pmap-cta-sub b { font-weight: 700; color: #fff !important; -webkit-text-fill-color: #fff !important; }
 html body main .pmap-cta-band .pmap-cta-sub mark { background: none; padding: 0; font-weight: 700; color: var(--nb-yellow, #FDE047) !important; -webkit-text-fill-color: var(--nb-yellow, #FDE047) !important; white-space: nowrap; }
+
+/* Sold-out card's closed button (2026-11-13). :is(#full-course) only adds
+   ID weight, needed to beat the Score Line layer's !important button rules. */
+html body #combos :is(#full-course, .combo-card) button.btn.combo-closed-btn,
+html body #combos :is(#full-course, .combo-card) button.btn.combo-closed-btn:hover,
+html body #combos :is(#full-course, .combo-card) button.btn.combo-closed-btn:active {
+  background: #d9d6cf !important; background-image: none !important;
+  color: #57534e !important; -webkit-text-fill-color: #57534e !important;
+  border-color: #a8a29e !important; box-shadow: none !important; transform: none !important;
+  cursor: not-allowed; opacity: 1; pointer-events: none;
+}
+html body #combos :is(#full-course, .combo-card) button.btn.combo-closed-btn::before { display: none !important; }
 </style>
 </head>
 <body data-float-stack>
@@ -5687,12 +5699,11 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
       {!comingSoon && !isSoldOut && discount && <div className="combo-discount">{discount}</div>}
     </div>
   );
-  // On request: once sold out, "Enrol now" (which would just 404/mislead
-  // against a batch that's no longer taking students) is replaced with a
-  // direct line to support instead of quietly disappearing or staying
-  // clickable.
+  // Once sold out the card can't be enrolled in at all (2026-11-13, direct
+  // request: "make the 2027 card unenrollable"): a disabled "Enrolment
+  // closed" button, no link. It used to be a "Confident? Contact us" mailto.
   const ctaEl = isSoldOut
-    ? <a href={'mailto:support@taai.live?subject=' + encodeURIComponent(c.title)} className="btn btn-primary btn-full"><Icon.Mail size={15} /> Confident? Contact us</a>
+    ? <button type="button" className="btn btn-primary btn-full combo-closed-btn" disabled aria-disabled="true">Enrolment closed</button>
     : isPreviewCard
       ? <button type="button" className="btn btn-primary btn-full" onClick={() => setShowEnrolNote(true)}>Enrol now <Icon.ArrowRight /></button>
       : <a href={pd.enrollUrl || c.href} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-full">Enrol now <Icon.ArrowRight /></a>;
