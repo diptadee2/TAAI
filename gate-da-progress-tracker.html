@@ -2445,6 +2445,23 @@ html body .mobile-menu-contact {
     .club-text { flex-basis: 100%; }
     .club-moon { left: auto; right: 64px; }
   }
+  /* Focus Mode timer card in the 2 AM Club night sky (2026-11-13, "can't the
+     whole card have the same background?"). A faint tiled star field over the
+     same gradient; the banner band on top goes transparent so it blends in. */
+  #focus-card.focus-card {
+    background-color: #0c0e26;
+    background-image:
+      radial-gradient(1.5px 1.5px at 20px 30px, rgba(255,255,255,0.45), transparent 60%),
+      radial-gradient(1px 1px at 120px 80px, rgba(255,255,255,0.35), transparent 60%),
+      radial-gradient(1.5px 1.5px at 200px 160px, rgba(255,255,255,0.3), transparent 60%),
+      radial-gradient(1px 1px at 70px 210px, rgba(255,255,255,0.35), transparent 60%),
+      radial-gradient(1px 1px at 250px 40px, rgba(255,255,255,0.25), transparent 60%),
+      radial-gradient(130% 70% at 82% 0%, #3a2a78 0%, #1a1745 45%, #0c0e26 100%);
+    background-size: 280px 260px, 280px 260px, 280px 260px, 280px 260px, 280px 260px, 100% 100%;
+    background-repeat: repeat, repeat, repeat, repeat, repeat, no-repeat;
+    border-color: rgba(167,139,250,0.35);
+  }
+  #focus-card .club-banner--compact { background: transparent; }
   @media (prefers-reduced-motion: reduce) { .club-sky i, .club-clock-time b { animation: none; } }
   .club-modal { width: min(500px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; }
   .club-modal-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
