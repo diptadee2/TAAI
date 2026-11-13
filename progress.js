@@ -244,9 +244,9 @@
       '<span class="club-crescent-tile" aria-hidden="true"><span class="club-crescent"></span></span>' +
       '<div class="club-text">' +
         '<div class="club-name">The 2 AM Club</div>' +
-        '<div class="club-head">We want to celebrate your 2 AMs</div>' +
+        '<div class="club-head">We want to celebrate your&nbsp;2&nbsp;AMs</div>' +
         '<div class="club-sub">Share a real photo of where you study and your TAAI story on LinkedIn. Your story might be the one that tells another aspirant they’re not alone.</div>' +
-        '<div class="club-note">The top 3 stories also get a prize.</div>' +
+        '<div class="club-note">The top 3 stories also get a prize: <span class="club-nw">₹5,000 · ₹3,000 · ₹2,000</span></div>' +
       '</div>' +
       '<div class="club-actions">' +
         '<button type="button" class="club-join" id="club-join">Share your story <span aria-hidden="true">→</span></button>' +
@@ -360,7 +360,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-13-11';
+  var CLIENT_VERSION = '2026-11-13-13';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -3544,6 +3544,8 @@
       // Permanent night-sky moon for the card; CSS hides it while the 2 AM
       // Club band (which has its own moon) is showing.
       html += '<span class="focus-moon" aria-hidden="true"><span class="club-crescent"></span></span>';
+      // More of the night sky, kept to the card's empty edges (see .focus-sky).
+      html += '<div class="focus-sky" aria-hidden="true"><span class="fs-saturn"></span><span class="fs-mars"></span><span class="fs-ice"></span><span class="fs-gold"></span><span class="fs-shoot"></span></div>';
       // Side by side in the timer's own empty space at wide viewports, one
       // above the other on narrow ones — see .pomo-today-row. Works fine
       // with just one child too (renderTodayLeaders returns '' on a fresh
