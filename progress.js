@@ -231,7 +231,8 @@
   }
   // Night-sky card: twinkling stars, a desk clock stuck at 2:00 AM, the
   // prizes up front. `compact` = the one-row version shown in Focus Mode.
-  function renderClubBanner(compact) {
+  function renderClubBanner(variant) {
+    var compact = variant === true || variant === 'compact';
     if (!clubBannerVisible()) return '';
     var d = clubDaysLeft();
     var when = d <= 0 ? 'Last day to enter' : d === 1 ? 'Ends tomorrow' : 'Ends Nov 30 · ' + d + ' days left';
@@ -239,20 +240,21 @@
     [[6,18],[14,62],[22,30],[31,80],[44,12],[52,55],[63,25],[71,70],[80,40],[88,15],[93,60],[38,42],[58,85],[76,8]].forEach(function (xy, i) {
       stars += '<i style="left:' + xy[0] + '%;top:' + xy[1] + '%;animation-delay:' + (i * 0.37 % 3).toFixed(2) + 's"></i>';
     });
-    return '<div class="club-banner' + (compact ? ' club-banner--compact' : '') + ' fade-in" id="club-banner">' +
+    var cls = compact ? ' club-banner--compact' : variant === 'side' ? ' club-banner--side' : ' club-banner--main';
+    return '<div class="club-banner' + cls + ' fade-in">' +
       '<div class="club-sky" aria-hidden="true">' + stars + '</div>' +
       '<span class="club-crescent-tile" aria-hidden="true"><span class="club-crescent"></span></span>' +
       '<div class="club-text">' +
         '<div class="club-name">The 2 AM Club</div>' +
         '<div class="club-head">We want to celebrate your&nbsp;2&nbsp;AMs</div>' +
         '<div class="club-sub">Share a real photo of where you study and your TAAI story on LinkedIn. Your story might be the one that tells another aspirant they’re not alone.</div>' +
-        '<div class="club-note">The top 3 stories also get a prize: <span class="club-nw">₹5,000 · ₹3,000 · ₹2,000</span></div>' +
+        '<div class="club-note">The top 3 stories also get a prize: <span class="club-pills"><span class="club-pill club-pill--1">🥇 ₹5,000</span><span class="club-pill">🥈 ₹3,000</span><span class="club-pill">🥉 ₹2,000</span></span></div>' +
       '</div>' +
       '<div class="club-actions">' +
-        '<button type="button" class="club-join" id="club-join">Share your story <span aria-hidden="true">→</span></button>' +
+        '<button type="button" class="club-join">Share your story <span aria-hidden="true">→</span></button>' +
         '<span class="club-when">' + when + '</span>' +
       '</div>' +
-      '<button type="button" class="club-close" id="club-close" aria-label="Hide this">&times;</button>' +
+      '<button type="button" class="club-close" aria-label="Hide this">&times;</button>' +
     '</div>';
   }
   var clubModalEl = null;
@@ -360,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-13-13';
+  var CLIENT_VERSION = '2026-11-14-3';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2415,6 +2417,27 @@
   // becomes negative instead: the sidebar scrolls through normally and
   // then pins with its bottom edge 24px above the window's bottom.
   var SIDE_COL_GAP = 24;
+  // The Focus card's planets follow the timer card's real position (it moves
+  // to the centre when Today's leaders is empty, and down while the 2 AM Club
+  // band shows), so they stay in empty space.
+  var skyObserver = null;
+  function syncSkyOffset() {
+    var card = document.getElementById('focus-card');
+    if (!card) return;
+    var pomo = card.querySelector('.pomodoro-card');
+    if (!pomo) return;
+    var c = card.getBoundingClientRect(), r = pomo.getBoundingClientRect();
+    card.style.setProperty('--pomo-top', Math.round(r.top - c.top) + 'px');
+    card.style.setProperty('--pomo-right', Math.round(r.right - c.left) + 'px');
+    if (window.ResizeObserver) {
+      if (skyObserver) skyObserver.disconnect();
+      skyObserver = new ResizeObserver(function () { requestAnimationFrame(syncSkyOffset); });
+      skyObserver.observe(card);
+      var row = card.querySelector('.pomo-today-row');
+      if (row) skyObserver.observe(row);
+    }
+  }
+  window.addEventListener('resize', syncSkyOffset);
   function fitSideColSticky() {
     var side = document.querySelector('.side-col');
     if (!side) return;
@@ -3604,7 +3627,7 @@
       // progress and marks); the month calendar below it, beside the
       // checklist it jumps into (swapped 2026-10-08, "can the positioning
       // be better?").
-      html += '<div class="side-col">' +
+      html += '<div class="side-col">' + renderClubBanner('side') +
         '<div id="subject-panel">' + renderSubjectBreakdown() + '</div>' +
         '<div id="heatmap-panel">' + renderHeatmap() + '</div>' +
         '</div>'; // side-col
@@ -6215,14 +6238,16 @@
   }
 
   function bindCalendarEvents() {
-    var clubJoin = document.getElementById('club-join');
-    if (clubJoin) clubJoin.addEventListener('click', openClubModal);
-    var clubClose = document.getElementById('club-close');
-    if (clubClose) clubClose.addEventListener('click', function () {
-      try { localStorage.setItem(CLUB_DISMISS_KEY, '1'); } catch (e) {}
-      var b = document.getElementById('club-banner');
-      if (b) b.remove();
+    document.querySelectorAll('.club-join').forEach(function (b) { b.addEventListener('click', openClubModal); });
+    document.querySelectorAll('.club-close').forEach(function (b) {
+      b.addEventListener('click', function () {
+        try { localStorage.setItem(CLUB_DISMISS_KEY, '1'); } catch (e) {}
+        document.querySelectorAll('.club-banner').forEach(function (el) { el.remove(); });
+        syncSkyOffset();
+        fitSideColSticky();
+      });
     });
+    syncSkyOffset();
     var batchPicker = document.getElementById('batch-picker-select');
     if (batchPicker) batchPicker.addEventListener('change', function () {
       if (!state.student) {

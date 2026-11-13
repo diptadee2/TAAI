@@ -2415,7 +2415,11 @@ html body .mobile-menu-contact {
   .club-sub { font-size: 13.5px; line-height: 1.5; color: rgba(255,255,255,0.72); margin-top: 5px; }
   .club-sub b { color: #fff; }
   .club-nw { white-space: nowrap; }
-  .club-note { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px; }
+  .club-note { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+  .club-pills { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+  .club-pill { font-size: 12px; font-weight: 700; color: #fff; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16); border-radius: 999px; padding: 2px 9px; white-space: nowrap; }
+  .club-pill--1 { color: #FDE047; border-color: rgba(253,224,71,0.4); background: rgba(253,224,71,0.08); }
+  .club-note { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 7px; }
   .club-actions { position: relative; display: flex; flex-direction: column; align-items: center; gap: 7px; flex-shrink: 0; }
   .club-when { font-size: 11.5px; font-weight: 600; color: rgba(255,255,255,0.6); white-space: nowrap; }
   .club-join { background: #FDE047; color: #14112b; border: none; border-radius: 12px; padding: 13px 20px; font-family: inherit; font-size: 15px; font-weight: 800; cursor: pointer; white-space: nowrap; }
@@ -2465,22 +2469,33 @@ html body .mobile-menu-contact {
   #focus-card > .focus-moon { z-index: 1; }
   /* Positions sit in the measured free margins of the 1024px-wide card:
      left strip and the 110px gap between the timer and Today's leaders,
-     right strip, and the left margin beside the weekly board. --sky-off adds
-     the club band's height while it shows. */
-  #focus-card { --sky-off: 0px; }
-  #focus-card:has(.club-banner) { --sky-off: 130px; }
-  .fs-saturn { position: absolute; left: -22px; top: calc(var(--sky-off) + 210px); width: 44px; height: 44px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #c9b8ff, #7c66d6 55%, #3d2f80); opacity: .55; }
+     right strip, and the left margin beside the weekly board. --pomo-top /
+     --pomo-right are the timer card's real position (set by syncSkyOffset in
+     progress.js), so the planets follow it. */
+  #focus-card { --pomo-top: 174px; --pomo-right: 467px; }
+  .fs-saturn { position: absolute; left: -22px; top: calc(var(--pomo-top) + 166px); width: 44px; height: 44px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #c9b8ff, #7c66d6 55%, #3d2f80); opacity: .55; }
   .fs-saturn::before { content: ''; position: absolute; left: -18px; top: 15px; width: 80px; height: 14px; border-radius: 50%; border: 2px solid rgba(201,184,255,0.7); transform: rotate(-18deg); }
-  .fs-mars { position: absolute; right: 30px; top: calc(var(--sky-off) + 430px); width: 16px; height: 16px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ffb38a, #d9603b 60%, #7a2b17); opacity: .75; }
-  .fs-gold { position: absolute; left: 510px; top: calc(var(--sky-off) + 470px); width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff1b8, #d8a838 60%, #6d4d12); opacity: .6; }
+  .fs-mars { position: absolute; right: 30px; top: calc(var(--pomo-top) + 386px); width: 16px; height: 16px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ffb38a, #d9603b 60%, #7a2b17); opacity: .75; }
+  .fs-gold { position: absolute; left: calc(var(--pomo-right) + 44px); top: calc(var(--pomo-top) + 426px); width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff1b8, #d8a838 60%, #6d4d12); opacity: .6; }
   .fs-ice { position: absolute; left: 9px; bottom: 520px; width: 20px; height: 20px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #bfeaff, #4aa3d8 60%, #1d4f78); opacity: .6; }
-  .fs-shoot { position: absolute; left: 482px; top: calc(var(--sky-off) + 120px); width: 60px; height: 2px; border-radius: 2px; background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.85)); transform: rotate(-28deg); opacity: 0; animation: fs-shoot 9s ease-in-out infinite; }
+  .fs-shoot { position: absolute; left: calc(var(--pomo-right) + 16px); top: calc(var(--pomo-top) + 76px); width: 60px; height: 2px; border-radius: 2px; background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.85)); transform: rotate(-28deg); opacity: 0; animation: fs-shoot 9s ease-in-out infinite; }
   @keyframes fs-shoot { 0%, 82% { opacity: 0; translate: 0 0; } 86% { opacity: .9; } 94% { opacity: 0; translate: 28px -15px; } 100% { opacity: 0; translate: 28px -15px; } }
   @media (prefers-reduced-motion: reduce) { .fs-shoot { animation: none; opacity: .5; } }
   @media (max-width: 1180px) { #focus-card .focus-moon { right: 12px; top: 12px; transform: scale(.8); } }
   #focus-card .club-sky i { background: #fff; }
   #focus-card .club-sky i { animation-name: club-twinkle-bright; }
   @keyframes club-twinkle-bright { 0%,100% { opacity: .35; } 50% { opacity: 1; } }
+  /* Checklist page: in the right-hand column on desktop, in the main column
+     below that (2026-11-14, "in the front page this can be a card towards
+     the right side"). */
+  @media (min-width: 1081px) { .club-banner--main { display: none; } }
+  .club-banner--side { flex-direction: column; align-items: flex-start; gap: 12px; padding: 20px 20px 20px; margin: 0 0 20px; }
+  .club-banner--side .club-crescent-tile { width: 46px; height: 46px; margin: -4px 0 0 -6px; }
+  .club-banner--side .club-crescent { width: 24px; height: 24px; box-shadow: 7px 4px 0 0 #f3e5b5; }
+  .club-banner--side .club-head { font-size: 20px; }
+  .club-banner--side .club-sub { font-size: 13px; }
+  .club-banner--side .club-actions { width: 100%; align-items: stretch; }
+  .club-banner--side .club-join { width: 100%; }
   @media (prefers-reduced-motion: reduce) { .club-sky i { animation: none; } }
   .club-modal { width: min(500px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; }
   .club-modal-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
