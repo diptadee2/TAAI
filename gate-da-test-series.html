@@ -557,7 +557,7 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--ink); 
 .feat-dark:hover .feat-stat:nth-child(2) .feat-stat-num { animation-delay: 160ms; }
 .feat-dark:hover .feat-stat:nth-child(3) .feat-stat-num { animation-delay: 240ms; }
 .feat-stat-num { font-family: var(--font-display); font-size: 24px; font-weight: 600; letter-spacing: -0.01em; line-height: 1; background: linear-gradient(120deg, var(--lilac), #fff); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.feat-stat-lbl { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,0.32); }
+.feat-stat-lbl { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,0.62); }
 /* Question palette */
 .feat-palette { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin: 4px 0; }
 .feat-palette-q { aspect-ratio: 1; border-radius: 7px; font-family: var(--font-mono); font-size: 8px; font-weight: 700; display: flex; align-items: center; justify-content: center; transition: transform .18s cubic-bezier(.34,1.4,.64,1), box-shadow .18s ease; user-select: none; }
@@ -2699,7 +2699,7 @@ function Discussions() {
           {DISCUSSION_VIDEOS.map(v => (
             <a key={v.id} className="disc-card" href={`https://www.youtube.com/watch?v=${v.id}`} target="_blank" rel="noopener noreferrer">
               <div className="disc-thumb-wrap">
-                <img className="disc-thumb" src={`https://img.youtube.com/vi/${v.id}/maxresdefault.jpg`} alt={titles[v.id] || ''} loading="lazy" />
+                <img className="disc-thumb" src={`https://img.youtube.com/vi/${v.id}/hqdefault.jpg`} alt={titles[v.id] || ''} loading="lazy" />
                 <div className="disc-play-btn">
                   <div className="disc-play-circle">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
