@@ -4343,6 +4343,36 @@ html body main .pmap-subject:not(#_), html body main .pmap-subject:hover:not(#_)
 html body main .pmap-detail-art:not(#_), html body main .pmap-detail-art:hover:not(#_) { box-shadow: none !important; transform: none !important; }
 html body main .pmap-detail-link:not(#_), html body main .pmap-detail-link:hover:not(#_) { box-shadow: none !important; transform: none !important; }
 </style>
+<style>
+/* Courses hero, quieter (2026-11-14, "this region can be a bit more minimal").
+   Jump buttons lose their hint lines and arrow boxes (smaller shadow, still
+   buttons), the three figures become one plain line, the divider goes, and
+   the syllabus guide is a plain underlined link instead of a boxed card. */
+html body main .page-hero .ph-cta:not(#_) { display: flex !important; flex-wrap: wrap; gap: 14px !important; max-width: none; }
+html body main .page-hero .ph-jump:not(#_) { padding: 11px 18px; gap: 10px; box-shadow: 4px 4px 0 #121316; border-width: 2.5px; }
+html body main .page-hero .ph-jump-text small { display: none; }
+html body main .page-hero .ph-jump-text b { font-size: 16px; font-weight: 700; }
+html body main .page-hero .ph-jump-arrow:not(#_) { width: auto; height: auto; background: none; color: #121316; }
+@media (hover: hover) and (pointer: fine) { html body main .page-hero .ph-jump:hover:not(#_) { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #121316; } }
+html body main .page-hero .ph-jump:active:not(#_) { transform: translate(4px, 4px); box-shadow: 0 0 0 #121316; }
+html body main .page-hero .hero-results:not(#_) { margin-top: 26px; padding-top: 0; border-top: 0; }
+html body main .page-hero .hero-results-row:not(#_) { display: flex !important; flex-wrap: wrap; gap: 4px 0 !important; max-width: none; }
+html body main .page-hero .hero-result:not(#_) { border: 0 !important; padding: 0 !important; display: inline; font-size: 14.5px; color: #3D3B47; }
+html body main .page-hero .hero-result b:not(#_) { font-family: var(--font-body) !important; font-size: 14.5px; font-weight: 700; color: #121316 !important; }
+html body main .page-hero .hero-result span:not(#_) { font-size: 14.5px; color: #3D3B47 !important; margin-left: 4px; }
+html body main .page-hero .hero-result + .hero-result::before { content: '\00B7'; margin: 0 10px; color: #9A96A8; }
+html body main .page-hero .hero-guide-link:not(#_) { display: inline-block !important; padding: 0; margin-top: 14px !important; background: none; border: 0; box-shadow: none; font-size: 14px; font-weight: 600; transform: none; }
+html body main .page-hero .hero-guide-link:not(#_) > svg:first-child { display: none; }
+html body main .page-hero .hero-guide-link:not(#_) span { text-decoration: underline !important; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+html body main .page-hero .hero-guide-link:hover:not(#_) { transform: none; box-shadow: none; }
+html body main .page-hero .hero-guide-link:not(#_) > svg:last-child { display: inline-block; vertical-align: -1px; margin-left: 6px; }
+@media (max-width: 600px) {
+  html body main .page-hero .hero-results-row:not(#_) { flex-direction: column; gap: 6px !important; }
+  html body main .page-hero .hero-result + .hero-result::before { content: none; }
+  html body main .page-hero .ph-cta:not(#_) { gap: 12px !important; }
+  html body main .page-hero .ph-jump:not(#_) { flex: 1 1 auto; justify-content: space-between; }
+}
+</style>
 </head>
 <body data-float-stack>
 <div id="root"></div>
