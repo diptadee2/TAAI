@@ -4767,7 +4767,6 @@ const COMBOS = [
     id: 'full-course',
     // Shown unblurred as the "MRP" once the card is sold out
     // (2026-10-09, direct request), instead of the blurred live price.
-    soldOutPrice: 14999,
     num: '02',
     badge: 'best', badgeLabel: 'Best value',
     accent: 'linear-gradient(90deg, var(--pink), var(--purple), var(--blue))',
@@ -5913,9 +5912,10 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
           {soldOutStampEl}
         </div>
       ) : includesEl}
-      {priceRowEl}
-      {(discountReason || discountDeadline) && <div className="combo-saving" style={{ color: '#e05a2b', fontWeight: 600 }}>⏳ {[discountReason, discountDeadline].filter(Boolean).join(' · ')}</div>}
-      {saving && <div className="combo-saving">{saving}</div>}
+      {/* Sold out: no price at all (2026-11-15, direct request). */}
+      {!isSoldOut && priceRowEl}
+      {!isSoldOut && (discountReason || discountDeadline) && <div className="combo-saving" style={{ color: '#e05a2b', fontWeight: 600 }}>⏳ {[discountReason, discountDeadline].filter(Boolean).join(' · ')}</div>}
+      {!isSoldOut && saving && <div className="combo-saving">{saving}</div>}
       {ctaEl}
     </div>
   );
