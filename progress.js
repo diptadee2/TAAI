@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-14-8';
+  var CLIENT_VERSION = '2026-11-15-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -5073,6 +5073,8 @@
   // <label>, which browsers don't treat as a checkbox click, so following
   // it never ticks the task.
   var TASK_LINK_ICON = '<svg class="task-link-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  // LMS lessons, plus TAAI's YouTube lectures (batch D's ML one-shots, 2026-11-15).
+  var TASK_LINK_OK = /^https:\/\/(learn\.taai\.live|www\.youtube\.com|youtu\.be)\//;
   function taskLinkFor(t) {
     // Links come from the database (schedule_task_links, via tracker-data)
     // so they change without a redeploy. The static /course-links.js map
@@ -5084,7 +5086,7 @@
       : ((window.SCHEDULE_TASK_LINKS || {})[effectiveScoutBatch() || 'C'] || {});
     var bySubject = byBatch[t.subject] || {};
     var url = bySubject[t.task_text];
-    return (typeof url === 'string' && /^https:\/\/learn\.taai\.live\//.test(url)) ? url : null;
+    return (typeof url === 'string' && TASK_LINK_OK.test(url)) ? url : null;
   }
 
   // Keeps the icon glued to the last word so it never wraps onto a line alone.
@@ -5126,7 +5128,7 @@
     // still tick; that starts sign-up into the batch they're previewing.)
     var locked = isPreviewingOtherBatch();
     var textHtml = link
-      ? '<a class="task-link" href="' + escapeAttr(link) + '" target="_blank" rel="noopener" title="Open this lesson on the course">' + taskLinkTextHtml(t.task_text) + '</a>'
+      ? '<a class="task-link" href="' + escapeAttr(link) + '" target="_blank" rel="noopener" title="' + (/youtu/.test(link) ? 'Watch this lecture on YouTube' : 'Open this lesson on the course') + '">' + taskLinkTextHtml(t.task_text) + '</a>'
       : escapeHtml(t.task_text);
     return '<label class="task-row' + (t.completed ? ' done' : '') + (locked ? ' locked' : '') + '" for="' + id + '"' + (locked ? ' title="Switch to this batch to tick tasks"' : '') + '>' +
       '<input type="checkbox" id="' + id + '" data-date="' + date + '" data-subject="' + escapeAttr(t.subject) + '" data-task="' + escapeAttr(t.task_text) + '"' + (t.completed ? ' checked' : '') + (locked ? ' disabled' : '') + '>' +

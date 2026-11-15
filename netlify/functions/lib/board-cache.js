@@ -278,7 +278,7 @@ export function getBatchSchedule(supabase, batch) {
     if (!linksResult.error) {
       links = {};
       for (const r of linksResult.data || []) {
-        if (!/^https:\/\/learn\.taai\.live\//.test(r.url)) continue;
+        if (!/^https:\/\/(learn\.taai\.live|www\.youtube\.com|youtu\.be)\//.test(r.url)) continue;
         (links[r.subject] = links[r.subject] || {})[r.task_text] = r.url;
       }
     }

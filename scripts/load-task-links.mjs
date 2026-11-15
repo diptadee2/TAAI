@@ -5,7 +5,7 @@
 // CSV columns: Subject,Task,URL. Task must match the schedule's task text
 // exactly (it's the key). Upserts by (batch, subject, task); --prune also
 // deletes this batch's links that aren't in the file. Only
-// https://learn.taai.live/ URLs are accepted (the tracker ignores others).
+// https://learn.taai.live/ and YouTube URLs are accepted (the tracker ignores others).
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -37,10 +37,10 @@ async function main() {
   for (const r of data) {
     const subject = (r[0] || '').trim(), task = (r[1] || '').trim(), url = (r[2] || '').trim();
     if (!subject && !task && !url) continue;
-    if (!subject || !task || !/^https:\/\/learn\.taai\.live\//.test(url)) { bad.push(r.join(' | ')); continue; }
+    if (!subject || !task || !/^https:\/\/(learn\.taai\.live|www\.youtube\.com|youtu\.be)\//.test(url)) { bad.push(r.join(' | ')); continue; }
     links.push({ batch, subject, task_text: task, url, updated_at: new Date().toISOString() });
   }
-  if (bad.length) { console.error('Rejected rows (need Subject, Task and a https://learn.taai.live/ URL):\n  ' + bad.join('\n  ')); process.exit(1); }
+  if (bad.length) { console.error('Rejected rows (need Subject, Task and a learn.taai.live or YouTube URL):\n  ' + bad.join('\n  ')); process.exit(1); }
 
   const supabase = getSupabase();
   // Warn (don't fail) about tasks that aren't in this batch's schedule:
