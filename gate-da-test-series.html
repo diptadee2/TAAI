@@ -1952,6 +1952,19 @@ html body #root .feat-f .feat-rank-divider, html body #root .feat-f .feat-rank-b
    so it wrapped in the fallback font and unwrapped when Poppins arrived, a layout shift. */
 .ts-br-phone { display: none; }
 @media (max-width: 600px) { .ts-br-phone { display: inline; } }
+
+/* FAQ left column aligned with the question list (2026-11-18, "fix the misallignments"):
+   the highlighted "questions?" starts at the same x as "Got" (its yellow box bleeds left
+   instead), the heading's letters start level with the first question box, and the
+   column is short enough that the two cards end level with the last (closed) question. */
+html body #root .faq-side > h2:not(#_) { margin-top: -0.14em; }
+html body #root .faq-side > h2 em:not(#_) { margin-left: -.12em; }
+html body #root .faq-side > p:not(#_) { margin-bottom: 20px !important; }
+html body #root .faq-side:not(#_) { display: flex; flex-direction: column; align-self: start; min-height: var(--faq-closed-h, 0px); }
+html body #root .faq-side > .btn:not(#_) { align-self: flex-start; }
+@media (max-width: 1024px) { html body #root .faq-side:not(#_) { min-height: 0; } }
+html body #root .faq-side .trust-strip:not(#_) { margin-top: auto; padding-top: 20px; }
+html body #root .faq-side .trust-item:not(#_) { padding: 16px 12px 14px; gap: 10px; }
 </style>
 <style>
 /* Not clickable, so no button look (2026-11-13, Clarity showed 9.55% of sessions
@@ -2815,16 +2828,33 @@ function FaqItem({ f, isOpen, onToggle }) {
 function FAQ() {
   const [openSet, setOpenSet] = React.useState(() => new Set([0]));
   const toggle = i => setOpenSet(prev => { const n = new Set(prev); n.has(i) ? n.delete(i) : n.add(i); return n; });
+  // Height of the question list with every answer closed (question rows + gaps).
+  // The left column is at least this tall and its two cards sit at its bottom, so
+  // they end level with the last question whichever answers are open.
+  const layoutRef = React.useRef(null);
+  React.useEffect(() => {
+    const el = layoutRef.current; if (!el) return;
+    const measure = () => {
+      const qs = el.querySelectorAll('.faq-q');
+      if (!qs.length) return;
+      let h = 0; qs.forEach(q => { h += q.closest('.faq-item').offsetHeight - q.parentElement.querySelector('.faq-a').offsetHeight; });
+      h += 12 * (qs.length - 1);
+      el.style.setProperty('--faq-closed-h', h + 'px');
+    };
+    measure();
+    const ro = new ResizeObserver(measure); ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   return (
     <section className="section ts-faq-section" id="faq">
       <div className="container">
-        <div className="faq-layout">
-          <div className="fade-in">
+        <div className="faq-layout" ref={layoutRef}>
+          <div className="fade-in faq-side">
             <h2 style={{ fontFamily:'var(--font-display)', fontSize:'clamp(30px,3.8vw,52px)', fontWeight:600, letterSpacing:'-0.035em', lineHeight:1, marginBottom:16 }}>
               Got<br /><em>questions?</em>
             </h2>
             <p style={{ fontSize:15, color:'var(--ink-dim)', lineHeight:1.7, marginBottom:24 }}>
-              Do reach us out<br />
+              Do reach us out at{' '}
               <a href="mailto:support@taai.live" style={{ color: 'inherit', fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 3 }}>support@taai.live</a>
             </p>
             <a href="/contact" className="btn btn-primary">Contact us <Icon.ArrowRight /></a>
