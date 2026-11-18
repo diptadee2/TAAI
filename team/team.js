@@ -313,6 +313,7 @@
     tab: 'announcements', // 'announcements' | 'students' — mutually exclusive views, not stacked panels
     dayCard: { batch: 'D', which: 'today', theme: 'auto', date: '', months: {}, loading: false, error: null }, // Day card tab (2026-10-09)
     offerPoster: { which: 'today', mode: 'auto', pricing: null, cutoff: null, loading: false, error: null }, // Offer poster tab (2026-10-18; challenge mode 2026-10-19)
+    clubWinner: { loaded: false, loading: false, form: null, saving: false, msg: null, msgType: null, updatedAt: null }, // 2 AM Club winner popup (2026-11-18)
     students: null, // null = not loaded yet; array once fetched
     studentsLoading: false,
     studentsError: null,
@@ -1011,11 +1012,12 @@
     // Day card and Offer poster share one "Marketing" main tab (2026-10-18,
     // direct request). state.tab still holds the sub-tab ('day-card' or
     // 'offer-poster') so each poster's own loaders keep working unchanged.
-    var isMarketing = state.tab === 'day-card' || state.tab === 'offer-poster';
+    var isMarketing = state.tab === 'day-card' || state.tab === 'offer-poster' || state.tab === 'club-winner';
     var marketingTabs = isMarketing
       ? '<div class="tabs" style="margin:0 0 14px;">' +
           '<button class="tab-btn' + (state.tab === 'day-card' ? ' active' : '') + '" data-mktab="day-card">📸 Day card</button>' +
           '<button class="tab-btn' + (state.tab === 'offer-poster' ? ' active' : '') + '" data-mktab="offer-poster">🔥 Offer poster</button>' +
+          '<button class="tab-btn' + (state.tab === 'club-winner' ? ' active' : '') + '" data-mktab="club-winner">🏆 2 AM winner</button>' +
         '</div>'
       : '';
     // Counts right on the tab itself — knowing "there are 12 announcements,
@@ -1065,6 +1067,8 @@
           ? marketingTabs + renderDayCard()
           : state.tab === 'offer-poster'
             ? marketingTabs + renderOfferPoster()
+          : state.tab === 'club-winner'
+            ? marketingTabs + renderClubWinner()
             : state.tab === 'challenge'
               ? renderChallengePanel()
               : state.tab === 'piracy'
@@ -1088,6 +1092,148 @@
     if (state.tab === 'day-card') bindDayCard();
     if (state.tab === 'offer-poster') bindOfferPoster();
     if (state.tab === 'piracy') bindPiracy();
+    if (state.tab === 'club-winner') bindClubWinner();
+  }
+
+  // ── 2 AM Club winner popup (2026-11-18) ──────────────────────────────
+  // Name, up to two photos (desk setup + LinkedIn picture), prize and the
+  // LinkedIn post. Between the two dates (IST) every tracker visitor sees it
+  // once, with confetti. Photos are shrunk in the browser to a JPEG of at
+  // most 1400px before saving. Preview opens the real tracker popup with
+  // the form as it is now (kept in this browser only), saved or not.
+  function cwDefaultForm() {
+    return { enabled: false, name: '', month: 'November', prize: 5000, linkedin_text: '', linkedin_url: '', show_from: '2026-12-02', show_until: '2026-12-09',
+      photos: [{ src: '', caption: 'Desk setup' }, { src: '', caption: 'LinkedIn post' }] };
+  }
+  function loadClubWinner() {
+    var cw = state.clubWinner;
+    if (cw.loaded || cw.loading) return;
+    cw.loading = true; render();
+    api('/team-club-winner').then(function (d) {
+      var f = cwDefaultForm();
+      if (d.winner) {
+        Object.keys(f).forEach(function (k) { if (k !== 'photos' && d.winner[k] !== undefined && d.winner[k] !== null) f[k] = d.winner[k]; });
+        (d.winner.photos || []).forEach(function (p, i) { if (i < 2) f.photos[i] = { src: p.src || '', caption: p.caption || '' }; });
+      }
+      cw.form = f; cw.updatedAt = d.updated_at; cw.loaded = true;
+    }).catch(function (e) {
+      cw.form = cwDefaultForm(); cw.loaded = true;
+      cw.msg = /club_winner/.test(e.message) ? 'The club_winner table doesn\'t exist yet. Run the SQL at the end of supabase/schema.sql, then reload. You can still fill this in and Preview it.' : 'Could not load: ' + e.message;
+      cw.msgType = 'error';
+    }).then(function () { cw.loading = false; if (state.tab === 'club-winner') render(); });
+  }
+  function cwStatus(f) {
+    if (!f.enabled) return { cls: 'off', text: 'Off: nobody sees it' };
+    var t = dcTodayIST();
+    if (t < f.show_from) return { cls: 'soon', text: 'Scheduled: shows from ' + dcPretty(f.show_from) };
+    if (t > f.show_until) return { cls: 'off', text: 'Ended on ' + dcPretty(f.show_until) };
+    return { cls: 'live', text: 'Live now on the tracker, until ' + dcPretty(f.show_until) };
+  }
+  function dcPretty(iso) {
+    if (!iso) return '';
+    var d = new Date(iso + 'T00:00:00');
+    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  function renderClubWinner() {
+    var cw = state.clubWinner;
+    if (!cw.loaded) return '<p class="hint">Loading…</p>';
+    var f = cw.form, st = cwStatus(f);
+    var photoHtml = f.photos.map(function (p, i) {
+      return '<div class="cw-photo-slot">' +
+        '<div class="cw-photo-label">' + (i === 0 ? 'Photo 1 (shown big)' : 'Photo 2 (optional)') + '</div>' +
+        (p.src ? '<img class="cw-thumb" src="' + escapeHtml(p.src) + '" alt="">' : '<div class="cw-thumb cw-thumb-empty">No photo</div>') +
+        '<div class="cw-photo-actions">' +
+          '<label class="btn btn-sm">' + (p.src ? 'Replace' : 'Upload') + '<input type="file" accept="image/*" data-cw-photo="' + i + '" hidden></label>' +
+          (p.src ? '<button type="button" class="btn btn-sm" data-cw-remove="' + i + '">Remove</button>' : '') +
+        '</div>' +
+        '<div class="field"><input type="text" class="cw-cap" data-cw-cap="' + i + '" maxlength="80" placeholder="Caption (optional)" value="' + escapeHtml(p.caption || '') + '"></div>' +
+      '</div>';
+    }).join('');
+    return '<div class="cw-panel">' +
+      '<p class="hint">The winner popup on the progress tracker. Between the two dates, everyone who opens the tracker sees it once (signed in or not), with confetti.</p>' +
+      '<div class="cw-status cw-status-' + st.cls + '">' + escapeHtml(st.text) + '</div>' +
+      (cw.msg ? '<div class="msg msg-' + (cw.msgType === 'error' ? 'error' : 'ok') + '">' + escapeHtml(cw.msg) + '</div>' : '') +
+      '<div class="cw-grid">' +
+        '<label class="field cw-field"><span>Winner\'s name</span><input type="text" id="cw-name" maxlength="80" value="' + escapeHtml(f.name) + '" placeholder="As it should appear"></label>' +
+        '<label class="field cw-field"><span>Month</span><input type="text" id="cw-month" maxlength="30" value="' + escapeHtml(f.month) + '"></label>' +
+        '<label class="field cw-field"><span>Prize (₹)</span><input type="number" id="cw-prize" min="0" step="1" value="' + escapeHtml(f.prize) + '"></label>' +
+        '<label class="field cw-field"><span>Show from</span><input type="date" id="cw-from" value="' + escapeHtml(f.show_from) + '"></label>' +
+        '<label class="field cw-field"><span>Show until (inclusive)</span><input type="date" id="cw-until" value="' + escapeHtml(f.show_until) + '"></label>' +
+      '</div>' +
+      '<div class="cw-photos-row">' + photoHtml + '</div>' +
+      '<label class="field cw-field cw-wide"><span>LinkedIn post text</span><textarea id="cw-text" rows="7" maxlength="3000" placeholder="Paste the winner\'s LinkedIn post">' + escapeHtml(f.linkedin_text) + '</textarea></label>' +
+      '<label class="field cw-field cw-wide"><span>LinkedIn post link</span><input type="url" id="cw-url" maxlength="500" value="' + escapeHtml(f.linkedin_url) + '" placeholder="https://www.linkedin.com/posts/..."></label>' +
+      '<label class="cw-switch"><input type="checkbox" id="cw-enabled"' + (f.enabled ? ' checked' : '') + '> <span>Switched on (shows on the tracker between the dates)</span></label>' +
+      '<div class="cw-actions-row">' +
+        '<button type="button" class="btn" id="cw-preview">Preview on the tracker ↗</button>' +
+        '<button type="button" class="btn btn-primary" id="cw-save"' + (cw.saving ? ' disabled' : '') + '>' + (cw.saving ? 'Saving…' : 'Save') + '</button>' +
+      '</div>' +
+    '</div>';
+  }
+  function cwReadForm() {
+    var f = state.clubWinner.form;
+    var v = function (id) { var el = document.getElementById(id); return el ? el.value : ''; };
+    f.name = v('cw-name'); f.month = v('cw-month'); f.prize = Number(v('cw-prize')) || 0;
+    f.show_from = v('cw-from'); f.show_until = v('cw-until');
+    f.linkedin_text = v('cw-text'); f.linkedin_url = v('cw-url').trim();
+    var en = document.getElementById('cw-enabled'); f.enabled = !!(en && en.checked);
+    document.querySelectorAll('[data-cw-cap]').forEach(function (el) { f.photos[+el.getAttribute('data-cw-cap')].caption = el.value; });
+    return f;
+  }
+  // Shrinks an uploaded image to a JPEG data URL of at most 1400px on its
+  // longest side, lowering quality if it's still too big to store.
+  function cwShrink(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        var max = 1400, w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, max / Math.max(w, h));
+        var c = document.createElement('canvas'); c.width = Math.round(w * k); c.height = Math.round(h * k);
+        var x = c.getContext('2d'); x.fillStyle = '#000'; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        var q = 0.85, out = c.toDataURL('image/jpeg', q);
+        while (out.length > 1300000 && q > 0.4) { q -= 0.1; out = c.toDataURL('image/jpeg', q); }
+        if (out.length > 1300000) reject(new Error('That image is too large even after shrinking.')); else resolve(out);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('That file isn\'t an image the browser can read.')); };
+      img.src = url;
+    });
+  }
+  function cwPayload(f) {
+    return { enabled: f.enabled, name: f.name.trim(), month: f.month.trim(), prize: f.prize, linkedin_text: f.linkedin_text, linkedin_url: f.linkedin_url,
+      show_from: f.show_from, show_until: f.show_until, photos: f.photos.filter(function (p) { return p.src; }) };
+  }
+  function bindClubWinner() {
+    var cw = state.clubWinner;
+    if (!cw.loaded) return;
+    document.querySelectorAll('[data-cw-photo]').forEach(function (input) {
+      input.addEventListener('change', function () {
+        var i = +input.getAttribute('data-cw-photo'), file = input.files && input.files[0];
+        if (!file) return;
+        cwReadForm();
+        cwShrink(file).then(function (src) { cw.form.photos[i].src = src; cw.msg = null; render(); })
+          .catch(function (e) { cw.msg = e.message; cw.msgType = 'error'; render(); });
+      });
+    });
+    document.querySelectorAll('[data-cw-remove]').forEach(function (btn) {
+      btn.addEventListener('click', function () { cwReadForm(); cw.form.photos[+btn.getAttribute('data-cw-remove')].src = ''; render(); });
+    });
+    var prev = document.getElementById('cw-preview');
+    if (prev) prev.addEventListener('click', function () {
+      var f = cwPayload(cwReadForm());
+      if (!f.name) { cw.msg = 'Add a name to preview.'; cw.msgType = 'error'; render(); return; }
+      try { localStorage.setItem('taai_club_winner_preview', JSON.stringify(f)); }
+      catch (e) { cw.msg = 'Preview needs the photos to fit in this browser\'s storage; try smaller photos.'; cw.msgType = 'error'; render(); return; }
+      window.open('/gate-da-progress-tracker?winner-preview', '_blank', 'noopener');
+    });
+    var save = document.getElementById('cw-save');
+    if (save) save.addEventListener('click', function () {
+      var f = cwPayload(cwReadForm());
+      cw.saving = true; cw.msg = null; render();
+      api('/team-club-winner', { method: 'PUT', body: JSON.stringify({ winner: f }) }).then(function (d) {
+        cw.updatedAt = d.updated_at; cw.msg = 'Saved. ' + cwStatus(cw.form).text + '.'; cw.msgType = 'ok';
+      }).catch(function (e) { cw.msg = 'Could not save: ' + e.message; cw.msgType = 'error'; })
+        .then(function () { cw.saving = false; render(); });
+    });
   }
 
   // ── Day card (2026-10-09) ────────────────────────────────────────────
@@ -4194,6 +4340,7 @@
         if (tab === 'site-data' && ensureSiteDataLoaded(state.siteData.subTab)) return;
         if (tab === 'day-card') { render(); loadDayCardMonth(); loadDayCardTemplate(); return; }
         if (tab === 'offer-poster') { render(); loadOfferPoster(); return; }
+        if (tab === 'club-winner') { render(); loadClubWinner(); return; }
         if (tab === 'challenge') { if (!state.challenge.loaded && !state.challenge.loading) { loadChallenge(); return; } render(); return; }
         if (tab === 'piracy') { if (!state.piracy.loaded && !state.piracy.loading) { loadPiracy(); return; } render(); return; }
         render();
@@ -4229,6 +4376,7 @@
         if (tab === state.tab) return;
         state.tab = tab; state.lastMarketing = tab;
         if (tab === 'day-card') { render(); loadDayCardMonth(); loadDayCardTemplate(); return; }
+        if (tab === 'club-winner') { render(); loadClubWinner(); return; }
         render(); loadOfferPoster();
       });
     });

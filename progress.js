@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-18-8';
+  var CLIENT_VERSION = '2026-11-18-9';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1401,6 +1401,105 @@
     setupTouchTips();
     setupRenameTooltip();
     setupAboutBubble();
+    setTimeout(checkClubWinner, 1500); // after the page has drawn
+  }
+
+  // ── The 2 AM Club winner popup (2026-11-18) ────────────────────────
+  // Set in /team > Marketing > 2 AM winner. Between its dates (IST) every
+  // visitor, signed in or not, sees it once per browser with confetti. A
+  // small check runs on each load; the photos are only fetched when the
+  // popup is actually going to show. On localhost, ?winner-preview shows
+  // it with sample content (or the real saved one if active).
+  var CLUB_WINNER_SEEN = 'taai_club_winner_seen_';
+  function checkClubWinner() {
+    var isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    // /team's Preview button saves its unsaved form into this browser's
+    // localStorage (same site) and opens ?winner-preview, on any host.
+    if (/[?&]winner-preview\b/.test(location.search)) {
+      var draft = null;
+      try { draft = JSON.parse(localStorage.getItem('taai_club_winner_preview') || 'null'); } catch (e) { /* none */ }
+      if (draft && draft.name) { showClubWinner(draft); return; }
+    }
+    var preview = isLocal && /[?&]winner-preview\b/.test(location.search);
+    fetch('/api/club-winner-public').then(function (r) { return r.ok ? r.json() : { active: false }; }).then(function (meta) {
+      if (!meta || !meta.active) {
+        if (preview) showClubWinner(SAMPLE_CLUB_WINNER);
+        return;
+      }
+      var seenKey = CLUB_WINNER_SEEN + meta.key;
+      var seen = false;
+      try { seen = localStorage.getItem(seenKey) === '1'; } catch (e) { /* show it */ }
+      if (seen && !preview) return;
+      return fetch('/api/club-winner-public?full=1').then(function (r) { return r.json(); }).then(function (d) {
+        if (!d || !d.winner) return;
+        try { localStorage.setItem(seenKey, '1'); } catch (e) { /* fine */ }
+        showClubWinner(d.winner);
+      });
+    }).catch(function () {
+      if (preview) showClubWinner(SAMPLE_CLUB_WINNER);
+    });
+  }
+  var SAMPLE_CLUB_WINNER = {
+    name: 'Sample Student', month: 'November', prize: 5000, linkedin_url: 'https://www.linkedin.com/',
+    linkedin_text: 'This is where the winner\'s LinkedIn post text goes.\n\nIt keeps its line breaks, and long posts get a Read more button so the popup stays a sensible size.',
+    photos: [{ src: '/logo.webp', caption: 'Desk setup' }],
+  };
+  function closeClubWinner() {
+    var m = document.getElementById('club-winner-modal');
+    if (!m) return;
+    m.classList.add('is-leaving');
+    document.removeEventListener('keydown', clubWinnerKeydown);
+    setTimeout(function () { if (m.parentNode) m.parentNode.removeChild(m); document.body.classList.remove('club-winner-open'); }, 220);
+  }
+  function clubWinnerKeydown(e) { if (e.key === 'Escape') closeClubWinner(); }
+  function showClubWinner(w) {
+    if (document.getElementById('club-winner-modal')) return;
+    var photos = (w.photos || []).filter(function (p) { return p && p.src; }).slice(0, 2);
+    var prize = w.prize ? '₹' + Number(w.prize).toLocaleString('en-IN') : '';
+    var m = document.createElement('div');
+    m.id = 'club-winner-modal';
+    m.className = 'cw-backdrop';
+    m.innerHTML =
+      '<div class="cw-card" role="dialog" aria-modal="true" aria-labelledby="cw-title">' +
+        '<button type="button" class="cw-close" aria-label="Close">×</button>' +
+        '<div class="cw-sky" aria-hidden="true"><span class="cw-moon"></span></div>' +
+        '<div class="cw-tag">🏆 The 2 AM Club · ' + escapeHtml(w.month || '') + ' winner</div>' +
+        '<h2 class="cw-title" id="cw-title">Congratulations, <span class="cw-name">' + escapeHtml(w.name) + '</span>!</h2>' +
+        '<p class="cw-sub">Winner of The 2 AM Club for ' + escapeHtml(w.month || '') + (prize ? '<span class="cw-prize">🥇 ' + prize + '</span>' : '') + '</p>' +
+        '<div class="cw-photos cw-photos-' + photos.length + '">' +
+          photos.map(function (p) {
+            return '<figure class="cw-photo"><img src="' + escapeAttr(p.src) + '" alt="' + escapeAttr(p.caption || (w.name + '\'s photo')) + '">' +
+              (p.caption ? '<figcaption>' + escapeHtml(p.caption) + '</figcaption>' : '') + '</figure>';
+          }).join('') +
+        '</div>' +
+        (w.linkedin_text ? '<div class="cw-post"><div class="cw-post-head">From ' + escapeHtml(w.name) + '\'s LinkedIn post</div><p class="cw-post-text"></p>' +
+          '<button type="button" class="cw-more" hidden>Read more</button></div>' : '') +
+        '<div class="cw-actions">' +
+          (w.linkedin_url ? '<a class="cw-btn cw-btn-li" href="' + escapeAttr(w.linkedin_url) + '" target="_blank" rel="noopener">Read the post on LinkedIn ↗</a>' : '') +
+          '<button type="button" class="cw-btn cw-btn-close">Close</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(m);
+    document.body.classList.add('club-winner-open');
+    var textEl = m.querySelector('.cw-post-text');
+    if (textEl) {
+      textEl.textContent = w.linkedin_text;
+      var more = m.querySelector('.cw-more');
+      requestAnimationFrame(function () {
+        if (textEl.scrollHeight > textEl.clientHeight + 4) more.hidden = false;
+      });
+      more.addEventListener('click', function () {
+        var open = textEl.classList.toggle('is-open');
+        more.textContent = open ? 'Show less' : 'Read more';
+      });
+    }
+    m.querySelector('.cw-close').addEventListener('click', closeClubWinner);
+    m.querySelector('.cw-btn-close').addEventListener('click', closeClubWinner);
+    m.addEventListener('click', function (e) { if (e.target === m) closeClubWinner(); });
+    document.addEventListener('keydown', clubWinnerKeydown);
+    var closeBtn = m.querySelector('.cw-btn-close');
+    if (closeBtn) closeBtn.focus({ preventScroll: true });
+    setTimeout(fireConfetti, 250);
   }
 
   // ── Scroll progress + back-to-top — same pattern as blog.js ──────────

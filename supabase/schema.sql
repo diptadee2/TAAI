@@ -1431,3 +1431,14 @@ CREATE TABLE IF NOT EXISTS piracy_ingested (
 );
 ALTER TABLE piracy_ingested ENABLE ROW LEVEL SECURITY;
 GRANT SELECT, INSERT, UPDATE, DELETE ON piracy_ingested TO service_role;
+
+-- 2 AM Club winner announcement (2026-11-18): one row (id 'main') holding the
+-- winner's name, photos (compressed JPEG data URLs) and LinkedIn post, set in
+-- /team > Marketing > 2 AM winner and shown as a popup on the tracker.
+CREATE TABLE IF NOT EXISTS club_winner (
+  id         TEXT PRIMARY KEY DEFAULT 'main',
+  data       JSONB,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+ALTER TABLE club_winner ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON club_winner TO service_role;
