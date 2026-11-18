@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-18-3';
+  var CLIENT_VERSION = '2026-11-18-4';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2497,7 +2497,7 @@
     try { if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; } catch (e) {}
     cometTimer = setTimeout(cometShower, 7000 + Math.random() * 9000);
   }
-  scheduleComets();
+  // Comet showers switched off 2026-11-18 (timer screen "too clumsy").
   function fitSideColSticky() {
     var side = document.querySelector('.side-col');
     if (!side) return;
@@ -3627,8 +3627,9 @@
       // Permanent night-sky moon for the card; CSS hides it while the 2 AM
       // Club band (which has its own moon) is showing.
       html += '<span class="focus-moon" aria-hidden="true"><span class="club-crescent"></span></span>';
-      // More of the night sky, kept to the card's empty edges (see .focus-sky).
-      html += '<div class="focus-sky" aria-hidden="true"><span class="fs-saturn"></span><span class="fs-mars"></span><span class="fs-ice"></span><span class="fs-gold"></span><span class="fs-shoot"></span></div>';
+      // Toned down 2026-11-18 ("too clumsy"): just the star field, the moon
+      // and one occasional shooting star; the planets and comet showers went.
+      html += '<div class="focus-sky" aria-hidden="true"><span class="fs-shoot"></span></div>';
       // Side by side in the timer's own empty space at wide viewports, one
       // above the other on narrow ones — see .pomo-today-row. Works fine
       // with just one child too (renderTodayLeaders returns '' on a fresh
