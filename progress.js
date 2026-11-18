@@ -1605,6 +1605,14 @@
     requestAnimationFrame(frame);
   }
 
+  // Local testing only: on localhost, open the tracker with ?confetti to fire
+  // it on load (and again on every reload), or call taaiConfetti() in the
+  // console. Never active on taai.live.
+  if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+    window.taaiConfetti = fireConfetti;
+    if (/[?&]confetti\b/.test(location.search)) setTimeout(fireConfetti, 900);
+  }
+
   // threshold: 0 — fires the moment ANY part of the card is visible, not
   // once a percentage of it is. Real bug, caught in testing: an earlier
   // 0.4 (40%) threshold was too strict for the top-20 card, which can be
