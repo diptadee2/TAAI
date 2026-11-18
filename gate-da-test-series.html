@@ -2699,7 +2699,7 @@ function Discussions() {
           {DISCUSSION_VIDEOS.map(v => (
             <a key={v.id} className="disc-card" href={`https://www.youtube.com/watch?v=${v.id}`} target="_blank" rel="noopener noreferrer">
               <div className="disc-thumb-wrap">
-                <img className="disc-thumb" src={`https://img.youtube.com/vi/${v.id}/hqdefault.jpg`} alt={titles[v.id] || ''} loading="lazy" />
+                <img className="disc-thumb" src={`https://img.youtube.com/vi/${v.id}/sddefault.jpg`} srcSet={`https://img.youtube.com/vi/${v.id}/hqdefault.jpg 480w, https://img.youtube.com/vi/${v.id}/sddefault.jpg 640w, https://img.youtube.com/vi/${v.id}/maxresdefault.jpg 1280w`} sizes="(max-width: 768px) 86vw, 640px" alt={titles[v.id] || ''} loading="lazy" />
                 <div className="disc-play-btn">
                   <div className="disc-play-circle">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
