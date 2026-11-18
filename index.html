@@ -2166,22 +2166,47 @@ body:has(.mobile-menu.open) .mobile-sticky-cta { transform: translateY(110%); op
         {
           "@type": "Question",
           "name": "Why should I choose TAAI?",
-          "acceptedAnswer": { "@type": "Answer", "text": "TAAI is a complete learning experience with conceptual clarity through visualization, top-quality GATE-level practice material, proven results (5 students in Top 50, 35+ in Top 250), complete support until admission, and interview preparation for AI and Data Science roles." }
+          "acceptedAnswer": { "@type": "Answer", "text": "TAAI is a complete learning experience with conceptual clarity through visualization, top-quality GATE-level practice material, proven results (5 students in Top 50, 35+ in Top 250, 51+ in Top 500), complete support until admission, and interview preparation for AI and Data Science roles." }
         },
         {
           "@type": "Question",
-          "name": "What do I get in the TAAI Full Course for GATE DA?",
-          "acceptedAnswer": { "@type": "Answer", "text": "A structured, high-quality, result-driven program including top-notch conceptual content, hand-coded animations, GATE-level problem sets, weekly topic-wise quizzes, GATE mentorship, active Discord community, and subject-wise quizzes." }
+          "name": "What do I get in the GATE 2028 Full Course?",
+          "acceptedAnswer": { "@type": "Answer", "text": "One enrolment covers two attempts, GATE DA 2027 and GATE DA 2028. It includes every GATE DA subject (300+ hours taught from scratch, with hand-coded animations), the GATE DA 2028 Test Series and weekly quizzes, 1,000+ practice questions with new ones every week, live practice sessions and live revision classes, Pro courses in the revision cycle, 5 portfolio projects in machine learning, computer vision and LLMs, GATE mentorship, weekly and monthly study schedules, and an active Discord community." }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I still join the GATE 2027 Full Course?",
+          "acceptedAnswer": { "@type": "Answer", "text": "No, enrolment for the GATE 2027 Full Course has closed. The GATE 2028 Full Course also covers GATE DA 2027, so you can prepare for both attempts with one enrolment." }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the 100 pe 100% off challenge?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Get an AIR under 100 in GATE DA 2027 and your GATE 2028 Full Course fee comes back, and you keep full access. Enrol in the course and register for the challenge by the date shown on the courses page. Full terms are in the refund policy." }
         },
         {
           "@type": "Question",
           "name": "What is the mode of teaching at TAAI?",
-          "acceptedAnswer": { "@type": "Answer", "text": "A blended learning approach: recorded concept classes for self-paced learning, GATE mentorship for topic-wise direct doubt resolution, and active Discord support with mentors and peers." }
+          "acceptedAnswer": { "@type": "Answer", "text": "A blended learning approach: recorded concept classes for self-paced learning, live practice sessions and live revision classes, GATE mentorship for topic-wise direct doubt resolution, and active Discord support with mentors and peers." }
         },
         {
           "@type": "Question",
           "name": "Where can I access the course?",
-          "acceptedAnswer": { "@type": "Answer", "text": "Courses are accessible on desktop via our dedicated website. For technical issues, reach out on Discord, our tech team assists promptly." }
+          "acceptedAnswer": { "@type": "Answer", "text": "On learn.taai.live, from a laptop or a phone browser. We recommend a laptop for full-length tests, since they match the real three-hour exam. For technical issues, reach out on Discord, our tech team assists promptly." }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I take GATE DA if I am not from a CS branch?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes. GATE is open to students of any discipline from 3rd year onwards, and you are free to choose the DA paper. Every subject in our courses starts from scratch, Python included." }
+        },
+        {
+          "@type": "Question",
+          "name": "Is the progress tracker free?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes. The progress tracker is free for every student: a day-by-day roadmap, a focus timer, streaks and leaderboards. No course purchase needed." }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I get a refund?",
+          "acceptedAnswer": { "@type": "Answer", "text": "All purchases are final. We refund duplicate or failed payments, and the 100 pe 100% off challenge has its own terms. Details are in the refund policy." }
         }
       ]
     }
@@ -3423,17 +3448,24 @@ function withDiscordLink(text) {
 }
 const FAQS = [
   { q: 'Why should I choose TAAI?', a: <><p>TAAI is a complete learning experience, not just coaching. Five reasons:</p><ul><li><b>Conceptual clarity with visualization.</b> Every concept explained visually, you learn the "why", not just the formula.</li><li><b>Top-quality practice material.</b> GATE-level, conceptual questions, quality over quantity.</li><li><b>Proven results.</b> 5 students in Top 50, 35+ in Top 250, and 51+ in Top 500.</li><li><b>Complete support until admission.</b> From choosing institutes to interviews and written tests.</li><li><b>Interview preparation.</b> Preparing students for AI and Data Science roles.</li></ul></> },
-  { q: 'What do I get in the TAAI Full Course for GATE DA?', a: <><p>Structured, high-quality, result-driven program:</p><ul><li>Top-notch conceptual content</li><li>Hand-coded animations</li><li>GATE-level problem sets</li><li>Weekly topic-wise quizzes</li><li>GATE mentorship</li><li>Active {withDiscordLink("Discord")} community</li><li>Subject-wise quizzes at the end</li></ul></> },
-  { q: 'What is the mode of teaching at TAAI?', a: <><p>A blended learning approach, flexibility with depth:</p><ul><li><b>Recorded concept classes</b>, learn at your own pace</li><li><b>GATE mentorship</b>, topic-wise, direct doubt resolution</li><li><b>Active {withDiscordLink("Discord")} support</b>, mentors and peers, fast resolution</li></ul></> },
-  { q: 'Where can I access the course?', a: <><p>Courses are accessible on desktop via our dedicated website. Facing technical issues? Drop a message on {withDiscordLink("Discord")}, our tech team assists promptly.</p></> }
+  { q: 'What do I get in the GATE 2028 Full Course?', a: <><p>One enrolment covers two attempts, GATE DA 2027 and GATE DA 2028. It includes:</p><ul><li><b>Every GATE DA subject</b>, 300+ hours taught from scratch, with hand-coded animations</li><li><b>The GATE DA 2028 Test Series and weekly quizzes</b>, topic-wise, subject-wise and full-length</li><li><b>1,000+ practice questions</b>, with new ones every week</li><li><b>Live practice sessions</b> all year and <b>live revision classes</b></li><li><b>Pro courses</b> in the revision cycle</li><li><b>5 portfolio projects</b> in machine learning, computer vision and LLMs</li><li><b>GATE mentorship</b>, weekly and monthly study schedules, and an active {withDiscordLink("Discord")} community</li></ul></> },
+  { q: 'Can I still join the GATE 2027 Full Course?', a: <><p>No, enrolment for the GATE 2027 Full Course has closed. The <a href="/gate-da-courses#full-course-2028">GATE 2028 Full Course</a> also covers GATE DA 2027, so you can prepare for both attempts with one enrolment.</p></> },
+  { q: 'What is the 100 pe 100% off challenge?', a: <><p>Get an AIR under 100 in GATE DA 2027 and your GATE 2028 Full Course fee comes back, and you keep full access. Enrol in the course and register for the challenge by the date shown on the <a href="/gate-da-courses#challenge">courses page</a>. Full terms are in our <a href="/refund-policy">refund policy</a>.</p></> },
+  { q: 'What is the mode of teaching at TAAI?', a: <><p>A blended learning approach, flexibility with depth:</p><ul><li><b>Recorded concept classes</b>, learn at your own pace</li><li><b>Live practice sessions and live revision classes</b>, solve and revise with the team</li><li><b>GATE mentorship</b>, topic-wise, direct doubt resolution</li><li><b>Active {withDiscordLink("Discord")} support</b>, mentors and peers, fast resolution</li></ul></> },
+  { q: 'Where can I access the course?', a: <><p>On learn.taai.live, from a laptop or a phone browser. We recommend a laptop for full-length tests, since they match the real three-hour exam. Facing technical issues? Drop a message on {withDiscordLink("Discord")}, our tech team assists promptly.</p></> },
+  { q: 'Can I take GATE DA if I am not from a CS branch?', a: <><p>Yes. GATE is open to students of any discipline from 3rd year onwards, and you are free to choose the DA paper. Every subject in our courses starts from scratch, Python included.</p></> },
+  { q: 'Is the progress tracker free?', a: <><p>Yes. The <a href="/gate-da-progress-tracker">progress tracker</a> is free for every student: a day-by-day roadmap, a focus timer, streaks and leaderboards. No course purchase needed.</p></> },
+  { q: 'Can I get a refund?', a: <><p>All purchases are final. We refund duplicate or failed payments, and the 100 pe 100% off challenge has its own terms. Details are in our <a href="/refund-policy">refund policy</a>.</p></> }
 ];
 
 function FaqItem({ f, isOpen, onToggle }) {
   const innerRef = React.useRef(null);
   const [measuredH, setMeasuredH] = React.useState(0);
   React.useEffect(() => {
+    // Re-measured on every open (2026-11-18): measuring only once at page load
+    // cut answers short on phones, since text wraps differently once fonts load.
     if (innerRef.current) setMeasuredH(innerRef.current.scrollHeight);
-  }, [f]);
+  }, [f, isOpen]);
   return (
     <div className={`faq-item${isOpen ? ' open' : ''}`}>
       <button className="faq-q" onClick={onToggle} aria-expanded={isOpen}>

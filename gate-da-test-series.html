@@ -1743,17 +1743,22 @@ body .mobile-menu-contact {
         {
           "@type": "Question",
           "name": "What types of tests are included?",
-          "acceptedAnswer": { "@type": "Answer", "text": "The test series includes topic-wise tests, subject-wise tests, and full-length tests (3 hours, full syllabus, real GATE DA pattern). Every category is live according to the schedule." }
+          "acceptedAnswer": { "@type": "Answer", "text": "57 tests in four kinds: 31 topic-wise tests (one per topic, right after you study it), 10 subject-wise tests (end-to-end across a full subject), 6 mini full-length tests (mixed subjects, 90 minutes each) and 10 full-length tests (three hours, full syllabus, real GATE DA pattern). Every category goes live according to the schedule." }
+        },
+        {
+          "@type": "Question",
+          "name": "I'm in a TAAI Full Course. Do I need to buy this?",
+          "acceptedAnswer": { "@type": "Answer", "text": "GATE 2028 Full Course: no, the GATE DA 2028 Test Series and the weekly quizzes are both included. GATE 2027 Full Course: the weekly quizzes are already included, so you only need the Test Series on its own, not a plan with quizzes." }
         },
         {
           "@type": "Question",
           "name": "What does the GATE-like interface look like?",
-          "acceptedAnswer": { "@type": "Answer", "text": "It replicates the official GATE CBT environment — question palette, section timer, marking scheme (+1, +2 and −0.33, −0.66), review later, and submit. You'll have zero interface anxiety on exam day." }
+          "acceptedAnswer": { "@type": "Answer", "text": "It replicates the official GATE CBT environment: question palette, section timer, marking scheme (+1, +2 and −0.33, −0.66), review later, and submit. You'll have zero interface anxiety on exam day." }
         },
         {
           "@type": "Question",
           "name": "Can I attempt tests on mobile?",
-          "acceptedAnswer": { "@type": "Answer", "text": "Yes, the platform works on mobile browsers. However, we strongly recommend desktop for full-length tests to match real GATE conditions — they're three-hour sessions." }
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes, the platform works on mobile browsers. However, we strongly recommend a laptop for full-length tests to match real GATE conditions, they're three-hour sessions." }
         },
         {
           "@type": "Question",
@@ -2779,18 +2784,21 @@ function TSTestimonials() {
 
 // ── FAQ ──────────────────────────────────────────────────────────
 const FAQS = [
-  { q: 'What types of tests are included?', a: 'The test series includes topic-wise tests (one per topic, right after you study it), subject-wise tests (end-to-end across a full subject), and full-length tests (three hours, full syllabus, real GATE DA pattern). Every category is live according to the schedule.' },
-  { q: 'What does the GATE-like interface look like?', a: 'It replicates the official GATE CBT environment, question palette, section timer, marking scheme (+1,+2 and −0.33,-0.66), review later, and submit. You\'ll have zero interface anxiety on exam day.' },
-  { q: 'Can I attempt tests on mobile?', a: 'Yes, the platform works on mobile browsers. However, we strongly recommend desktop for full-length tests to match real GATE conditions, they\'re three-hour sessions.' },
-  { q: 'Who makes the solutions?', a: 'Everything is curated by Manoj Kumar and his team.' },
+  { q: "What types of tests are included?", a: "57 tests in four kinds: 31 topic-wise tests (one per topic, right after you study it), 10 subject-wise tests (end-to-end across a full subject), 6 mini full-length tests (mixed subjects, 90 minutes each) and 10 full-length tests (three hours, full syllabus, real GATE DA pattern). Every category goes live according to the schedule." },
+  { q: "I'm in a TAAI Full Course. Do I need to buy this?", a: "GATE 2028 Full Course: no, the GATE DA 2028 Test Series and the weekly quizzes are both included. GATE 2027 Full Course: the weekly quizzes are already included, so you only need the Test Series on its own, not a plan with quizzes." },
+  { q: "What does the GATE-like interface look like?", a: "It replicates the official GATE CBT environment: question palette, section timer, marking scheme (+1, +2 and −0.33, −0.66), review later, and submit. You'll have zero interface anxiety on exam day." },
+  { q: "Can I attempt tests on mobile?", a: "Yes, the platform works on mobile browsers. However, we strongly recommend a laptop for full-length tests to match real GATE conditions, they're three-hour sessions." },
+  { q: "Who makes the solutions?", a: "Everything is curated by Manoj Kumar and his team." },
 ];
 
 function FaqItem({ f, isOpen, onToggle }) {
   const innerRef = React.useRef(null);
   const [measuredH, setMeasuredH] = React.useState(0);
   React.useEffect(() => {
+    // Re-measured on every open (2026-11-18): measuring only once at page load
+    // cut answers short on phones, since text wraps differently once fonts load.
     if (innerRef.current) setMeasuredH(innerRef.current.scrollHeight);
-  }, [f]);
+  }, [f, isOpen]);
   return (
     <div className={`faq-item${isOpen ? ' open' : ''}`}>
       <button className="faq-q" onClick={onToggle} aria-expanded={isOpen}>
