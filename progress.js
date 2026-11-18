@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-15-1';
+  var CLIENT_VERSION = '2026-11-18-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -4824,60 +4824,14 @@
     });
   }
 
+  // 2026-11-18: the "Activity by hour" bars were removed (direct
+  // feedback: "the graph is pretty much useless, only the busy meter is
+  // useful"; it summed every session since August, so it barely changed).
+  // The wrapper and class names stay so the reveal observer and layout
+  // keep working; only the busy meter renders now.
   function pomoHourlyActivityHtml() {
-    var hours = state.hourlyActivity || [];
-    var buckets = [];
-    for (var b = 0; b < 8; b++) {
-      var total = 0;
-      for (var h = b * 3; h < b * 3 + 3; h++) {
-        if (hours[h]) total += hours[h].total_minutes;
-      }
-      buckets.push({ startHour: b * 3, total_minutes: total });
-    }
-    var max = 0;
-    for (var i = 0; i < buckets.length; i++) {
-      if (buckets[i].total_minutes > max) max = buckets[i].total_minutes;
-    }
-    var nowIdx = hourlyCurrentBucketIdx();
-    if (max <= 0) {
-      return '<div class="hourly-activity">' +
-        '<div class="hourly-activity-title">Activity by hour</div>' +
-        '<div class="hourly-activity-body"><p class="hourly-activity-empty">Fills in as students complete focus sessions.</p></div>' +
-        '</div>';
-    }
-    var bars = '';
-    for (var b2 = 0; b2 < 8; b2++) {
-      var bucket = buckets[b2];
-      var pct = Math.max(Math.round((bucket.total_minutes / max) * 100), bucket.total_minutes > 0 ? 6 : 0);
-      var range = hourLabel12(bucket.startHour) + '–' + hourLabel12((bucket.startHour + 3) % 24);
-      var title = range + ': ' + Math.round(bucket.total_minutes) + ' min logged';
-      // One color family for every bar — intensity (opacity) scales with
-      // the bar's own share of the busiest hour instead of the busiest
-      // bar switching to a different, celebratory color. The busiest bar
-      // is always pct=100 by construction (it IS the max), so it's
-      // automatically the most vivid one with no special-casing needed.
-      var intensity = (0.35 + 0.65 * (pct / 100)).toFixed(2);
-      // Just the tick (bucket start hour), not the full "12a–3a" range —
-      // the full range crammed into an already-narrow bar column read as
-      // cluttered (direct feedback: "the hour labels still look
-      // terrible"). A single tick per bar, evenly spaced 3 hours apart,
-      // is how a normal chart axis reads; the full range is still there
-      // as the bar's own hover tooltip for anyone who wants it.
-      // --bar-h/--grow-delay drive a CSS-only grow-in entrance (see
-      // .hourly-bar-fill's @keyframes) — a static height would just pop
-      // in instantly, which is what "make the graph look more dynamic"
-      // was asking to move away from. hourly-bar-col--now marks whichever
-      // bucket covers this exact moment, tying the bars visually to the
-      // busy meter below (which reports on this same bucket).
-      bars += '<div class="hourly-bar-col' + (b2 === nowIdx ? ' hourly-bar-col--now' : '') + '">' +
-        '<div class="hourly-bar-track" title="' + escapeAttr(title) + '"><div class="hourly-bar-fill" style="--bar-h:' + pct + '%; --grow-delay:' + (b2 * 70) + 'ms; --intensity:' + intensity + ';"></div></div>' +
-        '<div class="hourly-bar-label">' + hourLabel12(bucket.startHour) + (b2 === nowIdx ? '<span class="hourly-bar-now-dot"></span>' : '') + '</div>' +
-        '</div>';
-    }
-    return '<div class="hourly-activity">' +
-      '<div class="hourly-activity-title">Activity by hour</div>' +
+    return '<div class="hourly-activity hourly-activity--meter-only">' +
       '<div class="hourly-activity-body">' +
-      '<div class="hourly-activity-bars">' + bars + '</div>' +
       hourlyBusyMeterHtml() +
       '</div>' +
       '</div>';
