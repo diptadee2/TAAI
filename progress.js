@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-18-1';
+  var CLIENT_VERSION = '2026-11-18-2';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -3848,6 +3848,253 @@
     } catch (e) { /* Web Audio unsupported/blocked — not critical */ }
   }
 
+  // ---- Time left in the browser tab title (2026-11-18) ----
+  // Students keep this tab in the background while studying elsewhere, so
+  // the title shows what's left. Background tabs only tick about once a
+  // minute after a while (browser throttling), so a hidden tab shows whole
+  // minutes rather than seconds that would look frozen.
+  var POMO_BASE_TITLE = document.title;
+  function updatePomoTitle() {
+    if (POMO_BASE_TITLE === undefined) return; // called before this block ran
+    var label = pomo.mode === 'work' ? 'Focus' : 'Break';
+    var paused = !pomo.running && pomo.secondsLeft > 0 && pomo.secondsLeft < pomo.totalSeconds;
+    var t;
+    if (!pomo.running && !paused) t = POMO_BASE_TITLE;
+    else {
+      var left = document.hidden ? Math.max(1, Math.ceil(pomo.secondsLeft / 60)) + 'm left' : formatPomoTime(pomo.secondsLeft);
+      t = (pomo.running ? '' : 'Paused ') + left + ' · ' + label + ' · TAAI';
+    }
+    if (document.title !== t) document.title = t;
+  }
+  document.addEventListener('visibilitychange', updatePomoTitle);
+
+  // ---- Background sound (2026-11-18) ----
+  // Rain / white / brown noise made in the browser (no audio files). Plays
+  // while the timer runs, focus and break alike, and stops on pause/reset.
+  // Only the tab driving the timer plays it, so two open tabs never double
+  // up. Choice and volume live in this browser only.
+  var AMBIENT_KEY = 'taai_pomo_ambient';
+  var AMBIENT_TYPES = [['off', 'Off'], ['rain', 'Rain'], ['white', 'White noise'], ['brown', 'Brown noise']];
+  var ambient = (function () {
+    var d = { type: 'off', vol: 0.5 };
+    try {
+      var s = JSON.parse(localStorage.getItem(AMBIENT_KEY) || 'null');
+      if (s && AMBIENT_TYPES.some(function (a) { return a[0] === s.type; })) d.type = s.type;
+      if (s && typeof s.vol === 'number' && s.vol >= 0 && s.vol <= 1) d.vol = s.vol;
+    } catch (e) { /* defaults */ }
+    return d;
+  })();
+  var ambientNodes = null; // { type, src, gain }
+  var ambientPreviewUntil = 0;
+  var ambientBuffers = {};
+  function saveAmbient() { try { localStorage.setItem(AMBIENT_KEY, JSON.stringify(ambient)); } catch (e) { /* this session only */ } }
+  function ambientBuffer(ctx, type) {
+    if (ambientBuffers[type]) return ambientBuffers[type];
+    var len = ctx.sampleRate * 8, buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+    var b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0, last = 0, i;
+    for (i = 0; i < len; i++) {
+      var w = Math.random() * 2 - 1;
+      if (type === 'white') d[i] = w * 0.25;
+      else if (type === 'brown') { last = (last + 0.02 * w) / 1.02; d[i] = last * 3.2; }
+      else { // pink, filtered further below for rain
+        b0 = 0.99886 * b0 + w * 0.0555179; b1 = 0.99332 * b1 + w * 0.0750759; b2 = 0.969 * b2 + w * 0.153852;
+        b3 = 0.8665 * b3 + w * 0.3104856; b4 = 0.55 * b4 + w * 0.5329522; b5 = -0.7616 * b5 - w * 0.016898;
+        d[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362) * 0.08; b6 = w * 0.115926;
+      }
+    }
+    // Make the loop seamless: remove the drift so the last sample meets
+    // the first (otherwise brown noise clicks every 8 seconds).
+    var drift = d[len - 1] - d[0];
+    for (i = 0; i < len; i++) d[i] -= drift * (i / (len - 1));
+    ambientBuffers[type] = buf;
+    return buf;
+  }
+  function stopAmbient() {
+    if (!ambientNodes) return;
+    var n = ambientNodes; ambientNodes = null;
+    try {
+      var t = pomoAudioCtx.currentTime;
+      n.gain.gain.cancelScheduledValues(t);
+      n.gain.gain.setValueAtTime(n.gain.gain.value, t);
+      n.gain.gain.linearRampToValueAtTime(0, t + 0.5);
+      n.src.stop(t + 0.55);
+    } catch (e) { /* already stopped */ }
+  }
+  function startAmbient(type) {
+    ensurePomoAudioCtx();
+    var ctx = pomoAudioCtx;
+    if (!ctx) return;
+    try {
+      var src = ctx.createBufferSource();
+      src.buffer = ambientBuffer(ctx, type);
+      src.loop = true;
+      var gain = ctx.createGain();
+      gain.gain.value = 0;
+      var out = src;
+      if (type === 'rain') {
+        var hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 400;
+        var lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 7000;
+        src.connect(hp); hp.connect(lp); out = lp;
+      }
+      out.connect(gain); gain.connect(ctx.destination);
+      src.start();
+      gain.gain.linearRampToValueAtTime(ambient.vol * 0.6, ctx.currentTime + 0.8);
+      ambientNodes = { type: type, src: src, gain: gain };
+    } catch (e) { ambientNodes = null; }
+  }
+  function syncAmbient() {
+    if (!ambient) return; // called before this block ran
+    var want = ambient.type !== 'off' && (Date.now() < ambientPreviewUntil || (pomo.running && !isPomoFollower()));
+    if (!want) { stopAmbient(); return; }
+    if (ambientNodes && ambientNodes.type !== ambient.type) stopAmbient();
+    if (!ambientNodes) startAmbient(ambient.type);
+    else if (pomoAudioCtx) {
+      try { ambientNodes.gain.gain.setTargetAtTime(ambient.vol * 0.6, pomoAudioCtx.currentTime, 0.1); } catch (e) { /* not critical */ }
+    }
+  }
+  // After a reload mid-session the browser keeps audio blocked until the
+  // student touches the page; the first click or key starts the sound.
+  ['pointerdown', 'keydown'].forEach(function (ev) {
+    document.addEventListener(ev, function () {
+      if (pomoAudioCtx && pomoAudioCtx.state === 'suspended') { try { pomoAudioCtx.resume(); } catch (e) { /* ignore */ } }
+      if (pomo.running && ambient.type !== 'off' && !ambientNodes) syncAmbient();
+    }, true);
+  });
+  function ambientSettingsHtml() {
+    var html = '<div class="pomo-setting-row pomo-ambient-row"><label>Background sound</label><div class="pomo-ambient-opts" role="group" aria-label="Background sound">';
+    AMBIENT_TYPES.forEach(function (a) {
+      html += '<button type="button" class="pomo-ambient-opt' + (ambient.type === a[0] ? ' selected' : '') + '" data-ambient="' + a[0] + '" aria-pressed="' + (ambient.type === a[0]) + '">' + a[1] + '</button>';
+    });
+    html += '</div></div>' +
+      '<div class="pomo-setting-row pomo-ambient-vol-row"' + (ambient.type === 'off' ? ' hidden' : '') + '><label for="pomo-ambient-vol">Volume</label>' +
+      '<input type="range" id="pomo-ambient-vol" min="0" max="100" step="1" value="' + Math.round(ambient.vol * 100) + '"></div>' +
+      '<p class="pomo-ambient-note">Plays while the timer runs, breaks included.</p>';
+    return html;
+  }
+  function bindAmbientSettings() {
+    Array.prototype.forEach.call(document.querySelectorAll('.pomo-ambient-opt'), function (btn) {
+      btn.addEventListener('click', function () {
+        ambient.type = btn.getAttribute('data-ambient');
+        saveAmbient();
+        Array.prototype.forEach.call(document.querySelectorAll('.pomo-ambient-opt'), function (o) {
+          o.classList.toggle('selected', o === btn); o.setAttribute('aria-pressed', o === btn);
+        });
+        var volRow = document.querySelector('.pomo-ambient-vol-row');
+        if (volRow) volRow.hidden = ambient.type === 'off';
+        // A short preview when the timer isn't running, so the pick can be heard.
+        ambientPreviewUntil = pomo.running ? 0 : Date.now() + 3000;
+        syncAmbient();
+        if (ambientPreviewUntil) setTimeout(syncAmbient, 3100);
+      });
+    });
+    var vol = document.getElementById('pomo-ambient-vol');
+    if (vol) {
+      vol.addEventListener('input', function () {
+        ambient.vol = Math.max(0, Math.min(1, Number(vol.value) / 100));
+        if (!pomo.running && ambient.type !== 'off' && Date.now() >= ambientPreviewUntil) {
+          ambientPreviewUntil = Date.now() + 2000;
+          setTimeout(syncAmbient, 2100);
+        } else if (!pomo.running) ambientPreviewUntil = Math.max(ambientPreviewUntil, Date.now() + 1500);
+        syncAmbient();
+      });
+      vol.addEventListener('change', saveAmbient);
+    }
+  }
+
+  // ---- Fullscreen focus view (2026-11-18) ----
+  // Just the time, the phase and a thin progress bar on a dark screen, for a
+  // second monitor or a phone propped on the desk. Uses the browser's real
+  // fullscreen where it can and keeps the screen awake while open.
+  var zenWakeLock = null;
+  function zenEl() { return document.getElementById('pomo-zen'); }
+  function openPomoZen() {
+    if (zenEl()) return;
+    var el = document.createElement('div');
+    el.id = 'pomo-zen';
+    el.className = 'pomo-zen';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-label', 'Fullscreen timer');
+    el.innerHTML =
+      '<div class="pomo-zen-top"><span class="pomo-zen-clock" id="pomo-zen-clock"></span>' +
+      '<button type="button" class="pomo-zen-exit" id="pomo-zen-exit" aria-label="Exit fullscreen">' +
+      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg><span>Exit</span></button></div>' +
+      '<div class="pomo-zen-center">' +
+      '<div class="pomo-zen-mode" id="pomo-zen-mode"></div>' +
+      '<div class="pomo-zen-time" id="pomo-zen-time"></div>' +
+      '<div class="pomo-zen-bar"><div class="pomo-zen-bar-fill" id="pomo-zen-bar-fill"></div></div>' +
+      '<div class="pomo-zen-sessions" id="pomo-zen-sessions"></div>' +
+      '</div>' +
+      '<div class="pomo-zen-bottom"><button type="button" class="pomo-zen-toggle" id="pomo-zen-toggle"></button></div>';
+    document.body.appendChild(el);
+    document.body.classList.add('pomo-zen-active');
+    document.getElementById('pomo-zen-exit').addEventListener('click', closePomoZen);
+    document.getElementById('pomo-zen-toggle').addEventListener('click', function () {
+      if (!state.student && !pomo.running) { closePomoZen(); pomoToggleRun(); return; }
+      pomoToggleRun();
+      updatePomoDisplay();
+    });
+    // Controls fade out after a few seconds without the mouse moving.
+    var idleT;
+    function wake() { el.classList.remove('is-idle'); clearTimeout(idleT); idleT = setTimeout(function () { el.classList.add('is-idle'); }, 3000); }
+    el.addEventListener('pointermove', wake);
+    el.addEventListener('pointerdown', wake);
+    wake();
+    var root = document.documentElement;
+    var req = root.requestFullscreen || root.webkitRequestFullscreen;
+    if (req) { try { var r = req.call(root); if (r && r.catch) r.catch(function () {}); } catch (e) { /* overlay alone is fine */ } }
+    if (navigator.wakeLock && navigator.wakeLock.request) {
+      navigator.wakeLock.request('screen').then(function (l) { zenWakeLock = l; }).catch(function () {});
+    }
+    updatePomoZen();
+    var exitBtn = document.getElementById('pomo-zen-exit');
+    if (exitBtn) exitBtn.focus({ preventScroll: true });
+  }
+  function closePomoZen() {
+    var el = zenEl();
+    if (!el) return;
+    el.remove();
+    document.body.classList.remove('pomo-zen-active');
+    if (zenWakeLock) { try { zenWakeLock.release(); } catch (e) { /* ignore */ } zenWakeLock = null; }
+    var fs = document.fullscreenElement || document.webkitFullscreenElement;
+    var exit = document.exitFullscreen || document.webkitExitFullscreen;
+    if (fs && exit) { try { var r = exit.call(document); if (r && r.catch) r.catch(function () {}); } catch (e) { /* ignore */ } }
+    var btn = document.getElementById('pomo-zen-open');
+    if (btn) btn.focus({ preventScroll: true });
+  }
+  function updatePomoZen() {
+    var el = zenEl();
+    if (!el) return;
+    if (!state.focus) { closePomoZen(); return; }
+    el.classList.toggle('on-break', pomo.mode === 'break');
+    el.classList.toggle('is-running', !!pomo.running);
+    var m = document.getElementById('pomo-zen-mode');
+    if (m) m.textContent = pomo.mode === 'work' ? 'Focus' : 'Break';
+    var t = document.getElementById('pomo-zen-time');
+    if (t) t.textContent = formatPomoTime(pomo.secondsLeft);
+    var f = document.getElementById('pomo-zen-bar-fill');
+    if (f) f.style.width = (pomo.totalSeconds > 0 ? (1 - pomo.secondsLeft / pomo.totalSeconds) * 100 : 0).toFixed(2) + '%';
+    var s = document.getElementById('pomo-zen-sessions');
+    if (s) s.textContent = pomoSessionLabel() + ' today';
+    var b = document.getElementById('pomo-zen-toggle');
+    if (b) b.textContent = pomo.running ? 'Pause' : 'Start';
+    var c = document.getElementById('pomo-zen-clock');
+    if (c) c.textContent = wallClockText();
+  }
+  function onZenFullscreenChange() {
+    if (!(document.fullscreenElement || document.webkitFullscreenElement) && zenEl()) closePomoZen();
+  }
+  document.addEventListener('fullscreenchange', onZenFullscreenChange);
+  document.addEventListener('webkitfullscreenchange', onZenFullscreenChange);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && zenEl()) closePomoZen(); });
+  document.addEventListener('visibilitychange', function () {
+    // The browser drops the wake lock when the tab is hidden; take it back.
+    if (!document.hidden && zenEl() && !zenWakeLock && navigator.wakeLock && navigator.wakeLock.request) {
+      navigator.wakeLock.request('screen').then(function (l) { zenWakeLock = l; }).catch(function () {});
+    }
+  });
+  // Wake lock released by the browser (tab hidden) — forget it so we re-take it.
+  setInterval(function () { if (zenWakeLock && zenWakeLock.released) zenWakeLock = null; }, 5000);
+
   // Only fires on a genuine tick-to-zero finish (called from pomoTick, not
   // pomoAdvance directly) — same reasoning as the leaderboard credit gating,
   // so skipping a phase doesn't also spam a notification.
@@ -3873,6 +4120,9 @@
   // card's innerHTML, so a once-a-second tick never touches (and never
   // replays the entrance animation of) a .fade-in ancestor.
   function updatePomoDisplay() {
+    updatePomoTitle();
+    syncAmbient();
+    updatePomoZen();
     var card = document.getElementById('pomo-card');
     if (!card) return;
     // Self-corrects the displayed count live once a real day boundary
@@ -4687,6 +4937,9 @@
       '<button class="pomo-settings-toggle" id="pomo-settings-toggle" aria-label="Timer settings" type="button">' +
       '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 0 1 0 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 0 1 0-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281Z"/><path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>' +
       '</button>' +
+      '<button class="pomo-zen-open" id="pomo-zen-open" aria-label="Fullscreen timer" title="Fullscreen timer" type="button">' +
+      '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>' +
+      '</button>' +
       // Semi-circle gauge — a real 180-degree arc <path> (M <left> A r r 0 0 1
       // <right>), not a full <circle>. viewBox is 200x160 (shorter than the
       // old 200x200 square) since there's no bottom half of a circle to
@@ -4742,6 +4995,7 @@
       '<div class="pomo-settings" id="pomo-settings" hidden>' +
       '<div class="pomo-settings-header">⚙️ Timer settings</div>' +
       pomoGradientSwatchesHtml() +
+      ambientSettingsHtml() +
       pomoStepperRowHtml('Focus', 'pomo-set-work', 1, POMO_WORK_MAX_MINUTES, pomoSettings.work, 'min') +
       '<p class="pomo-work-max-alert" id="pomo-work-max-alert">⏱️ Max session limit is 120 minutes.</p>' +
       pomoStepperRowHtml('Short break', 'pomo-set-short', 1, 60, pomoSettings.shortBreak, 'min') +
@@ -6552,6 +6806,9 @@
       // screen visibly changing, leaving no clue it opened at all.
       if (!panel.hidden) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
+    var pomoZenOpen = document.getElementById('pomo-zen-open');
+    if (pomoZenOpen) pomoZenOpen.addEventListener('click', openPomoZen);
+    bindAmbientSettings();
     var pomoSettingsSave = document.getElementById('pomo-settings-save');
     if (pomoSettingsSave) pomoSettingsSave.addEventListener('click', applyPomoSettings);
 
