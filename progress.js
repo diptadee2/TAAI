@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-18-6';
+  var CLIENT_VERSION = '2026-11-18-8';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1503,58 +1503,103 @@
     try { localStorage.setItem(CONFETTI_KEY_PREFIX + key, '1'); } catch (e) { /* non-critical */ }
   }
 
+  // Two bursts from the bottom corners (2026-11-18, "can't we improve the
+  // confetti shower?"): real gravity and air drag, paper that flips and
+  // flutters as it falls, a mix of rectangles, dots and thin streamers, and
+  // a fade at the end instead of pieces vanishing at the screen edge. Sharp
+  // on retina screens (canvas scaled by devicePixelRatio). Frame-rate
+  // independent (motion scaled by real elapsed time). Still a finite burst
+  // that removes its canvas when done. Skipped under reduced motion.
   function fireConfetti() {
+    try { if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; } catch (e) { /* ignore */ }
+    var W = window.innerWidth, H = window.innerHeight;
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
     var canvas = document.createElement('canvas');
-    canvas.style.cssText = 'position:fixed;inset:0;z-index:9999;pointer-events:none;';
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:9999;pointer-events:none;';
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
     document.body.appendChild(canvas);
     var ctx = canvas.getContext('2d');
-    var colors = ['#8B5CF6', '#FF7FB7', '#4D8BFF', '#FBBF24', '#34D399'];
+    ctx.scale(dpr, dpr);
+    var colors = ['#8B5CF6', '#A78BFA', '#FF7FB7', '#4D8BFF', '#FBBF24', '#34D399', '#FFFFFF'];
     var particles = [];
-    for (var i = 0; i < 140; i++) {
-      particles.push({
-        x: Math.random() * canvas.width,
-        y: -20 - Math.random() * canvas.height * 0.3,
-        w: 6 + Math.random() * 5,
-        h: 4 + Math.random() * 4,
-        color: colors[i % colors.length],
-        vy: 2.5 + Math.random() * 3,
-        vx: (Math.random() - 0.5) * 2.5,
-        rot: Math.random() * 360,
-        vrot: (Math.random() - 0.5) * 14,
-      });
+    function burst(fromLeft, count) {
+      for (var i = 0; i < count; i++) {
+        var spread = (Math.random() - 0.5) * 34;               // degrees around the aim
+        // Aim up and in, steeper on narrow screens so pieces don't fly out the sides.
+        var tilt = Math.atan((W * 0.5) / (H * 0.9)) * 180 / Math.PI;
+        var aim = fromLeft ? -(90 - tilt) : -(90 + tilt);
+        var ang = (aim + spread) * Math.PI / 180;
+        // Launch speed from the screen height, so pieces peak 55-90% of the
+        // way up on any screen (the 1.45 makes up for air drag).
+        var speed = Math.sqrt(2 * GRAVITY * H * (0.55 + Math.random() * 0.35)) * 1.45;
+        var r = Math.random();
+        var shape = r < 0.62 ? 'rect' : (r < 0.82 ? 'dot' : 'strip');
+        particles.push({
+          x: fromLeft ? -10 : W + 10,
+          y: H + 10,
+          vx: Math.cos(ang) * speed,
+          vy: Math.sin(ang) * speed,
+          shape: shape,
+          w: shape === 'strip' ? 3 : 7 + Math.random() * 5,
+          h: shape === 'strip' ? 14 + Math.random() * 8 : 4 + Math.random() * 4,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          rot: Math.random() * Math.PI * 2,
+          vrot: (Math.random() - 0.5) * 0.3,
+          flip: Math.random() * Math.PI * 2,
+          vflip: 0.08 + Math.random() * 0.14,
+          wob: Math.random() * Math.PI * 2,
+          vwob: 0.05 + Math.random() * 0.06,
+          life: 0,
+          ttl: 3800 + Math.random() * 1600,
+        });
+      }
     }
-    var start = null;
-    // A flat duration doesn't account for how far a particle actually needs
-    // to fall — real bug, confirmed visually: at vy 2.5-5.5px/frame, a lot
-    // of particles were nowhere near the bottom of the screen yet at a
-    // fixed 2.6s cutoff, so they got yanked away mid-fall instead of
-    // finishing naturally. Each particle now exits (is dropped from the
-    // array) only once it's actually below the viewport; MAX_DURATION is
-    // just a safety cap in case a stray particle's vy/start position would
-    // otherwise keep this running unreasonably long.
-    var MAX_DURATION = 6000;
+    var GRAVITY = 0.36, DRAG = 0.985, MAX_FALL = 3.2;
+    burst(true, 70); burst(false, 70);
+    setTimeout(function () { burst(true, 35); burst(false, 35); }, 220);
+    var last = null, start = null, MAX_DURATION = 7500;
     function frame(ts) {
-      if (!start) start = ts;
-      var elapsed = ts - start;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      particles = particles.filter(function (p) { return p.y < canvas.height + 30; });
-      particles.forEach(function (p) {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.rot += p.vrot;
+      if (start === null) { start = ts; last = ts; }
+      var dt = Math.min(3, (ts - last) / 16.67); // 1 = one 60fps frame
+      last = ts;
+      ctx.clearRect(0, 0, W, H);
+      particles = particles.filter(function (p) { return p.life < p.ttl && p.y < H + 60; });
+      for (var i = 0; i < particles.length; i++) {
+        var p = particles[i];
+        p.life += dt * 16.67;
+        p.vx *= Math.pow(DRAG, dt);
+        p.vy = Math.min(MAX_FALL, p.vy * Math.pow(DRAG, dt) + GRAVITY * dt);
+        p.wob += p.vwob * dt;
+        var falling = p.vy > 0;
+        p.x += (p.vx + (falling ? Math.sin(p.wob) * 1.1 : 0)) * dt;
+        p.y += p.vy * dt;
+        p.rot += p.vrot * dt;
+        p.flip += p.vflip * dt;
+        var fadeIn = Math.min(1, p.life / 120);
+        var fadeOut = Math.min(1, (p.ttl - p.life) / 700);
+        ctx.globalAlpha = Math.max(0, Math.min(fadeIn, fadeOut));
+        ctx.fillStyle = p.color;
         ctx.save();
         ctx.translate(p.x, p.y);
-        ctx.rotate((p.rot * Math.PI) / 180);
-        ctx.fillStyle = p.color;
-        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.rotate(p.rot);
+        if (p.shape === 'dot') {
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 3.2, 3.2 * Math.max(0.25, Math.abs(Math.cos(p.flip))), 0, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          var sy = Math.cos(p.flip); // paper turning over: thin when edge-on
+          ctx.scale(1, Math.abs(sy) < 0.12 ? 0.12 : Math.abs(sy));
+          if (sy < 0) ctx.globalAlpha *= 0.82; // the back side reads a bit darker
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        }
         ctx.restore();
-      });
-      if (particles.length > 0 && elapsed < MAX_DURATION) {
+      }
+      ctx.globalAlpha = 1;
+      if ((particles.length > 0 || ts - start < 400) && ts - start < MAX_DURATION) {
         requestAnimationFrame(frame);
       } else {
-        canvas.remove(); // finite burst — no lingering ticker, unlike the effects CLAUDE.md warns about
+        canvas.remove(); // finite burst, no lingering ticker
       }
     }
     requestAnimationFrame(frame);
