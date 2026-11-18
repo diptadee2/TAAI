@@ -2532,8 +2532,15 @@ html body .mobile-menu-contact {
 </style>
 <style>
 /* Pomodoro: fullscreen view (2026-11-18) */
-.pomo-zen-open { position: absolute; top: 36px; right: -4px; width: 32px; height: 32px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.08); color: var(--ink-dim); display: grid; place-items: center; cursor: pointer; z-index: 1; transition: color .2s, border-color .2s, background .2s; }
-.pomo-zen-open:hover { color: var(--purple); background: rgba(139,92,246,0.14); border-color: rgba(139,92,246,0.4); }
+/* Fullscreen + settings in one pill, top-right, same size and look as the clock pill top-left. */
+.pomo-tools { position: absolute; top: -4px; right: -4px; z-index: 1; display: inline-flex; align-items: center; height: 32px; padding: 0 3px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.14); background: rgba(10,11,30,0.55); }
+.pomo-tools .pomo-zen-open, .pomo-tools .pomo-settings-toggle { position: static; width: 30px; height: 26px; border: 0; border-radius: 999px; background: transparent; color: var(--ink-dim); display: grid; place-items: center; cursor: pointer; box-shadow: none; transform: none; transition: color .2s, background .2s; }
+.pomo-tools .pomo-zen-open + .pomo-settings-toggle { margin-left: 3px; position: relative; top: auto; right: auto; }
+.pomo-tools .pomo-zen-open + .pomo-settings-toggle::before { content: ''; position: absolute; left: -2px; top: 6px; bottom: 6px; width: 1px; background: rgba(255,255,255,0.14); }
+.pomo-tools .pomo-zen-open:hover, .pomo-tools .pomo-settings-toggle:hover { color: #fff; background: rgba(255,255,255,0.1); transform: none; box-shadow: none; }
+.pomo-tools .pomo-settings-toggle svg { transition: transform .4s cubic-bezier(.34,1.1,.64,1); }
+.pomo-tools .pomo-settings-toggle:hover svg { transform: rotate(55deg); }
+.pomo-tools .pomo-zen-open:active, .pomo-tools .pomo-settings-toggle:active { transform: scale(0.92); }
 .pomo-zen-open:focus-visible, .pomo-zen-exit:focus-visible, .pomo-zen-toggle:focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; }
 
 
