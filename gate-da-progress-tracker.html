@@ -2592,17 +2592,24 @@ body.club-winner-open { overflow: hidden; }
 .cw-title { position: relative; margin: 14px 0 6px; font-size: clamp(24px, 4.6vw, 32px); line-height: 1.15; font-weight: 800; }
 .cw-name { background: linear-gradient(120deg, #FF7FB7, #A78BFA, #4D8BFF); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .cw-sub { position: relative; margin: 0 0 18px; font-size: 14.5px; color: var(--ink-dim); display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; }
-.cw-prize { display: inline-flex; align-items: center; padding: 4px 11px; border-radius: 999px; font-weight: 800; font-size: 14px; color: #1a1205; background: #FBBF24; }
+.cw-prize-big { position: relative; display: inline-flex; flex-direction: column; align-items: center; gap: 2px; margin: -6px auto 18px; padding: 10px 26px 12px; border-radius: 18px; background: linear-gradient(160deg, rgba(251,191,36,0.18), rgba(251,191,36,0.06)); border: 1px solid rgba(251,191,36,0.45); box-shadow: 0 0 30px rgba(251,191,36,0.18); }
+.cw-prize-label { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #FCD34D; }
+.cw-prize-amt { font-size: clamp(40px, 9vw, 56px); font-weight: 800; line-height: 1.05; letter-spacing: -.01em; font-variant-numeric: tabular-nums;
+  background: linear-gradient(180deg, #FFF7D6 0%, #FDE68A 35%, #F59E0B 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .cw-photos { position: relative; display: grid; gap: 10px; margin-bottom: 16px; }
 .cw-photos-2 { grid-template-columns: 1fr 1fr; }
 .cw-photo { margin: 0; border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,0.12); background: #0b0b18; }
-.cw-photo img { display: block; width: 100%; max-height: 340px; object-fit: cover; }
-.cw-photos-2 .cw-photo img { height: 220px; max-height: none; }
+.cw-photo img { display: block; width: 100%; max-height: min(300px, 30vh); object-fit: cover; }
+.cw-photos-2 .cw-photo img { height: min(220px, 26vh); max-height: none; }
 .cw-photo figcaption { padding: 7px 10px; font-size: 12px; color: var(--ink-soft); text-align: left; }
 .cw-post { position: relative; text-align: left; padding: 14px 16px; margin-bottom: 18px; border-radius: 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-left: 3px solid #0A66C2; }
 .cw-post-head { font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #6FB1F4; margin-bottom: 6px; }
 .cw-post-text { margin: 0; font-size: 14px; line-height: 1.55; color: var(--ink); white-space: pre-line; max-height: 7.75em; overflow: hidden; }
 .cw-post-text.is-open { max-height: none; }
+.cw-post-text.is-clamped:not(.is-open) { -webkit-mask-image: linear-gradient(180deg, #000 45%, transparent 100%); mask-image: linear-gradient(180deg, #000 45%, transparent 100%); }
+.cw-more-li { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; font-size: 13.5px; font-weight: 700; color: #6FB1F4; text-decoration: none; }
+.cw-more-li:hover { color: #9cc9f8; text-decoration: underline; }
+.cw-dots { color: var(--ink-soft); font-weight: 400; }
 .cw-more { margin-top: 6px; padding: 0; border: 0; background: none; font: inherit; font-size: 13px; font-weight: 700; color: #A78BFA; cursor: pointer; }
 .cw-actions { position: relative; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 .cw-btn { display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 18px; border-radius: 12px; font: inherit; font-size: 14.5px; font-weight: 700; cursor: pointer; text-decoration: none; }
@@ -2610,13 +2617,26 @@ body.club-winner-open { overflow: hidden; }
 .cw-btn-li:hover { background: #0b74dc; }
 .cw-btn-close { background: rgba(255,255,255,0.08); color: var(--ink); border: 1px solid rgba(255,255,255,0.18); }
 .cw-btn-close:hover { background: rgba(255,255,255,0.14); }
-.cw-close:focus-visible, .cw-btn:focus-visible, .cw-more:focus-visible { outline: 2px solid #A78BFA; outline-offset: 2px; }
+.cw-close:focus-visible, .cw-btn:focus-visible, .cw-more:focus-visible, .cw-more-li:focus-visible { outline: 2px solid #A78BFA; outline-offset: 2px; }
 @media (max-width: 520px) {
   .cw-card { padding: 26px 18px 20px; }
   .cw-moon { display: none; }
   .cw-photos-2 { grid-template-columns: 1fr; }
   .cw-photos-2 .cw-photo img { height: auto; max-height: 260px; }
   .cw-btn { flex: 1 1 100%; }
+}
+/* Shorter screens (most laptops): tighter spacing so Close stays on screen. */
+@media (max-height: 940px) {
+  .cw-card { padding-top: 22px; padding-bottom: 18px; }
+  .cw-title { margin: 10px 0 4px; font-size: clamp(22px, 4vw, 28px); }
+  .cw-sub { margin-bottom: 12px; }
+  .cw-prize-big { margin: -4px auto 12px; padding: 7px 22px 9px; }
+  .cw-prize-amt { font-size: clamp(36px, 7vh, 48px); }
+  .cw-photos { margin-bottom: 12px; }
+  .cw-photo img { max-height: min(240px, 24vh); }
+  .cw-photos-2 .cw-photo img { height: min(190px, 22vh); }
+  .cw-post { padding: 11px 14px; margin-bottom: 12px; }
+  .cw-post-text { max-height: 4.65em; }
 }
 @media (prefers-reduced-motion: reduce) { .cw-backdrop, .cw-card, .cw-backdrop.is-leaving { animation: none; } }
 </style>

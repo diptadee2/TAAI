@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-18-10';
+  var CLIENT_VERSION = '2026-11-18-11';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1441,7 +1441,7 @@
   }
   var SAMPLE_CLUB_WINNER = {
     name: 'Sample Student', month: 'November', prize: 5000, linkedin_url: 'https://www.linkedin.com/',
-    linkedin_text: 'This is where the winner\'s LinkedIn post text goes.\n\nIt keeps its line breaks, and long posts get a Read more button so the popup stays a sensible size.',
+    linkedin_text: 'This is where the winner\'s LinkedIn post text goes.\n\nIt keeps its line breaks. Long posts are cut off after a few lines and fade out, with a link to read the rest on LinkedIn, so the popup stays a sensible size. This sample is long on purpose so you can see the fade.',
     photos: [{ src: '/logo.webp', caption: 'Desk setup' }],
   };
   function closeClubWinner() {
@@ -1465,17 +1465,24 @@
         '<div class="cw-sky" aria-hidden="true"><span class="cw-moon"></span></div>' +
         '<div class="cw-tag">🏆 The 2 AM Club · ' + escapeHtml(w.month || '') + ' winner</div>' +
         '<h2 class="cw-title" id="cw-title">Congratulations, <span class="cw-name">' + escapeHtml(w.name) + '</span>!</h2>' +
-        '<p class="cw-sub">Winner of The 2 AM Club for ' + escapeHtml(w.month || '') + (prize ? '<span class="cw-prize">🥇 ' + prize + '</span>' : '') + '</p>' +
+        '<p class="cw-sub">Winner of The 2 AM Club for ' + escapeHtml(w.month || '') + '</p>' +
+        (prize ? '<div class="cw-prize-big"><span class="cw-prize-label">🥇 Prize money</span><span class="cw-prize-amt">' + prize + '</span></div>' : '') +
         '<div class="cw-photos cw-photos-' + photos.length + '">' +
           photos.map(function (p) {
             return '<figure class="cw-photo"><img src="' + escapeAttr(p.src) + '" alt="' + escapeAttr(p.caption || (w.name + '\'s photo')) + '">' +
               (p.caption ? '<figcaption>' + escapeHtml(p.caption) + '</figcaption>' : '') + '</figure>';
           }).join('') +
         '</div>' +
+        // The post text fades out at the bottom and ends with "...Read more
+        // on LinkedIn" (2026-11-18, direct request); without a link, a long
+        // post gets a plain Read more toggle instead.
         (w.linkedin_text ? '<div class="cw-post"><div class="cw-post-head">From ' + escapeHtml(w.name) + '\'s LinkedIn post</div><p class="cw-post-text"></p>' +
-          '<button type="button" class="cw-more" hidden>Read more</button></div>' : '') +
+          (w.linkedin_url
+            ? '<a class="cw-more-li" href="' + escapeAttr(w.linkedin_url) + '" target="_blank" rel="noopener"><span class="cw-dots">…</span> Read more on LinkedIn ↗</a>'
+            : '<button type="button" class="cw-more" hidden>Read more</button>') +
+          '</div>' : '') +
         '<div class="cw-actions">' +
-          (w.linkedin_url ? '<a class="cw-btn cw-btn-li" href="' + escapeAttr(w.linkedin_url) + '" target="_blank" rel="noopener">Read the post on LinkedIn ↗</a>' : '') +
+          (!w.linkedin_text && w.linkedin_url ? '<a class="cw-btn cw-btn-li" href="' + escapeAttr(w.linkedin_url) + '" target="_blank" rel="noopener">Read the post on LinkedIn ↗</a>' : '') +
           '<button type="button" class="cw-btn cw-btn-close">Close</button>' +
         '</div>' +
       '</div>';
@@ -1486,9 +1493,11 @@
       textEl.textContent = w.linkedin_text;
       var more = m.querySelector('.cw-more');
       requestAnimationFrame(function () {
-        if (textEl.scrollHeight > textEl.clientHeight + 4) more.hidden = false;
+        var clamped = textEl.scrollHeight > textEl.clientHeight + 4;
+        textEl.classList.toggle('is-clamped', clamped);
+        if (more) more.hidden = !clamped;
       });
-      more.addEventListener('click', function () {
+      if (more) more.addEventListener('click', function () {
         var open = textEl.classList.toggle('is-open');
         more.textContent = open ? 'Show less' : 'Read more';
       });
