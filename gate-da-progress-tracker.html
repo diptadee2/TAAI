@@ -2584,14 +2584,14 @@ body.club-winner-open { overflow: hidden; }
     linear-gradient(160deg, #221a4a 0%, #120f2c 55%, #08091c 100%);
   box-shadow: 0 30px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.03) inset; animation: cw-rise .45s cubic-bezier(.2,.9,.3,1.15); }
 @keyframes cw-rise { from { opacity: 0; transform: translateY(18px) scale(.97); } to { opacity: 1; transform: none; } }
-.cw-sky { position: absolute; inset: 0; pointer-events: none; overflow: hidden; border-radius: inherit; }
-.cw-moon { position: absolute; top: 18px; left: 22px; width: 30px; height: 30px; border-radius: 50%; box-shadow: 8px -2px 0 0 #f3e5b5; transform: rotate(-20deg); opacity: .9; }
-.cw-close { position: absolute; top: 12px; right: 12px; z-index: 1; width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); color: var(--ink-dim); font-size: 20px; line-height: 1; cursor: pointer; }
+.cw-moon { position: absolute; top: 12px; left: 12px; width: 34px; height: 34px; display: grid; place-items: center; color: #f3e5b5; filter: drop-shadow(0 0 6px rgba(243,229,181,0.45)); pointer-events: none; }
+.cw-close { position: absolute; top: 12px; right: 12px; z-index: 1; width: 34px; height: 34px; padding: 0; display: grid; place-items: center; border-radius: 50%; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); color: var(--ink-dim); cursor: pointer; }
 .cw-close:hover { color: #fff; background: rgba(255,255,255,0.12); }
 .cw-tag { position: relative; display: inline-block; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: .04em; color: #FBBF24; background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.35); }
 .cw-title { position: relative; margin: 14px 0 6px; font-size: clamp(24px, 4.6vw, 32px); line-height: 1.15; font-weight: 800; }
 .cw-name { background: linear-gradient(120deg, #FF7FB7, #A78BFA, #4D8BFF); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .cw-sub { position: relative; margin: 0 0 18px; font-size: 14.5px; color: var(--ink-dim); display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; }
+.cw-month { font-weight: 800; color: #FCD34D; padding: 1px 8px; border-radius: 6px; background: rgba(251,191,36,0.14); border: 1px solid rgba(251,191,36,0.35); }
 .cw-prize-big { position: relative; display: inline-flex; flex-direction: column; align-items: center; gap: 2px; margin: -6px auto 18px; padding: 10px 26px 12px; border-radius: 18px; background: linear-gradient(160deg, rgba(251,191,36,0.18), rgba(251,191,36,0.06)); border: 1px solid rgba(251,191,36,0.45); box-shadow: 0 0 30px rgba(251,191,36,0.18); }
 .cw-prize-label { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #FCD34D; }
 .cw-prize-amt { font-size: clamp(40px, 9vw, 56px); font-weight: 800; line-height: 1.05; letter-spacing: -.01em; font-variant-numeric: tabular-nums;
@@ -2621,6 +2621,7 @@ body.club-winner-open { overflow: hidden; }
 @media (max-width: 520px) {
   .cw-card { padding: 26px 18px 20px; }
   .cw-moon { display: none; }
+  .cw-tag { margin-top: 30px; }
   .cw-photos-2 { grid-template-columns: 1fr; }
   .cw-photos-2 .cw-photo img { height: auto; max-height: 260px; }
   .cw-btn { flex: 1 1 100%; }

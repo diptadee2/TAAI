@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-18-11';
+  var CLIENT_VERSION = '2026-11-18-13';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1461,11 +1461,12 @@
     m.className = 'cw-backdrop';
     m.innerHTML =
       '<div class="cw-card" role="dialog" aria-modal="true" aria-labelledby="cw-title">' +
-        '<button type="button" class="cw-close" aria-label="Close">×</button>' +
-        '<div class="cw-sky" aria-hidden="true"><span class="cw-moon"></span></div>' +
+        // Moon top-left mirrors the close button top-right: same size, same inset.
+        '<button type="button" class="cw-close" aria-label="Close"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>' +
+        '<span class="cw-moon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/></svg></span>' +
         '<div class="cw-tag">🏆 The 2 AM Club · ' + escapeHtml(w.month || '') + ' winner</div>' +
         '<h2 class="cw-title" id="cw-title">Congratulations, <span class="cw-name">' + escapeHtml(w.name) + '</span>!</h2>' +
-        '<p class="cw-sub">Winner of The 2 AM Club for ' + escapeHtml(w.month || '') + '</p>' +
+        '<p class="cw-sub">Winner of The 2 AM Club for <span class="cw-month">' + escapeHtml(w.month || '') + '</span></p>' +
         (prize ? '<div class="cw-prize-big"><span class="cw-prize-label">🥇 Prize money</span><span class="cw-prize-amt">' + prize + '</span></div>' : '') +
         '<div class="cw-photos cw-photos-' + photos.length + '">' +
           photos.map(function (p) {
