@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-18-9';
+  var CLIENT_VERSION = '2026-11-18-10';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1499,7 +1499,7 @@
     document.addEventListener('keydown', clubWinnerKeydown);
     var closeBtn = m.querySelector('.cw-btn-close');
     if (closeBtn) closeBtn.focus({ preventScroll: true });
-    setTimeout(fireConfetti, 250);
+    setTimeout(fireWinnerCelebration, 250);
   }
 
   // ── Scroll progress + back-to-top — same pattern as blog.js ──────────
@@ -1700,6 +1700,120 @@
       } else {
         canvas.remove(); // finite burst, no lingering ticker
       }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // The 2 AM Club winner's own celebration (2026-11-18, "make the confetti
+  // different for this one"): gold fireworks (a rocket rises, then bursts
+  // into sparks with short trails) plus a slow shower of golden stars. Same
+  // rules as fireConfetti: finite, removes its canvas, sharp on retina,
+  // frame-rate independent, skipped under reduced motion.
+  function fireWinnerCelebration() {
+    try { if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; } catch (e) { /* ignore */ }
+    var W = window.innerWidth, H = window.innerHeight;
+    var dpr = Math.min(2, window.devicePixelRatio || 1);
+    var canvas = document.createElement('canvas');
+    canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:9999;pointer-events:none;';
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    document.body.appendChild(canvas);
+    var ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    var GOLDS = ['#FDE68A', '#FBBF24', '#F59E0B', '#FFF7D6', '#FFFFFF', '#FCD34D'];
+    var rockets = [], sparks = [], stars = [];
+    var small = W < 600;
+    // Five rockets, alternating sides, bursting in the top part of the screen.
+    // On wide screens they burst either side of the popup card so they don't cover it.
+    var plan = W >= 900
+      ? [[0.15, 0.28, 0], [0.85, 0.22, 380], [0.5, 0.07, 760], [0.2, 0.55, 1250], [0.8, 0.5, 1650]]
+      : [[0.22, 0.2, 0], [0.78, 0.16, 380], [0.5, 0.1, 760], [0.3, 0.3, 1250], [0.7, 0.26, 1650]];
+    plan.forEach(function (q) {
+      rockets.push({ x: W * q[0] + (Math.random() - 0.5) * 40, y: H + 10, tx: W * q[0], ty: H * q[1], delay: q[2], launched: false, done: false, trail: [] });
+    });
+    function burst(x, y) {
+      var n = small ? 46 : 70;
+      for (var i = 0; i < n; i++) {
+        var a = (i / n) * Math.PI * 2 + Math.random() * 0.15;
+        var sp = (small ? 2.4 : 3.1) + Math.random() * (small ? 2.2 : 3);
+        sparks.push({ x: x, y: y, px: x, py: y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0, ttl: 1100 + Math.random() * 800, color: GOLDS[Math.floor(Math.random() * GOLDS.length)], r: 2.2 + Math.random() * 1.6 });
+      }
+      // a soft flash at the centre
+      sparks.push({ flash: true, x: x, y: y, life: 0, ttl: 380 });
+    }
+    // Golden stars drifting down from the top, starting a moment after the first burst.
+    var starCount = small ? 26 : 44;
+    for (var j = 0; j < starCount; j++) {
+      stars.push({ x: Math.random() * W, y: -30 - Math.random() * H * 0.6, vy: 0.9 + Math.random() * 1.3, sway: Math.random() * Math.PI * 2, vs: 0.02 + Math.random() * 0.03,
+        rot: Math.random() * Math.PI, vrot: (Math.random() - 0.5) * 0.05, size: 5 + Math.random() * 6, delay: 500 + Math.random() * 1500, life: 0, ttl: 5200 + Math.random() * 1500,
+        color: GOLDS[Math.floor(Math.random() * 3) + 1] });
+    }
+    function starPath(r) {
+      ctx.beginPath();
+      for (var k = 0; k < 10; k++) {
+        var rr = k % 2 ? r * 0.45 : r, ang = -Math.PI / 2 + k * Math.PI / 5;
+        ctx[k ? 'lineTo' : 'moveTo'](Math.cos(ang) * rr, Math.sin(ang) * rr);
+      }
+      ctx.closePath();
+    }
+    var start = null, last = null, MAX = 8500;
+    function frame(ts) {
+      if (start === null) { start = ts; last = ts; }
+      var t = ts - start, dt = Math.min(3, (ts - last) / 16.67), ms = dt * 16.67;
+      last = ts;
+      ctx.clearRect(0, 0, W, H);
+      ctx.globalCompositeOperation = 'lighter';
+      // rockets
+      rockets.forEach(function (r) {
+        if (r.done || t < r.delay) return;
+        var dy = r.ty - r.y;
+        r.y += dy * 0.075 * dt - 2.2 * dt;
+        r.x += (r.tx - r.x) * 0.06 * dt;
+        r.trail.push([r.x, r.y]); if (r.trail.length > 10) r.trail.shift();
+        for (var i = 0; i < r.trail.length; i++) {
+          ctx.globalAlpha = (i / r.trail.length) * 0.8;
+          ctx.fillStyle = '#FDE68A';
+          ctx.beginPath(); ctx.arc(r.trail[i][0], r.trail[i][1], 1.8, 0, Math.PI * 2); ctx.fill();
+        }
+        if (r.y <= r.ty + 4) { r.done = true; burst(r.x, r.y); }
+      });
+      // sparks
+      sparks = sparks.filter(function (p) { return p.life < p.ttl; });
+      sparks.forEach(function (p) {
+        p.life += ms;
+        var k = 1 - p.life / p.ttl;
+        if (p.flash) {
+          var g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 60);
+          g.addColorStop(0, 'rgba(255,240,200,' + (0.55 * k) + ')'); g.addColorStop(1, 'rgba(255,200,80,0)');
+          ctx.globalAlpha = 1; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, 60, 0, Math.PI * 2); ctx.fill();
+          return;
+        }
+        p.px = p.x; p.py = p.y;
+        p.vx *= Math.pow(0.965, dt); p.vy = p.vy * Math.pow(0.965, dt) + 0.045 * dt;
+        p.x += p.vx * dt; p.y += p.vy * dt;
+        ctx.globalAlpha = Math.max(0, Math.min(1, k * 1.4));
+        ctx.strokeStyle = p.color; ctx.lineWidth = p.r; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(p.px - p.vx * 4.5, p.py - p.vy * 4.5); ctx.lineTo(p.x, p.y); ctx.stroke();
+        // twinkle near the end
+        if (k < 0.35 && Math.random() < 0.3) { ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.arc(p.x, p.y, p.r * 0.9, 0, Math.PI * 2); ctx.fill(); }
+      });
+      // stars
+      ctx.globalCompositeOperation = 'source-over';
+      stars = stars.filter(function (st) { return st.life < st.ttl && st.y < H + 30; });
+      stars.forEach(function (st) {
+        if (t < st.delay) return;
+        st.life += ms;
+        st.sway += st.vs * dt; st.rot += st.vrot * dt;
+        st.y += st.vy * dt; st.x += Math.sin(st.sway) * 0.6 * dt;
+        var fade = Math.min(1, st.life / 300, (st.ttl - st.life) / 800);
+        ctx.globalAlpha = Math.max(0, fade);
+        ctx.save(); ctx.translate(st.x, st.y); ctx.rotate(st.rot);
+        ctx.shadowColor = 'rgba(251,191,36,0.8)'; ctx.shadowBlur = 8;
+        ctx.fillStyle = st.color; starPath(st.size); ctx.fill();
+        ctx.restore();
+      });
+      ctx.globalAlpha = 1;
+      var busy = rockets.some(function (r) { return !r.done; }) || sparks.length || stars.length;
+      if (busy && t < MAX) requestAnimationFrame(frame); else canvas.remove();
     }
     requestAnimationFrame(frame);
   }
