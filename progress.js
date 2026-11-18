@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-18-5';
+  var CLIENT_VERSION = '2026-11-18-6';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2476,7 +2476,7 @@
     sky.appendChild(el);
     var a = el.animate([
       { opacity: 0, transform: 'translate(0,0) rotate(-32deg)' },
-      { opacity: 0.95, offset: 0.25 },
+      { opacity: 0.4, offset: 0.25 },
       { opacity: 0, transform: 'translate(' + (-dx) + 'px,' + dy + 'px) rotate(-32deg)' }
     ], { duration: 850 + Math.random() * 300, easing: 'ease-out' });
     a.onfinish = function () { el.remove(); };
@@ -2487,7 +2487,7 @@
     var zones = cometZones();
     if (zones.length) {
       var zone = zones[Math.floor(Math.random() * zones.length)];
-      var n = 2 + Math.floor(Math.random() * 3);
+      var n = 1 + Math.floor(Math.random() * 2);
       for (var i = 0; i < n; i++) setTimeout(function () { spawnComet(zone); }, i * (180 + Math.random() * 260));
     }
     scheduleComets();
@@ -2495,9 +2495,10 @@
   function scheduleComets() {
     if (cometTimer) return;
     try { if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; } catch (e) {}
-    cometTimer = setTimeout(cometShower, 7000 + Math.random() * 9000);
+    cometTimer = setTimeout(cometShower, 12000 + Math.random() * 12000);
   }
-  // Comet showers switched off 2026-11-18 (timer screen "too clumsy").
+  // Back on 2026-11-18, quieter: 1-2 faint comets (40% at most) every 12-24s.
+  scheduleComets();
   function fitSideColSticky() {
     var side = document.querySelector('.side-col');
     if (!side) return;
