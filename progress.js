@@ -1606,11 +1606,21 @@
   }
 
   // Local testing only: on localhost, open the tracker with ?confetti to fire
-  // it on load (and again on every reload), or call taaiConfetti() in the
+  // it in the Pomodoro view on load (and again on every reload), or call taaiConfetti() in the
   // console. Never active on taai.live.
   if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
     window.taaiConfetti = fireConfetti;
-    if (/[?&]confetti\b/.test(location.search)) setTimeout(fireConfetti, 900);
+    // ?confetti opens the Pomodoro (Focus mode) view first, then fires.
+    if (/[?&]confetti\b/.test(location.search)) {
+      var tries = 0;
+      (function waitForFocusButton() {
+        if (state.focus) { setTimeout(fireConfetti, 700); return; }
+        var btn = document.getElementById('focus-toggle');
+        if (btn && !state.stale) { btn.click(); setTimeout(fireConfetti, 900); return; }
+        if (++tries < 60) setTimeout(waitForFocusButton, 250);
+        else fireConfetti();
+      })();
+    }
   }
 
   // threshold: 0 — fires the moment ANY part of the card is visible, not
