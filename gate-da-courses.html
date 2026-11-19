@@ -4387,10 +4387,22 @@ html body main #combos #full-course-2028 .c28-pitch { margin: 22px 0 6px; paddin
 html body main #combos #full-course-2028 .c28-pitch .c28-pitch-head { margin: 0 0 8px !important; font-family: 'Archivo', system-ui, sans-serif; font-size: 22px !important; line-height: 1.3; font-weight: 800; letter-spacing: -.01em; color: var(--sl-ink, #121316) !important; }
 html body main #combos #full-course-2028 .c28-pitch-body { margin: 0; max-width: 62ch; font-size: 15px; line-height: 1.6; color: #3D3B47 !important; }
 html body main #combos #full-course-2028 .c28-pitch-mark { background: linear-gradient(transparent 55%, #FDE047 55%); color: #121316; font-weight: 700; padding: 0 2px; border-radius: 2px; }
+/* Phones: less scrolling (2026-11-19, "mobile folks shouldn't have to scroll
+   too much"). All What's-included groups start closed (JSX), the pitch is
+   tighter, and the 3 projects are one row of small tiles (drawing, xN, title)
+   without the captions toggle. */
 @media (max-width: 600px) {
-  html body main #combos #full-course-2028 .c28-pitch { margin-top: 18px; padding: 16px; }
-  html body main #combos #full-course-2028 .c28-pitch .c28-pitch-head { font-size: 18px !important; }
-  html body main #combos #full-course-2028 .c28-pitch-body { font-size: 14.5px; }
+  html body main #combos #full-course-2028 .c28-pitch { margin-top: 16px; padding: 14px 15px; }
+  html body main #combos #full-course-2028 .c28-pitch .c28-pitch-head { font-size: 17px !important; margin-bottom: 6px !important; }
+  html body main #combos #full-course-2028 .c28-pitch-body { font-size: 14px; line-height: 1.5; }
+  html body main #combos #full-course-2028 .c28-seehow:not(#_) { flex-direction: row !important; align-items: center !important; justify-content: space-between !important; gap: 10px !important; flex-wrap: nowrap !important; }
+  html body main #combos #full-course-2028 .c28-seehow-lead:not(#_) { font-size: 12.5px !important; }
+  html body main #combos #full-course-2028 .c28-projects .combo-projects-list:not(#_) { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 8px !important; }
+  html body main #combos #full-course-2028 .c28-projects .combo-projects-list li.c28-proj:not(#_) { flex-direction: column !important; align-items: stretch !important; flex-wrap: nowrap !important; padding: 8px !important; gap: 6px !important; }
+  html body main #combos #full-course-2028 .c28-projects .combo-projects-list li.c28-proj .c28-proj-art:not(#_) { order: -1; width: 100% !important; height: 46px !important; margin: 0 !important; }
+  html body main #combos #full-course-2028 .c28-projects .combo-projects-list li.c28-proj .c28-proj-count:not(#_) { font-size: 15px !important; min-width: 0 !important; height: auto !important; justify-content: flex-start; place-items: start; }
+  html body main #combos #full-course-2028 .c28-projects .combo-projects-list li > span > b:not(#_) { font-size: 12.5px !important; line-height: 1.25 !important; }
+  html body main #combos #full-course-2028 .c28-projects .combo-projects-pitch:not(#_), html body main #combos #full-course-2028 .combo-proj-toggle:not(#_) { display: none !important; }
 }
 </style>
 </head>
@@ -5827,7 +5839,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
             {c.includeGroups && !isSoldOut ? (
               <div className="c28-groups">
                 {c.includeGroups.map((g, gi) => (
-                  <details key={gi} className="c28-group" open={gi === 0 || undefined}>
+                  <details key={gi} className="c28-group" open={(gi === 0 && !(typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 600px)').matches)) || undefined}>
                     <summary>
                       <span className="c28-group-title">{g.title}</span>
                       {g.tag && <span className="c28-group-tag">{g.tag}</span>}
