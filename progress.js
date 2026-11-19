@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-23';
+  var CLIENT_VERSION = '2026-11-19-24';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2954,7 +2954,16 @@
     var zones = [[8, p.left - c.left - 8]];
     if (l) { zones.push([p.right - c.left + 8, l.left - c.left - 8]); zones.push([l.right - c.left + 8, c.width - 8]); }
     else zones.push([p.right - c.left + 8, c.width - 8]);
-    return zones.filter(function (z) { return z[1] - z[0] >= 80; }).map(function (z) { return { x0: z[0], x1: z[1], y0: top, y1: bottom }; });
+    // With the Vice skyline, comets stay above the buildings, tower and palms
+    // that sit under each zone (2026-11-19, "comets falling below building level").
+    var obstacles = VICE_NIGHT ? [].map.call(card.querySelectorAll('.vice-skyline, .vice-tower, .vice-palm'), function (e) { return e.getBoundingClientRect(); }) : [];
+    return zones.filter(function (z) { return z[1] - z[0] >= 80; }).map(function (z) {
+      var y1 = bottom;
+      obstacles.forEach(function (o) {
+        if (o.right - c.left > z[0] && o.left - c.left < z[1]) y1 = Math.min(y1, o.top - c.top - 14);
+      });
+      return { x0: z[0], x1: z[1], y0: top, y1: y1 };
+    }).filter(function (z) { return z.y1 - z.y0 >= 60; });
   }
   function spawnComet(zone) {
     var sky = document.querySelector('#focus-card .focus-sky');
