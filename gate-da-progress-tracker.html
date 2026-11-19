@@ -519,7 +519,6 @@
   .focus-toggle-wrap { display: flex; justify-content: center; margin-bottom: 22px; }
   /* Focus Mode is desktop-only, same breakpoint as .side-col below —
      phone and iPad-portrait get the task checklist only. */
-  @media (max-width: 1080px) { .focus-toggle-wrap { display: none; } }
   /* Focus mode call-to-action bar (2026-10-08): full main-column width,
      a short explanation on the left, the big button on the right. Same
      flat card idiom as the rest of the page with a soft purple tint so it
@@ -529,7 +528,6 @@
   .focus-cta-title { font-family: var(--font-nav); font-size: 17px; font-weight: 700; color: var(--ink); }
   .focus-cta-sub { font-size: 13.5px; color: var(--ink-dim); }
   .focus-cta .focus-toggle { flex-shrink: 0; }
-  @media (max-width: 1080px) { .focus-cta { display: none; } }
   /* Desktop: the plan card spans the full main column too, so it, the
      Focus bar and the champions card line up as one stack (it was a
      centred 560px card above two 696px ones). */
@@ -543,9 +541,7 @@
      the button's own press/hover transition. */
   .focus-tile-wrap { flex: 0 0 168px; display: flex; }
   .focus-toggle.focus-tile { flex: 1 1 auto; width: 100%; height: auto; flex-direction: column; gap: 8px; padding: 16px; border-radius: var(--radius-md); font-size: 16px; }
-  @media (max-width: 1080px) { .focus-tile-wrap { display: none; } }
   .focus-tile .focus-toggle-icon svg { width: 26px; height: 26px; }
-  @media (max-width: 1080px) { .focus-toggle.focus-tile { display: none; } }
   .focus-cta { margin-bottom: 28px; }
   /* Restyled 2026-10-03 ("the focus mode button can be better"): same
      language as the Pomodoro Start button (solid accent, dark text, drawn
@@ -2954,6 +2950,35 @@ html.vice-night .pomo-zen .vice-edge { bottom: 24px; height: 46px; background-si
 .pomo-zen.is-running .pomo-zen-toggle:hover { filter: none; background: rgba(24,18,44,0.75); }
 .pomo-zen.on-break.is-running .pomo-zen-toggle { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--pomo-break-g1, #4ade80) 65%, transparent), 0 10px 28px rgba(0,0,0,0.38); }
 .pomo-zen.on-break.is-running .pomo-zen-toggle svg { background: var(--pomo-break-g1, #4ade80); }
+</style>
+<style>
+/* Focus Mode on phones and iPads (2026-11-19): visible to look around,
+   starting a session shows the desktop-only popup. */
+.fdo-backdrop { position: fixed; inset: 0; z-index: 3200; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(6,4,16,.66); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); animation: fdo-in .2s ease-out; }
+.fdo-card { width: 100%; max-width: 380px; padding: 26px 24px 22px; border-radius: 18px; background: linear-gradient(180deg, #1d1838, #121024); border: 1px solid rgba(167,139,250,.35); text-align: center; color: var(--ink); animation: fdo-pop .26s cubic-bezier(.34,1.56,.64,1); }
+.fdo-icon { width: 52px; height: 52px; margin: 0 auto 14px; border-radius: 14px; display: flex; align-items: center; justify-content: center; background: rgba(167,139,250,.16); color: #C4B5FD; }
+.fdo-title { margin: 0 0 8px; font-family: var(--font-nav, Poppins); font-size: 19px; font-weight: 700; line-height: 1.3; }
+.fdo-text { margin: 0 0 20px; font-size: 14px; line-height: 1.55; color: var(--ink-dim); }
+.fdo-text b { color: var(--ink); }
+.fdo-ok { width: 100%; justify-content: center; }
+@keyframes fdo-in { from { opacity: 0; } }
+@keyframes fdo-pop { from { opacity: 0; transform: scale(.94); } }
+@media (prefers-reduced-motion: reduce) { .fdo-backdrop, .fdo-card { animation: none; } }
+/* Phones and iPads in Focus Mode (2026-11-19). */
+#focus-card.vice-no-tower .vice-tower { display: none; }
+@media (hover: none) and (pointer: coarse) {
+  .pomo-notify-permanent-tip, .pomo-notify-tip { display: none !important; }
+}
+@media (max-width: 700px) {
+  #leaderboard-card { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  #leaderboard-card .leaderboard-row, #leaderboard-card .leaderboard-columns { min-width: 640px; }
+  html.vice-night .pomo-zen .vice-tower { left: 86%; width: 58px; }
+  html.vice-night .pomo-zen .vice-palm { width: 150px; height: 220px; }
+  html.vice-night .pomo-zen .vice-palm--r { display: none; }
+}
+@media (max-height: 500px) {
+  html.vice-night .pomo-zen .vice-tower, html.vice-night .pomo-zen .vice-palm { display: none; }
+}
 </style>
 </head>
 <body data-float-stack data-nav-no-autohide>

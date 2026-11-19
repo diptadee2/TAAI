@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-44';
+  var CLIENT_VERSION = '2026-11-19-45';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2223,7 +2223,7 @@
   // a later reload behave normally.
   if (/[?&]focus\b/.test(location.search)) {
     try { history.replaceState(history.state, '', location.pathname + location.search.replace(/([?&])focus\b(=[^&]*)?&?/, '$1').replace(/[?&]$/, '') + location.hash); } catch (e) { /* fine */ }
-    if (window.innerWidth > 1080) {
+    {
       var fTries = 0;
       (function openFocusFromLink() {
         if (state.focus) return;
@@ -3154,11 +3154,22 @@
     var sky = card.querySelector('.focus-sky'), skyTop = sky ? sky.getBoundingClientRect().top : c.top;
     var divEl = card.querySelector('.focus-divider'), rowEl = card.querySelector('.pomo-today-row') || pomo;
     var base = divEl ? divEl.getBoundingClientRect().top : rowEl.getBoundingClientRect().bottom + 22;
+    var lb = card.querySelector('#today-leaderboard-card');
+    var lbR = lb ? lb.getBoundingClientRect() : null;
+    // Narrow screens (phones, iPad portrait) stack Today's leaders under the
+    // timer: the scene then ends above the leaders instead of behind them,
+    // and the tower stands right of the timer if there's room (2026-11-19).
+    var stacked = lbR && lbR.width && lbR.top >= r.bottom - 4;
+    if (stacked) base = Math.min(base, lbR.top - 8);
     card.style.setProperty('--vice-h', Math.round(base - skyTop) + 'px');
     // The Vice City tower goes in the empty gap between the timer and Today's leaders.
-    var lb = card.querySelector('#today-leaderboard-card');
-    var gapMid = lb ? (r.right + lb.getBoundingClientRect().left) / 2 - c.left : r.right - c.left + 70;
+    var gapMid, towerOk = true;
+    if (stacked || !lbR || !lbR.width) {
+      gapMid = (r.right + c.right) / 2 - c.left;
+      towerOk = c.right - r.right >= 90;
+    } else gapMid = (r.right + lbR.left) / 2 - c.left;
     card.style.setProperty('--vice-tower-x', Math.round(gapMid) + 'px');
+    card.classList.toggle('vice-no-tower', !towerOk);
     if (window.ResizeObserver) {
       if (skyObserver) skyObserver.disconnect();
       skyObserver = new ResizeObserver(function () { requestAnimationFrame(syncSkyOffset); });
@@ -4662,7 +4673,7 @@
     document.body.classList.add('pomo-zen-active');
     document.getElementById('pomo-zen-exit').addEventListener('click', closePomoZen);
     document.getElementById('pomo-zen-toggle').addEventListener('click', function () {
-      if (!state.student && !pomo.running) { closePomoZen(); pomoToggleRun(); return; }
+      if (!state.student && !pomo.running && !focusStartBlocked()) { closePomoZen(); pomoToggleRun(); return; }
       pomoToggleRun();
       updatePomoDisplay();
     });
@@ -4674,7 +4685,10 @@
     wake();
     var root = document.documentElement;
     var req = root.requestFullscreen || root.webkitRequestFullscreen;
-    if (req) { try { var r = req.call(root); if (r && r.catch) r.catch(function () {}); } catch (e) { /* overlay alone is fine */ } }
+    // Touch screens skip real browser fullscreen: iPad Safari draws its own
+    // close button over Exit there and leaves a strip of the page showing
+    // at the bottom (2026-11-19). The overlay alone fills the screen.
+    if (req && !focusStartBlocked()) { try { var r = req.call(root); if (r && r.catch) r.catch(function () {}); } catch (e) { /* overlay alone is fine */ } }
     if (navigator.wakeLock && navigator.wakeLock.request) {
       navigator.wakeLock.request('screen').then(function (l) { zenWakeLock = l; }).catch(function () {});
     }
@@ -5122,7 +5136,37 @@
     savePomoActiveState();
   }
 
+  // Phones and iPads (touch screens with no mouse) may look around Focus Mode
+  // and the fullscreen view, but sessions can only be started on a desktop
+  // or laptop (2026-11-19).
+  function focusStartBlocked() {
+    try { return window.matchMedia('(hover: none) and (pointer: coarse)').matches; } catch (e) { return false; }
+  }
+  function showFocusDesktopOnly() {
+    if (document.getElementById('focus-desktop-only')) return;
+    var el = document.createElement('div');
+    el.id = 'focus-desktop-only';
+    el.className = 'fdo-backdrop';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-modal', 'true');
+    el.setAttribute('aria-labelledby', 'fdo-title');
+    el.innerHTML =
+      '<div class="fdo-card">' +
+        '<div class="fdo-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></div>' +
+        '<h3 class="fdo-title" id="fdo-title">Focus mode is available on desktop</h3>' +
+        '<p class="fdo-text">For now, focus sessions can only be started on a laptop or desktop. Open <b>taai.live/focus</b> there to start one. Your tasks and streak still work right here.</p>' +
+        '<button type="button" class="pomo-btn pomo-btn-primary fdo-ok">Got it</button>' +
+      '</div>';
+    function close() { document.removeEventListener('keydown', onKey); el.remove(); }
+    function onKey(e) { if (e.key === 'Escape') close(); }
+    el.addEventListener('click', function (e) { if (e.target === el || e.target.closest('.fdo-ok')) close(); });
+    document.addEventListener('keydown', onKey);
+    document.body.appendChild(el);
+    var ok = el.querySelector('.fdo-ok'); if (ok) ok.focus();
+  }
+
   function pomoToggleRun() {
+    if (!pomo.running && focusStartBlocked()) { showFocusDesktopOnly(); return; }
     // Starting (not pausing) waits for fresh data: the rename / freeze
     // gates and synced settings come from the server response.
     if (!pomo.running && state.stale) return;
@@ -7872,15 +7916,9 @@
     try { applyPomoActiveState(JSON.parse(e.newValue)); } catch (er) { /* malformed: keep the current state */ }
   });
 
-  // Focus Mode is desktop-only (same 1080px breakpoint that hides
-  // .focus-toggle-wrap in CSS) — the button being hidden stops someone from
-  // entering it fresh on a phone/iPad-portrait, but doesn't help if they
-  // rotate an iPad from landscape to portrait mid-session, since state.focus
-  // stays true and CSS alone can't back that out. This kicks them back to
-  // the normal checklist the moment the viewport crosses the breakpoint.
-  window.addEventListener('resize', function () {
-    if (state.focus && window.innerWidth <= 1080) exitFocus();
-  });
+  // Phones and iPads can open Focus Mode and its fullscreen view to look
+  // around (2026-11-19); only starting a session is desktop-only, see
+  // focusStartBlocked().
 
   init();
   setupScrollEffects();
