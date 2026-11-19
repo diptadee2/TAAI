@@ -2747,7 +2747,26 @@ html.vice-night .pomo-zen .vice-palm--r { width: 165px; height: 240px; }
 .vt-mast { width: 2px; height: 16px; background: #1c1030; }
 .vt-sign { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-bottom: 4px; padding: 4px 7px 5px; border: 1.5px solid rgba(255,122,217,0.6); border-radius: 4px; background: rgba(10,4,20,0.75); box-shadow: 0 0 12px rgba(255,79,216,0.3); }
 .vt-sign span { font: italic 800 12px/1 Poppins, system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; padding-left: .14em; }
-.vt-sign span:first-child { color: #ff7ad9; text-shadow: 0 0 6px rgba(255,79,216,0.8); animation: vt-flicker 7s infinite; }
+.vt-sign span:first-child { color: #ff7ad9; text-shadow: 0 0 6px rgba(255,79,216,0.8); animation: vt-glitch-a 6.5s steps(1, end) infinite; }
+.vt-sign span:last-child { animation: vt-glitch-b 9s steps(1, end) infinite; animation-delay: 2.2s; }
+.vt-sign { animation: vt-box 11s steps(1, end) infinite; }
+/* Neon glitches: brief RGB split + sideways jump, a dying tube, a box flicker */
+@keyframes vt-glitch-a {
+  0%, 61%, 63.5%, 79%, 82%, 100% { transform: none; opacity: 1; text-shadow: 0 0 6px rgba(255,79,216,0.8); }
+  61.5% { transform: translate(-2px, 0) skewX(-8deg); text-shadow: -2px 0 0 rgba(45,226,230,0.9), 2px 0 0 rgba(255,59,107,0.9); }
+  62.3% { transform: translate(2px, -1px); text-shadow: 2px 0 0 rgba(45,226,230,0.9), -2px 0 0 rgba(255,59,107,0.9); opacity: .6; }
+  63% { transform: translate(-1px, 1px); opacity: .9; }
+  79.5% { opacity: .2; text-shadow: none; }
+  80.3% { opacity: 1; }
+  81% { opacity: .35; text-shadow: none; }
+}
+@keyframes vt-glitch-b {
+  0%, 44%, 46.5%, 100% { transform: none; opacity: 1; }
+  44.5% { transform: translate(3px, 0); text-shadow: -2px 0 0 rgba(255,59,107,0.85), 2px 0 0 rgba(45,226,230,0.9); clip-path: inset(0 0 45% 0); }
+  45.3% { transform: translate(-2px, 0); clip-path: inset(50% 0 0 0); opacity: .7; }
+  46% { transform: none; clip-path: none; }
+}
+@keyframes vt-box { 0%, 70%, 71.5%, 100% { border-color: rgba(255,122,217,0.6); } 70.5% { border-color: rgba(255,122,217,0.15); } }
 .vt-sign span:last-child { color: #7ef3f5; text-shadow: 0 0 6px rgba(45,226,230,0.8); }
 @keyframes vt-flicker { 0%, 92%, 96%, 100% { opacity: 1; } 93%, 95% { opacity: .35; } }
 /* cars */
@@ -2796,7 +2815,7 @@ html.vice-night .pomo-zen .vice-car--a { bottom: 1px; }
 .vm-title { font: italic 800 clamp(30px, 4.4vw, 52px)/1 Poppins, system-ui, sans-serif; letter-spacing: .02em; color: #FBBF24; -webkit-text-stroke: 1px rgba(0,0,0,0.6); text-shadow: 0 3px 0 rgba(0,0,0,0.6), 0 0 22px rgba(251,191,36,0.35); }
 .vm-sub { margin-top: 8px; font: 600 16px Poppins, system-ui, sans-serif; color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,0.7); }
 @keyframes vm-in { from { opacity: 0; transform: translateX(-50%) scale(.85); } to { opacity: 1; transform: translateX(-50%) scale(1); } }
-@media (prefers-reduced-motion: reduce) { .vice-car, .vice-blimp { display: none; } .vt-sign span:first-child, .vb-light { animation: none; } .pomo-zen-time.zen-kick, .pomo-zen-time.zen-settle, .vice-mission { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .vice-car, .vice-blimp { display: none; } .vt-sign, .vt-sign span, .vb-light { animation: none !important; } .pomo-zen-time.zen-kick, .pomo-zen-time.zen-settle, .vice-mission { animation: none; } }
 /* Game-style HUD, top right of fullscreen, today only */
 .pomo-zen > .zen-hud { position: absolute; top: 22px; right: 150px; z-index: 2; display: flex; align-items: flex-start; gap: 12px; }
 .zh-stats { width: 132px; display: flex; flex-direction: column; align-items: stretch; gap: 3px; text-align: right; }
@@ -2805,7 +2824,7 @@ html.vice-night .pomo-zen .vice-car--a { bottom: 1px; }
 .zh-money { color: #6fcf5a; font-size: 22px; }
 .zh-health { width: 100%; box-sizing: border-box; height: 10px; margin-top: 4px; background: #3a0d12; border: 2px solid #000; }
 .zh-health i { display: block; height: 100%; width: 100%; background: linear-gradient(180deg, #ff5a5f, #c4161c); transition: width 1s linear; }
-.zen-hud .zen-wanted { margin-top: 5px; justify-content: flex-end; gap: 4px; }
+.zen-hud .zen-wanted { margin-top: 6px; justify-content: flex-end; font-size: 15px; line-height: 1; letter-spacing: 3px; white-space: nowrap; filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.8)); }
 html.vice-night .pomo-zen .zs-gold { display: none; }
 .zen-hud .zen-wanted i { width: 16px; height: 16px; }
 .zh-weapon { width: 62px; height: 62px; border-radius: 12px; background: rgba(245,245,245,0.92); border: 2px solid #000; box-shadow: 2px 2px 0 #000; display: grid; place-items: center; }

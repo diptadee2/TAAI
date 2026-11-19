@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-15';
+  var CLIENT_VERSION = '2026-11-19-16';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1450,9 +1450,7 @@
   // Five "wanted" stars by the clock in fullscreen, filled one per focus
   // session finished today.
   function viceWantedHtml() {
-    var star = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 16.8l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>';
-    var out = ''; for (var i = 0; i < 5; i++) out += '<i>' + star + '</i>';
-    return '<span class="zen-wanted" id="zen-wanted" title="Wanted level: focus sessions done today">' + out + '</span>';
+    return '<span class="zen-wanted" id="zen-wanted" title="Focus sessions in this cycle">' + pomoDotsText() + '</span>';
   }
   function viceMissionPassed(min) {
     var old = document.getElementById('vice-mission'); if (old) old.remove();
@@ -4485,7 +4483,7 @@
     if (c) c.textContent = wallClockText();
     if (VICE_NIGHT) updateViceHud();
     var wz = document.getElementById('zen-wanted');
-    if (wz) { var n = Math.min(5, pomo.completedSessions || 0); [].forEach.call(wz.children, function (st, i) { st.classList.toggle('on', i < n); }); }
+    if (wz) { var dt = pomoDotsText(); if (wz.textContent !== dt) wz.textContent = dt; } // same tomatoes as the session dots
   }
   function onZenFullscreenChange() {
     if (!(document.fullscreenElement || document.webkitFullscreenElement) && zenEl()) closePomoZen();
