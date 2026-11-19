@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-24';
+  var CLIENT_VERSION = '2026-11-19-25';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1438,8 +1438,32 @@
     return '<div class="zen-hud" id="zen-hud" aria-hidden="true">' +
       '<div class="zh-stats"><div class="zh-clock" id="zh-clock"></div><div class="zh-money" id="zh-money"></div>' +
       '<div class="zh-health"><i id="zh-health"></i></div><div class="zh-stars" id="zh-stars"></div></div>' +
-      '<div class="zh-weapon"><svg viewBox="0 0 48 48"><path d="M10 38l3-10 20-20a3.5 3.5 0 0 1 5 0l2 2a3.5 3.5 0 0 1 0 5L20 35z" fill="#f2c94c" stroke="#111" stroke-width="2.4" stroke-linejoin="round"/><path d="M33 8l7 7" stroke="#111" stroke-width="2.4"/><path d="M33 8l2-2a3.5 3.5 0 0 1 5 0l2 2a3.5 3.5 0 0 1 0 5l-2 2" fill="#ff8fb1" stroke="#111" stroke-width="2.4" stroke-linejoin="round"/><path d="M10 38l3-10 7 7z" fill="#f5deb3" stroke="#111" stroke-width="2.4" stroke-linejoin="round"/><path d="M10 38l1.5-4.6 3.1 3.1z" fill="#111"/></svg></div>' +
+      '<div class="zh-weapon">' + vicePencilSvg() + '</div>' +
     '</div>';
+  }
+  // A shaded, faceted pencil like a game weapon icon: three-tone hexagonal
+  // body, wood cone, graphite tip, ridged metal ferrule, rubber eraser.
+  function vicePencilSvg() {
+    return '<svg viewBox="0 0 100 100" aria-hidden="true"><defs>' +
+      '<linearGradient id="vp-wood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6e2b6"/><stop offset="1" stop-color="#c39662"/></linearGradient>' +
+      '<linearGradient id="vp-metal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fafafa"/><stop offset=".45" stop-color="#b9bec4"/><stop offset=".6" stop-color="#8d939a"/><stop offset="1" stop-color="#d9dde1"/></linearGradient>' +
+      '<linearGradient id="vp-rub" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb3c4"/><stop offset=".55" stop-color="#f0728f"/><stop offset="1" stop-color="#b8445f"/></linearGradient>' +
+      '<linearGradient id="vp-shine" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>' +
+      '</defs><g transform="rotate(-40 50 50)">' +
+      '<path d="M8 50 L18 46.8 L18 53.2 Z" fill="#2b2b2e"/>' +
+      '<path d="M18 46.8 L30 43 L30 57 L18 53.2 Z" fill="url(#vp-wood)"/>' +
+      '<path d="M8 50 L13 48.4 L13 51.6 Z" fill="#111"/>' +
+      '<rect x="30" y="43" width="44" height="4.7" fill="#ffd84d"/>' +
+      '<rect x="30" y="47.7" width="44" height="4.6" fill="#f1b20c"/>' +
+      '<rect x="30" y="52.3" width="44" height="4.7" fill="#c7850a"/>' +
+      '<rect x="30" y="44" width="44" height="1.6" fill="url(#vp-shine)" opacity=".8"/>' +
+      '<path d="M30 47.7 H74 M30 52.3 H74" stroke="#a96f05" stroke-width=".5"/>' +
+      '<path d="M30 43 Q33 50 30 57" fill="none" stroke="#9c6a1e" stroke-width=".6"/>' +
+      '<rect x="74" y="42.4" width="9.5" height="15.2" fill="url(#vp-metal)"/>' +
+      '<path d="M76.2 42.4 V57.6 M78.7 42.4 V57.6 M81.2 42.4 V57.6" stroke="#6f757c" stroke-width=".7"/>' +
+      '<path d="M83.5 43.2 H89 Q93 43.2 93 50 Q93 56.8 89 56.8 H83.5 Z" fill="url(#vp-rub)"/>' +
+      '<path d="M8 50 L30 43 H74 V42.4 H83.5 V43.2 H89 Q93 43.2 93 50 Q93 56.8 89 56.8 H83.5 V57.6 H74 V57 H30 Z" fill="none" stroke="#1d1d1f" stroke-width="1.1" stroke-linejoin="round"/>' +
+      '</g></svg>';
   }
   function updateViceHud() {
     var c = document.getElementById('zh-clock');
