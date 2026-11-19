@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-22';
+  var CLIENT_VERSION = '2026-11-19-23';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1404,13 +1404,19 @@
   // A low sports car with a pink underglow, headlight beam and a tail-light
   // trail; 'a' drives left to right in front, 'b' right to left behind it.
   function viceCarHtml(which) {
+    // An 80s-style wedge coupe, side view, driving right: low nose, big glass,
+    // rear spoiler, side strakes, pink rim light from the city, glowing lights.
     return '<span class="vice-car vice-car--' + which + '"><span class="vc-trail"></span><span class="vc-glow"></span><span class="vc-beam"></span>' +
-      '<svg viewBox="0 0 140 34" aria-hidden="true">' +
-      '<path class="vc-body" d="M2 27 L8 21 L38 17 L60 8 L98 7 L116 15 L135 18 L139 24 L139 29 L2 29 Z"/>' +
-      '<path class="vc-glass" d="M64 11 L96 10.5 L109 16.5 L56 17 Z"/>' +
-      '<rect class="vc-stripe" x="10" y="22" width="122" height="1.6"/>' +
-      '<circle class="vc-w" cx="32" cy="29" r="5.5"/><circle class="vc-w" cx="110" cy="29" r="5.5"/>' +
-      '<rect class="vc-tail" x="2" y="22" width="6" height="3"/><rect class="vc-head" x="133" y="20" width="6" height="3"/>' +
+      '<svg viewBox="0 0 200 52" aria-hidden="true">' +
+      '<path class="vc-body" d="M6 40 L6 31 Q8 27 16 26 L50 24 Q62 13 80 11 L120 11 Q133 12 143 21 L182 25 Q195 27 196 33 L196 40 Q196 43 192 43 L172 43 A16 16 0 0 0 140 43 L68 43 A16 16 0 0 0 36 43 L10 43 Q6 43 6 40 Z"/>' +
+      '<path class="vc-rim" d="M16 26 L50 24 Q62 13 80 11 L120 11 Q133 12 143 21 L182 25 Q195 27 196 33"/>' +
+      '<path class="vc-glass" d="M66 14 L118 14 Q128 15 136 22 L58 24 Z"/>' +
+      '<path class="vc-pillar" d="M101 14 L99 23.5"/>' +
+      '<path class="vc-strake" d="M58 31 L118 30 M60 34 L116 33.2"/>' +
+      '<path class="vc-body" d="M4 22 L24 22 L24 25 L6 25 Z"/>' +
+      '<g class="vc-wheel"><circle cx="52" cy="43" r="11"/><circle class="vc-rimc" cx="52" cy="43" r="6.5"/><circle class="vc-hub" cx="52" cy="43" r="1.6"/></g>' +
+      '<g class="vc-wheel"><circle cx="156" cy="43" r="11"/><circle class="vc-rimc" cx="156" cy="43" r="6.5"/><circle class="vc-hub" cx="156" cy="43" r="1.6"/></g>' +
+      '<rect class="vc-tail" x="6" y="29" width="7" height="3.5" rx="1"/><rect class="vc-head" x="189" y="31" width="7" height="3" rx="1"/>' +
       '</svg></span>';
   }
   function viceTowerHtml() {
