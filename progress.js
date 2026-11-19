@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-5';
+  var CLIENT_VERSION = '2026-11-19-6';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1402,6 +1402,7 @@
     setupRenameTooltip();
     setupAboutBubble();
     setTimeout(checkClubWinner, 1500); // after the page has drawn
+    setInterval(function () { if (!document.hidden) checkClubWinner(true); }, 10 * 60 * 1000);
   }
 
   // ── The 2 AM Club winner popup (2026-11-18) ────────────────────────
@@ -1412,36 +1413,55 @@
   // popup is actually going to show. On localhost, ?winner-preview shows
   // it with sample content (or the real saved one if active).
   var CLUB_WINNER_SEEN = 'taai_club_winner_seen_';
-  function checkClubWinner() {
-    if (document.getElementById('club-winner-modal')) return;
+  // Also re-checked every 10 minutes while the page is open (background
+  // = true), so someone who keeps the timer or fullscreen open across the
+  // moment the winner goes live still gets it. If a focus session is
+  // running, it waits for that session to end (break, pause or reset)
+  // instead of interrupting it (2026-11-19).
+  var pendingClubWinner = null;
+  function checkClubWinner(background) {
+    if (document.getElementById('club-winner-modal') || pendingClubWinner) return;
     var isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    var wantsPreview = !background && /[?&]winner-preview\b/.test(location.search);
     // /team's Preview button saves its unsaved form into this browser's
     // localStorage (same site) and opens ?winner-preview, on any host.
-    if (/[?&]winner-preview\b/.test(location.search)) {
+    if (wantsPreview) {
       var draft = null;
       try { draft = JSON.parse(localStorage.getItem('taai_club_winner_preview') || 'null'); } catch (e) { /* none */ }
       if (draft && draft.name) { showClubWinner(draft); return; }
     }
-    var preview = isLocal && /[?&]winner-preview\b/.test(location.search);
+    var preview = isLocal && wantsPreview;
     fetch('/api/club-winner-public').then(function (r) { return r.ok ? r.json() : { active: false }; }).then(function (meta) {
       if (!meta || !meta.active) {
         if (preview) showClubWinner(SAMPLE_CLUB_WINNER);
         return;
       }
-      // Shown twice per browser: once on the checklist, once in the
-      // Pomodoro view (Focus Mode), whichever comes first (2026-11-19).
-      var seenKey = CLUB_WINNER_SEEN + meta.key + (state.focus ? ':focus' : ':list');
-      var seen = false;
-      try { seen = localStorage.getItem(seenKey) === '1'; } catch (e) { /* show it */ }
-      if (seen && !preview) return;
+      if (clubWinnerSeen(meta.key) && !preview) return;
       return fetch('/api/club-winner-public?full=1').then(function (r) { return r.json(); }).then(function (d) {
         if (!d || !d.winner) return;
-        try { localStorage.setItem(seenKey, '1'); } catch (e) { /* fine */ }
-        showClubWinner(d.winner);
+        pendingClubWinner = { key: meta.key, winner: d.winner };
+        showPendingClubWinner();
       });
     }).catch(function () {
       if (preview) showClubWinner(SAMPLE_CLUB_WINNER);
     });
+  }
+  // Shown twice per browser: once on the checklist, once in the Pomodoro
+  // view (Focus Mode), whichever comes first (2026-11-19).
+  function clubWinnerSeenKey(key) { return CLUB_WINNER_SEEN + key + (state.focus ? ':focus' : ':list'); }
+  function clubWinnerSeen(key) {
+    try { return localStorage.getItem(clubWinnerSeenKey(key)) === '1'; } catch (e) { return false; }
+  }
+  // Called right after fetching, and on every timer tick (updatePomoDisplay).
+  function showPendingClubWinner() {
+    var p = pendingClubWinner;
+    if (!p) return;
+    if (pomo.running && pomo.mode === 'work') return; // don't break a focus session
+    if (document.getElementById('club-winner-modal')) return;
+    pendingClubWinner = null;
+    if (clubWinnerSeen(p.key)) return;
+    try { localStorage.setItem(clubWinnerSeenKey(p.key), '1'); } catch (e) { /* fine */ }
+    showClubWinner(p.winner);
   }
   var SAMPLE_CLUB_WINNER = {
     name: 'Sample Student', month: 'November', prize: 5000, linkedin_url: 'https://www.linkedin.com/',
@@ -4268,7 +4288,7 @@
   }
   document.addEventListener('fullscreenchange', onZenFullscreenChange);
   document.addEventListener('webkitfullscreenchange', onZenFullscreenChange);
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && zenEl()) closePomoZen(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && zenEl() && !document.getElementById('club-winner-modal')) closePomoZen(); });
   document.addEventListener('visibilitychange', function () {
     // The browser drops the wake lock when the tab is hidden; take it back.
     if (!document.hidden && zenEl() && !zenWakeLock && navigator.wakeLock && navigator.wakeLock.request) {
@@ -4303,6 +4323,7 @@
   // card's innerHTML, so a once-a-second tick never touches (and never
   // replays the entrance animation of) a .fade-in ancestor.
   function updatePomoDisplay() {
+    if (pendingClubWinner) showPendingClubWinner();
     updatePomoTitle();
     updatePomoZen();
     var card = document.getElementById('pomo-card');
