@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-8';
+  var CLIENT_VERSION = '2026-11-19-10';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1352,6 +1352,49 @@
       var clean = location.pathname + location.search.replace(/([?&])batch=[^&#]*&?/, '$1').replace(/[?&]$/, '') + location.hash;
       history.replaceState(history.state, '', clean);
     } catch (e) { /* non-critical */ }
+  }
+
+  // ── Vice City night background, one day only (2026-11-19) ──────────
+  // "a GTA VI theme for the pomodoro background only for today, everything
+  // dark": a dim neon-sunset horizon, palm silhouettes and a city skyline
+  // behind the Pomodoro card and the fullscreen timer, on 19 Nov 2026 (IST)
+  // only. The midnight reload turns it off. Our own drawing, no game logos or
+  // artwork. ?vice previews it on localhost.
+  var VICE_NIGHT_DAY = '2026-11-19';
+  var VICE_NIGHT = (function () {
+    try {
+      var d = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+      var local = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+      return d === VICE_NIGHT_DAY || (local && /[?&]vice\b/.test(location.search));
+    } catch (e) { return false; }
+  })();
+  if (VICE_NIGHT) document.documentElement.classList.add('vice-night');
+  function vicePalmSvg(cls) {
+    var leaves = [-168, -140, -112, -80, -48, -18, 12, 160].map(function (a) {
+      return '<path transform="translate(112 94) rotate(' + a + ')" d="M0 0 Q 40 -24 96 -2 Q 74 -4 62 6 Q 42 -6 0 7 Z"/>';
+    }).join('');
+    return '<svg class="vice-palm ' + cls + '" viewBox="0 0 220 320" aria-hidden="true">' +
+      '<path d="M98 320 C 100 236, 116 170, 108 96 L 117 96 C 126 172, 110 236, 110 320 Z"/>' + leaves + '</svg>';
+  }
+  function viceSkylineSvg() {
+    // fixed, hand-picked building heights so it looks the same every load
+    var hs = [38, 62, 46, 90, 54, 120, 70, 48, 104, 64, 140, 58, 82, 44, 112, 66, 50, 96, 72, 40, 128, 60, 86, 52];
+    var x = 0, out = '', win = '';
+    hs.forEach(function (h, i) {
+      var w = 34 + (i * 7) % 18;
+      out += '<rect x="' + x + '" y="' + (160 - h) + '" width="' + w + '" height="' + h + '"/>';
+      for (var yy = 160 - h + 10; yy < 150; yy += 14) {
+        for (var xx = x + 6; xx < x + w - 6; xx += 10) {
+          if (((xx * 7 + yy * 3 + i) % 11) === 0) win += '<rect x="' + xx + '" y="' + yy + '" width="3" height="4"/>';
+        }
+      }
+      x += w + 4;
+    });
+    return '<svg class="vice-skyline" viewBox="0 0 ' + x + ' 160" preserveAspectRatio="none" aria-hidden="true"><g class="vs-b">' + out + '</g><g class="vs-w">' + win + '</g></svg>';
+  }
+  function viceSceneHtml() {
+    if (!VICE_NIGHT) return '';
+    return '<div class="vice-scene" aria-hidden="true"><div class="vice-glow"></div>' + viceSkylineSvg() + vicePalmSvg('vice-palm--l') + vicePalmSvg('vice-palm--r') + '</div>';
   }
 
   function init() {
@@ -2803,6 +2846,9 @@
     var c = card.getBoundingClientRect(), r = pomo.getBoundingClientRect();
     card.style.setProperty('--pomo-top', Math.round(r.top - c.top) + 'px');
     card.style.setProperty('--pomo-right', Math.round(r.right - c.left) + 'px');
+    // Vice City scene sits behind the timer row, not at the far bottom of the card.
+    var rowEl = card.querySelector('.pomo-today-row') || pomo;
+    card.style.setProperty('--vice-h', Math.round(rowEl.getBoundingClientRect().bottom - c.top + 24) + 'px');
     if (window.ResizeObserver) {
       if (skyObserver) skyObserver.disconnect();
       skyObserver = new ResizeObserver(function () { requestAnimationFrame(syncSkyOffset); });
@@ -4004,7 +4050,7 @@
       html += '<span class="focus-moon" aria-hidden="true"><span class="club-crescent"></span></span>';
       // Toned down 2026-11-18 ("too clumsy"): just the star field, the moon
       // and one occasional shooting star; the planets and comet showers went.
-      html += '<div class="focus-sky" aria-hidden="true"><span class="fs-shoot"></span></div>';
+      html += '<div class="focus-sky" aria-hidden="true">' + viceSceneHtml() + '<span class="fs-shoot"></span></div>';
       // Side by side in the timer's own empty space at wide viewports, one
       // above the other on narrow ones — see .pomo-today-row. Works fine
       // with just one child too (renderTodayLeaders returns '' on a fresh
@@ -4259,7 +4305,7 @@
     el.setAttribute('aria-label', 'Fullscreen timer');
     el.innerHTML =
       // A few faint planets in the corners (2026-11-19: only here, not on the card).
-      '<div class="pomo-zen-sky" aria-hidden="true"><span class="zs-ringed"></span><span class="zs-gold"></span><span class="zs-blue"></span></div>' +
+      '<div class="pomo-zen-sky" aria-hidden="true">' + viceSceneHtml() + '<span class="zs-ringed"></span><span class="zs-gold"></span><span class="zs-blue"></span></div>' +
       '<div class="pomo-zen-top"><span class="pomo-zen-clock" id="pomo-zen-clock"></span>' +
       '<button type="button" class="pomo-zen-exit" id="pomo-zen-exit" aria-label="Exit fullscreen">' +
       '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg><span>Exit</span></button></div>' +
