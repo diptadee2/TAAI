@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-11';
+  var CLIENT_VERSION = '2026-11-19-12';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1395,7 +1395,7 @@
   function viceSceneHtml() {
     if (!VICE_NIGHT) return '';
     return '<div class="vice-scene" aria-hidden="true"><div class="vice-glow"></div>' + viceSkylineSvg() +
-      '<span class="vice-sign">Vice</span>' + viceFlamingoSvg() + viceCarHtml() +
+      viceTowerHtml() + viceFlamingoSvg() + viceCarHtml('a') + viceCarHtml('b') + '<div class="vice-road"></div>' +
       vicePalmSvg('vice-palm--l') + vicePalmSvg('vice-palm--r') + '</div>';
   }
   // Small nods (2026-11-19, "add some subtle references"): a neon sign, a
@@ -1406,11 +1406,35 @@
       '<path d="M30 8c6 0 9 5 7 10l-6 10c-2 4 0 7 4 9 9 4 13 12 9 20-3 6-10 8-17 7l-1 26h-2l1-26c-6-1-10-6-8-12 2-5 7-7 12-8 4-1 5-4 3-7l-5-8c-3-5-1-11 5-11z" />' +
       '<path d="M37 18l9 2-8 3z"/></svg>';
   }
-  function viceCarHtml() {
-    return '<span class="vice-car"><svg viewBox="0 0 120 34" aria-hidden="true">' +
-      '<path d="M4 26c0-5 3-8 8-9l18-2 14-9c3-2 6-3 10-3h22c4 0 7 2 10 4l10 8 14 2c4 1 6 4 6 8v3H4z"/>' +
-      '<circle cx="28" cy="29" r="5" class="vc-w"/><circle cx="94" cy="29" r="5" class="vc-w"/>' +
-      '<rect x="4" y="21" width="5" height="3" class="vc-tail"/></svg></span>';
+  // A low sports car with a pink underglow, headlight beam and a tail-light
+  // trail; 'a' drives left to right in front, 'b' right to left behind it.
+  function viceCarHtml(which) {
+    return '<span class="vice-car vice-car--' + which + '"><span class="vc-trail"></span><span class="vc-glow"></span><span class="vc-beam"></span>' +
+      '<svg viewBox="0 0 140 34" aria-hidden="true">' +
+      '<path class="vc-body" d="M2 27 L8 21 L38 17 L60 8 L98 7 L116 15 L135 18 L139 24 L139 29 L2 29 Z"/>' +
+      '<path class="vc-glass" d="M64 11 L96 10.5 L109 16.5 L56 17 Z"/>' +
+      '<rect class="vc-stripe" x="10" y="22" width="122" height="1.6"/>' +
+      '<circle class="vc-w" cx="32" cy="29" r="5.5"/><circle class="vc-w" cx="110" cy="29" r="5.5"/>' +
+      '<rect class="vc-tail" x="2" y="22" width="6" height="3"/><rect class="vc-head" x="133" y="20" width="6" height="3"/>' +
+      '</svg></span>';
+  }
+  function viceTowerHtml() {
+    return '<div class="vice-tower"><div class="vt-sign"><span>Vice</span><span>City</span></div><div class="vt-mast"></div><div class="vt-body"></div></div>';
+  }
+  function viceBlimpHtml() {
+    return '<span class="vice-blimp"><svg viewBox="0 0 160 60" aria-hidden="true">' +
+      '<ellipse cx="78" cy="26" rx="62" ry="20" class="vb-body"/>' +
+      '<path class="vb-body" d="M132 24 L156 10 L152 26 L156 42 L132 30 Z"/>' +
+      '<rect class="vb-body" x="66" y="44" width="22" height="7" rx="3"/>' +
+      '<rect class="vb-screen" x="44" y="20" width="56" height="10" rx="2"/>' +
+      '<circle class="vb-light" cx="18" cy="26" r="1.8"/></svg></span>';
+  }
+  // Five "wanted" stars by the clock in fullscreen, filled one per focus
+  // session finished today.
+  function viceWantedHtml() {
+    var star = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 16.8l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>';
+    var out = ''; for (var i = 0; i < 5; i++) out += '<i>' + star + '</i>';
+    return '<span class="zen-wanted" id="zen-wanted" title="Wanted level: focus sessions done today">' + out + '</span>';
   }
   function viceMissionPassed(min) {
     var old = document.getElementById('vice-mission'); if (old) old.remove();
@@ -2873,8 +2897,15 @@
     card.style.setProperty('--pomo-top', Math.round(r.top - c.top) + 'px');
     card.style.setProperty('--pomo-right', Math.round(r.right - c.left) + 'px');
     // Vice City scene sits behind the timer row, not at the far bottom of the card.
-    var rowEl = card.querySelector('.pomo-today-row') || pomo;
-    card.style.setProperty('--vice-h', Math.round(rowEl.getBoundingClientRect().bottom - c.top + 24) + 'px');
+    // The skyline stands exactly on the divider under the timer row.
+    var sky = card.querySelector('.focus-sky'), skyTop = sky ? sky.getBoundingClientRect().top : c.top;
+    var divEl = card.querySelector('.focus-divider'), rowEl = card.querySelector('.pomo-today-row') || pomo;
+    var base = divEl ? divEl.getBoundingClientRect().top : rowEl.getBoundingClientRect().bottom + 22;
+    card.style.setProperty('--vice-h', Math.round(base - skyTop) + 'px');
+    // The Vice City tower goes in the empty gap between the timer and Today's leaders.
+    var lb = card.querySelector('#today-leaderboard-card');
+    var gapMid = lb ? (r.right + lb.getBoundingClientRect().left) / 2 - c.left : r.right - c.left + 70;
+    card.style.setProperty('--vice-tower-x', Math.round(gapMid) + 'px');
     if (window.ResizeObserver) {
       if (skyObserver) skyObserver.disconnect();
       skyObserver = new ResizeObserver(function () { requestAnimationFrame(syncSkyOffset); });
@@ -4331,8 +4362,8 @@
     el.setAttribute('aria-label', 'Fullscreen timer');
     el.innerHTML =
       // A few faint planets in the corners (2026-11-19: only here, not on the card).
-      '<div class="pomo-zen-sky" aria-hidden="true">' + viceSceneHtml() + '<span class="zs-ringed"></span><span class="zs-gold"></span><span class="zs-blue"></span></div>' +
-      '<div class="pomo-zen-top"><span class="pomo-zen-clock" id="pomo-zen-clock"></span>' +
+      '<div class="pomo-zen-sky" aria-hidden="true">' + viceSceneHtml() + (VICE_NIGHT ? viceBlimpHtml() : '') + '<span class="zs-ringed"></span><span class="zs-gold"></span><span class="zs-blue"></span></div>' +
+      '<div class="pomo-zen-top"><span class="pomo-zen-topleft"><span class="pomo-zen-clock" id="pomo-zen-clock"></span>' + (VICE_NIGHT ? viceWantedHtml() : '') + '</span>' +
       '<button type="button" class="pomo-zen-exit" id="pomo-zen-exit" aria-label="Exit fullscreen">' +
       '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg><span>Exit</span></button></div>' +
       '<div class="pomo-zen-center">' +
@@ -4433,6 +4464,8 @@
     if (m && !pomo.running && pomo.secondsLeft < pomo.totalSeconds) m.textContent += ' · paused';
     var c = document.getElementById('pomo-zen-clock');
     if (c) c.textContent = wallClockText();
+    var wz = document.getElementById('zen-wanted');
+    if (wz) { var n = Math.min(5, pomo.completedSessions || 0); [].forEach.call(wz.children, function (st, i) { st.classList.toggle('on', i < n); }); }
   }
   function onZenFullscreenChange() {
     if (!(document.fullscreenElement || document.webkitFullscreenElement) && zenEl()) closePomoZen();
