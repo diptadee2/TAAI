@@ -2591,8 +2591,14 @@ body.pomo-zen-active { overflow: hidden; }
 .pomo-zen-mode { font-size: clamp(14px, 1.6vw, 20px); font-weight: 700; letter-spacing: .32em; text-transform: uppercase; color: var(--pomo-g2, #A78BFA); padding-left: .32em; }
 .pomo-zen.on-break .pomo-zen-mode { color: var(--pomo-break-g1, #4ade80); }
 .pomo-zen-time { font-size: min(24vw, 40vh); line-height: 1; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.02em;
-  background: linear-gradient(120deg, var(--pomo-g1, #FF7FB7), var(--pomo-g2, #A78BFA), var(--pomo-g3, #4D8BFF)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.pomo-zen.on-break .pomo-zen-time { background-image: linear-gradient(120deg, var(--pomo-break-g1, #4ade80), var(--pomo-break-g2, #22d3ee)); }
+  --zen-grad: linear-gradient(120deg, var(--pomo-g1, #FF7FB7), var(--pomo-g2, #A78BFA), var(--pomo-g3, #4D8BFF));
+  background: var(--zen-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.pomo-zen.on-break .pomo-zen-time { --zen-grad: linear-gradient(120deg, var(--pomo-break-g1, #4ade80), var(--pomo-break-g2, #22d3ee)); background-image: var(--zen-grad); }
+/* Each character sits in its own fixed-width cell, so the time doesn't
+   shift sideways as the seconds change (Poppins has no tabular digits).
+   One gradient is spread across all the cells. */
+.pomo-zen .pomo-zen-time.has-cells, .pomo-zen.on-break .pomo-zen-time.has-cells { background: none; -webkit-background-clip: border-box; background-clip: border-box; display: flex; justify-content: center; letter-spacing: 0; }
+.pomo-zen-time .zd { display: inline-block; text-align: center; background-image: var(--zen-grad); background-size: var(--zen-w) 100%; background-repeat: no-repeat; -webkit-background-clip: text; background-clip: text; color: transparent; }
 .pomo-zen-time { transition: opacity .45s ease; }
 .pomo-zen:not(.is-running) .pomo-zen-time { opacity: .55; }
 .pomo-zen-time.zen-kick { animation: zen-kick .55s cubic-bezier(.34,1.56,.64,1); }

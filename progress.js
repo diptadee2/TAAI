@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-26';
+  var CLIENT_VERSION = '2026-11-19-27';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -4541,6 +4541,21 @@
     box.innerHTML = '<div class="zb-title">Today\'s top 10</div><ol class="zb-list">' + rows + '</ol>';
   }
 
+  // Fixed-width cell per character so the big fullscreen time doesn't jiggle.
+  function setZenTime(el, str) {
+    if (el.getAttribute('data-t') === str) return;
+    el.setAttribute('data-t', str);
+    var x = 0, html = '';
+    for (var i = 0; i < str.length; i++) {
+      var w = str[i] === ':' ? 0.3 : 0.64;
+      html += '<span class="zd" style="width:' + w + 'em;background-position:-' + x.toFixed(2) + 'em 0">' + str[i] + '</span>';
+      x += w;
+    }
+    el.style.setProperty('--zen-w', x.toFixed(2) + 'em');
+    el.classList.add('has-cells');
+    el.innerHTML = html;
+    el.setAttribute('aria-label', str);
+  }
   function updatePomoZen() {
     var el = zenEl();
     if (!el) return;
@@ -4550,7 +4565,7 @@
     var m = document.getElementById('pomo-zen-mode');
     if (m) m.textContent = pomo.mode === 'work' ? 'Focus' : 'Break';
     var t = document.getElementById('pomo-zen-time');
-    if (t) t.textContent = formatPomoTime(pomo.secondsLeft);
+    if (t) setZenTime(t, formatPomoTime(pomo.secondsLeft));
     var f = document.getElementById('pomo-zen-bar-fill');
     if (f) f.style.width = (pomo.totalSeconds > 0 ? (1 - pomo.secondsLeft / pomo.totalSeconds) * 100 : 0).toFixed(2) + '%';
     var s = document.getElementById('pomo-zen-sessions');
