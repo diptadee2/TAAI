@@ -4219,6 +4219,8 @@ html body main #combos #full-course-2028 .c28-promise {
   font-family: 'Archivo', system-ui, sans-serif; font-size: 16px; line-height: 1.45; color: var(--sl-ink);
 }
 html body main #combos #full-course-2028 .c28-promise b { font-weight: 800; }
+html body main #combos #full-course-2028 .c28-pitch-head { display: block; margin-bottom: 4px; font-weight: 800; font-size: 1.12em; letter-spacing: -.01em; }
+html body main #combos #full-course-2028 .c28-attempts .c28-attempts-note { max-width: 44ch !important; }
 html body main #combos #full-course-2028 .c28-promise mark { background: #FDE047; color: #121316; padding: 0 4px; border-radius: 3px; font-weight: 800; }
 @media (max-width: 600px) { html body main #combos #full-course-2028 .c28-promise { font-size: 14.5px; padding: 11px 13px; } }
 html body main #combos #full-course-2028 .c28-group { background: #fff; border: 1px solid var(--sl-line); border-radius: 14px; overflow: hidden; }
@@ -5775,7 +5777,10 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
                 enrolment, two attempts" label and chips were removed the same
                 day at direct request; only the career line remains. */}
             <div className="c28-attempts">
-              <span className="c28-attempts-note">Your entry point to an ML career: a master's at an IIT through GATE DA, then research or a high-paying job building AI.</span>
+              {/* Pitch (2026-11-19, user's idea): an IIT isn't magic, just daily
+                  small steps. Replaces the ML-career line and the separate
+                  "on us" promise above What's included, which said the same. */}
+              <span className="c28-attempts-note"><b className="c28-pitch-head">Getting into an IIT isn't rocket science.</b> Student or working, just do the small tasks we set each day, practise and revise with us, and walk into GATE DA with a real shot at an IIT.</span>
             </div>
           </div>
           <div className="c28-buy">
@@ -5801,10 +5806,6 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
         </div>
         <div className="c28-includes">
           <div className="combo-includes-label">What's included</div>
-          {/* The bundle's promise (2026-10-30, user's own words). */}
-          {c.includeGroups && !isSoldOut && (
-            <p className="c28-promise"><b>You just enrol and learn.</b> Getting you to practise, loads of it, plus strategy, revision and keeping you updated with AI trends in engineering, is <mark>on us</mark>.</p>
-          )}
           <div className="combo-includes-wrap">
             {c.includeGroups && !isSoldOut ? (
               <div className="c28-groups">
