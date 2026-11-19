@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-19';
+  var CLIENT_VERSION = '2026-11-19-21';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1431,7 +1431,7 @@
   function viceHudHtml() {
     return '<div class="zen-hud" id="zen-hud" aria-hidden="true">' +
       '<div class="zh-stats"><div class="zh-clock" id="zh-clock"></div><div class="zh-money" id="zh-money"></div>' +
-      '<div class="zh-health"><i id="zh-health"></i></div></div>' +
+      '<div class="zh-health"><i id="zh-health"></i></div><div class="zh-stars" id="zh-stars"></div></div>' +
       '<div class="zh-weapon"><svg viewBox="0 0 48 48"><path d="M10 38l3-10 20-20a3.5 3.5 0 0 1 5 0l2 2a3.5 3.5 0 0 1 0 5L20 35z" fill="#f2c94c" stroke="#111" stroke-width="2.4" stroke-linejoin="round"/><path d="M33 8l7 7" stroke="#111" stroke-width="2.4"/><path d="M33 8l2-2a3.5 3.5 0 0 1 5 0l2 2a3.5 3.5 0 0 1 0 5l-2 2" fill="#ff8fb1" stroke="#111" stroke-width="2.4" stroke-linejoin="round"/><path d="M10 38l3-10 7 7z" fill="#f5deb3" stroke="#111" stroke-width="2.4" stroke-linejoin="round"/><path d="M10 38l1.5-4.6 3.1 3.1z" fill="#111"/></svg></div>' +
     '</div>';
   }
@@ -4481,7 +4481,7 @@
     var f = document.getElementById('pomo-zen-bar-fill');
     if (f) f.style.width = (pomo.totalSeconds > 0 ? (1 - pomo.secondsLeft / pomo.totalSeconds) * 100 : 0).toFixed(2) + '%';
     var s = document.getElementById('pomo-zen-sessions');
-    if (s) { if (VICE_NIGHT) setPomoDots(s); else s.textContent = pomoSessionLabel() + ' today'; }
+    if (s) s.textContent = pomoSessionLabel() + ' today'; // fullscreen: the stars live in the top-right HUD, like the game
     var b = document.getElementById('pomo-zen-toggle');
     var runState = pomo.running ? 'run' : 'stop';
     if (b && b.getAttribute('data-state') !== runState) {
@@ -4501,7 +4501,7 @@
     if (m && !pomo.running && pomo.secondsLeft < pomo.totalSeconds) m.textContent += ' · paused';
     var c = document.getElementById('pomo-zen-clock');
     if (c) c.textContent = wallClockText();
-    if (VICE_NIGHT) updateViceHud();
+    if (VICE_NIGHT) { updateViceHud(); setPomoDots(document.getElementById('zh-stars')); }
     var wz = document.getElementById('zen-wanted');
     if (wz) { var dt = pomoDotsText(); if (wz.textContent !== dt) wz.textContent = dt; } // same tomatoes as the session dots
   }

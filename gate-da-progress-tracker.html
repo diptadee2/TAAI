@@ -2860,17 +2860,23 @@ html.vice-night .pomo-zen .pomo-zen-bottom { margin-bottom: 150px; }
 /* Wanted stars in place of the session dots / count */
 .wanted-stars { display: inline-flex; gap: 6px; vertical-align: middle; }
 .wanted-stars .ws { width: 22px; height: 22px; display: block; }
-.wanted-stars svg { width: 100%; height: 100%; fill: none; stroke: rgba(255,255,255,0.35); stroke-width: 1.6; stroke-linejoin: round; }
+.wanted-stars svg { width: 100%; height: 100%; fill: none; stroke: rgba(255,255,255,0.6); stroke-width: 1.6; stroke-linejoin: round; }
 .wanted-stars .ws.on svg { fill: #f4f4f4; stroke: #000; stroke-width: 1.4; filter: drop-shadow(0 0 4px rgba(255,255,255,0.45)); }
 .pomo-zen .wanted-stars { gap: 10px; }
 .pomo-zen .wanted-stars .ws { width: 30px; height: 30px; }
-/* First-time glow on the fullscreen button (a pseudo-element's opacity
-   pulses; the button itself never animates) */
-.pomo-tools .pomo-zen-open.is-new { position: relative; color: #e9e3ff; }
-.pomo-tools .pomo-zen-open.is-new::after { content: ''; position: absolute; inset: -3px; border-radius: 999px; pointer-events: none;
-  box-shadow: 0 0 0 1.5px rgba(167,139,250,0.9), 0 0 14px 3px rgba(167,139,250,0.55); animation: zen-new-glow 1.8s ease-in-out infinite; }
+/* First-time hint on the fullscreen button: a soft breathing halo behind the
+   icon (no hard ring), a brighter icon and a small pink "new" dot. Only the
+   halo's opacity animates. Gone once fullscreen has been used. */
+.pomo-tools .pomo-zen-open.is-new { position: relative; color: #fff; }
+.pomo-tools .pomo-zen-open.is-new::before { content: ''; position: absolute; inset: -6px; border-radius: 50%; pointer-events: none; z-index: -1;
+  background: radial-gradient(circle, rgba(196,170,255,0.55) 0%, rgba(167,139,250,0.25) 45%, rgba(167,139,250,0) 72%); animation: zen-new-glow 2.4s ease-in-out infinite; }
+.pomo-tools .pomo-zen-open.is-new::after { content: ''; position: absolute; top: 1px; right: 3px; width: 7px; height: 7px; border-radius: 50%; background: #ff5fa8; box-shadow: 0 0 0 2px #0f0c22; pointer-events: none; }
 @keyframes zen-new-glow { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .pomo-tools .pomo-zen-open.is-new::after { animation: none; opacity: .8; } }
+@media (prefers-reduced-motion: reduce) { .pomo-tools .pomo-zen-open.is-new::before { animation: none; opacity: .8; } }
+.zh-stars { display: flex; justify-content: flex-end; margin-top: 6px; }
+.zh-stars .wanted-stars { gap: 4px; }
+.zh-stars .wanted-stars .ws { width: 18px; height: 18px; }
+.zh-stars .wanted-stars svg { stroke: rgba(255,255,255,0.75); filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.9)); }
 </style>
 </head>
 <body data-float-stack data-nav-no-autohide>
