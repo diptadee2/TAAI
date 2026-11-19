@@ -2732,9 +2732,11 @@ html.vice-night .pomo-zen .vice-glow { height: 55%; background: radial-gradient(
 html.vice-night .pomo-zen .vice-skyline { height: 150px; }
 html.vice-night .pomo-zen .vice-palm { width: 230px; height: 340px; }
 html.vice-night .pomo-zen .vice-palm--r { width: 165px; height: 240px; }
-.vice-flamingo { position: absolute; left: 96px; bottom: 2px; width: 26px; height: 44px; fill: #07030c; }
+.vice-flamingo { position: absolute; left: 96px; bottom: 14px; width: 26px; height: 44px; fill: #07030c; }
 /* road: a faint line of light along the base of the skyline */
-.vice-road { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: linear-gradient(90deg, rgba(255,79,216,0), rgba(255,79,216,0.18) 25%, rgba(45,226,230,0.16) 75%, rgba(45,226,230,0)); }
+/* the road the cars drive on: a dark band over the building bases with a dashed centre line */
+.vice-road { position: absolute; left: 0; right: 0; bottom: 0; height: 16px; background-color: #06030b; border-top: 1px solid rgba(255,79,216,0.28);
+  background-image: repeating-linear-gradient(90deg, rgba(255,214,140,0.35) 0 14px, transparent 14px 32px); background-size: 100% 1.5px; background-position: 0 7px; background-repeat: no-repeat; }
 /* The Vice City tower, in the empty gap between the timer and Today's leaders */
 .vice-tower { position: absolute; bottom: 0; left: var(--vice-tower-x, 50%); width: 56px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; }
 .vt-body { width: 56px; height: 190px; background-color: #0a0414;
@@ -2747,7 +2749,7 @@ html.vice-night .pomo-zen .vice-palm--r { width: 165px; height: 240px; }
 .vt-sign span:last-child { color: #7ef3f5; text-shadow: 0 0 6px rgba(45,226,230,0.8); }
 @keyframes vt-flicker { 0%, 92%, 96%, 100% { opacity: 1; } 93%, 95% { opacity: .35; } }
 /* cars */
-.vice-car { position: absolute; bottom: 3px; width: 84px; height: 22px; opacity: 0; }
+.vice-car { position: absolute; z-index: 1; bottom: 1px; width: 84px; height: 22px; opacity: 0; }
 .vice-car svg { position: relative; width: 100%; height: 100%; display: block; }
 .vc-body { fill: #05020a; }
 .vc-glass { fill: rgba(45,226,230,0.28); }
@@ -2759,7 +2761,7 @@ html.vice-night .pomo-zen .vice-palm--r { width: 165px; height: 240px; }
 .vc-beam { position: absolute; left: 96%; top: 6px; width: 90px; height: 16px; background: linear-gradient(90deg, rgba(225,250,255,0.32), rgba(225,250,255,0)); clip-path: polygon(0 35%, 100% 0, 100% 100%, 0 65%); }
 .vc-trail { position: absolute; right: 96%; top: 11px; width: 130px; height: 2px; background: linear-gradient(90deg, rgba(255,59,107,0), rgba(255,59,107,0.75)); }
 .vice-car--a { animation: vice-drive-a 22s linear infinite; animation-delay: 3s; }
-.vice-car--b { width: 60px; height: 16px; bottom: 9px; animation: vice-drive-b 31s linear infinite; animation-delay: 12s; }
+.vice-car--b { width: 60px; height: 16px; bottom: 8px; z-index: 0; animation: vice-drive-b 31s linear infinite; animation-delay: 12s; }
 .vice-car--b svg, .vice-car--b .vc-beam, .vice-car--b .vc-trail, .vice-car--b .vc-glow { opacity: .55; }
 .vice-car--b { transform: scaleX(-1); }
 @keyframes vice-drive-a { 0% { left: -240px; opacity: 1; } 32% { left: calc(100% + 120px); opacity: 1; } 33%, 100% { left: calc(100% + 120px); opacity: 0; } }
@@ -2769,9 +2771,11 @@ html.vice-night .pomo-zen .vice-tower { left: 64%; }
 html.vice-night .pomo-zen .vt-body { width: 74px; height: 290px; }
 html.vice-night .pomo-zen .vice-tower { width: 74px; }
 html.vice-night .pomo-zen .vt-sign span { font-size: 15px; }
-html.vice-night .pomo-zen .vice-flamingo { left: 150px; width: 32px; height: 54px; }
+html.vice-night .pomo-zen .vice-flamingo { left: 150px; bottom: 20px; width: 32px; height: 54px; }
 html.vice-night .pomo-zen .vice-car { width: 120px; height: 32px; }
-html.vice-night .pomo-zen .vice-car--b { width: 84px; height: 22px; bottom: 14px; }
+html.vice-night .pomo-zen .vice-car--b { width: 84px; height: 22px; bottom: 11px; }
+html.vice-night .pomo-zen .vice-road { height: 22px; background-position: 0 10px; }
+html.vice-night .pomo-zen .vice-car--a { bottom: 1px; }
 /* blimp drifting high in the fullscreen sky */
 .vice-blimp { position: absolute; top: 13%; left: -200px; width: 150px; height: 56px; opacity: .8; animation: vice-blimp 110s linear infinite; }
 .vice-blimp svg { width: 100%; height: 100%; }
@@ -2793,19 +2797,31 @@ html.vice-night .pomo-zen .vice-car--b { width: 84px; height: 22px; bottom: 14px
 @media (prefers-reduced-motion: reduce) { .vice-car, .vice-blimp { display: none; } .vt-sign span:first-child, .vb-light { animation: none; } .pomo-zen-time.zen-kick, .pomo-zen-time.zen-settle, .vice-mission { animation: none; } }
 /* Game-style HUD, top right of fullscreen, today only */
 .pomo-zen > .zen-hud { position: absolute; top: 22px; right: 150px; z-index: 2; display: flex; align-items: flex-start; gap: 12px; }
-.zh-stats { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.zh-stats { width: 132px; display: flex; flex-direction: column; align-items: stretch; gap: 3px; text-align: right; }
 .zh-clock, .zh-money { font: 800 26px/1 Poppins, system-ui, sans-serif; letter-spacing: .02em; font-variant-numeric: tabular-nums; -webkit-text-stroke: 1.5px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; }
 .zh-clock { color: #e8e8e8; }
 .zh-money { color: #6fcf5a; font-size: 22px; }
-.zh-health { width: 118px; height: 10px; margin-top: 3px; background: #3a0d12; border: 2px solid #000; }
+.zh-health { width: 100%; box-sizing: border-box; height: 10px; margin-top: 4px; background: #3a0d12; border: 2px solid #000; }
 .zh-health i { display: block; height: 100%; width: 100%; background: linear-gradient(180deg, #ff5a5f, #c4161c); transition: width 1s linear; }
-.zen-hud .zen-wanted { margin-top: 4px; }
+.zen-hud .zen-wanted { margin-top: 5px; justify-content: flex-end; gap: 4px; }
+html.vice-night .pomo-zen .zs-gold { display: none; }
 .zen-hud .zen-wanted i { width: 16px; height: 16px; }
 .zh-weapon { width: 62px; height: 62px; border-radius: 12px; background: rgba(245,245,245,0.92); border: 2px solid #000; box-shadow: 2px 2px 0 #000; display: grid; place-items: center; }
 .zh-weapon svg { width: 44px; height: 44px; }
 html.vice-night .pomo-zen .pomo-zen-topleft { visibility: hidden; }
 /* Fullscreen top 10: more solid, so the skyline doesn't show through */
 html.vice-night .pomo-zen.has-board .pomo-zen-board { background: rgba(14,9,28,0.88); border-color: rgba(255,255,255,0.12); }
+/* Your own row on the Pomodoro card's leaderboards: nearly solid so the
+   skyline doesn't show through it */
+html.vice-night #focus-card .leaderboard-row--me { background: rgba(38,24,70,0.94); }
+/* Your own name is never dimmed, live or not (2026-11-19) */
+#leaderboard-card .leaderboard-row--me:not(.leaderboard-row--live) .leaderboard-name,
+#today-leaderboard-card .leaderboard-row--me:not(.leaderboard-row--live) .leaderboard-name { color: var(--ink); }
+#leaderboard-card .leaderboard-row--me:not(.leaderboard-row--live) .leaderboard-time,
+#today-leaderboard-card .leaderboard-row--me:not(.leaderboard-row--live) .leaderboard-time { color: var(--ink); }
+/* Fullscreen with the Vice HUD: Exit moves to the top left, the HUD takes the top right */
+html.vice-night .pomo-zen .pomo-zen-top { flex-direction: row-reverse; }
+html.vice-night .pomo-zen > .zen-hud { right: 32px; }
 </style>
 </head>
 <body data-float-stack data-nav-no-autohide>

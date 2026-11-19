@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-13';
+  var CLIENT_VERSION = '2026-11-19-15';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1354,20 +1354,15 @@
     } catch (e) { /* non-critical */ }
   }
 
-  // ── Vice City night background, one day only (2026-11-19) ──────────
+  // ── Vice City night background (2026-11-19, on until told otherwise) ──
   // "a GTA VI theme for the pomodoro background only for today, everything
   // dark": a dim neon-sunset horizon, palm silhouettes and a city skyline
-  // behind the Pomodoro card and the fullscreen timer, on 19 Nov 2026 (IST)
-  // only. The midnight reload turns it off. Our own drawing, no game logos or
-  // artwork. ?vice previews it on localhost.
-  var VICE_NIGHT_DAY = '2026-11-19';
-  var VICE_NIGHT = (function () {
-    try {
-      var d = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-      var local = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-      return d === VICE_NIGHT_DAY || (local && /[?&]vice\b/.test(location.search));
-    } catch (e) { return false; }
-  })();
+  // behind the Pomodoro card and the fullscreen timer. Our own drawing, no
+  // game logos or artwork.
+  // Was 19 Nov only; kept on until told otherwise (2026-11-19: "don't auto
+  // change the background after tonight, do it when I tell you"). Set to
+  // false (and bump CLIENT_VERSION) to switch it off.
+  var VICE_NIGHT = true;
   if (VICE_NIGHT) document.documentElement.classList.add('vice-night');
   function vicePalmSvg(cls) {
     var leaves = [-168, -140, -112, -80, -48, -18, 12, 160].map(function (a) {
@@ -1395,7 +1390,7 @@
   function viceSceneHtml() {
     if (!VICE_NIGHT) return '';
     return '<div class="vice-scene" aria-hidden="true"><div class="vice-glow"></div>' + viceSkylineSvg() +
-      viceTowerHtml() + viceFlamingoSvg() + viceCarHtml('a') + viceCarHtml('b') + '<div class="vice-road"></div>' +
+      viceTowerHtml() + '<div class="vice-road"></div>' + viceFlamingoSvg() + viceCarHtml('b') + viceCarHtml('a') +
       vicePalmSvg('vice-palm--l') + vicePalmSvg('vice-palm--r') + '</div>';
   }
   // Small nods (2026-11-19, "add some subtle references"): a neon sign, a
