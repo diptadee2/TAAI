@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-7';
+  var CLIENT_VERSION = '2026-11-19-8';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1424,8 +1424,15 @@
     if (document.getElementById('club-winner-modal') || pendingClubWinner) return;
     var isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
     var wantsPreview = !background && /[?&]winner-preview\b/.test(location.search);
-    // /team's Preview button saves its unsaved form into this browser's
-    // localStorage (same site) and opens ?winner-preview, on any host.
+    var wantsRunnersPreview = !background && /[?&]runners-preview\b/.test(location.search);
+    // /team's Preview buttons save the unsaved form into this browser's
+    // localStorage (same site) and open ?winner-preview / ?runners-preview.
+    if (wantsRunnersPreview) {
+      var rdraft = null;
+      try { rdraft = JSON.parse(localStorage.getItem('taai_club_runners_preview') || 'null'); } catch (e) { /* none */ }
+      showClubRunners(rdraft && rdraft.people && rdraft.people.length ? rdraft : SAMPLE_CLUB_RUNNERS);
+      return;
+    }
     if (wantsPreview) {
       var draft = null;
       try { draft = JSON.parse(localStorage.getItem('taai_club_winner_preview') || 'null'); } catch (e) { /* none */ }
@@ -1437,10 +1444,15 @@
         if (preview) showClubWinner(SAMPLE_CLUB_WINNER);
         return;
       }
-      if (clubWinnerSeen(meta.key) && !preview) return;
-      return fetch('/api/club-winner-public?full=1').then(function (r) { return r.json(); }).then(function (d) {
-        if (!d || !d.winner) return;
-        pendingClubWinner = { key: meta.key, winner: d.winner };
+      // 1st place and the runners-up each have their own key; show the
+      // first one this browser hasn't seen yet (the other at the next check).
+      var items = meta.items || [{ kind: 'winner', key: meta.key }];
+      var item = null;
+      for (var i = 0; i < items.length; i++) { if (preview || !clubWinnerSeen(items[i].key)) { item = items[i]; break; } }
+      if (!item) return;
+      return fetch('/api/club-winner-public?full=1' + (item.kind === 'runners' ? '&kind=runners' : '')).then(function (r) { return r.json(); }).then(function (d) {
+        if (!d || !(d.winner || d.runners)) return;
+        pendingClubWinner = { key: item.key, winner: d.winner, runners: d.runners };
         showPendingClubWinner();
       });
     }).catch(function () {
@@ -1463,13 +1475,63 @@
     pendingClubWinner = null;
     if (clubWinnerSeen(p.key)) return;
     try { localStorage.setItem(clubWinnerSeenKey(p.key), '1'); } catch (e) { /* fine */ }
-    showClubWinner(p.winner);
+    if (p.runners) showClubRunners(p.runners); else showClubWinner(p.winner);
   }
   var SAMPLE_CLUB_WINNER = {
     name: 'Sample Student', month: 'November', prize: 5000, linkedin_url: 'https://www.linkedin.com/',
     linkedin_text: 'This is where the winner\'s LinkedIn post text goes.\n\nIt keeps its line breaks. Long posts are cut off after a few lines and fade out, with a link to read the rest on LinkedIn, so the popup stays a sensible size. This sample is long on purpose so you can see the fade.',
     photos: [{ src: '/logo.webp', caption: 'Desk setup' }],
   };
+  var SAMPLE_CLUB_RUNNERS = {
+    month: 'November',
+    people: [
+      { place: 2, name: 'Second Student', prize: 3000, photo: { src: '/logo.webp', caption: 'Desk setup' }, linkedin_url: 'https://www.linkedin.com/' },
+      { place: 3, name: 'Third Student', prize: 2000, photo: { src: '/logo.webp', caption: '' }, linkedin_url: '' },
+    ],
+  };
+  // 2nd place, and 3rd if there is one, in one popup (2026-11-19). Same
+  // shell and close behaviour as the winner popup.
+  function showClubRunners(r) {
+    if (document.getElementById('club-winner-modal')) return;
+    var people = (r.people || []).filter(function (p) { return p && p.name; }).slice(0, 2);
+    if (!people.length) return;
+    var two = people.length > 1;
+    var medal = function (pl) { return pl === 2 ? '🥈' : '🥉'; };
+    var ord = function (pl) { return pl === 2 ? '2nd' : '3rd'; };
+    var m = document.createElement('div');
+    m.id = 'club-winner-modal';
+    m.className = 'cw-backdrop';
+    m.innerHTML =
+      '<div class="cw-card cr-card" role="dialog" aria-modal="true" aria-labelledby="cw-title">' +
+        '<button type="button" class="cw-close" aria-label="Close"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>' +
+        '<span class="cw-moon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/></svg></span>' +
+        '<div class="cw-tag">🏆 The 2 AM Club · ' + escapeHtml(r.month || '') + '</div>' +
+        '<h2 class="cw-title" id="cw-title">Congratulations to our ' + (two ? 'runners-up' : 'runner-up') + '!</h2>' +
+        '<p class="cw-sub">' + (two ? '2nd and 3rd place' : '2nd place') + ' in The 2 AM Club for <span class="cw-month">' + escapeHtml(r.month || '') + '</span></p>' +
+        '<div class="cr-people' + (two ? ' cr-two' : '') + '">' +
+          people.map(function (p) {
+            var prize = p.prize ? '₹' + Number(p.prize).toLocaleString('en-IN') : '';
+            return '<div class="cr-person">' +
+              (p.photo && p.photo.src ? '<figure class="cw-photo"><img src="' + escapeAttr(p.photo.src) + '" alt="' + escapeAttr(p.photo.caption || (p.name + '\'s photo')) + '"></figure>' : '') +
+              '<div class="cr-place">' + medal(p.place) + ' ' + ord(p.place) + ' place</div>' +
+              '<div class="cr-name">' + escapeHtml(p.name) + '</div>' +
+              (prize ? '<div class="cr-prize">' + prize + '</div>' : '') +
+              (p.linkedin_url ? '<a class="cw-more-li" href="' + escapeAttr(p.linkedin_url) + '" target="_blank" rel="noopener">Read their post on LinkedIn ↗</a>' : '') +
+            '</div>';
+          }).join('') +
+        '</div>' +
+        '<div class="cw-actions"><button type="button" class="cw-btn cw-btn-close">Close</button></div>' +
+      '</div>';
+    document.body.appendChild(m);
+    document.body.classList.add('club-winner-open');
+    m.querySelector('.cw-close').addEventListener('click', closeClubWinner);
+    m.querySelector('.cw-btn-close').addEventListener('click', closeClubWinner);
+    m.addEventListener('click', function (e) { if (e.target === m) closeClubWinner(); });
+    document.addEventListener('keydown', clubWinnerKeydown);
+    var closeBtn = m.querySelector('.cw-btn-close');
+    if (closeBtn) closeBtn.focus({ preventScroll: true });
+    setTimeout(fireWinnerCelebration, 250);
+  }
   function closeClubWinner() {
     var m = document.getElementById('club-winner-modal');
     if (!m) return;

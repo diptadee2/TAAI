@@ -2670,6 +2670,18 @@ body.club-winner-open { overflow: hidden; }
   .cw-post-text { max-height: 4.65em; }
 }
 @media (prefers-reduced-motion: reduce) { .cw-backdrop, .cw-card, .cw-backdrop.is-leaving { animation: none; } }
+/* Runners-up popup (2026-11-19): one or two people side by side. */
+.cr-card { width: min(620px, 100%); }
+.cr-people { display: grid; gap: 14px; margin: 4px 0 18px; }
+.cr-people.cr-two { grid-template-columns: 1fr 1fr; }
+.cr-person { padding: 12px 12px 14px; border-radius: 16px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); text-align: center; }
+.cr-person .cw-photo { margin-bottom: 10px; }
+.cr-place { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #E5E7EB; }
+.cr-name { margin-top: 4px; font-size: 19px; font-weight: 800; line-height: 1.2; background: linear-gradient(120deg, #FF7FB7, #A78BFA, #4D8BFF); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.cr-prize { margin-top: 4px; font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; background: linear-gradient(180deg, #FFF7D6 0%, #FDE68A 35%, #F59E0B 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.cr-person .cw-more-li { margin-top: 6px; font-size: 12.5px; }
+.cr-people:not(.cr-two) .cr-person { max-width: 380px; margin: 0 auto; width: 100%; }
+@media (max-width: 520px) { .cr-people.cr-two { grid-template-columns: 1fr 1fr; gap: 8px; } .cr-person { padding: 8px 8px 10px; } .cr-name { font-size: 15px; } .cr-prize { font-size: 20px; } .cr-person .cw-more-li { font-size: 11.5px; } }
 /* Photos are always 16:9 (2026-11-19). A single photo shrinks its width (centred) if 16:9 at full width would be too tall for the screen. */
 .cw-photo img, .cw-photos-2 .cw-photo img { aspect-ratio: 16 / 9; height: auto; max-height: none; object-fit: cover; }
 .cw-photos-1 .cw-photo { width: min(100%, calc(32vh * 16 / 9)); margin: 0 auto; }

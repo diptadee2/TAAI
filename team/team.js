@@ -314,6 +314,7 @@
     dayCard: { batch: 'D', which: 'today', theme: 'auto', date: '', months: {}, loading: false, error: null }, // Day card tab (2026-10-09)
     offerPoster: { which: 'today', mode: 'auto', pricing: null, cutoff: null, loading: false, error: null }, // Offer poster tab (2026-10-18; challenge mode 2026-10-19)
     clubWinner: { loaded: false, loading: false, form: null, saving: false, msg: null, msgType: null, updatedAt: null }, // 2 AM Club winner popup (2026-11-18)
+    clubRunners: { loaded: false, loading: false, form: null, saving: false, msg: null, msgType: null }, // 2nd and 3rd place popup (2026-11-19)
     students: null, // null = not loaded yet; array once fetched
     studentsLoading: false,
     studentsError: null,
@@ -1068,7 +1069,7 @@
           : state.tab === 'offer-poster'
             ? marketingTabs + renderOfferPoster()
           : state.tab === 'club-winner'
-            ? marketingTabs + renderClubWinner()
+            ? marketingTabs + renderClubWinner() + renderClubRunners()
             : state.tab === 'challenge'
               ? renderChallengePanel()
               : state.tab === 'piracy'
@@ -1092,7 +1093,7 @@
     if (state.tab === 'day-card') bindDayCard();
     if (state.tab === 'offer-poster') bindOfferPoster();
     if (state.tab === 'piracy') bindPiracy();
-    if (state.tab === 'club-winner') bindClubWinner();
+    if (state.tab === 'club-winner') { bindClubWinner(); bindClubRunners(); }
   }
 
   // ── 2 AM Club winner popup (2026-11-18) ──────────────────────────────
@@ -1233,6 +1234,120 @@
         cw.updatedAt = d.updated_at; cw.msg = 'Saved. ' + cwStatus(cw.form).text + '.'; cw.msgType = 'ok';
       }).catch(function (e) { cw.msg = 'Could not save: ' + e.message; cw.msgType = 'error'; })
         .then(function () { cw.saving = false; render(); });
+    });
+  }
+
+  // ── 2nd and 3rd place (2026-11-19) ──────────────────────────────────
+  // Released on their own dates, in one popup, after 1st place. 3rd place
+  // is optional: leave it empty if there aren't enough entries.
+  function crDefaultForm() {
+    return { enabled: false, month: 'November', show_from: '', show_until: '',
+      people: [
+        { place: 2, name: '', prize: 3000, linkedin_url: '', photo: null },
+        { place: 3, name: '', prize: 2000, linkedin_url: '', photo: null },
+      ] };
+  }
+  function loadClubRunners() {
+    var cr = state.clubRunners;
+    if (cr.loaded || cr.loading) return;
+    cr.loading = true;
+    api('/team-club-winner?slot=runners').then(function (d) {
+      var f = crDefaultForm(), r = d.runners;
+      if (r) {
+        ['enabled', 'month', 'show_from', 'show_until'].forEach(function (k) { if (r[k] !== undefined && r[k] !== null) f[k] = r[k]; });
+        (r.people || []).forEach(function (p) { var i = p.place === 3 ? 1 : 0; f.people[i] = { place: i + 2, name: p.name || '', prize: p.prize || 0, linkedin_url: p.linkedin_url || '', photo: p.photo || null }; });
+      }
+      cr.form = f; cr.loaded = true;
+    }).catch(function (e) {
+      cr.form = crDefaultForm(); cr.loaded = true;
+      cr.msg = 'Could not load: ' + e.message; cr.msgType = 'error';
+    }).then(function () { cr.loading = false; if (state.tab === 'club-winner') render(); });
+  }
+  function renderClubRunners() {
+    var cr = state.clubRunners;
+    if (!cr.loaded) return '';
+    var f = cr.form, st = f.show_from ? cwStatus(f) : (f.enabled ? { cls: 'off', text: 'Set the dates' } : { cls: 'off', text: 'Off: nobody sees it' });
+    var people = f.people.map(function (p, i) {
+      var pl = i === 0 ? '2nd place' : '3rd place (optional)';
+      return '<div class="cr-slot">' +
+        '<div class="cw-photo-label">' + (i === 0 ? '🥈 ' : '🥉 ') + pl + '</div>' +
+        (p.photo && p.photo.src ? '<img class="cw-thumb" src="' + escapeHtml(p.photo.src) + '" alt="">' : '<div class="cw-thumb cw-thumb-empty">No photo</div>') +
+        '<div class="cw-photo-actions">' +
+          '<label class="btn btn-sm">' + (p.photo && p.photo.src ? 'Replace photo' : 'Upload photo') + '<input type="file" accept="image/*" data-cr-photo="' + i + '" hidden></label>' +
+          (p.photo && p.photo.src ? '<button type="button" class="btn btn-sm" data-cr-remove="' + i + '">Remove</button>' : '') +
+          (i === 1 && (p.name || (p.photo && p.photo.src)) ? '<button type="button" class="btn btn-sm" data-cr-clear="1">No 3rd place</button>' : '') +
+        '</div>' +
+        '<label class="field cw-field"><span>Name</span><input type="text" data-cr-name="' + i + '" maxlength="80" value="' + escapeHtml(p.name) + '"' + (i === 1 ? ' placeholder="Leave empty if there\'s no 3rd place"' : '') + '></label>' +
+        '<label class="field cw-field"><span>Prize (₹)</span><input type="number" data-cr-prize="' + i + '" min="0" step="1" value="' + escapeHtml(p.prize) + '"></label>' +
+        '<label class="field cw-field"><span>LinkedIn post link (optional)</span><input type="url" data-cr-url="' + i + '" maxlength="500" value="' + escapeHtml(p.linkedin_url) + '" placeholder="https://www.linkedin.com/posts/..."></label>' +
+      '</div>';
+    }).join('');
+    return '<div class="cw-panel cr-panel">' +
+      '<h3 class="cr-head">2nd and 3rd place</h3>' +
+      '<p class="hint">A separate popup, on its own dates (for example after 1st place has had its days). Both people show in one popup. If there\'s no 3rd place, leave it empty and the popup says "runner-up".</p>' +
+      '<div class="cw-status cw-status-' + st.cls + '">' + escapeHtml(st.text) + '</div>' +
+      (cr.msg ? '<div class="msg msg-' + (cr.msgType === 'error' ? 'error' : 'ok') + '">' + escapeHtml(cr.msg) + '</div>' : '') +
+      '<div class="cw-grid">' +
+        '<label class="field cw-field"><span>Month</span><input type="text" id="cr-month" maxlength="30" value="' + escapeHtml(f.month) + '"></label>' +
+        '<label class="field cw-field"><span>Show from</span><input type="date" id="cr-from" value="' + escapeHtml(f.show_from) + '"></label>' +
+        '<label class="field cw-field"><span>Show until (inclusive)</span><input type="date" id="cr-until" value="' + escapeHtml(f.show_until) + '"></label>' +
+      '</div>' +
+      '<div class="cw-photos-row">' + people + '</div>' +
+      '<label class="cw-switch"><input type="checkbox" id="cr-enabled"' + (f.enabled ? ' checked' : '') + '> <span>Switched on (shows on the tracker between the dates)</span></label>' +
+      '<div class="cw-actions-row">' +
+        '<button type="button" class="btn" id="cr-preview">Preview on the tracker ↗</button>' +
+        '<button type="button" class="btn btn-primary" id="cr-save"' + (cr.saving ? ' disabled' : '') + '>' + (cr.saving ? 'Saving…' : 'Save') + '</button>' +
+      '</div>' +
+    '</div>';
+  }
+  function crReadForm() {
+    var f = state.clubRunners.form;
+    var v = function (id) { var el = document.getElementById(id); return el ? el.value : ''; };
+    f.month = v('cr-month'); f.show_from = v('cr-from'); f.show_until = v('cr-until');
+    var en = document.getElementById('cr-enabled'); f.enabled = !!(en && en.checked);
+    document.querySelectorAll('[data-cr-name]').forEach(function (el) { f.people[+el.getAttribute('data-cr-name')].name = el.value; });
+    document.querySelectorAll('[data-cr-prize]').forEach(function (el) { f.people[+el.getAttribute('data-cr-prize')].prize = Number(el.value) || 0; });
+    document.querySelectorAll('[data-cr-url]').forEach(function (el) { f.people[+el.getAttribute('data-cr-url')].linkedin_url = el.value.trim(); });
+    return f;
+  }
+  function crPayload(f) {
+    return { enabled: f.enabled, month: f.month.trim(), show_from: f.show_from, show_until: f.show_until,
+      people: f.people.map(function (p) { return { name: p.name.trim(), prize: p.prize, linkedin_url: p.linkedin_url, photo: p.photo && p.photo.src ? { src: p.photo.src, caption: '' } : null }; }) };
+  }
+  function bindClubRunners() {
+    var cr = state.clubRunners;
+    if (!cr.loaded) return;
+    document.querySelectorAll('[data-cr-photo]').forEach(function (input) {
+      input.addEventListener('change', function () {
+        var i = +input.getAttribute('data-cr-photo'), file = input.files && input.files[0];
+        if (!file) return;
+        crReadForm();
+        cwShrink(file).then(function (src) { cr.form.people[i].photo = { src: src, caption: '' }; cr.msg = null; render(); })
+          .catch(function (e) { cr.msg = e.message; cr.msgType = 'error'; render(); });
+      });
+    });
+    document.querySelectorAll('[data-cr-remove]').forEach(function (btn) {
+      btn.addEventListener('click', function () { crReadForm(); cr.form.people[+btn.getAttribute('data-cr-remove')].photo = null; render(); });
+    });
+    var clr = document.querySelector('[data-cr-clear]');
+    if (clr) clr.addEventListener('click', function () { crReadForm(); cr.form.people[1] = { place: 3, name: '', prize: 2000, linkedin_url: '', photo: null }; render(); });
+    var prev = document.getElementById('cr-preview');
+    if (prev) prev.addEventListener('click', function () {
+      var f = crPayload(crReadForm());
+      var people = f.people.map(function (p, i) { return Object.assign({ place: i + 2 }, p); }).filter(function (p) { return p.name; });
+      if (!people.length) { cr.msg = 'Add 2nd place\'s name to preview.'; cr.msgType = 'error'; render(); return; }
+      try { localStorage.setItem('taai_club_runners_preview', JSON.stringify({ month: f.month, people: people })); }
+      catch (e) { cr.msg = 'Preview needs the photos to fit in this browser\'s storage; try smaller photos.'; cr.msgType = 'error'; render(); return; }
+      window.open('/gate-da-progress-tracker?runners-preview', '_blank', 'noopener');
+    });
+    var save = document.getElementById('cr-save');
+    if (save) save.addEventListener('click', function () {
+      var f = crPayload(crReadForm());
+      cr.saving = true; cr.msg = null; render();
+      api('/team-club-winner?slot=runners', { method: 'PUT', body: JSON.stringify({ runners: f }) }).then(function () {
+        cr.msg = 'Saved. ' + (cr.form.show_from ? cwStatus(cr.form).text : 'Off') + '.'; cr.msgType = 'ok';
+      }).catch(function (e) { cr.msg = 'Could not save: ' + e.message; cr.msgType = 'error'; })
+        .then(function () { cr.saving = false; render(); });
     });
   }
 
@@ -4340,7 +4455,7 @@
         if (tab === 'site-data' && ensureSiteDataLoaded(state.siteData.subTab)) return;
         if (tab === 'day-card') { render(); loadDayCardMonth(); loadDayCardTemplate(); return; }
         if (tab === 'offer-poster') { render(); loadOfferPoster(); return; }
-        if (tab === 'club-winner') { render(); loadClubWinner(); return; }
+        if (tab === 'club-winner') { render(); loadClubWinner(); loadClubRunners(); return; }
         if (tab === 'challenge') { if (!state.challenge.loaded && !state.challenge.loading) { loadChallenge(); return; } render(); return; }
         if (tab === 'piracy') { if (!state.piracy.loaded && !state.piracy.loading) { loadPiracy(); return; } render(); return; }
         render();
@@ -4376,7 +4491,7 @@
         if (tab === state.tab) return;
         state.tab = tab; state.lastMarketing = tab;
         if (tab === 'day-card') { render(); loadDayCardMonth(); loadDayCardTemplate(); return; }
-        if (tab === 'club-winner') { render(); loadClubWinner(); return; }
+        if (tab === 'club-winner') { render(); loadClubWinner(); loadClubRunners(); return; }
         render(); loadOfferPoster();
       });
     });
