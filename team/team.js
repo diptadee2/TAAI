@@ -1167,6 +1167,7 @@
       '<label class="cw-switch"><input type="checkbox" id="cw-enabled"' + (f.enabled ? ' checked' : '') + '> <span>Switched on (shows on the tracker between the dates)</span></label>' +
       '<div class="cw-actions-row">' +
         '<button type="button" class="btn" id="cw-preview">Preview on the tracker ↗</button>' +
+        '<span class="cw-dl"><select id="cw-download-size" aria-label="Image size"><option value="square">Square 1:1 (YouTube, Instagram)</option><option value="portrait">Portrait 4:5 (Instagram, LinkedIn)</option></select><button type="button" class="btn" id="cw-download">Download PNG</button></span>' +
         '<button type="button" class="btn btn-primary" id="cw-save"' + (cw.saving ? ' disabled' : '') + '>' + (cw.saving ? 'Saving…' : 'Save') + '</button>' +
       '</div>' +
     '</div>';
@@ -1199,6 +1200,13 @@
       img.src = url;
     });
   }
+  // Both 2 AM panels sit on one page and every render() rebuilds both from
+  // state, so read both before re-rendering (2026-11-19: uploading a 2nd-place
+  // photo used to wipe an unsaved 1st-place name).
+  function cwReadBoth() {
+    if (state.clubWinner.loaded && state.clubWinner.form && document.getElementById('cw-name')) cwReadForm();
+    if (state.clubRunners.loaded && state.clubRunners.form && document.getElementById('cr-month')) crReadForm();
+  }
   function cwPayload(f) {
     return { enabled: f.enabled, name: f.name.trim(), month: f.month.trim(), prize: f.prize, linkedin_text: f.linkedin_text, linkedin_url: f.linkedin_url,
       show_from: f.show_from, show_until: f.show_until, photos: f.photos.filter(function (p) { return p.src; }) };
@@ -1210,17 +1218,18 @@
       input.addEventListener('change', function () {
         var i = +input.getAttribute('data-cw-photo'), file = input.files && input.files[0];
         if (!file) return;
-        cwReadForm();
+        cwReadBoth();
         cwShrink(file).then(function (src) { cw.form.photos[i].src = src; cw.msg = null; render(); })
           .catch(function (e) { cw.msg = e.message; cw.msgType = 'error'; render(); });
       });
     });
     document.querySelectorAll('[data-cw-remove]').forEach(function (btn) {
-      btn.addEventListener('click', function () { cwReadForm(); cw.form.photos[+btn.getAttribute('data-cw-remove')].src = ''; render(); });
+      btn.addEventListener('click', function () { cwReadBoth(); cw.form.photos[+btn.getAttribute('data-cw-remove')].src = ''; render(); });
     });
+    cwBindDownload('cw-download', 'winner', cw);
     var prev = document.getElementById('cw-preview');
     if (prev) prev.addEventListener('click', function () {
-      var f = cwPayload(cwReadForm());
+      cwReadBoth(); var f = cwPayload(state.clubWinner.form);
       if (!f.name) { cw.msg = 'Add a name to preview.'; cw.msgType = 'error'; render(); return; }
       try { localStorage.setItem('taai_club_winner_preview', JSON.stringify(f)); }
       catch (e) { cw.msg = 'Preview needs the photos to fit in this browser\'s storage; try smaller photos.'; cw.msgType = 'error'; render(); return; }
@@ -1228,12 +1237,171 @@
     });
     var save = document.getElementById('cw-save');
     if (save) save.addEventListener('click', function () {
-      var f = cwPayload(cwReadForm());
+      cwReadBoth(); var f = cwPayload(state.clubWinner.form);
       cw.saving = true; cw.msg = null; render();
       api('/team-club-winner', { method: 'PUT', body: JSON.stringify({ winner: f }) }).then(function (d) {
         cw.updatedAt = d.updated_at; cw.msg = 'Saved. ' + cwStatus(cw.form).text + '.'; cw.msgType = 'ok';
       }).catch(function (e) { cw.msg = 'Could not save: ' + e.message; cw.msgType = 'error'; })
         .then(function () { cw.saving = false; render(); });
+    });
+  }
+
+  // ── Downloadable PNG of the celebration cards (2026-11-19) ─────────
+  // "a downloadable png of the celebratory card to post on our other
+  // socials": 1080x1350 (4:5), same night-sky look as the tracker popup.
+  // Drawn from the form as it is now (saved or not). Photos are cropped
+  // to 16:9 from the centre, like the popup.
+  function cwLoadImg(src) {
+    return new Promise(function (resolve) {
+      if (!src) { resolve(null); return; }
+      var im = new Image(); im.onload = function () { resolve(im); }; im.onerror = function () { resolve(null); }; im.src = src;
+    });
+  }
+  function cwCover(ctx, im, x, y, w, h, r) {
+    ctx.save(); dcRoundRect(ctx, x, y, w, h, r); ctx.clip();
+    ctx.fillStyle = '#0b0b18'; ctx.fillRect(x, y, w, h);
+    if (im) {
+      var k = Math.max(w / im.naturalWidth, h / im.naturalHeight), dw = im.naturalWidth * k, dh = im.naturalHeight * k;
+      ctx.drawImage(im, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+    }
+    ctx.restore();
+    ctx.save(); dcRoundRect(ctx, x, y, w, h, r); ctx.strokeStyle = 'rgba(255,255,255,0.14)'; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+  }
+  function cwFit(ctx, text, weight, size, maxW, min) {
+    while (size > min) { ctx.font = weight + ' ' + size + 'px Poppins, system-ui, sans-serif'; if (ctx.measureText(text).width <= maxW) break; size -= 2; }
+    ctx.font = weight + ' ' + size + 'px Poppins, system-ui, sans-serif';
+    return size;
+  }
+  function cwGradText(ctx, text, cx, y, colors) {
+    var w = ctx.measureText(text).width, g = ctx.createLinearGradient(cx - w / 2, 0, cx + w / 2, 0);
+    colors.forEach(function (c, i) { g.addColorStop(i / (colors.length - 1), c); });
+    ctx.fillStyle = g; ctx.fillText(text, cx, y);
+  }
+  function cwGoldText(ctx, text, cx, y, size) {
+    var g = ctx.createLinearGradient(0, y - size, 0, y);
+    g.addColorStop(0, '#FFF7D6'); g.addColorStop(0.35, '#FDE68A'); g.addColorStop(1, '#F59E0B');
+    ctx.fillStyle = g; ctx.fillText(text, cx, y);
+  }
+  function cwBackground(ctx, W, H) {
+    var g = ctx.createLinearGradient(0, 0, W * 0.6, H);
+    g.addColorStop(0, '#221a4a'); g.addColorStop(0.55, '#120f2c'); g.addColorStop(1, '#08091c');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    var seed = 7; var rnd = function () { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    for (var i = 0; i < 90; i++) {
+      var x = rnd() * W, y = rnd() * H, r = rnd() * 1.6 + 0.6;
+      ctx.globalAlpha = 0.25 + rnd() * 0.55; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    // crescent moon, top right: drawn on its own small canvas (disc minus an
+    // offset disc), then placed with a soft glow.
+    var mc = document.createElement('canvas'); mc.width = 120; mc.height = 120;
+    var mx = mc.getContext('2d');
+    mx.fillStyle = '#f3e5b5'; mx.beginPath(); mx.arc(60, 60, 38, 0, Math.PI * 2); mx.fill();
+    mx.globalCompositeOperation = 'destination-out'; mx.beginPath(); mx.arc(78, 46, 34, 0, Math.PI * 2); mx.fill();
+    ctx.save(); ctx.shadowColor = 'rgba(243,229,181,0.55)'; ctx.shadowBlur = 28; ctx.drawImage(mc, W - 180, 50); ctx.restore();
+  }
+  function cwTag(ctx, text, cx, y) {
+    ctx.font = '700 26px Poppins, system-ui, sans-serif';
+    var w = ctx.measureText(text).width + 56, h = 56;
+    dcRoundRect(ctx, cx - w / 2, y, w, h, 28); ctx.fillStyle = 'rgba(251,191,36,0.12)'; ctx.fill();
+    ctx.strokeStyle = 'rgba(251,191,36,0.5)'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#FBBF24'; ctx.fillText(text, cx, y + 37);
+  }
+  function cwFooter(ctx, W, H) {
+    ctx.font = '500 26px Poppins, system-ui, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.fillText('Study with us, free progress tracker at taai.live', W / 2, H - 56);
+  }
+  function cwExportPng(kind, size) {
+    var sq = size === 'square';
+    // Square 1:1 for YouTube community / Instagram, portrait 4:5 for feeds (2026-11-19).
+    var W = 1080, H = sq ? 1080 : 1350, P = 72;
+    var L = sq
+      ? { tag: 118, l1: 228, l2: 316, sub: 368, box: 398, boxH: 140, amt: 78, photo: 566, photoMax: 410, rTop: 400, one: 560, nameY2: 300 }
+      : { tag: 178, l1: 318, l2: 418, sub: 478, box: 520, boxH: 168, amt: 92, photo: 724, photoMax: 9999, rTop: 530, one: 640, nameY2: 410 };
+    var c = document.createElement('canvas'); c.width = W; c.height = H;
+    var ctx = c.getContext('2d');
+    cwReadBoth();
+    var data = kind === 'runners' ? crPayload(state.clubRunners.form) : cwPayload(state.clubWinner.form);
+    var month = (data.month || '').trim();
+    var people = kind === 'runners' ? data.people.map(function (p, i) { return Object.assign({ place: i + 2 }, p); }).filter(function (p) { return p.name; }) : null;
+    if (kind === 'runners' && !people.length) return Promise.reject(new Error('Add 2nd place\'s name first.'));
+    if (kind !== 'runners' && !data.name) return Promise.reject(new Error('Add the winner\'s name first.'));
+    var srcs = kind === 'runners' ? people.map(function (p) { return p.photo && p.photo.src; }) : [(data.photos[0] || {}).src];
+    var fontsReady = document.fonts && document.fonts.load
+      ? Promise.all(['800 80px Poppins', '700 26px Poppins', '600 30px Poppins', '500 26px Poppins'].map(function (f) { return document.fonts.load(f); })).catch(function () {})
+      : Promise.resolve();
+    if (!dcLogo) { dcLogo = new Image(); dcLogo.src = '/logo.webp'; }
+    var logoReady = dcLogo.complete ? Promise.resolve() : new Promise(function (r) { dcLogo.onload = r; dcLogo.onerror = r; });
+    return Promise.all([fontsReady, logoReady, Promise.all(srcs.map(cwLoadImg))]).then(function (res) {
+      var imgs = res[2];
+      cwBackground(ctx, W, H);
+      if (dcLogo.complete && dcLogo.naturalWidth) ctx.drawImage(dcLogo, 104, 68, 150, 80, P, P - 4, 64 * 150 / 80, 64);
+      ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+      var cx = W / 2;
+      if (kind !== 'runners') {
+        cwTag(ctx, 'THE 2 AM CLUB · ' + month.toUpperCase() + ' WINNER', cx, L.tag);
+        ctx.font = '700 54px Poppins, system-ui, sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText('Congratulations,', cx, L.l1);
+        cwFit(ctx, data.name + '!', 800, 92, W - 2 * P, 48);
+        cwGradText(ctx, data.name + '!', cx, L.l2, ['#FF7FB7', '#A78BFA', '#4D8BFF']);
+        ctx.font = '500 32px Poppins, system-ui, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.75)';
+        ctx.fillText('Winner of The 2 AM Club for ' + month, cx, L.sub);
+        var bx = cx - 230, by = L.box, bw = 460, bh = L.boxH;
+        dcRoundRect(ctx, bx, by, bw, bh, 30); ctx.fillStyle = 'rgba(251,191,36,0.12)'; ctx.fill();
+        ctx.strokeStyle = 'rgba(251,191,36,0.55)'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.font = '700 24px Poppins, system-ui, sans-serif'; ctx.fillStyle = '#FCD34D'; ctx.fillText('PRIZE MONEY', cx, by + (sq ? 42 : 50));
+        ctx.font = '800 ' + L.amt + 'px Poppins, system-ui, sans-serif';
+        cwGoldText(ctx, '₹' + Number(data.prize || 0).toLocaleString('en-IN'), cx, by + bh - (sq ? 22 : 26), L.amt);
+        var ph = Math.min(Math.round((W - 2 * P) * 9 / 16), L.photoMax), pw = Math.round(ph * 16 / 9);
+        cwCover(ctx, imgs[0], cx - pw / 2, L.photo, pw, ph, 30);
+      } else {
+        var two = people.length > 1;
+        cwTag(ctx, 'THE 2 AM CLUB · ' + month.toUpperCase(), cx, L.tag);
+        ctx.font = '700 56px Poppins, system-ui, sans-serif'; ctx.fillStyle = '#fff';
+        ctx.fillText('Congratulations to our', cx, L.l1);
+        ctx.font = '800 76px Poppins, system-ui, sans-serif';
+        cwGradText(ctx, two ? 'runners-up!' : 'runner-up!', cx, L.nameY2 + (sq ? 0 : 0), ['#FF7FB7', '#A78BFA', '#4D8BFF']);
+        ctx.font = '500 32px Poppins, system-ui, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.75)';
+        ctx.fillText((two ? '2nd and 3rd place' : '2nd place') + ' in The 2 AM Club for ' + month, cx, L.sub - (sq ? 0 : 6));
+        var gap = 32, cw = two ? (W - 2 * P - gap) / 2 : L.one;
+        var phh0 = Math.round((cw - 32) * 9 / 16), cardH0 = 16 + phh0 + 236;
+        // centre the cards in the space between the subtitle and the footer
+        var areaTop = L.sub + 40, areaBot = H - 110, top = Math.round(areaTop + Math.max(0, (areaBot - areaTop - cardH0) / 2));
+        people.forEach(function (p, i) {
+          var x = two ? P + i * (cw + gap) : cx - cw / 2, ccx = x + cw / 2, phh = phh0;
+          var cardH = cardH0;
+          dcRoundRect(ctx, x, top, cw, cardH, 30); ctx.fillStyle = 'rgba(255,255,255,0.05)'; ctx.fill();
+          ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 2; ctx.stroke();
+          cwCover(ctx, imgs[i], x + 16, top + 16, cw - 32, phh, 22);
+          var y = top + 16 + phh;
+          ctx.font = '700 26px Poppins, system-ui, sans-serif'; ctx.fillStyle = p.place === 2 ? '#E5E7EB' : '#F0B27A';
+          ctx.fillText((p.place === 2 ? '2ND' : '3RD') + ' PLACE', ccx, y + 58);
+          cwFit(ctx, p.name, 800, 46, cw - 48, 26);
+          cwGradText(ctx, p.name, ccx, y + 118, ['#FF7FB7', '#A78BFA', '#4D8BFF']);
+          ctx.font = '800 64px Poppins, system-ui, sans-serif';
+          cwGoldText(ctx, '₹' + Number(p.prize || 0).toLocaleString('en-IN'), ccx, y + 196, 64);
+        });
+      }
+      cwFooter(ctx, W, H);
+      return new Promise(function (resolve, reject) {
+        c.toBlob(function (blob) {
+          if (!blob) { reject(new Error('Could not make the image.')); return; }
+          var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+          a.download = (kind === 'runners' ? 'taai-2am-club-runners-up' : 'taai-2am-club-winner') + (sq ? '-square' : '-portrait') + '.png';
+          document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+          resolve(c);
+        }, 'image/png');
+      });
+    });
+  }
+  function cwBindDownload(btnId, kind, st) {
+    var btn = document.getElementById(btnId);
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      btn.disabled = true;
+      var sel = document.getElementById(btnId + '-size');
+      cwExportPng(kind, sel ? sel.value : 'square').catch(function (e) { st.msg = e.message; st.msgType = 'error'; render(); })
+        .then(function () { btn.disabled = false; });
     });
   }
 
@@ -1296,6 +1464,7 @@
       '<label class="cw-switch"><input type="checkbox" id="cr-enabled"' + (f.enabled ? ' checked' : '') + '> <span>Switched on (shows on the tracker between the dates)</span></label>' +
       '<div class="cw-actions-row">' +
         '<button type="button" class="btn" id="cr-preview">Preview on the tracker ↗</button>' +
+        '<span class="cw-dl"><select id="cr-download-size" aria-label="Image size"><option value="square">Square 1:1 (YouTube, Instagram)</option><option value="portrait">Portrait 4:5 (Instagram, LinkedIn)</option></select><button type="button" class="btn" id="cr-download">Download PNG</button></span>' +
         '<button type="button" class="btn btn-primary" id="cr-save"' + (cr.saving ? ' disabled' : '') + '>' + (cr.saving ? 'Saving…' : 'Save') + '</button>' +
       '</div>' +
     '</div>';
@@ -1321,19 +1490,20 @@
       input.addEventListener('change', function () {
         var i = +input.getAttribute('data-cr-photo'), file = input.files && input.files[0];
         if (!file) return;
-        crReadForm();
+        cwReadBoth();
         cwShrink(file).then(function (src) { cr.form.people[i].photo = { src: src, caption: '' }; cr.msg = null; render(); })
           .catch(function (e) { cr.msg = e.message; cr.msgType = 'error'; render(); });
       });
     });
     document.querySelectorAll('[data-cr-remove]').forEach(function (btn) {
-      btn.addEventListener('click', function () { crReadForm(); cr.form.people[+btn.getAttribute('data-cr-remove')].photo = null; render(); });
+      btn.addEventListener('click', function () { cwReadBoth(); cr.form.people[+btn.getAttribute('data-cr-remove')].photo = null; render(); });
     });
     var clr = document.querySelector('[data-cr-clear]');
-    if (clr) clr.addEventListener('click', function () { crReadForm(); cr.form.people[1] = { place: 3, name: '', prize: 2000, linkedin_url: '', photo: null }; render(); });
+    if (clr) clr.addEventListener('click', function () { cwReadBoth(); cr.form.people[1] = { place: 3, name: '', prize: 2000, linkedin_url: '', photo: null }; render(); });
+    cwBindDownload('cr-download', 'runners', cr);
     var prev = document.getElementById('cr-preview');
     if (prev) prev.addEventListener('click', function () {
-      var f = crPayload(crReadForm());
+      cwReadBoth(); var f = crPayload(state.clubRunners.form);
       var people = f.people.map(function (p, i) { return Object.assign({ place: i + 2 }, p); }).filter(function (p) { return p.name; });
       if (!people.length) { cr.msg = 'Add 2nd place\'s name to preview.'; cr.msgType = 'error'; render(); return; }
       try { localStorage.setItem('taai_club_runners_preview', JSON.stringify({ month: f.month, people: people })); }
@@ -1342,7 +1512,7 @@
     });
     var save = document.getElementById('cr-save');
     if (save) save.addEventListener('click', function () {
-      var f = crPayload(crReadForm());
+      cwReadBoth(); var f = crPayload(state.clubRunners.form);
       cr.saving = true; cr.msg = null; render();
       api('/team-club-winner?slot=runners', { method: 'PUT', body: JSON.stringify({ runners: f }) }).then(function () {
         cr.msg = 'Saved. ' + (cr.form.show_from ? cwStatus(cr.form).text : 'Off') + '.'; cr.msgType = 'ok';
