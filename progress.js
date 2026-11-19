@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-34';
+  var CLIENT_VERSION = '2026-11-19-35';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1475,7 +1475,7 @@
       // ad screen with scrolling text
       '<rect x="82" y="27" width="96" height="24" rx="4" fill="#07040e" stroke="#ff4fa3" stroke-opacity=".7"/>' +
       '<g clip-path="url(#vb-scr)"><g class="vb-ticker">' +
-        '<text x="88" y="43" class="vb-text">TAAI.LIVE \u2605 GATE DA 2027 \u2605 TAAI.LIVE \u2605 GATE DA 2027 \u2605 </text>' +
+        '<text x="88" y="43" class="vb-text">taai.live \u2605 GATE DA 2027 \u2605 taai.live \u2605 GATE DA 2027 \u2605 </text>' +
       '</g></g>' +
       // nav lights
       '<circle cx="229" cy="40" r="2.2" class="vb-strobe"/>' +
