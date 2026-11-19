@@ -2979,6 +2979,19 @@ html.vice-night .pomo-zen .vice-edge { bottom: 24px; height: 46px; background-si
 @media (max-height: 500px) {
   html.vice-night .pomo-zen .vice-tower, html.vice-night .pomo-zen .vice-palm { display: none; }
 }
+/* Fullscreen on small phones and phones held sideways (2026-11-19): a
+   smaller HUD so it doesn't touch FOCUS or the time. */
+@media (max-width: 420px) {
+  html.vice-night .pomo-zen > .zen-hud { transform: scale(.82); transform-origin: top right; right: 20px; }
+  .pomo-zen-center { padding-top: 28px; }
+}
+@media (max-height: 500px) {
+  html.vice-night .pomo-zen > .zen-hud { transform: scale(.72); transform-origin: top right; top: 14px; right: 20px; }
+  .pomo-zen { padding: 16px 24px 16px; }
+  .pomo-zen-time { font-size: min(18vw, 30vh); }
+  .pomo-zen-center { padding-top: 26px; }
+  html.vice-night .pomo-zen .pomo-zen-bottom { margin-bottom: 4px; }
+}
 </style>
 </head>
 <body data-float-stack data-nav-no-autohide>
