@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-4';
+  var CLIENT_VERSION = '2026-11-19-5';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -4235,11 +4235,12 @@
     var rows = leaders.map(function (l, i) {
       return '<li class="zb-row' + (l.is_me ? ' zb-me' : '') + (l.is_live ? ' zb-live' : '') + '">' +
         '<span class="zb-rank">' + (i + 1) + '</span>' +
-        '<span class="zb-name">' + (l.is_live ? '<i class="zb-dot" aria-label="Studying now"></i>' : '') + escapeHtml(l.display_name) + (l.is_me ? ' <b class="zb-you">You</b>' : '') + '</span>' +
+        '<span class="zb-dotcell">' + (l.is_live ? '<i class="zb-dot" aria-label="Studying now"></i>' : '') + '</span>' +
+        '<span class="zb-name">' + escapeHtml(l.display_name) + (l.is_me ? ' <b class="zb-you">You</b>' : '') + '</span>' +
         '<span class="zb-time">' + formatHoursDecimal(l.total_minutes) + '</span></li>';
     }).join('');
     var me = state.todayViewerRank;
-    if (me) rows += '<li class="zb-gap">···</li><li class="zb-row zb-me' + (me.is_live ? ' zb-live' : '') + '"><span class="zb-rank">' + me.rank + '</span><span class="zb-name">You</span><span class="zb-time">' + formatHoursDecimal(me.total_minutes) + '</span></li>';
+    if (me) rows += '<li class="zb-gap">···</li><li class="zb-row zb-me' + (me.is_live ? ' zb-live' : '') + '"><span class="zb-rank">' + me.rank + '</span><span class="zb-dotcell">' + (me.is_live ? '<i class="zb-dot" aria-label="Studying now"></i>' : '') + '</span><span class="zb-name">You</span><span class="zb-time">' + formatHoursDecimal(me.total_minutes) + '</span></li>';
     box.innerHTML = '<div class="zb-title">Today\'s top 10</div><ol class="zb-list">' + rows + '</ol>';
   }
 

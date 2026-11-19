@@ -2553,8 +2553,8 @@ body.pomo-zen-active { overflow: hidden; }
 .pomo-zen-sky span { position: absolute; border-radius: 50%; }
 .zs-ringed { left: 7%; top: 70%; width: 34px; height: 34px; background: radial-gradient(circle at 35% 30%, #c9b8ff, #7c66d6 55%, #3d2f80); opacity: .3; }
 .zs-ringed::before { content: ''; position: absolute; left: -13px; top: 11px; width: 60px; height: 11px; border-radius: 50%; border: 1.5px solid rgba(201,184,255,0.55); transform: rotate(-18deg); }
-.zs-gold { right: 12%; top: 20%; width: 14px; height: 14px; background: radial-gradient(circle at 35% 30%, #fff1b8, #d8a838 60%, #6d4d12); opacity: .35; }
-.zs-blue { right: 8%; top: 76%; width: 10px; height: 10px; background: radial-gradient(circle at 35% 30%, #bfeaff, #4aa3d8 60%, #1d4f78); opacity: .3; }
+.zs-gold { right: 27%; top: 11%; width: 14px; height: 14px; background: radial-gradient(circle at 35% 30%, #fff1b8, #d8a838 60%, #6d4d12); opacity: .35; }
+.zs-blue { left: 17%; top: 23%; width: 10px; height: 10px; background: radial-gradient(circle at 35% 30%, #bfeaff, #4aa3d8 60%, #1d4f78); opacity: .3; }
 .pomo-zen-top, .pomo-zen-bottom { display: flex; align-items: center; transition: opacity .5s; }
 .pomo-zen-top { justify-content: space-between; }
 .pomo-zen-bottom { justify-content: center; }
@@ -2571,7 +2571,7 @@ body.pomo-zen-active { overflow: hidden; }
 }
 .zb-title { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 10px; }
 .zb-list { list-style: none; margin: 0; padding: 0; }
-.zb-row { display: grid; grid-template-columns: 24px minmax(0,1fr) auto; gap: 8px; align-items: center; padding: 6px 0; font-size: 13.5px; color: rgba(255,255,255,0.78); border-top: 1px solid rgba(255,255,255,0.05); }
+.zb-row { display: grid; grid-template-columns: 22px 12px minmax(0,1fr) auto; gap: 6px; align-items: center; padding: 6px 0; font-size: 13.5px; color: rgba(255,255,255,0.78); border-top: 1px solid rgba(255,255,255,0.05); }
 .zb-row:first-child { border-top: 0; }
 .zb-rank { color: rgba(255,255,255,0.4); font-variant-numeric: tabular-nums; font-size: 12.5px; }
 .zb-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -2579,7 +2579,9 @@ body.pomo-zen-active { overflow: hidden; }
 .zb-me { color: #fff; }
 .zb-me .zb-time { color: var(--pomo-g2, #A78BFA); font-weight: 700; }
 .zb-you { font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 999px; background: rgba(167,139,250,0.2); color: #d9ccff; }
-.zb-dot { display: inline-block; width: 6px; height: 6px; margin-right: 7px; vertical-align: 2px; border-radius: 50%; background: #4ade80; }
+.zb-dotcell { display: flex; align-items: center; justify-content: center; }
+.zb-dot { display: block; width: 7px; height: 7px; border-radius: 50%; background: #4ade80; animation: live-pulse 2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .zb-dot { animation: none; } }
 .zb-gap { text-align: center; color: rgba(255,255,255,0.3); font-size: 12px; padding: 2px 0; }
 .pomo-zen-clock { font-size: 15px; color: rgba(255,255,255,0.55); font-variant-numeric: tabular-nums; letter-spacing: .02em; }
 .pomo-zen-exit { display: inline-flex; align-items: center; gap: 8px; font: inherit; font-size: 14px; padding: 9px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.8); cursor: pointer; }
