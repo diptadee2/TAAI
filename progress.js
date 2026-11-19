@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-36';
+  var CLIENT_VERSION = '2026-11-19-37';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1562,7 +1562,7 @@
     setTimeout(function () { dim.remove(); }, 4800);
     var d = document.createElement('div');
     d.id = 'vice-mission'; d.className = 'vice-mission'; d.setAttribute('role', 'status');
-    d.innerHTML = '<div class="vm-title">Mission passed!</div><div class="vm-respect">Respect +</div><div class="vm-sub">+' + (min > 0 ? min : '') + ' min of focus</div>';
+    d.innerHTML = '<div class="vm-title">Mission passed!</div><div class="vm-respect">Respect<span class="vm-plus">+</span></div><div class="vm-sub">+' + (min > 0 ? min : '') + ' min of focus</div>';
     // In fullscreen the clock sits left of centre when today's top 10 is
     // showing, so line the message up with the clock rather than the screen.
     var zenTime = document.querySelector('#pomo-zen .pomo-zen-time');
