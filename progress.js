@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-16';
+  var CLIENT_VERSION = '2026-11-19-19';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1414,7 +1414,7 @@
       '</svg></span>';
   }
   function viceTowerHtml() {
-    return '<div class="vice-tower"><div class="vt-sign"><span>Vice</span><span>City</span></div><div class="vt-mast"></div><div class="vt-body"></div></div>';
+    return '<div class="vice-tower"><div class="vt-sign"><span>Vi<b class="vt-dead">c</b>e</span><span>Ci<b class="vt-dead vt-dead--2">t</b>y</span></div><div class="vt-mast"></div><div class="vt-body"></div></div>';
   }
   function viceBlimpHtml() {
     return '<span class="vice-blimp"><svg viewBox="0 0 160 60" aria-hidden="true">' +
@@ -1431,7 +1431,7 @@
   function viceHudHtml() {
     return '<div class="zen-hud" id="zen-hud" aria-hidden="true">' +
       '<div class="zh-stats"><div class="zh-clock" id="zh-clock"></div><div class="zh-money" id="zh-money"></div>' +
-      '<div class="zh-health"><i id="zh-health"></i></div>' + viceWantedHtml() + '</div>' +
+      '<div class="zh-health"><i id="zh-health"></i></div></div>' +
       '<div class="zh-weapon"><svg viewBox="0 0 48 48"><path d="M10 38l3-10 20-20a3.5 3.5 0 0 1 5 0l2 2a3.5 3.5 0 0 1 0 5L20 35z" fill="#f2c94c" stroke="#111" stroke-width="2.4" stroke-linejoin="round"/><path d="M33 8l7 7" stroke="#111" stroke-width="2.4"/><path d="M33 8l2-2a3.5 3.5 0 0 1 5 0l2 2a3.5 3.5 0 0 1 0 5l-2 2" fill="#ff8fb1" stroke="#111" stroke-width="2.4" stroke-linejoin="round"/><path d="M10 38l3-10 7 7z" fill="#f5deb3" stroke="#111" stroke-width="2.4" stroke-linejoin="round"/><path d="M10 38l1.5-4.6 3.1 3.1z" fill="#111"/></svg></div>' +
     '</div>';
   }
@@ -4287,6 +4287,20 @@
   // The dots alone are easy to miss/misread at a glance (tiny, same shape,
   // color is the only distinguishing signal) — this spells out the same
   // count as text underneath.
+  // Vice background: the session dots become "wanted" stars (2026-11-19,
+  // "the wanted stars in place of session count"), one per session in the
+  // cycle, filled as they're done. The text form stays for screen readers.
+  function pomoStarsHtml() {
+    var filled = pomo.completedSessions % pomoSettings.cycle, out = '';
+    var star = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 16.8l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>';
+    for (var i = 0; i < pomoSettings.cycle; i++) out += '<i class="ws' + (i < filled ? ' on' : '') + '">' + star + '</i>';
+    return '<span class="wanted-stars" role="img" aria-label="' + filled + ' of ' + pomoSettings.cycle + ' focus sessions done">' + out + '</span>';
+  }
+  function setPomoDots(el) {
+    if (!el) return;
+    if (VICE_NIGHT) { var h = pomoStarsHtml(); if (el.getAttribute('data-stars') !== h) { el.setAttribute('data-stars', h); el.innerHTML = h; } }
+    else el.textContent = pomoDotsText();
+  }
   function pomoSessionLabel() {
     var filled = pomo.completedSessions % pomoSettings.cycle;
     return filled + ' / ' + pomoSettings.cycle + ' sessions';
@@ -4369,7 +4383,13 @@
   // fullscreen where it can and keeps the screen awake while open.
   var zenWakeLock = null;
   function zenEl() { return document.getElementById('pomo-zen'); }
+  // The fullscreen button glows until it's been used once in this browser
+  // (2026-11-19, "a little glow so that users notice it").
+  var ZEN_SEEN_KEY = 'taai_zen_seen_v1';
+  function zenSeen() { try { return localStorage.getItem(ZEN_SEEN_KEY) === '1'; } catch (e) { return true; } }
   function openPomoZen() {
+    try { localStorage.setItem(ZEN_SEEN_KEY, '1'); } catch (e) { /* fine */ }
+    var zb = document.getElementById('pomo-zen-open'); if (zb) zb.classList.remove('is-new');
     if (zenEl()) return;
     var el = document.createElement('div');
     el.id = 'pomo-zen';
@@ -4461,7 +4481,7 @@
     var f = document.getElementById('pomo-zen-bar-fill');
     if (f) f.style.width = (pomo.totalSeconds > 0 ? (1 - pomo.secondsLeft / pomo.totalSeconds) * 100 : 0).toFixed(2) + '%';
     var s = document.getElementById('pomo-zen-sessions');
-    if (s) s.textContent = pomoSessionLabel() + ' today';
+    if (s) { if (VICE_NIGHT) setPomoDots(s); else s.textContent = pomoSessionLabel() + ' today'; }
     var b = document.getElementById('pomo-zen-toggle');
     var runState = pomo.running ? 'run' : 'stop';
     if (b && b.getAttribute('data-state') !== runState) {
@@ -4545,7 +4565,7 @@
     var timeEl = document.getElementById('pomo-time');
     if (timeEl) timeEl.textContent = formatPomoTime(pomo.secondsLeft);
     var dotsEl = document.getElementById('pomo-dots');
-    if (dotsEl) dotsEl.textContent = pomoDotsText();
+    setPomoDots(dotsEl);
     var sessionLabelEl = document.getElementById('pomo-session-label');
     if (sessionLabelEl) sessionLabelEl.textContent = pomoSessionLabel();
     var toggleBtn = document.getElementById('pomo-toggle');
@@ -5343,7 +5363,7 @@
       // Fullscreen and settings share one pill in the top-right corner,
       // matching the clock pill in the top-left (2026-11-18).
       '<div class="pomo-tools">' +
-      '<button class="pomo-zen-open" id="pomo-zen-open" aria-label="Fullscreen timer" title="Fullscreen timer" type="button">' +
+      '<button class="pomo-zen-open' + (zenSeen() ? '' : ' is-new') + '" id="pomo-zen-open" aria-label="Fullscreen timer" title="Fullscreen timer" type="button">' +
       '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>' +
       '</button>' +
       '<button class="pomo-settings-toggle" id="pomo-settings-toggle" aria-label="Timer settings" title="Timer settings" type="button">' +
@@ -5388,7 +5408,7 @@
       '<div class="pomodoro-time" id="pomo-time">' + formatPomoTime(pomo.secondsLeft) + '</div>' +
       '</div>' +
       '</div>' +
-      '<div class="pomodoro-dots" id="pomo-dots">' + pomoDotsText() + '</div>' +
+      '<div class="pomodoro-dots" id="pomo-dots">' + (VICE_NIGHT ? pomoStarsHtml() : pomoDotsText()) + '</div>' +
       '<div class="pomodoro-session-label" id="pomo-session-label">' + pomoSessionLabel() + '</div>' +
       '<div class="pomodoro-controls">' +
       '<button id="pomo-reset" class="pomo-btn pomo-btn-secondary" aria-label="Reset" title="Reset">' +

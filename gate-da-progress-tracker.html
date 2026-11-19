@@ -2736,9 +2736,14 @@ html.vice-night .pomo-zen .vice-palm--r { width: 165px; height: 240px; }
 /* road: a faint line of light along the base of the skyline */
 /* the road the cars drive on: dark asphalt with a soft neon edge and faint,
    sparse lane marks (the first dashed version read as cheap) */
-.vice-road { position: absolute; left: 0; right: 0; bottom: 0; height: 16px;
-  background: repeating-linear-gradient(90deg, rgba(255,255,255,0.09) 0 18px, transparent 18px 70px) 0 8px / 100% 1px no-repeat, linear-gradient(180deg, #120a1f 0%, #07040d 60%, #040208 100%);
-  border-top: 1px solid rgba(255,79,216,0.32); box-shadow: 0 -2px 10px rgba(255,79,216,0.12); }
+.vice-road { position: absolute; left: 0; right: 0; bottom: 0; height: 18px;
+  /* layers, top to bottom: a thin kerb (light top edge), the city's pink glow
+     reflected on the wet road, faint lane marks, then asphalt */
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.10) 0 1px, #1b1027 1px 4px, transparent 4px) 0 0 / 100% 4px no-repeat,
+    linear-gradient(180deg, rgba(255,79,216,0.16), rgba(255,79,216,0) 100%) 0 4px / 100% 8px no-repeat,
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.09) 0 18px, transparent 18px 70px) 0 11px / 100% 1px no-repeat,
+    linear-gradient(180deg, #0d0717 0%, #07040d 60%, #040208 100%); }
 /* The Vice City tower, in the empty gap between the timer and Today's leaders */
 .vice-tower { position: absolute; bottom: 0; left: var(--vice-tower-x, 50%); width: 56px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; }
 .vt-body { width: 56px; height: 190px; background-color: #0a0414;
@@ -2747,25 +2752,32 @@ html.vice-night .pomo-zen .vice-palm--r { width: 165px; height: 240px; }
 .vt-mast { width: 2px; height: 16px; background: #1c1030; }
 .vt-sign { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-bottom: 4px; padding: 4px 7px 5px; border: 1.5px solid rgba(255,122,217,0.6); border-radius: 4px; background: rgba(10,4,20,0.75); box-shadow: 0 0 12px rgba(255,79,216,0.3); }
 .vt-sign span { font: italic 800 12px/1 Poppins, system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; padding-left: .14em; }
-.vt-sign span:first-child { color: #ff7ad9; text-shadow: 0 0 6px rgba(255,79,216,0.8); animation: vt-glitch-a 6.5s steps(1, end) infinite; }
-.vt-sign span:last-child { animation: vt-glitch-b 9s steps(1, end) infinite; animation-delay: 2.2s; }
+.vt-sign span:first-child { color: #ff7ad9; text-shadow: 0 0 6px rgba(255,79,216,0.8); animation: vt-onoff-a 7s steps(1, end) infinite; }
+.vt-sign span:last-child { animation: vt-onoff-b 10s steps(1, end) infinite; animation-delay: 1.7s; }
+.vt-sign b { font-weight: inherit; }
+/* Neon tubes switching on and off (2026-11-19: "like on and off lights"):
+   each word blinks off and back on now and then, and one letter in each
+   word is a failing tube that cuts out on its own. Off = dark unlit tube. */
+.vt-dead { animation: vt-dead 4.3s steps(1, end) infinite; }
+.vt-dead--2 { animation-duration: 5.9s; animation-delay: 2.4s; }
+@keyframes vt-onoff-a {
+  0%, 58%, 60%, 62.5%, 100% { opacity: 1; }
+  58.5%, 60.5% { opacity: .12; text-shadow: none; }
+  61.5% { opacity: .12; text-shadow: none; }
+}
+@keyframes vt-onoff-b {
+  0%, 30%, 33%, 100% { opacity: 1; }
+  30.5%, 31.5% { opacity: .12; text-shadow: none; }
+  31% { opacity: 1; }
+}
+@keyframes vt-dead {
+  0%, 20%, 23%, 70%, 100% { opacity: 1; }
+  20.5%, 22% { opacity: .1; text-shadow: none; }
+  21.3% { opacity: .7; }
+  71%, 76% { opacity: .1; text-shadow: none; }
+  74% { opacity: 1; }
+}
 .vt-sign { animation: vt-box 11s steps(1, end) infinite; }
-/* Neon glitches: brief RGB split + sideways jump, a dying tube, a box flicker */
-@keyframes vt-glitch-a {
-  0%, 61%, 63.5%, 79%, 82%, 100% { transform: none; opacity: 1; text-shadow: 0 0 6px rgba(255,79,216,0.8); }
-  61.5% { transform: translate(-2px, 0) skewX(-8deg); text-shadow: -2px 0 0 rgba(45,226,230,0.9), 2px 0 0 rgba(255,59,107,0.9); }
-  62.3% { transform: translate(2px, -1px); text-shadow: 2px 0 0 rgba(45,226,230,0.9), -2px 0 0 rgba(255,59,107,0.9); opacity: .6; }
-  63% { transform: translate(-1px, 1px); opacity: .9; }
-  79.5% { opacity: .2; text-shadow: none; }
-  80.3% { opacity: 1; }
-  81% { opacity: .35; text-shadow: none; }
-}
-@keyframes vt-glitch-b {
-  0%, 44%, 46.5%, 100% { transform: none; opacity: 1; }
-  44.5% { transform: translate(3px, 0); text-shadow: -2px 0 0 rgba(255,59,107,0.85), 2px 0 0 rgba(45,226,230,0.9); clip-path: inset(0 0 45% 0); }
-  45.3% { transform: translate(-2px, 0); clip-path: inset(50% 0 0 0); opacity: .7; }
-  46% { transform: none; clip-path: none; }
-}
 @keyframes vt-box { 0%, 70%, 71.5%, 100% { border-color: rgba(255,122,217,0.6); } 70.5% { border-color: rgba(255,122,217,0.15); } }
 .vt-sign span:last-child { color: #7ef3f5; text-shadow: 0 0 6px rgba(45,226,230,0.8); }
 @keyframes vt-flicker { 0%, 92%, 96%, 100% { opacity: 1; } 93%, 95% { opacity: .35; } }
@@ -2795,7 +2807,7 @@ html.vice-night .pomo-zen .vt-sign span { font-size: 15px; }
 html.vice-night .pomo-zen .vice-flamingo { left: 150px; bottom: 20px; width: 32px; height: 54px; }
 html.vice-night .pomo-zen .vice-car { width: 120px; height: 32px; }
 html.vice-night .pomo-zen .vice-car--b { width: 84px; height: 22px; bottom: 11px; }
-html.vice-night .pomo-zen .vice-road { height: 22px; background-position: 0 11px, 0 0; }
+html.vice-night .pomo-zen .vice-road { height: 24px; background-position: 0 0, 0 4px, 0 14px, 0 0; }
 html.vice-night .pomo-zen .vice-car--a { bottom: 1px; }
 /* blimp drifting high in the fullscreen sky */
 .vice-blimp { position: absolute; top: 13%; left: -200px; width: 150px; height: 56px; opacity: .8; animation: vice-blimp 110s linear infinite; }
@@ -2815,7 +2827,7 @@ html.vice-night .pomo-zen .vice-car--a { bottom: 1px; }
 .vm-title { font: italic 800 clamp(30px, 4.4vw, 52px)/1 Poppins, system-ui, sans-serif; letter-spacing: .02em; color: #FBBF24; -webkit-text-stroke: 1px rgba(0,0,0,0.6); text-shadow: 0 3px 0 rgba(0,0,0,0.6), 0 0 22px rgba(251,191,36,0.35); }
 .vm-sub { margin-top: 8px; font: 600 16px Poppins, system-ui, sans-serif; color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,0.7); }
 @keyframes vm-in { from { opacity: 0; transform: translateX(-50%) scale(.85); } to { opacity: 1; transform: translateX(-50%) scale(1); } }
-@media (prefers-reduced-motion: reduce) { .vice-car, .vice-blimp { display: none; } .vt-sign, .vt-sign span, .vb-light { animation: none !important; } .pomo-zen-time.zen-kick, .pomo-zen-time.zen-settle, .vice-mission { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .vice-car, .vice-blimp { display: none; } .vt-sign, .vt-sign span, .vt-sign b, .vb-light { animation: none !important; } .pomo-zen-time.zen-kick, .pomo-zen-time.zen-settle, .vice-mission { animation: none; } }
 /* Game-style HUD, top right of fullscreen, today only */
 .pomo-zen > .zen-hud { position: absolute; top: 22px; right: 150px; z-index: 2; display: flex; align-items: flex-start; gap: 12px; }
 .zh-stats { width: 132px; display: flex; flex-direction: column; align-items: stretch; gap: 3px; text-align: right; }
@@ -2844,7 +2856,21 @@ html.vice-night #focus-card .leaderboard-row--me { background: rgba(38,24,70,0.9
 html.vice-night .pomo-zen .pomo-zen-top { flex-direction: row-reverse; }
 html.vice-night .pomo-zen > .zen-hud { right: 32px; }
 /* Start/Pause/Resume sits a bit higher in fullscreen, clear of the road */
-html.vice-night .pomo-zen .pomo-zen-bottom { margin-bottom: 64px; }
+html.vice-night .pomo-zen .pomo-zen-bottom { margin-bottom: 150px; }
+/* Wanted stars in place of the session dots / count */
+.wanted-stars { display: inline-flex; gap: 6px; vertical-align: middle; }
+.wanted-stars .ws { width: 22px; height: 22px; display: block; }
+.wanted-stars svg { width: 100%; height: 100%; fill: none; stroke: rgba(255,255,255,0.35); stroke-width: 1.6; stroke-linejoin: round; }
+.wanted-stars .ws.on svg { fill: #f4f4f4; stroke: #000; stroke-width: 1.4; filter: drop-shadow(0 0 4px rgba(255,255,255,0.45)); }
+.pomo-zen .wanted-stars { gap: 10px; }
+.pomo-zen .wanted-stars .ws { width: 30px; height: 30px; }
+/* First-time glow on the fullscreen button (a pseudo-element's opacity
+   pulses; the button itself never animates) */
+.pomo-tools .pomo-zen-open.is-new { position: relative; color: #e9e3ff; }
+.pomo-tools .pomo-zen-open.is-new::after { content: ''; position: absolute; inset: -3px; border-radius: 999px; pointer-events: none;
+  box-shadow: 0 0 0 1.5px rgba(167,139,250,0.9), 0 0 14px 3px rgba(167,139,250,0.55); animation: zen-new-glow 1.8s ease-in-out infinite; }
+@keyframes zen-new-glow { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .pomo-tools .pomo-zen-open.is-new::after { animation: none; opacity: .8; } }
 </style>
 </head>
 <body data-float-stack data-nav-no-autohide>
