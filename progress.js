@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-37';
+  var CLIENT_VERSION = '2026-11-19-38';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1455,7 +1455,6 @@
         '<linearGradient id="vb-fin" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#160d28"/><stop offset="1" stop-color="#2c1c48"/></linearGradient>' +
         '<linearGradient id="vb-rim" x1="0" y1="0" x2="0" y2="1"><stop offset=".55" stop-color="#ff4fa3" stop-opacity="0"/><stop offset="1" stop-color="#ff4fa3" stop-opacity=".55"/></linearGradient>' +
         '<clipPath id="vb-clip"><path d="' + hull + '"/></clipPath>' +
-        '<clipPath id="vb-scr"><rect x="84" y="29" width="92" height="20" rx="3"/></clipPath>' +
       '</defs>' +
       // tail fins (behind the hull)
       '<path d="M44 30 L14 8 L8 10 L22 34 Z" fill="url(#vb-fin)"/>' +
@@ -1474,9 +1473,7 @@
       '<path d="M48 38 L12 36 L10 40 L12 44 L48 42 Z" fill="#1d1233"/>' +
       // ad screen with scrolling text
       '<rect x="82" y="27" width="96" height="24" rx="4" fill="#07040e" stroke="#ff4fa3" stroke-opacity=".7"/>' +
-      '<g clip-path="url(#vb-scr)"><g class="vb-ticker">' +
-        '<text x="88" y="43" class="vb-text">taai.live \u2605 GATE DA 2027 \u2605 taai.live \u2605 GATE DA 2027 \u2605 </text>' +
-      '</g></g>' +
+      '<text x="130" y="43.5" text-anchor="middle" class="vb-text">taai.live</text>' +
       // nav lights
       '<circle cx="229" cy="40" r="2.2" class="vb-strobe"/>' +
       '<circle cx="11" cy="9" r="2" class="vb-light"/>' +
@@ -4563,9 +4560,6 @@
       '<div class="pomo-zen-bottom"><button type="button" class="pomo-zen-toggle" id="pomo-zen-toggle"></button></div>' +
       '<aside class="pomo-zen-board" id="pomo-zen-board" data-clarity-mask="true" aria-label="Today\'s top 10"></aside>';
     document.body.appendChild(el);
-    // Loop the airship's ad text by exactly one copy of the message.
-    var vbt = el.querySelector('.vb-text');
-    if (vbt) requestAnimationFrame(function () { try { el.querySelector('.vb-ticker').style.setProperty('--vb-loop', (-vbt.getComputedTextLength() / 2) + 'px'); } catch (e) { /* fine */ } });
     refreshZenBoard();
     document.body.classList.add('pomo-zen-active');
     document.getElementById('pomo-zen-exit').addEventListener('click', closePomoZen);
