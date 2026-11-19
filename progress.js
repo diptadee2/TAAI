@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-21';
+  var CLIENT_VERSION = '2026-11-19-22';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1390,7 +1390,7 @@
   function viceSceneHtml() {
     if (!VICE_NIGHT) return '';
     return '<div class="vice-scene" aria-hidden="true"><div class="vice-glow"></div>' + viceSkylineSvg() +
-      viceTowerHtml() + '<div class="vice-road"></div>' + viceFlamingoSvg() + viceCarHtml('b') + viceCarHtml('a') +
+      viceTowerHtml() + '<div class="vice-edge"></div><div class="vice-road"></div>' + viceFlamingoSvg() + viceCarHtml('b') + viceCarHtml('a') +
       vicePalmSvg('vice-palm--l') + vicePalmSvg('vice-palm--r') + '</div>';
   }
   // Small nods (2026-11-19, "add some subtle references"): a neon sign, a
