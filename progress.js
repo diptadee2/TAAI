@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-3';
+  var CLIENT_VERSION = '2026-11-19-4';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -4185,8 +4185,10 @@
       '<div class="pomo-zen-bar"><div class="pomo-zen-bar-fill" id="pomo-zen-bar-fill"></div></div>' +
       '<div class="pomo-zen-sessions" id="pomo-zen-sessions"></div>' +
       '</div>' +
-      '<div class="pomo-zen-bottom"><button type="button" class="pomo-zen-toggle" id="pomo-zen-toggle"></button></div>';
+      '<div class="pomo-zen-bottom"><button type="button" class="pomo-zen-toggle" id="pomo-zen-toggle"></button></div>' +
+      '<aside class="pomo-zen-board" id="pomo-zen-board" data-clarity-mask="true" aria-label="Today\'s top 10"></aside>';
     document.body.appendChild(el);
+    refreshZenBoard();
     document.body.classList.add('pomo-zen-active');
     document.getElementById('pomo-zen-exit').addEventListener('click', closePomoZen);
     document.getElementById('pomo-zen-toggle').addEventListener('click', function () {
@@ -4222,6 +4224,25 @@
     var btn = document.getElementById('pomo-zen-open');
     if (btn) btn.focus({ preventScroll: true });
   }
+  // Today's top 10 on the right of the fullscreen timer (2026-11-19).
+  // Redrawn on open and whenever the leaderboard poll brings new numbers.
+  function refreshZenBoard() {
+    var el = zenEl(), box = document.getElementById('pomo-zen-board');
+    if (!el || !box) return;
+    var leaders = state.todayLeaders || [];
+    el.classList.toggle('has-board', leaders.length > 0);
+    if (!leaders.length) { box.innerHTML = ''; return; }
+    var rows = leaders.map(function (l, i) {
+      return '<li class="zb-row' + (l.is_me ? ' zb-me' : '') + (l.is_live ? ' zb-live' : '') + '">' +
+        '<span class="zb-rank">' + (i + 1) + '</span>' +
+        '<span class="zb-name">' + (l.is_live ? '<i class="zb-dot" aria-label="Studying now"></i>' : '') + escapeHtml(l.display_name) + (l.is_me ? ' <b class="zb-you">You</b>' : '') + '</span>' +
+        '<span class="zb-time">' + formatHoursDecimal(l.total_minutes) + '</span></li>';
+    }).join('');
+    var me = state.todayViewerRank;
+    if (me) rows += '<li class="zb-gap">···</li><li class="zb-row zb-me' + (me.is_live ? ' zb-live' : '') + '"><span class="zb-rank">' + me.rank + '</span><span class="zb-name">You</span><span class="zb-time">' + formatHoursDecimal(me.total_minutes) + '</span></li>';
+    box.innerHTML = '<div class="zb-title">Today\'s top 10</div><ol class="zb-list">' + rows + '</ol>';
+  }
+
   function updatePomoZen() {
     var el = zenEl();
     if (!el) return;
@@ -6505,6 +6526,7 @@
           // rather than leaving a card with a title and no rows.
           if (todayRows && !state.todayLeaders.length && todayRows.children.length) animateTodayBoardOut();
           else if (todayRows) todayRows.innerHTML = renderTodayLeaderboardRows();
+          refreshZenBoard();
           // Same key as the initial-render arming call above (renderCalendar)
           // — see its comment for why these must not be two different keys.
           armConfetti('today-leaderboard-card', 'today-' + todayIso(),

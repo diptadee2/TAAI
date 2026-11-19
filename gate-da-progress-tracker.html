@@ -2560,6 +2560,27 @@ body.pomo-zen-active { overflow: hidden; }
 .pomo-zen-bottom { justify-content: center; }
 .pomo-zen.is-idle .pomo-zen-top, .pomo-zen.is-idle .pomo-zen-bottom { opacity: 0.12; }
 .pomo-zen.is-idle { cursor: none; }
+/* Today's top 10 on the right (2026-11-19). The timer column makes room for it. */
+.pomo-zen-board { display: none; }
+@media (min-width: 1100px) {
+  .pomo-zen.has-board .pomo-zen-board { display: block; position: absolute; right: 32px; top: 50%; transform: translateY(-50%); width: 270px; z-index: 1; padding: 18px 18px 14px; border-radius: 18px; background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.08); transition: opacity .5s; }
+  .pomo-zen.has-board .pomo-zen-center, .pomo-zen.has-board .pomo-zen-bottom { padding-right: 310px; }
+  .pomo-zen.has-board .pomo-zen-time { font-size: min(15vw, 34vh); }
+  .pomo-zen.has-board .pomo-zen-bar { width: min(40vw, 520px); }
+  .pomo-zen.has-board.is-idle .pomo-zen-board { opacity: .45; }
+}
+.zb-title { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 10px; }
+.zb-list { list-style: none; margin: 0; padding: 0; }
+.zb-row { display: grid; grid-template-columns: 24px minmax(0,1fr) auto; gap: 8px; align-items: center; padding: 6px 0; font-size: 13.5px; color: rgba(255,255,255,0.78); border-top: 1px solid rgba(255,255,255,0.05); }
+.zb-row:first-child { border-top: 0; }
+.zb-rank { color: rgba(255,255,255,0.4); font-variant-numeric: tabular-nums; font-size: 12.5px; }
+.zb-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.zb-time { font-variant-numeric: tabular-nums; color: rgba(255,255,255,0.6); }
+.zb-me { color: #fff; }
+.zb-me .zb-time { color: var(--pomo-g2, #A78BFA); font-weight: 700; }
+.zb-you { font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 999px; background: rgba(167,139,250,0.2); color: #d9ccff; }
+.zb-dot { display: inline-block; width: 6px; height: 6px; margin-right: 7px; vertical-align: 2px; border-radius: 50%; background: #4ade80; }
+.zb-gap { text-align: center; color: rgba(255,255,255,0.3); font-size: 12px; padding: 2px 0; }
 .pomo-zen-clock { font-size: 15px; color: rgba(255,255,255,0.55); font-variant-numeric: tabular-nums; letter-spacing: .02em; }
 .pomo-zen-exit { display: inline-flex; align-items: center; gap: 8px; font: inherit; font-size: 14px; padding: 9px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.8); cursor: pointer; }
 .pomo-zen-exit:hover { background: rgba(255,255,255,0.12); color: #fff; }
