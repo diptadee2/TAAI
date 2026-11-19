@@ -4375,6 +4375,23 @@ html body main .page-hero .hero-guide-link:not(#_) > svg:last-child { display: i
   html body main .page-hero .ph-jump:not(#_) { flex: 1 1 auto; justify-content: space-between; }
 }
 </style>
+<style>
+/* GATE 2028 card reorganised (2026-11-19, "a bit disorganised, this is our
+   premier course"): header = title + tagline | price box (validity now
+   inside the price box); the pitch is its own full-width panel under it,
+   headline over text; then What's included, then projects. */
+html body main #combos #full-course-2028 .c28-head:not(#_) { align-items: center !important; }
+html body main #combos #full-course-2028 .c28-valid { margin-top: 12px; display: flex; justify-content: center; }
+html body main #combos #full-course-2028 .c28-valid .combo-validity { margin: 0 !important; font-size: 12px !important; color: var(--sl-dim, #5B5A66) !important; justify-content: center; }
+html body main #combos #full-course-2028 .c28-pitch { margin: 22px 0 6px; padding: 22px 26px; background: #fff; border: 1px solid var(--sl-line, #DEDAF0); border-radius: 20px; }
+html body main #combos #full-course-2028 .c28-pitch .c28-pitch-head { margin: 0 0 8px !important; font-family: 'Archivo', system-ui, sans-serif; font-size: 22px !important; line-height: 1.3; font-weight: 800; letter-spacing: -.01em; color: var(--sl-ink, #121316) !important; }
+html body main #combos #full-course-2028 .c28-pitch-body { margin: 0; max-width: 62ch; font-size: 15px; line-height: 1.6; color: #3D3B47 !important; }
+@media (max-width: 600px) {
+  html body main #combos #full-course-2028 .c28-pitch { margin-top: 18px; padding: 16px; }
+  html body main #combos #full-course-2028 .c28-pitch .c28-pitch-head { font-size: 18px !important; }
+  html body main #combos #full-course-2028 .c28-pitch-body { font-size: 14.5px; }
+}
+</style>
 </head>
 <body data-float-stack>
 <div id="root"></div>
@@ -5772,16 +5789,6 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
               </div>
             )}
             {!comingSoon && !isSoldOut && countdownDetailEl}
-            {!isSoldOut && validityEl}
-            {/* Fills the space beside the price box (2026-10-19). The "one
-                enrolment, two attempts" label and chips were removed the same
-                day at direct request; only the career line remains. */}
-            <div className="c28-attempts">
-              {/* Pitch (2026-11-19, user's idea): the course is gamified, daily
-                  goals from day 1 instead of 10-hour days at the end. Replaces the ML-career line and the separate
-                  "on us" promise above What's included, which said the same. */}
-              <span className="c28-attempts-note"><b className="c28-pitch-head">Getting into an IIT isn't rocket science.<br />It's an entrance exam.</b> Student or working, it's a few small goals a day from day 1, with streaks and leaderboards keeping you going. Stay on track and your last months are revision, not 10‑hour days of cramming.</span>
-            </div>
           </div>
           <div className="c28-buy">
             {c.priceTag && !comingSoon && !isSoldOut && !discountReason && <span className="c28-price-tag">{c.priceTag}</span>}
@@ -5802,7 +5809,16 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
                 {ctaEl}
               </div>
             )}
+            {!isSoldOut && <div className="c28-valid">{validityEl}</div>}
           </div>
+        </div>
+        {/* Pitch (2026-11-19, user's idea): an IIT is an entrance exam, done
+            with small daily goals from day 1 instead of 10-hour days at the
+            end. Its own full-width band under the header (card reorganised
+            the same day, "a bit disorganised"). */}
+        <div className="c28-pitch">
+          <p className="c28-pitch-head">Getting into an IIT isn't rocket science.<br />It's an entrance exam.</p>
+          <p className="c28-pitch-body">Student or working, it's a few small goals a day from day 1, with streaks and leaderboards keeping you going. Stay on track and your last months are revision, not 10‑hour days of cramming.</p>
         </div>
         <div className="c28-includes">
           <div className="combo-includes-label">What's included</div>
