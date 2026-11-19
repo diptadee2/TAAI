@@ -2142,6 +2142,21 @@
         if (++ztries < 60) setTimeout(openFocusForGlow, 250);
       })();
     }
+    // ?mission: play Mission passed every 6s on the checklist.
+    // ?mission=focus on the Pomodoro view, ?mission=zen in fullscreen.
+    var mm = location.search.match(/[?&]mission(?:=(\w+))?/);
+    if (mm) {
+      var mWhere = mm[1] || 'list', mTries = 0;
+      (function missionPreview() {
+        var ready = !state.stale && document.getElementById('focus-toggle');
+        if (!ready && !state.focus) { if (++mTries < 60) setTimeout(missionPreview, 250); return; }
+        if (mWhere !== 'list' && !state.focus) document.getElementById('focus-toggle').click();
+        setTimeout(function () {
+          if (mWhere === 'zen' && !document.getElementById('pomo-zen')) { var z = document.getElementById('pomo-zen-open'); if (z) z.click(); }
+          setTimeout(function loop() { viceMissionPassed(25); setTimeout(loop, 6000); }, 800);
+        }, 900);
+      })();
+    }
     if (/[?&]confetti\b/.test(location.search)) {
       var tries = 0;
       (function waitForFocusButton() {
