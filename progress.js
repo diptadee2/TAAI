@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-18-13';
+  var CLIENT_VERSION = '2026-11-19-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1406,12 +1406,14 @@
 
   // ── The 2 AM Club winner popup (2026-11-18) ────────────────────────
   // Set in /team > Marketing > 2 AM winner. Between its dates (IST) every
-  // visitor, signed in or not, sees it once per browser with confetti. A
+  // visitor, signed in or not, sees it twice per browser (once on the
+  // checklist, once in Focus Mode) with confetti. A
   // small check runs on each load; the photos are only fetched when the
   // popup is actually going to show. On localhost, ?winner-preview shows
   // it with sample content (or the real saved one if active).
   var CLUB_WINNER_SEEN = 'taai_club_winner_seen_';
   function checkClubWinner() {
+    if (document.getElementById('club-winner-modal')) return;
     var isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
     // /team's Preview button saves its unsaved form into this browser's
     // localStorage (same site) and opens ?winner-preview, on any host.
@@ -1426,7 +1428,9 @@
         if (preview) showClubWinner(SAMPLE_CLUB_WINNER);
         return;
       }
-      var seenKey = CLUB_WINNER_SEEN + meta.key;
+      // Shown twice per browser: once on the checklist, once in the
+      // Pomodoro view (Focus Mode), whichever comes first (2026-11-19).
+      var seenKey = CLUB_WINNER_SEEN + meta.key + (state.focus ? ':focus' : ':list');
       var seen = false;
       try { seen = localStorage.getItem(seenKey) === '1'; } catch (e) { /* show it */ }
       if (seen && !preview) return;
@@ -5526,6 +5530,7 @@
     startLeaderboardTimerTick();
     startLeaderboardPoll();
     stopLastWeekPoll(); // champions card isn't rendered in Focus Mode — nothing to poll for
+    setTimeout(checkClubWinner, 700); // the winner popup shows once more in the Pomodoro view
   }
 
   // Shared by the "Focus mode" toggle button and the top-5 champions card
