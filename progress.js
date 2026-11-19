@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-2';
+  var CLIENT_VERSION = '2026-11-19-3';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -3920,7 +3920,7 @@
       html += '<span class="focus-moon" aria-hidden="true"><span class="club-crescent"></span></span>';
       // Toned down 2026-11-18 ("too clumsy"): just the star field, the moon
       // and one occasional shooting star; the planets and comet showers went.
-      html += '<div class="focus-sky" aria-hidden="true"><span class="fs-saturn fs-min"></span><span class="fs-gold fs-min"></span><span class="fs-ice fs-min"></span><span class="fs-shoot"></span></div>';
+      html += '<div class="focus-sky" aria-hidden="true"><span class="fs-shoot"></span></div>';
       // Side by side in the timer's own empty space at wide viewports, one
       // above the other on narrow ones — see .pomo-today-row. Works fine
       // with just one child too (renderTodayLeaders returns '' on a fresh
@@ -4174,6 +4174,8 @@
     el.setAttribute('role', 'dialog');
     el.setAttribute('aria-label', 'Fullscreen timer');
     el.innerHTML =
+      // A few faint planets in the corners (2026-11-19: only here, not on the card).
+      '<div class="pomo-zen-sky" aria-hidden="true"><span class="zs-ringed"></span><span class="zs-gold"></span><span class="zs-blue"></span></div>' +
       '<div class="pomo-zen-top"><span class="pomo-zen-clock" id="pomo-zen-clock"></span>' +
       '<button type="button" class="pomo-zen-exit" id="pomo-zen-exit" aria-label="Exit fullscreen">' +
       '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg><span>Exit</span></button></div>' +

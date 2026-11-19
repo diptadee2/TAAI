@@ -2485,13 +2485,6 @@ html body .mobile-menu-contact {
   .fs-comet { position: absolute; height: 2px; border-radius: 2px; background: linear-gradient(90deg, #fff, rgba(216,204,255,0.75) 35%, rgba(255,255,255,0)); transform-origin: left center; opacity: 0; pointer-events: none; }
   .fs-comet::before { content: ''; position: absolute; left: -2.5px; top: -1.5px; width: 5px; height: 5px; border-radius: 50%; background: #fff; box-shadow: 0 0 6px 2px rgba(230,220,255,0.5); }
   @media (prefers-reduced-motion: reduce) { .fs-shoot { animation: none; opacity: .5; } }
-  /* Planets back, subtle and minimal (2026-11-19): three small, faint ones
-     in the same measured empty spots (the ringed one half off the left
-     edge, gold in the timer/leaders gap, blue in the left margin). */
-  .fs-min.fs-saturn { width: 30px; height: 30px; left: -14px; opacity: .32; }
-  .fs-min.fs-saturn::before { left: -12px; top: 10px; width: 54px; height: 10px; border-width: 1.5px; border-color: rgba(201,184,255,0.55); }
-  .fs-min.fs-gold { width: 14px; height: 14px; opacity: .35; }
-  .fs-min.fs-ice { width: 12px; height: 12px; opacity: .3; }
   @media (max-width: 1180px) { #focus-card .focus-moon { right: 12px; top: 12px; transform: scale(.8); } }
   #focus-card .club-sky i { background: #fff; }
   #focus-card .club-sky i { animation-name: club-twinkle-bright; }
@@ -2555,6 +2548,13 @@ body.pomo-zen-active { overflow: hidden; }
 .pomo-zen { position: fixed; inset: 0; z-index: 2000; display: flex; flex-direction: column; justify-content: space-between; padding: 28px 32px 40px; color: #fff;
   background: radial-gradient(ellipse at 50% 35%, #1b1640 0%, #0c0b22 55%, #05060f 100%); animation: pomo-zen-in .35s ease-out; }
 @keyframes pomo-zen-in { from { opacity: 0; } to { opacity: 1; } }
+.pomo-zen-sky { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.pomo-zen > *:not(.pomo-zen-sky) { position: relative; z-index: 1; }
+.pomo-zen-sky span { position: absolute; border-radius: 50%; }
+.zs-ringed { left: 7%; top: 70%; width: 34px; height: 34px; background: radial-gradient(circle at 35% 30%, #c9b8ff, #7c66d6 55%, #3d2f80); opacity: .3; }
+.zs-ringed::before { content: ''; position: absolute; left: -13px; top: 11px; width: 60px; height: 11px; border-radius: 50%; border: 1.5px solid rgba(201,184,255,0.55); transform: rotate(-18deg); }
+.zs-gold { right: 12%; top: 20%; width: 14px; height: 14px; background: radial-gradient(circle at 35% 30%, #fff1b8, #d8a838 60%, #6d4d12); opacity: .35; }
+.zs-blue { right: 8%; top: 76%; width: 10px; height: 10px; background: radial-gradient(circle at 35% 30%, #bfeaff, #4aa3d8 60%, #1d4f78); opacity: .3; }
 .pomo-zen-top, .pomo-zen-bottom { display: flex; align-items: center; transition: opacity .5s; }
 .pomo-zen-top { justify-content: space-between; }
 .pomo-zen-bottom { justify-content: center; }
