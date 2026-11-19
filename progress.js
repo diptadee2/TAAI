@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-30';
+  var CLIENT_VERSION = '2026-11-19-31';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1444,13 +1444,43 @@
   function viceTowerHtml() {
     return '<div class="vice-tower"><div class="vt-sign"><span>Vi<b class="vt-dead">c</b>e</span><span>Ci<b class="vt-dead vt-dead--2">t</b>y</span></div><div class="vt-mast"></div><div class="vt-body"></div></div>';
   }
+  // Airship drifting across the fullscreen sky, drawn nose-right (it travels
+  // left to right): shaded hull, tail fins, lit gondola, blinking nav lights
+  // and a small ad screen with scrolling text. Our own drawing.
   function viceBlimpHtml() {
-    return '<span class="vice-blimp"><svg viewBox="0 0 160 60" aria-hidden="true">' +
-      '<ellipse cx="78" cy="26" rx="62" ry="20" class="vb-body"/>' +
-      '<path class="vb-body" d="M132 24 L156 10 L152 26 L156 42 L132 30 Z"/>' +
-      '<rect class="vb-body" x="66" y="44" width="22" height="7" rx="3"/>' +
-      '<rect class="vb-screen" x="44" y="20" width="56" height="10" rx="2"/>' +
-      '<circle class="vb-light" cx="18" cy="26" r="1.8"/></svg></span>';
+    var hull = 'M28 40 C28 23 66 14 128 14 C190 14 224 25 230 40 C224 55 190 66 128 66 C66 66 28 57 28 40 Z';
+    return '<span class="vice-blimp"><svg viewBox="0 0 240 84" aria-hidden="true">' +
+      '<defs>' +
+        '<linearGradient id="vb-hull" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a3168"/><stop offset=".35" stop-color="#241640"/><stop offset="1" stop-color="#0b0716"/></linearGradient>' +
+        '<linearGradient id="vb-fin" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#160d28"/><stop offset="1" stop-color="#2c1c48"/></linearGradient>' +
+        '<linearGradient id="vb-rim" x1="0" y1="0" x2="0" y2="1"><stop offset=".55" stop-color="#ff4fa3" stop-opacity="0"/><stop offset="1" stop-color="#ff4fa3" stop-opacity=".55"/></linearGradient>' +
+        '<clipPath id="vb-clip"><path d="' + hull + '"/></clipPath>' +
+        '<clipPath id="vb-scr"><rect x="84" y="29" width="92" height="20" rx="3"/></clipPath>' +
+      '</defs>' +
+      // tail fins (behind the hull)
+      '<path d="M44 30 L14 8 L8 10 L22 34 Z" fill="url(#vb-fin)"/>' +
+      '<path d="M44 50 L14 72 L8 70 L22 46 Z" fill="url(#vb-fin)"/>' +
+      // gondola
+      '<path d="M120 62 L156 62 L152 73 Q150 76 146 76 L128 76 Q124 76 122 73 Z" fill="#120a20"/>' +
+      '<rect x="128" y="67" width="4" height="4" rx="1" fill="#ffd27a"/><rect x="136" y="67" width="4" height="4" rx="1" fill="#ffd27a" opacity=".7"/><rect x="144" y="67" width="4" height="4" rx="1" fill="#ffd27a"/>' +
+      // hull, city-glow rim light, top sheen, panel seams
+      '<path d="' + hull + '" fill="url(#vb-hull)"/>' +
+      '<g clip-path="url(#vb-clip)">' +
+        '<rect x="20" y="14" width="214" height="52" fill="url(#vb-rim)"/>' +
+        '<ellipse cx="130" cy="20" rx="78" ry="4" fill="#fff" opacity=".1"/>' +
+        '<path d="M70 14 Q62 40 70 66 M190 15 Q200 40 190 65" stroke="#000" stroke-opacity=".35" fill="none"/>' +
+      '</g>' +
+      // middle fin seen side-on
+      '<path d="M48 38 L12 36 L10 40 L12 44 L48 42 Z" fill="#1d1233"/>' +
+      // ad screen with scrolling text
+      '<rect x="82" y="27" width="96" height="24" rx="4" fill="#07040e" stroke="#ff4fa3" stroke-opacity=".7"/>' +
+      '<g clip-path="url(#vb-scr)"><g class="vb-ticker">' +
+        '<text x="88" y="43" class="vb-text">STAY FOCUSED \u2605 ONE MORE SESSION \u2605 STAY FOCUSED \u2605 ONE MORE SESSION \u2605</text>' +
+      '</g></g>' +
+      // nav lights
+      '<circle cx="229" cy="40" r="2.2" class="vb-strobe"/>' +
+      '<circle cx="11" cy="9" r="2" class="vb-light"/>' +
+      '</svg></span>';
   }
   // A game-style HUD in the top right of fullscreen (2026-11-19): a 24-hour
   // clock, today's focus time in green where the money would be, a red bar
@@ -1525,10 +1555,10 @@
     var old = document.getElementById('vice-mission'); if (old) old.remove();
     var d = document.createElement('div');
     d.id = 'vice-mission'; d.className = 'vice-mission'; d.setAttribute('role', 'status');
-    d.innerHTML = '<div class="vm-title">Mission passed!</div><div class="vm-sub">+' + (min > 0 ? min : '') + ' min of focus</div>';
+    d.innerHTML = '<div class="vm-title">Mission passed!</div><div class="vm-respect">Respect +</div><div class="vm-sub">+' + (min > 0 ? min : '') + ' min of focus</div>';
     document.body.appendChild(d);
-    setTimeout(function () { d.classList.add('is-leaving'); }, 3200);
-    setTimeout(function () { d.remove(); }, 3800);
+    setTimeout(function () { d.classList.add('is-leaving'); }, 4200);
+    setTimeout(function () { d.remove(); }, 4800);
   }
 
   function init() {
