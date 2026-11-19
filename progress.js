@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-38';
+  var CLIENT_VERSION = '2026-11-19-39';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1440,7 +1440,43 @@
       an.onfinish = an.oncancel = function () { car._driving = false; car.style.opacity = '0'; car._next = Date.now() + viceRand(4000, 20000); };
     });
   }
-  if (VICE_NIGHT && !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) setInterval(viceCarsTick, 1000);
+  // Airship in fullscreen (2026-11-19, "interfering with the focus text",
+  // "can its motion be randomised"): it flies only in the free band between
+  // the Start button / top 10 and the rooftops, at a random height, speed,
+  // direction and gap. If a short screen leaves no room, that pass is skipped.
+  function viceBlimpTick() {
+    if (document.hidden) return;
+    var bl = document.querySelector('#pomo-zen .vice-blimp');
+    if (!bl || bl._flying || !bl.animate) return;
+    var now = Date.now();
+    if (!bl._next) { bl._next = now + viceRand(4000, 20000); return; }
+    if (now < bl._next) return;
+    var zen = document.getElementById('pomo-zen'), sky = bl.parentNode;
+    var skyline = zen.querySelector('.vice-skyline');
+    if (!sky || !skyline) return;
+    var sr = sky.getBoundingClientRect();
+    var top = 0;
+    ['#pomo-zen-toggle', '#pomo-zen-sessions', '#pomo-zen-board', '.pomo-zen-bar', '.vt-sign'].forEach(function (s) {
+      var e = zen.querySelector(s); if (!e || !e.offsetParent && s !== '#pomo-zen-board') return;
+      var r = e.getBoundingClientRect(); if (r.height && r.bottom > top) top = r.bottom;
+    });
+    var kr = skyline.getBoundingClientRect();
+    // It may pass in front of the taller buildings (scenery, not text), but
+    // its belly stays above mid-building height.
+    var floor = kr.top + kr.height * 0.45;
+    var h = bl.offsetHeight || 60;
+    var lo = top + 12 - sr.top, hi = floor - h - sr.top;
+    if (hi < lo) { bl._next = now + viceRand(20000, 40000); return; }
+    var rtl = Math.random() < 0.5, w = sky.clientWidth;
+    bl.style.top = Math.round(viceRand(lo, hi)) + 'px';
+    bl.style.setProperty('--vb-dir', rtl ? -1 : 1);
+    bl.classList.add('is-flying');
+    bl._flying = true;
+    var from = rtl ? w + 40 : -bl.offsetWidth - 40, to = rtl ? -bl.offsetWidth - 40 : w + 40;
+    var an = bl.animate([{ left: from + 'px' }, { left: to + 'px' }], { duration: viceRand(45000, 90000), easing: 'linear' });
+    an.onfinish = an.oncancel = function () { bl._flying = false; bl.classList.remove('is-flying'); bl._next = Date.now() + viceRand(15000, 60000); };
+  }
+  if (VICE_NIGHT && !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) setInterval(function () { viceCarsTick(); viceBlimpTick(); }, 1000);
   function viceTowerHtml() {
     return '<div class="vice-tower"><div class="vt-sign"><span>Vi<b class="vt-dead">c</b>e</span><span>Ci<b class="vt-dead vt-dead--2">t</b>y</span></div><div class="vt-mast"></div><div class="vt-body"></div></div>';
   }
