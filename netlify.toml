@@ -144,6 +144,14 @@
   status = 302
   force = true
 
+# Short link straight into Focus Mode (the Pomodoro view) for ads
+# (2026-11-19). progress.js opens Focus Mode on ?focus (desktop only).
+[[redirects]]
+  from = "/focus"
+  to = "/gate-da-progress-tracker?focus"
+  status = 302
+  force = true
+
 # "100 pe 100% off" registration form (2026-10-18): serves challenge.html,
 # which carries the link-preview tags and forwards people to the courses
 # page with the form open (ChallengeRegister's #register-challenge check).

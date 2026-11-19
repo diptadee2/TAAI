@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-39';
+  var CLIENT_VERSION = '2026-11-19-41';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2170,6 +2170,23 @@
       if (busy && t < MAX) requestAnimationFrame(frame); else canvas.remove();
     }
     requestAnimationFrame(frame);
+  }
+
+  // ?focus (or the short link taai.live/focus): open straight into Focus Mode,
+  // for ads (2026-11-19). Desktop only, like the Focus button; on a phone it
+  // just lands on the checklist. The parameter is removed first so Back and
+  // a later reload behave normally.
+  if (/[?&]focus\b/.test(location.search)) {
+    try { history.replaceState(history.state, '', location.pathname + location.search.replace(/([?&])focus\b(=[^&]*)?&?/, '$1').replace(/[?&]$/, '') + location.hash); } catch (e) { /* fine */ }
+    if (window.innerWidth > 1080) {
+      var fTries = 0;
+      (function openFocusFromLink() {
+        if (state.focus) return;
+        var btn = document.getElementById('focus-toggle');
+        if (btn && !state.stale) { btn.click(); return; }
+        if (++fTries < 80) setTimeout(openFocusFromLink, 250);
+      })();
+    }
   }
 
   // Local testing only: on localhost, open the tracker with ?confetti to fire
