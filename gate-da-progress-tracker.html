@@ -2838,7 +2838,7 @@ html.vice-night .pomo-zen .vice-car--a { bottom: 1px; }
 @media (prefers-reduced-motion: reduce) { .vice-car, .vice-blimp { display: none; } .vt-sign, .vt-sign span, .vt-sign b, .vb-light { animation: none !important; } .pomo-zen-time.zen-kick, .pomo-zen-time.zen-settle, .vice-mission { animation: none; } }
 /* Game-style HUD, top right of fullscreen, today only */
 .pomo-zen > .zen-hud { position: absolute; top: 22px; right: 150px; z-index: 2; display: flex; align-items: flex-start; gap: 12px; }
-.zh-stats { width: 176px; display: flex; flex-direction: column; align-items: stretch; gap: 3px; text-align: right; }
+.zh-stats { width: 150px; display: flex; flex-direction: column; align-items: stretch; gap: 3px; text-align: right; }
 .zh-clock, .zh-money { font: 800 26px/1 Poppins, system-ui, sans-serif; letter-spacing: .02em; font-variant-numeric: tabular-nums; -webkit-text-stroke: 1.5px #000; paint-order: stroke fill; text-shadow: 2px 2px 0 #000; }
 .zh-clock { color: #e8e8e8; }
 .zh-money { color: #6fcf5a; font-size: 22px; }
@@ -2905,7 +2905,10 @@ html.vice-night .pomo-zen .vice-edge { bottom: 24px; height: 46px; background-si
 .zh-row { display: flex; align-items: baseline; justify-content: flex-end; gap: 8px; }
 .zh-lbl { font: 700 10px/1 Poppins, system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,0.55); text-shadow: 1px 1px 0 #000; white-space: nowrap; }
 .zh-clock, .zh-money { white-space: nowrap; }
-.zh-cap { margin-top: 3px; font: 600 11px/1.2 Poppins, system-ui, sans-serif; color: rgba(255,255,255,0.7); text-shadow: 1px 1px 0 #000; }
+.zh-ico { width: 18px; height: 18px; flex: none; align-self: center; filter: drop-shadow(1.5px 1.5px 0 #000); }
+.zh-row { align-items: center !important; }
+/* bar and caption sit side by side, caption in the HUD's outlined style */
+.zh-cap { margin-top: 4px; font: 800 12px/1 Poppins, system-ui, sans-serif; letter-spacing: .04em; text-transform: uppercase; color: #ff6b6b; -webkit-text-stroke: 1px #000; paint-order: stroke fill; text-shadow: 1.5px 1.5px 0 #000; }
 .zh-health i { transition: width 1s linear; }
 </style>
 </head>

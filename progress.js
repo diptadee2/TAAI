@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-28';
+  var CLIENT_VERSION = '2026-11-19-29';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1459,8 +1459,9 @@
   function viceHudHtml() {
     return '<div class="zen-hud" id="zen-hud" aria-hidden="true">' +
       '<div class="zh-stats">' +
-        '<div class="zh-row"><span class="zh-lbl">Time</span><span class="zh-clock" id="zh-clock"></span></div>' +
-        '<div class="zh-row"><span class="zh-lbl">Focused today</span><span class="zh-money" id="zh-money"></span></div>' +
+        // Small outlined icons instead of word labels, closer to the game's HUD.
+        '<div class="zh-row" title="Time"><svg class="zh-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="#e8e8e8" stroke="#000" stroke-width="2.4"/><path d="M12 7.5V12l3 2" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round"/></svg><span class="zh-clock" id="zh-clock"></span></div>' +
+        '<div class="zh-row" title="Focused today"><svg class="zh-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="#6fcf5a" stroke="#000" stroke-width="2.4"/><circle cx="12" cy="12" r="4" fill="none" stroke="#000" stroke-width="2"/><circle cx="12" cy="12" r="1.3" fill="#000"/></svg><span class="zh-money" id="zh-money"></span></div>' +
         '<div class="zh-health"><i id="zh-health"></i></div><div class="zh-cap" id="zh-cap"></div>' +
         '<div class="zh-stars" id="zh-stars"></div></div>' +
       '<div class="zh-weapon">' + vicePencilSvg() + '</div>' +
@@ -1511,7 +1512,7 @@
     var cap = document.getElementById('zh-cap');
     if (cap) {
       var sessLeft = Math.max(0, target - (pomo.completedSessions || 0));
-      var txt = sessLeft === 0 ? 'Target reached' : sessLeft + (sessLeft === 1 ? ' session' : ' sessions') + ' to today\'s target';
+      var txt = sessLeft === 0 ? 'Target reached!' : sessLeft + ' to go';
       if (cap.textContent !== txt) cap.textContent = txt;
     }
   }
