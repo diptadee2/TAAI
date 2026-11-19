@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-27';
+  var CLIENT_VERSION = '2026-11-19-28';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1458,8 +1458,11 @@
   // "weapon". Our own drawing; no game font or artwork.
   function viceHudHtml() {
     return '<div class="zen-hud" id="zen-hud" aria-hidden="true">' +
-      '<div class="zh-stats"><div class="zh-clock" id="zh-clock"></div><div class="zh-money" id="zh-money"></div>' +
-      '<div class="zh-health"><i id="zh-health"></i></div><div class="zh-stars" id="zh-stars"></div></div>' +
+      '<div class="zh-stats">' +
+        '<div class="zh-row"><span class="zh-lbl">Time</span><span class="zh-clock" id="zh-clock"></span></div>' +
+        '<div class="zh-row"><span class="zh-lbl">Focused today</span><span class="zh-money" id="zh-money"></span></div>' +
+        '<div class="zh-health"><i id="zh-health"></i></div><div class="zh-cap" id="zh-cap"></div>' +
+        '<div class="zh-stars" id="zh-stars"></div></div>' +
       '<div class="zh-weapon">' + vicePencilSvg() + '</div>' +
     '</div>';
   }
@@ -1496,8 +1499,21 @@
     if (mine) mins = mine.total_minutes || 0; else if (state.todayViewerRank) mins = state.todayViewerRank.total_minutes || 0;
     var m = document.getElementById('zh-money');
     if (m) m.textContent = Math.floor(mins / 60) + 'h ' + String(Math.round(mins % 60)).padStart(2, '0') + 'm';
+    // The red bar is today's session target (2026-11-19): full at the start
+    // of the day, it drains as you focus (smoothly, including the session
+    // running now) and is empty once the target is reached. Target = one
+    // cycle of focus sessions from the timer settings.
+    var target = Math.max(1, pomoSettings.cycle || 4), workSec = (pomoSettings.work || 25) * 60;
+    var doneSec = Math.min(target * workSec, (pomo.completedSessions || 0) * workSec + (pomo.mode === 'work' ? Math.max(0, pomo.totalSeconds - pomo.secondsLeft) : 0));
+    var left = 1 - doneSec / (target * workSec);
     var h = document.getElementById('zh-health');
-    if (h) h.style.width = (pomo.totalSeconds > 0 ? Math.max(0, Math.min(1, pomo.secondsLeft / pomo.totalSeconds)) * 100 : 100).toFixed(1) + '%';
+    if (h) h.style.width = (Math.max(0, left) * 100).toFixed(2) + '%';
+    var cap = document.getElementById('zh-cap');
+    if (cap) {
+      var sessLeft = Math.max(0, target - (pomo.completedSessions || 0));
+      var txt = sessLeft === 0 ? 'Target reached' : sessLeft + (sessLeft === 1 ? ' session' : ' sessions') + ' to today\'s target';
+      if (cap.textContent !== txt) cap.textContent = txt;
+    }
   }
   // Five "wanted" stars by the clock in fullscreen, filled one per focus
   // session finished today.
