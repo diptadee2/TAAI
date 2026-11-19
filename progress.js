@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-25';
+  var CLIENT_VERSION = '2026-11-19-26';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1419,6 +1419,28 @@
       '<rect class="vc-tail" x="6" y="29" width="7" height="3.5" rx="1"/><rect class="vc-head" x="189" y="31" width="7" height="3" rx="1"/>' +
       '</svg></span>';
   }
+  // Cars drive at random moments and speeds (2026-11-19, "can't the cars'
+  // entry and exit be randomized"): one check a second; a parked car waits a
+  // random 4-20s, then crosses in 6.5-11s (the far one 9-14s).
+  function viceRand(a, b) { return a + Math.random() * (b - a); }
+  function viceCarsTick() {
+    if (document.hidden) return;
+    var now = Date.now();
+    [].forEach.call(document.querySelectorAll('.vice-car'), function (car) {
+      if (car._driving) return;
+      if (!car._next) { car._next = now + viceRand(1500, 12000); return; }
+      if (now < car._next) return;
+      var w = car.parentNode ? car.parentNode.clientWidth : 0;
+      if (!w || !car.animate) return;
+      var rtl = car.classList.contains('vice-car--b');
+      var dur = rtl ? viceRand(9000, 14000) : viceRand(6500, 11000);
+      car._driving = true;
+      car.style.opacity = '1';
+      var an = car.animate([{ left: (rtl ? w + 170 : -270) + 'px' }, { left: (rtl ? -250 : w + 170) + 'px' }], { duration: dur, easing: 'linear' });
+      an.onfinish = an.oncancel = function () { car._driving = false; car.style.opacity = '0'; car._next = Date.now() + viceRand(4000, 20000); };
+    });
+  }
+  if (VICE_NIGHT && !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) setInterval(viceCarsTick, 1000);
   function viceTowerHtml() {
     return '<div class="vice-tower"><div class="vt-sign"><span>Vi<b class="vt-dead">c</b>e</span><span>Ci<b class="vt-dead vt-dead--2">t</b>y</span></div><div class="vt-mast"></div><div class="vt-body"></div></div>';
   }
@@ -2061,6 +2083,18 @@
     window.taaiConfetti = fireConfetti;
     window.taaiMission = function () { viceMissionPassed(25); };
     // ?confetti opens the Pomodoro (Focus mode) view first, then fires.
+    // ?zen-new: forget that fullscreen was used (so the button glows again)
+    // and open the Pomodoro view.
+    if (/[?&]zen-new\b/.test(location.search)) {
+      try { localStorage.removeItem('taai_zen_seen_v1'); } catch (e) { /* fine */ }
+      var ztries = 0;
+      (function openFocusForGlow() {
+        if (state.focus) return;
+        var btn = document.getElementById('focus-toggle');
+        if (btn && !state.stale) { btn.click(); return; }
+        if (++ztries < 60) setTimeout(openFocusForGlow, 250);
+      })();
+    }
     if (/[?&]confetti\b/.test(location.search)) {
       var tries = 0;
       (function waitForFocusButton() {
