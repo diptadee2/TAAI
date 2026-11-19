@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-33';
+  var CLIENT_VERSION = '2026-11-19-34';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1553,6 +1553,13 @@
   }
   function viceMissionPassed(min) {
     var old = document.getElementById('vice-mission'); if (old) old.remove();
+    var oldDim = document.getElementById('vice-mission-dim'); if (oldDim) oldDim.remove();
+    // Dim everything behind it so the message reads clearly in the middle.
+    var dim = document.createElement('div');
+    dim.id = 'vice-mission-dim'; dim.className = 'vice-mission-dim';
+    document.body.appendChild(dim);
+    setTimeout(function () { dim.classList.add('is-leaving'); }, 4200);
+    setTimeout(function () { dim.remove(); }, 4800);
     var d = document.createElement('div');
     d.id = 'vice-mission'; d.className = 'vice-mission'; d.setAttribute('role', 'status');
     d.innerHTML = '<div class="vm-title">Mission passed!</div><div class="vm-respect">Respect +</div><div class="vm-sub">+' + (min > 0 ? min : '') + ' min of focus</div>';
