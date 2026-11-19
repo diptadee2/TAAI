@@ -11,8 +11,8 @@
 <meta name="description" content="Track your daily GATE DA 2027 study schedule and mark tasks complete as you go.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@500;600;700&display=swap" rel="stylesheet"></noscript>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@500;600;700&family=Saira:wght@800;900&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@500;600;700&family=Saira:wght@800;900&display=swap" rel="stylesheet"></noscript>
 <script defer src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
 <script defer src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
 <script defer src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
@@ -2916,6 +2916,16 @@ html.vice-night .pomo-zen .vice-edge { bottom: 24px; height: 46px; background-si
 /* bar and caption sit side by side, caption in the HUD's outlined style */
 .zh-cap { margin-top: 4px; font: 800 12px/1 Poppins, system-ui, sans-serif; letter-spacing: .04em; text-transform: uppercase; color: #ff6b6b; -webkit-text-stroke: 1px #000; paint-order: stroke fill; text-shadow: 1.5px 1.5px 0 #000; }
 .zh-health i { transition: width 1s linear; }
+</style>
+<style>
+/* Game-style lettering for the Vice night extras (2026-11-19): Saira Black /
+   ExtraBold (free Google Font) for Mission passed, Respect + and the HUD.
+   The game's own font (Pricedown) needs a paid webfont license, so not used. */
+.vm-title { font-family: Saira, Poppins, system-ui, sans-serif !important; font-weight: 900 !important; font-style: normal !important; text-transform: uppercase; letter-spacing: .01em; -webkit-text-stroke: 2px #000; paint-order: stroke fill; text-shadow: 0 4px 0 #000, 0 0 24px rgba(251,191,36,0.35); }
+.vm-respect, .vm-sub { font-family: Saira, Poppins, system-ui, sans-serif !important; font-weight: 800 !important; }
+.vm-sub { font-size: 17px; letter-spacing: .03em; }
+.zh-clock, .zh-money, .zh-cap { font-family: Saira, Poppins, system-ui, sans-serif !important; font-weight: 900 !important; }
+.zh-clock { font-size: 28px !important; } .zh-money { font-size: 24px !important; }
 </style>
 </head>
 <body data-float-stack data-nav-no-autohide>
