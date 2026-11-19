@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-32';
+  var CLIENT_VERSION = '2026-11-19-33';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1475,7 +1475,7 @@
       // ad screen with scrolling text
       '<rect x="82" y="27" width="96" height="24" rx="4" fill="#07040e" stroke="#ff4fa3" stroke-opacity=".7"/>' +
       '<g clip-path="url(#vb-scr)"><g class="vb-ticker">' +
-        '<text x="88" y="43" class="vb-text">STAY FOCUSED \u2605 ONE MORE SESSION \u2605 STAY FOCUSED \u2605 ONE MORE SESSION \u2605</text>' +
+        '<text x="88" y="43" class="vb-text">TAAI.LIVE \u2605 GATE DA 2027 \u2605 TAAI.LIVE \u2605 GATE DA 2027 \u2605 </text>' +
       '</g></g>' +
       // nav lights
       '<circle cx="229" cy="40" r="2.2" class="vb-strobe"/>' +
@@ -4547,6 +4547,9 @@
       '<div class="pomo-zen-bottom"><button type="button" class="pomo-zen-toggle" id="pomo-zen-toggle"></button></div>' +
       '<aside class="pomo-zen-board" id="pomo-zen-board" data-clarity-mask="true" aria-label="Today\'s top 10"></aside>';
     document.body.appendChild(el);
+    // Loop the airship's ad text by exactly one copy of the message.
+    var vbt = el.querySelector('.vb-text');
+    if (vbt) requestAnimationFrame(function () { try { el.querySelector('.vb-ticker').style.setProperty('--vb-loop', (-vbt.getComputedTextLength() / 2) + 'px'); } catch (e) { /* fine */ } });
     refreshZenBoard();
     document.body.classList.add('pomo-zen-active');
     document.getElementById('pomo-zen-exit').addEventListener('click', closePomoZen);

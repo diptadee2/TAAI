@@ -2822,7 +2822,7 @@ html.vice-night .pomo-zen .vice-car--a { bottom: 1px; }
 .vice-blimp svg { width: 100%; height: 100%; display: block; overflow: visible; }
 .vb-text { font: 700 11px Poppins, sans-serif; letter-spacing: .08em; fill: #ff7ac0; }
 .vb-ticker { animation: vb-ticker 12s linear infinite; }
-@keyframes vb-ticker { from { transform: translateX(0); } to { transform: translateX(-247.9px); } }
+@keyframes vb-ticker { from { transform: translateX(0); } to { transform: translateX(var(--vb-loop, -150px)); } }
 .vb-light { fill: #ff3b6b; animation: vb-blink 1.6s steps(1) infinite; }
 .vb-strobe { fill: #fff; animation: vb-blink 1.6s steps(1) .8s infinite; }
 @keyframes vb-blink { 0%, 70% { opacity: .15; } 71%, 100% { opacity: 1; } }
