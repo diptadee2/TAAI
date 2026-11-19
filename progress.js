@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-12';
+  var CLIENT_VERSION = '2026-11-19-13';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1428,6 +1428,29 @@
       '<rect class="vb-body" x="66" y="44" width="22" height="7" rx="3"/>' +
       '<rect class="vb-screen" x="44" y="20" width="56" height="10" rx="2"/>' +
       '<circle class="vb-light" cx="18" cy="26" r="1.8"/></svg></span>';
+  }
+  // A game-style HUD in the top right of fullscreen (2026-11-19): a 24-hour
+  // clock, today's focus time in green where the money would be, a red bar
+  // for the time left in this phase, the wanted stars, and a pencil as the
+  // "weapon". Our own drawing; no game font or artwork.
+  function viceHudHtml() {
+    return '<div class="zen-hud" id="zen-hud" aria-hidden="true">' +
+      '<div class="zh-stats"><div class="zh-clock" id="zh-clock"></div><div class="zh-money" id="zh-money"></div>' +
+      '<div class="zh-health"><i id="zh-health"></i></div>' + viceWantedHtml() + '</div>' +
+      '<div class="zh-weapon"><svg viewBox="0 0 48 48"><path d="M10 38l3-10 20-20a3.5 3.5 0 0 1 5 0l2 2a3.5 3.5 0 0 1 0 5L20 35z" fill="#f2c94c" stroke="#111" stroke-width="2.4" stroke-linejoin="round"/><path d="M33 8l7 7" stroke="#111" stroke-width="2.4"/><path d="M33 8l2-2a3.5 3.5 0 0 1 5 0l2 2a3.5 3.5 0 0 1 0 5l-2 2" fill="#ff8fb1" stroke="#111" stroke-width="2.4" stroke-linejoin="round"/><path d="M10 38l3-10 7 7z" fill="#f5deb3" stroke="#111" stroke-width="2.4" stroke-linejoin="round"/><path d="M10 38l1.5-4.6 3.1 3.1z" fill="#111"/></svg></div>' +
+    '</div>';
+  }
+  function updateViceHud() {
+    var c = document.getElementById('zh-clock');
+    if (!c) return;
+    var d = new Date();
+    c.textContent = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    var mins = 0, mine = (state.todayLeaders || []).filter(function (l) { return l.is_me; })[0];
+    if (mine) mins = mine.total_minutes || 0; else if (state.todayViewerRank) mins = state.todayViewerRank.total_minutes || 0;
+    var m = document.getElementById('zh-money');
+    if (m) m.textContent = Math.floor(mins / 60) + 'h ' + String(Math.round(mins % 60)).padStart(2, '0') + 'm';
+    var h = document.getElementById('zh-health');
+    if (h) h.style.width = (pomo.totalSeconds > 0 ? Math.max(0, Math.min(1, pomo.secondsLeft / pomo.totalSeconds)) * 100 : 100).toFixed(1) + '%';
   }
   // Five "wanted" stars by the clock in fullscreen, filled one per focus
   // session finished today.
@@ -4363,7 +4386,8 @@
     el.innerHTML =
       // A few faint planets in the corners (2026-11-19: only here, not on the card).
       '<div class="pomo-zen-sky" aria-hidden="true">' + viceSceneHtml() + (VICE_NIGHT ? viceBlimpHtml() : '') + '<span class="zs-ringed"></span><span class="zs-gold"></span><span class="zs-blue"></span></div>' +
-      '<div class="pomo-zen-top"><span class="pomo-zen-topleft"><span class="pomo-zen-clock" id="pomo-zen-clock"></span>' + (VICE_NIGHT ? viceWantedHtml() : '') + '</span>' +
+      (VICE_NIGHT ? viceHudHtml() : '') +
+      '<div class="pomo-zen-top"><span class="pomo-zen-topleft"><span class="pomo-zen-clock" id="pomo-zen-clock"></span></span>' +
       '<button type="button" class="pomo-zen-exit" id="pomo-zen-exit" aria-label="Exit fullscreen">' +
       '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg><span>Exit</span></button></div>' +
       '<div class="pomo-zen-center">' +
@@ -4464,6 +4488,7 @@
     if (m && !pomo.running && pomo.secondsLeft < pomo.totalSeconds) m.textContent += ' · paused';
     var c = document.getElementById('pomo-zen-clock');
     if (c) c.textContent = wallClockText();
+    if (VICE_NIGHT) updateViceHud();
     var wz = document.getElementById('zen-wanted');
     if (wz) { var n = Math.min(5, pomo.completedSessions || 0); [].forEach.call(wz.children, function (st, i) { st.classList.toggle('on', i < n); }); }
   }
