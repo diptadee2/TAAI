@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-42';
+  var CLIENT_VERSION = '2026-11-19-43';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1465,9 +1465,9 @@
       if (busy) { car._next = now + viceRand(2000, 6000); return; }
       var w = car.parentNode ? car.parentNode.clientWidth : 0;
       if (!w || !car.animate) return;
-      // Random direction, body shape and colours every pass (2026-11-19).
+      // Random body shape and colours every pass; direction fixed per lane (2026-11-19).
       var far = car.classList.contains('vice-car--b');
-      var rtl = Math.random() < 0.5;
+      var rtl = far; // fixed: near lane left to right, far lane right to left
       var dur = far ? viceRand(9000, 14000) : viceRand(6500, 11000);
       car.style.transform = rtl ? 'scaleX(-1)' : 'none';
       car.setAttribute('data-shape', String(1 + Math.floor(Math.random() * 3)));
