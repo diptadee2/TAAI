@@ -2640,6 +2640,11 @@ body.club-winner-open { overflow: hidden; }
   .cw-post-text { max-height: 4.65em; }
 }
 @media (prefers-reduced-motion: reduce) { .cw-backdrop, .cw-card, .cw-backdrop.is-leaving { animation: none; } }
+/* Photos are always 16:9 (2026-11-19). A single photo shrinks its width (centred) if 16:9 at full width would be too tall for the screen. */
+.cw-photo img, .cw-photos-2 .cw-photo img { aspect-ratio: 16 / 9; height: auto; max-height: none; object-fit: cover; }
+.cw-photos-1 .cw-photo { width: min(100%, calc(32vh * 16 / 9)); margin: 0 auto; }
+@media (max-height: 940px) { .cw-photos-1 .cw-photo { width: min(100%, calc(25vh * 16 / 9)); } }
+@media (max-width: 520px) { .cw-photos-2 { grid-template-columns: 1fr 1fr; gap: 8px; } .cw-photos-2 .cw-photo img { height: auto; max-height: none; } }
 </style>
 </head>
 <body data-float-stack data-nav-no-autohide>
