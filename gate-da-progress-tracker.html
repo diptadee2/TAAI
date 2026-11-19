@@ -2485,6 +2485,13 @@ html body .mobile-menu-contact {
   .fs-comet { position: absolute; height: 2px; border-radius: 2px; background: linear-gradient(90deg, #fff, rgba(216,204,255,0.75) 35%, rgba(255,255,255,0)); transform-origin: left center; opacity: 0; pointer-events: none; }
   .fs-comet::before { content: ''; position: absolute; left: -2.5px; top: -1.5px; width: 5px; height: 5px; border-radius: 50%; background: #fff; box-shadow: 0 0 6px 2px rgba(230,220,255,0.5); }
   @media (prefers-reduced-motion: reduce) { .fs-shoot { animation: none; opacity: .5; } }
+  /* Planets back, subtle and minimal (2026-11-19): three small, faint ones
+     in the same measured empty spots (the ringed one half off the left
+     edge, gold in the timer/leaders gap, blue in the left margin). */
+  .fs-min.fs-saturn { width: 30px; height: 30px; left: -14px; opacity: .32; }
+  .fs-min.fs-saturn::before { left: -12px; top: 10px; width: 54px; height: 10px; border-width: 1.5px; border-color: rgba(201,184,255,0.55); }
+  .fs-min.fs-gold { width: 14px; height: 14px; opacity: .35; }
+  .fs-min.fs-ice { width: 12px; height: 12px; opacity: .3; }
   @media (max-width: 1180px) { #focus-card .focus-moon { right: 12px; top: 12px; transform: scale(.8); } }
   #focus-card .club-sky i { background: #fff; }
   #focus-card .club-sky i { animation-name: club-twinkle-bright; }
