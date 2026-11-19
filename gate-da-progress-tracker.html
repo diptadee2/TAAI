@@ -2842,6 +2842,7 @@ html.vice-night .pomo-zen .vice-car--a { bottom: 1px; }
 .vm-sub { margin-top: 8px; font: 600 16px Poppins, system-ui, sans-serif; color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,0.7); }
 @keyframes vm-in { from { opacity: 0; transform: translate(-50%,-50%) scale(.85); } to { opacity: 1; transform: translate(-50%,-50%) scale(1); } }
 .vice-mission-dim { position: fixed; inset: 0; z-index: 2590; pointer-events: none; background: rgba(4,2,10,0.62); animation: vm-dim-in .35s ease-out; }
+.vice-mission-dim.is-zen { background: rgba(2,1,6,0.8); }
 .vice-mission-dim.is-leaving { opacity: 0; transition: opacity .5s ease; }
 @keyframes vm-dim-in { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .vice-car, .vice-blimp { display: none; } .vb-ticker, .vb-light, .vb-strobe { animation: none !important; } .vt-sign, .vt-sign span, .vt-sign b, .vb-light { animation: none !important; } .pomo-zen-time.zen-kick, .pomo-zen-time.zen-settle, .vice-mission, .vm-respect, .vice-mission-dim { animation: none; } .vm-respect { opacity: 1; } }

@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-35';
+  var CLIENT_VERSION = '2026-11-19-36';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1563,6 +1563,15 @@
     var d = document.createElement('div');
     d.id = 'vice-mission'; d.className = 'vice-mission'; d.setAttribute('role', 'status');
     d.innerHTML = '<div class="vm-title">Mission passed!</div><div class="vm-respect">Respect +</div><div class="vm-sub">+' + (min > 0 ? min : '') + ' min of focus</div>';
+    // In fullscreen the clock sits left of centre when today's top 10 is
+    // showing, so line the message up with the clock rather than the screen.
+    var zenTime = document.querySelector('#pomo-zen .pomo-zen-time');
+    if (zenTime) {
+      var zr = zenTime.getBoundingClientRect();
+      d.style.left = Math.round(zr.left + zr.width / 2) + 'px';
+      d.style.top = Math.round(zr.top + zr.height / 2) + 'px';
+      dim.classList.add('is-zen');
+    }
     document.body.appendChild(d);
     setTimeout(function () { d.classList.add('is-leaving'); }, 4200);
     setTimeout(function () { d.remove(); }, 4800);
