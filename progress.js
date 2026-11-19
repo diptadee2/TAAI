@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-10';
+  var CLIENT_VERSION = '2026-11-19-11';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1394,7 +1394,32 @@
   }
   function viceSceneHtml() {
     if (!VICE_NIGHT) return '';
-    return '<div class="vice-scene" aria-hidden="true"><div class="vice-glow"></div>' + viceSkylineSvg() + vicePalmSvg('vice-palm--l') + vicePalmSvg('vice-palm--r') + '</div>';
+    return '<div class="vice-scene" aria-hidden="true"><div class="vice-glow"></div>' + viceSkylineSvg() +
+      '<span class="vice-sign">Vice</span>' + viceFlamingoSvg() + viceCarHtml() +
+      vicePalmSvg('vice-palm--l') + vicePalmSvg('vice-palm--r') + '</div>';
+  }
+  // Small nods (2026-11-19, "add some subtle references"): a neon sign, a
+  // flamingo by the palm, a car crossing the skyline now and then, and a
+  // "Mission passed" toast when a focus session completes. Our own drawing.
+  function viceFlamingoSvg() {
+    return '<svg class="vice-flamingo" viewBox="0 0 60 100" aria-hidden="true">' +
+      '<path d="M30 8c6 0 9 5 7 10l-6 10c-2 4 0 7 4 9 9 4 13 12 9 20-3 6-10 8-17 7l-1 26h-2l1-26c-6-1-10-6-8-12 2-5 7-7 12-8 4-1 5-4 3-7l-5-8c-3-5-1-11 5-11z" />' +
+      '<path d="M37 18l9 2-8 3z"/></svg>';
+  }
+  function viceCarHtml() {
+    return '<span class="vice-car"><svg viewBox="0 0 120 34" aria-hidden="true">' +
+      '<path d="M4 26c0-5 3-8 8-9l18-2 14-9c3-2 6-3 10-3h22c4 0 7 2 10 4l10 8 14 2c4 1 6 4 6 8v3H4z"/>' +
+      '<circle cx="28" cy="29" r="5" class="vc-w"/><circle cx="94" cy="29" r="5" class="vc-w"/>' +
+      '<rect x="4" y="21" width="5" height="3" class="vc-tail"/></svg></span>';
+  }
+  function viceMissionPassed(min) {
+    var old = document.getElementById('vice-mission'); if (old) old.remove();
+    var d = document.createElement('div');
+    d.id = 'vice-mission'; d.className = 'vice-mission'; d.setAttribute('role', 'status');
+    d.innerHTML = '<div class="vm-title">Mission passed!</div><div class="vm-sub">+' + (min > 0 ? min : '') + ' min of focus</div>';
+    document.body.appendChild(d);
+    setTimeout(function () { d.classList.add('is-leaving'); }, 3200);
+    setTimeout(function () { d.remove(); }, 3800);
   }
 
   function init() {
@@ -1964,6 +1989,7 @@
   // console. Never active on taai.live.
   if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
     window.taaiConfetti = fireConfetti;
+    window.taaiMission = function () { viceMissionPassed(25); };
     // ?confetti opens the Pomodoro (Focus mode) view first, then fires.
     if (/[?&]confetti\b/.test(location.search)) {
       var tries = 0;
@@ -4389,7 +4415,22 @@
     var s = document.getElementById('pomo-zen-sessions');
     if (s) s.textContent = pomoSessionLabel() + ' today';
     var b = document.getElementById('pomo-zen-toggle');
-    if (b) b.textContent = pomo.running ? 'Pause' : 'Start';
+    var runState = pomo.running ? 'run' : 'stop';
+    if (b && b.getAttribute('data-state') !== runState) {
+      b.setAttribute('data-state', runState);
+      b.innerHTML = (pomo.running
+        ? '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/></svg>'
+        : '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>') +
+        '<span>' + (pomo.running ? 'Pause' : (pomo.secondsLeft < pomo.totalSeconds ? 'Resume' : 'Start')) + '</span>';
+      // A small kick on the time when it starts, a gentle settle when it stops
+      // (skipped on the very first draw).
+      if (t && el.hasAttribute('data-drawn')) {
+        t.classList.remove('zen-kick', 'zen-settle'); void t.offsetWidth;
+        t.classList.add(pomo.running ? 'zen-kick' : 'zen-settle');
+      }
+    }
+    el.setAttribute('data-drawn', '1');
+    if (m && !pomo.running && pomo.secondsLeft < pomo.totalSeconds) m.textContent += ' · paused';
     var c = document.getElementById('pomo-zen-clock');
     if (c) c.textContent = wallClockText();
   }
@@ -4509,6 +4550,7 @@
     // pomo.mode was a moment ago).
     var finishedMode = pomo.mode;
     var oldPhaseEndAt = pomo.phaseEndAt;
+    if (VICE_NIGHT && finishedMode === 'work' && oldPhaseEndAt && Date.now() - oldPhaseEndAt < 60000) viceMissionPassed(Math.round(pomo.totalSeconds / 60));
     pomoResetSessionsIfNewDay();
     if (pomo.mode === 'work') pomo.completedSessions++;
     pomo.mode = pomo.mode === 'work' ? 'break' : 'work';
