@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-41';
+  var CLIENT_VERSION = '2026-11-19-42';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1404,21 +1404,50 @@
   // A low sports car with a pink underglow, headlight beam and a tail-light
   // trail; 'a' drives left to right in front, 'b' right to left behind it.
   function viceCarHtml(which) {
-    // An 80s-style wedge coupe, side view, driving right: low nose, big glass,
-    // rear spoiler, side strakes, pink rim light from the city, glowing lights.
-    return '<span class="vice-car vice-car--' + which + '"><span class="vc-trail"></span><span class="vc-glow"></span><span class="vc-beam"></span>' +
+    // Side-view cars drawn driving right; three body shapes (1 wedge coupe,
+    // 2 muscle car, 3 open-top roadster) share the wheels and lights. Each pass
+    // picks a shape, a colour scheme and a direction (viceCarsTick).
+    var arch = 'L172 43 A16 16 0 0 0 140 43 L68 43 A16 16 0 0 0 36 43';
+    return '<span class="vice-car vice-car--' + which + '" data-shape="1"><span class="vc-trail"></span><span class="vc-glow"></span><span class="vc-beam"></span>' +
       '<svg viewBox="0 0 200 52" aria-hidden="true">' +
-      '<path class="vc-body" d="M6 40 L6 31 Q8 27 16 26 L50 24 Q62 13 80 11 L120 11 Q133 12 143 21 L182 25 Q195 27 196 33 L196 40 Q196 43 192 43 L172 43 A16 16 0 0 0 140 43 L68 43 A16 16 0 0 0 36 43 L10 43 Q6 43 6 40 Z"/>' +
-      '<path class="vc-rim" d="M16 26 L50 24 Q62 13 80 11 L120 11 Q133 12 143 21 L182 25 Q195 27 196 33"/>' +
-      '<path class="vc-glass" d="M66 14 L118 14 Q128 15 136 22 L58 24 Z"/>' +
-      '<path class="vc-pillar" d="M101 14 L99 23.5"/>' +
-      '<path class="vc-strake" d="M58 31 L118 30 M60 34 L116 33.2"/>' +
-      '<path class="vc-body" d="M4 22 L24 22 L24 25 L6 25 Z"/>' +
+      '<g class="vc-shape vc-shape--1">' +
+        '<path class="vc-body" d="M6 40 L6 31 Q8 27 16 26 L50 24 Q62 13 80 11 L120 11 Q133 12 143 21 L182 25 Q195 27 196 33 L196 40 Q196 43 192 43 ' + arch + ' L10 43 Q6 43 6 40 Z"/>' +
+        '<path class="vc-rim" d="M16 26 L50 24 Q62 13 80 11 L120 11 Q133 12 143 21 L182 25 Q195 27 196 33"/>' +
+        '<path class="vc-glass" d="M66 14 L118 14 Q128 15 136 22 L58 24 Z"/>' +
+        '<path class="vc-pillar" d="M101 14 L99 23.5"/>' +
+        '<path class="vc-strake" d="M58 31 L118 30 M60 34 L116 33.2"/>' +
+        '<path class="vc-body" d="M4 22 L24 22 L24 25 L6 25 Z"/>' +
+      '</g>' +
+      '<g class="vc-shape vc-shape--2">' +
+        '<path class="vc-body" d="M4 40 L4 29 Q5 25 12 24 L58 23 Q68 13 84 12 L116 12 Q127 13 134 22 L188 25 Q197 26 197 32 L197 40 Q197 43 193 43 ' + arch + ' L8 43 Q4 43 4 40 Z"/>' +
+        '<path class="vc-rim" d="M12 24 L58 23 Q68 13 84 12 L116 12 Q127 13 134 22 L188 25 Q197 26 197 32"/>' +
+        '<path class="vc-glass" d="M70 15 L114 15 Q122 16 128 22.5 L62 23.5 Z"/>' +
+        '<path class="vc-pillar" d="M96 15 L95 23"/>' +
+        '<path class="vc-strake" d="M8 34 L192 33.5"/>' +
+        '<path class="vc-body" d="M150 22 L168 23.5 L166 25.5 L150 24.5 Z"/>' +
+      '</g>' +
+      '<g class="vc-shape vc-shape--3">' +
+        '<path class="vc-body" d="M6 40 L6 31 Q8 26 20 25 L84 25.5 Q88 27 92 27 L122 27 L182 26 Q195 28 196 33 L196 40 Q196 43 192 43 ' + arch + ' L10 43 Q6 43 6 40 Z"/>' +
+        '<path class="vc-rim" d="M20 25 L84 25.5 Q88 27 92 27 L122 27 L182 26 Q195 28 196 33"/>' +
+        '<path class="vc-body" d="M85 27 Q85 20.5 89.5 20.5 Q92 20.5 92 23 L92 27 Z"/>' +
+        '<path class="vc-glass" d="M119 27 L127.5 16.5 L131 16.5 L124 27 Z"/>' +
+        '<circle class="vc-body" cx="101" cy="20" r="4.4"/><path class="vc-body" d="M95.5 27 Q96.5 23 101 23 Q105.5 23 106.5 27 Z"/>' +
+        '<path class="vc-strake" d="M30 33 L170 32.5"/>' +
+      '</g>' +
       '<g class="vc-wheel"><circle cx="52" cy="43" r="11"/><circle class="vc-rimc" cx="52" cy="43" r="6.5"/><circle class="vc-hub" cx="52" cy="43" r="1.6"/></g>' +
       '<g class="vc-wheel"><circle cx="156" cy="43" r="11"/><circle class="vc-rimc" cx="156" cy="43" r="6.5"/><circle class="vc-hub" cx="156" cy="43" r="1.6"/></g>' +
       '<rect class="vc-tail" x="6" y="29" width="7" height="3.5" rx="1"/><rect class="vc-head" x="189" y="31" width="7" height="3" rx="1"/>' +
       '</svg></span>';
   }
+  // Night colour schemes for the cars: paint, rim light, window tint, underglow.
+  var VICE_CAR_LOOKS = [
+    ['#07030d', 'rgba(255,122,217,0.55)', 'rgba(45,226,230,0.22)', 'rgba(255,79,216,0.6)'],
+    ['#05101c', 'rgba(70,225,255,0.6)', 'rgba(255,140,220,0.2)', 'rgba(45,200,255,0.55)'],
+    ['#16060a', 'rgba(255,170,80,0.6)', 'rgba(150,210,255,0.22)', 'rgba(255,130,50,0.55)'],
+    ['#0b0716', 'rgba(185,140,255,0.6)', 'rgba(60,230,210,0.2)', 'rgba(150,100,255,0.6)'],
+    ['#06120c', 'rgba(150,255,120,0.5)', 'rgba(110,220,255,0.2)', 'rgba(110,240,90,0.45)'],
+    ['#0f0f17', 'rgba(230,235,255,0.5)', 'rgba(120,170,255,0.25)', 'rgba(90,140,255,0.5)']
+  ];
   // Cars drive at random moments and speeds (2026-11-19, "can't the cars'
   // entry and exit be randomized"): one check a second; a parked car waits a
   // random 4-20s, then crosses in 6.5-11s (the far one 9-14s).
@@ -1430,10 +1459,21 @@
       if (car._driving) return;
       if (!car._next) { car._next = now + viceRand(1500, 12000); return; }
       if (now < car._next) return;
+      // One car on the road at a time per scene, so two cars never overlap
+      // on screen and look like a crash (2026-11-19).
+      var busy = car.parentNode && [].some.call(car.parentNode.querySelectorAll('.vice-car'), function (o) { return o !== car && o._driving; });
+      if (busy) { car._next = now + viceRand(2000, 6000); return; }
       var w = car.parentNode ? car.parentNode.clientWidth : 0;
       if (!w || !car.animate) return;
-      var rtl = car.classList.contains('vice-car--b');
-      var dur = rtl ? viceRand(9000, 14000) : viceRand(6500, 11000);
+      // Random direction, body shape and colours every pass (2026-11-19).
+      var far = car.classList.contains('vice-car--b');
+      var rtl = Math.random() < 0.5;
+      var dur = far ? viceRand(9000, 14000) : viceRand(6500, 11000);
+      car.style.transform = rtl ? 'scaleX(-1)' : 'none';
+      car.setAttribute('data-shape', String(1 + Math.floor(Math.random() * 3)));
+      var look = VICE_CAR_LOOKS[Math.floor(Math.random() * VICE_CAR_LOOKS.length)];
+      car.style.setProperty('--vc-paint', look[0]); car.style.setProperty('--vc-rimlight', look[1]);
+      car.style.setProperty('--vc-tint', look[2]); car.style.setProperty('--vc-under', look[3]);
       car._driving = true;
       car.style.opacity = '1';
       var an = car.animate([{ left: (rtl ? w + 170 : -270) + 'px' }, { left: (rtl ? -250 : w + 170) + 'px' }], { duration: dur, easing: 'linear' });
