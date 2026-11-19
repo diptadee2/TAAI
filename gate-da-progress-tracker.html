@@ -2821,8 +2821,7 @@ html.vice-night .pomo-zen .vice-car--a { bottom: 1px; }
 /* blimp drifting high in the fullscreen sky */
 .vice-blimp { position: absolute; top: 60%; left: -260px; width: 170px; height: 60px; opacity: 0; filter: drop-shadow(0 6px 14px rgba(0,0,0,.5)); transition: opacity .6s; }
 .vice-blimp.is-flying { opacity: .92; }
-.vice-blimp .vb-text { transform-box: fill-box; transform-origin: center; transform: scaleX(var(--vb-dir, 1)); } /* keep the text readable when the ship faces left */
-.vice-blimp svg { width: 100%; height: 100%; display: block; overflow: visible; transform: scaleX(var(--vb-dir, 1)); animation: vb-bob 7s ease-in-out infinite; }
+.vice-blimp svg { width: 100%; height: 100%; display: block; overflow: visible; animation: vb-bob 7s ease-in-out infinite; }
 @keyframes vb-bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -5px; } }
 .vb-text { font: 800 14px Saira, Poppins, sans-serif; letter-spacing: .04em; fill: #ff7ac0; }
 .vb-ticker { animation: vb-ticker 12s linear infinite; }

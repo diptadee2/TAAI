@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-43';
+  var CLIENT_VERSION = '2026-11-19-44';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1509,7 +1509,12 @@
     if (hi < lo) { bl._next = now + viceRand(20000, 40000); return; }
     var rtl = Math.random() < 0.5, w = sky.clientWidth;
     bl.style.top = Math.round(viceRand(lo, hi)) + 'px';
-    bl.style.setProperty('--vb-dir', rtl ? -1 : 1);
+    // Mirror the drawing with an SVG attribute (not CSS: Safari puts a
+    // CSS-flipped SVG text in the wrong place) and move the text to the
+    // screen's mirrored centre, so it always reads normally.
+    var ship = bl.querySelector('.vb-ship'), txt = bl.querySelector('.vb-text');
+    if (ship) { if (rtl) ship.setAttribute('transform', 'translate(240 0) scale(-1 1)'); else ship.removeAttribute('transform'); }
+    if (txt) txt.setAttribute('x', rtl ? '110' : '130');
     bl.classList.add('is-flying');
     bl._flying = true;
     var from = rtl ? w + 40 : -bl.offsetWidth - 40, to = rtl ? -bl.offsetWidth - 40 : w + 40;
@@ -1531,7 +1536,7 @@
         '<linearGradient id="vb-fin" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#160d28"/><stop offset="1" stop-color="#2c1c48"/></linearGradient>' +
         '<linearGradient id="vb-rim" x1="0" y1="0" x2="0" y2="1"><stop offset=".55" stop-color="#ff4fa3" stop-opacity="0"/><stop offset="1" stop-color="#ff4fa3" stop-opacity=".55"/></linearGradient>' +
         '<clipPath id="vb-clip"><path d="' + hull + '"/></clipPath>' +
-      '</defs>' +
+      '</defs><g class="vb-ship">' +
       // tail fins (behind the hull)
       '<path d="M44 30 L14 8 L8 10 L22 34 Z" fill="url(#vb-fin)"/>' +
       '<path d="M44 50 L14 72 L8 70 L22 46 Z" fill="url(#vb-fin)"/>' +
@@ -1549,10 +1554,10 @@
       '<path d="M48 38 L12 36 L10 40 L12 44 L48 42 Z" fill="#1d1233"/>' +
       // ad screen with scrolling text
       '<rect x="82" y="27" width="96" height="24" rx="4" fill="#07040e" stroke="#ff4fa3" stroke-opacity=".7"/>' +
-      '<text x="130" y="43.5" text-anchor="middle" class="vb-text">taai.live</text>' +
       // nav lights
       '<circle cx="229" cy="40" r="2.2" class="vb-strobe"/>' +
       '<circle cx="11" cy="9" r="2" class="vb-light"/>' +
+      '</g><text x="130" y="43.5" text-anchor="middle" class="vb-text">taai.live</text>' +
       '</svg></span>';
   }
   // A game-style HUD in the top right of fullscreen (2026-11-19): a 24-hour
