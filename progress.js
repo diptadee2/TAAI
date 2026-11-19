@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-6';
+  var CLIENT_VERSION = '2026-11-19-7';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1419,6 +1419,7 @@
   // running, it waits for that session to end (break, pause or reset)
   // instead of interrupting it (2026-11-19).
   var pendingClubWinner = null;
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && pendingClubWinner) setTimeout(showPendingClubWinner, 600); });
   function checkClubWinner(background) {
     if (document.getElementById('club-winner-modal') || pendingClubWinner) return;
     var isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
@@ -1457,6 +1458,7 @@
     var p = pendingClubWinner;
     if (!p) return;
     if (pomo.running && pomo.mode === 'work') return; // don't break a focus session
+    if (document.hidden) return; // wait until they're looking, so the fireworks aren't missed
     if (document.getElementById('club-winner-modal')) return;
     pendingClubWinner = null;
     if (clubWinnerSeen(p.key)) return;
