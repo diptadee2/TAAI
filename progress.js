@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-20-13';
+  var CLIENT_VERSION = '2026-11-20-14';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -4955,7 +4955,7 @@
     // pomo.mode was a moment ago).
     var finishedMode = pomo.mode;
     var oldPhaseEndAt = pomo.phaseEndAt;
-    if (VICE_NIGHT && finishedMode === 'work' && oldPhaseEndAt && Date.now() - oldPhaseEndAt < 60000) viceMissionPassed(Math.round(pomo.totalSeconds / 60));
+    if (VICE_NIGHT && finishedMode === 'work' && oldPhaseEndAt && !document.hidden && Date.now() - oldPhaseEndAt < 60000) viceMissionPassed(Math.round(pomo.totalSeconds / 60));
     pomoResetSessionsIfNewDay();
     if (pomo.mode === 'work') pomo.completedSessions++;
     pomo.mode = pomo.mode === 'work' ? 'break' : 'work';
@@ -5113,7 +5113,9 @@
       : Promise.resolve();
     // Ended while the student was elsewhere (tab hidden now, or this tick
     // is landing well after the end time because the page was paused).
-    if (finishedMode === 'work' && ranFully && (document.hidden || Date.now() - pomo.phaseEndAt > 45000)) {
+    // Never together with Mission passed: that one only shows for a finish
+    // seen within a minute, this one for anything later or while hidden.
+    if (finishedMode === 'work' && ranFully && (document.hidden || Date.now() - pomo.phaseEndAt >= 60000)) {
       noteSessionDoneAway(Math.round(pomo.totalSeconds / 60));
     }
 
