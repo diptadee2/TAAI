@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-20-20';
+  var CLIENT_VERSION = '2026-11-20-24';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -912,7 +912,22 @@
   // device that started a session may control it (owner_token, see
   // pomo-active.js), so a second device shows this box instead of a timer.
   var pomoLastLocalWrite = 0, ownerPollTimer = null, elsewhereTick = null;
-  function pomoOnOtherDevice(st) {
+  // Tabs of one browser share the timer (one drives, the rest mirror), so
+  // when one of them learns the session moved to another device it tells
+  // the others through this key, and they show the box too.
+  var ELSEWHERE_KEY = 'taai_pomo_elsewhere';
+  function shareElsewhere(st) { try { if (st) localStorage.setItem(ELSEWHERE_KEY, JSON.stringify({ mode: st.mode, phaseEndAt: st.phaseEndAt, totalSeconds: st.totalSeconds, at: Date.now() })); else localStorage.removeItem(ELSEWHERE_KEY); } catch (e) { /* fine */ } }
+  window.addEventListener('storage', function (e) {
+    if (e.key !== ELSEWHERE_KEY) return;
+    if (e.newValue) {
+      try { var st = JSON.parse(e.newValue); if (st && st.phaseEndAt > Date.now()) pomoOnOtherDevice(st, true); } catch (er) { /* ignore */ }
+    } else if (state.pomoElsewhere) {
+      // Another tab of this browser switched the session here, or it ended.
+      setTimeout(function () { checkPomoOwner(true); }, 300);
+    }
+  });
+  function pomoOnOtherDevice(st, fromOtherTab) {
+    if (!fromOtherTab) shareElsewhere(st);
     clearTimeout(pomo.timerId);
     pomo.running = false;
     pomo.mode = st.mode === 'break' ? 'break' : 'work';
@@ -927,11 +942,14 @@
   }
   function leaveElsewhere(st) {
     state.pomoElsewhere = null;
+    shareElsewhere(null);
     clearInterval(elsewhereTick); elsewhereTick = null;
     if (st && !st.running) {
       pomo.mode = st.mode === 'break' ? 'break' : 'work';
       if (st.totalSeconds) pomo.totalSeconds = st.totalSeconds;
       pomo.secondsLeft = Number.isFinite(st.secondsLeft) ? st.secondsLeft : pomo.totalSeconds;
+      pomo.phaseStartedAt = st.phaseAgeMs != null && pomo.secondsLeft < pomo.totalSeconds ? Date.now() - st.phaseAgeMs : null;
+      savePomoActiveLocalOnly();
     }
     if (state.focus) renderCalendar();
   }
@@ -972,6 +990,7 @@
         var st = r && r.state;
         if (r && r.takenOver && st) {
           state.pomoElsewhere = null;
+          shareElsewhere(null);
           clearInterval(elsewhereTick); elsewhereTick = null;
           pomo.mode = st.mode === 'break' ? 'break' : 'work';
           pomo.totalSeconds = st.totalSeconds;
@@ -1015,7 +1034,18 @@
   // a session runs or shows as elsewhere, and whenever the tab comes back.
   function pomoPausedMidway() { return !pomo.running && pomo.secondsLeft > 0 && pomo.secondsLeft < pomo.totalSeconds; }
   function checkPomoOwner(force) {
-    if (!state.student || isPomoFollower()) return;
+    if (!state.student) return;
+    if (isPomoFollower()) {
+      var shared = null; try { shared = localStorage.getItem(ELSEWHERE_KEY); } catch (e) { /* none */ }
+      if (state.pomoElsewhere && !shared) {
+        state.pomoElsewhere = null;
+        clearInterval(elsewhereTick); elsewhereTick = null;
+        var saved = loadPomoActiveState();
+        if (saved) applyPomoActiveState(saved);
+        if (state.focus) renderCalendar();
+      }
+      return;
+    }
     if (!force && !pomo.running && !state.pomoElsewhere && !pomoPausedMidway()) return;
     var askedAt = Date.now();
     api('/pomo-active', { method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -1032,6 +1062,19 @@
           }
         } else if (activeElsewhere) {
           pomoOnOtherDevice(st);
+        } else if (st && !st.running && !pomo.running && Number.isFinite(st.secondsLeft) && st.totalSeconds &&
+                   st.secondsLeft > 0 && st.secondsLeft < st.totalSeconds &&
+                   (st.secondsLeft !== pomo.secondsLeft || st.mode !== pomo.mode)) {
+          // Paused midway on another device while this one sat idle: show
+          // that paused session here, so Start continues it instead of
+          // beginning a fresh one and losing the time already done.
+          pomo.mode = st.mode === 'break' ? 'break' : 'work';
+          pomo.totalSeconds = st.totalSeconds;
+          pomo.secondsLeft = st.secondsLeft;
+          // When it really started, so finishing it here still claims it.
+          pomo.phaseStartedAt = st.phaseAgeMs != null ? Date.now() - st.phaseAgeMs : null;
+          savePomoActiveLocalOnly();
+          updatePomoDisplay();
         }
       }).catch(function () {});
   }
@@ -2372,7 +2415,41 @@
   // for ads (2026-11-19). Desktop only, like the Focus button; on a phone it
   // just lands on the checklist. The parameter is removed first so Back and
   // a later reload behave normally.
-  if (/[?&]focus\b/.test(location.search)) {
+  // The installed app on a phone runs sideways (2026-11-20: "can't the phone
+  // app just force horizontal mode?"). Android lets an installed app lock
+  // the orientation; iPhone gives web apps no way to, so on an upright
+  // phone the app shows "Turn your phone sideways" until it's rotated.
+  // Tablets and the website rotate freely.
+  function isPhoneApp() { return isStandaloneApp() && isTouchScreen() && !isTabletDevice(); }
+  if (isPhoneApp()) {
+    try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(function () {}); } catch (e) { /* not allowed here */ }
+    var rotateMq = window.matchMedia('(orientation: portrait)');
+    var syncRotateHint = function () {
+      var el = document.getElementById('rotate-hint');
+      if (rotateMq.matches) {
+        if (!el) {
+          el = document.createElement('div');
+          el.id = 'rotate-hint';
+          el.setAttribute('role', 'alert');
+          el.innerHTML = '<div class="rh-phone" aria-hidden="true"><svg viewBox="0 0 24 24" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M11 18.5h2"/></svg></div>' +
+            '<div class="rh-title">Turn your phone sideways</div>' +
+            '<div class="rh-text">TAAI Focus works in landscape on phones, so the timer and city fit the screen.</div>';
+          document.body.appendChild(el);
+        }
+      } else if (el) el.remove();
+    };
+    if (rotateMq.addEventListener) rotateMq.addEventListener('change', syncRotateHint); else if (rotateMq.addListener) rotateMq.addListener(syncRotateHint);
+    if (document.body) syncRotateHint(); else document.addEventListener('DOMContentLoaded', syncRotateHint);
+  }
+
+  // The installed app's very first launch opens Focus mode, so someone who
+  // installed it from the Focus mode page lands back where they were
+  // (2026-11-20); later launches open the tracker page as usual.
+  var appFirstOpen = false;
+  if (isStandaloneApp()) {
+    try { if (!localStorage.getItem('taai_app_first_open_v1')) { localStorage.setItem('taai_app_first_open_v1', '1'); appFirstOpen = true; } } catch (e) { /* storage blocked: no first-launch jump */ }
+  }
+  if (/[?&]focus\b/.test(location.search) || appFirstOpen) {
     try { history.replaceState(history.state, '', location.pathname + location.search.replace(/([?&])focus\b(=[^&]*)?&?/, '$1').replace(/[?&]$/, '') + location.hash); } catch (e) { /* fine */ }
     {
       var fTries = 0;
@@ -3343,7 +3420,19 @@
     card.style.setProperty('--vice-h', Math.round(base - skyTop) + 'px');
     // The Vice City tower goes in the empty gap between the timer and Today's leaders.
     var gapMid, towerOk = true;
-    if (stacked || !lbR || !lbR.width) {
+    // Upright phones and tablets have no room beside the timer: the city
+    // gets its own band at the bottom of the timer card instead (padding
+    // added by .vice-stage), with the tower in the middle of it, below the
+    // buttons and tips (2026-11-20, "the Vice City tower should be present
+    // in every orientation, obstructing nothing").
+    var stage = VICE_NIGHT && !!(stacked || !lbR || !lbR.width) && (c.right - r.right < 90);
+    if (card.classList.contains('vice-stage') !== stage) {
+      card.classList.toggle('vice-stage', stage);
+      requestAnimationFrame(syncSkyOffset); // the band changes the layout; measure again
+    }
+    if (stage) {
+      gapMid = (r.left + r.right) / 2 - c.left;
+    } else if (stacked || !lbR || !lbR.width) {
       gapMid = (r.right + c.right) / 2 - c.left;
       towerOk = c.right - r.right >= 90;
     } else gapMid = (r.right + lbR.left) / 2 - c.left;

@@ -3010,8 +3010,16 @@ html.vice-night .pomo-zen .vice-edge { bottom: 24px; height: 46px; background-si
   html.vice-night .pomo-zen .vice-palm--r { display: none; }
 }
 @media (max-height: 500px) {
-  html.vice-night .pomo-zen .vice-tower, html.vice-night .pomo-zen .vice-palm { display: none; }
+  html.vice-night .pomo-zen .vice-palm { display: none; }
+  /* Phones held sideways: a smaller tower in the empty bottom-left corner
+     instead of none (2026-11-20). */
+  html.vice-night .pomo-zen .vice-tower { left: 7%; width: 40px; }
+  html.vice-night .pomo-zen .vt-body { width: 40px; height: 120px; }
 }
+/* Upright phones and tablets: the city's own band at the bottom of the
+   timer card (see syncSkyOffset's vice-stage). */
+html.vice-night #focus-card.vice-stage .pomodoro-card { padding-bottom: 210px; }
+html.vice-night #focus-card.vice-stage .vt-body { height: 120px; }
 /* Fullscreen on small phones and phones held sideways (2026-11-19): a
    smaller HUD so it doesn't touch FOCUS or the time. */
 @media (max-width: 420px) {
@@ -3063,6 +3071,53 @@ html.vice-night .pomo-zen .vice-edge { bottom: 24px; height: 46px; background-si
   #nav-root { display: none; }
   body { padding-top: env(safe-area-inset-top); }
 }
+/* Portrait phones and tablets (2026-11-20: "don't show About on phone, long
+   text gets cut off" and "the Focus mode page is not optimised for phone
+   portrait; also check tablets in portrait"). */
+/* Tablets and phones upright: no room for the weekly board's About column
+   (it was squeezed to a letter or two), so it goes and the name takes it. */
+@media (max-width: 1024px) and (orientation: portrait) {
+  #leaderboard-card .leaderboard-about, #leaderboard-card .leaderboard-col-about { display: none !important; }
+  #leaderboard-card .leaderboard-row, #leaderboard-card .leaderboard-columns { grid-template-columns: 40px 16px minmax(0,1fr) 140px 76px 60px 44px !important; min-width: 0 !important; }
+  #leaderboard-card { overflow-x: visible !important; }
+}
+/* Phones upright: tighter spacing so names fit, the weekly board becomes a
+   simple list (rank, arrow, name, minutes) with no sideways scrolling, and
+   Today's leaders drops the About icon. */
+@media (max-width: 600px) and (orientation: portrait) {
+  #focus-card { padding-left: 12px !important; padding-right: 12px !important; }
+  #today-leaderboard-card, #leaderboard-card { padding-left: 10px !important; padding-right: 10px !important; }
+  #today-leaderboard-card .leaderboard-row, #leaderboard-card .leaderboard-row { grid-template-columns: 30px 12px minmax(0,1fr) auto !important; gap: 8px !important; padding: 10px 8px !important; }
+  #leaderboard-card .leaderboard-columns { grid-template-columns: 30px 12px minmax(0,1fr) auto !important; gap: 8px !important; padding: 0 8px 6px !important; }
+  #leaderboard-card .leaderboard-streak, #leaderboard-card .leaderboard-status, #leaderboard-card .leaderboard-timer,
+  #leaderboard-card .leaderboard-col-streak, #leaderboard-card .leaderboard-col-status, #leaderboard-card .leaderboard-col-timer { display: none !important; }
+  .leaderboard-about-icon { display: none !important; }
+}
+/* Phones felt too dark (2026-11-20): a lighter, bluer night sky, a stronger
+   horizon glow, and a less faded stopped timer in fullscreen. Silhouettes
+   and text are unchanged, so contrast holds. */
+@media (max-width: 600px), (max-height: 500px) and (hover: none) {
+  html.vice-night #focus-card.focus-card {
+    background-color: #1a1342;
+    background-image:
+      radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.75), transparent 70%),
+      radial-gradient(1.5px 1.5px at 120px 80px, rgba(255,255,255,0.65), transparent 70%),
+      radial-gradient(1.5px 1.5px at 200px 160px, rgba(255,255,255,0.6), transparent 70%),
+      radial-gradient(1px 1px at 70px 210px, rgba(255,255,255,0.65), transparent 70%),
+      linear-gradient(180deg, #1b1446 0%, #251a55 45%, #1d1445 100%);
+  }
+  html.vice-night .vice-glow { background: radial-gradient(70% 70% at 50% 100%, rgba(255,92,150,0.34) 0%, rgba(255,120,80,0.14) 40%, rgba(255,92,150,0) 75%); }
+  html.vice-night .pomo-zen { background: linear-gradient(180deg, #161040 0%, #24164e 50%, #3a1645 82%, #4b1b46 100%); }
+  html.vice-night .pomo-zen .vice-glow { background: radial-gradient(60% 70% at 50% 100%, rgba(255,92,150,0.36) 0%, rgba(255,120,80,0.14) 40%, rgba(255,92,150,0) 75%); }
+  .pomo-zen:not(.is-running) .pomo-zen-time { opacity: .85; }
+}
+/* Phone app held upright: "Turn your phone sideways" (see isPhoneApp). */
+#rotate-hint { position: fixed; inset: 0; z-index: 6000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 32px; text-align: center; background: linear-gradient(180deg, #1b1446 0%, #2a1650 60%, #4b1b46 100%); color: #f3f0ff; font-family: var(--font-body, Poppins), sans-serif; }
+#rotate-hint .rh-phone { color: #C4B5FD; animation: rh-turn 2.4s ease-in-out infinite; }
+#rotate-hint .rh-title { font-size: 22px; font-weight: 800; }
+#rotate-hint .rh-text { font-size: 14.5px; line-height: 1.5; color: rgba(243,240,255,.8); max-width: 280px; }
+@keyframes rh-turn { 0%, 20% { transform: rotate(0deg); } 50%, 80% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
+@media (prefers-reduced-motion: reduce) { #rotate-hint .rh-phone { animation: none; transform: rotate(-90deg); } }
 </style>
 </head>
 <body data-float-stack data-nav-no-autohide>
