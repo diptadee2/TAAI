@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-20-7';
+  var CLIENT_VERSION = '2026-11-20-8';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -5290,6 +5290,28 @@
 
   // One line under the controls on tablets, in place of the desktop
   // "check your OS notification settings" tip (hidden on touch screens).
+  // How to allow this site's notifications in the browser/app the student
+  // is actually using (shared by the tablet tip and the test button).
+  function notifyAllowSteps() {
+    var ua = navigator.userAgent || '';
+    if (isStandaloneApp() && isIPadOS()) return 'Open your iPad’s <b>Settings</b>, tap <b>Notifications</b>, then <b>TAAI Focus</b>, and turn on <b>Allow Notifications</b>. Then close TAAI Focus and open it again.';
+    if (isStandaloneApp()) return 'Press and hold the <b>TAAI Focus</b> icon, tap <b>App info</b>, then <b>Notifications</b>, and turn them on. Then close the app and open it again.';
+    if (isIPadOS()) return 'Open your iPad’s <b>Settings</b>, tap <b>Apps</b>, then <b>Safari</b>, then <b>Notifications</b>, and allow taai.live. Then reload this page.';
+    if (/Android/i.test(ua)) return 'Tap the icon to the left of the address bar, then <b>Permissions</b> (or <b>Site settings</b>), and allow <b>Notifications</b>. Then reload this page.';
+    if (/Safari/.test(ua) && !/Chrome|Chromium|Edg|OPR|Firefox/.test(ua)) return 'In the <b>Safari</b> menu, open <b>Settings</b>, then <b>Websites</b>, then <b>Notifications</b>, and set taai.live to <b>Allow</b>. Then reload this page.';
+    return 'Click the icon to the left of the address bar, open the site settings, and set <b>Notifications</b> to <b>Allow</b>. Then reload this page.';
+  }
+  // Allowed by the site but still not showing: the device itself has to
+  // let the browser show notifications.
+  function notifyDeviceSteps() {
+    var ua = navigator.userAgent || '';
+    var browser = /Edg\//.test(ua) ? 'Microsoft Edge' : /Firefox/.test(ua) ? 'Firefox' : /Chrome|Chromium/.test(ua) ? 'Google Chrome' : 'Safari';
+    if (isStandaloneApp() && isIPadOS()) return 'open your iPad’s <b>Settings</b>, then <b>Notifications</b>, then <b>TAAI Focus</b>, turn on <b>Allow Notifications</b>, and check that <b>Focus</b> (Do Not Disturb) is off';
+    if (isIPadOS() || /Android/i.test(ua)) return 'check your device’s <b>Settings</b> allow notifications for ' + (isStandaloneApp() ? '<b>TAAI Focus</b>' : 'your browser') + ', and that Do Not Disturb is off';
+    if (/Mac/.test(ua)) return 'open <b>System Settings</b> on your Mac, then <b>Notifications</b>, then <b>' + browser + '</b>, turn on <b>Allow notifications</b>, and check that <b>Focus</b> (Do Not Disturb) is off';
+    if (/Windows/.test(ua)) return 'open Windows <b>Settings</b>, then <b>System</b>, then <b>Notifications</b>, turn them on for <b>' + browser + '</b>, and check that <b>Do not disturb</b> is off';
+    return 'check your computer’s notification settings allow <b>' + browser + '</b>, and that Do Not Disturb is off';
+  }
   function pomoTabletTipHtml() {
     if (!isTabletDevice()) return '';
     var notify = pomoNotifyState();
@@ -5298,12 +5320,7 @@
       // iPad Safari tab: no notifications at all outside a Home Screen app.
       text = 'Keep this screen on during a session. Safari tabs can\'t show alerts. To get them, tap <b>Share</b>, then <b>Add to Home Screen</b>, open <b>TAAI Focus</b> and sign in with the same email.';
     } else if (notify === 'denied') {
-      var how;
-      if (isStandaloneApp() && isIPadOS()) how = 'open your iPad\'s <b>Settings</b>, tap <b>Notifications</b>, then <b>TAAI Focus</b>, and turn on <b>Allow Notifications</b>. Then close TAAI Focus and open it again.';
-      else if (isStandaloneApp()) how = 'press and hold the <b>TAAI Focus</b> icon, tap <b>App info</b>, then <b>Notifications</b>, and turn them on. Then close the app and open it again.';
-      else if (isIPadOS()) how = 'open your iPad\'s <b>Settings</b>, tap <b>Apps</b>, then <b>Safari</b>, then <b>Notifications</b>, and allow taai.live. Then reload this page.';
-      else how = 'tap the icon to the left of the address bar, then <b>Permissions</b> (or <b>Site settings</b>), and allow <b>Notifications</b>. Then reload this page.';
-      text = 'Alerts are off, so you won\'t get a pop-up when a session ends. The timer still works. To turn them on, ' + how;
+      text = 'Alerts are off, so you won\'t get a pop-up when a session ends. The timer still works. To turn them on: ' + notifyAllowSteps();
     } else {
       text = 'Keep this screen on during a session. If you switch apps, the alert can come late, but your session still counts.';
       if (!isStandaloneApp() && /Android/i.test(navigator.userAgent) && !pomoInstallPrompt) {
@@ -5975,7 +5992,7 @@
       '<button class="pomo-test-sound" id="pomo-test-sound" type="button">🔊 Test sound</button>' +
       '<button class="pomo-test-sound" id="pomo-test-notify" type="button">🔔 Test notification</button>' +
       '</div>' +
-      '<p class="pomo-notify-tip">Nothing showed up? The site allowing notifications isn’t the same as your computer allowing them for this browser — check your OS’s own notification settings for it too.</p>' +
+      '<p class="pomo-notify-tip" id="pomo-test-notify-status" role="status">Press Test notification to check that session alerts reach you.</p>' +
       '<button class="pomo-btn pomo-btn-primary pomo-settings-save" id="pomo-settings-save" type="button">Save changes</button>' +
       '</div>' +
       '</div>';
@@ -7897,19 +7914,41 @@
 
     var pomoTestNotify = document.getElementById('pomo-test-notify');
     if (pomoTestNotify) pomoTestNotify.addEventListener('click', function () {
-      // Reachable only once notifications are already 'granted' (this
-      // button lives in the unlocked timer view, not the gate), so this
-      // isolates whether a real OS notification actually reaches the
-      // screen — if this test button also shows nothing, the site's own
-      // logic isn't the problem; look at the OS's own per-app notification
-      // settings for the browser instead of the website's permission.
+      var out = document.getElementById('pomo-test-notify-status');
+      function say(html) { if (out) out.innerHTML = html; }
+      function send() {
+        try {
+          showPomoNotification('Test notification 🔔', {
+            body: 'If you can see this, session alerts are working.',
+            // A new tag each time: reusing one lets the system quietly
+            // replace the last test with no banner at all.
+            tag: 'taai-pomo-test-' + Date.now(),
+            icon: '/apple-touch-icon.png',
+          });
+        } catch (e) { /* reported below */ }
+        say('Sent. If no notification appeared: ' + notifyDeviceSteps() + '.');
+      }
+      var st = pomoNotifyState();
+      if (st === 'granted') { send(); return; }
+      if (st === 'unsupported') {
+        say(isIPadOS() || isTouchScreen()
+          ? 'This browser tab can’t show notifications. Tap <b>Share</b>, then <b>Add to Home Screen</b>, and open <b>TAAI Focus</b> from there.'
+          : 'This browser can’t show notifications. Try Chrome, Edge, Firefox or Safari.');
+        return;
+      }
+      if (st === 'denied') { say('Notifications are blocked for this site. ' + notifyAllowSteps() + ' After that, press Test notification again.'); return; }
+      // 'default': this click is the gesture the permission prompt needs.
+      say('Your browser is asking whether to allow notifications. Choose <b>Allow</b>.');
       try {
-        showPomoNotification('Test notification 🔔', {
-          body: 'If you can see this, notifications are working.',
-          tag: 'taai-pomo-test',
-          icon: '/apple-touch-icon.png',
-        });
-      } catch (e) { /* not critical */ }
+        var pr = Notification.requestPermission(function (perm) { handle(perm); });
+        if (pr && pr.then) pr.then(handle);
+      } catch (e) { handle(pomoNotifyState()); }
+      var handled = false;
+      function handle(perm) {
+        if (handled) return; handled = true;
+        if (perm === 'granted') send();
+        else say('Notifications weren’t allowed, so session alerts can’t reach you. ' + notifyAllowSteps() + ' After that, press Test notification again.');
+      }
     });
 
     var pomoGateReload = document.getElementById('pomo-gate-reload');

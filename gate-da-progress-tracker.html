@@ -1255,7 +1255,8 @@
   .pomo-test-row { display: flex; gap: 8px; margin-top: 8px; }
   .pomo-test-sound { flex: 1; padding: 8px 10px; font-size: 12px; font-family: var(--font-body); border-radius: 10px; border: 1px solid rgba(255,255,255,0.12); background: var(--card); color: var(--ink-dim); cursor: pointer; transition: background .2s, color .2s, border-color .2s; }
   .pomo-test-sound:hover { background: rgba(139,92,246,0.14); border-color: rgba(139,92,246,0.4); color: var(--ink); }
-  .pomo-notify-tip { font-size: 11.5px; color: var(--ink-soft); text-align: center; line-height: 1.5; max-width: 280px; margin: 10px auto 0; }
+  .pomo-notify-tip { font-size: 11.5px; color: var(--ink-soft); text-align: center; line-height: 1.5; max-width: 300px; margin: 10px auto 0; }
+  .pomo-notify-tip b { color: var(--ink-dim); font-weight: 600; }
   .pomo-settings-save { display: flex; width: 100%; margin-top: 14px; height: 44px; padding: 0 24px; font-size: 13px; }
 
   /* Inline notice shown below Start/Reset/Skip only after Start actually
@@ -2973,7 +2974,7 @@ html.vice-night .pomo-zen .vice-edge { bottom: 24px; height: 46px; background-si
 /* Phones and iPads in Focus Mode (2026-11-19). */
 #focus-card.vice-no-tower .vice-tower { display: none; }
 @media (hover: none) and (pointer: coarse) {
-  .pomo-notify-permanent-tip, .pomo-notify-tip { display: none !important; }
+  .pomo-notify-permanent-tip, .pomo-notify-tip:not(#pomo-test-notify-status) { display: none !important; }
 }
 @media (max-width: 700px) {
   #leaderboard-card { overflow-x: auto; -webkit-overflow-scrolling: touch; }
