@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-20-3';
+  var CLIENT_VERSION = '2026-11-20-4';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2227,7 +2227,10 @@
   // for ads (2026-11-19). Desktop only, like the Focus button; on a phone it
   // just lands on the checklist. The parameter is removed first so Back and
   // a later reload behave normally.
-  if (/[?&]focus\b/.test(location.search)) {
+  // The installed TAAI Focus app (Home Screen / installed PWA) also opens
+  // straight into Focus Mode: iPadOS can ignore the manifest's start_url and
+  // reopen whatever URL was showing when it was added (2026-11-20).
+  if (/[?&]focus\b/.test(location.search) || isStandaloneApp()) {
     try { history.replaceState(history.state, '', location.pathname + location.search.replace(/([?&])focus\b(=[^&]*)?&?/, '$1').replace(/[?&]$/, '') + location.hash); } catch (e) { /* fine */ }
     {
       var fTries = 0;
