@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-20-2';
+  var CLIENT_VERSION = '2026-11-20-3';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -5222,9 +5222,41 @@
       text = 'Alerts are blocked for this site. To turn them on, open your browser\'s site settings for taai.live and allow <b>Notifications</b>. Keep this screen on during a session.';
     } else {
       text = 'Keep this screen on during a session. If you switch apps, the alert can come late, but your session still counts.';
+      if (!isStandaloneApp() && /Android/i.test(navigator.userAgent) && !pomoInstallPrompt) {
+        text += ' For a TAAI Focus app, open your browser menu (<b>\u22ee</b>) and tap <b>Add to Home screen</b> or <b>Install app</b>.';
+      }
     }
-    return '<p class="pomo-tablet-tip">' + text + '</p>';
+    var install = (pomoInstallPrompt && !isStandaloneApp())
+      ? '<button type="button" class="pomo-install-btn" id="pomo-install-app">Install the TAAI Focus app</button>' : '';
+    return '<p class="pomo-tablet-tip">' + text + '</p>' + install;
   }
+
+  // Android Chrome (and desktop Chrome) offer to install the tracker as an
+  // app (tracker.webmanifest). Keep the offer and show our own button on
+  // tablets instead of relying on students finding it in the menu.
+  var pomoInstallPrompt = null;
+  function refreshTabletTip() {
+    var tip = document.querySelector('.pomo-tablet-tip');
+    if (!tip) return;
+    var btn = document.getElementById('pomo-install-app'); if (btn) btn.remove();
+    tip.insertAdjacentHTML('afterend', pomoTabletTipHtml());
+    tip.remove();
+  }
+  window.addEventListener('beforeinstallprompt', function (e) {
+    if (!isTabletDevice()) return;
+    e.preventDefault();
+    pomoInstallPrompt = e;
+    refreshTabletTip();
+  });
+  window.addEventListener('appinstalled', function () { pomoInstallPrompt = null; refreshTabletTip(); });
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest || !e.target.closest('#pomo-install-app') || !pomoInstallPrompt) return;
+    var p = pomoInstallPrompt;
+    p.prompt();
+    (p.userChoice || Promise.resolve()).then(function (c) {
+      if (c && c.outcome === 'accepted') { pomoInstallPrompt = null; refreshTabletTip(); }
+    }).catch(function () {});
+  });
 
   // A focus session that ended while the student was in another tab or
   // app: say so when they come back, so a silent "session over" doesn't
