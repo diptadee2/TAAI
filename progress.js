@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-19-45';
+  var CLIENT_VERSION = '2026-11-20-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -4688,7 +4688,7 @@
     // Touch screens skip real browser fullscreen: iPad Safari draws its own
     // close button over Exit there and leaves a strip of the page showing
     // at the bottom (2026-11-19). The overlay alone fills the screen.
-    if (req && !focusStartBlocked()) { try { var r = req.call(root); if (r && r.catch) r.catch(function () {}); } catch (e) { /* overlay alone is fine */ } }
+    if (req && !isTouchScreen()) { try { var r = req.call(root); if (r && r.catch) r.catch(function () {}); } catch (e) { /* overlay alone is fine */ } }
     if (navigator.wakeLock && navigator.wakeLock.request) {
       navigator.wakeLock.request('screen').then(function (l) { zenWakeLock = l; }).catch(function () {});
     }
@@ -4812,7 +4812,7 @@
     try {
       // tag replaces any notification already showing instead of stacking
       // them, in case several phases finish while the tab is untouched.
-      new Notification(title, { body: body, tag: 'taai-pomo', icon: '/favicon-32.png' });
+      showPomoNotification(title, { body: body, tag: 'taai-pomo', icon: '/apple-touch-icon.png' });
     } catch (e) { /* not critical */ }
   }
 
@@ -4820,6 +4820,7 @@
   // card's innerHTML, so a once-a-second tick never touches (and never
   // replays the entrance animation of) a .fade-in ancestor.
   function updatePomoDisplay() {
+    syncTabletWakeLock();
     if (pendingClubWinner) showPendingClubWinner();
     updatePomoTitle();
     updatePomoZen();
@@ -5139,8 +5140,73 @@
   // Phones and iPads (touch screens with no mouse) may look around Focus Mode
   // and the fullscreen view, but sessions can only be started on a desktop
   // or laptop (2026-11-19).
-  function focusStartBlocked() {
+  // Tablets (iPad, Android tablets) may start sessions since 2026-11-20;
+  // only phones still get the desktop-only popup. A tablet is a touch
+  // screen whose shorter side is at least 600 CSS px (iPad mini is 744).
+  function isTouchScreen() {
     try { return window.matchMedia('(hover: none) and (pointer: coarse)').matches; } catch (e) { return false; }
+  }
+  function isTabletDevice() {
+    if (!isTouchScreen()) return false;
+    var sw = (window.screen && screen.width) || window.innerWidth;
+    var sh = (window.screen && screen.height) || window.innerHeight;
+    return Math.min(sw, sh) >= 600;
+  }
+  function focusStartBlocked() {
+    return isTouchScreen() && !isTabletDevice();
+  }
+  function isStandaloneApp() {
+    try { return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch (e) { return false; }
+  }
+
+  // Service worker, only used to show notifications where the page itself
+  // can't (Android Chrome throws on `new Notification()`, and home-screen
+  // apps on iPad/iPhone only show them through a service worker).
+  var pomoSwReg = null;
+  if ('serviceWorker' in navigator) {
+    try {
+      navigator.serviceWorker.register('/sw.js', { scope: '/gate-da-progress-tracker' })
+        .then(function (r) { pomoSwReg = r; }).catch(function () {});
+    } catch (e) { /* not critical */ }
+  }
+  function showPomoNotification(title, opts) {
+    var viaSw = function () {
+      if (pomoSwReg && pomoSwReg.showNotification) { pomoSwReg.showNotification(title, opts).catch(function () {}); return true; }
+      return false;
+    };
+    // Touch devices go through the service worker first; desktops keep the
+    // plain page notification they always used, with the worker as backup.
+    if (isTouchScreen() && viaSw()) return;
+    try { new Notification(title, opts); } catch (e) { viaSw(); }
+  }
+
+  // Keep a tablet's screen on while a session runs: tablets pause the page
+  // once the screen sleeps, which would delay the end-of-session chime.
+  var tabletWakeLock = null, tabletWakePending = false;
+  function syncTabletWakeLock() {
+    if (!isTabletDevice() || !navigator.wakeLock || !navigator.wakeLock.request) return;
+    if (tabletWakeLock && tabletWakeLock.released) tabletWakeLock = null;
+    if (pomo.running && !document.hidden) {
+      if (tabletWakeLock || tabletWakePending) return;
+      tabletWakePending = true;
+      navigator.wakeLock.request('screen').then(function (l) { tabletWakeLock = l; })
+        .catch(function () {}).then(function () { tabletWakePending = false; });
+    } else if (!pomo.running && tabletWakeLock) {
+      try { tabletWakeLock.release(); } catch (e) { /* ignore */ }
+      tabletWakeLock = null;
+    }
+  }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) syncTabletWakeLock(); });
+
+  // One line under the controls on tablets, in place of the desktop
+  // "check your OS notification settings" tip (hidden on touch screens).
+  function pomoTabletTipHtml() {
+    if (!isTabletDevice()) return '';
+    var iosTab = typeof Notification === 'undefined' && !isStandaloneApp();
+    return '<p class="pomo-tablet-tip">' + (iosTab
+      ? 'Keep this screen open during a session. For alerts, tap <b>Share</b>, then <b>Add to Home Screen</b>, and open TAAI Focus from there.'
+      : 'Keep this screen open during a session. If you switch apps, the end-of-session alert can arrive late.') +
+      '</p>';
   }
   function showFocusDesktopOnly() {
     if (document.getElementById('focus-desktop-only')) return;
@@ -5211,6 +5277,17 @@
     if (state.needsRename) return;
 
     var notifyState = pomoNotifyState();
+    // Tablets: notifications are a bonus, never a requirement (iPad Safari
+    // has none outside a home-screen app). Ask once if we can, start either way.
+    if (isTabletDevice() && notifyState !== 'granted') {
+      if (notifyState === 'default') {
+        try { Notification.requestPermission().catch(function () {}); } catch (e) { /* ignore */ }
+      }
+      state.pomoBlockedReason = null;
+      pomoActuallyStart();
+      updatePomoDisplay();
+      return;
+    }
     if (notifyState === 'granted') {
       pomoActuallyStart();
       updatePomoDisplay();
@@ -5726,6 +5803,7 @@
       '</div>' +
       '</div>' + // .pomo-clock-wrap
       '<p class="pomo-notify-permanent-tip">🔔 Notifications need your computer’s permission too, not just this site’s — check your OS’s own notification settings for this browser if they don’t show up.</p>' +
+      pomoTabletTipHtml() +
       renderPomoNotifyNotice() +
       '<div class="pomo-settings" id="pomo-settings" hidden>' +
       '<div class="pomo-settings-header">⚙️ Timer settings</div>' +
@@ -7668,10 +7746,10 @@
       // logic isn't the problem; look at the OS's own per-app notification
       // settings for the browser instead of the website's permission.
       try {
-        new Notification('Test notification 🔔', {
+        showPomoNotification('Test notification 🔔', {
           body: 'If you can see this, notifications are working.',
           tag: 'taai-pomo-test',
-          icon: '/favicon-32.png',
+          icon: '/apple-touch-icon.png',
         });
       } catch (e) { /* not critical */ }
     });
