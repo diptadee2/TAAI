@@ -4404,6 +4404,8 @@ html body main #combos #full-course-2028 .c28-pitch-mark { background: linear-gr
   html body main #combos #full-course-2028 .c28-projects .combo-projects-list li > span > b:not(#_) { font-size: 12.5px !important; line-height: 1.25 !important; }
   html body main #combos #full-course-2028 .c28-projects .combo-projects-pitch:not(#_), html body main #combos #full-course-2028 .combo-proj-toggle:not(#_) { display: none !important; }
 }
+/* Last topic line on individual cards (2026-11-20) */
+html body main .courses-grid .course-topic.course-topic-more { font-style: italic; opacity: .8; }
 </style>
 </head>
 <body data-float-stack>
@@ -5978,6 +5980,7 @@ const CourseCard = React.memo(function CourseCard({ c, pricing }) {
         {c.topics.map((t, i) => (
           <div key={i} className="course-topic" style={{ '--td': `${i * 55}ms` }}>{t}</div>
         ))}
+        <div className="course-topic course-topic-more" style={{ '--td': `${c.topics.length * 55}ms` }}>And everything else GATE DA asks</div>
       </div>
       {c.note && <div className="course-note"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.6"/><path d="M8 7.2v4M8 4.6v.1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg><span>{c.note}</span></div>}
       <div className={`course-price-row${p.price ? ' price-loaded' : ''}`}>
