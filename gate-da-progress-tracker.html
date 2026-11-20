@@ -3076,7 +3076,7 @@ html.vice-night #focus-card.vice-stage .vt-body { height: 120px; }
    portrait; also check tablets in portrait"). */
 /* Tablets and phones upright: no room for the weekly board's About column
    (it was squeezed to a letter or two), so it goes and the name takes it. */
-@media (max-width: 1024px) and (orientation: portrait) {
+@media (max-width: 1024px) {
   #leaderboard-card .leaderboard-about, #leaderboard-card .leaderboard-col-about { display: none !important; }
   #leaderboard-card .leaderboard-row, #leaderboard-card .leaderboard-columns { grid-template-columns: 40px 16px minmax(0,1fr) 140px 76px 60px 44px !important; min-width: 0 !important; }
   #leaderboard-card { overflow-x: visible !important; }
@@ -3118,6 +3118,17 @@ html.vice-night #focus-card.vice-stage .vt-body { height: 120px; }
 #rotate-hint .rh-text { font-size: 14.5px; line-height: 1.5; color: rgba(243,240,255,.8); max-width: 280px; }
 @keyframes rh-turn { 0%, 20% { transform: rotate(0deg); } 50%, 80% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
 @media (prefers-reduced-motion: reduce) { #rotate-hint .rh-phone { animation: none; transform: rotate(-90deg); } }
+/* Phones held sideways (2026-11-20, "the nav bar is taking too much
+   space"): a slimmer nav that scrolls away with the page instead of staying
+   pinned (no slide animation). The installed app hides the nav anyway. */
+@media (max-height: 500px) and (hover: none) and (pointer: coarse) {
+  .nav { position: absolute !important; }
+  .nav-inner { height: 50px !important; }
+  .nav-spacer { height: 50px !important; }
+  .mobile-menu { top: 50px !important; }
+  .nav-logo svg, .nav-logo img { width: 112px !important; }
+  .nav-hamburger { transform: scale(.82); transform-origin: right center; }
+}
 </style>
 </head>
 <body data-float-stack data-nav-no-autohide>

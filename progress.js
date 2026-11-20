@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-20-25';
+  var CLIENT_VERSION = '2026-11-20-26';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2445,7 +2445,7 @@
           el.setAttribute('role', 'alert');
           el.innerHTML = '<div class="rh-phone" aria-hidden="true"><svg viewBox="0 0 24 24" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M11 18.5h2"/></svg></div>' +
             '<div class="rh-title">Turn your phone sideways</div>' +
-            '<div class="rh-text">TAAI Focus works in landscape on phones, so the timer and city fit the screen.</div>';
+            '<div class="rh-text">TAAI Focus works in landscape on phones.</div>';
           document.body.appendChild(el);
         }
       } else if (el) el.remove();
