@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0d0a24">
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
@@ -541,6 +541,13 @@
   .focus-cta-title { font-family: var(--font-nav); font-size: 17px; font-weight: 700; color: var(--ink); }
   .focus-cta-sub { font-size: 13.5px; color: var(--ink-dim); }
   .focus-cta .focus-toggle { flex-shrink: 0; }
+  /* Phones: text across the full width, then a full-width button
+     (2026-11-20, "fix the Focus mode card": the text was squeezed into a
+     narrow column beside the button). */
+  @media (max-width: 600px) {
+    .focus-cta { flex-direction: column; align-items: stretch; gap: 14px; padding: 18px; }
+    .focus-cta .focus-toggle { width: 100%; justify-content: center; }
+  }
   /* Desktop: the plan card spans the full main column too, so it, the
      Focus bar and the champions card line up as one stack (it was a
      centred 560px card above two 696px ones). */
@@ -3143,6 +3150,33 @@ html.vice-night #focus-card.vice-stage .vt-body { height: 120px; }
   .mobile-menu { top: 50px !important; }
   .nav-logo svg, .nav-logo img { width: 112px !important; }
   .nav-hamburger { transform: scale(.82); transform-origin: right center; }
+}
+/* iPhone app sideways filled only the middle, with black bars on both
+   sides (2026-11-20). The page now covers the whole screen
+   (viewport-fit=cover) and keeps its content clear of the notch with the
+   safe-area insets; only the background reaches the edges. */
+.wrap { padding-left: max(18px, calc(env(safe-area-inset-left) + 8px)); padding-right: max(18px, calc(env(safe-area-inset-right) + 8px)); }
+.nav-inner { padding-left: max(14px, env(safe-area-inset-left)) !important; padding-right: max(14px, env(safe-area-inset-right)) !important; }
+.pomo-zen { padding-left: max(32px, calc(env(safe-area-inset-left) + 12px)); padding-right: max(32px, calc(env(safe-area-inset-right) + 12px)); }
+@media (max-height: 500px) { .pomo-zen { padding-left: max(24px, calc(env(safe-area-inset-left) + 12px)); padding-right: max(24px, calc(env(safe-area-inset-right) + 12px)); } }
+.pomo-zen > .zen-hud { margin-right: env(safe-area-inset-right); }
+.back-to-top { right: max(24px, calc(env(safe-area-inset-right) + 12px)); }
+#rotate-hint { padding-left: max(32px, env(safe-area-inset-left)); padding-right: max(32px, env(safe-area-inset-right)); }
+/* iPhone zooms the page when a text box under 16px is tapped ("the screen
+   seems zoomed in after entering the email"); 16px on touch screens. */
+@media (hover: none) and (pointer: coarse) {
+  input, select, textarea { font-size: 16px !important; }
+}
+/* Upright tablets (2026-11-20): the card's dial was smaller (280px, 44px
+   time) than on a sideways tablet (340px, 62px) although the upright card
+   is twice as wide, so it's bigger here; and in fullscreen the Start/Pause
+   button sat low with a big gap under the time, so it moves up. */
+@media (min-width: 601px) and (max-width: 1024px) and (orientation: portrait) {
+  .pomodoro-ring-wrap { width: 380px; height: 304px; }
+  .pomodoro-time { font-size: 66px; }
+}
+@media (min-width: 601px) and (orientation: portrait) {
+  .pomo-zen .pomo-zen-bottom, html.vice-night .pomo-zen .pomo-zen-bottom { margin-bottom: 36vh; }
 }
 </style>
 </head>

@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-20-26';
+  var CLIENT_VERSION = '2026-11-20-27';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -912,6 +912,10 @@
   // device that started a session may control it (owner_token, see
   // pomo-active.js), so a second device shows this box instead of a timer.
   var pomoLastLocalWrite = 0, ownerPollTimer = null, elsewhereTick = null;
+  // Saves to the server still on their way, and when the last one finished:
+  // an ownership check answered before this device's own save landed must
+  // not undo it (more precise than a fixed 5-second window).
+  var pomoWritesInFlight = 0, pomoLastWriteDone = 0;
   // Tabs of one browser share the timer (one drives, the rest mirror), so
   // when one of them learns the session moved to another device it tells
   // the others through this key, and they show the box too.
@@ -1064,7 +1068,7 @@
       body: JSON.stringify({ email: state.student.email, mode: pomo.mode, action: 'peek', deviceToken: getPomoDeviceToken(), clientNow: Date.now() }) })
       .then(function (r) {
         var st = r && r.state;
-        if (pomoLastLocalWrite > askedAt - 5000) return; // its own change may not be stored yet
+        if (pomoWritesInFlight > 0 || pomoLastWriteDone > askedAt) return; // its own change may not be stored yet
         var activeElsewhere = st && st.running && !st.ownedByYou && (st.msLeft != null ? st.msLeft > 0 : (Number.isFinite(st.phaseEndAt) && st.phaseEndAt > Date.now() - 5000));
         if (state.pomoElsewhere) {
           if (!activeElsewhere) leaveElsewhere(st);
@@ -1124,8 +1128,12 @@
       clientNow: Date.now(),
     });
     function attempt(retriesLeft) {
+      pomoWritesInFlight++;
+      var settled = false;
+      function done() { if (settled) return; settled = true; pomoWritesInFlight = Math.max(0, pomoWritesInFlight - 1); pomoLastWriteDone = Date.now(); }
       api('/pomo-active', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body })
         .then(function (r) {
+          done();
           // The server may date this phase later than we do (it resets the
           // start when an earlier write from this device was ignored or
           // overwritten by another tab/device). Adopt the later start so we
@@ -1140,6 +1148,7 @@
           }
         })
         .catch(function () {
+          done();
           if (retriesLeft > 0) setTimeout(function () { attempt(retriesLeft - 1); }, 800);
         });
     }
@@ -8172,6 +8181,28 @@
 
     var notYou = document.getElementById('not-you');
     if (notYou) notYou.addEventListener('click', function () {
+      // A running session belongs to the account that's signing out: pause
+      // it on that account first (it can be resumed after signing back in),
+      // then reset the timer here, so nothing keeps counting on a page with
+      // no account (2026-11-20, "when I press Not you mid session the
+      // session still continues").
+      if (pomo.running && !state.pomoElsewhere) {
+        clearTimeout(pomo.timerId);
+        pomo.running = false;
+        pomo.secondsLeft = Math.max(0, Math.round((pomo.phaseEndAt - Date.now()) / 1000));
+        savePomoActiveState();
+      }
+      clearTimeout(pomo.timerId);
+      pomo.running = false;
+      pomo.mode = 'work';
+      pomo.totalSeconds = pomoDurationFor('work');
+      pomo.secondsLeft = pomo.totalSeconds;
+      pomo.phaseEndAt = null;
+      pomo.phaseStartedAt = null;
+      state.pomoElsewhere = null;
+      shareElsewhere(null);
+      try { localStorage.removeItem(POMO_ACTIVE_KEY); } catch (e) { /* fine */ }
+      if (typeof zenEl === 'function' && zenEl()) closePomoZen();
       clearCookie();
       state.student = null;
       loadMonth(state.month);

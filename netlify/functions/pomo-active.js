@@ -29,6 +29,18 @@ function tsMs(v) {
   const str = String(v);
   return Date.parse(/[zZ]$|[+-]\d\d:?\d\d$/.test(str) ? str : str + 'Z');
 }
+// Is the stored phase still running, and with how much margin? Measured on
+// the server's clock (msLeftOf) when possible; the old comparison of the
+// owner's phase_end_at with the requester's clock is only the fallback.
+// Using the owner's clock let a device whose clock ran slow look finished
+// early, so a second device could start a new session on top of it and
+// both got credited (2026-11-20, real-device report).
+function stillRunning(row, skewMs, marginMs) {
+  if (!row || !row.running) return false;
+  const left = msLeftOf(row);
+  if (left != null) return left > (marginMs || 0);
+  return Number.isFinite(row.phase_end_at) && row.phase_end_at > Date.now() + skewMs + (marginMs || 0);
+}
 function msLeftOf(row) {
   if (!row || !row.running || !Number.isFinite(row.seconds_left) || !row.updated_at) return null;
   const since = Date.now() - tsMs(row.updated_at);
@@ -92,7 +104,7 @@ export async function handler(event) {
       };
     };
     const skew = clockSkewMs(body.clientNow);
-    const active = !!(existing && existing.running && Number.isFinite(existing.phase_end_at) && existing.phase_end_at > Date.now() + skew);
+    const active = stillRunning(existing, skew, 0);
     if (body.action === 'peek') return json(200, { ok: true, state: view(!owner || owner === token) });
     if (!active || !token) return json(200, { ok: true, takenOver: false, state: view(!owner || owner === token) });
     const { error: tErr } = await supabase.from('pomo_active_session').update({ owner_token: token }).eq('email', email);
@@ -144,7 +156,7 @@ export async function handler(event) {
   // the old phase was running and was ignored; the new 2h session then
   // never existed server-side and got zero credit, four times.
   const clientSkewMs = clockSkewMs(body.clientNow);
-  const existingStillActive = !!(existing && existing.running && Number.isFinite(existing.phase_end_at) && existing.phase_end_at > Date.now() + clientSkewMs);
+  const existingStillActive = stillRunning(existing, clientSkewMs, 0);
   // While a phase is running and unexpired, ONLY the tab/device that started
   // it (owner_token) may change it. Widened 2026-10-01 from "new phases
   // only, and only when a token is present": a stale tab's pagehide beacon
@@ -195,7 +207,7 @@ export async function handler(event) {
   // natural break only starts once work time is up, so a break write
   // against unfinished work is never legitimate, from any tab.
   if (existing && existing.mode === 'work' && body.mode === 'break') {
-    const workRunningUnfinished = existing.running && Number.isFinite(existing.phase_end_at) && existing.phase_end_at > Date.now() + clientSkewMs + 5000;
+    const workRunningUnfinished = stillRunning(existing, clientSkewMs, 5000);
     const workPausedMidway = !existing.running && Number.isFinite(existing.seconds_left) && Number.isFinite(existing.total_seconds)
       && existing.seconds_left > 0 && existing.seconds_left < existing.total_seconds;
     if (workRunningUnfinished || workPausedMidway) {
