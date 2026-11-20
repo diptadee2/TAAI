@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-20-19';
+  var CLIENT_VERSION = '2026-11-20-20';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -5409,8 +5409,18 @@
     var ua = navigator.userAgent || '';
     return /iPad/.test(ua) || (/Macintosh/.test(ua) && (navigator.maxTouchPoints || 0) > 1);
   }
-  function focusStartBlocked() {
-    return isTouchScreen() && !isTabletDevice();
+  // Phones run sessions too since 2026-11-20 ("we can have focus timer in
+  // phone like the format of iPad and tablets ... I meant webapps"): like
+  // tablets, only inside the installed TAAI Focus app. Nothing is blocked
+  // outright any more; tabletNeedsApp() sends browser tabs to the install
+  // steps instead.
+  function focusStartBlocked() { return false; }
+  function isAppleMobile() { return isIPadOS() || /iPhone|iPod/.test(navigator.userAgent || ''); }
+  // "iPad" / "iPhone" / "phone" / "tablet", for "your iPad's Settings" etc.
+  function deviceName() {
+    if (isIPadOS()) return 'iPad';
+    if (/iPhone|iPod/.test(navigator.userAgent || '')) return 'iPhone';
+    return isTabletDevice() ? 'tablet' : 'phone';
   }
   function isStandaloneApp() {
     try { return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch (e) { return false; }
@@ -5462,9 +5472,9 @@
   // is actually using (shared by the tablet tip and the test button).
   function notifyAllowSteps() {
     var ua = navigator.userAgent || '';
-    if (isStandaloneApp() && isIPadOS()) return 'Open your iPad’s <b>Settings</b>, tap <b>Notifications</b>, then <b>TAAI Focus</b>, and turn on <b>Allow Notifications</b>. Then close TAAI Focus and open it again.';
+    if (isStandaloneApp() && isAppleMobile()) return 'Open your ' + deviceName() + '’s <b>Settings</b>, tap <b>Notifications</b>, then <b>TAAI Focus</b>, and turn on <b>Allow Notifications</b>. Then close TAAI Focus and open it again.';
     if (isStandaloneApp()) return 'Press and hold the <b>TAAI Focus</b> icon, tap <b>App info</b>, then <b>Notifications</b>, and turn them on. Then close the app and open it again.';
-    if (isIPadOS()) return 'Open your iPad’s <b>Settings</b>, tap <b>Apps</b>, then <b>Safari</b>, then <b>Notifications</b>, and allow taai.live. Then reload this page.';
+    if (isAppleMobile()) return 'Open your ' + deviceName() + '’s <b>Settings</b>, tap <b>Apps</b>, then <b>Safari</b>, then <b>Notifications</b>, and allow taai.live. Then reload this page.';
     if (/Android/i.test(ua)) return 'Tap the icon to the left of the address bar, then <b>Permissions</b> (or <b>Site settings</b>), and allow <b>Notifications</b>. Then reload this page.';
     if (/Safari/.test(ua) && !/Chrome|Chromium|Edg|OPR|Firefox/.test(ua)) return 'In the <b>Safari</b> menu, open <b>Settings</b>, then <b>Websites</b>, then <b>Notifications</b>, and set taai.live to <b>Allow</b>. Then reload this page.';
     return 'Click the icon to the left of the address bar, open the site settings, and set <b>Notifications</b> to <b>Allow</b>. Then reload this page.';
@@ -5474,8 +5484,8 @@
   function notifyDeviceSteps() {
     var ua = navigator.userAgent || '';
     var browser = /Edg\//.test(ua) ? 'Microsoft Edge' : /Firefox/.test(ua) ? 'Firefox' : /Chrome|Chromium/.test(ua) ? 'Google Chrome' : 'Safari';
-    if (isStandaloneApp() && isIPadOS()) return 'open your iPad’s <b>Settings</b>, then <b>Notifications</b>, then <b>TAAI Focus</b>, turn on <b>Allow Notifications</b>, and check that <b>Focus</b> (Do Not Disturb) is off';
-    if (isIPadOS() || /Android/i.test(ua)) return 'check your device’s <b>Settings</b> allow notifications for ' + (isStandaloneApp() ? '<b>TAAI Focus</b>' : 'your browser') + ', and that Do Not Disturb is off';
+    if (isStandaloneApp() && isAppleMobile()) return 'open your ' + deviceName() + '’s <b>Settings</b>, then <b>Notifications</b>, then <b>TAAI Focus</b>, turn on <b>Allow Notifications</b>, and check that <b>Focus</b> (Do Not Disturb) is off';
+    if (isAppleMobile() || /Android/i.test(ua)) return 'check your device’s <b>Settings</b> allow notifications for ' + (isStandaloneApp() ? '<b>TAAI Focus</b>' : 'your browser') + ', and that Do Not Disturb is off';
     if (/Mac/.test(ua)) return 'open <b>System Settings</b> on your Mac, then <b>Notifications</b>, then <b>' + browser + '</b>, turn on <b>Allow notifications</b>, and check that <b>Focus</b> (Do Not Disturb) is off';
     if (/Windows/.test(ua)) return 'open Windows <b>Settings</b>, then <b>System</b>, then <b>Notifications</b>, turn them on for <b>' + browser + '</b>, and check that <b>Do not disturb</b> is off';
     return 'check your computer’s notification settings allow <b>' + browser + '</b>, and that Do Not Disturb is off';
@@ -5484,7 +5494,7 @@
   // before 18.4 ignore the request (WebKit bug), so they get the manual hint.
   function screenStaysOn() {
     if (!navigator.wakeLock || !navigator.wakeLock.request) return false;
-    if (isStandaloneApp() && isIPadOS()) {
+    if (isStandaloneApp() && isAppleMobile()) {
       var m = (navigator.userAgent || '').match(/(?:OS |Version\/)(\d+)[._](\d+)/);
       if (m && (+m[1] < 18 || (+m[1] === 18 && +m[2] < 4))) return false;
     }
@@ -5492,7 +5502,7 @@
   }
   function screenOnLine() {
     if (screenStaysOn()) return 'The screen stays on while the timer runs, as long as TAAI is open in front of you.';
-    if (isIPadOS()) return 'Keep this screen on during a session (set <b>Auto-Lock</b> to Never in Settings, then Display &amp; Brightness, if it dims).';
+    if (isAppleMobile()) return 'Keep this screen on during a session (set <b>Auto-Lock</b> to Never in Settings, then Display &amp; Brightness, if it dims).';
     return 'Keep this screen on during a session.';
   }
   // Safari on a Mac (not an iPad): alerts need Safari's site setting AND
@@ -5556,15 +5566,15 @@
       '</details>';
   }
   function pomoTabletTipHtml() {
-    if (!isTabletDevice()) return '';
+    if (!isTouchScreen()) return '';
     var notify = pomoNotifyState();
     var text;
     if (!isStandaloneApp()) {
-      text = 'On a tablet, focus sessions run in the <b>TAAI Focus</b> app. Press <b>Start</b> to see how to add it.';
+      text = 'On a phone or tablet, focus sessions run in the <b>TAAI Focus</b> app. Press <b>Start</b> to see how to add it.';
     } else if (state.pomoBlockedReason) {
       return '';
     } else if (notify === 'unsupported') {
-      text = screenOnLine() + ' Your iPad’s software can’t show alerts, so watch the timer yourself, or update iPadOS (16.4 or later) to get them.';
+      text = screenOnLine() + ' Your ' + deviceName() + '’s software can’t show alerts, so watch the timer yourself, or update it (iOS 16.4 or later) to get them.';
     } else if (notify === 'default') {
       text = 'When you press <b>Start</b>, you’ll be asked to allow notifications. Tap <b>Allow</b>: the timer needs them to tell you when a session ends.';
     } else if (notify === 'denied') {
@@ -5590,7 +5600,7 @@
     tip.remove();
   }
   window.addEventListener('beforeinstallprompt', function (e) {
-    if (!isTabletDevice()) return;
+    if (!isTouchScreen()) return;
     e.preventDefault();
     pomoInstallPrompt = e;
     refreshTabletTip();
@@ -5653,7 +5663,7 @@
 
   // Tablets run focus sessions only in the installed TAAI Focus app, where
   // alerts work (2026-11-20). In a browser tab, Start shows how to install.
-  function tabletNeedsApp() { return isTabletDevice() && !isStandaloneApp(); }
+  function tabletNeedsApp() { return isTouchScreen() && !isStandaloneApp(); }
   // Signed up already: name the exact email to use in the app (the iPad app
   // starts signed out). Brand new: they sign up in the app instead.
   function appSignInStep(ifAsked) {
@@ -5668,9 +5678,10 @@
   var ICON_MORE = '<span class="ti-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></span>';
   var ICON_DOTS = '<span class="ti-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></span>';
   function tabletInstallStepsHtml() {
-    if (isIPadOS()) {
+    if (isAppleMobile()) {
+      var where = isIPadOS() ? 'at the top of the screen' : 'at the bottom of the screen';
       return '<ol class="fdo-steps">' +
-        '<li>Tap ' + ICON_SHARE + ' <b>Share</b> at the top of the screen (in Chrome, it’s inside the address bar). Don’t see it? Tap ' + ICON_DOTS + ' next to the address bar, then <b>Share</b>.</li>' +
+        '<li>Tap ' + ICON_SHARE + ' <b>Share</b> ' + where + ' (in Chrome, it’s inside the address bar). Don’t see it? Tap ' + ICON_DOTS + ' next to the address bar, then <b>Share</b>.</li>' +
         '<li>Tap ' + ICON_ADD + ' <b>Add to Home Screen</b> (scroll down if you don’t see it), then <b>Add</b>.</li>' +
         '<li>Open <b>TAAI Focus</b> from your Home Screen.</li>' +
         '<li>' + appSignInStep() + ' then press <b>Start</b>. When asked to allow notifications, tap <b>Allow</b>.</li>' +
@@ -5694,12 +5705,12 @@
       '<div class="fdo-card fdo-card--wide">' +
         '<div class="fdo-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2.5"/><path d="M12 7v7M9 11l3 3 3-3"/></svg></div>' +
         '<h3 class="fdo-title" id="ti-title">Add the TAAI Focus app to start</h3>' +
-        '<p class="fdo-text">On a tablet, focus sessions run in the TAAI Focus app, so an alert can tell you when each session ends. It takes a few seconds:</p>' +
+        '<p class="fdo-text">On a phone or tablet, focus sessions run in the TAAI Focus app, so an alert can tell you when each session ends. It takes a few seconds:</p>' +
         tabletInstallStepsHtml() +
-        '<p class="fdo-text fdo-small">Already added it? Open <b>TAAI Focus</b> from your ' + (isIPadOS() ? 'Home Screen' : 'home screen or app list') + '. Your tasks and streak still work right here.</p>' +
+        '<p class="fdo-text fdo-small">Already added it? Open <b>TAAI Focus</b> from your ' + (isAppleMobile() ? 'Home Screen' : 'home screen or app list') + '. Your tasks and streak still work right here.</p>' +
         '<div class="fdo-actions">' +
-          ((pomoInstallPrompt && !isIPadOS()) ? '<button type="button" class="pomo-btn pomo-btn-primary ti-install">Install TAAI Focus</button>' : '') +
-          '<button type="button" class="pomo-btn ' + ((pomoInstallPrompt && !isIPadOS()) ? 'pomo-btn-secondary-text' : 'pomo-btn-primary') + ' fdo-ok">Got it</button>' +
+          ((pomoInstallPrompt && !isAppleMobile()) ? '<button type="button" class="pomo-btn pomo-btn-primary ti-install">Install TAAI Focus</button>' : '') +
+          '<button type="button" class="pomo-btn ' + ((pomoInstallPrompt && !isAppleMobile()) ? 'pomo-btn-secondary-text' : 'pomo-btn-primary') + ' fdo-ok">Got it</button>' +
         '</div>' +
       '</div>';
     function close() { document.removeEventListener('keydown', onKey); el.remove(); }
@@ -5730,16 +5741,16 @@
   // up again after signing in and after allowing notifications.
   var APP_SETUP_KEY = 'taai_app_setup_done_v1';
   var appSetupShownOnLoad = false;
-  function inTabletApp() { return isTabletDevice() && isStandaloneApp(); }
+  function inTabletApp() { return isTouchScreen() && isStandaloneApp(); }
   function appSetupDoneFlag() { try { return localStorage.getItem(APP_SETUP_KEY) === '1'; } catch (e) { return false; } }
   function appSetupSteps() {
     var n = pomoNotifyState();
     var email = state.student && state.student.email;
     return [
-      { label: 'Add TAAI Focus to your ' + (isIPadOS() ? 'Home Screen' : 'home screen'), done: true },
+      { label: 'Add TAAI Focus to your ' + (isAppleMobile() ? 'Home Screen' : 'home screen'), done: true },
       { label: 'Open TAAI Focus', done: true },
       { label: email ? 'Signed in as <b>' + escapeHtml(email) + '</b>' : 'Sign in with your email', done: !!email, key: 'signin' },
-      { label: n === 'unsupported' ? 'Notifications (your iPad’s software is too old for them, update iPadOS to get them)' : n === 'granted' ? 'Notifications allowed' : 'Allow notifications',
+      { label: n === 'unsupported' ? 'Notifications (your ' + deviceName() + '’s software is too old for them, update it to get them)' : n === 'granted' ? 'Notifications allowed' : 'Allow notifications',
         done: n === 'granted' || n === 'unsupported', key: 'notify' },
     ];
   }
@@ -5862,7 +5873,7 @@
     // Tablets (always in the app by now, see tabletNeedsApp): alerts are
     // required like on desktop, except an iPad too old to show them at all
     // (no Notification API in its Home Screen app before iPadOS 16.4).
-    if (isTabletDevice() && notifyState === 'unsupported') {
+    if (isTouchScreen() && notifyState === 'unsupported') {
       state.pomoBlockedReason = null;
       pomoActuallyStart();
       updatePomoDisplay();
@@ -6026,7 +6037,7 @@
       // Only the student flipping it in their own browser's site settings
       // can undo that, so the instructions have to be specific enough to
       // actually follow rather than a vague "check your settings".
-      if (isTabletDevice()) {
+      if (isTouchScreen()) {
         html += '<div class="pomo-gate-title">Turn on alerts to use the timer</div>' +
           '<p class="pomo-gate-body">TAAI Focus needs alerts so you know when each session ends. To turn them on: ' + notifyAllowSteps() + '</p>' +
           '<button class="pomo-btn pomo-btn-primary" id="pomo-gate-reload" type="button">I’ve turned them on, check again</button>';
@@ -8359,7 +8370,7 @@
       var st = pomoNotifyState();
       if (st === 'granted') { send(); return; }
       if (st === 'unsupported') {
-        say(isIPadOS() || isTouchScreen()
+        say(isAppleMobile() || isTouchScreen()
           ? 'This browser tab can’t show notifications. Tap <b>Share</b>, then <b>Add to Home Screen</b>, and open <b>TAAI Focus</b> from there.'
           : 'This browser can’t show notifications. Try Chrome, Edge, Firefox or Safari.');
         return;
