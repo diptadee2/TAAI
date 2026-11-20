@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-20-11';
+  var CLIENT_VERSION = '2026-11-20-12';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -5374,7 +5374,7 @@
   function macSafariNoteHtml() {
     if (!isDesktopBrowser() || state.pomoBlockedReason) return '';
     var name = desktopBrowser().name;
-    return '<details class="pomo-safari-note"><summary>' + (isMacSafari() ? 'Using Safari? Session alerts need a few settings' : 'Not getting session alerts? Check these settings') + '</summary>' +
+    return '<details class="pomo-safari-note"><summary>' + (isMacSafari() ? 'Using Safari? Alerts need a few settings' : 'Not getting alerts? Check these settings') + '</summary>' +
       '<p>' + desktopAlertIntro() + '</p>' +
       desktopAlertStepsHtml() +
       '<p>The second step is the one most often missed: ' + name + ' can allow taai.live while your computer still blocks ' + name + ' itself.</p>' +
