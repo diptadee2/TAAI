@@ -47,6 +47,37 @@ export async function handler(event) {
     .maybeSingle();
   if (readError) return json(500, { error: readError.message });
 
+  // Read-only look at the stored session, and "Switch to this device"
+  // (2026-11-20). A device that isn't running the student's session shows
+  // "running on another device" with a Switch button; switching moves
+  // ownership (owner_token) to it and leaves the session itself untouched,
+  // so no time is lost and it is still credited once.
+  if (body.action === 'peek' || body.action === 'takeover') {
+    const token = typeof body.deviceToken === 'string' ? body.deviceToken.slice(0, 64) : null;
+    let owner = null;
+    try {
+      const { data: o } = await supabase.from('pomo_active_session').select('owner_token').eq('email', email).maybeSingle();
+      owner = o ? o.owner_token : null;
+    } catch (e) { /* treat as unknown owner */ }
+    const view = (ownedByYou) => {
+      if (!existing) return null;
+      const st = existing.phase_started_at ? Date.parse(existing.phase_started_at) : NaN;
+      return {
+        mode: existing.mode, running: !!existing.running, totalSeconds: existing.total_seconds,
+        phaseEndAt: existing.phase_end_at, secondsLeft: existing.seconds_left,
+        phaseAgeMs: Number.isFinite(st) ? Math.max(0, Date.now() - st) : null,
+        ownedByYou,
+      };
+    };
+    const skew = clockSkewMs(body.clientNow);
+    const active = !!(existing && existing.running && Number.isFinite(existing.phase_end_at) && existing.phase_end_at > Date.now() + skew);
+    if (body.action === 'peek') return json(200, { ok: true, state: view(!owner || owner === token) });
+    if (!active || !token) return json(200, { ok: true, takenOver: false, state: view(!owner || owner === token) });
+    const { error: tErr } = await supabase.from('pomo_active_session').update({ owner_token: token }).eq('email', email);
+    if (tErr) return json(500, { error: tErr.message });
+    return json(200, { ok: true, takenOver: true, state: view(true) });
+  }
+
   const isNewPhase = !existing ||
     existing.mode !== body.mode ||
     existing.total_seconds !== totalSeconds ||
@@ -105,7 +136,17 @@ export async function handler(event) {
   // (pause/skip/reset, its own beacon) are unaffected, and once the phase
   // ends or isn't running, any tab may write as before.
   if (existingStillActive && existingOwnerToken && existingOwnerToken !== deviceToken) {
-    return json(200, { ok: true, ignored: 'another device owns the active session' });
+    // Send the running session back so the refused device can show it
+    // instead of silently counting its own copy (2026-11-20).
+    const startedMs = existing.phase_started_at ? Date.parse(existing.phase_started_at) : NaN;
+    return json(200, {
+      ok: true, ignored: 'another device owns the active session',
+      owner: {
+        mode: existing.mode, running: true, totalSeconds: existing.total_seconds,
+        phaseEndAt: existing.phase_end_at,
+        phaseAgeMs: Number.isFinite(startedMs) ? Math.max(0, Date.now() - startedMs) : null,
+      },
+    });
   }
 
   // Malpractice freeze enforcement (see record_malpractice_incident in

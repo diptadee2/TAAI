@@ -50,7 +50,6 @@ export async function handler(event) {
   const displayName = String(body.display_name || '').trim();
   const batch = VALID_BATCHES.includes(body.batch) ? body.batch : 'C';
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json(400, { error: 'valid email is required' });
-  if (!displayName) return json(400, { error: 'display_name is required' });
 
   const supabase = getSupabase();
 
@@ -61,6 +60,9 @@ export async function handler(event) {
     .maybeSingle();
   if (fetchError) return json(500, { error: fetchError.message });
   if (existing) return json(200, existing);
+  // Email-first sign-in (2026-11-20): a returning student needs only their
+  // email; a name is asked for only when the email is new.
+  if (!displayName) return json(400, { error: 'Looks like you’re new here. Add your name to sign up.', needName: true });
 
   const { data: created, error: insertError } = await supabase
     .from('students')

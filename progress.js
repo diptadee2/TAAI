@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-20-16';
+  var CLIENT_VERSION = '2026-11-20-19';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -906,8 +906,149 @@
   // request could cost a real student real credit. Still doesn't block
   // the UI either way: the local timer counts down regardless of whether
   // or when this succeeds.
+  // "Running on another device" (2026-11-20, direct request: show that the
+  // timer is running elsewhere and ask if they want to switch to this one;
+  // after switching, the other device shows the same message). Only the
+  // device that started a session may control it (owner_token, see
+  // pomo-active.js), so a second device shows this box instead of a timer.
+  var pomoLastLocalWrite = 0, ownerPollTimer = null, elsewhereTick = null;
+  function pomoOnOtherDevice(st) {
+    clearTimeout(pomo.timerId);
+    pomo.running = false;
+    pomo.mode = st.mode === 'break' ? 'break' : 'work';
+    if (st.totalSeconds) pomo.totalSeconds = st.totalSeconds;
+    pomo.secondsLeft = Math.max(0, Math.round((st.phaseEndAt - Date.now()) / 1000));
+    var wasShowing = !!state.pomoElsewhere;
+    state.pomoElsewhere = { mode: pomo.mode, phaseEndAt: st.phaseEndAt, totalSeconds: st.totalSeconds };
+    if (typeof zenEl === 'function' && zenEl()) closePomoZen();
+    if (!wasShowing && state.focus) renderCalendar();
+    startElsewhereTick();
+    startOwnerPoll();
+  }
+  function leaveElsewhere(st) {
+    state.pomoElsewhere = null;
+    clearInterval(elsewhereTick); elsewhereTick = null;
+    if (st && !st.running) {
+      pomo.mode = st.mode === 'break' ? 'break' : 'work';
+      if (st.totalSeconds) pomo.totalSeconds = st.totalSeconds;
+      pomo.secondsLeft = Number.isFinite(st.secondsLeft) ? st.secondsLeft : pomo.totalSeconds;
+    }
+    if (state.focus) renderCalendar();
+  }
+  function elsewhereLeftText() {
+    var e = state.pomoElsewhere; if (!e) return '';
+    var sec = Math.max(0, Math.round((e.phaseEndAt - Date.now()) / 1000));
+    if (!sec) return '<span class="pel-unit">Finishing on the other device…</span>';
+    var m = Math.floor(sec / 60), r = sec % 60;
+    return '<b class="pel-num">' + m + ':' + (r < 10 ? '0' : '') + r + '</b> <span class="pel-unit">left in this ' + (e.mode === 'break' ? 'break' : 'focus session') + '</span>';
+  }
+  function startElsewhereTick() {
+    if (elsewhereTick) return;
+    elsewhereTick = setInterval(function () {
+      if (!state.pomoElsewhere) { clearInterval(elsewhereTick); elsewhereTick = null; return; }
+      var el = document.getElementById('pomo-elsewhere-left');
+      if (el) el.innerHTML = elsewhereLeftText();
+      // The other device's phase is over: check what it's doing now.
+      if (state.pomoElsewhere.phaseEndAt < Date.now() - 3000 && !state.pomoElsewhere.checked) { state.pomoElsewhere.checked = true; checkPomoOwner(); }
+    }, 1000);
+  }
+  function renderPomoElsewhereGateHtml() {
+    return '<div class="pomo-malpractice-gate pomo-elsewhere-gate" id="pomo-malpractice-gate">' +
+      '<div class="pomo-gate-title">Your timer is running on another device</div>' +
+      '<p class="pomo-elsewhere-left" id="pomo-elsewhere-left">' + elsewhereLeftText() + '</p>' +
+      (focusStartBlocked()
+        ? '<p class="pomo-gate-body">It counts as normal. Phones can’t run focus sessions, so keep it going on that device.</p>'
+        : '<p class="pomo-gate-body">Want to continue it here? The same session moves to this device. No time is lost, and it counts once.</p>' +
+          '<button class="pomo-btn pomo-btn-primary" id="pomo-elsewhere-switch" type="button">Switch to this device</button>') +
+      '</div>';
+  }
+  function switchPomoHere(btn) {
+    if (!state.student) return;
+    if (tabletNeedsApp()) { showTabletInstall(); return; }
+    if (btn) { btn.disabled = true; btn.textContent = 'Switching…'; }
+    api('/pomo-active', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: state.student.email, mode: pomo.mode, action: 'takeover', deviceToken: getPomoDeviceToken(), clientNow: Date.now() }) })
+      .then(function (r) {
+        var st = r && r.state;
+        if (r && r.takenOver && st) {
+          state.pomoElsewhere = null;
+          clearInterval(elsewhereTick); elsewhereTick = null;
+          pomo.mode = st.mode === 'break' ? 'break' : 'work';
+          pomo.totalSeconds = st.totalSeconds;
+          pomo.phaseEndAt = st.phaseEndAt;
+          pomo.running = true;
+          pomo.secondsLeft = Math.max(0, Math.round((st.phaseEndAt - Date.now()) / 1000));
+          pomo.phaseStartedAt = st.phaseAgeMs != null ? Date.now() - st.phaseAgeMs : st.phaseEndAt - st.totalSeconds * 1000;
+          claimPomoDriver();
+          savePomoActiveLocalOnly();
+          if (state.focus) renderCalendar();
+          pomoTick();
+          showPomoToast('Switched. Your session continues on this device.');
+        } else {
+          leaveElsewhere(st);
+          showPomoToast(st && st.running ? 'Couldn’t switch just now. Try again.' : 'That session isn’t running any more, so you can start here.');
+        }
+      })
+      .catch(function () {
+        if (btn) { btn.disabled = false; btn.textContent = 'Switch to this device'; }
+        showPomoToast('Couldn’t reach TAAI. Check your connection and try again.');
+      });
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('#pomo-elsewhere-switch');
+    if (b) switchPomoHere(b);
+  });
+  function showPomoToast(text) {
+    var old = document.getElementById('pomo-device-note'); if (old) old.remove();
+    var el = document.createElement('div');
+    el.id = 'pomo-device-note';
+    el.className = 'pomo-away-note pomo-device-note';
+    el.setAttribute('role', 'status');
+    el.innerHTML = '<span class="pan-check" aria-hidden="true">✓</span><span></span><button type="button" class="pan-x" aria-label="Close">\u00d7</button>';
+    el.children[1].textContent = text;
+    document.body.appendChild(el);
+    var t = setTimeout(close, 6000);
+    function close() { clearTimeout(t); el.classList.add('is-leaving'); setTimeout(function () { el.remove(); }, 300); }
+    el.querySelector('.pan-x').addEventListener('click', close);
+  }
+  // Is this device still the one running the session? Asked every 30s while
+  // a session runs or shows as elsewhere, and whenever the tab comes back.
+  function pomoPausedMidway() { return !pomo.running && pomo.secondsLeft > 0 && pomo.secondsLeft < pomo.totalSeconds; }
+  function checkPomoOwner(force) {
+    if (!state.student || isPomoFollower()) return;
+    if (!force && !pomo.running && !state.pomoElsewhere && !pomoPausedMidway()) return;
+    var askedAt = Date.now();
+    api('/pomo-active', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: state.student.email, mode: pomo.mode, action: 'peek', deviceToken: getPomoDeviceToken(), clientNow: Date.now() }) })
+      .then(function (r) {
+        var st = r && r.state;
+        if (pomoLastLocalWrite > askedAt - 5000) return; // its own change may not be stored yet
+        var activeElsewhere = st && st.running && !st.ownedByYou && Number.isFinite(st.phaseEndAt) && st.phaseEndAt > Date.now() - 5000;
+        if (state.pomoElsewhere) {
+          if (!activeElsewhere) leaveElsewhere(st);
+          else if (st.phaseEndAt !== state.pomoElsewhere.phaseEndAt || st.mode !== state.pomoElsewhere.mode) {
+            state.pomoElsewhere = { mode: st.mode, phaseEndAt: st.phaseEndAt, totalSeconds: st.totalSeconds };
+            if (state.focus) renderCalendar();
+          }
+        } else if (activeElsewhere) {
+          pomoOnOtherDevice(st);
+        }
+      }).catch(function () {});
+  }
+  function startOwnerPoll() {
+    if (ownerPollTimer) return;
+    ownerPollTimer = setInterval(function () {
+      if (document.hidden) return;
+      if (!pomo.running && !state.pomoElsewhere && !pomoPausedMidway()) { clearInterval(ownerPollTimer); ownerPollTimer = null; return; }
+      checkPomoOwner();
+    }, 30000);
+  }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && (state.focus || pomo.running)) checkPomoOwner(true); });
+
   function savePomoActiveRemote(payload) {
     if (!state.student) return;
+    pomoLastLocalWrite = Date.now();
+    if (payload.running || (payload.secondsLeft > 0 && payload.secondsLeft < payload.totalSeconds)) startOwnerPoll();
     // A finished phase whose credit claim hasn't reached the server yet
     // (e.g. the wifi dropped right as it ended): writing the next phase
     // now would replace the server's record of the finished one, and the
@@ -934,6 +1075,7 @@
           // start when an earlier write from this device was ignored or
           // overwritten by another tab/device). Adopt the later start so we
           // never claim before the server will accept it (pomoPhaseRanFully).
+          if (r && r.ignored === 'another device owns the active session' && r.owner && !isPomoFollower()) { pomoOnOtherDevice(r.owner); return; }
           if (!r || r.phaseAgeMs == null || r.ignored) return;
           if (pomo.phaseEndAt !== payload.phaseEndAt || pomo.mode !== payload.mode) return;
           var serverStart = Date.now() - r.phaseAgeMs;
@@ -2536,11 +2678,13 @@
       '<p>' + promptText + '</p>' +
       '<form id="reg-form">' +
       '<div class="reg-field"><label for="reg-email">Your email</label>' +
-      '<input id="reg-email" type="email" required autocomplete="email"></div>' +
-      '<div class="reg-field"><label for="reg-name">Your display name</label>' +
-      '<input id="reg-name" type="text" required autocomplete="name"></div>' +
+      '<input id="reg-email" type="email" required autocomplete="email" inputmode="email" autocapitalize="off" autocorrect="off" spellcheck="false">' +
+      '<p class="reg-hint">Already a TAAI student? Use the same email and you’re in.</p></div>' +
+      '<div class="reg-field" id="reg-name-field" hidden><label for="reg-name">Your name</label>' +
+      '<input id="reg-name" type="text" autocomplete="name" maxlength="40">' +
+      '<p class="reg-hint">You’re new here. This is the name others see on the leaderboard.</p></div>' +
       (errorMsg ? '<p class="form-error">' + escapeHtml(errorMsg) + '</p>' : '') +
-      '<button class="btn-primary" type="submit">Start Tracking</button>' +
+      '<button class="btn-primary" type="submit">Continue</button>' +
       (hasPending ? '<button type="button" class="reg-cancel-link" id="reg-cancel">← Keep browsing without an account</button>' : '') +
       '</form></div>';
 
@@ -2548,9 +2692,12 @@
       e.preventDefault();
       var btn = e.target.querySelector('button');
       var email = document.getElementById('reg-email').value.trim();
+      var nameField = document.getElementById('reg-name-field');
       var name = document.getElementById('reg-name').value.trim();
+      if (!nameField.hidden && !name) { document.getElementById('reg-name').focus(); return; }
+      var oldErr = e.target.querySelector('.form-error'); if (oldErr) oldErr.remove();
       btn.disabled = true;
-      btn.textContent = 'Starting…';
+      btn.textContent = 'One moment…';
       api('/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2606,7 +2753,22 @@
           if (state.focus) renderCalendar();
         })
         .catch(function (err) {
+          // New email: show the name box right here, keeping what they typed.
+          if (err && err.data && err.data.needName) {
+            nameField.hidden = false;
+            btn.disabled = false;
+            btn.textContent = 'Sign up';
+            document.getElementById('reg-name').focus();
+            return;
+          }
+          var keepEmail = email, keepName = name, nameShown = !nameField.hidden;
           renderRegisterForm(err.message);
+          var em = document.getElementById('reg-email'); if (em) em.value = keepEmail;
+          if (nameShown) {
+            var nf = document.getElementById('reg-name-field'); if (nf) nf.hidden = false;
+            var nm = document.getElementById('reg-name'); if (nm) nm.value = keepName;
+            var sb = document.querySelector('#reg-form button[type=submit]'); if (sb) sb.textContent = 'Sign up';
+          }
         });
     });
 
@@ -2821,6 +2983,7 @@
   var initialMonthChecked = false;
   function applyTrackerData(data, isStale, swapQuietly) {
     state.stale = !!isStale;
+    if (!isStale) setTimeout(function () { checkPomoOwner(true); }, 1500);
     if (!isStale && !appSetupShownOnLoad && inTabletApp() && !appSetupDoneFlag()) {
       appSetupShownOnLoad = true;
       setTimeout(function () { showAppSetup(); }, 900);
@@ -5498,17 +5661,23 @@
     if (email) return 'Sign in with <b>' + escapeHtml(email) + '</b>' + (ifAsked ? ' if asked,' : ',');
     return 'Sign up with your email,';
   }
+  // Small pictures of the buttons the steps talk about, so nobody has to
+  // decode "a square with an arrow pointing up" (2026-11-20).
+  var ICON_SHARE = '<span class="ti-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M7 10H5v11h14V10h-2"/></svg></span>';
+  var ICON_ADD = '<span class="ti-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg></span>';
+  var ICON_MORE = '<span class="ti-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></span>';
+  var ICON_DOTS = '<span class="ti-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></span>';
   function tabletInstallStepsHtml() {
     if (isIPadOS()) {
       return '<ol class="fdo-steps">' +
-        '<li>Tap the <b>Share</b> button: a square with an arrow pointing up, at the top of the screen (in Chrome, inside the address bar). Don’t see it? Tap <b>⋯</b> next to the address bar, then <b>Share</b>.</li>' +
-        '<li>Tap <b>Add to Home Screen</b> (scroll down if you don’t see it), then <b>Add</b>.</li>' +
+        '<li>Tap ' + ICON_SHARE + ' <b>Share</b> at the top of the screen (in Chrome, it’s inside the address bar). Don’t see it? Tap ' + ICON_DOTS + ' next to the address bar, then <b>Share</b>.</li>' +
+        '<li>Tap ' + ICON_ADD + ' <b>Add to Home Screen</b> (scroll down if you don’t see it), then <b>Add</b>.</li>' +
         '<li>Open <b>TAAI Focus</b> from your Home Screen.</li>' +
         '<li>' + appSignInStep() + ' then press <b>Start</b>. When asked to allow notifications, tap <b>Allow</b>.</li>' +
         '</ol>';
     }
     return '<ol class="fdo-steps">' +
-      '<li>' + (pomoInstallPrompt ? 'Tap <b>Install TAAI Focus</b> below, or open' : 'Open') + ' your browser menu (<b>⋮</b>, top right) and tap <b>Install app</b> or <b>Add to Home screen</b>.</li>' +
+      '<li>' + (pomoInstallPrompt ? 'Tap <b>Install TAAI Focus</b> below, or open' : 'Open') + ' your browser menu ' + ICON_MORE + ' (top right) and tap <b>Install app</b> or <b>Add to Home screen</b>.</li>' +
       '<li>Open <b>TAAI Focus</b> from your home screen or app list.</li>' +
       '<li>' + appSignInStep(true) + ' then press <b>Start</b>. When asked to allow notifications, tap <b>Allow</b>.</li>' +
       '</ol>';
@@ -5641,6 +5810,7 @@
   }
 
   function pomoToggleRun() {
+    if (state.pomoElsewhere) return;
     if (!pomo.running && focusStartBlocked()) { showFocusDesktopOnly(); return; }
     if (!pomo.running && tabletNeedsApp()) { showTabletInstall(); return; }
     // Starting (not pausing) waits for fresh data: the rename / freeze
@@ -5947,6 +6117,7 @@
   // Start at all, so it only gets the slot when nothing more urgent
   // needs it.
   function pomoGateState() {
+    if (state.pomoElsewhere) return 'elsewhere';
     if (pomoIsFrozen()) return 'freeze';
     if (state.needsRename) return 'rename';
     if (pomoMalpracticeWarningActive()) return 'warning';
@@ -6029,6 +6200,7 @@
     var gateState = pomoGateState();
     if (!gateState) return '';
     if (gateState === 'rename') return renderPomoRenameGateHtml(show);
+    if (gateState === 'elsewhere') return renderPomoElsewhereGateHtml();
     var frozen = gateState === 'freeze';
     var html = '<div class="pomo-malpractice-gate' + (frozen ? ' pomo-malpractice-gate--freeze' : ' pomo-malpractice-gate--warning') + '" id="pomo-malpractice-gate"' + (show ? '' : ' hidden') + '>' +
       '<div class="pomo-gate-title">⚠️ Malpractice Detected</div>';
