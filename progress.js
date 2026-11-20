@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-20-1';
+  var CLIENT_VERSION = '2026-11-20-2';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1657,6 +1657,12 @@
 
   function init() {
     state.student = readCookie();
+    // Safari caps cookies written by JavaScript at 7 days from when they
+    // were last written, whatever expiry we ask for, so a student who only
+    // ever had the cookie written at sign-up was signed out a week later
+    // even while visiting daily (2026-11-20). Rewriting it on every visit
+    // restarts that clock, so regular visitors stay signed in.
+    if (state.student) writeCookie(state.student);
     // A cookie written before batch support existed (2026-09-28) has no
     // batch at all — and every student registered before then IS on the
     // original batch. Without this, effectiveScoutBatch() saw 'C' vs
@@ -5053,6 +5059,11 @@
     var creditPromise = finishedMode === 'work' && ranFully
       ? recordPomodoroCompletion(pomoSettings.work, pomo.phaseEndAt)
       : Promise.resolve();
+    // Ended while the student was elsewhere (tab hidden now, or this tick
+    // is landing well after the end time because the page was paused).
+    if (finishedMode === 'work' && ranFully && (document.hidden || Date.now() - pomo.phaseEndAt > 45000)) {
+      noteSessionDoneAway(Math.round(pomo.totalSeconds / 60));
+    }
 
     return creditPromise.then(function () {
       // pomoAdvance first, not after — it's what increments
@@ -5202,12 +5213,42 @@
   // "check your OS notification settings" tip (hidden on touch screens).
   function pomoTabletTipHtml() {
     if (!isTabletDevice()) return '';
-    var iosTab = typeof Notification === 'undefined' && !isStandaloneApp();
-    return '<p class="pomo-tablet-tip">' + (iosTab
-      ? 'Keep this screen open during a session. For alerts, tap <b>Share</b>, then <b>Add to Home Screen</b>, and open TAAI Focus from there.'
-      : 'Keep this screen open during a session. If you switch apps, the end-of-session alert can arrive late.') +
-      '</p>';
+    var notify = pomoNotifyState();
+    var text;
+    if (notify === 'unsupported' && !isStandaloneApp()) {
+      // iPad Safari tab: no notifications at all outside a Home Screen app.
+      text = 'Keep this screen on during a session. Safari tabs can\'t show alerts. To get them, tap <b>Share</b>, then <b>Add to Home Screen</b>, open <b>TAAI Focus</b> and sign in with the same email.';
+    } else if (notify === 'denied') {
+      text = 'Alerts are blocked for this site. To turn them on, open your browser\'s site settings for taai.live and allow <b>Notifications</b>. Keep this screen on during a session.';
+    } else {
+      text = 'Keep this screen on during a session. If you switch apps, the alert can come late, but your session still counts.';
+    }
+    return '<p class="pomo-tablet-tip">' + text + '</p>';
   }
+
+  // A focus session that ended while the student was in another tab or
+  // app: say so when they come back, so a silent "session over" doesn't
+  // look like a broken timer (2026-11-20).
+  var awayNoteMin = 0;
+  function noteSessionDoneAway(min) {
+    awayNoteMin = min;
+    if (!document.hidden) showAwayNote();
+  }
+  function showAwayNote() {
+    if (!awayNoteMin) return;
+    var min = awayNoteMin; awayNoteMin = 0;
+    var old = document.getElementById('pomo-away-note'); if (old) old.remove();
+    var el = document.createElement('div');
+    el.id = 'pomo-away-note';
+    el.className = 'pomo-away-note';
+    el.setAttribute('role', 'status');
+    el.innerHTML = '<span class="pan-check" aria-hidden="true">\u2713</span><span>Your ' + min + '-min focus session finished while you were away. It counts.</span><button type="button" class="pan-x" aria-label="Close">\u00d7</button>';
+    document.body.appendChild(el);
+    var t = setTimeout(close, 7000);
+    function close() { clearTimeout(t); el.classList.add('is-leaving'); setTimeout(function () { el.remove(); }, 300); }
+    el.querySelector('.pan-x').addEventListener('click', close);
+  }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) setTimeout(showAwayNote, 400); });
   function showFocusDesktopOnly() {
     if (document.getElementById('focus-desktop-only')) return;
     var el = document.createElement('div');
