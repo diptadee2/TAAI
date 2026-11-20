@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-20-6';
+  var CLIENT_VERSION = '2026-11-20-7';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2252,6 +2252,7 @@
   if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
     window.taaiConfetti = fireConfetti;
     window.taaiMission = function () { viceMissionPassed(25); };
+    window.taaiZenComet = function () { if (zenEl()) spawnZenComet(zenEl()); };
     // ?confetti opens the Pomodoro (Focus mode) view first, then fires.
     // ?zen-new: forget that fullscreen was used (so the button glows again)
     // and open the Pomodoro view.
@@ -3244,9 +3245,56 @@
     ], { duration: 850 + Math.random() * 300, easing: 'ease-out' });
     a.onfinish = function () { el.remove(); };
   }
+  // Fullscreen timer comets (2026-11-20): the card's comets were never drawn
+  // here, and the fullscreen layer covers the card. Each comet's whole path
+  // (head travel plus tail) is checked against everything on screen and
+  // tried again elsewhere if it would cross any of it.
+  function zenCometObstacles(zen) {
+    var sel = '.pomo-zen-clock, .pomo-zen-exit, .pomo-zen-mode, .pomo-zen-time, .pomo-zen-bar, .pomo-zen-sessions, #pomo-zen-toggle, #pomo-zen-board, .zen-hud, ' +
+      '.vice-skyline, .vice-tower, .vice-palm, .vice-blimp, .vice-road, .vice-edge, .zs-ringed, .zs-gold, .zs-blue';
+    return [].filter.call(zen.querySelectorAll(sel), function (e) {
+      var cs = getComputedStyle(e);
+      return cs.display !== 'none' && cs.visibility !== 'hidden' && e.getBoundingClientRect().width > 0;
+    }).map(function (e) { return e.getBoundingClientRect(); });
+  }
+  function spawnZenComet(zen) {
+    var sky = zen.querySelector('.pomo-zen-sky');
+    if (!sky || !sky.animate) return;
+    var W = zen.clientWidth, H = zen.clientHeight, PAD = 18;
+    var obs = zenCometObstacles(zen);
+    for (var tries = 0; tries < 30; tries++) {
+      var len = 60 + Math.random() * 50;
+      var dx = 70 + Math.random() * 60, dy = dx * 0.62;
+      var tailX = len * 0.85, tailY = len * 0.53;
+      var x = dx + 12 + Math.random() * (W - dx - tailX - 24);
+      var y = tailY + 12 + Math.random() * (H - tailY - dy - 24);
+      // Path box: from the tail's far end (up-right of the start) to where
+      // the head ends (down-left).
+      var bx0 = x - dx - PAD, bx1 = x + tailX + PAD, by0 = y - tailY - PAD, by1 = y + dy + PAD;
+      var hit = obs.some(function (o) { return o.left < bx1 && o.right > bx0 && o.top < by1 && o.bottom > by0; });
+      if (hit) continue;
+      var el = document.createElement('i');
+      el.className = 'fs-comet';
+      el.style.cssText = 'left:' + Math.round(x) + 'px;top:' + Math.round(y) + 'px;width:' + Math.round(len) + 'px;';
+      sky.appendChild(el);
+      var a = el.animate([
+        { opacity: 0, transform: 'translate(0,0) rotate(-32deg)' },
+        { opacity: 0.45, offset: 0.25 },
+        { opacity: 0, transform: 'translate(' + (-dx) + 'px,' + dy + 'px) rotate(-32deg)' }
+      ], { duration: 1000 + Math.random() * 350, easing: 'ease-out' });
+      a.onfinish = function () { el.remove(); };
+      return;
+    }
+  }
   function cometShower() {
     cometTimer = null;
     if (!state.focus || document.hidden) return scheduleComets();
+    var zenNow = zenEl();
+    if (zenNow) {
+      var zn = 1 + Math.floor(Math.random() * 2);
+      for (var zi = 0; zi < zn; zi++) setTimeout(function () { if (zenEl()) spawnZenComet(zenEl()); }, zi * (180 + Math.random() * 260));
+      return scheduleComets();
+    }
     var zones = cometZones();
     if (zones.length) {
       var zone = zones[Math.floor(Math.random() * zones.length)];
