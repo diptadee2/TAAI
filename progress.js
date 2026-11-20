@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-20-8';
+  var CLIENT_VERSION = '2026-11-20-10';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2230,10 +2230,7 @@
   // for ads (2026-11-19). Desktop only, like the Focus button; on a phone it
   // just lands on the checklist. The parameter is removed first so Back and
   // a later reload behave normally.
-  // The installed TAAI Focus app (Home Screen / installed PWA) also opens
-  // straight into Focus Mode: iPadOS can ignore the manifest's start_url and
-  // reopen whatever URL was showing when it was added (2026-11-20).
-  if (/[?&]focus\b/.test(location.search) || (isStandaloneApp() && !focusStartBlocked())) {
+  if (/[?&]focus\b/.test(location.search)) {
     try { history.replaceState(history.state, '', location.pathname + location.search.replace(/([?&])focus\b(=[^&]*)?&?/, '$1').replace(/[?&]$/, '') + location.hash); } catch (e) { /* fine */ }
     {
       var fTries = 0;
@@ -5274,7 +5271,8 @@
   // once the screen sleeps, which would delay the end-of-session chime.
   var tabletWakeLock = null, tabletWakePending = false;
   function syncTabletWakeLock() {
-    if (!isTabletDevice() || !navigator.wakeLock || !navigator.wakeLock.request) return;
+    // Tablets, laptops and desktops (everything that can run a session).
+    if (focusStartBlocked() || !navigator.wakeLock || !navigator.wakeLock.request) return;
     if (tabletWakeLock && tabletWakeLock.released) tabletWakeLock = null;
     if (pomo.running && !document.hidden) {
       if (tabletWakeLock || tabletWakePending) return;
@@ -5312,17 +5310,54 @@
     if (/Windows/.test(ua)) return 'open Windows <b>Settings</b>, then <b>System</b>, then <b>Notifications</b>, turn them on for <b>' + browser + '</b>, and check that <b>Do not disturb</b> is off';
     return 'check your computer’s notification settings allow <b>' + browser + '</b>, and that Do Not Disturb is off';
   }
+  // Can this browser keep the screen awake? Home Screen apps on iPadOS
+  // before 18.4 ignore the request (WebKit bug), so they get the manual hint.
+  function screenStaysOn() {
+    if (!navigator.wakeLock || !navigator.wakeLock.request) return false;
+    if (isStandaloneApp() && isIPadOS()) {
+      var m = (navigator.userAgent || '').match(/(?:OS |Version\/)(\d+)[._](\d+)/);
+      if (m && (+m[1] < 18 || (+m[1] === 18 && +m[2] < 4))) return false;
+    }
+    return true;
+  }
+  function screenOnLine() {
+    if (screenStaysOn()) return 'The screen stays on while the timer runs, as long as TAAI is open in front of you.';
+    if (isIPadOS()) return 'Keep this screen on during a session (set <b>Auto-Lock</b> to Never in Settings, then Display &amp; Brightness, if it dims).';
+    return 'Keep this screen on during a session.';
+  }
+  // Safari on a Mac (not an iPad): alerts need Safari's site setting AND
+  // macOS letting Safari show notifications, and the second is easy to miss.
+  function isMacSafari() {
+    var ua = navigator.userAgent || '';
+    return /Macintosh/.test(ua) && /Safari/.test(ua) && !/Chrome|Chromium|Edg|OPR|Firefox/.test(ua) && !isIPadOS();
+  }
+  function macSafariStepsHtml() {
+    return '<ol class="pomo-safari-steps">' +
+      '<li>In the <b>Safari</b> menu, open <b>Settings</b>, then <b>Websites</b>, then <b>Notifications</b>, and set <b>taai.live</b> to <b>Allow</b>.</li>' +
+      '<li>Open your Mac’s <b>System Settings</b>, then <b>Notifications</b>, then <b>Safari</b>. Turn on <b>Allow notifications</b> and choose <b>Banners</b> or <b>Alerts</b>.</li>' +
+      '<li>Make sure <b>Focus</b> (Do Not Disturb) is off.</li>' +
+      '<li>Reload this page and press <b>Test notification</b> in the timer settings (⚙).</li>' +
+      '</ol>';
+  }
+  function macSafariNoteHtml() {
+    if (!isMacSafari() || state.pomoBlockedReason) return '';
+    return '<details class="pomo-safari-note"><summary>Using Safari? Session alerts need a few settings</summary>' +
+      '<p>Focus mode was designed for desktop browsers like Chrome, and Safari needs a few extra settings before it shows alerts. We know that’s inconvenient, sorry. Here’s what to do:</p>' +
+      macSafariStepsHtml() +
+      '<p>The second step is the one most often missed: Safari can allow taai.live while your Mac still blocks Safari itself.</p>' +
+      '</details>';
+  }
   function pomoTabletTipHtml() {
     if (!isTabletDevice()) return '';
     var notify = pomoNotifyState();
     var text;
     if (notify === 'unsupported' && !isStandaloneApp()) {
       // iPad Safari tab: no notifications at all outside a Home Screen app.
-      text = 'Keep this screen on during a session. Safari tabs can\'t show alerts. To get them, tap <b>Share</b>, then <b>Add to Home Screen</b>, open <b>TAAI Focus</b> and sign in with the same email.';
+      text = screenOnLine() + ' Safari tabs can\'t show alerts. To get them, tap <b>Share</b>, then <b>Add to Home Screen</b>, open <b>TAAI Focus</b> and sign in with the same email.';
     } else if (notify === 'denied') {
       text = 'Alerts are off, so you won\'t get a pop-up when a session ends. The timer still works. To turn them on: ' + notifyAllowSteps();
     } else {
-      text = 'Keep this screen on during a session. If you switch apps, the alert can come late, but your session still counts.';
+      text = screenOnLine() + ' If you switch apps, the alert can come late, but your session still counts.';
       if (!isStandaloneApp() && /Android/i.test(navigator.userAgent) && !pomoInstallPrompt) {
         text += ' For a TAAI Focus app, open your browser menu (<b>\u22ee</b>) and tap <b>Add to Home screen</b> or <b>Install app</b>.';
       }
@@ -5615,6 +5650,13 @@
       // Only the student flipping it in their own browser's site settings
       // can undo that, so the instructions have to be specific enough to
       // actually follow rather than a vague "check your settings".
+      if (isMacSafari()) {
+        html += '<div class="pomo-gate-title">Notifications are blocked</div>' +
+          '<p class="pomo-gate-body">Focus mode was designed for desktop browsers like Chrome, and Safari needs a few extra settings before it shows session alerts. We know that’s inconvenient, sorry. Here’s what to do:</p>' +
+          macSafariStepsHtml() +
+          '<button class="pomo-btn pomo-btn-primary" id="pomo-gate-reload" type="button">I’ve updated it, reload</button>';
+        return html + '</div>';
+      }
       html += '<div class="pomo-gate-title">Notifications are blocked</div>' +
         '<p class="pomo-gate-body">Your browser saved a “Block” choice for this site, so it can’t prompt you again automatically. To fix it:</p>' +
         '<ol class="pomo-gate-steps">' +
@@ -5976,9 +6018,10 @@
       '<span class="pomo-btn-icon">' + POMO_ICON_SKIP + '</span><span class="pomo-btn-label">Skip</span></button>' +
       '</div>' +
       '</div>' + // .pomo-clock-wrap
-      '<p class="pomo-notify-permanent-tip">🔔 Notifications need your computer’s permission too, not just this site’s — check your OS’s own notification settings for this browser if they don’t show up.</p>' +
+      (isMacSafari() ? '' : '<p class="pomo-notify-permanent-tip">🔔 Notifications need your computer’s permission too, not just this site’s. If they don’t show up, check your computer’s notification settings for this browser.</p>') +
       (pomoJustSignedUp ? '<p class="pomo-signed-up" id="pomo-signed-up">You\'re signed up. Press <b>Start</b> to begin your first session.</p>' : '') +
       pomoTabletTipHtml() +
+      macSafariNoteHtml() +
       renderPomoNotifyNotice() +
       '<div class="pomo-settings" id="pomo-settings" hidden>' +
       '<div class="pomo-settings-header">⚙️ Timer settings</div>' +
@@ -7926,7 +7969,8 @@
             icon: '/apple-touch-icon.png',
           });
         } catch (e) { /* reported below */ }
-        say('Sent. If no notification appeared: ' + notifyDeviceSteps() + '.');
+        if (isMacSafari()) say('Sent. No notification? Focus mode was designed for desktop browsers like Chrome, and Safari needs a few extra settings, sorry for the hassle:' + macSafariStepsHtml());
+        else say('Sent. If no notification appeared: ' + notifyDeviceSteps() + '.');
       }
       var st = pomoNotifyState();
       if (st === 'granted') { send(); return; }
@@ -7936,7 +7980,7 @@
           : 'This browser can’t show notifications. Try Chrome, Edge, Firefox or Safari.');
         return;
       }
-      if (st === 'denied') { say('Notifications are blocked for this site. ' + notifyAllowSteps() + ' After that, press Test notification again.'); return; }
+      if (st === 'denied') { say(isMacSafari() ? 'Notifications are blocked for this site. Focus mode was designed for desktop browsers like Chrome, and Safari needs a few extra settings, sorry for the hassle:' + macSafariStepsHtml() : 'Notifications are blocked for this site. ' + notifyAllowSteps() + ' After that, press Test notification again.'); return; }
       // 'default': this click is the gesture the permission prompt needs.
       say('Your browser is asking whether to allow notifications. Choose <b>Allow</b>.');
       try {

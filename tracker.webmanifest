@@ -3,7 +3,7 @@
   "name": "TAAI Focus",
   "short_name": "TAAI Focus",
   "description": "Your GATE DA study roadmap and focus timer.",
-  "start_url": "/gate-da-progress-tracker?focus",
+  "start_url": "/gate-da-progress-tracker",
   "scope": "/gate-da-progress-tracker",
   "display": "standalone",
   "orientation": "any",
