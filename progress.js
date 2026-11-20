@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-20-15';
+  var CLIENT_VERSION = '2026-11-20-16';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -2562,6 +2562,7 @@
         .then(function (student) {
           writeCookie(student);
           state.student = student;
+          if (inTabletApp() && !appSetupDoneFlag()) setTimeout(function () { showAppSetup(); }, 1500);
           var task = pendingTask;
           pendingTask = null;
           if (pendingPomoStart) pomoJustSignedUp = true;
@@ -2820,6 +2821,10 @@
   var initialMonthChecked = false;
   function applyTrackerData(data, isStale, swapQuietly) {
     state.stale = !!isStale;
+    if (!isStale && !appSetupShownOnLoad && inTabletApp() && !appSetupDoneFlag()) {
+      appSetupShownOnLoad = true;
+      setTimeout(function () { showAppSetup(); }, 900);
+    }
     var scheduleDays = data.schedule.days || [];
     state.latestScheduledMonth = data.schedule.latestMonth || null;
     state.taskLinks = data.taskLinks || null;
@@ -5549,6 +5554,92 @@
     var ok = el.querySelector('.ti-install') || el.querySelector('.fdo-ok'); if (ok) ok.focus();
   }
 
+  // Setup checklist inside the TAAI Focus app on a tablet (2026-11-20, "a
+  // checklist that pops up again with every step done crossed out"). The
+  // browser can't see the Home Screen steps, but the app knows it was
+  // installed and opened, so it starts with those two crossed out, then pops
+  // up again after signing in and after allowing notifications.
+  var APP_SETUP_KEY = 'taai_app_setup_done_v1';
+  var appSetupShownOnLoad = false;
+  function inTabletApp() { return isTabletDevice() && isStandaloneApp(); }
+  function appSetupDoneFlag() { try { return localStorage.getItem(APP_SETUP_KEY) === '1'; } catch (e) { return false; } }
+  function appSetupSteps() {
+    var n = pomoNotifyState();
+    var email = state.student && state.student.email;
+    return [
+      { label: 'Add TAAI Focus to your ' + (isIPadOS() ? 'Home Screen' : 'home screen'), done: true },
+      { label: 'Open TAAI Focus', done: true },
+      { label: email ? 'Signed in as <b>' + escapeHtml(email) + '</b>' : 'Sign in with your email', done: !!email, key: 'signin' },
+      { label: n === 'unsupported' ? 'Notifications (your iPad’s software is too old for them, update iPadOS to get them)' : n === 'granted' ? 'Notifications allowed' : 'Allow notifications',
+        done: n === 'granted' || n === 'unsupported', key: 'notify' },
+    ];
+  }
+  function showAppSetup(force) {
+    if (!inTabletApp()) return;
+    if (appSetupDoneFlag() && !force) return;
+    var steps = appSetupSteps();
+    var doneCount = steps.filter(function (x) { return x.done; }).length;
+    var next = steps.filter(function (x) { return !x.done; })[0];
+    var el = document.getElementById('app-setup');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'app-setup';
+      el.className = 'fdo-backdrop';
+      el.setAttribute('role', 'dialog');
+      el.setAttribute('aria-modal', 'true');
+      el.setAttribute('aria-labelledby', 'as-title');
+      document.body.appendChild(el);
+      el.addEventListener('click', onSetupClick);
+      document.addEventListener('keydown', onSetupKey);
+    }
+    var list = '<ol class="as-list">' + steps.map(function (x) {
+      var cls = x.done ? 'is-done' : (x === next ? 'is-next' : '');
+      return '<li class="' + cls + '"><span class="as-mark" aria-hidden="true">' + (x.done ? '✓' : '') + '</span><span class="as-label">' + x.label + '</span>' +
+        (x.done ? '<span class="sr-only"> (done)</span>' : '') + '</li>';
+    }).join('') + '</ol>';
+    var action = '';
+    if (!next) {
+      try { localStorage.setItem(APP_SETUP_KEY, '1'); } catch (e) { /* fine */ }
+      action = pomo.running
+        ? '<p class="fdo-text">Your first session has started. Good luck!</p><div class="fdo-actions"><button type="button" class="pomo-btn pomo-btn-primary as-close">Got it</button></div>'
+        : '<p class="fdo-text">Press <b>Start</b> on the timer to begin your first session.</p><div class="fdo-actions"><button type="button" class="pomo-btn pomo-btn-primary as-go">Go to the timer</button></div>';
+    } else if (next.key === 'signin') {
+      action = '<p class="fdo-text">Next: sign in with the email you use on TAAI (or sign up if you’re new).</p>' +
+        '<div class="fdo-actions"><button type="button" class="pomo-btn pomo-btn-primary as-signin">Sign in</button><button type="button" class="pomo-btn pomo-btn-secondary-text as-close">Later</button></div>';
+    } else if (pomoNotifyState() === 'denied') {
+      action = '<p class="fdo-text">Notifications are turned off. To turn them on: ' + notifyAllowSteps() + '</p>' +
+        '<div class="fdo-actions"><button type="button" class="pomo-btn pomo-btn-primary as-recheck">I’ve turned them on, check again</button><button type="button" class="pomo-btn pomo-btn-secondary-text as-close">Later</button></div>';
+    } else {
+      action = '<p class="fdo-text">Next: allow notifications, so TAAI Focus can tell you when each session ends. Tap the button, then tap <b>Allow</b>.</p>' +
+        '<div class="fdo-actions"><button type="button" class="pomo-btn pomo-btn-primary as-allow">Allow notifications</button><button type="button" class="pomo-btn pomo-btn-secondary-text as-close">Later</button></div>';
+    }
+    el.innerHTML = '<div class="fdo-card fdo-card--wide as-card">' +
+      '<h3 class="fdo-title" id="as-title">' + (next ? 'Set up TAAI Focus' : 'You’re all set!') + '</h3>' +
+      '<p class="as-count">' + doneCount + ' of ' + steps.length + ' done</p>' +
+      '<div class="as-bar"><span style="width:' + Math.round(doneCount / steps.length * 100) + '%"></span></div>' +
+      list + action + '</div>';
+    var b = el.querySelector('.as-allow, .as-signin, .as-recheck, .as-go, .as-close'); if (b) b.focus();
+  }
+  function closeAppSetup() {
+    var el = document.getElementById('app-setup');
+    if (el) el.remove();
+    document.removeEventListener('keydown', onSetupKey);
+  }
+  function onSetupKey(e) { if (e.key === 'Escape') closeAppSetup(); }
+  function onSetupClick(e) {
+    var el = document.getElementById('app-setup');
+    if (e.target === el || e.target.closest('.as-close')) { closeAppSetup(); return; }
+    if (e.target.closest('.as-signin')) { closeAppSetup(); pendingPomoStart = true; renderRegisterForm(); return; }
+    if (e.target.closest('.as-recheck')) { location.reload(); return; }
+    if (e.target.closest('.as-go')) { closeAppSetup(); if (!state.focus) { var fb = document.getElementById('focus-toggle'); if (fb) fb.click(); } return; }
+    if (e.target.closest('.as-allow')) {
+      try {
+        var pr = Notification.requestPermission();
+        (pr && pr.then ? pr : Promise.resolve(pomoNotifyState())).then(function () { refreshTabletTip(); showAppSetup(true); });
+      } catch (er) { showAppSetup(true); }
+    }
+  }
+
   function pomoToggleRun() {
     if (!pomo.running && focusStartBlocked()) { showFocusDesktopOnly(); return; }
     if (!pomo.running && tabletNeedsApp()) { showTabletInstall(); return; }
@@ -5637,6 +5728,7 @@
         var fa = document.querySelector('.pomo-first-allow');
         if (fa) fa.outerHTML = macSafariNoteHtml();
         refreshTabletTip();
+        if (inTabletApp() && !appSetupDoneFlag()) showAppSetup();
       } else {
         state.pomoBlockedReason = 'denied';
         renderCalendar();

@@ -2968,6 +2968,21 @@ html.vice-night .pomo-zen .vice-edge { bottom: 24px; height: 46px; background-si
 .fdo-text { margin: 0 0 20px; font-size: 14px; line-height: 1.55; color: var(--ink-dim); }
 .fdo-text b { color: var(--ink); }
 .fdo-ok { width: 100%; justify-content: center; }
+.as-count { margin: -2px 0 8px; font-size: 13px; color: var(--ink-dim); }
+.as-bar { height: 6px; border-radius: 99px; background: rgba(255,255,255,.1); overflow: hidden; margin: 0 0 16px; }
+.as-bar span { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #A78BFA, #4ade80); transition: width .5s ease; }
+.as-list { list-style: none; margin: 0 0 16px; padding: 0; text-align: left; }
+.as-list li { display: flex; align-items: flex-start; gap: 12px; padding: 10px 12px; border-radius: 10px; font-size: 15px; line-height: 1.4; color: var(--ink-dim); }
+.as-list li + li { margin-top: 4px; }
+.as-mark { flex: none; width: 24px; height: 24px; border-radius: 50%; border: 2px solid rgba(255,255,255,.3); display: grid; place-items: center; font-size: 13px; font-weight: 800; }
+.as-list li.is-done { color: var(--ink-soft); }
+.as-list li.is-done .as-label { text-decoration: line-through; text-decoration-thickness: 2px; text-decoration-color: rgba(74,222,128,.7); }
+.as-list li.is-done .as-mark { background: #4ade80; border-color: #4ade80; color: #06210f; animation: as-pop .35s cubic-bezier(.34,1.56,.64,1); }
+.as-list li.is-next { background: rgba(167,139,250,.14); border: 1px solid rgba(167,139,250,.45); color: var(--ink); font-weight: 600; }
+.as-list li.is-next .as-mark { border-color: #A78BFA; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@keyframes as-pop { from { transform: scale(.4); } }
+@media (prefers-reduced-motion: reduce) { .as-list li.is-done .as-mark { animation: none; } .as-bar span { transition: none; } }
 .fdo-card--wide { max-width: 460px; max-height: calc(100vh - 40px); overflow-y: auto; }
 .fdo-card--wide .fdo-text { margin-bottom: 12px; }
 .fdo-steps { margin: 0 0 14px; padding: 0 0 0 22px; text-align: left; font-size: 14px; line-height: 1.55; color: var(--ink-dim); }
