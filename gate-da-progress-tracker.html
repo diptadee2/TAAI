@@ -334,6 +334,13 @@
   .roadmap-sub-right { display: flex; align-items: center; gap: 10px; margin-left: auto; }
   /* Phones: when the Discord button wraps under the name/guest line, keep it left-aligned with that text instead of hanging off the right edge (2026-10-16) */
   @media (max-width: 600px) { .roadmap-sub-right { margin-left: 0; } }
+  /* Phones: Join Discord on the left, Exit focus on the right edge as a
+     matching outlined button (2026-11-20, "Exit focus is not properly
+     placed": it used to float loosely beside Join Discord). */
+  @media (max-width: 600px) {
+    .roadmap-sub-right { width: 100%; justify-content: space-between; }
+    .roadmap-sub-right .focus-toggle.active { display: inline-flex; align-items: center; height: 34px; box-sizing: border-box; padding: 0 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.05); color: var(--ink-dim); font-size: 12px; letter-spacing: .03em; }
+  }
   .discord-join { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 8px; font-family: var(--font-nav); font-size: 13px; font-weight: 600; color: #C7CBFF; background: rgba(88,101,242,0.14); border: 1px solid rgba(88,101,242,0.38); text-decoration: none; transition: background-color .2s ease, border-color .2s ease, color .2s ease; white-space: nowrap; }
   .discord-join:hover { background: rgba(88,101,242,0.26); border-color: rgba(88,101,242,0.6); color: #fff; }
   .discord-join:focus-visible { outline: 2px solid #5865F2; outline-offset: 2px; }
