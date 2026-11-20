@@ -3092,6 +3092,14 @@ html.vice-night #focus-card.vice-stage .vt-body { height: 120px; }
   #leaderboard-card .leaderboard-streak, #leaderboard-card .leaderboard-status, #leaderboard-card .leaderboard-timer,
   #leaderboard-card .leaderboard-col-streak, #leaderboard-card .leaderboard-col-status, #leaderboard-card .leaderboard-col-timer { display: none !important; }
   .leaderboard-about-icon { display: none !important; }
+  /* Calmer rows ("looks too busy"): no up/down arrows or badges, smaller
+     lighter text, shorter rows. Bigger screens keep them. */
+  #leaderboard-card .rank-move-col, #leaderboard-card .leaderboard-columns > span:nth-child(2),
+  #today-leaderboard-card .rank-move-col, .leaderboard-effort-badge, #effort-legend-toggle { display: none !important; }
+  #today-leaderboard-card .leaderboard-row, #leaderboard-card .leaderboard-row { grid-template-columns: 30px minmax(0,1fr) auto !important; padding: 8px 8px !important; }
+  #leaderboard-card .leaderboard-columns { grid-template-columns: 30px minmax(0,1fr) auto !important; }
+  #leaderboard-card .leaderboard-name, #today-leaderboard-card .leaderboard-name { font-size: 15px !important; font-weight: 600 !important; }
+  #leaderboard-card .leaderboard-time, #today-leaderboard-card .leaderboard-time { font-size: 14px !important; }
 }
 /* Phones felt too dark (2026-11-20): a lighter, bluer night sky, a stronger
    horizon glow, and a less faded stopped timer in fullscreen. Silhouettes
