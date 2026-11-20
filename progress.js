@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-20-14';
+  var CLIENT_VERSION = '2026-11-20-15';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -5375,6 +5375,11 @@
   }
   function macSafariNoteHtml() {
     if (!isDesktopBrowser() || state.pomoBlockedReason) return '';
+    // Not asked yet: say what's coming, so the browser's prompt isn't a
+    // surprise first-timers click Block on.
+    if (pomoNotifyState() === 'default') {
+      return '<p class="pomo-first-allow">When you press <b>Start</b>, your browser will ask to show notifications. Click <b>Allow</b>, so it can tell you when each session ends.</p>';
+    }
     var name = desktopBrowser().name;
     return '<details class="pomo-safari-note"><summary>' + (isMacSafari() ? 'Using Safari? Alerts need a few settings' : 'Not getting alerts? Check these settings') + '</summary>' +
       '<p>' + desktopAlertIntro() + '</p>' +
@@ -5393,7 +5398,7 @@
     } else if (notify === 'unsupported') {
       text = screenOnLine() + ' Your iPad’s software can’t show alerts, so watch the timer yourself, or update iPadOS (16.4 or later) to get them.';
     } else if (notify === 'default') {
-      text = 'When you press <b>Start</b>, tap <b>Allow</b> for alerts. The timer needs them so you know when a session ends.';
+      text = 'When you press <b>Start</b>, you’ll be asked to allow notifications. Tap <b>Allow</b>: the timer needs them to tell you when a session ends.';
     } else if (notify === 'denied') {
       text = 'Alerts are off, and the timer needs them. To turn them on: ' + notifyAllowSteps();
     } else {
@@ -5481,19 +5486,26 @@
   // Tablets run focus sessions only in the installed TAAI Focus app, where
   // alerts work (2026-11-20). In a browser tab, Start shows how to install.
   function tabletNeedsApp() { return isTabletDevice() && !isStandaloneApp(); }
+  // Signed up already: name the exact email to use in the app (the iPad app
+  // starts signed out). Brand new: they sign up in the app instead.
+  function appSignInStep(ifAsked) {
+    var email = state.student && state.student.email;
+    if (email) return 'Sign in with <b>' + escapeHtml(email) + '</b>' + (ifAsked ? ' if asked,' : ',');
+    return 'Sign up with your email,';
+  }
   function tabletInstallStepsHtml() {
     if (isIPadOS()) {
       return '<ol class="fdo-steps">' +
-        '<li>Tap the <b>Share</b> button (a square with an arrow pointing up). In Safari it’s at the top of the screen; in Chrome it’s in the address bar.</li>' +
+        '<li>Tap the <b>Share</b> button: a square with an arrow pointing up, at the top of the screen (in Chrome, inside the address bar). Don’t see it? Tap <b>⋯</b> next to the address bar, then <b>Share</b>.</li>' +
         '<li>Tap <b>Add to Home Screen</b> (scroll down if you don’t see it), then <b>Add</b>.</li>' +
         '<li>Open <b>TAAI Focus</b> from your Home Screen.</li>' +
-        '<li>Sign in with the same email you use here, press <b>Start</b>, and tap <b>Allow</b> for alerts.</li>' +
+        '<li>' + appSignInStep() + ' then press <b>Start</b>. When asked to allow notifications, tap <b>Allow</b>.</li>' +
         '</ol>';
     }
     return '<ol class="fdo-steps">' +
       '<li>' + (pomoInstallPrompt ? 'Tap <b>Install TAAI Focus</b> below, or open' : 'Open') + ' your browser menu (<b>⋮</b>, top right) and tap <b>Install app</b> or <b>Add to Home screen</b>.</li>' +
       '<li>Open <b>TAAI Focus</b> from your home screen or app list.</li>' +
-      '<li>Sign in with the same email if asked, press <b>Start</b>, and tap <b>Allow</b> for alerts.</li>' +
+      '<li>' + appSignInStep(true) + ' then press <b>Start</b>. When asked to allow notifications, tap <b>Allow</b>.</li>' +
       '</ol>';
   }
   function showTabletInstall() {
@@ -5527,7 +5539,7 @@
           if (c && c.outcome === 'accepted') {
             pomoInstallPrompt = null;
             var card = el.querySelector('.fdo-card');
-            if (card) card.innerHTML = '<h3 class="fdo-title">TAAI Focus is installed</h3><p class="fdo-text">Open <b>TAAI Focus</b> from your home screen or app list, press <b>Start</b>, and tap <b>Allow</b> for alerts.</p><div class="fdo-actions"><button type="button" class="pomo-btn pomo-btn-primary fdo-ok">Got it</button></div>';
+            if (card) card.innerHTML = '<h3 class="fdo-title">TAAI Focus is installed</h3><p class="fdo-text">Open <b>TAAI Focus</b> from your home screen or app list, press <b>Start</b>, and tap <b>Allow</b> when asked about notifications.</p><div class="fdo-actions"><button type="button" class="pomo-btn pomo-btn-primary fdo-ok">Got it</button></div>';
           }
         }).catch(function () {});
       }
@@ -5621,6 +5633,10 @@
         // entrance for no reason.
         pomoActuallyStart();
         updatePomoDisplay();
+        // The "you'll be asked to allow" lines are now out of date.
+        var fa = document.querySelector('.pomo-first-allow');
+        if (fa) fa.outerHTML = macSafariNoteHtml();
+        refreshTabletTip();
       } else {
         state.pomoBlockedReason = 'denied';
         renderCalendar();
