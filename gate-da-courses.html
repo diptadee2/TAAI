@@ -4406,6 +4406,10 @@ html body main #combos #full-course-2028 .c28-pitch-mark { background: linear-gr
 }
 /* Last topic line on individual cards (2026-11-20) */
 html body main .courses-grid .course-topic.course-topic-more { font-style: italic; opacity: .8; }
+/* Hinglish line above the bundles and single-subject headings (2026-11-20). */
+.hinglish-kicker { margin: 0 0 10px; font-family: var(--font-display, Poppins), sans-serif; font-size: clamp(15px, 1.5vw, 19px); font-weight: 700; color: #6D28D9; letter-spacing: -0.01em; }
+.hinglish-kicker .nowrap { white-space: nowrap; }
+#combos .hinglish-kicker:not(#_) { color: #6D28D9 !important; -webkit-text-fill-color: #6D28D9 !important; }
 </style>
 </head>
 <body data-float-stack>
@@ -6641,6 +6645,7 @@ function App() {
         <div className="container">
           <div className="combos-header">
             <div className="combos-header-text">
+              <p className="hinglish-kicker fade-in">Poori taiyari ek saath, <span className="nowrap">aur paise bhi bachao</span></p>
               <h2 className="section fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 12, padding: 0 }}>
                 Best value <em>bundles</em>
               </h2>
@@ -6786,6 +6791,7 @@ function App() {
         <div className="container">
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 12 }}>
             <div>
+              <p className="hinglish-kicker fade-in">Sirf ek subject mein dikkat hai? <span className="nowrap">Wahi lo, baaki chhodo.</span></p>
               <h2 className="fade-in" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px,3.8vw,52px)', fontWeight: 600, letterSpacing: '-0.035em', lineHeight: 1, marginBottom: 12 }}>
                 Pick a <em>single subject</em>
               </h2>
