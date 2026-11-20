@@ -379,7 +379,11 @@
   // Who this device is, from the server's claims: the server's answer wins.
   // A name another device holds can't be used here; an old local pick from
   // before claims existed is claimed quietly if it's still free.
+  // Single person since 2026-11-20 ("drop Sunitesh, make it only for Dipta"):
+  // everything is saved as person 1, Dipta; no picking who you are.
+  var ME = 1;
   function syncMe(d) {
+    S.me = ME; return;
     if (!d.claimsReady) return;
     if (d.mine === 0 || d.mine === 1) { if (S.me !== d.mine) { S.me = d.mine; store(KEY_ME, String(S.me)); } return; }
     if (S.me != null && d.taken[S.me]) { S.me = null; store(KEY_ME, null); return; }
@@ -392,7 +396,7 @@
   // A day counts as done for the pair once either of them has ticked it.
   function groupTicks(rows) {
     var map = {};
-    (rows || []).forEach(function (t) { (map[t.task_id] = map[t.task_id] || {})[t.done_by] = t; });
+    (rows || []).forEach(function (t) { if (t.done_by !== ME) return; (map[t.task_id] = map[t.task_id] || {})[t.done_by] = t; });
     return map;
   }
   // linkMap[taskId] = [notes links attached to that day, oldest first]
@@ -425,10 +429,9 @@
   // ── Render ──────────────────────────────────────────────────────────
   function render() {
     var d = S.data, names = d.names, today = todayIST(), list = allTasks();
-    document.title = 'Roadmap · ' + names.join(' & ');
+    document.title = 'Roadmap · ' + names[ME];
     var done = list.filter(function (t) { return d.tickMap[t.id]; });
     var pct = list.length ? Math.round(done.length / list.length * 100) : 0;
-    var byCount = [0, 0]; done.forEach(function (t) { var m = d.tickMap[t.id]; if (m[0]) byCount[0] += 1; if (m[1]) byCount[1] += 1; });
     var due = list.filter(function (t) { return t.id < today; });
     var late = due.filter(function (t) { return !d.tickMap[t.id]; });
     var revs = list.filter(function (t) { return t.revision; });
@@ -440,22 +443,15 @@
     var linkTotal = (d.links || []).length;
 
     var html = '<div class="wrap">';
-    html += '<div class="top"><div><h1>' + esc(d.title) + '</h1><div class="sub">' + esc(names[0]) + ' &amp; ' + esc(names[1]) +
+    html += '<div class="top"><div><h1>' + esc(d.title) + '</h1><div class="sub">' + esc(names[ME]) +
       ' · ' + list.length + ' days, ' + fmtDay(first.id).dm + ' to ' + fmtDay(last.id).dm + '</div></div>' +
-      '<div class="who">' + (S.me != null
-          ? '<span class="who-me">You\'re <b>' + esc(names[S.me]) + '</b> · <button type="button" class="linkish" data-who>Not you?</button></span>'
-          : '<button type="button" class="btn btn-yellow" data-who>Pick who you are</button>') +
-      '<div class="tools"><button class="btn-ghost btn" id="rename-btn" type="button">Rename</button>' + (d.open ? '' : '<button class="btn-ghost btn" id="lock-btn" type="button">Lock</button>') + '</div></div></div>';
-
-    html += '<div class="box rename' + (S.renaming ? ' show' : '') + '"><form id="rename-form"><label>Person 1<input name="n0" maxlength="24" value="' + esc(names[0]) + '" required></label>' +
-      '<label>Person 2<input name="n1" maxlength="24" value="' + esc(names[1]) + '" required></label>' +
-      '<button class="btn btn-yellow" type="submit">Save</button><button class="btn" type="button" id="rename-cancel">Cancel</button></form></div>';
+      (d.open ? '' : '<div class="who"><div class="tools"><button class="btn-ghost btn" id="lock-btn" type="button">Lock</button></div></div>') + '</div>';
 
     html += '<div class="stats">' +
       '<div class="box stat stat-main"><div class="stat-head">Progress</div><div class="stat-big">' + pct + '%</div><div class="stat-label">' + done.length + ' of ' + list.length + ' days done' +
           (revs.length ? ' · revision ' + revDone + ' of ' + revs.length : '') + '</div>' +
         '<div class="bar"><span style="width: ' + pct + '%"></span></div>' +
-        '<div class="split"><span>' + esc(names[0]) + ' ticked <b>' + byCount[0] + '</b></span><span>' + esc(names[1]) + ' ticked <b>' + byCount[1] + '</b></span></div></div>' +
+        '</div>' +
       // Catch-up: past days nobody has ticked yet. Before day 1 it says when it starts.
       (due.length
         ? '<div class="box stat ' + (late.length ? 'behind' : 'ontrack') + '"><div class="stat-head">Catch-up</div><div class="stat-big">' + (late.length || '✓') + '</div><div class="stat-label">' +
@@ -532,6 +528,7 @@
     return '<button type="button" class="check' + (small ? ' small' : '') + (S.busy[t.id] ? ' busy' : '') + '" role="checkbox" aria-checked="' + on + '" data-tick="' + t.id + '" aria-label="' + esc((on ? 'Done: ' : 'Mark done: ') + (t.text || 'revision')) + '">' + CHECK_SVG + '</button>';
   }
   function whoTicked(tk, withDate) {
+    return ''; // one person: their own checkbox already shows it
     var out = '';
     if (tk) [0, 1].forEach(function (k) { if (tk[k]) out += '<span class="by">✓ ' + esc(S.data.names[k]) + (withDate ? ' · ' + fmtDay(String(tk[k].done_at).slice(0, 10)).dm : '') + '</span>'; });
     return out;
@@ -669,7 +666,7 @@
       return '<div class="rev xitem' + (tk ? ' is-done' : '') + (big ? ' big' : '') + '">' + checkHtml(Object.assign({ text: x.text }, x), true) +
         '<div class="rev-body"><div class="rev-text"><span class="rev-label">' + esc(parts[parts.length - 1]) + '</span>' + esc(x.text) +
         (x.url ? '<a class="x-open" href="' + esc(x.url) + '" target="_blank" rel="noopener noreferrer">Open lesson ↗</a>' : '') + '</div>' +
-        '<div class="rev-sub">' + esc(parts.slice(0, -1).join(' · ') || x.tag) + '</div>' +
+        '<div class="rev-sub">' + esc(parts.slice(0, -1).filter(function (w) { return w !== d.names[ME]; }).join(' · ') || x.tag) + '</div>' +
         (tk ? '<div class="task-meta">' + whoTicked(tk, false) + '</div>' : '') + '</div></div>';
     }).join('');
   }
@@ -677,8 +674,7 @@
     var mine = canRemove; // shared notes: either person can remove any link
     var host = ''; try { host = new URL(n.url).hostname.replace(/^www\./, ''); } catch (e) {}
     var icon = /drive\.google|docs\.google/.test(host) ? '📄' : /youtube\.com|youtu\.be/.test(host) ? '▶️' : '🔗';
-    return '<span class="note-chip"><a href="' + esc(n.url) + '" target="_blank" rel="noopener noreferrer" title="' + esc(n.url) + '">' + icon + ' <b>' + esc(S.data.names[n.added_by]) + '</b>' +
-      (n.label ? ' · ' + esc(n.label) : '') + ' ↗</a>' + (mine ? '<button type="button" class="note-x" data-remove="' + esc(n.id) + '" aria-label="Remove this link">×</button>' : '') + '</span>';
+    return '<span class="note-chip"><a href="' + esc(n.url) + '" target="_blank" rel="noopener noreferrer" title="' + esc(n.url) + '">' + icon + (n.label ? ' ' + esc(n.label) : ' ' + esc(host || 'Link')) + ' ↗</a>' + (mine ? '<button type="button" class="note-x" data-remove="' + esc(n.id) + '" aria-label="Remove this link">×</button>' : '') + '</span>';
   }
   function linksHtml(taskId, canAdd) {
     var d = S.data, list = d.linkMap[taskId] || [];
@@ -709,7 +705,7 @@
     if (!text) return '<div class="day-note-row"><button type="button" class="add-link" data-note-edit="' + taskId + '">+ Write a note</button></div>';
     var when = t.takeaway_at ? new Date(t.takeaway_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' }) : '';
     return '<div class="day-note"><div class="day-note-text">' + esc(text) + '</div>' +
-      '<div class="day-note-meta">📝 ' + esc(d.names[t.takeaway_by] || '') + (when ? ' · ' + when : '') + ' <button type="button" class="add-link" data-note-edit="' + taskId + '">Edit</button></div></div>';
+      '<div class="day-note-meta">📝 ' + (when ? 'Saved ' + when : 'Saved') + ' <button type="button" class="add-link" data-note-edit="' + taskId + '">Edit</button></div></div>';
   }
 
   // Revision map: the whole syllabus as one grid. Squares show whether a
@@ -737,6 +733,7 @@
   // Ask who this is the first time they do something (tick, add notes).
   // `then` runs the action once they've picked.
   function needMe(then) {
+    S.me = ME;
     if (S.me != null) return false;
     openWho(then);
     return true;
@@ -918,14 +915,6 @@
     if (lockBtn) lockBtn.addEventListener('click', function () {
       store(KEY_CODE, null); S.code = null; S.data = null; renderLock();
     });
-    document.getElementById('rename-btn').addEventListener('click', function () { S.renaming = !S.renaming; render(); });
-    document.getElementById('rename-cancel').addEventListener('click', function () { S.renaming = false; render(); });
-    document.getElementById('rename-form').addEventListener('submit', function (e) {
-      e.preventDefault();
-      var f = e.target, names = [f.n0.value.trim(), f.n1.value.trim()];
-      api({ action: 'names', names: names }).then(function (r) { S.data.names = r.names; S.renaming = false; render(); toast('Names saved'); })
-        .catch(function () { toast("Couldn't save the names. Try again."); });
-    });
   }
 
   function tick(id) {
@@ -960,8 +949,7 @@
   });
 
   // Start
-  var savedMe = read(KEY_ME);
-  S.me = savedMe === '0' || savedMe === '1' ? Number(savedMe) : null;
+  S.me = ME;
   // The board is open (no passcode) since 2026-10-23; the lock screen only
   // appears if a passcode is ever set on it again.
   S.code = read(KEY_CODE) || '';
