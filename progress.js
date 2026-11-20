@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-20-12';
+  var CLIENT_VERSION = '2026-11-20-13';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -5384,21 +5384,24 @@
     if (!isTabletDevice()) return '';
     var notify = pomoNotifyState();
     var text;
-    if (notify === 'unsupported' && !isStandaloneApp()) {
-      // iPad Safari tab: no notifications at all outside a Home Screen app.
-      text = screenOnLine() + ' Safari tabs can\'t show alerts. To get them, tap <b>Share</b>, then <b>Add to Home Screen</b>, open <b>TAAI Focus</b> and sign in with the same email.';
+    if (!isStandaloneApp()) {
+      text = 'On a tablet, focus sessions run in the <b>TAAI Focus</b> app. Press <b>Start</b> to see how to add it.';
+    } else if (state.pomoBlockedReason) {
+      return '';
+    } else if (notify === 'unsupported') {
+      text = screenOnLine() + ' Your iPad’s software can’t show alerts, so watch the timer yourself, or update iPadOS (16.4 or later) to get them.';
+    } else if (notify === 'default') {
+      text = 'When you press <b>Start</b>, tap <b>Allow</b> for alerts. The timer needs them so you know when a session ends.';
     } else if (notify === 'denied') {
-      text = 'Alerts are off, so you won\'t get a pop-up when a session ends. The timer still works. To turn them on: ' + notifyAllowSteps();
+      text = 'Alerts are off, and the timer needs them. To turn them on: ' + notifyAllowSteps();
     } else {
       text = screenOnLine() + ' If you switch apps, the alert can come late, but your session still counts.';
-      if (!isStandaloneApp() && /Android/i.test(navigator.userAgent) && !pomoInstallPrompt) {
-        text += ' For a TAAI Focus app, open your browser menu (<b>\u22ee</b>) and tap <b>Add to Home screen</b> or <b>Install app</b>.';
-      }
     }
     var install = (pomoInstallPrompt && !isStandaloneApp())
       ? '<button type="button" class="pomo-install-btn" id="pomo-install-app">Install the TAAI Focus app</button>' : '';
     return '<p class="pomo-tablet-tip">' + text + '</p>' + install;
   }
+
 
   // Android Chrome (and desktop Chrome) offer to install the tracker as an
   // app (tracker.webmanifest). Keep the offer and show our own button on
@@ -5473,8 +5476,68 @@
     var ok = el.querySelector('.fdo-ok'); if (ok) ok.focus();
   }
 
+  // Tablets run focus sessions only in the installed TAAI Focus app, where
+  // alerts work (2026-11-20). In a browser tab, Start shows how to install.
+  function tabletNeedsApp() { return isTabletDevice() && !isStandaloneApp(); }
+  function tabletInstallStepsHtml() {
+    if (isIPadOS()) {
+      return '<ol class="fdo-steps">' +
+        '<li>Tap the <b>Share</b> button (a square with an arrow pointing up). In Safari it’s at the top of the screen; in Chrome it’s in the address bar.</li>' +
+        '<li>Tap <b>Add to Home Screen</b> (scroll down if you don’t see it), then <b>Add</b>.</li>' +
+        '<li>Open <b>TAAI Focus</b> from your Home Screen.</li>' +
+        '<li>Sign in with the same email you use here, press <b>Start</b>, and tap <b>Allow</b> for alerts.</li>' +
+        '</ol>';
+    }
+    return '<ol class="fdo-steps">' +
+      '<li>' + (pomoInstallPrompt ? 'Tap <b>Install TAAI Focus</b> below, or open' : 'Open') + ' your browser menu (<b>⋮</b>, top right) and tap <b>Install app</b> or <b>Add to Home screen</b>.</li>' +
+      '<li>Open <b>TAAI Focus</b> from your home screen or app list.</li>' +
+      '<li>Sign in with the same email if asked, press <b>Start</b>, and tap <b>Allow</b> for alerts.</li>' +
+      '</ol>';
+  }
+  function showTabletInstall() {
+    if (document.getElementById('tablet-install')) return;
+    var el = document.createElement('div');
+    el.id = 'tablet-install';
+    el.className = 'fdo-backdrop';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-modal', 'true');
+    el.setAttribute('aria-labelledby', 'ti-title');
+    el.innerHTML =
+      '<div class="fdo-card fdo-card--wide">' +
+        '<div class="fdo-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2.5"/><path d="M12 7v7M9 11l3 3 3-3"/></svg></div>' +
+        '<h3 class="fdo-title" id="ti-title">Add the TAAI Focus app to start</h3>' +
+        '<p class="fdo-text">On a tablet, focus sessions run in the TAAI Focus app, so an alert can tell you when each session ends. It takes a few seconds:</p>' +
+        tabletInstallStepsHtml() +
+        '<p class="fdo-text fdo-small">Already added it? Open <b>TAAI Focus</b> from your ' + (isIPadOS() ? 'Home Screen' : 'home screen or app list') + '. Your tasks and streak still work right here.</p>' +
+        '<div class="fdo-actions">' +
+          ((pomoInstallPrompt && !isIPadOS()) ? '<button type="button" class="pomo-btn pomo-btn-primary ti-install">Install TAAI Focus</button>' : '') +
+          '<button type="button" class="pomo-btn ' + ((pomoInstallPrompt && !isIPadOS()) ? 'pomo-btn-secondary-text' : 'pomo-btn-primary') + ' fdo-ok">Got it</button>' +
+        '</div>' +
+      '</div>';
+    function close() { document.removeEventListener('keydown', onKey); el.remove(); }
+    function onKey(e) { if (e.key === 'Escape') close(); }
+    el.addEventListener('click', function (e) {
+      if (e.target === el || e.target.closest('.fdo-ok')) { close(); return; }
+      if (e.target.closest('.ti-install') && pomoInstallPrompt) {
+        var pr = pomoInstallPrompt;
+        pr.prompt();
+        (pr.userChoice || Promise.resolve()).then(function (c) {
+          if (c && c.outcome === 'accepted') {
+            pomoInstallPrompt = null;
+            var card = el.querySelector('.fdo-card');
+            if (card) card.innerHTML = '<h3 class="fdo-title">TAAI Focus is installed</h3><p class="fdo-text">Open <b>TAAI Focus</b> from your home screen or app list, press <b>Start</b>, and tap <b>Allow</b> for alerts.</p><div class="fdo-actions"><button type="button" class="pomo-btn pomo-btn-primary fdo-ok">Got it</button></div>';
+          }
+        }).catch(function () {});
+      }
+    });
+    document.addEventListener('keydown', onKey);
+    document.body.appendChild(el);
+    var ok = el.querySelector('.ti-install') || el.querySelector('.fdo-ok'); if (ok) ok.focus();
+  }
+
   function pomoToggleRun() {
     if (!pomo.running && focusStartBlocked()) { showFocusDesktopOnly(); return; }
+    if (!pomo.running && tabletNeedsApp()) { showTabletInstall(); return; }
     // Starting (not pausing) waits for fresh data: the rename / freeze
     // gates and synced settings come from the server response.
     if (!pomo.running && state.stale) return;
@@ -5521,10 +5584,10 @@
     var notifyState = pomoNotifyState();
     // Tablets: notifications are a bonus, never a requirement (iPad Safari
     // has none outside a home-screen app). Ask once if we can, start either way.
-    if (isTabletDevice() && notifyState !== 'granted') {
-      if (notifyState === 'default') {
-        try { Notification.requestPermission().catch(function () {}); } catch (e) { /* ignore */ }
-      }
+    // Tablets (always in the app by now, see tabletNeedsApp): alerts are
+    // required like on desktop, except an iPad too old to show them at all
+    // (no Notification API in its Home Screen app before iPadOS 16.4).
+    if (isTabletDevice() && notifyState === 'unsupported') {
       state.pomoBlockedReason = null;
       pomoActuallyStart();
       updatePomoDisplay();
@@ -5683,6 +5746,12 @@
       // Only the student flipping it in their own browser's site settings
       // can undo that, so the instructions have to be specific enough to
       // actually follow rather than a vague "check your settings".
+      if (isTabletDevice()) {
+        html += '<div class="pomo-gate-title">Turn on alerts to use the timer</div>' +
+          '<p class="pomo-gate-body">TAAI Focus needs alerts so you know when each session ends. To turn them on: ' + notifyAllowSteps() + '</p>' +
+          '<button class="pomo-btn pomo-btn-primary" id="pomo-gate-reload" type="button">I’ve turned them on, check again</button>';
+        return html + '</div>';
+      }
       if (isDesktopBrowser()) {
         html += '<div class="pomo-gate-title">Notifications are blocked</div>' +
           '<p class="pomo-gate-body">' + (isMacSafari() ? desktopAlertIntro() : 'Focus mode needs notifications so you know when a session ends, and ' + desktopBrowser().name + ' has them blocked for this site. Here’s how to turn them on:') + '</p>' +

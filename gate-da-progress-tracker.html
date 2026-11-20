@@ -2968,6 +2968,15 @@ html.vice-night .pomo-zen .vice-edge { bottom: 24px; height: 46px; background-si
 .fdo-text { margin: 0 0 20px; font-size: 14px; line-height: 1.55; color: var(--ink-dim); }
 .fdo-text b { color: var(--ink); }
 .fdo-ok { width: 100%; justify-content: center; }
+.fdo-card--wide { max-width: 460px; max-height: calc(100vh - 40px); overflow-y: auto; }
+.fdo-card--wide .fdo-text { margin-bottom: 12px; }
+.fdo-steps { margin: 0 0 14px; padding: 0 0 0 22px; text-align: left; font-size: 14px; line-height: 1.55; color: var(--ink-dim); }
+.fdo-steps li { margin: 6px 0; padding-left: 2px; }
+.fdo-steps b { color: var(--ink); }
+.fdo-small { font-size: 12.5px; margin-bottom: 18px !important; }
+.fdo-actions { display: flex; flex-direction: column; gap: 8px; }
+.fdo-actions .pomo-btn { width: 100%; justify-content: center; }
+.pomo-btn-secondary-text { background: transparent; border: 1px solid rgba(255,255,255,.18); color: var(--ink); }
 @keyframes fdo-in { from { opacity: 0; } }
 @keyframes fdo-pop { from { opacity: 0; transform: scale(.94); } }
 @media (prefers-reduced-motion: reduce) { .fdo-backdrop, .fdo-card { animation: none; } }
