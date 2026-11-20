@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-20-4';
+  var CLIENT_VERSION = '2026-11-20-6';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1171,6 +1171,9 @@
   // pomoToggleRun). Used to gate entering Focus Mode at all (hence the
   // name) before that changed.
   var pendingPomoStart = false;
+  // Set after a guest signs up from the Start button: Start has to be
+  // pressed once more, so say so right under it (2026-11-20).
+  var pomoJustSignedUp = false;
 
   // No cookie just means browsing as a guest, not "show the login screen" —
   // the schedule itself (schedule.js) needs no email, so anyone can view and
@@ -2230,7 +2233,7 @@
   // The installed TAAI Focus app (Home Screen / installed PWA) also opens
   // straight into Focus Mode: iPadOS can ignore the manifest's start_url and
   // reopen whatever URL was showing when it was added (2026-11-20).
-  if (/[?&]focus\b/.test(location.search) || isStandaloneApp()) {
+  if (/[?&]focus\b/.test(location.search) || (isStandaloneApp() && !focusStartBlocked())) {
     try { history.replaceState(history.state, '', location.pathname + location.search.replace(/([?&])focus\b(=[^&]*)?&?/, '$1').replace(/[?&]$/, '') + location.hash); } catch (e) { /* fine */ }
     {
       var fTries = 0;
@@ -2563,6 +2566,7 @@
           state.student = student;
           var task = pendingTask;
           pendingTask = null;
+          if (pendingPomoStart) pomoJustSignedUp = true;
           pendingPomoStart = false;
           // Replay the tick that opened this form only if the account's
           // batch is the one the visitor was looking at. An existing
@@ -3646,7 +3650,7 @@
     } else {
       html = Number(voluntaryLeft) > 0
         ? '<span class="alltime-tooltip-value">' + voluntaryLeft + '</span> <span class="alltime-tooltip-label">' + (voluntaryLeft === '1' ? 'rename' : 'renames') + ' left this month</span>'
-        : '<span class="alltime-tooltip-label">No renames left — resets the 1st</span>';
+        : '<span class="alltime-tooltip-label">No renames left, resets on the 1st</span>';
     }
     el.innerHTML = html;
     el.classList.add('visible');
@@ -4816,7 +4820,7 @@
     var title = finishedMode === 'work' ? 'Focus session complete 🎉' : "Break's over ⏰";
     var progress = pomoSessionLabel() + ' today';
     var body = finishedMode === 'work'
-      ? 'Nice work — time for a break. ' + progress + '.'
+      ? 'Nice work, time for a break. ' + progress + '.'
       : 'Come back and hit Start to keep going. ' + progress + '.';
     try {
       // tag replaces any notification already showing instead of stacking
@@ -5138,6 +5142,7 @@
   // synchronous (already granted) and asynchronous (just granted via the
   // prompt below) paths in pomoToggleRun share it instead of duplicating it.
   function pomoActuallyStart() {
+    if (pomoJustSignedUp) { pomoJustSignedUp = false; var su = document.getElementById('pomo-signed-up'); if (su) su.remove(); }
     claimPomoDriver();
     ensurePomoAudioCtx(); // real click — unlocks audio for the chime that fires later, unattended
     // A fresh phase starts its real clock now (the server stamps the same
@@ -5157,14 +5162,37 @@
   // Tablets (iPad, Android tablets) may start sessions since 2026-11-20;
   // only phones still get the desktop-only popup. A tablet is a touch
   // screen whose shorter side is at least 600 CSS px (iPad mini is 744).
-  function isTouchScreen() {
-    try { return window.matchMedia('(hover: none) and (pointer: coarse)').matches; } catch (e) { return false; }
-  }
-  function isTabletDevice() {
-    if (!isTouchScreen()) return false;
+  // Shorter screen side in CSS px (iOS/iPadOS report screen in portrait).
+  function screenMinSide() {
     var sw = (window.screen && screen.width) || window.innerWidth;
     var sh = (window.screen && screen.height) || window.innerHeight;
-    return Math.min(sw, sh) >= 600;
+    return Math.min(sw, sh);
+  }
+  // iPads and Android tablets by what they are, not by their pointer: with
+  // a keyboard/trackpad cover attached an iPad reports a fine, hovering
+  // pointer like a laptop, and would otherwise be treated as one (desktop
+  // rules: Start refused in a Safari tab, which has no notifications).
+  // iPadOS Safari presents as a Mac, so "Mac with a touch screen". The size
+  // check keeps iPhones out (an iPhone asking for the desktop site also
+  // presents as a Mac).
+  function isTabletByUA() {
+    var ua = navigator.userAgent || '';
+    var ipad = /iPad/.test(ua) || (/Macintosh/.test(ua) && (navigator.maxTouchPoints || 0) > 1);
+    var androidTab = /Android/i.test(ua) && !/Mobile/i.test(ua);
+    return (ipad || androidTab) && screenMinSide() >= 600;
+  }
+  function isTouchScreen() {
+    try { if (window.matchMedia('(hover: none) and (pointer: coarse)').matches) return true; } catch (e) { /* fall through */ }
+    return isTabletByUA();
+  }
+  function isTabletDevice() {
+    if (isTabletByUA()) return true;
+    if (!isTouchScreen()) return false;
+    return screenMinSide() >= 600;
+  }
+  function isIPadOS() {
+    var ua = navigator.userAgent || '';
+    return /iPad/.test(ua) || (/Macintosh/.test(ua) && (navigator.maxTouchPoints || 0) > 1);
   }
   function focusStartBlocked() {
     return isTouchScreen() && !isTabletDevice();
@@ -5222,7 +5250,12 @@
       // iPad Safari tab: no notifications at all outside a Home Screen app.
       text = 'Keep this screen on during a session. Safari tabs can\'t show alerts. To get them, tap <b>Share</b>, then <b>Add to Home Screen</b>, open <b>TAAI Focus</b> and sign in with the same email.';
     } else if (notify === 'denied') {
-      text = 'Alerts are blocked for this site. To turn them on, open your browser\'s site settings for taai.live and allow <b>Notifications</b>. Keep this screen on during a session.';
+      var how;
+      if (isStandaloneApp() && isIPadOS()) how = 'open your iPad\'s <b>Settings</b>, tap <b>Notifications</b>, then <b>TAAI Focus</b>, and turn on <b>Allow Notifications</b>. Then close TAAI Focus and open it again.';
+      else if (isStandaloneApp()) how = 'press and hold the <b>TAAI Focus</b> icon, tap <b>App info</b>, then <b>Notifications</b>, and turn them on. Then close the app and open it again.';
+      else if (isIPadOS()) how = 'open your iPad\'s <b>Settings</b>, tap <b>Apps</b>, then <b>Safari</b>, then <b>Notifications</b>, and allow taai.live. Then reload this page.';
+      else how = 'tap the icon to the left of the address bar, then <b>Permissions</b> (or <b>Site settings</b>), and allow <b>Notifications</b>. Then reload this page.';
+      text = 'Alerts are off, so you won\'t get a pop-up when a session ends. The timer still works. To turn them on, ' + how;
     } else {
       text = 'Keep this screen on during a session. If you switch apps, the alert can come late, but your session still counts.';
       if (!isStandaloneApp() && /Android/i.test(navigator.userAgent) && !pomoInstallPrompt) {
@@ -5295,8 +5328,8 @@
     el.innerHTML =
       '<div class="fdo-card">' +
         '<div class="fdo-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></div>' +
-        '<h3 class="fdo-title" id="fdo-title">Focus mode is available on desktop</h3>' +
-        '<p class="fdo-text">For now, focus sessions can only be started on a laptop or desktop. Open <b>taai.live/focus</b> there to start one. Your tasks and streak still work right here.</p>' +
+        '<h3 class="fdo-title" id="fdo-title">Focus sessions start on a laptop or tablet</h3>' +
+        '<p class="fdo-text">Phones can’t start a focus session yet. Open <b>taai.live/focus</b> on a laptop, desktop or tablet and sign in with the same email to start one. Your tasks and streak still work right here.</p>' +
         '<button type="button" class="pomo-btn pomo-btn-primary fdo-ok">Got it</button>' +
       '</div>';
     function close() { document.removeEventListener('keydown', onKey); el.remove(); }
@@ -5524,7 +5557,7 @@
         '<li>Set Notifications for this site to <strong>Allow</strong></li>' +
         '<li>Come back here and reload</li>' +
         '</ol>' +
-        '<button class="pomo-btn pomo-btn-primary" id="pomo-gate-reload" type="button">I’ve updated it — Reload</button>';
+        '<button class="pomo-btn pomo-btn-primary" id="pomo-gate-reload" type="button">I’ve updated it, reload</button>';
     }
     html += '</div>';
     return html;
@@ -5642,7 +5675,7 @@
       // name IS the flagged content, and quoting it back would broadcast
       // the exact inappropriate text on screen (see identityDisplayName's
       // own comment for the real report that caught this).
-      '<p class="pomo-gate-body">Your current name isn’t usable here — please pick a different one to keep using Focus sessions.</p>' +
+      '<p class="pomo-gate-body">Your current name isn’t usable here. Please pick a different one to keep using Focus sessions.</p>' +
       '<form id="pomo-rename-gate-form" class="rename-form">' +
       '<input id="pomo-rename-gate-input" type="text" maxlength="60" required autocomplete="name" placeholder="Pick a new name"' + (state.gateTriesLeft === 0 ? ' disabled' : '') + '>' +
       // Disabled from the very first paint once gateTriesLeft is known to
@@ -5879,6 +5912,7 @@
       '</div>' +
       '</div>' + // .pomo-clock-wrap
       '<p class="pomo-notify-permanent-tip">🔔 Notifications need your computer’s permission too, not just this site’s — check your OS’s own notification settings for this browser if they don’t show up.</p>' +
+      (pomoJustSignedUp ? '<p class="pomo-signed-up" id="pomo-signed-up">You\'re signed up. Press <b>Start</b> to begin your first session.</p>' : '') +
       pomoTabletTipHtml() +
       renderPomoNotifyNotice() +
       '<div class="pomo-settings" id="pomo-settings" hidden>' +
@@ -6483,7 +6517,7 @@
     for (var i = 0; i < EFFORT_TIERS.length; i++) {
       var t = EFFORT_TIERS[i];
       if (hours < t.minHours) break; // tiers are ascending, so nothing further can match either
-      html += '<span class="leaderboard-effort-badge leaderboard-effort-badge--' + t.key + '" title="' + t.name + ' milestone — ' + t.minHours + '+ all-time focus hours">' + t.icon + '</span>';
+      html += '<span class="leaderboard-effort-badge leaderboard-effort-badge--' + t.key + '" title="' + t.name + ' milestone: ' + t.minHours + '+ all-time focus hours">' + t.icon + '</span>';
     }
     return html;
   }
@@ -7528,7 +7562,7 @@
           // redraws the exact same warning (correctly labeled, via
           // renderBatchMigrationWarning/BATCH_OPTIONS) with the error
           // line now showing, ready to retry.
-          state.batchMigrationError = 'Couldn’t switch batches — please try again.';
+          state.batchMigrationError = 'Couldn’t switch batches. Please try again.';
           renderCalendar();
         });
     });
@@ -7561,7 +7595,7 @@
       // button being disabled at state.gateTriesLeft === 0 (see
       // renderIdentityLine) is that case's own equivalent backstop.
       if (!state.needsRename && voluntaryRenamesLeft() <= 0) {
-        state.renameLimitMessage = 'You\'ve used all your renames for this month — you can rename again from the 1st.';
+        state.renameLimitMessage = 'You\'ve used all your renames for this month. You can rename again from the 1st.';
         renderCalendar();
         return;
       }
