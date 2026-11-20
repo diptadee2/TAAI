@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-20-24';
+  var CLIENT_VERSION = '2026-11-20-25';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -916,11 +916,19 @@
   // when one of them learns the session moved to another device it tells
   // the others through this key, and they show the box too.
   var ELSEWHERE_KEY = 'taai_pomo_elsewhere';
-  function shareElsewhere(st) { try { if (st) localStorage.setItem(ELSEWHERE_KEY, JSON.stringify({ mode: st.mode, phaseEndAt: st.phaseEndAt, totalSeconds: st.totalSeconds, at: Date.now() })); else localStorage.removeItem(ELSEWHERE_KEY); } catch (e) { /* fine */ } }
+  // When a running session elsewhere ends, on THIS device's clock: from the
+  // server's time-left figure (msLeft), so a device whose clock is off still
+  // counts down correctly; the owner's phaseEndAt is only the fallback.
+  function localEndOf(st) {
+    if (st.localEnd) return st.localEnd;
+    if (st.msLeft != null) return Date.now() + st.msLeft;
+    return st.phaseEndAt;
+  }
+  function shareElsewhere(st) { try { if (st) localStorage.setItem(ELSEWHERE_KEY, JSON.stringify({ mode: st.mode, phaseEndAt: st.phaseEndAt, localEnd: localEndOf(st), totalSeconds: st.totalSeconds, at: Date.now() })); else localStorage.removeItem(ELSEWHERE_KEY); } catch (e) { /* fine */ } }
   window.addEventListener('storage', function (e) {
     if (e.key !== ELSEWHERE_KEY) return;
     if (e.newValue) {
-      try { var st = JSON.parse(e.newValue); if (st && st.phaseEndAt > Date.now()) pomoOnOtherDevice(st, true); } catch (er) { /* ignore */ }
+      try { var st = JSON.parse(e.newValue); if (st && localEndOf(st) > Date.now()) pomoOnOtherDevice(st, true); } catch (er) { /* ignore */ }
     } else if (state.pomoElsewhere) {
       // Another tab of this browser switched the session here, or it ended.
       setTimeout(function () { checkPomoOwner(true); }, 300);
@@ -932,9 +940,10 @@
     pomo.running = false;
     pomo.mode = st.mode === 'break' ? 'break' : 'work';
     if (st.totalSeconds) pomo.totalSeconds = st.totalSeconds;
-    pomo.secondsLeft = Math.max(0, Math.round((st.phaseEndAt - Date.now()) / 1000));
+    var localEnd = localEndOf(st);
+    pomo.secondsLeft = Math.max(0, Math.round((localEnd - Date.now()) / 1000));
     var wasShowing = !!state.pomoElsewhere;
-    state.pomoElsewhere = { mode: pomo.mode, phaseEndAt: st.phaseEndAt, totalSeconds: st.totalSeconds };
+    state.pomoElsewhere = { mode: pomo.mode, phaseEndAt: st.phaseEndAt, localEnd: localEnd, totalSeconds: st.totalSeconds };
     if (typeof zenEl === 'function' && zenEl()) closePomoZen();
     if (!wasShowing && state.focus) renderCalendar();
     startElsewhereTick();
@@ -955,7 +964,7 @@
   }
   function elsewhereLeftText() {
     var e = state.pomoElsewhere; if (!e) return '';
-    var sec = Math.max(0, Math.round((e.phaseEndAt - Date.now()) / 1000));
+    var sec = Math.max(0, Math.round(((e.localEnd || e.phaseEndAt) - Date.now()) / 1000));
     if (!sec) return '<span class="pel-unit">Finishing on the other device…</span>';
     var m = Math.floor(sec / 60), r = sec % 60;
     return '<b class="pel-num">' + m + ':' + (r < 10 ? '0' : '') + r + '</b> <span class="pel-unit">left in this ' + (e.mode === 'break' ? 'break' : 'focus session') + '</span>';
@@ -967,7 +976,7 @@
       var el = document.getElementById('pomo-elsewhere-left');
       if (el) el.innerHTML = elsewhereLeftText();
       // The other device's phase is over: check what it's doing now.
-      if (state.pomoElsewhere.phaseEndAt < Date.now() - 3000 && !state.pomoElsewhere.checked) { state.pomoElsewhere.checked = true; checkPomoOwner(); }
+      if ((state.pomoElsewhere.localEnd || state.pomoElsewhere.phaseEndAt) < Date.now() - 3000 && !state.pomoElsewhere.checked) { state.pomoElsewhere.checked = true; checkPomoOwner(); }
     }, 1000);
   }
   function renderPomoElsewhereGateHtml() {
@@ -994,12 +1003,15 @@
           clearInterval(elsewhereTick); elsewhereTick = null;
           pomo.mode = st.mode === 'break' ? 'break' : 'work';
           pomo.totalSeconds = st.totalSeconds;
-          pomo.phaseEndAt = st.phaseEndAt;
+          // Same session, timed on this device's own clock from the server's
+          // time-left figure, then saved back so the server's record of when
+          // it ends matches this device (its finish and its claim line up).
+          pomo.phaseEndAt = localEndOf(st);
           pomo.running = true;
-          pomo.secondsLeft = Math.max(0, Math.round((st.phaseEndAt - Date.now()) / 1000));
-          pomo.phaseStartedAt = st.phaseAgeMs != null ? Date.now() - st.phaseAgeMs : st.phaseEndAt - st.totalSeconds * 1000;
+          pomo.secondsLeft = Math.max(0, Math.round((pomo.phaseEndAt - Date.now()) / 1000));
+          pomo.phaseStartedAt = st.phaseAgeMs != null ? Date.now() - st.phaseAgeMs : pomo.phaseEndAt - st.totalSeconds * 1000;
           claimPomoDriver();
-          savePomoActiveLocalOnly();
+          savePomoActiveState();
           if (state.focus) renderCalendar();
           pomoTick();
           showPomoToast('Switched. Your session continues on this device.');
@@ -1053,11 +1065,11 @@
       .then(function (r) {
         var st = r && r.state;
         if (pomoLastLocalWrite > askedAt - 5000) return; // its own change may not be stored yet
-        var activeElsewhere = st && st.running && !st.ownedByYou && Number.isFinite(st.phaseEndAt) && st.phaseEndAt > Date.now() - 5000;
+        var activeElsewhere = st && st.running && !st.ownedByYou && (st.msLeft != null ? st.msLeft > 0 : (Number.isFinite(st.phaseEndAt) && st.phaseEndAt > Date.now() - 5000));
         if (state.pomoElsewhere) {
           if (!activeElsewhere) leaveElsewhere(st);
           else if (st.phaseEndAt !== state.pomoElsewhere.phaseEndAt || st.mode !== state.pomoElsewhere.mode) {
-            state.pomoElsewhere = { mode: st.mode, phaseEndAt: st.phaseEndAt, totalSeconds: st.totalSeconds };
+            state.pomoElsewhere = { mode: st.mode, phaseEndAt: st.phaseEndAt, localEnd: localEndOf(st), totalSeconds: st.totalSeconds };
             if (state.focus) renderCalendar();
           }
         } else if (activeElsewhere) {

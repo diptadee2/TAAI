@@ -15,6 +15,27 @@
 // localStorage remains the authoritative same-device state regardless.
 import { getSupabase, json, clockSkewMs } from './lib/supabase.js';
 
+// Time left in a running phase, measured on the server's clock (2026-11-20):
+// the remaining time the owning device last reported, minus how long ago
+// (server time) it reported it. Devices count down from this instead of
+// comparing the owner's phase_end_at (the owner's own clock) with theirs,
+// so the countdown is right even when two devices' clocks disagree.
+// Stored times come back two ways: phase_started_at is epoch milliseconds (a
+// number) and updated_at is a TIMESTAMP without a time zone, written as UTC
+// but returned without a "Z", which Date.parse would read as local time.
+function tsMs(v) {
+  if (v == null) return NaN;
+  if (typeof v === 'number') return v;
+  const str = String(v);
+  return Date.parse(/[zZ]$|[+-]\d\d:?\d\d$/.test(str) ? str : str + 'Z');
+}
+function msLeftOf(row) {
+  if (!row || !row.running || !Number.isFinite(row.seconds_left) || !row.updated_at) return null;
+  const since = Date.now() - tsMs(row.updated_at);
+  if (!Number.isFinite(since)) return null;
+  return Math.max(0, row.seconds_left * 1000 - since);
+}
+
 export async function handler(event) {
   if (event.httpMethod !== 'POST') return json(405, { error: 'method not allowed' });
 
@@ -42,7 +63,7 @@ export async function handler(event) {
   // accumulating from when it first began).
   const { data: existing, error: readError } = await supabase
     .from('pomo_active_session')
-    .select('mode, total_seconds, phase_started_at, running, phase_end_at, seconds_left')
+    .select('mode, total_seconds, phase_started_at, running, phase_end_at, seconds_left, updated_at')
     .eq('email', email)
     .maybeSingle();
   if (readError) return json(500, { error: readError.message });
@@ -61,11 +82,12 @@ export async function handler(event) {
     } catch (e) { /* treat as unknown owner */ }
     const view = (ownedByYou) => {
       if (!existing) return null;
-      const st = existing.phase_started_at ? Date.parse(existing.phase_started_at) : NaN;
+      const st = tsMs(existing.phase_started_at);
       return {
         mode: existing.mode, running: !!existing.running, totalSeconds: existing.total_seconds,
         phaseEndAt: existing.phase_end_at, secondsLeft: existing.seconds_left,
         phaseAgeMs: Number.isFinite(st) ? Math.max(0, Date.now() - st) : null,
+        msLeft: msLeftOf(existing),
         ownedByYou,
       };
     };
@@ -138,13 +160,14 @@ export async function handler(event) {
   if (existingStillActive && existingOwnerToken && existingOwnerToken !== deviceToken) {
     // Send the running session back so the refused device can show it
     // instead of silently counting its own copy (2026-11-20).
-    const startedMs = existing.phase_started_at ? Date.parse(existing.phase_started_at) : NaN;
+    const startedMs = tsMs(existing.phase_started_at);
     return json(200, {
       ok: true, ignored: 'another device owns the active session',
       owner: {
         mode: existing.mode, running: true, totalSeconds: existing.total_seconds,
         phaseEndAt: existing.phase_end_at,
         phaseAgeMs: Number.isFinite(startedMs) ? Math.max(0, Date.now() - startedMs) : null,
+        msLeft: msLeftOf(existing),
       },
     });
   }
