@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-20-10';
+  var CLIENT_VERSION = '2026-11-20-11';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -5331,20 +5331,53 @@
     var ua = navigator.userAgent || '';
     return /Macintosh/.test(ua) && /Safari/.test(ua) && !/Chrome|Chromium|Edg|OPR|Firefox/.test(ua) && !isIPadOS();
   }
-  function macSafariStepsHtml() {
+  // A laptop or desktop browser (not a phone or tablet).
+  function isDesktopBrowser() { return !isTouchScreen() && !isTabletDevice(); }
+  function desktopBrowser() {
+    var ua = navigator.userAgent || '';
+    if (/Edg\//.test(ua)) return { name: 'Microsoft Edge', kind: 'chromium' };
+    if (/OPR\//.test(ua)) return { name: 'Opera', kind: 'chromium' };
+    if (/Firefox\//.test(ua)) return { name: 'Firefox', kind: 'firefox' };
+    if (/Chrome|Chromium/.test(ua)) return { name: navigator.brave ? 'Brave Browser' : 'Google Chrome', kind: 'chromium' };
+    if (/Safari/.test(ua)) return { name: 'Safari', kind: 'safari' };
+    return { name: 'your browser', kind: 'other' };
+  }
+  function desktopOS() {
+    var ua = navigator.userAgent || '';
+    return /Macintosh|Mac OS X/.test(ua) ? 'mac' : /Windows/.test(ua) ? 'windows' : 'other';
+  }
+  // Numbered steps to get session alerts showing on a laptop/desktop: the
+  // browser has to allow taai.live AND the computer has to allow the browser.
+  function desktopAlertStepsHtml() {
+    var b = desktopBrowser(), os = desktopOS(), n = '<b>' + b.name + '</b>';
+    var site;
+    if (b.kind === 'safari') site = 'In the <b>Safari</b> menu, open <b>Settings</b>, then <b>Websites</b>, then <b>Notifications</b>, and set <b>taai.live</b> to <b>Allow</b>.';
+    else if (b.kind === 'firefox') site = 'Click the icon to the left of the address bar. If <b>Notifications</b> shows <b>Blocked</b>, click the <b>×</b> next to it to clear it.';
+    else if (b.kind === 'chromium') site = 'Click the icon to the left of the address bar (a padlock or two small sliders), open <b>Site settings</b>, and set <b>Notifications</b> to <b>Allow</b>.';
+    else site = 'Open this site’s settings in your browser and set <b>Notifications</b> to <b>Allow</b>.';
+    var comp;
+    if (os === 'mac') comp = 'Open your Mac’s <b>System Settings</b>, then <b>Notifications</b>, then ' + n + '. Turn on <b>Allow notifications</b> and choose <b>Banners</b> or <b>Alerts</b>.';
+    else if (os === 'windows') comp = 'Open Windows <b>Settings</b>, then <b>System</b>, then <b>Notifications</b>. Turn <b>Notifications</b> on, and turn on ' + n + ' in the list below.';
+    else comp = 'In your computer’s notification settings, allow ' + n + ' to show notifications.';
+    var dnd = os === 'windows' ? 'Make sure <b>Do not disturb</b> is off.' : 'Make sure <b>Focus</b> (Do Not Disturb) is off.';
     return '<ol class="pomo-safari-steps">' +
-      '<li>In the <b>Safari</b> menu, open <b>Settings</b>, then <b>Websites</b>, then <b>Notifications</b>, and set <b>taai.live</b> to <b>Allow</b>.</li>' +
-      '<li>Open your Mac’s <b>System Settings</b>, then <b>Notifications</b>, then <b>Safari</b>. Turn on <b>Allow notifications</b> and choose <b>Banners</b> or <b>Alerts</b>.</li>' +
-      '<li>Make sure <b>Focus</b> (Do Not Disturb) is off.</li>' +
+      '<li>' + site + '</li><li>' + comp + '</li><li>' + dnd + '</li>' +
       '<li>Reload this page and press <b>Test notification</b> in the timer settings (⚙).</li>' +
       '</ol>';
   }
+  // Kept for the Safari callers below.
+  function macSafariStepsHtml() { return desktopAlertStepsHtml(); }
+  function desktopAlertIntro() {
+    if (isMacSafari()) return 'Focus mode was designed for desktop browsers like Chrome, and Safari needs a few extra settings before it shows alerts. We know that’s inconvenient, sorry. Here’s what to do:';
+    return 'Two places have to allow notifications: ' + desktopBrowser().name + ' for taai.live, and your computer for ' + desktopBrowser().name + '. Here’s how:';
+  }
   function macSafariNoteHtml() {
-    if (!isMacSafari() || state.pomoBlockedReason) return '';
-    return '<details class="pomo-safari-note"><summary>Using Safari? Session alerts need a few settings</summary>' +
-      '<p>Focus mode was designed for desktop browsers like Chrome, and Safari needs a few extra settings before it shows alerts. We know that’s inconvenient, sorry. Here’s what to do:</p>' +
-      macSafariStepsHtml() +
-      '<p>The second step is the one most often missed: Safari can allow taai.live while your Mac still blocks Safari itself.</p>' +
+    if (!isDesktopBrowser() || state.pomoBlockedReason) return '';
+    var name = desktopBrowser().name;
+    return '<details class="pomo-safari-note"><summary>' + (isMacSafari() ? 'Using Safari? Session alerts need a few settings' : 'Not getting session alerts? Check these settings') + '</summary>' +
+      '<p>' + desktopAlertIntro() + '</p>' +
+      desktopAlertStepsHtml() +
+      '<p>The second step is the one most often missed: ' + name + ' can allow taai.live while your computer still blocks ' + name + ' itself.</p>' +
       '</details>';
   }
   function pomoTabletTipHtml() {
@@ -5650,10 +5683,10 @@
       // Only the student flipping it in their own browser's site settings
       // can undo that, so the instructions have to be specific enough to
       // actually follow rather than a vague "check your settings".
-      if (isMacSafari()) {
+      if (isDesktopBrowser()) {
         html += '<div class="pomo-gate-title">Notifications are blocked</div>' +
-          '<p class="pomo-gate-body">Focus mode was designed for desktop browsers like Chrome, and Safari needs a few extra settings before it shows session alerts. We know that’s inconvenient, sorry. Here’s what to do:</p>' +
-          macSafariStepsHtml() +
+          '<p class="pomo-gate-body">' + (isMacSafari() ? desktopAlertIntro() : 'Focus mode needs notifications so you know when a session ends, and ' + desktopBrowser().name + ' has them blocked for this site. Here’s how to turn them on:') + '</p>' +
+          desktopAlertStepsHtml() +
           '<button class="pomo-btn pomo-btn-primary" id="pomo-gate-reload" type="button">I’ve updated it, reload</button>';
         return html + '</div>';
       }
@@ -6018,7 +6051,6 @@
       '<span class="pomo-btn-icon">' + POMO_ICON_SKIP + '</span><span class="pomo-btn-label">Skip</span></button>' +
       '</div>' +
       '</div>' + // .pomo-clock-wrap
-      (isMacSafari() ? '' : '<p class="pomo-notify-permanent-tip">🔔 Notifications need your computer’s permission too, not just this site’s. If they don’t show up, check your computer’s notification settings for this browser.</p>') +
       (pomoJustSignedUp ? '<p class="pomo-signed-up" id="pomo-signed-up">You\'re signed up. Press <b>Start</b> to begin your first session.</p>' : '') +
       pomoTabletTipHtml() +
       macSafariNoteHtml() +
@@ -7969,7 +8001,8 @@
             icon: '/apple-touch-icon.png',
           });
         } catch (e) { /* reported below */ }
-        if (isMacSafari()) say('Sent. No notification? Focus mode was designed for desktop browsers like Chrome, and Safari needs a few extra settings, sorry for the hassle:' + macSafariStepsHtml());
+        if (isMacSafari()) say('Sent. No notification? Focus mode was designed for desktop browsers like Chrome, and Safari needs a few extra settings, sorry for the hassle:' + desktopAlertStepsHtml());
+        else if (isDesktopBrowser()) say('Sent. No notification? Check these:' + desktopAlertStepsHtml());
         else say('Sent. If no notification appeared: ' + notifyDeviceSteps() + '.');
       }
       var st = pomoNotifyState();
@@ -7980,7 +8013,7 @@
           : 'This browser can’t show notifications. Try Chrome, Edge, Firefox or Safari.');
         return;
       }
-      if (st === 'denied') { say(isMacSafari() ? 'Notifications are blocked for this site. Focus mode was designed for desktop browsers like Chrome, and Safari needs a few extra settings, sorry for the hassle:' + macSafariStepsHtml() : 'Notifications are blocked for this site. ' + notifyAllowSteps() + ' After that, press Test notification again.'); return; }
+      if (st === 'denied') { say(isMacSafari() ? 'Notifications are blocked for this site. Focus mode was designed for desktop browsers like Chrome, and Safari needs a few extra settings, sorry for the hassle:' + desktopAlertStepsHtml() : isDesktopBrowser() ? 'Notifications are blocked for this site. Here’s how to turn them on:' + desktopAlertStepsHtml() : 'Notifications are blocked for this site. ' + notifyAllowSteps() + ' After that, press Test notification again.'); return; }
       // 'default': this click is the gesture the permission prompt needs.
       say('Your browser is asking whether to allow notifications. Choose <b>Allow</b>.');
       try {
@@ -7991,7 +8024,7 @@
       function handle(perm) {
         if (handled) return; handled = true;
         if (perm === 'granted') send();
-        else say('Notifications weren’t allowed, so session alerts can’t reach you. ' + notifyAllowSteps() + ' After that, press Test notification again.');
+        else say(isDesktopBrowser() ? 'Notifications weren’t allowed, so session alerts can’t reach you. Here’s how to turn them on:' + desktopAlertStepsHtml() : 'Notifications weren’t allowed, so session alerts can’t reach you. ' + notifyAllowSteps() + ' After that, press Test notification again.');
       }
     });
 
