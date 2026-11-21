@@ -2761,6 +2761,63 @@ body.club-winner-open { overflow: hidden; }
   .cw-actions .cw-btn { flex: 1 1 0; padding: 0 10px; font-size: 13.5px; }
 }
 @media (max-height: 700px) { .cw-li-frame img { height: 22vh; } .cw-li-text { max-height: 2.9em; } }
+/* Popup scrollbar (2026-11-21): when the card has to scroll, a thin
+   lilac scrollbar kept inside the rounded corners, not the browser's grey one. */
+.cw-card { scrollbar-width: thin; scrollbar-color: rgba(167,139,250,0.45) transparent; }
+.cw-card::-webkit-scrollbar { width: 8px; }
+.cw-card::-webkit-scrollbar-track { background: transparent; margin: 20px 0; }
+.cw-card::-webkit-scrollbar-thumb { background: rgba(167,139,250,0.4); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+.cw-card::-webkit-scrollbar-thumb:hover { background-color: rgba(167,139,250,0.65); }
+/* Short screens (1366x768 / 1280x720 laptops, iPhone SE): tighter so Close fits. */
+@media (max-height: 800px) {
+  .cw-card { padding-top: 18px; padding-bottom: 14px; }
+  .cw-title { margin: 8px 0 2px; font-size: clamp(20px, 3.6vh, 26px); }
+  .cw-sub { margin-bottom: 8px; font-size: 13.5px; }
+  .cw-prize-big { margin: -2px auto 10px; padding: 5px 18px 7px; }
+  .cw-prize-amt { font-size: clamp(30px, 6vh, 40px); }
+  .cw-li { margin-bottom: 10px; }
+  .cw-li-head { padding: 8px 12px 6px; }
+  .cw-li-av { width: 40px; height: 40px; }
+  .cw-li-text { max-height: 2.9em; }
+  .cw-li-textwrap { padding-bottom: 8px; }
+  .cw-li-photos { padding: 12px 10px; }
+  .cw-li-frame img { height: 22vh; }
+  .cw-li-bar { padding: 7px 8px 8px; }
+  .cw-btn { height: 40px; }
+}
+/* Phones held sideways: two columns, the celebration on the left and the
+   post on the right, so the photos aren't below the fold. */
+@media (max-height: 500px) and (min-width: 560px) {
+  .cw-backdrop { padding: 10px; }
+  .cw-card { width: min(820px, 100%); max-height: calc(100vh - 20px); padding: 14px 18px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); column-gap: 18px; align-content: start; align-items: start; }
+  .cw-card > :not(.cw-li):not(.cw-close):not(.cw-moon) { grid-column: 1; }
+  .cw-card > .cw-tag { justify-self: center; margin-top: 18px; }
+  .cw-card > .cw-li { grid-column: 2; grid-row: 1 / span 6; margin: 0; }
+  .cw-title { font-size: 22px; margin: 8px 0 2px; }
+  .cw-sub { font-size: 13px; margin-bottom: 8px; }
+  .cw-prize-big { margin: 0 auto 10px; }
+  .cw-prize-amt { font-size: 34px; }
+  .cw-actions .cw-btn { flex: 1 1 0; height: 38px; padding: 0 10px; font-size: 13px; }
+  .cw-li-frame img { height: min(150px, 38vh); }
+  .cw-li-photos { padding: 10px; gap: 10px; }
+  .cw-card > .cw-close { display: none; } /* would sit on the post card; the Close button is beside it */
+}
+/* Winner photos are buttons: tap to see them bigger (2026-11-21). */
+button.cw-li-frame { padding: 0; border: 0; margin: 0; background: none; font: inherit; color: inherit; cursor: zoom-in; -webkit-tap-highlight-color: transparent; }
+button.cw-li-frame:focus-visible { outline: 2px solid #A78BFA; outline-offset: 3px; }
+@media (hover: hover) and (pointer: fine) { button.cw-li-frame img { transition: filter .2s; } button.cw-li-frame:hover img { filter: saturate(1.06) contrast(1.03) brightness(1.08); } }
+.cw-lb { position: fixed; inset: 0; z-index: 3300; display: flex; align-items: center; justify-content: center; padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  background: rgba(3,3,10,0.92); animation: cw-fade .18s ease-out; touch-action: pan-y; cursor: zoom-out; }
+.cw-lb.is-leaving { animation: cw-fade-out .18s ease-in forwards; }
+.cw-lb-img { display: block; max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); cursor: default; user-select: none; -webkit-user-drag: none; }
+.cw-lb-x { position: absolute; top: max(14px, env(safe-area-inset-top)); right: max(14px, env(safe-area-inset-right)); width: 42px; height: 42px; display: grid; place-items: center; padding: 0; border-radius: 50%; border: 1px solid rgba(255,255,255,0.25); background: rgba(20,18,40,0.7); color: #fff; cursor: pointer; }
+.cw-lb-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 46px; height: 46px; padding: 0 0 4px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.25); background: rgba(20,18,40,0.7); color: #fff; font-size: 30px; line-height: 1; cursor: pointer; }
+.cw-lb-prev { left: max(14px, env(safe-area-inset-left)); }
+.cw-lb-next { right: max(14px, env(safe-area-inset-right)); }
+.cw-lb-count { position: absolute; bottom: max(16px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); padding: 4px 12px; border-radius: 999px; background: rgba(20,18,40,0.7); color: #fff; font-size: 13px; font-weight: 600; }
+.cw-lb-x:hover, .cw-lb-nav:hover { background: rgba(60,50,110,0.85); }
+.cw-lb-x:focus-visible, .cw-lb-nav:focus-visible { outline: 2px solid #A78BFA; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .cw-lb, .cw-lb.is-leaving { animation: none; } }
 </style>
 <style>
 /* Vice City night, one day only (2026-11-19). Background only: the timer,

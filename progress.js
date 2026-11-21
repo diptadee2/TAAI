@@ -2077,7 +2077,57 @@
     document.removeEventListener('keydown', clubWinnerKeydown);
     setTimeout(function () { if (m.parentNode) m.parentNode.removeChild(m); document.body.classList.remove('club-winner-open'); }, 220);
   }
-  function clubWinnerKeydown(e) { if (e.key === 'Escape') closeClubWinner(); }
+  function clubWinnerKeydown(e) {
+    if (document.getElementById('cw-lightbox')) return; // the photo viewer handles its own keys
+    if (e.key === 'Escape') closeClubWinner();
+  }
+  // Tap a winner photo to see it bigger (2026-11-21): full-screen viewer
+  // over the popup; arrows / swipe for the second photo; Esc, x or a tap
+  // outside the photo closes it (the popup stays open).
+  function openClubPhoto(srcs, idx) {
+    if (!srcs.length || document.getElementById('cw-lightbox')) return;
+    var i = idx || 0, back = document.activeElement;
+    var lb = document.createElement('div');
+    lb.id = 'cw-lightbox';
+    lb.className = 'cw-lb';
+    lb.setAttribute('role', 'dialog');
+    lb.setAttribute('aria-modal', 'true');
+    lb.setAttribute('aria-label', 'Photo');
+    lb.innerHTML =
+      '<img class="cw-lb-img" alt="">' +
+      '<button type="button" class="cw-lb-x" aria-label="Close photo"><svg width="16" height="16" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>' +
+      (srcs.length > 1 ? '<button type="button" class="cw-lb-nav cw-lb-prev" aria-label="Previous photo">‹</button><button type="button" class="cw-lb-nav cw-lb-next" aria-label="Next photo">›</button><span class="cw-lb-count"></span>' : '');
+    document.body.appendChild(lb);
+    var img = lb.querySelector('.cw-lb-img'), count = lb.querySelector('.cw-lb-count');
+    function show() { img.src = srcs[i]; img.alt = 'Photo ' + (i + 1) + ' of ' + srcs.length; if (count) count.textContent = (i + 1) + ' / ' + srcs.length; }
+    function go(d) { if (srcs.length > 1) { i = (i + d + srcs.length) % srcs.length; show(); } }
+    function close() {
+      document.removeEventListener('keydown', onKey, true);
+      lb.classList.add('is-leaving');
+      setTimeout(function () { if (lb.parentNode) lb.parentNode.removeChild(lb); }, 180);
+      if (back && back.focus) back.focus({ preventScroll: true });
+    }
+    function onKey(e) {
+      if (e.key === 'Escape') { e.stopPropagation(); close(); }
+      else if (e.key === 'ArrowRight') go(1);
+      else if (e.key === 'ArrowLeft') go(-1);
+    }
+    lb.addEventListener('click', function (e) {
+      if (e.target.closest('.cw-lb-prev')) return go(-1);
+      if (e.target.closest('.cw-lb-next')) return go(1);
+      if (e.target === img) return;
+      close();
+    });
+    var sx = null;
+    lb.addEventListener('pointerdown', function (e) { sx = e.clientX; });
+    lb.addEventListener('pointerup', function (e) {
+      if (sx !== null && Math.abs(e.clientX - sx) > 45) go(e.clientX < sx ? 1 : -1);
+      sx = null;
+    });
+    document.addEventListener('keydown', onKey, true);
+    show();
+    lb.querySelector('.cw-lb-x').focus({ preventScroll: true });
+  }
   function clubInitials(name) {
     var parts = String(name || '').trim().split(/\s+/).filter(Boolean);
     return ((parts[0] || '?')[0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
@@ -2111,8 +2161,8 @@
           '</div>' : '') +
           // each photo whole in a white print-style frame, over a blurred,
           // darkened copy of the first photo (2026-11-21)
-          (photos.length ? '<div class="cw-li-photos cw-li-photos-' + photos.length + '"><img class="cw-li-bg" src="' + escapeAttr(photos[0].src) + '" alt="" aria-hidden="true">' + photos.map(function (p) {
-            return '<span class="cw-li-frame"><img src="' + escapeAttr(p.src) + '" alt="' + escapeAttr(p.caption || (w.name + '\'s photo')) + '"></span>';
+          (photos.length ? '<div class="cw-li-photos cw-li-photos-' + photos.length + '"><img class="cw-li-bg" src="' + escapeAttr(photos[0].src) + '" alt="" aria-hidden="true">' + photos.map(function (p, i) {
+            return '<button type="button" class="cw-li-frame" data-photo="' + i + '" aria-label="View photo ' + (i + 1) + ' bigger"><img src="' + escapeAttr(p.src) + '" alt="' + escapeAttr(p.caption || (w.name + '\'s photo')) + '"></button>';
           }).join('') + '</div>' : '') +
           '<div class="cw-li-bar" aria-hidden="true"><span>Like</span><span>Comment</span><span>Repost</span><span>Send</span></div>' +
         '</div>' : '') +
@@ -2138,6 +2188,11 @@
         textEl.classList.remove('is-clamped'); textEl.classList.add('is-open'); more.hidden = true;
       });
     }
+    Array.prototype.forEach.call(m.querySelectorAll('.cw-li-frame[data-photo]'), function (b) {
+      b.addEventListener('click', function () {
+        openClubPhoto(photos.map(function (p) { return p.src; }), Number(b.getAttribute('data-photo')));
+      });
+    });
     m.querySelector('.cw-close').addEventListener('click', closeClubWinner);
     m.querySelector('.cw-btn-close').addEventListener('click', closeClubWinner);
     m.addEventListener('click', function (e) { if (e.target === m) closeClubWinner(); });
