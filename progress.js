@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-21-1';
+  var CLIENT_VERSION = '2026-11-21-2';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -5043,9 +5043,22 @@
       navigator.wakeLock.request('screen').then(function (l) { zenWakeLock = l; }).catch(function () {});
     }
     updatePomoZen();
+    syncZenCity();
     var exitBtn = document.getElementById('pomo-zen-exit');
     if (exitBtn) exitBtn.focus({ preventScroll: true });
   }
+  // Upright phones: the city grows up to just under Start, so there's no
+  // empty band between the timer and the scene on taller phones (2026-11-21:
+  // "the GTA theme was a lot below the clock").
+  function syncZenCity() {
+    var z = zenEl();
+    if (!z || !z.classList.contains('zen-phone')) return;
+    var t = document.getElementById('pomo-zen-toggle');
+    if (!t || window.innerWidth > window.innerHeight) { z.style.removeProperty('--zen-city-h'); return; }
+    var free = window.innerHeight - t.getBoundingClientRect().bottom - 14;
+    z.style.setProperty('--zen-city-h', Math.round(Math.max(150, Math.min(free, 340))) + 'px');
+  }
+  window.addEventListener('resize', syncZenCity);
   function closePomoZen() {
     var el = zenEl();
     if (!el) return;
@@ -5079,6 +5092,7 @@
             '<span class="zb-name">' + (l.is_me ? 'You' : escapeHtml(l.display_name)) + '</span>' +
             '<span class="zb-time">' + formatHoursDecimal(l.total_minutes) + '</span></li>';
         }).join('') + '</ol>';
+      syncZenCity();
       return;
     }
     var rows = leaders.map(function (l, i) {

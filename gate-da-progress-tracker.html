@@ -3207,6 +3207,10 @@ html.vice-night #focus-card.vice-stage .vt-body { height: 120px; }
   .pomo-zen.zen-phone.has-board .pomo-zen-board { order: 1; position: relative; left: auto; right: auto; top: auto; width: min(300px, 100%); margin: 52px auto 0; }
   .pomo-zen.zen-phone.has-board .pomo-zen-time { font-size: min(21vw, 10.5vh); }
 }
+@media (orientation: portrait) {
+  html.vice-night .pomo-zen.zen-phone .vice-skyline { height: var(--zen-city-h, 150px); }
+  html.vice-night .pomo-zen.zen-phone .vice-palm { height: calc(var(--zen-city-h, 150px) + 40px); width: calc((var(--zen-city-h, 150px) + 40px) * .68); }
+}
 @media (orientation: portrait) and (min-width: 420px) { .pomo-zen.zen-phone.has-board .pomo-zen-board { margin-top: 74px; } }
 @media (orientation: portrait) and (max-height: 700px) { .pomo-zen.zen-phone.has-board .pomo-zen-board { margin-top: 50px; } .pomo-zen.zen-phone .zb-row { padding: 2px 0; } }
 @media (orientation: portrait) and (max-height: 800px) { html.vice-night .pomo-zen.zen-phone.has-board .vt-body { height: 18vh; } }
