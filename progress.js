@@ -1956,7 +1956,9 @@
   document.addEventListener('visibilitychange', function () { if (!document.hidden && pendingClubWinner) setTimeout(showPendingClubWinner, 600); });
   function checkClubWinner(background) {
     if (document.getElementById('club-winner-modal') || pendingClubWinner) return;
-    var isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    // localhost, or a phone on the same Wi-Fi opening the Mac's address
+    // (192.168.x / 10.x / 172.16-31.x); never true on taai.live
+    var isLocal = /^(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)$/.test(location.hostname);
     // ?runners-preview is an older link from /team; it now shows the same
     // combined announcement as ?winner-preview (2026-11-21).
     var wantsPreview = !background && /[?&](winner|runners)-preview\b/.test(location.search);

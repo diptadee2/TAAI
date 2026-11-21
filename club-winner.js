@@ -511,7 +511,9 @@
     if ((tries || 0) < 24) setTimeout(function () { whenFree(fn, (tries || 0) + 1); }, 5000);
   }
   function start() {
-    var isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    // localhost, or a phone on the same Wi-Fi opening the Mac's address
+    // (192.168.x / 10.x / 172.16-31.x); never true on taai.live
+    var isLocal = /^(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)$/.test(location.hostname);
     // Local preview: ?winner-preview shows what /team has saved (netlify dev
     // lets the admin endpoints through), switched on or not.
     if (isLocal && /[?&]winner-preview\b/.test(location.search)) {
