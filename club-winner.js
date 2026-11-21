@@ -9,7 +9,7 @@
 // checklist and Focus mode). On the courses and test series pages
 // (<script src="/club-winner.js" data-auto defer>), it shows once to anyone
 // who hasn't already seen it on the tracker, a few seconds after the page
-// opens, with a link to the free tracker (mostly for new visitors).
+// opens (mostly for new visitors).
 //
 // Phones get the winners as a Bumble-style card deck: one post on top, the
 // others stacked behind; drag it left or right and it flies off to the back
@@ -34,7 +34,7 @@
   function ensureCss() {
     if (document.getElementById('club-winner-css')) return;
     var l = document.createElement('link');
-    l.id = 'club-winner-css'; l.rel = 'stylesheet'; l.href = '/club-winner.css?v=6';
+    l.id = 'club-winner-css'; l.rel = 'stylesheet'; l.href = '/club-winner.css?v=7';
     document.head.appendChild(l);
   }
   ensureCss();
@@ -556,7 +556,9 @@
     }
     return false;
   }
-  var cta = { href: '/gate-da-progress-tracker', text: 'See the free progress tracker', short: 'Free tracker' };
+  // No extra button on the sales pages (removed 2026-11-21: a link away to the
+  // tracker distracts from the courses); show() still accepts opts.cta.
+  var cta = null;
   function whenFree(fn, tries) {
     if (!pageBusy()) return fn();
     if ((tries || 0) < 24) setTimeout(function () { whenFree(fn, (tries || 0) + 1); }, 5000);

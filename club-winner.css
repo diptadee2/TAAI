@@ -382,3 +382,9 @@ button.cw-li-frame:focus-visible { outline: 2px solid #A78BFA; outline-offset: 3
   .cw-card-multi .cw-soon b { font-size: 12.5px; }
   .cw-card-multi .cw-deck-dots { margin: 10px 0 8px; }
 }
+
+/* Phones held sideways, especially the installed app (viewport-fit=cover):
+   keep the popup clear of the notch / Dynamic Island on the side. */
+@media (max-height: 500px) and (min-width: 560px) {
+  .cw-backdrop { padding-left: max(10px, env(safe-area-inset-left)); padding-right: max(10px, env(safe-area-inset-right)); }
+}
