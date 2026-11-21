@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-21-3';
+  var CLIENT_VERSION = '2026-11-21-4';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -948,7 +948,10 @@
     pomo.secondsLeft = Math.max(0, Math.round((localEnd - Date.now()) / 1000));
     var wasShowing = !!state.pomoElsewhere;
     state.pomoElsewhere = { mode: pomo.mode, phaseEndAt: st.phaseEndAt, localEnd: localEnd, totalSeconds: st.totalSeconds };
-    if (typeof zenEl === 'function' && zenEl()) closePomoZen();
+    // Fullscreen closes so the box (on the card) is what they see. On phones
+    // it comes back by itself once the box goes away (Switch, or the other
+    // device pauses), since it wasn't the student who closed it.
+    if (typeof zenEl === 'function' && zenEl()) { closePomoZen(); zenAutoOpened = false; }
     if (!wasShowing && state.focus) renderCalendar();
     startElsewhereTick();
     startOwnerPoll();
@@ -4990,7 +4993,7 @@
   function maybeAutoZen() {
     if (!state.focus) { zenAutoOpened = false; return; }
     if (zenEl()) { refreshZenBoard(); return; }
-    if (zenAutoOpened || !isPhoneDevice()) return;
+    if (zenAutoOpened || !isPhoneDevice() || state.pomoElsewhere) return;
     zenAutoOpened = true;
     openPomoZen();
   }
