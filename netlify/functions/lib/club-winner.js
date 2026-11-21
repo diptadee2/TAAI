@@ -45,19 +45,23 @@ export function cleanWinner(b) {
     if (src.length > MAX_PHOTO_CHARS) return { error: 'a photo is too large, please use a smaller one' };
     out.photos.push({ src, caption: str(p.caption, 80) });
   }
+  // Manual only (2026-11-21, "nothing should come without manually
+  // triggering it"): no start date; it shows from the moment it's switched
+  // on and saved. show_until is an optional automatic stop.
+  out.show_from = '';
   if (out.enabled) {
     if (!out.name) return { error: 'add the winner\'s name before switching it on' };
     if (!out.photos.length) return { error: 'add at least one photo before switching it on' };
-    if (!out.show_from || !out.show_until) return { error: 'set both dates before switching it on' };
+    if (out.show_until && out.show_until < todayIST()) return { error: 'the stop date has already passed; clear it or pick a later one' };
   }
   return { data: out };
 }
 
-// Whether the popup should show today (IST).
+// Whether the popup shows now: only while switched on (by hand), and not
+// after the optional stop date (IST). Never starts on its own.
 export function winnerActive(d) {
-  if (!d || !d.enabled || !d.name || !d.photos || !d.photos.length || !d.show_from || !d.show_until) return false;
-  const t = todayIST();
-  return t >= d.show_from && t <= d.show_until;
+  if (!d || !d.enabled || !d.name || !d.photos || !d.photos.length) return false;
+  return !d.show_until || todayIST() <= d.show_until;
 }
 
 // Other places (2026-11-21, design B): a second row in club_winner (id

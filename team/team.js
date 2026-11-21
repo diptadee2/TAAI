@@ -1103,7 +1103,7 @@
   // most 1400px before saving. Preview opens the real tracker popup with
   // the form as it is now (kept in this browser only), saved or not.
   function cwDefaultForm() {
-    return { enabled: false, name: '', month: 'November', prize: 5000, linkedin_text: '', linkedin_url: '', headline: '', avatar: null, show_from: '2026-12-02', show_until: '2026-12-09',
+    return { enabled: false, name: '', month: 'November', prize: 5000, linkedin_text: '', linkedin_url: '', headline: '', avatar: null, show_from: '', show_until: '',
       photos: [{ src: '', caption: 'Desk setup' }, { src: '', caption: 'LinkedIn post' }] };
   }
   function loadClubWinner() {
@@ -1116,7 +1116,8 @@
         Object.keys(f).forEach(function (k) { if (k !== 'photos' && d.winner[k] !== undefined && d.winner[k] !== null) f[k] = d.winner[k]; });
         (d.winner.photos || []).forEach(function (p, i) { if (i < 2) f.photos[i] = { src: p.src || '', caption: p.caption || '' }; });
       }
-      cw.form = f; cw.updatedAt = d.updated_at; cw.loaded = true;
+      cw.form = f; cw.savedEnabled = !!f.enabled; cw.updatedAt = d.updated_at; cw.loaded = true;
+      if (f.show_from) f.show_from = ''; // start dates aren't used any more (manual only)
     }).catch(function (e) {
       cw.form = cwDefaultForm(); cw.loaded = true;
       cw.msg = /club_winner/.test(e.message) ? 'The club_winner table doesn\'t exist yet. Run the SQL at the end of supabase/schema.sql, then reload. You can still fill this in and Preview it.' : 'Could not load: ' + e.message;
@@ -1124,11 +1125,11 @@
     }).then(function () { cw.loading = false; if (state.tab === 'club-winner') render(); });
   }
   function cwStatus(f) {
+    // Manual only: live from the moment it's switched on and saved; the
+    // optional date only stops it (2026-11-21).
     if (!f.enabled) return { cls: 'off', text: 'Off: nobody sees it' };
-    var t = dcTodayIST();
-    if (t < f.show_from) return { cls: 'soon', text: 'Scheduled: shows from ' + dcPretty(f.show_from) };
-    if (t > f.show_until) return { cls: 'off', text: 'Ended on ' + dcPretty(f.show_until) };
-    return { cls: 'live', text: 'Live now on the tracker, until ' + dcPretty(f.show_until) };
+    if (f.show_until && dcTodayIST() > f.show_until) return { cls: 'off', text: 'Ended on ' + dcPretty(f.show_until) };
+    return { cls: 'live', text: 'Live on the tracker' + (f.show_until ? ', stops after ' + dcPretty(f.show_until) : ', until you switch it off') };
   }
   function dcPretty(iso) {
     if (!iso) return '';
@@ -1151,15 +1152,14 @@
       '</div>';
     }).join('');
     return '<div class="cw-panel">' +
-      '<p class="hint">The winner popup on the progress tracker. Between the two dates, everyone who opens the tracker sees it once (signed in or not), with confetti.</p>' +
+      '<p class="hint">The winners popup on the progress tracker. It only goes out when you switch it on and press Save (you\'ll be asked to confirm); then everyone who opens the tracker sees it (signed in or not), with fireworks. Nothing is ever published by a date on its own.</p>' +
       '<div class="cw-status cw-status-' + st.cls + '">' + escapeHtml(st.text) + '</div>' +
       (cw.msg ? '<div class="msg msg-' + (cw.msgType === 'error' ? 'error' : 'ok') + '">' + escapeHtml(cw.msg) + '</div>' : '') +
       '<div class="cw-grid">' +
         '<label class="field cw-field"><span>Winner\'s name</span><input type="text" id="cw-name" maxlength="80" value="' + escapeHtml(f.name) + '" placeholder="As it should appear"></label>' +
         '<label class="field cw-field"><span>Month</span><input type="text" id="cw-month" maxlength="30" value="' + escapeHtml(f.month) + '"></label>' +
         '<label class="field cw-field"><span>Prize (₹)</span><input type="number" id="cw-prize" min="0" step="1" value="' + escapeHtml(f.prize) + '"></label>' +
-        '<label class="field cw-field"><span>Show from</span><input type="date" id="cw-from" value="' + escapeHtml(f.show_from) + '"></label>' +
-        '<label class="field cw-field"><span>Show until (inclusive)</span><input type="date" id="cw-until" value="' + escapeHtml(f.show_until) + '"></label>' +
+        '<label class="field cw-field"><span>Stop showing after (optional)</span><input type="date" id="cw-until" value="' + escapeHtml(f.show_until) + '"></label>' +
       '</div>' +
       '<div class="cw-photos-row">' + photoHtml + '</div>' +
       // Used only by the downloadable LinkedIn-post image (2026-11-21).
@@ -1176,7 +1176,7 @@
       '</div>' +
       '<label class="field cw-field cw-wide"><span>LinkedIn post text</span><textarea id="cw-text" rows="7" maxlength="3000" placeholder="Paste the winner\'s LinkedIn post">' + escapeHtml(f.linkedin_text) + '</textarea></label>' +
       '<label class="field cw-field cw-wide"><span>LinkedIn post link</span><input type="url" id="cw-url" maxlength="500" value="' + escapeHtml(f.linkedin_url) + '" placeholder="https://www.linkedin.com/posts/..."></label>' +
-      '<label class="cw-switch"><input type="checkbox" id="cw-enabled"' + (f.enabled ? ' checked' : '') + '> <span>Switched on (shows on the tracker between the dates)</span></label>' +
+      '<label class="cw-switch"><input type="checkbox" id="cw-enabled"' + (f.enabled ? ' checked' : '') + '> <span>Live: everyone who opens the tracker sees it (takes effect when you press Save)</span></label>' +
       '<div class="cw-actions-row">' +
         '<button type="button" class="btn" id="cw-preview">Preview on the tracker ↗</button>' +
         '<span class="cw-dl"><select id="cw-download-style" aria-label="Image style"><option value="linkedin">LinkedIn post</option><option value="classic">Classic card</option></select><select id="cw-download-size" aria-label="Image size"><option value="square">Square 1:1 (YouTube, Instagram)</option><option value="portrait">Portrait 4:5 (Instagram, LinkedIn)</option></select><button type="button" class="btn" id="cw-download">Download PNG</button></span>' +
@@ -1188,7 +1188,7 @@
     var f = state.clubWinner.form;
     var v = function (id) { var el = document.getElementById(id); return el ? el.value : ''; };
     f.name = v('cw-name'); f.month = v('cw-month'); f.prize = Number(v('cw-prize')) || 0;
-    f.show_from = v('cw-from'); f.show_until = v('cw-until');
+    f.show_from = ''; f.show_until = v('cw-until');
     f.linkedin_text = v('cw-text'); f.linkedin_url = v('cw-url').trim();
     if (document.getElementById('cw-headline')) f.headline = v('cw-headline');
     var en = document.getElementById('cw-enabled'); f.enabled = !!(en && en.checked);
@@ -1255,8 +1255,11 @@
     var save = document.getElementById('cw-save');
     if (save) save.addEventListener('click', function () {
       cwReadBoth(); var f = cwPayload(state.clubWinner.form);
+      // Publishing is a deliberate act: confirm when this save turns it on.
+      if (f.enabled && !cw.savedEnabled && !window.confirm('Publish the 2 AM Club announcement now?\n\nEveryone who opens the progress tracker will see it from now on.')) return;
       cw.saving = true; cw.msg = null; render();
       api('/team-club-winner', { method: 'PUT', body: JSON.stringify({ winner: f }) }).then(function (d) {
+        cw.savedEnabled = f.enabled;
         cw.updatedAt = d.updated_at; cw.msg = 'Saved. ' + cwStatus(cw.form).text + '.'; cw.msgType = 'ok';
       }).catch(function (e) { cw.msg = 'Could not save: ' + e.message; cw.msgType = 'error'; })
         .then(function () { cw.saving = false; render(); });
@@ -1622,7 +1625,7 @@
     }).join('');
     return '<div class="cw-panel cr-panel">' +
       '<h3 class="cr-head">Other places: 2nd, another 2nd, 3rd</h3>' +
-      '<p class="hint">Shown in the same popup as 1st place, everyone side by side, and published together with it: 1st place\'s switch and dates above decide when (' + escapeHtml(main || 'set above') + '). Leave a place empty if there\'s nobody in it yet. Saving a change while it\'s live shows the announcement again to everyone, so add a later winner (e.g. on the 30th) and Save.</p>' +
+      '<p class="hint">Shown in the same popup as 1st place, everyone side by side, and published together with it: only 1st place\'s switch above publishes it (' + escapeHtml(main || 'set above') + '). Leave a place empty if there\'s nobody in it yet. Saving a change while it\'s live shows the announcement again to everyone, so add a later winner (e.g. on the 30th) and Save.</p>' +
       (cr.msg ? '<div class="msg msg-' + (cr.msgType === 'error' ? 'error' : 'ok') + '">' + escapeHtml(cr.msg) + '</div>' : '') +
       '<div class="cw-grid">' +
         '<label class="field cw-field"><span>Month</span><input type="text" id="cr-month" maxlength="30" value="' + escapeHtml(f.month) + '"></label>' +
