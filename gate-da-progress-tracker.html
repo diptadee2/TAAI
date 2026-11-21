@@ -3179,6 +3179,39 @@ html.vice-night #focus-card.vice-stage .vt-body { height: 120px; }
   .pomo-zen .pomo-zen-bottom, html.vice-night .pomo-zen .pomo-zen-bottom { margin-bottom: 36vh; }
 }
 </style>
+<style>
+/* Phones: Focus mode opens in fullscreen, with a small top 5 in the top-left
+   corner under Exit and how many are studying now (2026-11-21). */
+.pomo-zen.zen-phone.has-board .pomo-zen-board { display: block; position: absolute; z-index: 2;
+  left: calc(18px + env(safe-area-inset-left)); top: calc(78px + env(safe-area-inset-top)); width: min(168px, 44vw);
+  padding: 8px 10px 6px; border-radius: 12px; background: rgba(10,8,24,0.72); border: 1px solid rgba(255,255,255,0.1); transition: opacity .5s; }
+.pomo-zen.zen-phone.is-idle.is-running .pomo-zen-board { opacity: .5; }
+.pomo-zen.zen-phone .zb-title { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 9.5px; margin-bottom: 4px; letter-spacing: .06em; }
+.pomo-zen.zen-phone .zb-livecount { display: inline-flex; align-items: center; gap: 4px; color: #86efac; letter-spacing: 0; text-transform: none; font-size: 10.5px; font-weight: 600; }
+.pomo-zen.zen-phone .zb-livecount .zb-dot { width: 6px; height: 6px; }
+.pomo-zen.zen-phone .zb-row { grid-template-columns: 12px 8px minmax(0,1fr) auto; gap: 5px; padding: 3px 0; font-size: 11.5px; }
+.pomo-zen.zen-phone .zb-rank { font-size: 10.5px; }
+.pomo-zen.zen-phone .zb-row .zb-dot { width: 6px; height: 6px; }
+.pomo-zen.zen-phone .zb-me { margin: 0 -6px; padding-left: 6px; padding-right: 6px; border-radius: 6px; }
+@media (orientation: landscape) {
+  .pomo-zen.zen-phone.has-board .pomo-zen-board { left: auto; right: calc(18px + env(safe-area-inset-right)); top: calc(104px + env(safe-area-inset-top)); width: 150px; padding: 6px 9px 4px; }
+  .pomo-zen.zen-phone .zb-row { padding: 2px 0; font-size: 11px; }
+  .pomo-zen.zen-phone.has-board .pomo-zen-center, .pomo-zen.zen-phone.has-board .pomo-zen-bottom { padding-right: 140px; }
+}
+/* Upright phones: no room beside the HUD, so the board gets its own row
+   under it, centred, and the time is a little smaller to make room. */
+@media (orientation: portrait) {
+  .pomo-zen.zen-phone .pomo-zen-top { order: 0; }
+  .pomo-zen.zen-phone .pomo-zen-center { order: 2; }
+  .pomo-zen.zen-phone .pomo-zen-bottom { order: 3; }
+  .pomo-zen.zen-phone.has-board .pomo-zen-board { order: 1; position: relative; left: auto; right: auto; top: auto; width: min(300px, 100%); margin: 52px auto 0; }
+  .pomo-zen.zen-phone.has-board .pomo-zen-time { font-size: min(21vw, 10.5vh); }
+}
+@media (orientation: portrait) and (min-width: 420px) { .pomo-zen.zen-phone.has-board .pomo-zen-board { margin-top: 74px; } }
+@media (orientation: portrait) and (max-height: 700px) { .pomo-zen.zen-phone.has-board .pomo-zen-board { margin-top: 50px; } .pomo-zen.zen-phone .zb-row { padding: 2px 0; } }
+@media (orientation: portrait) and (max-height: 800px) { html.vice-night .pomo-zen.zen-phone.has-board .vt-body { height: 18vh; } }
+@media (orientation: portrait) and (max-height: 600px) { .pomo-zen.zen-phone .zb-row:nth-child(n+4) { display: none; } }
+</style>
 </head>
 <body data-float-stack data-nav-no-autohide>
 

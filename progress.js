@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-20-27';
+  var CLIENT_VERSION = '2026-11-21-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -4805,6 +4805,7 @@
     // applyPomoGradient() is documented safe to call even where
     // #pomo-card doesn't exist (a no-op for that one element).
     applyPomoGradient();
+    maybeAutoZen();
     // state.lastWeekLeaders/lastWeekViewerRank are already fresh at this
     // point (set earlier in loadMonth's resolve, before renderCalendar is
     // called) — unlike the top-20 card in Focus Mode, this one doesn't
@@ -4980,13 +4981,26 @@
   // (2026-11-19, "a little glow so that users notice it").
   var ZEN_SEEN_KEY = 'taai_zen_seen_v1';
   function zenSeen() { try { return localStorage.getItem(ZEN_SEEN_KEY) === '1'; } catch (e) { return true; } }
+  // On phones (website and app) Focus mode opens straight into the
+  // fullscreen timer (direct request 2026-11-21). Once per visit to Focus
+  // mode: Exit fullscreen leaves the student on the card until they leave
+  // Focus mode and come back.
+  var zenAutoOpened = false;
+  function isPhoneDevice() { return isTouchScreen() && !isTabletDevice(); }
+  function maybeAutoZen() {
+    if (!state.focus) { zenAutoOpened = false; return; }
+    if (zenEl()) { refreshZenBoard(); return; }
+    if (zenAutoOpened || !isPhoneDevice()) return;
+    zenAutoOpened = true;
+    openPomoZen();
+  }
   function openPomoZen() {
     try { localStorage.setItem(ZEN_SEEN_KEY, '1'); } catch (e) { /* fine */ }
     var zb = document.getElementById('pomo-zen-open'); if (zb) zb.classList.remove('is-new');
     if (zenEl()) return;
     var el = document.createElement('div');
     el.id = 'pomo-zen';
-    el.className = 'pomo-zen';
+    el.className = 'pomo-zen' + (isPhoneDevice() ? ' zen-phone' : '');
     el.setAttribute('role', 'dialog');
     el.setAttribute('aria-label', 'Fullscreen timer');
     el.innerHTML =
@@ -5052,6 +5066,21 @@
     var leaders = state.todayLeaders || [];
     el.classList.toggle('has-board', leaders.length > 0);
     if (!leaders.length) { box.innerHTML = ''; return; }
+    // Phones: a small top 5 in the corner, with how many are studying now
+    // (direct request 2026-11-21: "so that it doesn't take much space").
+    if (el.classList.contains('zen-phone')) {
+      var live = state.liveCount || 0;
+      box.innerHTML = '<div class="zb-title"><span>Top 5 today</span>' +
+        (live > 0 ? '<span class="zb-livecount"><i class="zb-dot" aria-hidden="true"></i>' + live + ' live</span>' : '') + '</div>' +
+        '<ol class="zb-list">' + leaders.slice(0, 5).map(function (l, i) {
+          return '<li class="zb-row' + (l.is_me ? ' zb-me' : '') + '">' +
+            '<span class="zb-rank">' + (i + 1) + '</span>' +
+            '<span class="zb-dotcell">' + (l.is_live ? '<i class="zb-dot" aria-label="Studying now"></i>' : '') + '</span>' +
+            '<span class="zb-name">' + (l.is_me ? 'You' : escapeHtml(l.display_name)) + '</span>' +
+            '<span class="zb-time">' + formatHoursDecimal(l.total_minutes) + '</span></li>';
+        }).join('') + '</ol>';
+      return;
+    }
     var rows = leaders.map(function (l, i) {
       return '<li class="zb-row' + (l.is_me ? ' zb-me' : '') + (l.is_live ? ' zb-live' : '') + '">' +
         '<span class="zb-rank">' + (i + 1) + '</span>' +
@@ -7390,6 +7419,7 @@
     if (!liveCountData) return;
     state.liveCount = liveCountData.count || 0;
     state.liveCountMax = liveCountData.maxCount || 0;
+    refreshZenBoard(); // the phone corner board shows the live count
     var liveCountMax = Math.max(state.liveCountMax, state.liveCount, 1);
     var pct = Math.round(Math.min(100, (state.liveCount / liveCountMax) * 100));
     var el = document.querySelector('.hourly-busy-meter-marker');
