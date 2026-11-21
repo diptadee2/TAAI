@@ -1354,7 +1354,8 @@
       out.push(line);
     }
     while (out.length && out[out.length - 1] === '') out.pop();
-    if (out.length > maxLines) { out = out.slice(0, maxLines); cut = true; }
+    // maxLines counts text lines only; blank lines between paragraphs are free (drawn as a small gap)
+    for (var n = 0, k = 0; k < out.length; k++) { if (out[k] !== '') n++; if (n > maxLines) { out = out.slice(0, k); cut = true; break; } }
     while (out.length && out[out.length - 1] === '') { out.pop(); cut = true; }
     return { lines: out, cut: cut };
   }
@@ -1407,8 +1408,12 @@
     ctx.font = '400 25px ' + sans; ctx.fillStyle = '#191919';
     var maxLines = photos.filter(Boolean).length ? (sq ? 3 : 5) : (sq ? 11 : 15);
     var wr = cwWrap(ctx, data.linkedin_text || '', w - 2 * pad, maxLines), lines = wr.lines;
+    var yy = textTop + 25 - lh, lastY = textTop;
     for (var i = 0; i < lines.length; i++) {
-      var ln = lines[i], yy = textTop + 25 + i * lh;
+      var ln = lines[i];
+      yy += (i && lines[i - 1] === '') ? lh * 0.45 : lh; // blank line between paragraphs = a small gap
+      if (ln === '') continue;
+      lastY = yy;
       if (i === lines.length - 1 && wr.cut) {
         var more = '…see more', mw = ctx.measureText(more).width;
         if (/\s/.test(ln)) ln = ln.replace(/\s+\S*$/, ''); // the next word was cut: drop it whole
@@ -1417,7 +1422,7 @@
         ctx.fillStyle = '#666666'; ctx.fillText(more, x + pad + ctx.measureText(ln.replace(/\s+$/, '')).width + 6, yy);
       } else { ctx.fillStyle = '#191919'; ctx.fillText(ln, x + pad, yy); }
     }
-    var textEnd = lines.length ? textTop + 25 + (lines.length - 1) * lh + 18 : textTop;
+    var textEnd = lines.length ? lastY + 18 : textTop;
     // their photos, edge to edge like a feed post
     var barH = 66, imgTop = textEnd + 14, imgBot = bottom - barH, ims = photos.filter(Boolean);
     if (ims.length && imgBot - imgTop > 120) {
@@ -1435,7 +1440,9 @@
     ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
     ctx.fillStyle = '#f2f2f2'; ctx.fillRect(x, y, w, h);
     var k = Math.max(w / im.naturalWidth, h / im.naturalHeight), dw = im.naturalWidth * k, dh = im.naturalHeight * k;
-    ctx.drawImage(im, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+    // tall phone photos keep their upper part (the screen / desk), not the middle
+    var oy = dh > h ? (h - dh) * 0.15 : (h - dh) / 2;
+    ctx.drawImage(im, x + (w - dw) / 2, y + oy, dw, dh);
     ctx.restore();
   }
   function cwFitSans(ctx, text, weight, size, maxW, min, fam) {
