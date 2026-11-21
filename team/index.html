@@ -612,6 +612,11 @@
 .cw-field input, .cw-field textarea { width: 100%; box-sizing: border-box; }
 .cw-field textarea { resize: vertical; min-height: 140px; font: inherit; }
 .cw-photos-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+.cw-avatar-row { display: flex; gap: 16px; align-items: flex-start; margin: 14px 0 4px; }
+.cw-avatar { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; flex: 0 0 72px; border: 1px solid var(--line); background: #222; }
+.cw-avatar-empty { display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 22px; color: #fff; background: linear-gradient(135deg, #A78BFA, #4D8BFF); }
+.cw-avatar-body { flex: 1; min-width: 0; }
+.cw-avatar-body .cw-field { margin-top: 8px; }
 .cw-photo-slot { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; }
 .cw-photo-label { font-size: 13px; font-weight: 600; }
 .cw-thumb { width: 100%; height: 160px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); background: #111; }

@@ -1103,7 +1103,7 @@
   // most 1400px before saving. Preview opens the real tracker popup with
   // the form as it is now (kept in this browser only), saved or not.
   function cwDefaultForm() {
-    return { enabled: false, name: '', month: 'November', prize: 5000, linkedin_text: '', linkedin_url: '', show_from: '2026-12-02', show_until: '2026-12-09',
+    return { enabled: false, name: '', month: 'November', prize: 5000, linkedin_text: '', linkedin_url: '', headline: '', avatar: null, show_from: '2026-12-02', show_until: '2026-12-09',
       photos: [{ src: '', caption: 'Desk setup' }, { src: '', caption: 'LinkedIn post' }] };
   }
   function loadClubWinner() {
@@ -1162,12 +1162,24 @@
         '<label class="field cw-field"><span>Show until (inclusive)</span><input type="date" id="cw-until" value="' + escapeHtml(f.show_until) + '"></label>' +
       '</div>' +
       '<div class="cw-photos-row">' + photoHtml + '</div>' +
+      // Used only by the downloadable LinkedIn-post image (2026-11-21).
+      '<div class="cw-avatar-row">' +
+        (f.avatar && f.avatar.src ? '<img class="cw-avatar" src="' + escapeHtml(f.avatar.src) + '" alt="">' : '<div class="cw-avatar cw-avatar-empty">' + escapeHtml(cwInitials(f.name)) + '</div>') +
+        '<div class="cw-avatar-body">' +
+          '<div class="cw-photo-label">Profile picture (for the LinkedIn-post image)</div>' +
+          '<div class="cw-photo-actions">' +
+            '<label class="btn btn-sm">' + (f.avatar && f.avatar.src ? 'Replace' : 'Upload') + '<input type="file" accept="image/*" id="cw-avatar-file" hidden></label>' +
+            (f.avatar && f.avatar.src ? '<button type="button" class="btn btn-sm" id="cw-avatar-remove">Remove</button>' : '') +
+          '</div>' +
+          '<label class="field cw-field"><span>Their LinkedIn headline (optional)</span><input type="text" id="cw-headline" maxlength="120" value="' + escapeHtml(f.headline || '') + '" placeholder="e.g. GATE DA 2027 aspirant | B.Tech CSE"></label>' +
+        '</div>' +
+      '</div>' +
       '<label class="field cw-field cw-wide"><span>LinkedIn post text</span><textarea id="cw-text" rows="7" maxlength="3000" placeholder="Paste the winner\'s LinkedIn post">' + escapeHtml(f.linkedin_text) + '</textarea></label>' +
       '<label class="field cw-field cw-wide"><span>LinkedIn post link</span><input type="url" id="cw-url" maxlength="500" value="' + escapeHtml(f.linkedin_url) + '" placeholder="https://www.linkedin.com/posts/..."></label>' +
       '<label class="cw-switch"><input type="checkbox" id="cw-enabled"' + (f.enabled ? ' checked' : '') + '> <span>Switched on (shows on the tracker between the dates)</span></label>' +
       '<div class="cw-actions-row">' +
         '<button type="button" class="btn" id="cw-preview">Preview on the tracker ↗</button>' +
-        '<span class="cw-dl"><select id="cw-download-size" aria-label="Image size"><option value="square">Square 1:1 (YouTube, Instagram)</option><option value="portrait">Portrait 4:5 (Instagram, LinkedIn)</option></select><button type="button" class="btn" id="cw-download">Download PNG</button></span>' +
+        '<span class="cw-dl"><select id="cw-download-style" aria-label="Image style"><option value="linkedin">LinkedIn post</option><option value="classic">Classic card</option></select><select id="cw-download-size" aria-label="Image size"><option value="square">Square 1:1 (YouTube, Instagram)</option><option value="portrait">Portrait 4:5 (Instagram, LinkedIn)</option></select><button type="button" class="btn" id="cw-download">Download PNG</button></span>' +
         '<button type="button" class="btn btn-primary" id="cw-save"' + (cw.saving ? ' disabled' : '') + '>' + (cw.saving ? 'Saving…' : 'Save') + '</button>' +
       '</div>' +
     '</div>';
@@ -1178,17 +1190,18 @@
     f.name = v('cw-name'); f.month = v('cw-month'); f.prize = Number(v('cw-prize')) || 0;
     f.show_from = v('cw-from'); f.show_until = v('cw-until');
     f.linkedin_text = v('cw-text'); f.linkedin_url = v('cw-url').trim();
+    if (document.getElementById('cw-headline')) f.headline = v('cw-headline');
     var en = document.getElementById('cw-enabled'); f.enabled = !!(en && en.checked);
     document.querySelectorAll('[data-cw-cap]').forEach(function (el) { f.photos[+el.getAttribute('data-cw-cap')].caption = el.value; });
     return f;
   }
   // Shrinks an uploaded image to a JPEG data URL of at most 1400px on its
   // longest side, lowering quality if it's still too big to store.
-  function cwShrink(file) {
+  function cwShrink(file, maxSide) {
     return new Promise(function (resolve, reject) {
       var url = URL.createObjectURL(file), img = new Image();
       img.onload = function () {
-        var max = 1400, w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, max / Math.max(w, h));
+        var max = maxSide || 1400, w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, max / Math.max(w, h));
         var c = document.createElement('canvas'); c.width = Math.round(w * k); c.height = Math.round(h * k);
         var x = c.getContext('2d'); x.fillStyle = '#000'; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
         URL.revokeObjectURL(url);
@@ -1209,6 +1222,7 @@
   }
   function cwPayload(f) {
     return { enabled: f.enabled, name: f.name.trim(), month: f.month.trim(), prize: f.prize, linkedin_text: f.linkedin_text, linkedin_url: f.linkedin_url,
+      headline: (f.headline || '').trim(), avatar: f.avatar && f.avatar.src ? { src: f.avatar.src } : null,
       show_from: f.show_from, show_until: f.show_until, photos: f.photos.filter(function (p) { return p.src; }) };
   }
   function bindClubWinner() {
@@ -1223,6 +1237,15 @@
           .catch(function (e) { cw.msg = e.message; cw.msgType = 'error'; render(); });
       });
     });
+    var avIn = document.getElementById('cw-avatar-file');
+    if (avIn) avIn.addEventListener('change', function () {
+      var file = avIn.files && avIn.files[0]; if (!file) return;
+      cwReadBoth();
+      cwShrink(file, 400).then(function (src) { cw.form.avatar = { src: src }; cw.msg = null; render(); })
+        .catch(function (e) { cw.msg = e.message; cw.msgType = 'error'; render(); });
+    });
+    var avRm = document.getElementById('cw-avatar-remove');
+    if (avRm) avRm.addEventListener('click', function () { cwReadBoth(); cw.form.avatar = null; render(); });
     document.querySelectorAll('[data-cw-remove]').forEach(function (btn) {
       btn.addEventListener('click', function () { cwReadBoth(); cw.form.photos[+btn.getAttribute('data-cw-remove')].src = ''; render(); });
     });
@@ -1311,8 +1334,122 @@
     ctx.font = '500 26px Poppins, system-ui, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.6)';
     ctx.fillText('Study with us, free progress tracker at taai.live', W / 2, H - 56);
   }
-  function cwExportPng(kind, size) {
+  function cwInitials(name) {
+    var parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+    return ((parts[0] || '?')[0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+  }
+  // Wraps text (keeping line breaks) to lines of at most maxW; returns at
+  // most maxLines lines and whether anything was cut.
+  function cwWrap(ctx, text, maxW, maxLines) {
+    var out = [], cut = false;
+    var paras = String(text || '').replace(/\r/g, '').split('\n');
+    for (var p = 0; p < paras.length; p++) {
+      var words = paras[p].split(/\s+/).filter(Boolean), line = '';
+      if (!words.length) { if (out.length && out[out.length - 1] !== '') out.push(''); continue; }
+      for (var i = 0; i < words.length; i++) {
+        var t = line ? line + ' ' + words[i] : words[i];
+        if (ctx.measureText(t).width <= maxW || !line) line = t;
+        else { out.push(line); line = words[i]; }
+      }
+      out.push(line);
+    }
+    while (out.length && out[out.length - 1] === '') out.pop();
+    if (out.length > maxLines) { out = out.slice(0, maxLines); cut = true; }
+    while (out.length && out[out.length - 1] === '') { out.pop(); cut = true; }
+    return { lines: out, cut: cut };
+  }
+  // The winner's post drawn as a LinkedIn-style post on the night sky
+  // (2026-11-21, "a mockup of the LinkedIn post with the person's profile
+  // pic in the corner and some of the pictures they shared"). No LinkedIn
+  // logo and no made-up reaction counts.
+  function cwDrawLinkedIn(ctx, W, H, data, photos, avatar, sq, month) {
+    var P = 60, cx = W / 2;
+    var sans = '-apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+    ctx.textAlign = 'center';
+    cwTag(ctx, 'THE 2 AM CLUB · ' + month.toUpperCase() + ' WINNER', cx, 44);
+    cwFit(ctx, 'Congratulations, ' + data.name + '!', 800, sq ? 52 : 58, W - 2 * P, 32);
+    var head = 'Congratulations, ' + data.name + '!';
+    cwGradText(ctx, head, cx, sq ? 204 : 218, ['#FF7FB7', '#A78BFA', '#4D8BFF']);
+    var pre = 'Winner of The 2 AM Club for ' + month + '  ·  ', amt = '₹' + Number(data.prize || 0).toLocaleString('en-IN') + ' prize';
+    ctx.font = '500 28px Poppins, system-ui, sans-serif'; var w1 = ctx.measureText(pre).width;
+    ctx.font = '800 30px Poppins, system-ui, sans-serif'; var w2 = ctx.measureText(amt).width;
+    var sx = cx - (w1 + w2) / 2, py = sq ? 248 : 266;
+    ctx.textAlign = 'left';
+    ctx.font = '500 28px Poppins, system-ui, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.78)'; ctx.fillText(pre, sx, py);
+    ctx.font = '800 30px Poppins, system-ui, sans-serif'; cwGoldTextLeft(ctx, amt, sx + w1, py, 30);
+    // the post card
+    var x = P, y = sq ? 280 : 304, w = W - 2 * P, bottom = H - 100, h = bottom - y, pad = 34;
+    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.45)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 14;
+    dcRoundRect(ctx, x, y, w, h, 22); ctx.fillStyle = '#fff'; ctx.fill(); ctx.restore();
+    ctx.save(); dcRoundRect(ctx, x, y, w, h, 22); ctx.clip();
+    // header: profile picture in the corner, name, headline, "posted" line
+    var av = 92, ax = x + pad, ay = y + pad;
+    ctx.save(); ctx.beginPath(); ctx.arc(ax + av / 2, ay + av / 2, av / 2, 0, Math.PI * 2); ctx.clip();
+    if (avatar) {
+      var k = Math.max(av / avatar.naturalWidth, av / avatar.naturalHeight), dw = avatar.naturalWidth * k, dh = avatar.naturalHeight * k;
+      ctx.drawImage(avatar, ax + (av - dw) / 2, ay + (av - dh) / 2, dw, dh);
+    } else {
+      var g = ctx.createLinearGradient(ax, ay, ax + av, ay + av); g.addColorStop(0, '#A78BFA'); g.addColorStop(1, '#4D8BFF');
+      ctx.fillStyle = g; ctx.fillRect(ax, ay, av, av);
+      ctx.fillStyle = '#fff'; ctx.font = '700 36px ' + sans; ctx.textAlign = 'center'; ctx.fillText(cwInitials(data.name), ax + av / 2, ay + av / 2 + 13); ctx.textAlign = 'left';
+    }
+    ctx.restore();
+    var tx = ax + av + 20, tw = x + w - pad - tx;
+    ctx.fillStyle = '#191919'; cwFitSans(ctx, data.name, 700, 32, tw, 22, sans); ctx.fillText(data.name, tx, ay + 34);
+    ctx.fillStyle = '#666666'; ctx.font = '400 23px ' + sans;
+    var hl = data.headline || ('Winner, The 2 AM Club · ' + month);
+    while (ctx.measureText(hl).width > tw && hl.length > 4) hl = hl.slice(0, -2);
+    if (hl !== (data.headline || ('Winner, The 2 AM Club · ' + month))) hl = hl.replace(/\s*\S?$/, '') + '…';
+    ctx.fillText(hl, tx, ay + 66);
+    ctx.fillStyle = '#8a8a8a'; ctx.font = '400 21px ' + sans; ctx.fillText('Posted on LinkedIn', tx, ay + 94);
+    // post text
+    var textTop = ay + av + 26, lh = 34;
+    ctx.font = '400 25px ' + sans; ctx.fillStyle = '#191919';
+    var maxLines = photos.filter(Boolean).length ? (sq ? 3 : 5) : (sq ? 11 : 15);
+    var wr = cwWrap(ctx, data.linkedin_text || '', w - 2 * pad, maxLines), lines = wr.lines;
+    for (var i = 0; i < lines.length; i++) {
+      var ln = lines[i], yy = textTop + 25 + i * lh;
+      if (i === lines.length - 1 && wr.cut) {
+        var more = '…see more', mw = ctx.measureText(more).width;
+        if (/\s/.test(ln)) ln = ln.replace(/\s+\S*$/, ''); // the next word was cut: drop it whole
+        while (ln && ctx.measureText(ln).width + mw + 8 > w - 2 * pad) ln = ln.replace(/\s*\S+$/, '');
+        ctx.fillStyle = '#191919'; ctx.fillText(ln.replace(/\s+$/, ''), x + pad, yy);
+        ctx.fillStyle = '#666666'; ctx.fillText(more, x + pad + ctx.measureText(ln.replace(/\s+$/, '')).width + 6, yy);
+      } else { ctx.fillStyle = '#191919'; ctx.fillText(ln, x + pad, yy); }
+    }
+    var textEnd = lines.length ? textTop + 25 + (lines.length - 1) * lh + 18 : textTop;
+    // their photos, edge to edge like a feed post
+    var barH = 66, imgTop = textEnd + 14, imgBot = bottom - barH, ims = photos.filter(Boolean);
+    if (ims.length && imgBot - imgTop > 120) {
+      if (ims.length === 1) cwCoverPlain(ctx, ims[0], x, imgTop, w, imgBot - imgTop);
+      else { var half = (w - 4) / 2; cwCoverPlain(ctx, ims[0], x, imgTop, half, imgBot - imgTop); cwCoverPlain(ctx, ims[1], x + half + 4, imgTop, half, imgBot - imgTop); }
+    }
+    // action bar (labels only, no counts)
+    ctx.fillStyle = '#e8e8e8'; ctx.fillRect(x + pad, bottom - barH, w - 2 * pad, 2);
+    ctx.fillStyle = '#5e5e5e'; ctx.font = '600 23px ' + sans; ctx.textAlign = 'center';
+    ['Like', 'Comment', 'Repost', 'Send'].forEach(function (lab, j) { ctx.fillText(lab, x + w * (j + 0.5) / 4, bottom - 22); });
+    ctx.restore();
+    ctx.textAlign = 'center';
+  }
+  function cwCoverPlain(ctx, im, x, y, w, h) {
+    ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+    ctx.fillStyle = '#f2f2f2'; ctx.fillRect(x, y, w, h);
+    var k = Math.max(w / im.naturalWidth, h / im.naturalHeight), dw = im.naturalWidth * k, dh = im.naturalHeight * k;
+    ctx.drawImage(im, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+    ctx.restore();
+  }
+  function cwFitSans(ctx, text, weight, size, maxW, min, fam) {
+    while (size > min) { ctx.font = weight + ' ' + size + 'px ' + fam; if (ctx.measureText(text).width <= maxW) break; size -= 2; }
+    ctx.font = weight + ' ' + size + 'px ' + fam;
+  }
+  function cwGoldTextLeft(ctx, text, x, y, size) {
+    var g = ctx.createLinearGradient(0, y - size, 0, y);
+    g.addColorStop(0, '#FFF7D6'); g.addColorStop(0.35, '#FDE68A'); g.addColorStop(1, '#F59E0B');
+    ctx.fillStyle = g; ctx.fillText(text, x, y);
+  }
+  function cwExportPng(kind, size, style) {
     var sq = size === 'square';
+    var li = kind !== 'runners' && style === 'linkedin';
     // Square 1:1 for YouTube community / Instagram, portrait 4:5 for feeds (2026-11-19).
     var W = 1080, H = sq ? 1080 : 1350, P = 72;
     var L = sq
@@ -1326,7 +1463,9 @@
     var people = kind === 'runners' ? data.people.map(function (p, i) { return Object.assign({ place: i + 2 }, p); }).filter(function (p) { return p.name; }) : null;
     if (kind === 'runners' && !people.length) return Promise.reject(new Error('Add 2nd place\'s name first.'));
     if (kind !== 'runners' && !data.name) return Promise.reject(new Error('Add the winner\'s name first.'));
-    var srcs = kind === 'runners' ? people.map(function (p) { return p.photo && p.photo.src; }) : [(data.photos[0] || {}).src];
+    var srcs = kind === 'runners' ? people.map(function (p) { return p.photo && p.photo.src; })
+      : li ? data.photos.map(function (p) { return p.src; }).concat([data.avatar && data.avatar.src])
+      : [(data.photos[0] || {}).src];
     var fontsReady = document.fonts && document.fonts.load
       ? Promise.all(['800 80px Poppins', '700 26px Poppins', '600 30px Poppins', '500 26px Poppins'].map(function (f) { return document.fonts.load(f); })).catch(function () {})
       : Promise.resolve();
@@ -1338,7 +1477,9 @@
       if (dcLogo.complete && dcLogo.naturalWidth) ctx.drawImage(dcLogo, 104, 68, 150, 80, P, P - 4, 64 * 150 / 80, 64);
       ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
       var cx = W / 2;
-      if (kind !== 'runners') {
+      if (li) {
+        cwDrawLinkedIn(ctx, W, H, data, imgs.slice(0, imgs.length - 1), imgs[imgs.length - 1], sq, month);
+      } else if (kind !== 'runners') {
         cwTag(ctx, 'THE 2 AM CLUB · ' + month.toUpperCase() + ' WINNER', cx, L.tag);
         ctx.font = '700 54px Poppins, system-ui, sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText('Congratulations,', cx, L.l1);
         cwFit(ctx, data.name + '!', 800, 92, W - 2 * P, 48);
@@ -1386,7 +1527,7 @@
         c.toBlob(function (blob) {
           if (!blob) { reject(new Error('Could not make the image.')); return; }
           var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-          a.download = (kind === 'runners' ? 'taai-2am-club-runners-up' : 'taai-2am-club-winner') + (sq ? '-square' : '-portrait') + '.png';
+          a.download = (kind === 'runners' ? 'taai-2am-club-runners-up' : li ? 'taai-2am-club-winner-linkedin' : 'taai-2am-club-winner') + (sq ? '-square' : '-portrait') + '.png';
           document.body.appendChild(a); a.click(); a.remove();
           setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
           resolve(c);
@@ -1399,8 +1540,8 @@
     if (!btn) return;
     btn.addEventListener('click', function () {
       btn.disabled = true;
-      var sel = document.getElementById(btnId + '-size');
-      cwExportPng(kind, sel ? sel.value : 'square').catch(function (e) { st.msg = e.message; st.msgType = 'error'; render(); })
+      var sel = document.getElementById(btnId + '-size'), sty = document.getElementById(btnId + '-style');
+      cwExportPng(kind, sel ? sel.value : 'square', sty ? sty.value : 'classic').catch(function (e) { st.msg = e.message; st.msgType = 'error'; render(); })
         .then(function () { btn.disabled = false; });
     });
   }

@@ -18,10 +18,20 @@ export function cleanWinner(b) {
     prize: Math.max(0, Math.min(1_000_000, Math.round(Number(b.prize) || 0))),
     linkedin_text: str(b.linkedin_text, 3000),
     linkedin_url: str(b.linkedin_url, 500),
+    // For the downloadable LinkedIn-post mockup only (2026-11-21); not sent
+    // to the tracker popup.
+    headline: str(b.headline, 120),
+    avatar: null,
     show_from: str(b.show_from, 10),
     show_until: str(b.show_until, 10),
     photos: [],
   };
+  const av = b.avatar && typeof b.avatar.src === 'string' ? b.avatar.src : '';
+  if (av) {
+    if (!/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(av)) return { error: 'the profile picture is not a valid image' };
+    if (av.length > 400_000) return { error: 'the profile picture is too large, please use a smaller one' };
+    out.avatar = { src: av };
+  }
   if (out.linkedin_url && !/^https:\/\/([a-z0-9-]+\.)*linkedin\.com\//i.test(out.linkedin_url)) {
     return { error: 'the LinkedIn link must start with https:// and be on linkedin.com' };
   }
