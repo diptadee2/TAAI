@@ -1328,8 +1328,9 @@
     ctx.fillStyle = '#FBBF24'; ctx.fillText(text, cx, y + 37);
   }
   function cwFooter(ctx, W, H) {
-    ctx.font = '500 26px Poppins, system-ui, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.6)';
-    ctx.fillText('Study with us, free progress tracker at taai.live', W / 2, H - 56);
+    // just the site address (2026-11-21: the "free progress tracker" pitch was removed on request)
+    ctx.font = '600 26px Poppins, system-ui, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.fillText('taai.live', W / 2, H - 56);
   }
   function cwInitials(name) {
     var parts = String(name || '').trim().split(/\s+/).filter(Boolean);
@@ -1438,7 +1439,7 @@
     ctx.fillStyle = '#f2f2f2'; ctx.fillRect(x, y, w, h);
     var k = Math.max(w / im.naturalWidth, h / im.naturalHeight), dw = im.naturalWidth * k, dh = im.naturalHeight * k;
     // tall phone photos keep their upper part (the screen / desk), not the middle
-    var oy = dh > h ? (h - dh) * 0.15 : (h - dh) / 2;
+    var oy = dh > h ? (h - dh) * 0.32 : (h - dh) / 2;
     ctx.drawImage(im, x + (w - dw) / 2, y + oy, dw, dh);
     ctx.restore();
   }
