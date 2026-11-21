@@ -1368,13 +1368,10 @@
     cwFit(ctx, 'Congratulations, ' + data.name + '!', 800, sq ? 52 : 58, W - 2 * P, 32);
     var head = 'Congratulations, ' + data.name + '!';
     cwGradText(ctx, head, cx, sq ? 204 : 218, ['#FF7FB7', '#A78BFA', '#4D8BFF']);
-    var pre = 'Winner of The 2 AM Club for ' + month + '  ·  ', amt = '₹' + Number(data.prize || 0).toLocaleString('en-IN') + ' prize';
-    ctx.font = '500 28px Poppins, system-ui, sans-serif'; var w1 = ctx.measureText(pre).width;
-    ctx.font = '800 30px Poppins, system-ui, sans-serif'; var w2 = ctx.measureText(amt).width;
-    var sx = cx - (w1 + w2) / 2, py = sq ? 248 : 266;
+    // no prize money in the image (2026-11-21, direct request)
+    ctx.font = '500 28px Poppins, system-ui, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.78)';
+    ctx.fillText('Winner of The 2 AM Club for ' + month, cx, sq ? 248 : 266);
     ctx.textAlign = 'left';
-    ctx.font = '500 28px Poppins, system-ui, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.78)'; ctx.fillText(pre, sx, py);
-    ctx.font = '800 30px Poppins, system-ui, sans-serif'; cwGoldTextLeft(ctx, amt, sx + w1, py, 30);
     // the post card
     var x = P, y = sq ? 280 : 304, w = W - 2 * P, bottom = H - 100, h = bottom - y, pad = 34;
     ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.45)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 14;
@@ -1490,14 +1487,10 @@
         cwGradText(ctx, data.name + '!', cx, L.l2, ['#FF7FB7', '#A78BFA', '#4D8BFF']);
         ctx.font = '500 32px Poppins, system-ui, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.75)';
         ctx.fillText('Winner of The 2 AM Club for ' + month, cx, L.sub);
-        var bx = cx - 230, by = L.box, bw = 460, bh = L.boxH;
-        dcRoundRect(ctx, bx, by, bw, bh, 30); ctx.fillStyle = 'rgba(251,191,36,0.12)'; ctx.fill();
-        ctx.strokeStyle = 'rgba(251,191,36,0.55)'; ctx.lineWidth = 2; ctx.stroke();
-        ctx.font = '700 24px Poppins, system-ui, sans-serif'; ctx.fillStyle = '#FCD34D'; ctx.fillText('PRIZE MONEY', cx, by + (sq ? 42 : 50));
-        ctx.font = '800 ' + L.amt + 'px Poppins, system-ui, sans-serif';
-        cwGoldText(ctx, '₹' + Number(data.prize || 0).toLocaleString('en-IN'), cx, by + bh - (sq ? 22 : 26), L.amt);
-        var ph = Math.min(Math.round((W - 2 * P) * 9 / 16), L.photoMax), pw = Math.round(ph * 16 / 9);
-        cwCover(ctx, imgs[0], cx - pw / 2, L.photo, pw, ph, 30);
+        // no prize box any more (2026-11-21): the photo takes its place
+        var ph = Math.min(Math.round((W - 2 * P) * 9 / 16), L.photoMax + (L.photo - L.box)), pw = Math.round(ph * 16 / 9);
+        if (pw > W - 2 * P) { pw = W - 2 * P; ph = Math.round(pw * 9 / 16); }
+        cwCover(ctx, imgs[0], cx - pw / 2, L.box + 10, pw, ph, 30);
       } else {
         var two = people.length > 1, n = people.length;
         cwTag(ctx, 'THE 2 AM CLUB · ' + month.toUpperCase(), cx, L.tag);
@@ -1510,7 +1503,7 @@
         var placesTxt = (n2 > 1 ? 'Two 2nd places' : n2 ? '2nd place' : '') + (has3 ? (n2 ? ' and 3rd place' : '3rd place') : '');
         ctx.fillText(placesTxt + ' in The 2 AM Club for ' + month, cx, L.sub - (sq ? 0 : 6));
         var gap = n > 2 ? 24 : 32, cw = two ? (W - 2 * P - (n - 1) * gap) / n : L.one;
-        var phh0 = Math.round((cw - 32) * 9 / 16), cardH0 = 16 + phh0 + 236;
+        var phh0 = Math.round((cw - 32) * 9 / 16), cardH0 = 16 + phh0 + 156;
         // centre the cards in the space between the subtitle and the footer
         var areaTop = L.sub + 40, areaBot = H - 110, top = Math.round(areaTop + Math.max(0, (areaBot - areaTop - cardH0) / 2));
         people.forEach(function (p, i) {
@@ -1524,9 +1517,7 @@
           ctx.fillText((p.place === 2 ? '2ND' : '3RD') + ' PLACE', ccx, y + 58);
           cwFit(ctx, p.name, 800, n > 2 ? 38 : 46, cw - 40, 22);
           cwGradText(ctx, p.name, ccx, y + 118, ['#FF7FB7', '#A78BFA', '#4D8BFF']);
-          var amtPx = n > 2 ? 52 : 64;
-          ctx.font = '800 ' + amtPx + 'px Poppins, system-ui, sans-serif';
-          cwGoldText(ctx, '₹' + Number(p.prize || 0).toLocaleString('en-IN'), ccx, y + 196, amtPx);
+          // no prize money in the image (2026-11-21)
         });
       }
       cwFooter(ctx, W, H);

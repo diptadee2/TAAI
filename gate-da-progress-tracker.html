@@ -2740,7 +2740,14 @@ body.club-winner-open { overflow: hidden; }
   background: linear-gradient(90deg, rgba(255,255,255,0), #fff 40px); }
 .cw-li-more:hover { color: #0A66C2; text-decoration: underline; }
 .cw-li-photos { position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center; gap: 16px; padding: 22px 16px;
-  background: radial-gradient(120% 90% at 50% 20%, #2a2350 0%, #171330 55%, #0e0c1f 100%); }
+  /* abstract flowing gradient lines and soft colour glows (2026-11-21, "too negative") */
+  background-color: #2a2058;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 240' preserveAspectRatio='none'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='0'><stop offset='0' stop-color='%23FF7FB7'/><stop offset='.5' stop-color='%23A78BFA'/><stop offset='1' stop-color='%234D8BFF'/></linearGradient><linearGradient id='h' x1='0' y1='0' x2='1' y2='0'><stop offset='0' stop-color='%234D8BFF'/><stop offset='1' stop-color='%23FDE68A'/></linearGradient></defs><g fill='none' stroke-linecap='round'><path d='M-20 170 C 60 110, 130 220, 210 150 S 340 60, 420 110' stroke='url(%23g)' stroke-width='3' opacity='.75'/><path d='M-20 195 C 70 140, 150 245, 230 175 S 350 95, 420 140' stroke='url(%23g)' stroke-width='1.6' opacity='.5'/><path d='M-20 60 C 80 20, 150 110, 240 70 S 360 10, 420 40' stroke='url(%23h)' stroke-width='2.2' opacity='.45'/><path d='M-20 85 C 90 45, 160 135, 250 95 S 370 35, 420 65' stroke='url(%23h)' stroke-width='1.2' opacity='.32'/></g></svg>"),
+    radial-gradient(circle at 12% 18%, rgba(255,127,183,0.42), transparent 46%),
+    radial-gradient(circle at 88% 82%, rgba(77,139,255,0.45), transparent 50%),
+    radial-gradient(circle at 70% 10%, rgba(253,230,138,0.22), transparent 40%),
+    linear-gradient(135deg, #3b2a78 0%, #2a2058 55%, #1d2a5e 100%);
+  background-size: 100% 100%, auto, auto, auto, auto; background-repeat: no-repeat; }
 .cw-li-photos .cw-li-bg { display: none; }
 /* gallery look (2026-11-21, "classy"): straight photos, rounded corners, a hairline edge and a soft deep shadow; the whole photo shown, never cropped */
 .cw-li-frame { position: relative; flex: 0 1 auto; min-width: 0; border-radius: 10px; overflow: hidden; line-height: 0;

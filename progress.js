@@ -2106,20 +2106,19 @@
     var people = [first].concat(others);
     var combined = others.length > 0;
     var note = combined && runners.note ? runners.note : '';
-    var money = function (n) { return n ? '₹' + Number(n).toLocaleString('en-IN') : ''; };
     var head = combined
       ? '<div class="cw-tag">🏆 The 2 AM Club · ' + escapeHtml(month) + ' winners</div>' +
         '<h2 class="cw-title" id="cw-title">Congratulations to our <span class="cw-name">2 AM Club</span> winners!</h2>' +
         '<p class="cw-sub">The best stories of <span class="cw-month">' + escapeHtml(month) + '</span></p>'
       : '<div class="cw-tag">🏆 The 2 AM Club · ' + escapeHtml(month) + ' winner</div>' +
         '<h2 class="cw-title" id="cw-title">Congratulations, <span class="cw-name">' + escapeHtml(w.name) + '</span>!</h2>' +
-        '<p class="cw-sub">Winner of The 2 AM Club for <span class="cw-month">' + escapeHtml(month) + '</span></p>' +
-        (w.prize ? '<div class="cw-prize-big"><span class="cw-prize-label">🥇 Prize money</span><span class="cw-prize-amt">' + money(w.prize) + '</span></div>' : '');
+        '<p class="cw-sub">Winner of The 2 AM Club for <span class="cw-month">' + escapeHtml(month) + '</span></p>';
+    // No prize money anywhere in the announcement (2026-11-21, direct request).
     var body = combined
       ? '<div class="cw-cols cw-cols-' + people.length + '">' +
           people.map(function (p, i) {
             return '<div class="cw-col cw-col-p' + p.place + '">' +
-              '<div class="cw-place cw-place-' + p.place + '">' + CLUB_MEDAL[p.place] + ' ' + CLUB_ORD[p.place] + ' place' + (p.prize ? ' · <span class="cw-place-amt">' + money(p.prize) + '</span>' : '') + '</div>' +
+              '<div class="cw-place cw-place-' + p.place + '">' + CLUB_MEDAL[p.place] + ' ' + CLUB_ORD[p.place] + ' place</div>' +
               (clubLiCardHtml(p, i, month) || '<div class="cw-li cw-li-nameonly"><b>' + escapeHtml(p.name) + '</b></div>') +
               (p.linkedin_url ? '<a class="cw-col-link" href="' + escapeAttr(p.linkedin_url) + '" target="_blank" rel="noopener">View on LinkedIn ↗</a>' : '') +
             '</div>';
@@ -2172,7 +2171,11 @@
     document.addEventListener('keydown', clubWinnerKeydown);
     var closeBtn = m.querySelector('.cw-btn-close');
     if (closeBtn) closeBtn.focus({ preventScroll: true });
+    // Fireworks and confetti together (2026-11-21, "don't forget the
+    // celebratory fireworks and confettis"); the confetti cannons fire once
+    // the first rockets have burst.
     setTimeout(fireWinnerCelebration, 250);
+    setTimeout(fireConfetti, 900);
   }
 
   // ── Scroll progress + back-to-top — same pattern as blog.js ──────────
