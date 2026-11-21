@@ -60,55 +60,57 @@ export function winnerActive(d) {
   return t >= d.show_from && t <= d.show_until;
 }
 
-// 2nd and 3rd place (2026-11-19): a second row in club_winner (id
-// 'runners'), released on its own dates in one popup. 3rd place is optional
-// (there may not be enough entries for it).
+// Other places (2026-11-21, design B): a second row in club_winner (id
+// 'runners') with up to three more people (2nd, another 2nd, 3rd), each
+// shown as a full LinkedIn-style post in the SAME popup as 1st place. They
+// are published together: there is no separate switch or dates here; 1st
+// place's switch and dates decide when everyone shows. Older rows with one
+// `photo` per person are read as photos[0].
+const PLACES = [2, 2, 3];
+const IMG_RE = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
+export const MAX_RUNNERS_CHARS = 5_200_000; // keeps the request under Netlify's 6 MB limit
 export function cleanRunners(b) {
   if (!b || typeof b !== 'object') return { error: 'missing runners-up data' };
   const str = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
-  const out = {
-    enabled: !!b.enabled,
-    month: str(b.month, 30) || 'November',
-    show_from: str(b.show_from, 10),
-    show_until: str(b.show_until, 10),
-    people: [],
-  };
-  if (out.show_from && !DATE_RE.test(out.show_from)) return { error: 'show from must be a date' };
-  if (out.show_until && !DATE_RE.test(out.show_until)) return { error: 'show until must be a date' };
-  if (out.show_from && out.show_until && out.show_until < out.show_from) return { error: 'show until is before show from' };
-  const people = Array.isArray(b.people) ? b.people.slice(0, 2) : [];
+  const out = { month: str(b.month, 30) || 'November', note: str(b.note, 120), people: [] };
+  const people = Array.isArray(b.people) ? b.people.slice(0, PLACES.length) : [];
+  let total = 0;
   for (let i = 0; i < people.length; i++) {
     const p = people[i] || {};
-    const place = i + 2;
+    const place = PLACES[i];
+    const label = i === 0 ? '2nd place' : i === 1 ? 'the other 2nd place' : '3rd place';
     const person = {
       place,
       name: str(p.name, 80),
       prize: Math.max(0, Math.min(1_000_000, Math.round(Number(p.prize) || 0))),
       linkedin_url: str(p.linkedin_url, 500),
-      photo: null,
+      headline: str(p.headline, 120),
+      linkedin_text: str(p.linkedin_text, 3000),
+      avatar: null,
+      photos: [],
     };
     if (person.linkedin_url && !/^https:\/\/([a-z0-9-]+\.)*linkedin\.com\//i.test(person.linkedin_url)) {
-      return { error: `the ${place === 2 ? '2nd' : '3rd'} place LinkedIn link must start with https:// and be on linkedin.com` };
+      return { error: `the ${label} LinkedIn link must start with https:// and be on linkedin.com` };
     }
-    const src = p.photo && typeof p.photo.src === 'string' ? p.photo.src : '';
-    if (src) {
-      if (!/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(src)) return { error: 'a photo is not a valid image' };
-      if (src.length > MAX_PHOTO_CHARS) return { error: 'a photo is too large, please use a smaller one' };
-      person.photo = { src, caption: str(p.photo.caption, 80) };
+    const av = p.avatar && typeof p.avatar.src === 'string' ? p.avatar.src : '';
+    if (av) {
+      if (!IMG_RE.test(av)) return { error: `the ${label} profile picture is not a valid image` };
+      if (av.length > 400_000) return { error: `the ${label} profile picture is too large` };
+      person.avatar = { src: av }; total += av.length;
     }
-    if (!person.name && !person.photo) continue; // empty slot (no 3rd place)
-    if (out.enabled && (!person.name || !person.photo)) return { error: `add both a name and a photo for ${place === 2 ? '2nd' : '3rd'} place, or leave it empty` };
+    const srcs = (Array.isArray(p.photos) ? p.photos : (p.photo ? [p.photo] : [])).slice(0, 2);
+    for (const ph of srcs) {
+      const src = ph && typeof ph.src === 'string' ? ph.src : '';
+      if (!src) continue;
+      if (!IMG_RE.test(src)) return { error: `a ${label} photo is not a valid image` };
+      if (src.length > MAX_PHOTO_CHARS) return { error: `a ${label} photo is too large, please use a smaller one` };
+      person.photos.push({ src, caption: '' }); total += src.length;
+    }
+    const empty = !person.name && !person.photos.length && !person.linkedin_text && !person.avatar;
+    if (empty) continue; // nobody in this place (yet)
+    if (!person.name) return { error: `add a name for ${label}, or clear that place` };
     out.people.push(person);
   }
-  if (out.enabled) {
-    if (!out.people.length || out.people[0].place !== 2) return { error: 'add 2nd place before switching it on' };
-    if (!out.show_from || !out.show_until) return { error: 'set both dates before switching it on' };
-  }
+  if (total > MAX_RUNNERS_CHARS) return { error: 'the photos together are too large; use fewer or smaller photos' };
   return { data: out };
-}
-
-export function runnersActive(d) {
-  if (!d || !d.enabled || !Array.isArray(d.people) || !d.people.length || !d.show_from || !d.show_until) return false;
-  const t = todayIST();
-  return t >= d.show_from && t <= d.show_until;
 }

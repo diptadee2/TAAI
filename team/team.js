@@ -1251,13 +1251,7 @@
     });
     cwBindDownload('cw-download', 'winner', cw);
     var prev = document.getElementById('cw-preview');
-    if (prev) prev.addEventListener('click', function () {
-      cwReadBoth(); var f = cwPayload(state.clubWinner.form);
-      if (!f.name) { cw.msg = 'Add a name to preview.'; cw.msgType = 'error'; render(); return; }
-      try { localStorage.setItem('taai_club_winner_preview', JSON.stringify(f)); }
-      catch (e) { cw.msg = 'Preview needs the photos to fit in this browser\'s storage; try smaller photos.'; cw.msgType = 'error'; render(); return; }
-      window.open('/gate-da-progress-tracker?winner-preview', '_blank', 'noopener');
-    });
+    if (prev) prev.addEventListener('click', function () { cwOpenPreview(cw); });
     var save = document.getElementById('cw-save');
     if (save) save.addEventListener('click', function () {
       cwReadBoth(); var f = cwPayload(state.clubWinner.form);
@@ -1467,10 +1461,10 @@
     cwReadBoth();
     var data = kind === 'runners' ? crPayload(state.clubRunners.form) : cwPayload(state.clubWinner.form);
     var month = (data.month || '').trim();
-    var people = kind === 'runners' ? data.people.map(function (p, i) { return Object.assign({ place: i + 2 }, p); }).filter(function (p) { return p.name; }) : null;
+    var people = kind === 'runners' ? data.people.map(function (p, i) { return Object.assign({ place: CR_SLOTS[i].place }, p); }).filter(function (p) { return p.name; }) : null;
     if (kind === 'runners' && !people.length) return Promise.reject(new Error('Add 2nd place\'s name first.'));
     if (kind !== 'runners' && !data.name) return Promise.reject(new Error('Add the winner\'s name first.'));
-    var srcs = kind === 'runners' ? people.map(function (p) { return p.photo && p.photo.src; })
+    var srcs = kind === 'runners' ? people.map(function (p) { return p.photos[0] && p.photos[0].src; })
       : li ? data.photos.map(function (p) { return p.src; }).concat([data.avatar && data.avatar.src])
       : [(data.photos[0] || {}).src];
     var fontsReady = document.fonts && document.fonts.load
@@ -1502,15 +1496,17 @@
         var ph = Math.min(Math.round((W - 2 * P) * 9 / 16), L.photoMax), pw = Math.round(ph * 16 / 9);
         cwCover(ctx, imgs[0], cx - pw / 2, L.photo, pw, ph, 30);
       } else {
-        var two = people.length > 1;
+        var two = people.length > 1, n = people.length;
         cwTag(ctx, 'THE 2 AM CLUB · ' + month.toUpperCase(), cx, L.tag);
         ctx.font = '700 56px Poppins, system-ui, sans-serif'; ctx.fillStyle = '#fff';
         ctx.fillText('Congratulations to our', cx, L.l1);
         ctx.font = '800 76px Poppins, system-ui, sans-serif';
         cwGradText(ctx, two ? 'runners-up!' : 'runner-up!', cx, L.nameY2 + (sq ? 0 : 0), ['#FF7FB7', '#A78BFA', '#4D8BFF']);
         ctx.font = '500 32px Poppins, system-ui, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.75)';
-        ctx.fillText((two ? '2nd and 3rd place' : '2nd place') + ' in The 2 AM Club for ' + month, cx, L.sub - (sq ? 0 : 6));
-        var gap = 32, cw = two ? (W - 2 * P - gap) / 2 : L.one;
+        var n2 = people.filter(function (p) { return p.place === 2; }).length, has3 = people.some(function (p) { return p.place === 3; });
+        var placesTxt = (n2 > 1 ? 'Two 2nd places' : n2 ? '2nd place' : '') + (has3 ? (n2 ? ' and 3rd place' : '3rd place') : '');
+        ctx.fillText(placesTxt + ' in The 2 AM Club for ' + month, cx, L.sub - (sq ? 0 : 6));
+        var gap = n > 2 ? 24 : 32, cw = two ? (W - 2 * P - (n - 1) * gap) / n : L.one;
         var phh0 = Math.round((cw - 32) * 9 / 16), cardH0 = 16 + phh0 + 236;
         // centre the cards in the space between the subtitle and the footer
         var areaTop = L.sub + 40, areaBot = H - 110, top = Math.round(areaTop + Math.max(0, (areaBot - areaTop - cardH0) / 2));
@@ -1523,10 +1519,11 @@
           var y = top + 16 + phh;
           ctx.font = '700 26px Poppins, system-ui, sans-serif'; ctx.fillStyle = p.place === 2 ? '#E5E7EB' : '#F0B27A';
           ctx.fillText((p.place === 2 ? '2ND' : '3RD') + ' PLACE', ccx, y + 58);
-          cwFit(ctx, p.name, 800, 46, cw - 48, 26);
+          cwFit(ctx, p.name, 800, n > 2 ? 38 : 46, cw - 40, 22);
           cwGradText(ctx, p.name, ccx, y + 118, ['#FF7FB7', '#A78BFA', '#4D8BFF']);
-          ctx.font = '800 64px Poppins, system-ui, sans-serif';
-          cwGoldText(ctx, '₹' + Number(p.prize || 0).toLocaleString('en-IN'), ccx, y + 196, 64);
+          var amtPx = n > 2 ? 52 : 64;
+          ctx.font = '800 ' + amtPx + 'px Poppins, system-ui, sans-serif';
+          cwGoldText(ctx, '₹' + Number(p.prize || 0).toLocaleString('en-IN'), ccx, y + 196, amtPx);
         });
       }
       cwFooter(ctx, W, H);
@@ -1553,15 +1550,18 @@
     });
   }
 
-  // ── 2nd and 3rd place (2026-11-19) ──────────────────────────────────
-  // Released on their own dates, in one popup, after 1st place. 3rd place
-  // is optional: leave it empty if there aren't enough entries.
+  // ── Other places: 2nd, another 2nd, 3rd (2026-11-21, design B) ──────
+  // Shown in the SAME popup as 1st place, side by side, and published
+  // together under 1st place's switch and dates (no switch here). Each
+  // place is a full LinkedIn-style post: profile picture, headline, post
+  // text, up to two photos. Leave a place empty if there's nobody yet;
+  // saving later shows the announcement again to everyone.
+  var CR_SLOTS = [{ place: 2, label: '🥈 2nd place', prize: 3000 }, { place: 2, label: '🥈 2nd place (another)', prize: 3000 }, { place: 3, label: '🥉 3rd place', prize: 2000 }];
+  function crEmptyPerson(i) {
+    return { place: CR_SLOTS[i].place, name: '', prize: CR_SLOTS[i].prize, linkedin_url: '', headline: '', linkedin_text: '', avatar: null, photos: [{ src: '' }, { src: '' }] };
+  }
   function crDefaultForm() {
-    return { enabled: false, month: 'November', show_from: '', show_until: '',
-      people: [
-        { place: 2, name: '', prize: 3000, linkedin_url: '', photo: null },
-        { place: 3, name: '', prize: 2000, linkedin_url: '', photo: null },
-      ] };
+    return { month: 'November', note: '', people: CR_SLOTS.map(function (_, i) { return crEmptyPerson(i); }) };
   }
   function loadClubRunners() {
     var cr = state.clubRunners;
@@ -1570,8 +1570,16 @@
     api('/team-club-winner?slot=runners').then(function (d) {
       var f = crDefaultForm(), r = d.runners;
       if (r) {
-        ['enabled', 'month', 'show_from', 'show_until'].forEach(function (k) { if (r[k] !== undefined && r[k] !== null) f[k] = r[k]; });
-        (r.people || []).forEach(function (p) { var i = p.place === 3 ? 1 : 0; f.people[i] = { place: i + 2, name: p.name || '', prize: p.prize || 0, linkedin_url: p.linkedin_url || '', photo: p.photo || null }; });
+        if (r.month) f.month = r.month;
+        f.note = r.note || '';
+        var two = 0;
+        (r.people || []).forEach(function (p) {
+          var i = p.place === 3 ? 2 : two++;
+          if (i > 2) return;
+          var ph = (p.photos && p.photos.length ? p.photos : (p.photo ? [p.photo] : [])).slice(0, 2);
+          f.people[i] = { place: CR_SLOTS[i].place, name: p.name || '', prize: p.prize || 0, linkedin_url: p.linkedin_url || '', headline: p.headline || '',
+            linkedin_text: p.linkedin_text || '', avatar: p.avatar || null, photos: [ph[0] || { src: '' }, ph[1] || { src: '' }] };
+        });
       }
       cr.form = f; cr.loaded = true;
     }).catch(function (e) {
@@ -1582,36 +1590,47 @@
   function renderClubRunners() {
     var cr = state.clubRunners;
     if (!cr.loaded) return '';
-    var f = cr.form, st = f.show_from ? cwStatus(f) : (f.enabled ? { cls: 'off', text: 'Set the dates' } : { cls: 'off', text: 'Off: nobody sees it' });
+    var f = cr.form;
+    var main = state.clubWinner.loaded && state.clubWinner.form ? cwStatus(state.clubWinner.form).text : '';
     var people = f.people.map(function (p, i) {
-      var pl = i === 0 ? '2nd place' : '3rd place (optional)';
+      var filled = p.name || p.linkedin_text || (p.avatar && p.avatar.src) || p.photos.some(function (x) { return x.src; });
       return '<div class="cr-slot">' +
-        '<div class="cw-photo-label">' + (i === 0 ? '🥈 ' : '🥉 ') + pl + '</div>' +
-        (p.photo && p.photo.src ? '<img class="cw-thumb" src="' + escapeHtml(p.photo.src) + '" alt="">' : '<div class="cw-thumb cw-thumb-empty">No photo</div>') +
-        '<div class="cw-photo-actions">' +
-          '<label class="btn btn-sm">' + (p.photo && p.photo.src ? 'Replace photo' : 'Upload photo') + '<input type="file" accept="image/*" data-cr-photo="' + i + '" hidden></label>' +
-          (p.photo && p.photo.src ? '<button type="button" class="btn btn-sm" data-cr-remove="' + i + '">Remove</button>' : '') +
-          (i === 1 && (p.name || (p.photo && p.photo.src)) ? '<button type="button" class="btn btn-sm" data-cr-clear="1">No 3rd place</button>' : '') +
+        '<div class="cr-slot-head"><span class="cw-photo-label">' + CR_SLOTS[i].label + '</span>' +
+          (filled ? '<button type="button" class="btn btn-sm" data-cr-clear="' + i + '">Clear this place</button>' : '') + '</div>' +
+        '<div class="cw-grid">' +
+          '<label class="field cw-field"><span>Name</span><input type="text" data-cr-name="' + i + '" maxlength="80" value="' + escapeHtml(p.name) + '" placeholder="' + (i === 0 ? 'As it should appear' : 'Leave empty if nobody yet') + '"></label>' +
+          '<label class="field cw-field"><span>Prize (₹)</span><input type="number" data-cr-prize="' + i + '" min="0" step="1" value="' + escapeHtml(p.prize) + '"></label>' +
         '</div>' +
-        '<label class="field cw-field"><span>Name</span><input type="text" data-cr-name="' + i + '" maxlength="80" value="' + escapeHtml(p.name) + '"' + (i === 1 ? ' placeholder="Leave empty if there\'s no 3rd place"' : '') + '></label>' +
-        '<label class="field cw-field"><span>Prize (₹)</span><input type="number" data-cr-prize="' + i + '" min="0" step="1" value="' + escapeHtml(p.prize) + '"></label>' +
-        '<label class="field cw-field"><span>LinkedIn post link (optional)</span><input type="url" data-cr-url="' + i + '" maxlength="500" value="' + escapeHtml(p.linkedin_url) + '" placeholder="https://www.linkedin.com/posts/..."></label>' +
+        '<div class="cw-avatar-row">' +
+          (p.avatar && p.avatar.src ? '<img class="cw-avatar" src="' + escapeHtml(p.avatar.src) + '" alt="">' : '<span class="cw-avatar cw-avatar-empty">' + escapeHtml(p.name.trim() ? cwInitials(p.name) : '?') + '</span>') +
+          '<div class="cw-avatar-body"><span class="cw-photo-label">Profile picture</span><div class="cw-photo-actions">' +
+            '<label class="btn btn-sm">' + (p.avatar && p.avatar.src ? 'Replace' : 'Upload') + '<input type="file" accept="image/*" data-cr-avatar="' + i + '" hidden></label>' +
+            (p.avatar && p.avatar.src ? '<button type="button" class="btn btn-sm" data-cr-avremove="' + i + '">Remove</button>' : '') +
+          '</div></div>' +
+        '</div>' +
+        '<label class="field cw-field"><span>Their LinkedIn headline (optional)</span><input type="text" data-cr-headline="' + i + '" maxlength="120" value="' + escapeHtml(p.headline) + '"></label>' +
+        '<label class="field cw-field"><span>LinkedIn post text</span><textarea data-cr-text="' + i + '" rows="4" maxlength="3000" placeholder="Paste their LinkedIn post">' + escapeHtml(p.linkedin_text) + '</textarea></label>' +
+        '<label class="field cw-field"><span>LinkedIn post link</span><input type="url" data-cr-url="' + i + '" maxlength="500" value="' + escapeHtml(p.linkedin_url) + '" placeholder="https://www.linkedin.com/posts/..."></label>' +
+        '<div class="cr-photos">' + p.photos.map(function (ph, j) {
+          return '<div class="cr-photo">' +
+            (ph.src ? '<img class="cw-thumb" src="' + escapeHtml(ph.src) + '" alt="">' : '<div class="cw-thumb cw-thumb-empty">Photo ' + (j + 1) + '</div>') +
+            '<div class="cw-photo-actions"><label class="btn btn-sm">' + (ph.src ? 'Replace' : 'Upload') + '<input type="file" accept="image/*" data-cr-photo="' + i + ':' + j + '" hidden></label>' +
+            (ph.src ? '<button type="button" class="btn btn-sm" data-cr-remove="' + i + ':' + j + '">Remove</button>' : '') + '</div>' +
+          '</div>';
+        }).join('') + '</div>' +
       '</div>';
     }).join('');
     return '<div class="cw-panel cr-panel">' +
-      '<h3 class="cr-head">2nd and 3rd place</h3>' +
-      '<p class="hint">A separate popup, on its own dates (for example after 1st place has had its days). Both people show in one popup. If there\'s no 3rd place, leave it empty and the popup says "runner-up".</p>' +
-      '<div class="cw-status cw-status-' + st.cls + '">' + escapeHtml(st.text) + '</div>' +
+      '<h3 class="cr-head">Other places: 2nd, another 2nd, 3rd</h3>' +
+      '<p class="hint">Shown in the same popup as 1st place, everyone side by side, and published together with it: 1st place\'s switch and dates above decide when (' + escapeHtml(main || 'set above') + '). Leave a place empty if there\'s nobody in it yet. Saving a change while it\'s live shows the announcement again to everyone, so add a later winner (e.g. on the 30th) and Save.</p>' +
       (cr.msg ? '<div class="msg msg-' + (cr.msgType === 'error' ? 'error' : 'ok') + '">' + escapeHtml(cr.msg) + '</div>' : '') +
       '<div class="cw-grid">' +
         '<label class="field cw-field"><span>Month</span><input type="text" id="cr-month" maxlength="30" value="' + escapeHtml(f.month) + '"></label>' +
-        '<label class="field cw-field"><span>Show from</span><input type="date" id="cr-from" value="' + escapeHtml(f.show_from) + '"></label>' +
-        '<label class="field cw-field"><span>Show until (inclusive)</span><input type="date" id="cr-until" value="' + escapeHtml(f.show_until) + '"></label>' +
+        '<label class="field cw-field"><span>"Still to come" note (optional)</span><input type="text" id="cr-note" maxlength="120" value="' + escapeHtml(f.note) + '" placeholder="e.g. One more 2nd place, announced on Nov 30"></label>' +
       '</div>' +
-      '<div class="cw-photos-row">' + people + '</div>' +
-      '<label class="cw-switch"><input type="checkbox" id="cr-enabled"' + (f.enabled ? ' checked' : '') + '> <span>Switched on (shows on the tracker between the dates)</span></label>' +
+      '<div class="cr-slots">' + people + '</div>' +
       '<div class="cw-actions-row">' +
-        '<button type="button" class="btn" id="cr-preview">Preview on the tracker ↗</button>' +
+        '<button type="button" class="btn" id="cr-preview">Preview everyone on the tracker ↗</button>' +
         '<span class="cw-dl"><select id="cr-download-size" aria-label="Image size"><option value="square">Square 1:1 (YouTube, Instagram)</option><option value="portrait">Portrait 4:5 (Instagram, LinkedIn)</option></select><button type="button" class="btn" id="cr-download">Download PNG</button></span>' +
         '<button type="button" class="btn btn-primary" id="cr-save"' + (cr.saving ? ' disabled' : '') + '>' + (cr.saving ? 'Saving…' : 'Save') + '</button>' +
       '</div>' +
@@ -1620,50 +1639,75 @@
   function crReadForm() {
     var f = state.clubRunners.form;
     var v = function (id) { var el = document.getElementById(id); return el ? el.value : ''; };
-    f.month = v('cr-month'); f.show_from = v('cr-from'); f.show_until = v('cr-until');
-    var en = document.getElementById('cr-enabled'); f.enabled = !!(en && en.checked);
-    document.querySelectorAll('[data-cr-name]').forEach(function (el) { f.people[+el.getAttribute('data-cr-name')].name = el.value; });
-    document.querySelectorAll('[data-cr-prize]').forEach(function (el) { f.people[+el.getAttribute('data-cr-prize')].prize = Number(el.value) || 0; });
-    document.querySelectorAll('[data-cr-url]').forEach(function (el) { f.people[+el.getAttribute('data-cr-url')].linkedin_url = el.value.trim(); });
+    f.month = v('cr-month'); f.note = v('cr-note');
+    var each = function (attr, fn) { document.querySelectorAll('[' + attr + ']').forEach(function (el) { fn(f.people[+el.getAttribute(attr)], el); }); };
+    each('data-cr-name', function (p, el) { p.name = el.value; });
+    each('data-cr-prize', function (p, el) { p.prize = Number(el.value) || 0; });
+    each('data-cr-url', function (p, el) { p.linkedin_url = el.value.trim(); });
+    each('data-cr-headline', function (p, el) { p.headline = el.value; });
+    each('data-cr-text', function (p, el) { p.linkedin_text = el.value; });
     return f;
   }
   function crPayload(f) {
-    return { enabled: f.enabled, month: f.month.trim(), show_from: f.show_from, show_until: f.show_until,
-      people: f.people.map(function (p) { return { name: p.name.trim(), prize: p.prize, linkedin_url: p.linkedin_url, photo: p.photo && p.photo.src ? { src: p.photo.src, caption: '' } : null }; }) };
+    return { month: f.month.trim(), note: (f.note || '').trim(),
+      people: f.people.map(function (p) {
+        return { name: p.name.trim(), prize: p.prize, linkedin_url: p.linkedin_url, headline: (p.headline || '').trim(), linkedin_text: p.linkedin_text || '',
+          avatar: p.avatar && p.avatar.src ? { src: p.avatar.src } : null,
+          photos: p.photos.filter(function (x) { return x.src; }).map(function (x) { return { src: x.src }; }) };
+      }) };
+  }
+  // Both panels' Preview buttons open the whole announcement (1st place plus
+  // the other places) from the unsaved forms.
+  function cwOpenPreview(st) {
+    cwReadBoth();
+    var w = cwPayload(state.clubWinner.form);
+    if (!w.name) { st.msg = 'Add 1st place\'s name to preview.'; st.msgType = 'error'; render(); return; }
+    var r = state.clubRunners.loaded && state.clubRunners.form ? crPayload(state.clubRunners.form) : null;
+    try {
+      localStorage.setItem('taai_club_winner_preview', JSON.stringify(w));
+      if (r) localStorage.setItem('taai_club_runners_preview', JSON.stringify(r)); else localStorage.removeItem('taai_club_runners_preview');
+    } catch (e) { st.msg = 'Preview needs the photos to fit in this browser\'s storage; try smaller photos.'; st.msgType = 'error'; render(); return; }
+    window.open('/gate-da-progress-tracker?winner-preview', '_blank', 'noopener');
   }
   function bindClubRunners() {
     var cr = state.clubRunners;
     if (!cr.loaded) return;
+    var fail = function (e) { cr.msg = e.message; cr.msgType = 'error'; render(); };
     document.querySelectorAll('[data-cr-photo]').forEach(function (input) {
       input.addEventListener('change', function () {
-        var i = +input.getAttribute('data-cr-photo'), file = input.files && input.files[0];
+        var ij = input.getAttribute('data-cr-photo').split(':'), file = input.files && input.files[0];
         if (!file) return;
         cwReadBoth();
-        cwShrink(file).then(function (src) { cr.form.people[i].photo = { src: src, caption: '' }; cr.msg = null; render(); })
-          .catch(function (e) { cr.msg = e.message; cr.msgType = 'error'; render(); });
+        // smaller than 1st place's photos: up to six photos go in one save
+        cwShrink(file, 1100).then(function (src) { cr.form.people[+ij[0]].photos[+ij[1]] = { src: src }; cr.msg = null; render(); }).catch(fail);
+      });
+    });
+    document.querySelectorAll('[data-cr-avatar]').forEach(function (input) {
+      input.addEventListener('change', function () {
+        var i = +input.getAttribute('data-cr-avatar'), file = input.files && input.files[0];
+        if (!file) return;
+        cwReadBoth();
+        cwShrink(file, 400).then(function (src) { cr.form.people[i].avatar = { src: src }; cr.msg = null; render(); }).catch(fail);
       });
     });
     document.querySelectorAll('[data-cr-remove]').forEach(function (btn) {
-      btn.addEventListener('click', function () { cwReadBoth(); cr.form.people[+btn.getAttribute('data-cr-remove')].photo = null; render(); });
+      btn.addEventListener('click', function () { var ij = btn.getAttribute('data-cr-remove').split(':'); cwReadBoth(); cr.form.people[+ij[0]].photos[+ij[1]] = { src: '' }; render(); });
     });
-    var clr = document.querySelector('[data-cr-clear]');
-    if (clr) clr.addEventListener('click', function () { cwReadBoth(); cr.form.people[1] = { place: 3, name: '', prize: 2000, linkedin_url: '', photo: null }; render(); });
+    document.querySelectorAll('[data-cr-avremove]').forEach(function (btn) {
+      btn.addEventListener('click', function () { cwReadBoth(); cr.form.people[+btn.getAttribute('data-cr-avremove')].avatar = null; render(); });
+    });
+    document.querySelectorAll('[data-cr-clear]').forEach(function (btn) {
+      btn.addEventListener('click', function () { var i = +btn.getAttribute('data-cr-clear'); cwReadBoth(); cr.form.people[i] = crEmptyPerson(i); render(); });
+    });
     cwBindDownload('cr-download', 'runners', cr);
     var prev = document.getElementById('cr-preview');
-    if (prev) prev.addEventListener('click', function () {
-      cwReadBoth(); var f = crPayload(state.clubRunners.form);
-      var people = f.people.map(function (p, i) { return Object.assign({ place: i + 2 }, p); }).filter(function (p) { return p.name; });
-      if (!people.length) { cr.msg = 'Add 2nd place\'s name to preview.'; cr.msgType = 'error'; render(); return; }
-      try { localStorage.setItem('taai_club_runners_preview', JSON.stringify({ month: f.month, people: people })); }
-      catch (e) { cr.msg = 'Preview needs the photos to fit in this browser\'s storage; try smaller photos.'; cr.msgType = 'error'; render(); return; }
-      window.open('/gate-da-progress-tracker?runners-preview', '_blank', 'noopener');
-    });
+    if (prev) prev.addEventListener('click', function () { cwOpenPreview(cr); });
     var save = document.getElementById('cr-save');
     if (save) save.addEventListener('click', function () {
       cwReadBoth(); var f = crPayload(state.clubRunners.form);
       cr.saving = true; cr.msg = null; render();
       api('/team-club-winner?slot=runners', { method: 'PUT', body: JSON.stringify({ runners: f }) }).then(function () {
-        cr.msg = 'Saved. ' + (cr.form.show_from ? cwStatus(cr.form).text : 'Off') + '.'; cr.msgType = 'ok';
+        cr.msg = 'Saved. Shown with 1st place: ' + (state.clubWinner.form ? cwStatus(state.clubWinner.form).text : 'see above') + '.'; cr.msgType = 'ok';
       }).catch(function (e) { cr.msg = 'Could not save: ' + e.message; cr.msgType = 'error'; })
         .then(function () { cr.saving = false; render(); });
     });
