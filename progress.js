@@ -2081,51 +2081,36 @@
     if (document.getElementById('cw-lightbox')) return; // the photo viewer handles its own keys
     if (e.key === 'Escape') closeClubWinner();
   }
-  // Tap a winner photo to see it bigger (2026-11-21): full-screen viewer
-  // over the popup; arrows / swipe for the second photo; Esc, x or a tap
-  // outside the photo closes it (the popup stays open).
-  function openClubPhoto(srcs, idx) {
+  // Tap a winner photo to see them bigger (2026-11-21): a full-screen
+  // viewer over the popup with ALL the photos side by side; Esc, x or a
+  // tap outside a photo closes it (the popup stays open).
+  function openClubPhoto(srcs) {
     if (!srcs.length || document.getElementById('cw-lightbox')) return;
-    var i = idx || 0, back = document.activeElement;
+    var back = document.activeElement;
     var lb = document.createElement('div');
     lb.id = 'cw-lightbox';
     lb.className = 'cw-lb';
     lb.setAttribute('role', 'dialog');
     lb.setAttribute('aria-modal', 'true');
-    lb.setAttribute('aria-label', 'Photo');
+    lb.setAttribute('aria-label', 'Photos');
     lb.innerHTML =
-      '<img class="cw-lb-img" alt="">' +
-      '<button type="button" class="cw-lb-x" aria-label="Close photo"><svg width="16" height="16" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>' +
-      (srcs.length > 1 ? '<button type="button" class="cw-lb-nav cw-lb-prev" aria-label="Previous photo">‹</button><button type="button" class="cw-lb-nav cw-lb-next" aria-label="Next photo">›</button><span class="cw-lb-count"></span>' : '');
+      '<div class="cw-lb-row n' + srcs.length + '">' + srcs.map(function (src, i) {
+        return '<img class="cw-lb-img" src="' + escapeAttr(src) + '" alt="Photo ' + (i + 1) + ' of ' + srcs.length + '">';
+      }).join('') + '</div>' +
+      '<button type="button" class="cw-lb-x" aria-label="Close photos"><svg width="16" height="16" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>';
     document.body.appendChild(lb);
-    var img = lb.querySelector('.cw-lb-img'), count = lb.querySelector('.cw-lb-count');
-    function show() { img.src = srcs[i]; img.alt = 'Photo ' + (i + 1) + ' of ' + srcs.length; if (count) count.textContent = (i + 1) + ' / ' + srcs.length; }
-    function go(d) { if (srcs.length > 1) { i = (i + d + srcs.length) % srcs.length; show(); } }
     function close() {
       document.removeEventListener('keydown', onKey, true);
       lb.classList.add('is-leaving');
       setTimeout(function () { if (lb.parentNode) lb.parentNode.removeChild(lb); }, 180);
       if (back && back.focus) back.focus({ preventScroll: true });
     }
-    function onKey(e) {
-      if (e.key === 'Escape') { e.stopPropagation(); close(); }
-      else if (e.key === 'ArrowRight') go(1);
-      else if (e.key === 'ArrowLeft') go(-1);
-    }
+    function onKey(e) { if (e.key === 'Escape') { e.stopPropagation(); close(); } }
     lb.addEventListener('click', function (e) {
-      if (e.target.closest('.cw-lb-prev')) return go(-1);
-      if (e.target.closest('.cw-lb-next')) return go(1);
-      if (e.target === img) return;
+      if (e.target.classList && e.target.classList.contains('cw-lb-img')) return;
       close();
     });
-    var sx = null;
-    lb.addEventListener('pointerdown', function (e) { sx = e.clientX; });
-    lb.addEventListener('pointerup', function (e) {
-      if (sx !== null && Math.abs(e.clientX - sx) > 45) go(e.clientX < sx ? 1 : -1);
-      sx = null;
-    });
     document.addEventListener('keydown', onKey, true);
-    show();
     lb.querySelector('.cw-lb-x').focus({ preventScroll: true });
   }
   function clubInitials(name) {
@@ -2190,7 +2175,7 @@
     }
     Array.prototype.forEach.call(m.querySelectorAll('.cw-li-frame[data-photo]'), function (b) {
       b.addEventListener('click', function () {
-        openClubPhoto(photos.map(function (p) { return p.src; }), Number(b.getAttribute('data-photo')));
+        openClubPhoto(photos.map(function (p) { return p.src; }));
       });
     });
     m.querySelector('.cw-close').addEventListener('click', closeClubWinner);
