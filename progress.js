@@ -2123,8 +2123,8 @@
               (p.linkedin_url ? '<a class="cw-col-link" href="' + escapeAttr(p.linkedin_url) + '" target="_blank" rel="noopener">View on LinkedIn ↗</a>' : '') +
             '</div>';
           }).join('') +
-          (note ? '<div class="cw-col-note"><div class="cw-soon"><b>🥈 Still to come:</b> <span></span></div></div>' : '') +
-        '</div>'
+        '</div>' +
+        (note ? '<div class="cw-col-note"><div class="cw-soon"><b>🏅 Still to come:</b> <span></span></div></div>' : '')
       : clubLiCardHtml(first, 0, month);
     var m = document.createElement('div');
     m.id = 'club-winner-modal';

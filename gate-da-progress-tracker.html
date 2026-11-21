@@ -2816,14 +2816,14 @@ button.cw-li-frame:focus-visible { outline: 2px solid #A78BFA; outline-offset: 3
 /* Framed prints, fanned diagonally over each other (2026-11-21): a slim
    warm paper frame, the 2nd photo overlapping the 1st, opposite tilts.
    Static only; nothing animates on these framed (shadow + radius) elements. */
-.cw-li-photos button.cw-li-frame { padding: 6px; border-radius: 8px; overflow: visible; background: #f7f4ee;
+.cw-li-photos button.cw-li-frame { padding: 3px; border-radius: 6px; overflow: visible; background: #f7f4ee;
   box-shadow: 0 16px 34px rgba(0,0,0,0.55), 0 3px 8px rgba(0,0,0,0.35); }
 .cw-li-photos button.cw-li-frame img { border-radius: 3px; }
 .cw-li-photos-2 { gap: 0; padding-top: 30px; padding-bottom: 30px; }
 .cw-li-photos-2 button.cw-li-frame { max-width: 58%; }
 .cw-li-photos-2 button.cw-li-frame:first-of-type { transform: rotate(-6deg) translateY(-6px); z-index: 1; }
 .cw-li-photos-2 button.cw-li-frame:last-of-type { transform: rotate(5deg) translateY(10px); margin-left: -46px; z-index: 2; }
-@media (max-width: 520px) { .cw-li-photos-2 button.cw-li-frame:last-of-type { margin-left: -34px; } .cw-li-photos button.cw-li-frame { padding: 5px; } .cw-li-photos-2 { padding-top: 18px; padding-bottom: 20px; } }
+@media (max-width: 520px) { .cw-li-photos-2 button.cw-li-frame:last-of-type { margin-left: -34px; } .cw-li-photos button.cw-li-frame { padding: 2.5px; } .cw-li-photos-2 { padding-top: 18px; padding-bottom: 20px; } }
 @media (max-height: 700px) { .cw-li-photos-2 { padding-top: 14px; padding-bottom: 16px; } .cw-li-photos-2 .cw-li-frame img { height: 19vh; } }
 @media (max-height: 500px) and (min-width: 560px) { .cw-li-photos-2 { padding-top: 14px; padding-bottom: 16px; } .cw-li-photos-2 button.cw-li-frame:last-of-type { margin-left: -28px; } }
 /* Full-screen viewer: all the photos side by side. */
@@ -2854,14 +2854,60 @@ button.cw-li-frame:focus-visible { outline: 2px solid #A78BFA; outline-offset: 3
 .cw-col-link { align-self: center; margin-top: 8px; font-size: 13px; font-weight: 700; color: #6FB1F4; text-decoration: none; }
 .cw-col-link:hover { text-decoration: underline; }
 .cw-li-nameonly { padding: 16px; text-align: center; }
-.cw-col-note { grid-column: 1 / -1; }
+.cw-col-note { margin: -2px 0 16px; }
 .cw-soon { display: block; padding: 10px 14px; border-radius: 12px; border: 1.5px dashed rgba(167,139,250,0.5); background: rgba(167,139,250,0.06); color: #c9c3ef; font-size: 13.5px; text-align: center; }
 .cw-soon b { color: #fff; font-size: 14px; }
 .cw-card-multi .cw-li-text { max-height: 2.9em; }
 .cw-card-multi .cw-li-frame img { height: min(220px, 24vh); }
 .cw-card-multi .cw-li-photos-2 { padding-top: 22px; padding-bottom: 24px; }
 @media (max-height: 800px) { .cw-card-multi .cw-li-frame img { height: min(190px, 22vh); } }
-@media (max-width: 600px) { .cw-cols { gap: 16px; } .cw-card-multi .cw-li-frame img { height: min(210px, 26vh); } }
+/* Phones (2026-11-21): the winners are a swipe row, each post nearly the
+   full width with the next one peeking in, instead of a long stack. */
+@media (max-width: 600px) {
+  .cw-card-multi { padding-left: 14px; padding-right: 14px; }
+  .cw-card-multi .cw-cols { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 12px; margin: 4px -14px 12px; padding: 4px 14px 6px; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .cw-card-multi .cw-cols::-webkit-scrollbar { display: none; }
+  .cw-card-multi .cw-col { flex: 0 0 86%; scroll-snap-align: center; }
+  .cw-card-multi .cw-li-frame img { height: min(200px, 25vh); }
+  .cw-card-multi .cw-title { font-size: 22px; }
+  .cw-card-multi .cw-col-note { margin-bottom: 12px; }
+}
+@media (max-width: 600px) and (max-height: 700px) {
+  .cw-card-multi { padding-top: 16px; padding-bottom: 12px; }
+  .cw-card-multi .cw-title { font-size: 19px; margin: 8px 0 2px; }
+  .cw-card-multi .cw-sub { margin-bottom: 8px; }
+  .cw-card-multi .cw-li-meta { display: none; }
+  .cw-card-multi .cw-li-frame img { height: 15.5vh; }
+  .cw-card-multi .cw-place { margin-bottom: 5px; }
+  .cw-card-multi .cw-col-link { margin-top: 5px; }
+  .cw-card-multi .cw-li-photos-2 { padding-top: 14px; padding-bottom: 16px; }
+  .cw-card-multi .cw-soon { padding: 8px 10px; font-size: 12.5px; }
+  .cw-card-multi .cw-btn { height: 40px; }
+}
+/* Phones held sideways: heading, note and Close on the left, the swipe row of posts on the right. */
+@media (max-height: 500px) and (min-width: 560px) {
+  .cw-card-multi { width: min(900px, 100%); max-height: calc(100vh - 20px); padding: 14px 16px; display: grid; grid-template-columns: 230px minmax(0, 1fr); column-gap: 16px; align-content: center; align-items: start; text-align: center; }
+  .cw-card-multi > * { grid-column: 1; }
+  .cw-card-multi > .cw-cols { grid-column: 2; grid-row: 1 / span 7; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 12px; margin: 0; padding: 2px 2px 4px; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .cw-card-multi > .cw-cols::-webkit-scrollbar { display: none; }
+  .cw-card-multi .cw-col { flex: 0 0 min(330px, 78%); scroll-snap-align: start; }
+  .cw-card-multi > .cw-close, .cw-card-multi > .cw-moon { display: none; }
+  .cw-card-multi .cw-tag { margin-top: 4px; font-size: 10.5px; padding: 5px 9px; white-space: nowrap; letter-spacing: 0; }
+  .cw-card-multi .cw-title { font-size: 19px; margin: 8px 0 4px; }
+  .cw-card-multi .cw-sub { font-size: 12.5px; margin-bottom: 8px; }
+  .cw-card-multi .cw-col-note { margin: 0 0 10px; }
+  .cw-card-multi .cw-soon { font-size: 12px; padding: 8px 10px; }
+  .cw-card-multi .cw-actions .cw-btn { flex: 1 1 100%; height: 38px; }
+  .cw-card-multi .cw-place { margin-bottom: 4px; font-size: 12px; }
+  .cw-card-multi .cw-li-head { padding: 6px 10px 4px; }
+  .cw-card-multi .cw-li-av { width: 34px; height: 34px; }
+  .cw-card-multi .cw-li-who .cw-li-meta { display: none; }
+  .cw-card-multi .cw-li-textwrap { display: none; } /* no room for the text here; the photos and the LinkedIn link carry it */
+  .cw-card-multi .cw-li-photos-2 { padding-top: 12px; padding-bottom: 14px; }
+  .cw-card-multi .cw-li-frame img { height: min(140px, 34vh); }
+  .cw-card-multi .cw-li-bar { padding: 5px 6px 6px; font-size: 11.5px; }
+  .cw-card-multi .cw-col-link { margin-top: 4px; font-size: 12px; }
+}
 .cw-lb { position: fixed; inset: 0; z-index: 10000; /* above the celebration canvas (9999) */ display: flex; align-items: center; justify-content: center; padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   background: rgba(3,3,10,0.97); animation: cw-fade .18s ease-out; touch-action: pan-y; cursor: zoom-out; }
 .cw-lb.is-leaving { animation: cw-fade-out .18s ease-in forwards; }
