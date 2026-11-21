@@ -1364,13 +1364,16 @@
     var P = 60, cx = W / 2;
     var sans = '-apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
     ctx.textAlign = 'center';
-    cwTag(ctx, 'THE 2 AM CLUB · ' + month.toUpperCase() + ' WINNER', cx, 44);
+    // 1st place, or 2nd/3rd (2026-11-21: one image per place, same style)
+    var place = data.place || 1, ord = { 1: '1st', 2: '2nd', 3: '3rd' }[place] || '1st';
+    var defHeadline = place === 1 ? 'Winner, The 2 AM Club · ' + month : ord + ' place, The 2 AM Club · ' + month;
+    cwTag(ctx, 'THE 2 AM CLUB · ' + month.toUpperCase() + (place === 1 ? ' WINNER' : ' · ' + ord.toUpperCase() + ' PLACE'), cx, 44);
     cwFit(ctx, 'Congratulations, ' + data.name + '!', 800, sq ? 52 : 58, W - 2 * P, 32);
     var head = 'Congratulations, ' + data.name + '!';
     cwGradText(ctx, head, cx, sq ? 204 : 218, ['#FF7FB7', '#A78BFA', '#4D8BFF']);
     // no prize money in the image (2026-11-21, direct request)
     ctx.font = '500 28px Poppins, system-ui, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.78)';
-    ctx.fillText('Winner of The 2 AM Club for ' + month, cx, sq ? 248 : 266);
+    ctx.fillText(place === 1 ? 'Winner of The 2 AM Club for ' + month : ord + ' place in The 2 AM Club for ' + month, cx, sq ? 248 : 266);
     ctx.textAlign = 'left';
     // the post card
     var x = P, y = sq ? 280 : 304, w = W - 2 * P, bottom = H - 100, h = bottom - y, pad = 34;
@@ -1392,9 +1395,9 @@
     var tx = ax + av + 20, tw = x + w - pad - tx;
     ctx.fillStyle = '#191919'; cwFitSans(ctx, data.name, 700, 32, tw, 22, sans); ctx.fillText(data.name, tx, ay + 34);
     ctx.fillStyle = '#666666'; ctx.font = '400 23px ' + sans;
-    var hl = data.headline || ('Winner, The 2 AM Club · ' + month);
+    var hl = data.headline || defHeadline;
     while (ctx.measureText(hl).width > tw && hl.length > 4) hl = hl.slice(0, -2);
-    if (hl !== (data.headline || ('Winner, The 2 AM Club · ' + month))) hl = hl.replace(/\s*\S?$/, '') + '…';
+    if (hl !== (data.headline || defHeadline)) hl = hl.replace(/\s*\S?$/, '') + '…';
     ctx.fillText(hl, tx, ay + 66);
     ctx.fillStyle = '#8a8a8a'; ctx.font = '400 21px ' + sans; ctx.fillText('Posted on LinkedIn', tx, ay + 94);
     // post text
@@ -1450,7 +1453,9 @@
   }
   function cwExportPng(kind, size, style) {
     var sq = size === 'square';
-    var li = kind !== 'runners' && style === 'linkedin';
+    // kind 'runner:N' = one of the other places (slot N) as its own LinkedIn-post image
+    var personIdx = /^runner:(\d)$/.test(kind) ? +kind.slice(7) : -1;
+    var li = personIdx >= 0 || (kind !== 'runners' && style === 'linkedin');
     // Square 1:1 for YouTube community / Instagram, portrait 4:5 for feeds (2026-11-19).
     var W = 1080, H = sq ? 1080 : 1350, P = 72;
     var L = sq
@@ -1460,6 +1465,10 @@
     var ctx = c.getContext('2d');
     cwReadBoth();
     var data = kind === 'runners' ? crPayload(state.clubRunners.form) : cwPayload(state.clubWinner.form);
+    if (personIdx >= 0) {
+      var rf = crPayload(state.clubRunners.form);
+      data = Object.assign({ month: rf.month, place: CR_SLOTS[personIdx].place }, rf.people[personIdx]);
+    }
     var month = (data.month || '').trim();
     var people = kind === 'runners' ? data.people.map(function (p, i) { return Object.assign({ place: CR_SLOTS[i].place }, p); }).filter(function (p) { return p.name; }) : null;
     if (kind === 'runners' && !people.length) return Promise.reject(new Error('Add 2nd place\'s name first.'));
@@ -1525,7 +1534,9 @@
         c.toBlob(function (blob) {
           if (!blob) { reject(new Error('Could not make the image.')); return; }
           var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-          a.download = (kind === 'runners' ? 'taai-2am-club-runners-up' : li ? 'taai-2am-club-winner-linkedin' : 'taai-2am-club-winner') + (sq ? '-square' : '-portrait') + '.png';
+          var slug = String(data.name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+          a.download = (personIdx >= 0 ? 'taai-2am-club-' + ({ 2: '2nd', 3: '3rd' }[data.place] || '2nd') + '-place-' + slug
+            : kind === 'runners' ? 'taai-2am-club-runners-up' : li ? 'taai-2am-club-winner-linkedin' : 'taai-2am-club-winner') + (sq ? '-square' : '-portrait') + '.png';
           document.body.appendChild(a); a.click(); a.remove();
           setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
           resolve(c);
@@ -1590,7 +1601,8 @@
       var filled = p.name || p.linkedin_text || (p.avatar && p.avatar.src) || p.photos.some(function (x) { return x.src; });
       return '<div class="cr-slot">' +
         '<div class="cr-slot-head"><span class="cw-photo-label">' + CR_SLOTS[i].label + '</span>' +
-          (filled ? '<button type="button" class="btn btn-sm" data-cr-clear="' + i + '">Clear this place</button>' : '') + '</div>' +
+          '<span class="cr-slot-btns">' + (p.name ? '<button type="button" class="btn btn-sm" data-cr-dl="' + i + '" title="LinkedIn-post style image of this place, in the size picked below">Download image</button>' : '') +
+          (filled ? '<button type="button" class="btn btn-sm" data-cr-clear="' + i + '">Clear this place</button>' : '') + '</span></div>' +
         '<div class="cw-grid">' +
           '<label class="field cw-field"><span>Name</span><input type="text" data-cr-name="' + i + '" maxlength="80" value="' + escapeHtml(p.name) + '" placeholder="' + (i === 0 ? 'As it should appear' : 'Leave empty if nobody yet') + '"></label>' +
           '<label class="field cw-field"><span>Prize (₹)</span><input type="number" data-cr-prize="' + i + '" min="0" step="1" value="' + escapeHtml(p.prize) + '"></label>' +
@@ -1694,6 +1706,15 @@
       btn.addEventListener('click', function () { var i = +btn.getAttribute('data-cr-clear'); cwReadBoth(); cr.form.people[i] = crEmptyPerson(i); render(); });
     });
     cwBindDownload('cr-download', 'runners', cr);
+    document.querySelectorAll('[data-cr-dl]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        btn.disabled = true;
+        var sel = document.getElementById('cr-download-size');
+        cwExportPng('runner:' + btn.getAttribute('data-cr-dl'), sel ? sel.value : 'square', 'linkedin')
+          .catch(function (e) { cr.msg = e.message; cr.msgType = 'error'; render(); })
+          .then(function () { btn.disabled = false; });
+      });
+    });
     var prev = document.getElementById('cr-preview');
     if (prev) prev.addEventListener('click', function () { cwOpenPreview(cr); });
     var save = document.getElementById('cr-save');
