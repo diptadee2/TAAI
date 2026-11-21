@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-21-4';
+  var CLIENT_VERSION = '2026-11-21-5';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -947,7 +947,7 @@
     var localEnd = localEndOf(st);
     pomo.secondsLeft = Math.max(0, Math.round((localEnd - Date.now()) / 1000));
     var wasShowing = !!state.pomoElsewhere;
-    state.pomoElsewhere = { mode: pomo.mode, phaseEndAt: st.phaseEndAt, localEnd: localEnd, totalSeconds: st.totalSeconds };
+    state.pomoElsewhere = { mode: pomo.mode, phaseEndAt: st.phaseEndAt, localEnd: localEnd, totalSeconds: st.totalSeconds, device: st.device || null };
     // Fullscreen closes so the box (on the card) is what they see. On phones
     // it comes back by itself once the box goes away (Switch, or the other
     // device pauses), since it wasn't the student who closed it.
@@ -972,7 +972,7 @@
   function elsewhereLeftText() {
     var e = state.pomoElsewhere; if (!e) return '';
     var sec = Math.max(0, Math.round(((e.localEnd || e.phaseEndAt) - Date.now()) / 1000));
-    if (!sec) return '<span class="pel-unit">Finishing on the other device…</span>';
+    if (!sec) return '<span class="pel-unit">Finishing on ' + elsewhereDeviceName() + '…</span>';
     var m = Math.floor(sec / 60), r = sec % 60;
     return '<b class="pel-num">' + m + ':' + (r < 10 ? '0' : '') + r + '</b> <span class="pel-unit">left in this ' + (e.mode === 'break' ? 'break' : 'focus session') + '</span>';
   }
@@ -986,9 +986,24 @@
       if ((state.pomoElsewhere.localEnd || state.pomoElsewhere.phaseEndAt) < Date.now() - 3000 && !state.pomoElsewhere.checked) { state.pomoElsewhere.checked = true; checkPomoOwner(); }
     }, 1000);
   }
+  // What kind of device this is, sent with every timer write so another
+  // device can say "running on your laptop" instead of "another device"
+  // (2026-11-21, direct request).
+  function pomoDeviceKind() {
+    if (isPhoneDevice()) return /iPhone|iPod/.test(navigator.userAgent || '') ? 'iphone' : 'phone';
+    if (isTabletDevice()) return isIPadOS() ? 'ipad' : 'tablet';
+    return 'laptop';
+  }
+  var POMO_DEVICE_NAMES = { laptop: 'laptop', iphone: 'iPhone', phone: 'phone', ipad: 'iPad', tablet: 'tablet' };
+  function elsewhereDeviceName() {
+    var d = state.pomoElsewhere && state.pomoElsewhere.device;
+    var n = d && POMO_DEVICE_NAMES[d];
+    if (!n) return 'another device';
+    return 'your ' + (d === pomoDeviceKind() ? 'other ' : '') + n;
+  }
   function renderPomoElsewhereGateHtml() {
     return '<div class="pomo-malpractice-gate pomo-elsewhere-gate" id="pomo-malpractice-gate">' +
-      '<div class="pomo-gate-title">Your timer is running on another device</div>' +
+      '<div class="pomo-gate-title">Your timer is running on ' + elsewhereDeviceName() + '</div>' +
       '<p class="pomo-elsewhere-left" id="pomo-elsewhere-left">' + elsewhereLeftText() + '</p>' +
       (focusStartBlocked()
         ? '<p class="pomo-gate-body">It counts as normal. Phones can’t run focus sessions, so keep it going on that device.</p>'
@@ -1001,7 +1016,7 @@
     if (tabletNeedsApp()) { showTabletInstall(); return; }
     if (btn) { btn.disabled = true; btn.textContent = 'Switching…'; }
     api('/pomo-active', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: state.student.email, mode: pomo.mode, action: 'takeover', deviceToken: getPomoDeviceToken(), clientNow: Date.now() }) })
+      body: JSON.stringify({ email: state.student.email, mode: pomo.mode, action: 'takeover', deviceToken: getPomoDeviceToken(), deviceKind: pomoDeviceKind(), clientNow: Date.now() }) })
       .then(function (r) {
         var st = r && r.state;
         if (r && r.takenOver && st) {
@@ -1068,15 +1083,15 @@
     if (!force && !pomo.running && !state.pomoElsewhere && !pomoPausedMidway()) return;
     var askedAt = Date.now();
     api('/pomo-active', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: state.student.email, mode: pomo.mode, action: 'peek', deviceToken: getPomoDeviceToken(), clientNow: Date.now() }) })
+      body: JSON.stringify({ email: state.student.email, mode: pomo.mode, action: 'peek', deviceToken: getPomoDeviceToken(), deviceKind: pomoDeviceKind(), clientNow: Date.now() }) })
       .then(function (r) {
         var st = r && r.state;
         if (pomoWritesInFlight > 0 || pomoLastWriteDone > askedAt) return; // its own change may not be stored yet
         var activeElsewhere = st && st.running && !st.ownedByYou && (st.msLeft != null ? st.msLeft > 0 : (Number.isFinite(st.phaseEndAt) && st.phaseEndAt > Date.now() - 5000));
         if (state.pomoElsewhere) {
           if (!activeElsewhere) leaveElsewhere(st);
-          else if (st.phaseEndAt !== state.pomoElsewhere.phaseEndAt || st.mode !== state.pomoElsewhere.mode) {
-            state.pomoElsewhere = { mode: st.mode, phaseEndAt: st.phaseEndAt, localEnd: localEndOf(st), totalSeconds: st.totalSeconds };
+          else if (st.phaseEndAt !== state.pomoElsewhere.phaseEndAt || st.mode !== state.pomoElsewhere.mode || (st.device || null) !== state.pomoElsewhere.device) {
+            state.pomoElsewhere = { mode: st.mode, phaseEndAt: st.phaseEndAt, localEnd: localEndOf(st), totalSeconds: st.totalSeconds, device: st.device || null };
             if (state.focus) renderCalendar();
           }
         } else if (activeElsewhere) {
@@ -1125,7 +1140,7 @@
       totalSeconds: payload.totalSeconds,
       phaseEndAt: payload.phaseEndAt,
       completedSessions: payload.completedSessions,
-      deviceToken: getPomoDeviceToken(),
+      deviceToken: getPomoDeviceToken(), deviceKind: pomoDeviceKind(),
       // This device's clock, so the server can correct for a fast/slow
       // device clock when comparing phaseEndAt (see clockSkewMs).
       clientNow: Date.now(),
@@ -1228,7 +1243,7 @@
       completedSessions: pomo.completedSessions,
       // Identifies this tab, so the server can ignore the beacon if another
       // tab/device owns the running session (see pomo-active.js).
-      deviceToken: getPomoDeviceToken(),
+      deviceToken: getPomoDeviceToken(), deviceKind: pomoDeviceKind(),
       clientNow: Date.now(),
     });
     navigator.sendBeacon('/api/pomo-active', new Blob([body], { type: 'application/json' }));

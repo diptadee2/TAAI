@@ -85,6 +85,16 @@ export async function handler(event) {
   // "running on another device" with a Switch button; switching moves
   // ownership (owner_token) to it and leaves the session itself untouched,
   // so no time is lost and it is still credited once.
+  // Which kind of device owns the session (2026-11-21, "can't we know which
+  // device was last used?"). Stored with the owner's id in owner_token as
+  // "<id>|<kind>", so no new column; ids never contain "|", and rows from
+  // before this have no kind (shown as "another device").
+  const DEVICE_KINDS = ['laptop', 'iphone', 'phone', 'ipad', 'tablet'];
+  const kind = DEVICE_KINDS.includes(body.deviceKind) ? body.deviceKind : null;
+  const tokId = (v) => (v ? String(v).split('|')[0] : null);
+  const tokKind = (v) => { const k = v ? String(v).split('|')[1] : null; return DEVICE_KINDS.includes(k) ? k : null; };
+  const withKind = (t) => (t && kind ? t + '|' + kind : t);
+
   if (body.action === 'peek' || body.action === 'takeover') {
     const token = typeof body.deviceToken === 'string' ? body.deviceToken.slice(0, 64) : null;
     let owner = null;
@@ -101,13 +111,15 @@ export async function handler(event) {
         phaseAgeMs: Number.isFinite(st) ? Math.max(0, Date.now() - st) : null,
         msLeft: msLeftOf(existing),
         ownedByYou,
+        device: tokKind(owner),
       };
     };
     const skew = clockSkewMs(body.clientNow);
     const active = stillRunning(existing, skew, 0);
-    if (body.action === 'peek') return json(200, { ok: true, state: view(!owner || owner === token) });
-    if (!active || !token) return json(200, { ok: true, takenOver: false, state: view(!owner || owner === token) });
-    const { error: tErr } = await supabase.from('pomo_active_session').update({ owner_token: token }).eq('email', email);
+    if (body.action === 'peek') return json(200, { ok: true, state: view(!owner || tokId(owner) === token) });
+    if (!active || !token) return json(200, { ok: true, takenOver: false, state: view(!owner || tokId(owner) === token) });
+    owner = withKind(token);
+    const { error: tErr } = await supabase.from('pomo_active_session').update({ owner_token: owner }).eq('email', email);
     if (tErr) return json(500, { error: tErr.message });
     return json(200, { ok: true, takenOver: true, state: view(true) });
   }
@@ -169,7 +181,7 @@ export async function handler(event) {
   // tokenless write counts as "not the owner". The owner's own writes
   // (pause/skip/reset, its own beacon) are unaffected, and once the phase
   // ends or isn't running, any tab may write as before.
-  if (existingStillActive && existingOwnerToken && existingOwnerToken !== deviceToken) {
+  if (existingStillActive && existingOwnerToken && tokId(existingOwnerToken) !== deviceToken) {
     // Send the running session back so the refused device can show it
     // instead of silently counting its own copy (2026-11-20).
     const startedMs = tsMs(existing.phase_started_at);
@@ -180,6 +192,7 @@ export async function handler(event) {
         phaseEndAt: existing.phase_end_at,
         phaseAgeMs: Number.isFinite(startedMs) ? Math.max(0, Date.now() - startedMs) : null,
         msLeft: msLeftOf(existing),
+        device: tokKind(existingOwnerToken),
       },
     });
   }
@@ -282,7 +295,7 @@ export async function handler(event) {
   // moved ownership, so a session paused in one tab and resumed in a new
   // one (browser reopened, new tab) stayed owned by the dead tab, and the
   // live tab's own next-phase write could be ignored as "another device".
-  if (deviceToken && (isNewPhase || (running && !existingStillActive))) upsertPayload.owner_token = deviceToken;
+  if (deviceToken && (isNewPhase || (running && !existingStillActive))) upsertPayload.owner_token = withKind(deviceToken);
 
   let { error } = await supabase.from('pomo_active_session').upsert(upsertPayload, { onConflict: 'email' });
   if (error && upsertPayload.owner_token) {
