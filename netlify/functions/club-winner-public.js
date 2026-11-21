@@ -48,7 +48,7 @@ export async function handler(event) {
     const d = main.data;
     return reply({
       active: true, key: it.key,
-      winner: { name: d.name, month: d.month, prize: d.prize, photos: d.photos, linkedin_text: d.linkedin_text, linkedin_url: d.linkedin_url },
+      winner: { name: d.name, month: d.month, prize: d.prize, photos: d.photos, linkedin_text: d.linkedin_text, linkedin_url: d.linkedin_url, headline: d.headline || '', avatar: d.avatar || null },
     });
   } catch (e) {
     return reply({ active: false });

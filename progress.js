@@ -2078,6 +2078,10 @@
     setTimeout(function () { if (m.parentNode) m.parentNode.removeChild(m); document.body.classList.remove('club-winner-open'); }, 220);
   }
   function clubWinnerKeydown(e) { if (e.key === 'Escape') closeClubWinner(); }
+  function clubInitials(name) {
+    var parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+    return ((parts[0] || '?')[0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+  }
   function showClubWinner(w) {
     if (document.getElementById('club-winner-modal')) return;
     var photos = (w.photos || []).filter(function (p) { return p && p.src; }).slice(0, 2);
@@ -2094,20 +2098,22 @@
         '<h2 class="cw-title" id="cw-title">Congratulations, <span class="cw-name">' + escapeHtml(w.name) + '</span>!</h2>' +
         '<p class="cw-sub">Winner of The 2 AM Club for <span class="cw-month">' + escapeHtml(w.month || '') + '</span></p>' +
         (prize ? '<div class="cw-prize-big"><span class="cw-prize-label">🥇 Prize money</span><span class="cw-prize-amt">' + prize + '</span></div>' : '') +
-        '<div class="cw-photos cw-photos-' + photos.length + '">' +
-          photos.map(function (p) {
-            return '<figure class="cw-photo"><img src="' + escapeAttr(p.src) + '" alt="' + escapeAttr(p.caption || (w.name + '\'s photo')) + '">' +
-              (p.caption ? '<figcaption>' + escapeHtml(p.caption) + '</figcaption>' : '') + '</figure>';
-          }).join('') +
-        '</div>' +
-        // The post text fades out at the bottom and ends with "...Read more
-        // on LinkedIn" (2026-11-18, direct request); without a link, a long
-        // post gets a plain Read more toggle instead.
-        (w.linkedin_text ? '<div class="cw-post"><div class="cw-post-head">From ' + escapeHtml(w.name) + '\'s LinkedIn post</div><p class="cw-post-text"></p>' +
-          (w.linkedin_url
-            ? '<a class="cw-more-li" href="' + escapeAttr(w.linkedin_url) + '" target="_blank" rel="noopener"><span class="cw-dots">…</span> Read more on LinkedIn ↗</a>'
-            : '<button type="button" class="cw-more" hidden>Read more</button>') +
+        // The winner's post as a LinkedIn-style card (2026-11-21, direct
+        // request): profile picture, name, a few lines fading to grey with
+        // "...see more", then their photos shown whole (never cropped).
+        ((w.linkedin_text || photos.length) ? '<div class="cw-li">' +
+          '<div class="cw-li-head">' +
+            (w.avatar && w.avatar.src ? '<img class="cw-li-av" src="' + escapeAttr(w.avatar.src) + '" alt="">' : '<span class="cw-li-av cw-li-av-ini">' + escapeHtml(clubInitials(w.name)) + '</span>') +
+            '<div class="cw-li-who"><b>' + escapeHtml(w.name) + '</b><span>' + escapeHtml(w.headline || ('Winner, The 2 AM Club · ' + (w.month || ''))) + '</span><span class="cw-li-meta">Posted on LinkedIn</span></div>' +
+          '</div>' +
+          (w.linkedin_text ? '<div class="cw-li-textwrap"><p class="cw-li-text"></p>' +
+            (w.linkedin_url ? '<a class="cw-li-more" hidden href="' + escapeAttr(w.linkedin_url) + '" target="_blank" rel="noopener">…see more</a>' : '<button type="button" class="cw-li-more" hidden>…see more</button>') +
           '</div>' : '') +
+          (photos.length ? '<div class="cw-li-photos">' + photos.map(function (p) {
+            return '<img src="' + escapeAttr(p.src) + '" alt="' + escapeAttr(p.caption || (w.name + '\'s photo')) + '">';
+          }).join('') + '</div>' : '') +
+          '<div class="cw-li-bar" aria-hidden="true"><span>Like</span><span>Comment</span><span>Repost</span><span>Send</span></div>' +
+        '</div>' : '') +
         '<div class="cw-actions">' +
           (!w.linkedin_text && w.linkedin_url ? '<a class="cw-btn cw-btn-li" href="' + escapeAttr(w.linkedin_url) + '" target="_blank" rel="noopener">Read the post on LinkedIn ↗</a>' : '') +
           '<button type="button" class="cw-btn cw-btn-close">Close</button>' +
@@ -2115,18 +2121,19 @@
       '</div>';
     document.body.appendChild(m);
     document.body.classList.add('club-winner-open');
-    var textEl = m.querySelector('.cw-post-text');
+    var textEl = m.querySelector('.cw-li-text');
     if (textEl) {
-      textEl.textContent = w.linkedin_text;
-      var more = m.querySelector('.cw-more');
+      // blank lines between paragraphs become single breaks, so the
+      // preview shows real text instead of gaps
+      textEl.textContent = String(w.linkedin_text).replace(/\r/g, '').replace(/\n\s*\n+/g, '\n');
+      var more = m.querySelector('.cw-li-more');
       requestAnimationFrame(function () {
         var clamped = textEl.scrollHeight > textEl.clientHeight + 4;
         textEl.classList.toggle('is-clamped', clamped);
         if (more) more.hidden = !clamped;
       });
-      if (more) more.addEventListener('click', function () {
-        var open = textEl.classList.toggle('is-open');
-        more.textContent = open ? 'Show less' : 'Read more';
+      if (more && more.tagName === 'BUTTON') more.addEventListener('click', function () {
+        textEl.classList.remove('is-clamped'); textEl.classList.add('is-open'); more.hidden = true;
       });
     }
     m.querySelector('.cw-close').addEventListener('click', closeClubWinner);
