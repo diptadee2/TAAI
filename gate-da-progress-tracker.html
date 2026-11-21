@@ -2716,7 +2716,7 @@ body.club-winner-open { overflow: hidden; }
 .cr-people:not(.cr-two) .cr-person { max-width: 380px; margin: 0 auto; width: 100%; }
 @media (max-width: 520px) { .cr-people.cr-two { grid-template-columns: 1fr 1fr; gap: 8px; } .cr-person { padding: 8px 8px 10px; } .cr-name { font-size: 15px; } .cr-prize { font-size: 20px; } .cr-person .cw-more-li { font-size: 11.5px; } }
 /* Photos are always 16:9 (2026-11-19). A single photo shrinks its width (centred) if 16:9 at full width would be too tall for the screen. */
-.cw-photo img, .cw-photos-2 .cw-photo img { aspect-ratio: 16 / 9; height: auto; max-height: none; object-fit: cover; }
+.cw-photo img, .cw-photos-2 .cw-photo img { aspect-ratio: 16 / 9; height: auto; max-height: none; object-fit: cover; object-position: center 15%; /* tall phone photos keep the screen/desk, not the keyboard */ }
 .cw-photos-1 .cw-photo { width: min(100%, calc(32vh * 16 / 9)); margin: 0 auto; }
 @media (max-height: 940px) { .cw-photos-1 .cw-photo { width: min(100%, calc(25vh * 16 / 9)); } }
 @media (max-width: 520px) { .cw-photos-2 { grid-template-columns: 1fr 1fr; gap: 8px; } .cw-photos-2 .cw-photo img { height: auto; max-height: none; } }

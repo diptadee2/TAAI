@@ -1975,7 +1975,11 @@
     var preview = isLocal && wantsPreview;
     fetch('/api/club-winner-public').then(function (r) { return r.ok ? r.json() : { active: false }; }).then(function (meta) {
       if (!meta || !meta.active) {
-        if (preview) showClubWinner(SAMPLE_CLUB_WINNER);
+        // Before the show dates: on localhost (netlify dev skips the admin
+        // login) preview the saved winner from /team, else sample content.
+        if (preview) return fetch('/api/team-club-winner').then(function (r) { return r.ok ? r.json() : {}; }).then(function (d) {
+          showClubWinner(d && d.winner && d.winner.name ? d.winner : SAMPLE_CLUB_WINNER);
+        }).catch(function () { showClubWinner(SAMPLE_CLUB_WINNER); });
         return;
       }
       // 1st place and the runners-up each have their own key; show the
