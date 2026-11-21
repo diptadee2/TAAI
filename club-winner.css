@@ -323,3 +323,62 @@ button.cw-li-frame:focus-visible { outline: 2px solid #A78BFA; outline-offset: 3
 .cw-cta-short { display: none; }
 @media (max-height: 500px) and (min-width: 560px) { .cw-cta-short { display: inline; } }
 @media (prefers-reduced-motion: reduce) { .cw-card-multi .cw-cols.cw-deck > .cw-col { transition: none; } }
+
+/* Real iPhones in Safari (2026-11-21, from a screenshot): the visible page
+   is only ~548px tall on an iPhone SE-size screen, so on phones the photos
+   size to the screen (never the tiny short-screen size), there's one
+   LinkedIn link under the deck instead of one per card, and Close stays
+   pinned to the bottom of the card. */
+.cw-card-multi .cw-cols.cw-deck .cw-col-link { display: none; }
+.cw-deck-link { display: block; margin: 8px auto 0; font-size: 13px; font-weight: 700; color: #6FB1F4; text-decoration: none; text-align: center; }
+.cw-deck-link:hover { text-decoration: underline; }
+.cw-deck-link[hidden] { display: none; }
+.cw-card-multi .cw-cols.cw-deck .cw-li-frame img { height: clamp(120px, 24vh, 210px); }
+.cw-card-multi .cw-cols.cw-deck .cw-li-photos-2 { padding-top: 16px; padding-bottom: 18px; }
+@media (max-width: 600px) {
+  .cw-card-multi .cw-actions { position: sticky; bottom: -12px; z-index: 5; margin: 0 -14px -12px; padding: 12px 14px; background: linear-gradient(180deg, rgba(15,12,36,0), #0f0c24 40%); }
+  .cw-card-multi .cw-deck-dots { margin: 6px 0 10px; }
+}
+@media (max-width: 600px) and (max-height: 700px) {
+  .cw-card-multi .cw-sub { display: none; }
+  .cw-card-multi .cw-title { margin-bottom: 8px; }
+  .cw-card-multi .cw-cols.cw-deck .cw-li-bar { display: none; }
+  .cw-card-multi .cw-cols.cw-deck .cw-li-text { max-height: 2.9em; }
+}
+@media (max-height: 500px) and (min-width: 560px) {
+  .cw-card-multi > .cw-deck-dots { grid-row: 7; }
+  .cw-card-multi .cw-cols.cw-deck .cw-li-frame img { height: min(130px, 30vh); }
+  .cw-card-multi .cw-actions { position: static; background: none; margin: 0; padding: 0; }
+}
+
+/* Swipe hints (2026-11-21): animated arrows around the hint, swiped cards' dots dimmed. */
+.cw-deck-dots i.done { background: rgba(255,255,255,0.12); }
+.cw-deck-dots span { display: inline-flex; align-items: center; gap: 6px; color: #d6d2f2; font-weight: 600; }
+.cw-sw { font-size: 18px; line-height: 1; color: #FBBF24; font-weight: 800; display: inline-block; }
+.cw-sw-l { animation: cw-sw-l 1.4s ease-in-out infinite; }
+.cw-sw-r { animation: cw-sw-r 1.4s ease-in-out infinite; }
+@keyframes cw-sw-l { 0%, 100% { transform: translateX(0); opacity: .55; } 50% { transform: translateX(-5px); opacity: 1; } }
+@keyframes cw-sw-r { 0%, 100% { transform: translateX(0); opacity: .55; } 50% { transform: translateX(5px); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .cw-sw-l, .cw-sw-r { animation: none; } }
+/* hint row now sits above the deck */
+@media (max-width: 600px) { .cw-card-multi .cw-cols.cw-deck .cw-place { display: none; } }
+
+/* The swipe cue (2026-11-21, "add a hand gesture"): a white hand that
+   presses on the top card and drags it left (JS moves the card with it). */
+.cw-hand { position: absolute; left: 58%; top: 56%; z-index: 20; pointer-events: none; opacity: 0;
+  transform: translate(-50%, -50%); transition: opacity .25s ease, transform .55s cubic-bezier(.4,.1,.3,1);
+  filter: drop-shadow(0 6px 12px rgba(0,0,0,0.55)); }
+.cw-hand svg { display: block; }
+.cw-hand svg path { fill: #fff; stroke: rgba(20,16,43,0.9); stroke-width: .9; paint-order: stroke; }
+.cw-hand.is-on { opacity: 1; }
+.cw-hand.is-press { transform: translate(-50%, -50%) scale(.86); }
+.cw-hand.is-drag { transform: translate(-50%, -50%) translateX(-58px) rotate(-10deg) scale(.86); }
+.cw-hand::after { content: ''; position: absolute; left: 44%; top: 30%; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%;
+  background: rgba(255,255,255,0.45); opacity: 0; transform: scale(.4); transition: opacity .2s, transform .3s; }
+.cw-hand.is-press::after { opacity: 1; transform: scale(1); }
+/* phones: the note is a plain line, not a box */
+@media (max-width: 600px), (max-height: 500px) {
+  .cw-card-multi .cw-soon { border: 0; background: none; padding: 2px 0; font-size: 12.5px; color: #B8B8C4; }
+  .cw-card-multi .cw-soon b { font-size: 12.5px; }
+  .cw-card-multi .cw-deck-dots { margin: 10px 0 8px; }
+}

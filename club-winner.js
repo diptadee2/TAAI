@@ -34,7 +34,7 @@
   function ensureCss() {
     if (document.getElementById('club-winner-css')) return;
     var l = document.createElement('link');
-    l.id = 'club-winner-css'; l.rel = 'stylesheet'; l.href = '/club-winner.css?v=2';
+    l.id = 'club-winner-css'; l.rel = 'stylesheet'; l.href = '/club-winner.css?v=6';
     document.head.appendChild(l);
   }
   ensureCss();
@@ -108,20 +108,30 @@
 
   // ── Bumble-style deck (phones) ──────────────────────────────────────
   // The posts are stacked; the top one follows the finger (a little tilt),
-  // and if thrown far or fast enough it flies off and goes to the back of
-  // the deck, so nobody can lose a card. A tap (no drag) still works as a
-  // tap: photos open, links open.
+  // and if thrown far or fast enough it flies off and is gone. Swiping the
+  // last card away closes the popup (no endless loop). A tap (no drag)
+  // still works as a tap: photos open, links open.
   function setupDeck(m) {
     var wrap = m.querySelector('.cw-cols');
     var cols = Array.prototype.slice.call(wrap.querySelectorAll('.cw-col'));
     if (cols.length < 2) return;
-    var n = cols.length, order = cols.map(function (_, i) { return i; }); // order[0] = top card
+    var n = cols.length, order = cols.map(function (_, i) { return i; }); // cards still in the deck; order[0] = top
     wrap.classList.add('cw-deck');
+    // Kept minimal (2026-11-21, "too clumsy"): just progress dots under the
+    // deck; the swipe cue is a hand gesture over the card (below), and each
+    // post's own "...see more" opens it on LinkedIn.
     var dots = document.createElement('div');
     dots.className = 'cw-deck-dots';
-    dots.innerHTML = cols.map(function () { return '<i></i>'; }).join('') + '<span>Swipe to see the next winner</span>';
+    dots.setAttribute('aria-hidden', 'true');
+    dots.innerHTML = cols.map(function () { return '<i></i>'; }).join('');
     wrap.parentNode.insertBefore(dots, wrap.nextSibling);
     var dotEls = dots.querySelectorAll('i');
+    // A hand (Material "touch_app" icon) that drags across the top card.
+    var hand = document.createElement('div');
+    hand.className = 'cw-hand';
+    hand.setAttribute('aria-hidden', 'true');
+    hand.innerHTML = '<svg viewBox="0 0 24 24" width="56" height="56"><path d="M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z"/></svg>';
+    wrap.appendChild(hand);
 
     function layout(instant) {
       order.forEach(function (ci, pos) {
@@ -133,7 +143,10 @@
         el.classList.toggle('is-top', pos === 0);
         el.setAttribute('aria-hidden', pos === 0 ? 'false' : 'true');
       });
-      Array.prototype.forEach.call(dotEls, function (d, i) { d.classList.toggle('on', i === order[0]); });
+      Array.prototype.forEach.call(dotEls, function (d, i) {
+        d.classList.toggle('on', i === order[0]);
+        d.classList.toggle('done', order.indexOf(i) < 0);
+      });
     }
     function measure() {
       var h = 0;
@@ -146,26 +159,57 @@
     m._onResize = measure;
     window.addEventListener('resize', measure);
 
+    var busy = false, touched = false;
+    // Show, don't tell: a hand presses on the top card and drags it a little
+    // to the left, the card following with a tilt, then lets go and it
+    // springs back. Twice ~1.2 s after opening, again at ~6.5 s if nobody
+    // has touched the deck; the hand disappears the moment someone does.
+    function hideHand() { hand.classList.remove('is-on', 'is-press', 'is-drag'); }
+    function nudge() {
+      if (touched || busy || dragging || order.length < 2 || reduced() || !document.body.contains(wrap)) return;
+      var top = cols[order[0]];
+      hand.classList.add('is-on');                                    // fade in, resting on the card
+      setTimeout(function () { if (!touched) hand.classList.add('is-press'); }, 250);      // press
+      setTimeout(function () {
+        if (touched || dragging) return;
+        hand.classList.add('is-drag');                                // drag left...
+        top.style.transition = 'transform .55s cubic-bezier(.4,.1,.3,1)';
+        top.style.transform = 'translateX(-46px) rotate(-4deg)';      // ...and the card goes with it
+      }, 450);
+      setTimeout(function () {
+        if (touched || dragging) return;
+        hideHand();                                                   // let go
+        layout(false);                                                // the card springs back
+      }, 1150);
+    }
+    var cue1 = setTimeout(nudge, 1200), cue2 = setTimeout(nudge, 2700), cue3 = setTimeout(nudge, 6500);
+    function stopCue() { touched = true; clearTimeout(cue1); clearTimeout(cue2); clearTimeout(cue3); hideHand(); }
     function next(dir) {
+      if (busy || !order.length) return;
       var top = cols[order[0]];
       var W = wrap.offsetWidth || 320;
-      if (reduced()) { order.push(order.shift()); layout(true); return; }
+      function gone() {
+        order.shift();
+        top.style.display = 'none';
+        top.classList.remove('is-top');
+        top.setAttribute('aria-hidden', 'true');
+        if (!order.length) { close(); return; } // that was the last winner
+        layout(false); // the next card moves up
+        busy = false;
+      }
+      busy = true;
+      if (reduced()) { gone(); return; }
       top.style.transition = 'transform .32s cubic-bezier(.2,.7,.3,1), opacity .32s';
       top.style.transform = 'translateX(' + (dir * W * 1.25) + 'px) rotate(' + (dir * 18) + 'deg)';
       top.style.opacity = '0';
-      setTimeout(function () {
-        order.push(order.shift());
-        layout(true);           // the old top card jumps to the back unseen...
-        top.style.opacity = '0';
-        requestAnimationFrame(function () { requestAnimationFrame(function () { layout(false); }); }); // ...then everything settles
-      }, 300);
+      setTimeout(gone, 300);
     }
 
     var sx = 0, sy = 0, dx = 0, t0 = 0, dragging = false, pid = null, moved = false;
     wrap.addEventListener('pointerdown', function (e) {
       var top = cols[order[0]];
       if (!top.contains(e.target) || (e.pointerType === 'mouse' && e.button !== 0)) return;
-      sx = e.clientX; sy = e.clientY; dx = 0; t0 = Date.now(); dragging = false; moved = false; pid = e.pointerId;
+      sx = e.clientX; sy = e.clientY; dx = 0; t0 = Date.now(); dragging = false; moved = false; pid = e.pointerId; stopCue();
     });
     wrap.addEventListener('pointermove', function (e) {
       if (pid !== e.pointerId) return;
