@@ -2952,6 +2952,10 @@ html.vice-night .pomo-zen .vice-edge { bottom: 24px; height: 46px; background-si
 .vm-respect { margin-right: -.06em; } /* cancel the trailing letter-space so it centres under the title */
 .vm-plus { display: inline-block; font-size: 1.45em; line-height: .7; transform: translateY(-.03em); }
 .vm-sub { letter-spacing: .02em; margin-right: -.02em; }
+/* One line on upright phones: the fixed box only gets half the screen width
+   (left: 50%), which broke the title in two (2026-11-21). */
+.vm-title { white-space: nowrap; }
+@media (max-width: 600px) { .vm-title { font-size: min(30px, 8.6vw) !important; } }
 .zh-clock, .zh-money, .zh-cap { font-family: Saira, Poppins, system-ui, sans-serif !important; font-weight: 900 !important; }
 .zh-clock { font-size: 28px !important; } .zh-money { font-size: 24px !important; }
 </style>
