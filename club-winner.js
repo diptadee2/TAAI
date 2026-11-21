@@ -315,8 +315,15 @@
         });
       }
       var srcs = photosOf(p).map(function (ph) { return ph.src; });
+      // On phones a tap on the photos opens their LinkedIn post (2026-11-21,
+      // direct request); elsewhere, or with no link, it opens them full screen.
+      var toPost = isPhone() && p.linkedin_url;
       Array.prototype.forEach.call(card.querySelectorAll('.cw-li-frame'), function (b) {
-        b.addEventListener('click', function () { openPhotos(srcs); });
+        if (toPost) b.setAttribute('aria-label', 'Open ' + p.name + '’s post on LinkedIn');
+        b.addEventListener('click', function () {
+          if (toPost) window.open(p.linkedin_url, '_blank', 'noopener');
+          else openPhotos(srcs);
+        });
       });
     });
     if (combined && isPhone()) setupDeck(m);
