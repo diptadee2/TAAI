@@ -2109,13 +2109,15 @@
           (w.linkedin_text ? '<div class="cw-li-textwrap"><p class="cw-li-text"></p>' +
             (w.linkedin_url ? '<a class="cw-li-more" hidden href="' + escapeAttr(w.linkedin_url) + '" target="_blank" rel="noopener">…see more</a>' : '<button type="button" class="cw-li-more" hidden>…see more</button>') +
           '</div>' : '') +
-          (photos.length ? '<div class="cw-li-photos">' + photos.map(function (p) {
-            return '<img src="' + escapeAttr(p.src) + '" alt="' + escapeAttr(p.caption || (w.name + '\'s photo')) + '">';
+          // each photo whole in a white print-style frame, over a blurred,
+          // darkened copy of the first photo (2026-11-21)
+          (photos.length ? '<div class="cw-li-photos cw-li-photos-' + photos.length + '"><img class="cw-li-bg" src="' + escapeAttr(photos[0].src) + '" alt="" aria-hidden="true">' + photos.map(function (p) {
+            return '<span class="cw-li-frame"><img src="' + escapeAttr(p.src) + '" alt="' + escapeAttr(p.caption || (w.name + '\'s photo')) + '"></span>';
           }).join('') + '</div>' : '') +
           '<div class="cw-li-bar" aria-hidden="true"><span>Like</span><span>Comment</span><span>Repost</span><span>Send</span></div>' +
         '</div>' : '') +
         '<div class="cw-actions">' +
-          (!w.linkedin_text && w.linkedin_url ? '<a class="cw-btn cw-btn-li" href="' + escapeAttr(w.linkedin_url) + '" target="_blank" rel="noopener">Read the post on LinkedIn ↗</a>' : '') +
+          (w.linkedin_url ? '<a class="cw-btn cw-btn-li" href="' + escapeAttr(w.linkedin_url) + '" target="_blank" rel="noopener">View on LinkedIn ↗</a>' : '') +
           '<button type="button" class="cw-btn cw-btn-close">Close</button>' +
         '</div>' +
       '</div>';
