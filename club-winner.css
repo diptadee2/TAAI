@@ -388,3 +388,18 @@ button.cw-li-frame:focus-visible { outline: 2px solid #A78BFA; outline-offset: 3
 @media (max-height: 500px) and (min-width: 560px) {
   .cw-backdrop { padding-left: max(10px, env(safe-area-inset-left)); padding-right: max(10px, env(safe-area-inset-right)); }
 }
+
+/* Phones sideways (2026-11-21, "the left texts and the right pictures feel
+   not in the same line"): the left block is centred vertically against the
+   cards instead of starting at the top. Rows: flexible / tag / title / sub
+   / note / buttons / flexible; the deck spans them all, the dots sit under it. */
+@media (max-height: 500px) and (min-width: 560px) {
+  .cw-card-multi:has(.cw-deck) { grid-template-rows: 1fr auto auto auto auto auto 1fr auto; align-content: stretch; align-items: center; }
+  .cw-card-multi:has(.cw-deck) > .cw-tag { grid-row: 2; margin-top: 0; }
+  .cw-card-multi:has(.cw-deck) > .cw-title { grid-row: 3; }
+  .cw-card-multi:has(.cw-deck) > .cw-sub { grid-row: 4; }
+  .cw-card-multi:has(.cw-deck) > .cw-col-note { grid-row: 5; }
+  .cw-card-multi:has(.cw-deck) > .cw-actions { grid-row: 6; }
+  .cw-card-multi:has(.cw-deck) > .cw-cols.cw-deck { grid-row: 1 / 8; align-self: center; }
+  .cw-card-multi:has(.cw-deck) > .cw-deck-dots { grid-column: 2; grid-row: 8; margin: 6px 0 0; }
+}

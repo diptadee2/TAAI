@@ -34,7 +34,7 @@
   function ensureCss() {
     if (document.getElementById('club-winner-css')) return;
     var l = document.createElement('link');
-    l.id = 'club-winner-css'; l.rel = 'stylesheet'; l.href = '/club-winner.css?v=7';
+    l.id = 'club-winner-css'; l.rel = 'stylesheet'; l.href = '/club-winner.css?v=8';
     document.head.appendChild(l);
   }
   ensureCss();
