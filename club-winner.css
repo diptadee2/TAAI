@@ -1,0 +1,325 @@
+/* The 2 AM Club winners popup, shared by the tracker, courses and test series pages (moved out of the tracker 2026-11-21). */
+/* The 2 AM Club winner popup (2026-11-18) */
+body.club-winner-open { overflow: hidden; }
+.cw-backdrop { position: fixed; inset: 0; z-index: 3000; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(4,5,14,0.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); animation: cw-fade .25s ease-out; }
+.cw-backdrop.is-leaving { animation: cw-fade-out .22s ease-in forwards; }
+@keyframes cw-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes cw-fade-out { to { opacity: 0; } }
+.cw-card { position: relative; width: min(560px, 100%); max-height: calc(100vh - 40px); overflow-y: auto; padding: 30px 28px 24px; border-radius: 22px; text-align: center; color: #F2F2F5;
+  border: 1px solid rgba(167,139,250,0.35);
+  background: radial-gradient(1px 1px at 12% 18%, rgba(255,255,255,.7), transparent 60%), radial-gradient(1px 1px at 78% 12%, rgba(255,255,255,.6), transparent 60%), radial-gradient(1.5px 1.5px at 88% 46%, rgba(255,255,255,.55), transparent 60%), radial-gradient(1px 1px at 22% 70%, rgba(255,255,255,.5), transparent 60%), radial-gradient(1px 1px at 52% 8%, rgba(255,255,255,.6), transparent 60%),
+    linear-gradient(160deg, #221a4a 0%, #120f2c 55%, #08091c 100%);
+  box-shadow: 0 30px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.03) inset; animation: cw-rise .45s cubic-bezier(.2,.9,.3,1.15); }
+@keyframes cw-rise { from { opacity: 0; transform: translateY(18px) scale(.97); } to { opacity: 1; transform: none; } }
+.cw-moon { position: absolute; top: 12px; left: 12px; width: 34px; height: 34px; display: grid; place-items: center; color: #f3e5b5; filter: drop-shadow(0 0 6px rgba(243,229,181,0.45)); pointer-events: none; }
+.cw-close { position: absolute; top: 12px; right: 12px; z-index: 1; width: 34px; height: 34px; padding: 0; display: grid; place-items: center; border-radius: 50%; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); color: #B8B8C4; cursor: pointer; }
+.cw-close:hover { color: #fff; background: rgba(255,255,255,0.12); }
+.cw-tag { position: relative; display: inline-block; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: .04em; color: #FBBF24; background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.35); }
+.cw-title { position: relative; margin: 14px 0 6px; font-size: clamp(24px, 4.6vw, 32px); line-height: 1.15; font-weight: 800; }
+.cw-name { background: linear-gradient(120deg, #FF7FB7, #A78BFA, #4D8BFF); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.cw-sub { position: relative; margin: 0 0 18px; font-size: 14.5px; color: #B8B8C4; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; }
+.cw-month { font-weight: 800; color: #FCD34D; padding: 1px 8px; border-radius: 6px; background: rgba(251,191,36,0.14); border: 1px solid rgba(251,191,36,0.35); }
+.cw-prize-big { position: relative; display: inline-flex; flex-direction: column; align-items: center; gap: 2px; margin: -6px auto 18px; padding: 10px 26px 12px; border-radius: 18px; background: linear-gradient(160deg, rgba(251,191,36,0.18), rgba(251,191,36,0.06)); border: 1px solid rgba(251,191,36,0.45); box-shadow: 0 0 30px rgba(251,191,36,0.18); }
+.cw-prize-label { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #FCD34D; }
+.cw-prize-amt { font-size: clamp(40px, 9vw, 56px); font-weight: 800; line-height: 1.05; letter-spacing: -.01em; font-variant-numeric: tabular-nums;
+  background: linear-gradient(180deg, #FFF7D6 0%, #FDE68A 35%, #F59E0B 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.cw-photos { position: relative; display: grid; gap: 10px; margin-bottom: 16px; }
+.cw-photos-2 { grid-template-columns: 1fr 1fr; }
+.cw-photo { margin: 0; border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,0.12); background: #0b0b18; }
+.cw-photo img { display: block; width: 100%; max-height: min(300px, 30vh); object-fit: cover; }
+.cw-photos-2 .cw-photo img { height: min(220px, 26vh); max-height: none; }
+.cw-photo figcaption { padding: 7px 10px; font-size: 12px; color: #8E8EA0; text-align: left; }
+.cw-post { position: relative; text-align: left; padding: 14px 16px; margin-bottom: 18px; border-radius: 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-left: 3px solid #0A66C2; }
+.cw-post-head { font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #6FB1F4; margin-bottom: 6px; }
+.cw-post-text { margin: 0; font-size: 14px; line-height: 1.55; color: #F2F2F5; white-space: pre-line; max-height: 7.75em; overflow: hidden; }
+.cw-post-text.is-open { max-height: none; }
+.cw-post-text.is-clamped:not(.is-open) { -webkit-mask-image: linear-gradient(180deg, #000 45%, transparent 100%); mask-image: linear-gradient(180deg, #000 45%, transparent 100%); }
+.cw-more-li { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; font-size: 13.5px; font-weight: 700; color: #6FB1F4; text-decoration: none; }
+.cw-more-li:hover { color: #9cc9f8; text-decoration: underline; }
+.cw-dots { color: #8E8EA0; font-weight: 400; }
+.cw-more { margin-top: 6px; padding: 0; border: 0; background: none; font: inherit; font-size: 13px; font-weight: 700; color: #A78BFA; cursor: pointer; }
+.cw-actions { position: relative; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.cw-btn { display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 18px; border-radius: 12px; font: inherit; font-size: 14.5px; font-weight: 700; cursor: pointer; text-decoration: none; }
+.cw-btn-li { background: #0A66C2; color: #fff; border: 0; }
+.cw-btn-li:hover { background: #0b74dc; }
+.cw-btn-close { background: rgba(255,255,255,0.08); color: #F2F2F5; border: 1px solid rgba(255,255,255,0.18); }
+.cw-btn-close:hover { background: rgba(255,255,255,0.14); }
+.cw-close:focus-visible, .cw-btn:focus-visible, .cw-more:focus-visible, .cw-more-li:focus-visible { outline: 2px solid #A78BFA; outline-offset: 2px; }
+@media (max-width: 520px) {
+  .cw-card { padding: 26px 18px 20px; }
+  .cw-moon { display: none; }
+  .cw-tag { margin-top: 30px; }
+  .cw-photos-2 { grid-template-columns: 1fr; }
+  .cw-photos-2 .cw-photo img { height: auto; max-height: 260px; }
+  .cw-btn { flex: 1 1 100%; }
+}
+/* Shorter screens (most laptops): tighter spacing so Close stays on screen. */
+@media (max-height: 940px) {
+  .cw-card { padding-top: 22px; padding-bottom: 18px; }
+  .cw-title { margin: 10px 0 4px; font-size: clamp(22px, 4vw, 28px); }
+  .cw-sub { margin-bottom: 12px; }
+  .cw-prize-big { margin: -4px auto 12px; padding: 7px 22px 9px; }
+  .cw-prize-amt { font-size: clamp(36px, 7vh, 48px); }
+  .cw-photos { margin-bottom: 12px; }
+  .cw-photo img { max-height: min(240px, 24vh); }
+  .cw-photos-2 .cw-photo img { height: min(190px, 22vh); }
+  .cw-post { padding: 11px 14px; margin-bottom: 12px; }
+  .cw-post-text { max-height: 4.65em; }
+}
+@media (prefers-reduced-motion: reduce) { .cw-backdrop, .cw-card, .cw-backdrop.is-leaving { animation: none; } }
+/* Runners-up popup (2026-11-19): one or two people side by side. */
+.cr-card { width: min(620px, 100%); }
+.cr-people { display: grid; gap: 14px; margin: 4px 0 18px; }
+.cr-people.cr-two { grid-template-columns: 1fr 1fr; }
+.cr-person { padding: 12px 12px 14px; border-radius: 16px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); text-align: center; }
+.cr-person .cw-photo { margin-bottom: 10px; }
+.cr-place { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #E5E7EB; }
+.cr-name { margin-top: 4px; font-size: 19px; font-weight: 800; line-height: 1.2; background: linear-gradient(120deg, #FF7FB7, #A78BFA, #4D8BFF); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.cr-prize { margin-top: 4px; font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; background: linear-gradient(180deg, #FFF7D6 0%, #FDE68A 35%, #F59E0B 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.cr-person .cw-more-li { margin-top: 6px; font-size: 12.5px; }
+.cr-people:not(.cr-two) .cr-person { max-width: 380px; margin: 0 auto; width: 100%; }
+@media (max-width: 520px) { .cr-people.cr-two { grid-template-columns: 1fr 1fr; gap: 8px; } .cr-person { padding: 8px 8px 10px; } .cr-name { font-size: 15px; } .cr-prize { font-size: 20px; } .cr-person .cw-more-li { font-size: 11.5px; } }
+/* Photos are always 16:9 (2026-11-19). A single photo shrinks its width (centred) if 16:9 at full width would be too tall for the screen. */
+.cw-photo img, .cw-photos-2 .cw-photo img { aspect-ratio: 16 / 9; height: auto; max-height: none; object-fit: cover; object-position: center 15%; /* tall phone photos keep the screen/desk, not the keyboard */ }
+.cw-photos-1 .cw-photo { width: min(100%, calc(32vh * 16 / 9)); margin: 0 auto; }
+@media (max-height: 940px) { .cw-photos-1 .cw-photo { width: min(100%, calc(25vh * 16 / 9)); } }
+@media (max-width: 520px) { .cw-photos-2 { grid-template-columns: 1fr 1fr; gap: 8px; } .cw-photos-2 .cw-photo img { height: auto; max-height: none; } }
+/* 1st-place popup: the winner's post as a LinkedIn-style card (2026-11-21).
+   Photos are shown whole (contain, never cropped) on LinkedIn's grey. */
+.cw-li { margin: 0 0 18px; border-radius: 12px; overflow: hidden; background: #fff; color: #191919; text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+.cw-li-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px 8px; }
+.cw-li-av { flex: 0 0 auto; width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+.cw-li-av-ini { display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 18px; background: linear-gradient(135deg, #A78BFA, #4D8BFF); }
+.cw-li-who { min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
+.cw-li-who b { font-size: 15px; font-weight: 600; color: #191919; }
+.cw-li-who span { font-size: 12.5px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cw-li-who .cw-li-meta { font-size: 12px; color: #8a8a8a; }
+.cw-li-textwrap { position: relative; padding: 0 14px 10px; }
+.cw-li-text { margin: 0; font-size: 14.5px; line-height: 1.45; color: #191919; white-space: pre-line; max-height: 4.35em; overflow: hidden; }
+.cw-li-text.is-open { max-height: none; }
+/* the last line fades to grey, ending in "...see more" */
+.cw-li-text.is-clamped { -webkit-mask-image: linear-gradient(180deg, #000 55%, rgba(0,0,0,0.3) 100%); mask-image: linear-gradient(180deg, #000 55%, rgba(0,0,0,0.3) 100%); }
+.cw-li-more { position: absolute; right: 14px; bottom: 10px; padding: 0 0 0 42px; border: 0; font: inherit; font-size: 14.5px; line-height: 1.45; color: #666; text-decoration: none; cursor: pointer;
+  background: linear-gradient(90deg, rgba(255,255,255,0), #fff 40px); }
+.cw-li-more:hover { color: #0A66C2; text-decoration: underline; }
+.cw-li-photos { position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center; gap: 16px; padding: 22px 16px;
+  /* abstract flowing gradient lines and soft colour glows (2026-11-21, "too negative") */
+  background-color: #2a2058;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 240' preserveAspectRatio='none'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='0'><stop offset='0' stop-color='%23FF7FB7'/><stop offset='.5' stop-color='%23A78BFA'/><stop offset='1' stop-color='%234D8BFF'/></linearGradient><linearGradient id='h' x1='0' y1='0' x2='1' y2='0'><stop offset='0' stop-color='%234D8BFF'/><stop offset='1' stop-color='%23FDE68A'/></linearGradient></defs><g fill='none' stroke-linecap='round'><path d='M-20 170 C 60 110, 130 220, 210 150 S 340 60, 420 110' stroke='url(%23g)' stroke-width='3' opacity='.75'/><path d='M-20 195 C 70 140, 150 245, 230 175 S 350 95, 420 140' stroke='url(%23g)' stroke-width='1.6' opacity='.5'/><path d='M-20 60 C 80 20, 150 110, 240 70 S 360 10, 420 40' stroke='url(%23h)' stroke-width='2.2' opacity='.45'/><path d='M-20 85 C 90 45, 160 135, 250 95 S 370 35, 420 65' stroke='url(%23h)' stroke-width='1.2' opacity='.32'/></g></svg>"),
+    radial-gradient(circle at 12% 18%, rgba(255,127,183,0.42), transparent 46%),
+    radial-gradient(circle at 88% 82%, rgba(77,139,255,0.45), transparent 50%),
+    radial-gradient(circle at 70% 10%, rgba(253,230,138,0.22), transparent 40%),
+    linear-gradient(135deg, #3b2a78 0%, #2a2058 55%, #1d2a5e 100%);
+  background-size: 100% 100%, auto, auto, auto, auto; background-repeat: no-repeat; }
+.cw-li-photos .cw-li-bg { display: none; }
+/* gallery look (2026-11-21, "classy"): straight photos, rounded corners, a hairline edge and a soft deep shadow; the whole photo shown, never cropped */
+.cw-li-frame { position: relative; flex: 0 1 auto; min-width: 0; border-radius: 10px; overflow: hidden; line-height: 0;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.14), 0 22px 44px rgba(0,0,0,0.55), 0 4px 10px rgba(0,0,0,0.35); }
+.cw-li-photos-2 .cw-li-frame { max-width: calc(50% - 8px); }
+.cw-li-frame img { display: block; height: min(300px, 30vh); width: auto; max-width: 100%; object-fit: contain; filter: saturate(1.06) contrast(1.03); }
+.cw-li-bar { display: flex; justify-content: space-around; padding: 9px 8px 10px; border-top: 1px solid #e8e8e8; font-size: 13px; font-weight: 600; color: #666; }
+@media (max-height: 940px) {
+  .cw-li { margin-bottom: 12px; }
+  .cw-li-frame img { height: min(260px, 27vh); }
+  .cw-li-head { padding-top: 10px; }
+}
+@media (max-width: 520px) {
+  .cw-li-av { width: 42px; height: 42px; }
+  .cw-li-text, .cw-li-more { font-size: 14px; }
+  .cw-li-frame img { height: min(230px, 26vh); }
+  .cw-li-photos { gap: 12px; padding: 14px 10px; }
+  .cw-actions .cw-btn { flex: 1 1 0; padding: 0 10px; font-size: 13.5px; }
+}
+@media (max-height: 700px) { .cw-li-frame img { height: 22vh; } .cw-li-text { max-height: 2.9em; } }
+/* Popup scrollbar (2026-11-21): when the card has to scroll, a thin
+   lilac scrollbar kept inside the rounded corners, not the browser's grey one. */
+.cw-card { scrollbar-width: thin; scrollbar-color: rgba(167,139,250,0.45) transparent; }
+.cw-card::-webkit-scrollbar { width: 8px; }
+.cw-card::-webkit-scrollbar-track { background: transparent; margin: 20px 0; }
+.cw-card::-webkit-scrollbar-thumb { background: rgba(167,139,250,0.4); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+.cw-card::-webkit-scrollbar-thumb:hover { background-color: rgba(167,139,250,0.65); }
+/* Short screens (1366x768 / 1280x720 laptops, iPhone SE): tighter so Close fits. */
+@media (max-height: 800px) {
+  .cw-card { padding-top: 18px; padding-bottom: 14px; }
+  .cw-title { margin: 8px 0 2px; font-size: clamp(20px, 3.6vh, 26px); }
+  .cw-sub { margin-bottom: 8px; font-size: 13.5px; }
+  .cw-prize-big { margin: -2px auto 10px; padding: 5px 18px 7px; }
+  .cw-prize-amt { font-size: clamp(30px, 6vh, 40px); }
+  .cw-li { margin-bottom: 10px; }
+  .cw-li-head { padding: 8px 12px 6px; }
+  .cw-li-av { width: 40px; height: 40px; }
+  .cw-li-text { max-height: 2.9em; }
+  .cw-li-textwrap { padding-bottom: 8px; }
+  .cw-li-photos { padding: 12px 10px; }
+  .cw-li-frame img { height: 22vh; }
+  .cw-li-bar { padding: 7px 8px 8px; }
+  .cw-btn { height: 40px; }
+}
+/* Phones held sideways: two columns, the celebration on the left and the
+   post on the right, so the photos aren't below the fold. */
+@media (max-height: 500px) and (min-width: 560px) {
+  .cw-backdrop { padding: 10px; }
+  .cw-card:not(.cw-card-multi) { width: min(820px, 100%); max-height: calc(100vh - 20px); padding: 14px 18px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); column-gap: 18px; align-content: start; align-items: start; }
+  .cw-card:not(.cw-card-multi) > :not(.cw-li):not(.cw-close):not(.cw-moon) { grid-column: 1; }
+  .cw-card:not(.cw-card-multi) > .cw-tag { justify-self: center; margin-top: 18px; }
+  .cw-card:not(.cw-card-multi) > .cw-li { grid-column: 2; grid-row: 1 / span 6; margin: 0; }
+  .cw-title { font-size: 22px; margin: 8px 0 2px; }
+  .cw-sub { font-size: 13px; margin-bottom: 8px; }
+  .cw-prize-big { margin: 0 auto 10px; }
+  .cw-prize-amt { font-size: 34px; }
+  .cw-actions .cw-btn { flex: 1 1 0; height: 38px; padding: 0 10px; font-size: 13px; }
+  .cw-li-frame img { height: min(150px, 38vh); }
+  .cw-li-photos { padding: 10px; gap: 10px; }
+  .cw-card:not(.cw-card-multi) > .cw-close { display: none; } /* would sit on the post card; the Close button is beside it */
+}
+/* Winner photos are buttons: tap to see them bigger (2026-11-21). */
+button.cw-li-frame { padding: 0; border: 0; margin: 0; background: none; font: inherit; color: inherit; cursor: zoom-in; -webkit-tap-highlight-color: transparent; }
+button.cw-li-frame:focus-visible { outline: 2px solid #A78BFA; outline-offset: 3px; }
+@media (hover: hover) and (pointer: fine) { button.cw-li-frame img { transition: filter .2s; } button.cw-li-frame:hover img { filter: saturate(1.06) contrast(1.03) brightness(1.08); } }
+/* Framed prints, fanned diagonally over each other (2026-11-21): a slim
+   warm paper frame, the 2nd photo overlapping the 1st, opposite tilts.
+   Static only; nothing animates on these framed (shadow + radius) elements. */
+.cw-li-photos button.cw-li-frame { padding: 3px; border-radius: 6px; overflow: visible; background: #f7f4ee;
+  box-shadow: 0 16px 34px rgba(0,0,0,0.55), 0 3px 8px rgba(0,0,0,0.35); }
+.cw-li-photos button.cw-li-frame img { border-radius: 3px; }
+.cw-li-photos-2 { gap: 0; padding-top: 30px; padding-bottom: 30px; }
+.cw-li-photos-2 button.cw-li-frame { max-width: 58%; }
+.cw-li-photos-2 button.cw-li-frame:first-of-type { transform: rotate(-6deg) translateY(-6px); z-index: 1; }
+.cw-li-photos-2 button.cw-li-frame:last-of-type { transform: rotate(5deg) translateY(10px); margin-left: -46px; z-index: 2; }
+@media (max-width: 520px) { .cw-li-photos-2 button.cw-li-frame:last-of-type { margin-left: -34px; } .cw-li-photos button.cw-li-frame { padding: 2.5px; } .cw-li-photos-2 { padding-top: 18px; padding-bottom: 20px; } }
+@media (max-height: 700px) { .cw-li-photos-2 { padding-top: 14px; padding-bottom: 16px; } .cw-li-photos-2 .cw-li-frame img { height: 19vh; } }
+@media (max-height: 500px) and (min-width: 560px) { .cw-li-photos-2 { padding-top: 14px; padding-bottom: 16px; } .cw-li-photos-2 button.cw-li-frame:last-of-type { margin-left: -28px; } }
+/* Full-screen viewer: all the photos side by side. */
+.cw-lb-row { display: flex; align-items: center; justify-content: center; gap: 16px; width: 100%; height: 100%; }
+.cw-lb-row .cw-lb-img { max-height: 100%; min-width: 0; }
+.cw-lb-row.n2 .cw-lb-img { max-width: calc(50% - 8px); }
+@media (max-width: 520px) { .cw-lb-row { gap: 8px; } .cw-lb-row.n2 .cw-lb-img { max-width: calc(50% - 4px); } }
+/* All the winners together, side by side (2026-11-21, design B): 1st
+   place, 2nd, another 2nd, 3rd, each a full LinkedIn-style post with its
+   place and prize above it; an optional "still to come" note as one more
+   column. Columns wrap (one per row on phones); the card scrolls if needed. */
+.cw-card-multi { width: min(980px, 100%); }
+.cw-card-multi .cw-name { white-space: nowrap; }
+.cw-card-n3 { width: min(1180px, 100%); }
+.cw-card-n4 { width: min(1320px, 100%); }
+.cw-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; margin: 4px 0 16px; }
+.cw-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.cw-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 1100px) { .cw-cols-3, .cw-cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .cw-cols, .cw-cols-3, .cw-cols-4 { grid-template-columns: minmax(0, 1fr); } }
+.cw-col { min-width: 0; display: flex; flex-direction: column; }
+.cw-col .cw-li { margin: 0; }
+.cw-place { margin: 0 0 8px; font-size: 13px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #E5E7EB; }
+.cw-place-1 { color: #FCD34D; }
+.cw-place-3 { color: #F0B27A; }
+.cw-place-amt { font-weight: 800; letter-spacing: 0; background: linear-gradient(180deg, #FFF7D6 0%, #FDE68A 35%, #F59E0B 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.cw-col-p1 .cw-li { box-shadow: 0 0 0 2px rgba(251,191,36,0.55), 0 10px 30px rgba(0,0,0,0.35); }
+.cw-col-link { align-self: center; margin-top: 8px; font-size: 13px; font-weight: 700; color: #6FB1F4; text-decoration: none; }
+.cw-col-link:hover { text-decoration: underline; }
+.cw-li-nameonly { padding: 16px; text-align: center; }
+.cw-col-note { margin: -2px 0 16px; }
+.cw-soon { display: block; padding: 10px 14px; border-radius: 12px; border: 1.5px dashed rgba(167,139,250,0.5); background: rgba(167,139,250,0.06); color: #c9c3ef; font-size: 13.5px; text-align: center; }
+.cw-soon b { color: #fff; font-size: 14px; }
+.cw-card-multi .cw-li-text { max-height: 2.9em; }
+.cw-card-multi .cw-li-frame img { height: min(220px, 24vh); }
+.cw-card-multi .cw-li-photos-2 { padding-top: 22px; padding-bottom: 24px; }
+@media (max-height: 800px) { .cw-card-multi .cw-li-frame img { height: min(190px, 22vh); } }
+/* Phones (2026-11-21): the winners are a swipe row, each post nearly the
+   full width with the next one peeking in, instead of a long stack. */
+@media (max-width: 600px) {
+  .cw-card-multi { padding-left: 14px; padding-right: 14px; }
+  .cw-card-multi .cw-cols { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 12px; margin: 4px -14px 12px; padding: 4px 14px 6px; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .cw-card-multi .cw-cols::-webkit-scrollbar { display: none; }
+  .cw-card-multi .cw-col { flex: 0 0 86%; scroll-snap-align: center; }
+  .cw-card-multi .cw-li-frame img { height: min(200px, 25vh); }
+  .cw-card-multi .cw-title { font-size: 22px; }
+  .cw-card-multi .cw-col-note { margin-bottom: 12px; }
+}
+@media (max-width: 600px) and (max-height: 700px) {
+  .cw-card-multi { padding-top: 16px; padding-bottom: 12px; }
+  .cw-card-multi .cw-title { font-size: 19px; margin: 8px 0 2px; }
+  .cw-card-multi .cw-sub { margin-bottom: 8px; }
+  .cw-card-multi .cw-li-meta { display: none; }
+  .cw-card-multi .cw-li-frame img { height: 15.5vh; }
+  .cw-card-multi .cw-place { margin-bottom: 5px; }
+  .cw-card-multi .cw-col-link { margin-top: 5px; }
+  .cw-card-multi .cw-li-photos-2 { padding-top: 14px; padding-bottom: 16px; }
+  .cw-card-multi .cw-soon { padding: 8px 10px; font-size: 12.5px; }
+  .cw-card-multi .cw-btn { height: 40px; }
+}
+/* Phones held sideways: heading, note and Close on the left, the swipe row of posts on the right. */
+@media (max-height: 500px) and (min-width: 560px) {
+  .cw-card-multi { width: min(900px, 100%); max-height: calc(100vh - 20px); padding: 14px 16px; display: grid; grid-template-columns: 230px minmax(0, 1fr); column-gap: 16px; align-content: center; align-items: start; text-align: center; }
+  .cw-card-multi > * { grid-column: 1; }
+  .cw-card-multi > .cw-cols { grid-column: 2; grid-row: 1 / span 7; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 12px; margin: 0; padding: 2px 2px 4px; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .cw-card-multi > .cw-cols::-webkit-scrollbar { display: none; }
+  .cw-card-multi .cw-col { flex: 0 0 min(330px, 78%); scroll-snap-align: start; }
+  .cw-card-multi > .cw-close, .cw-card-multi > .cw-moon { display: none; }
+  .cw-card-multi .cw-tag { margin-top: 4px; font-size: 10.5px; padding: 5px 9px; white-space: nowrap; letter-spacing: 0; }
+  .cw-card-multi .cw-title { font-size: 19px; margin: 8px 0 4px; }
+  .cw-card-multi .cw-sub { font-size: 12.5px; margin-bottom: 8px; }
+  .cw-card-multi .cw-col-note { margin: 0 0 10px; }
+  .cw-card-multi .cw-soon { font-size: 12px; padding: 8px 10px; }
+  .cw-card-multi .cw-actions .cw-btn { flex: 1 1 100%; height: 38px; }
+  .cw-card-multi .cw-place { margin-bottom: 4px; font-size: 12px; }
+  .cw-card-multi .cw-li-head { padding: 6px 10px 4px; }
+  .cw-card-multi .cw-li-av { width: 34px; height: 34px; }
+  .cw-card-multi .cw-li-who .cw-li-meta { display: none; }
+  .cw-card-multi .cw-li-textwrap { display: none; } /* no room for the text here; the photos and the LinkedIn link carry it */
+  .cw-card-multi .cw-li-photos-2 { padding-top: 12px; padding-bottom: 14px; }
+  .cw-card-multi .cw-li-frame img { height: min(140px, 34vh); }
+  .cw-card-multi .cw-li-bar { padding: 5px 6px 6px; font-size: 11.5px; }
+  .cw-card-multi .cw-col-link { margin-top: 4px; font-size: 12px; }
+}
+.cw-lb { position: fixed; inset: 0; z-index: 10000; /* above the celebration canvas (9999) */ display: flex; align-items: center; justify-content: center; padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  background: rgba(3,3,10,0.97); animation: cw-fade .18s ease-out; touch-action: pan-y; cursor: zoom-out; }
+.cw-lb.is-leaving { animation: cw-fade-out .18s ease-in forwards; }
+.cw-lb-img { display: block; max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); cursor: default; user-select: none; -webkit-user-drag: none; }
+.cw-lb-x { position: absolute; top: max(14px, env(safe-area-inset-top)); right: max(14px, env(safe-area-inset-right)); width: 42px; height: 42px; display: grid; place-items: center; padding: 0; border-radius: 50%; border: 1px solid rgba(255,255,255,0.25); background: rgba(20,18,40,0.7); color: #fff; cursor: pointer; }
+.cw-lb-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 46px; height: 46px; padding: 0 0 4px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.25); background: rgba(20,18,40,0.7); color: #fff; font-size: 30px; line-height: 1; cursor: pointer; }
+.cw-lb-prev { left: max(14px, env(safe-area-inset-left)); }
+.cw-lb-next { right: max(14px, env(safe-area-inset-right)); }
+.cw-lb-count { position: absolute; bottom: max(16px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); padding: 4px 12px; border-radius: 999px; background: rgba(20,18,40,0.7); color: #fff; font-size: 13px; font-weight: 600; }
+.cw-lb-x:hover, .cw-lb-nav:hover { background: rgba(60,50,110,0.85); }
+.cw-lb-x:focus-visible, .cw-lb-nav:focus-visible { outline: 2px solid #A78BFA; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .cw-lb, .cw-lb.is-leaving { animation: none; } }
+
+/* ── Shared across pages (2026-11-21): the tracker, courses and test series
+   pages all load this file via /club-winner.js. Own font and colours, so
+   the host page's styles don't leak in. ── */
+.cw-backdrop, .cw-lb { font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif; line-height: 1.4; -webkit-font-smoothing: antialiased; }
+.cw-backdrop *, .cw-lb * { box-sizing: border-box; }
+.cw-backdrop h2, .cw-backdrop p { letter-spacing: normal; text-transform: none; }
+.cw-btn-cta { background: #FBBF24; color: #1a1208; border: 0; }
+.cw-btn-cta:hover { background: #fcd34d; }
+@media (max-width: 600px) { .cw-actions.has-cta .cw-btn { flex: 1 1 100%; } }
+
+/* Bumble-style deck on phones: the posts stacked, the top one dragged
+   left/right flies off to the back of the deck (see setupDeck in
+   club-winner.js). Overrides the phone swipe-row rules above. */
+.cw-card-multi .cw-cols.cw-deck { display: block; position: relative; overflow: visible; margin: 6px auto 4px; padding: 0; max-width: 360px; touch-action: pan-y; }
+.cw-card-multi .cw-cols.cw-deck > .cw-col { position: absolute; top: 0; left: 0; right: 0; width: auto; flex: none; transform-origin: 50% 100%;
+  transition: transform .34s cubic-bezier(.2,.8,.3,1.08), opacity .3s; will-change: transform; user-select: none; -webkit-user-select: none; }
+.cw-card-multi .cw-cols.cw-deck > .cw-col:not(.is-top) { cursor: pointer; }
+.cw-card-multi .cw-cols.cw-deck > .cw-col:not(.is-top) .cw-col-link,
+.cw-card-multi .cw-cols.cw-deck > .cw-col:not(.is-top) .cw-place { visibility: hidden; }
+.cw-card-multi .cw-cols.cw-deck > .cw-col.is-top { cursor: grab; }
+.cw-deck-dots { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 8px 0 12px; }
+.cw-deck-dots i { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.28); cursor: pointer; transition: width .2s, background .2s; }
+.cw-deck-dots i.on { width: 18px; border-radius: 4px; background: #FBBF24; }
+.cw-deck-dots span { margin-left: 8px; font-size: 12px; color: #B8B8C4; }
+@media (max-height: 500px) and (min-width: 560px) {
+  /* left column stacks from the top; the deck spans a 1fr filler row, so
+     its height doesn't push gaps between the heading, note and buttons */
+  .cw-card-multi:has(.cw-deck) { align-content: start; grid-template-rows: auto auto auto auto auto 1fr auto; }
+  .cw-card-multi > .cw-cols.cw-deck { grid-row: 1 / 7; margin: 0 auto; width: 100%; max-width: 340px; }
+  .cw-card-multi > .cw-deck-dots { grid-column: 2; grid-row: 7; margin: 4px 0 0; }
+  .cw-card-multi .cw-deck-dots span { display: none; }
+  .cw-card-multi .cw-actions.has-cta { flex-wrap: nowrap; gap: 8px; }
+  .cw-card-multi .cw-actions.has-cta .cw-btn { flex: 1 1 auto; padding: 0 10px; font-size: 12.5px; }
+  .cw-cta-full { display: none; }
+}
+.cw-cta-short { display: none; }
+@media (max-height: 500px) and (min-width: 560px) { .cw-cta-short { display: inline; } }
+@media (prefers-reduced-motion: reduce) { .cw-card-multi .cw-cols.cw-deck > .cw-col { transition: none; } }
