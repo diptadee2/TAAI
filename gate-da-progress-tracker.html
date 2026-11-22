@@ -3222,6 +3222,20 @@ html .pomo-zen.zen-phone.has-board .pomo-zen-board::before { content: ''; positi
 @media (max-height: 500px) { html.vice-night .pomo-zen.zen-phone .vice-flamingo { display: none; } }
 @media (orientation: portrait) { html .pomo-zen.zen-phone.has-board .pomo-zen-board { flex-shrink: 0; } }
 @media (orientation: portrait) and (max-height: 600px) { .pomo-zen.zen-phone .zb-list:has(+ .zb-you-row) .zb-row:nth-child(n+3) { display: none; } html.vice-night .pomo-zen.zen-phone .vice-flamingo { display: none; } }
+/* 2026-11-22 ("the hours can be in a different colour, and the glass
+   buttons are merging into the background"): gold hours in the phone Top 5,
+   and lighter, clearly outlined round buttons + running Start so they stand
+   off the dark skyline. */
+.pomo-zen.zen-phone .zb-time, .pomo-zen.zen-phone .zb-you-row .zb-time, .pomo-zen.zen-phone .zb-me .zb-time { color: #FCD34D; }
+.pomo-zen.zen-phone .zb-time small { color: #FCD34D; opacity: .7; }
+.pomo-zen-side { background: rgba(58,44,104,.72); color: #fff; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.42), 0 6px 18px rgba(0,0,0,.45); }
+.pomo-zen-side:hover { background: rgba(78,60,136,.82); }
+.pomo-zen-side:disabled { opacity: .45; background: rgba(40,30,72,.6); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.22); }
+html .pomo-zen.is-running .pomo-zen-toggle { background: rgba(58,44,104,.8); box-shadow: inset 0 0 0 2px var(--pomo-g2, #A78BFA), 0 8px 24px rgba(0,0,0,.45); }
+html .pomo-zen.on-break.is-running .pomo-zen-toggle { box-shadow: inset 0 0 0 2px var(--pomo-break-g1, #4ade80), 0 8px 24px rgba(0,0,0,.45); }
+/* Touch screens: while running, idle controls only dim slightly (they used to fade to 12% and vanish into the skyline). */
+@media (hover: none) { .pomo-zen.is-idle.is-running .pomo-zen-top, .pomo-zen.is-idle.is-running .pomo-zen-bottom { opacity: .7; } }
+@media (hover: none) { html .pomo-zen.is-idle.is-running .pomo-zen-board { opacity: .8; } }
 </style>
 </head>
 <body data-float-stack data-nav-no-autohide>
