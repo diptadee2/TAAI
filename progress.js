@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-22-4';
+  var CLIENT_VERSION = '2026-11-22-5';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -4808,6 +4808,25 @@
     var btn = document.getElementById('pomo-zen-open');
     if (btn) btn.focus({ preventScroll: true });
   }
+  // Phones' Top 5: the student's own position under the list when they're
+  // not in the top 5 (2026-11-22: "where is the user's position"). Rank 6-10
+  // comes from today's leaders, beyond that from todayViewerRank; a student
+  // with no focus time yet today gets a nudge instead. Guests get nothing.
+  function zenPhoneYouRow(leaders) {
+    if (!state.student) return '';
+    for (var i = 0; i < Math.min(5, leaders.length); i++) if (leaders[i].is_me) return '';
+    var rank = null, mins = 0, live = false;
+    for (var j = 5; j < leaders.length; j++) if (leaders[j].is_me) { rank = j + 1; mins = leaders[j].total_minutes; live = leaders[j].is_live; }
+    var v = state.todayViewerRank;
+    if (rank === null && v) { rank = v.rank; mins = v.total_minutes; live = v.is_live; }
+    if (rank === null) {
+      return '<div class="zb-you-row zb-you-empty"><span class="zb-rank zb-rank-you">–</span><span class="zb-name">You</span><span class="zb-you-hint">Start a session to join</span></div>';
+    }
+    return '<div class="zb-you-row"><span class="zb-rank zb-rank-you">' + rank + '</span>' +
+      '<span class="zb-dotcell">' + (live ? '<i class="zb-dot" aria-label="Studying now"></i>' : '') + '</span>' +
+      '<span class="zb-name">You</span>' +
+      '<span class="zb-time">' + String(formatHoursDecimal(mins)).replace(/h$/, '<small>h</small>') + '</span></div>';
+  }
   // Today's top 10 on the right of the fullscreen timer (2026-11-19).
   // Redrawn on open and whenever the leaderboard poll brings new numbers.
   function refreshZenBoard() {
@@ -4823,7 +4842,7 @@
       // 2026-11-22 ("can't the top 5 card be better"): a trophy header and
       // gold/silver/bronze rank badges for the top 3.
       box.innerHTML = '<div class="zb-title"><span class="zb-title-main">' +
-          '<svg class="zb-trophy" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5a2 2 0 0 0 2 4h1M16 6h3a2 2 0 0 1-2 4h-1"/><path d="M12 13v4M9 20h6"/></svg>' +
+          '<span class="zb-trophy-tile"><svg class="zb-trophy" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5a2 2 0 0 0 2 4h1M16 6h3a2 2 0 0 1-2 4h-1"/><path d="M12 13v4M9 20h6"/></svg></span>' +
           'Top 5 today</span></div>' +
         '<ol class="zb-list">' + leaders.slice(0, 5).map(function (l, i) {
           return '<li class="zb-row' + (l.is_me ? ' zb-me' : '') + '">' +
@@ -4831,7 +4850,7 @@
             '<span class="zb-dotcell">' + (l.is_live ? '<i class="zb-dot" aria-label="Studying now"></i>' : '') + '</span>' +
             '<span class="zb-name">' + (l.is_me ? 'You' : escapeHtml(l.display_name)) + '</span>' +
             '<span class="zb-time">' + String(formatHoursDecimal(l.total_minutes)).replace(/h$/, '<small>h</small>') + '</span></li>';
-        }).join('') + '</ol>';
+        }).join('') + '</ol>' + zenPhoneYouRow(leaders);
       syncZenCity();
       return;
     }

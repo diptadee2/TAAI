@@ -3191,6 +3191,37 @@ html .pomo-zen.zen-phone.has-board .pomo-zen-board { background: linear-gradient
 @media (orientation: portrait) and (max-width: 600px) {
   html.vice-night .pomo-zen.zen-phone .vt-body, html.vice-night .pomo-zen.zen-phone.has-board .vt-body { height: max(26px, min(calc(var(--zen-city-h, 150px) - 95px), calc(var(--zen-tower-room, 200px) - 70px))); }
 }
+/* Phone Top 5 card, refined (2026-11-22: "the small card as a whole can
+   look better", plus the student's own position under the list). */
+html .pomo-zen.zen-phone.has-board .pomo-zen-board { overflow: hidden; border-radius: 16px; background: linear-gradient(180deg, rgba(36,24,70,.9), rgba(14,9,32,.92)); border: 1px solid rgba(255,255,255,.12); box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 14px 30px rgba(0,0,0,.42); }
+html .pomo-zen.zen-phone.has-board .pomo-zen-board::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: linear-gradient(90deg, var(--pomo-g1, #FF7FB7), var(--pomo-g2, #A78BFA), var(--pomo-g3, #4D8BFF)); opacity: .85; }
+.pomo-zen.zen-phone .zb-title { display: flex; align-items: center; border-bottom: 0; padding-bottom: 6px; margin-bottom: 2px; font-size: 11.5px; letter-spacing: .01em; color: #fff; }
+.pomo-zen.zen-phone .zb-trophy-tile { width: 20px; height: 20px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(160deg, rgba(253,230,138,.28), rgba(245,158,11,.18)); box-shadow: inset 0 0 0 1px rgba(251,191,36,.35); }
+.pomo-zen.zen-phone .zb-list { margin: 0; padding: 0; list-style: none; }
+.pomo-zen.zen-phone .zb-row { border-radius: 8px; margin: 0 -6px; padding-left: 6px !important; padding-right: 6px !important; }
+.pomo-zen.zen-phone .zb-row + .zb-row { box-shadow: 0 -1px 0 rgba(255,255,255,.05); }
+.pomo-zen.zen-phone .zb-row:first-child { background: linear-gradient(90deg, rgba(251,191,36,.14), rgba(251,191,36,0)); }
+.pomo-zen.zen-phone .zb-time { font-variant-numeric: tabular-nums; }
+.pomo-zen.zen-phone .zb-row.zb-me, .pomo-zen.zen-phone .zb-row:first-child.zb-me { background: linear-gradient(90deg, rgba(167,139,250,.32), rgba(167,139,250,.1)); box-shadow: inset 2px 0 0 var(--pomo-g2, #A78BFA); }
+.pomo-zen.zen-phone .zb-me .zb-time { color: #fff; }
+.pomo-zen.zen-phone .zb-you-row { display: grid; grid-template-columns: 17px 7px minmax(0,1fr) auto; gap: 6px; align-items: center; margin: 5px -6px 0; padding: 4px 6px; border-radius: 8px; font-size: 11.5px; background: linear-gradient(90deg, rgba(167,139,250,.32), rgba(167,139,250,.1)); box-shadow: inset 2px 0 0 var(--pomo-g2, #A78BFA); position: relative; }
+.pomo-zen.zen-phone .zb-you-row::before { content: ''; position: absolute; left: 6px; right: 6px; top: -4px; border-top: 1px dashed rgba(255,255,255,.18); }
+.pomo-zen.zen-phone .zb-you-row .zb-name { color: #fff; font-weight: 700; }
+.pomo-zen.zen-phone .zb-you-row .zb-time { color: #fff; font-weight: 700; }
+.pomo-zen.zen-phone .zb-you-row .zb-time small { font-size: .8em; opacity: .6; margin-left: 1px; }
+.pomo-zen.zen-phone .zb-rank-you { width: 17px; height: 17px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800; background: var(--pomo-g2, #A78BFA); color: #120c26; }
+.pomo-zen.zen-phone .zb-you-empty { grid-template-columns: 17px auto minmax(0,1fr); }
+.pomo-zen.zen-phone .zb-you-hint { font-size: 10px; color: rgba(255,255,255,.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
+.pomo-zen.zen-phone .zb-you-row .zb-dot { width: 6px; height: 6px; }
+/* Nothing behind the fullscreen buttons (2026-11-22): upright phones' palms
+   fit the room under the button row like the tower, and the flamingo
+   steps aside on phones held sideways. */
+@media (orientation: portrait) and (max-width: 600px) {
+  html.vice-night .pomo-zen.zen-phone .vice-palm { height: min(calc(var(--zen-city-h, 150px) + 40px), calc(var(--zen-tower-room, 240px) - 4px)); width: calc(min(calc(var(--zen-city-h, 150px) + 40px), calc(var(--zen-tower-room, 240px) - 4px)) * .68); }
+}
+@media (max-height: 500px) { html.vice-night .pomo-zen.zen-phone .vice-flamingo { display: none; } }
+@media (orientation: portrait) { html .pomo-zen.zen-phone.has-board .pomo-zen-board { flex-shrink: 0; } }
+@media (orientation: portrait) and (max-height: 600px) { .pomo-zen.zen-phone .zb-list:has(+ .zb-you-row) .zb-row:nth-child(n+3) { display: none; } html.vice-night .pomo-zen.zen-phone .vice-flamingo { display: none; } }
 </style>
 </head>
 <body data-float-stack data-nav-no-autohide>
