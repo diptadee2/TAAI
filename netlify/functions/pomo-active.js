@@ -75,7 +75,10 @@ export async function handler(event) {
   // accumulating from when it first began).
   const { data: existing, error: readError } = await supabase
     .from('pomo_active_session')
-    .select('mode, total_seconds, phase_started_at, running, phase_end_at, seconds_left, updated_at')
+    // owner_token is read here too (2026-11-22): it used to be a second,
+    // separate read of this same row (a safety net from before the column
+    // existed), which doubled the database requests of every check and save.
+    .select('mode, total_seconds, phase_started_at, running, phase_end_at, seconds_left, updated_at, owner_token')
     .eq('email', email)
     .maybeSingle();
   if (readError) return json(500, { error: readError.message });
@@ -97,11 +100,7 @@ export async function handler(event) {
 
   if (body.action === 'peek' || body.action === 'takeover') {
     const token = typeof body.deviceToken === 'string' ? body.deviceToken.slice(0, 64) : null;
-    let owner = null;
-    try {
-      const { data: o } = await supabase.from('pomo_active_session').select('owner_token').eq('email', email).maybeSingle();
-      owner = o ? o.owner_token : null;
-    } catch (e) { /* treat as unknown owner */ }
+    let owner = existing ? existing.owner_token || null : null;
     const view = (ownedByYou) => {
       if (!existing) return null;
       const st = tsMs(existing.phase_started_at);
@@ -138,24 +137,15 @@ export async function handler(event) {
   // stale tab/device re-syncing its own old idle state can silently
   // clobber a genuinely in-progress session on a DIFFERENT device right
   // before its completion call arrives, wiping out the only server-side
-  // record pomodoro-complete.js verifies elapsed time against. Its own
-  // separate, best-effort query (not added to the `existing` select
-  // above) so a pre-migration "column does not exist" error can never
-  // break the routine sync every Start/Pause/Skip/Reset depends on — the
+  // record pomodoro-complete.js verifies elapsed time against. (This used to
+  // be its own separate query, kept apart from the `existing` select while
+  // the column might not exist yet; the column has long existed, so since
+  // 2026-11-22 it's read with that select instead. Originally the
   // same fault-tolerance discipline as the malpractice freeze check just
-  // above.
+  // above.)
   const deviceToken = typeof body.deviceToken === 'string' && body.deviceToken ? body.deviceToken.slice(0, 100) : null;
-  let existingOwnerToken = null;
-  try {
-    const { data: ownerRow, error: ownerError } = await supabase
-      .from('pomo_active_session')
-      .select('owner_token')
-      .eq('email', email)
-      .maybeSingle();
-    if (!ownerError && ownerRow) existingOwnerToken = ownerRow.owner_token;
-  } catch (e) {
-    console.error('pomo-active.js: owner_token lookup failed for', email, e);
-  }
+  // Read with the row above (2026-11-22); no second query.
+  const existingOwnerToken = existing ? existing.owner_token || null : null;
 
   // Only blocks a write that would actually CHANGE the phase (isNewPhase)
   // while a DIFFERENT device's session is still genuinely active (running,
