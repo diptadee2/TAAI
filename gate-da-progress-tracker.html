@@ -3189,9 +3189,8 @@ html .pomo-zen.zen-phone.has-board .pomo-zen-board { background: linear-gradient
 /* Upright phones: the tower stays under the button row (its sign used to
    sit behind the new Settings button, 2026-11-22). */
 @media (orientation: portrait) and (max-width: 600px) {
-  html.vice-night .pomo-zen.zen-phone .vt-body, html.vice-night .pomo-zen.zen-phone.has-board .vt-body { height: max(60px, calc(var(--zen-city-h, 150px) - 95px)); }
+  html.vice-night .pomo-zen.zen-phone .vt-body, html.vice-night .pomo-zen.zen-phone.has-board .vt-body { height: max(26px, min(calc(var(--zen-city-h, 150px) - 95px), calc(var(--zen-tower-room, 200px) - 70px))); }
 }
-@media (orientation: portrait) and (max-width: 600px) and (max-height: 600px) { html.vice-night .pomo-zen.zen-phone .vice-tower { display: none; } }
 </style>
 </head>
 <body data-float-stack data-nav-no-autohide>

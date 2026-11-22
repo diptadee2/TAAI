@@ -4791,6 +4791,9 @@
     if (!t || window.innerWidth > window.innerHeight) { z.style.removeProperty('--zen-city-h'); return; }
     var free = window.innerHeight - t.getBoundingClientRect().bottom - 14;
     z.style.setProperty('--zen-city-h', Math.round(Math.max(150, Math.min(free, 340))) + 'px');
+    // The real room under the buttons, so the Vice City tower always fits
+    // there, even on the smallest phones (2026-11-22: the theme is the USP).
+    z.style.setProperty('--zen-tower-room', Math.round(Math.max(0, free)) + 'px');
   }
   window.addEventListener('resize', syncZenCity);
   function closePomoZen() {
