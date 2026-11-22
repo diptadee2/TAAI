@@ -110,6 +110,10 @@ export async function handler(event) {
         phaseEndAt: existing.phase_end_at, secondsLeft: existing.seconds_left,
         phaseAgeMs: Number.isFinite(st) ? Math.max(0, Date.now() - st) : null,
         msLeft: msLeftOf(existing),
+        // How long ago the stored record last changed (an age, so device
+        // clocks don't matter). Lets a device tell whether a Reset/Skip made
+        // elsewhere is newer than its own last change (2026-11-22).
+        updatedAgeMs: Number.isFinite(tsMs(existing.updated_at)) ? Math.max(0, Date.now() - tsMs(existing.updated_at)) : null,
         ownedByYou,
         device: tokKind(owner),
       };

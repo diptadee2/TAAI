@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-22-6';
+  var CLIENT_VERSION = '2026-11-22-7';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1109,10 +1109,32 @@
           pomo.phaseStartedAt = st.phaseAgeMs != null ? Date.now() - st.phaseAgeMs : null;
           savePomoActiveLocalOnly();
           updatePomoDisplay();
+        } else if (st && !st.running && !pomo.running && st.totalSeconds && st.secondsLeft === st.totalSeconds &&
+                   st.updatedAgeMs != null && Date.now() - st.updatedAgeMs > lastDeviceWrite() + 1000 &&
+                   (pomo.secondsLeft !== st.secondsLeft || pomo.mode !== st.mode || pomo.totalSeconds !== st.totalSeconds)) {
+          // Reset (or Skip into the next phase) on another device after this
+          // one last changed anything: follow it instead of keeping a stale
+          // paused time here (2026-11-22). Only when the server's record is
+          // newer than this device's own last change, so a pause made here
+          // is never thrown away.
+          pomo.mode = st.mode === 'break' ? 'break' : 'work';
+          pomo.totalSeconds = st.totalSeconds;
+          pomo.secondsLeft = st.secondsLeft;
+          pomo.phaseStartedAt = null;
+          savePomoActiveLocalOnly();
+          updatePomoDisplay();
         }
       }).catch(function () {});
   }
   var PAUSED_POLL_STOP_MS = 10 * 60 * 1000;
+  // When this device last really changed the session (Start/Pause/Reset/
+  // Skip), kept across reloads. Restoring from storage doesn't count.
+  var POMO_LAST_WRITE_KEY = 'taai_pomo_last_write';
+  function lastDeviceWrite() {
+    var stored = 0;
+    try { stored = Number(localStorage.getItem(POMO_LAST_WRITE_KEY)) || 0; } catch (e) { /* none */ }
+    return Math.max(pomoLastLocalWrite, stored);
+  }
   function startOwnerPoll() {
     if (ownerPollTimer) return;
     ownerPollTimer = setInterval(function () {
@@ -1131,6 +1153,7 @@
   function savePomoActiveRemote(payload) {
     if (!state.student) return;
     pomoLastLocalWrite = Date.now();
+    try { localStorage.setItem(POMO_LAST_WRITE_KEY, String(pomoLastLocalWrite)); } catch (e) { /* in-memory only */ }
     if (payload.running || (payload.secondsLeft > 0 && payload.secondsLeft < payload.totalSeconds)) startOwnerPoll();
     // A finished phase whose credit claim hasn't reached the server yet
     // (e.g. the wifi dropped right as it ended): writing the next phase
@@ -1220,6 +1243,12 @@
     // finished phase a pending claim still needs. Its end time has passed,
     // so the server already shows this student as not live.
     if (hasPendingPomoClaims()) return;
+    // Not running and nothing changed here lately: the server already has
+    // this device's last change, and resending it would overwrite anything
+    // done since on another device (2026-11-22: a reload put an old paused
+    // time back over a Reset made on another laptop). A pause pressed just
+    // before the reload is still resent, which is what this beacon is for.
+    if (!pomo.running && Date.now() - lastDeviceWrite() > 30000) return;
     // Real bug, confirmed against production: this used to read
     // pomo.completedSessions directly, but this is the one write path
     // pomoResetSessionsIfNewDay (see its own comment) was never wired
