@@ -2964,6 +2964,16 @@ html.vice-night #focus-card.vice-stage .vt-body { height: 120px; }
   .pomo-zen-center { padding-top: 26px; }
   html.vice-night .pomo-zen .pomo-zen-bottom { margin-bottom: 4px; }
 }
+/* Phone website held sideways (2026-11-22): Safari's toolbars leave only
+   ~320-370px, so the time, gaps and Start get tighter there to keep Start
+   fully on screen, like in the app. */
+@media (max-height: 380px) and (orientation: landscape) {
+  .pomo-zen { padding-top: 12px; padding-bottom: max(10px, env(safe-area-inset-bottom)); }
+  .pomo-zen-center { padding-top: 14px; gap: 10px; }
+  .pomo-zen-time { font-size: min(16vw, 27vh); }
+  .pomo-zen-toggle { height: 46px; padding-top: 0; padding-bottom: 0; }
+  html.vice-night .pomo-zen .pomo-zen-bottom { margin-bottom: 2px; }
+}
 /* Tablet Focus timer tip (2026-11-20). */
 .pomo-tablet-tip { position: relative; z-index: 2; font-size: 12px; color: var(--ink-dim); text-align: center; line-height: 1.5; max-width: 330px; margin: 12px auto 0; padding: 8px 12px; border-radius: 10px; background: rgba(8,6,20,.78); border: 1px solid rgba(255,255,255,.08); }
 .pomo-tablet-tip b { color: var(--ink-dim); font-weight: 600; }
