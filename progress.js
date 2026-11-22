@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-22-7';
+  var CLIENT_VERSION = '2026-11-22-8';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1064,7 +1064,7 @@
     function close() { clearTimeout(t); el.classList.add('is-leaving'); setTimeout(function () { el.remove(); }, 300); }
     el.querySelector('.pan-x').addEventListener('click', close);
   }
-  // Is this device still the one running the session? Asked every 30s while
+  // Is this device still the one running the session? Asked every 15s while
   // a session runs or shows as elsewhere, and whenever the tab comes back.
   function pomoPausedMidway() { return !pomo.running && pomo.secondsLeft > 0 && pomo.secondsLeft < pomo.totalSeconds; }
   function checkPomoOwner(force) {
@@ -1146,7 +1146,7 @@
       // and the server refuses a Start here if another device is running it.
       if (!pomo.running && !state.pomoElsewhere && Date.now() - pomoLastLocalWrite > PAUSED_POLL_STOP_MS) { clearInterval(ownerPollTimer); ownerPollTimer = null; return; }
       checkPomoOwner();
-    }, 30000);
+    }, 15000); // every 15s (was 30s; 2026-11-22, after the single-read merge)
   }
   document.addEventListener('visibilitychange', function () { if (!document.hidden && (state.focus || pomo.running)) checkPomoOwner(true); });
 
