@@ -3244,6 +3244,14 @@ html .pomo-zen.on-break.is-running .pomo-zen-toggle { box-shadow: inset 0 0 0 2p
   .pomo-zen.zen-phone #pomo-zen-time { order: 2; }
   .pomo-zen.zen-phone .pomo-zen-bar { order: 3; }
 }
+/* Phones held sideways: the timer and buttons sit higher, off the road
+   (2026-11-22, "push the clock buttons and the whole thing a bit above"). */
+@media (orientation: landscape) and (max-height: 500px) and (min-height: 361px) {
+  html.vice-night .pomo-zen.zen-phone .pomo-zen-bottom { margin-bottom: 30px; }
+}
+@media (orientation: landscape) and (max-height: 360px) {
+  html.vice-night .pomo-zen.zen-phone .pomo-zen-bottom { margin-bottom: 14px; }
+}
 </style>
 </head>
 <body data-float-stack data-nav-no-autohide>
