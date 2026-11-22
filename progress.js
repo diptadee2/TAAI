@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-22-3';
+  var CLIENT_VERSION = '2026-11-22-4';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1723,7 +1723,7 @@
     if (!sky || !skyline) return;
     var sr = sky.getBoundingClientRect();
     var top = 0;
-    ['#pomo-zen-toggle', '#pomo-zen-sessions', '#pomo-zen-board', '.pomo-zen-bar', '.vt-sign'].forEach(function (s) {
+    ['.pomo-zen-bottom button', '#pomo-zen-sessions', '#pomo-zen-board', '.pomo-zen-bar', '.vt-sign'].forEach(function (s) {
       var e = zen.querySelector(s); if (!e || !e.offsetParent && s !== '#pomo-zen-board') return;
       var r = e.getBoundingClientRect(); if (r.height && r.bottom > top) top = r.bottom;
     });
@@ -3235,7 +3235,7 @@
   // (head travel plus tail) is checked against everything on screen and
   // tried again elsewhere if it would cross any of it.
   function zenCometObstacles(zen) {
-    var sel = '.pomo-zen-clock, .pomo-zen-exit, .pomo-zen-mode, .pomo-zen-time, .pomo-zen-bar, .pomo-zen-sessions, #pomo-zen-toggle, #pomo-zen-board, .zen-hud, ' +
+    var sel = '.pomo-zen-clock, .pomo-zen-exit, .pomo-zen-mode, .pomo-zen-time, .pomo-zen-bar, .pomo-zen-sessions, .pomo-zen-bottom button, #pomo-zen-board, .zen-hud, ' +
       '.vice-skyline, .vice-tower, .vice-palm, .vice-blimp, .vice-road, .vice-edge, .zs-ringed, .zs-gold, .zs-blue';
     return [].filter.call(zen.querySelectorAll(sel), function (e) {
       var cs = getComputedStyle(e);
@@ -4726,7 +4726,15 @@
       '<div class="pomo-zen-bar"><div class="pomo-zen-bar-fill" id="pomo-zen-bar-fill"></div></div>' +
       '<div class="pomo-zen-sessions" id="pomo-zen-sessions"></div>' +
       '</div>' +
-      '<div class="pomo-zen-bottom"><button type="button" class="pomo-zen-toggle" id="pomo-zen-toggle"></button></div>' +
+      // Reset, Start/Pause, Skip and Settings (2026-11-22: on phones the
+      // fullscreen timer is the whole of Focus mode, so it needs them all).
+      '<div class="pomo-zen-bottom">' +
+      '<button type="button" class="pomo-zen-side" id="pomo-zen-reset" aria-label="Reset" title="Reset">' + POMO_ICON_RESET + '</button>' +
+      '<button type="button" class="pomo-zen-toggle" id="pomo-zen-toggle"></button>' +
+      '<button type="button" class="pomo-zen-side" id="pomo-zen-skip" aria-label="Skip">' + POMO_ICON_SKIP + '</button>' +
+      '<button type="button" class="pomo-zen-side pomo-zen-gear" id="pomo-zen-settings" aria-label="Timer settings" title="Timer settings">' +
+      '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>' +
+      '</div>' +
       '<aside class="pomo-zen-board" id="pomo-zen-board" data-clarity-mask="true" aria-label="Today\'s top 10"></aside>';
     document.body.appendChild(el);
     refreshZenBoard();
@@ -4741,6 +4749,17 @@
       if (!state.student && !pomo.running && !focusStartBlocked()) { closePomoZen(); pomoToggleRun(); return; }
       pomoToggleRun();
       updatePomoDisplay();
+    });
+    document.getElementById('pomo-zen-reset').addEventListener('click', function () { pomoReset(); updatePomoZen(); });
+    document.getElementById('pomo-zen-skip').addEventListener('click', function () { pomoSkip(); updatePomoZen(); });
+    // Settings live on the card: leave fullscreen and open the panel there
+    // (it doesn't reopen by itself until Focus mode is left and re-entered).
+    document.getElementById('pomo-zen-settings').addEventListener('click', function () {
+      closePomoZen();
+      var panel = document.getElementById('pomo-settings');
+      if (!panel) return;
+      panel.hidden = false;
+      setTimeout(function () { panel.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 60);
     });
     // Controls fade out after a few seconds without the mouse moving.
     var idleT;
@@ -4854,6 +4873,14 @@
     if (f) f.style.width = (pomo.totalSeconds > 0 ? (1 - pomo.secondsLeft / pomo.totalSeconds) * 100 : 0).toFixed(2) + '%';
     var s = document.getElementById('pomo-zen-sessions');
     if (s) s.textContent = pomoSessionLabel() + ' today'; // fullscreen: the stars live in the top-right HUD, like the game
+    var sk = document.getElementById('pomo-zen-skip');
+    if (sk) {
+      var noSkip = pomo.mode === 'work';
+      if (sk.disabled !== noSkip) {
+        sk.disabled = noSkip;
+        sk.title = noSkip ? 'Skip works during breaks only. Skipping a Focus session gives no credit.' : 'Skip break';
+      }
+    }
     var b = document.getElementById('pomo-zen-toggle');
     var runState = pomo.running ? 'run' : 'stop';
     if (b && b.getAttribute('data-state') !== runState) {

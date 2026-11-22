@@ -3166,6 +3166,32 @@ html .pomo-zen.zen-phone.has-board .pomo-zen-board { background: linear-gradient
   .pomo-zen.zen-phone .pomo-zen-sessions { padding: 3px 12px; border-radius: 999px; background: rgba(10,6,24,.62); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); color: rgba(255,255,255,.72); font-size: 12.5px; }
   .pomo-zen.zen-phone .pomo-zen-bar { height: 5px; background: rgba(255,255,255,.16); box-shadow: 0 0 0 3px rgba(10,6,24,.55); }
 }
+/* Reset, Skip and Settings beside Start in the fullscreen timer (2026-11-22). */
+.pomo-zen .pomo-zen-bottom { gap: 14px; }
+.pomo-zen-side { flex: none; width: 46px; height: 46px; border-radius: 50%; border: 0; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; color: rgba(255,255,255,.88); background: rgba(16,10,34,.62); box-shadow: inset 0 0 0 1px rgba(255,255,255,.2), 0 6px 18px rgba(0,0,0,.3); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); transition: transform .18s cubic-bezier(.34,1.56,.64,1), background-color .2s, opacity .2s; }
+.pomo-zen-side svg { width: 17px; height: 17px; }
+.pomo-zen-side:hover { background: rgba(32,22,62,.78); }
+.pomo-zen-side:active { transform: scale(.9); transition-duration: .08s; }
+.pomo-zen-side:disabled { opacity: .32; cursor: not-allowed; }
+.pomo-zen-side:disabled:active { transform: none; }
+.pomo-zen-side:focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; }
+.pomo-zen .pomo-zen-gear { margin-left: 10px; }
+@media (max-width: 600px), (max-height: 500px) {
+  .pomo-zen .pomo-zen-bottom { gap: 10px; }
+  .pomo-zen-side { width: 42px; height: 42px; }
+  .pomo-zen .pomo-zen-gear { margin-left: 4px; }
+}
+@media (max-width: 360px) {
+  .pomo-zen .pomo-zen-bottom { gap: 7px; }
+  .pomo-zen-side { width: 38px; height: 38px; }
+  .pomo-zen .pomo-zen-toggle { padding-right: 18px; }
+}
+/* Upright phones: the tower stays under the button row (its sign used to
+   sit behind the new Settings button, 2026-11-22). */
+@media (orientation: portrait) and (max-width: 600px) {
+  html.vice-night .pomo-zen.zen-phone .vt-body, html.vice-night .pomo-zen.zen-phone.has-board .vt-body { height: max(60px, calc(var(--zen-city-h, 150px) - 95px)); }
+}
+@media (orientation: portrait) and (max-width: 600px) and (max-height: 600px) { html.vice-night .pomo-zen.zen-phone .vice-tower { display: none; } }
 </style>
 </head>
 <body data-float-stack data-nav-no-autohide>
