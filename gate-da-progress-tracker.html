@@ -3236,6 +3236,14 @@ html .pomo-zen.on-break.is-running .pomo-zen-toggle { box-shadow: inset 0 0 0 2p
 /* Touch screens: while running, idle controls only dim slightly (they used to fade to 12% and vanish into the skyline). */
 @media (hover: none) { .pomo-zen.is-idle.is-running .pomo-zen-top, .pomo-zen.is-idle.is-running .pomo-zen-bottom { opacity: .7; } }
 @media (hover: none) { html .pomo-zen.is-idle.is-running .pomo-zen-board { opacity: .8; } }
+/* Phones held sideways: the sessions line moves up under FOCUS so the
+   area above the buttons isn't crowded (2026-11-22). */
+@media (orientation: landscape) and (max-height: 500px) {
+  .pomo-zen.zen-phone #pomo-zen-mode { order: 0; }
+  .pomo-zen.zen-phone #pomo-zen-sessions { order: 1; margin-top: -6px; padding: 0; background: none; -webkit-backdrop-filter: none; backdrop-filter: none; color: rgba(255,255,255,.62); font-size: 12px; letter-spacing: .02em; }
+  .pomo-zen.zen-phone #pomo-zen-time { order: 2; }
+  .pomo-zen.zen-phone .pomo-zen-bar { order: 3; }
+}
 </style>
 </head>
 <body data-float-stack data-nav-no-autohide>
