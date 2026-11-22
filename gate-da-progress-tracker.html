@@ -3279,6 +3279,60 @@ html .pomo-zen.on-break.is-running .pomo-zen-toggle { box-shadow: inset 0 0 0 2p
 .pomo-zen.zen-phone > *:not(.pomo-zen-sky) { animation: zen-phone-content-in .3s ease-out both; }
 @keyframes zen-phone-content-in { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .pomo-zen.zen-phone > *:not(.pomo-zen-sky) { animation: none; } }
+/* 2 AM Club on phones, tidied (2026-11-22, "too clumsy in some").
+   Upright: the moon sits small beside "The 2 AM Club" instead of taking a
+   column (the text was squeezed into a narrow strip), the three prizes are
+   one even row, the button is full width, everything on one left edge.
+   Up to 700px wide, so iPhone SE held sideways gets it too. */
+@media (max-width: 700px) {
+  .club-banner.club-banner--main { display: grid; grid-template-columns: 34px 1fr; column-gap: 10px; row-gap: 0; align-items: center; padding: 18px 18px 18px; }
+  .club-banner--main .club-text { display: contents; }
+  .club-banner--main .club-sky { grid-column: 1 / -1; }
+  .club-banner--main .club-crescent-tile { grid-column: 1; grid-row: 1; width: 34px; height: 34px; }
+  .club-banner--main .club-crescent { width: 17px; height: 17px; box-shadow: 5px 3px 0 0 #f3e5b5; transform: translate(-3px, -2px) rotate(-18deg); }
+  .club-banner--main .club-name { grid-column: 2; grid-row: 1; padding-right: 30px; position: relative; }
+  .club-banner--main .club-head, .club-banner--main .club-sub, .club-banner--main .club-note, .club-banner--main .club-actions { grid-column: 1 / -1; position: relative; }
+  .club-banner--main .club-head { font-size: 21px; margin-top: 10px; }
+  .club-banner--main .club-sub { font-size: 14px; margin-top: 6px; }
+  .club-banner--main .club-note { display: block; margin-top: 12px; }
+  .club-banner--main .club-pills { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; width: 100%; margin-top: 7px; }
+  .club-banner--main .club-pill { text-align: center; padding: 6px 2px; font-size: 13px; }
+  .club-banner--main .club-actions { width: auto; flex-direction: column; align-items: stretch; gap: 8px; margin-top: 16px; }
+  .club-banner--main .club-join { width: 100%; }
+  .club-banner--main .club-when { text-align: center; }
+  .club-banner--main .club-close { top: 10px; right: 8px; }
+}
+@media (min-width: 601px) and (max-width: 700px) {
+  .club-banner--main .club-pills { max-width: 440px; }
+  .club-banner--main .club-actions { flex-direction: row; align-items: center; gap: 14px; }
+  .club-banner--main .club-join { width: auto; }
+}
+@media (max-width: 340px) { .club-banner--main .club-pill { font-size: 11.5px; } .club-banner--main .club-head { font-size: 19px; } }
+/* Phones held sideways (wider than 700px): a smaller moon, closer to the text. */
+@media (orientation: landscape) and (max-height: 500px) and (min-width: 701px) {
+  .club-banner--main { gap: 16px; }
+  .club-banner--main .club-crescent-tile { width: 46px; height: 46px; }
+  .club-banner--main .club-crescent { width: 23px; height: 23px; box-shadow: 7px 4px 0 0 #f3e5b5; }
+}
+/* The "How to join" window on short screens: wider, tighter, slim prize
+   row, and Close / Open LinkedIn pinned to the bottom so they're always
+   visible while the text scrolls. Pinned buttons on all phones. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .about-modal.club-modal { width: min(640px, 100%); max-height: calc(100vh - 16px); padding: 14px 22px 0; }
+  .about-modal-backdrop:has(.club-modal) { padding: 8px 16px; }
+  .club-modal .club-modal-head { margin-bottom: 8px; }
+  .club-modal .club-icon svg { width: 22px; height: 22px; }
+  .club-modal .club-modal-title { font-size: 16px; }
+  .club-modal .club-modal-p { font-size: 13px; line-height: 1.5; margin-bottom: 8px; }
+  .club-modal .club-prizes { margin: 10px 0 12px; }
+  .club-modal .club-prizes div { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px; }
+  .club-modal .club-prizes span { display: inline; font-size: 15px; }
+  .club-modal .club-prizes b { display: inline; margin: 0; font-size: 14px; }
+}
+@media (max-width: 600px), (orientation: landscape) and (max-height: 500px) {
+  .about-modal.club-modal { padding-bottom: 0; }
+  .club-modal .about-modal-actions { position: sticky; bottom: 0; margin: 12px -22px 0; padding: 10px 22px 12px; background: var(--card); border-top: 1px solid var(--line); }
+}
 </style>
 </head>
 <body data-float-stack data-nav-no-autohide>
