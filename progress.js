@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-21-6';
+  var CLIENT_VERSION = '2026-11-22-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -4731,7 +4731,12 @@
     document.body.appendChild(el);
     refreshZenBoard();
     document.body.classList.add('pomo-zen-active');
-    document.getElementById('pomo-zen-exit').addEventListener('click', closePomoZen);
+    // Phones: Focus mode is the fullscreen timer, so Exit leaves Focus mode
+    // altogether and lands on the tracker page (direct request 2026-11-22).
+    document.getElementById('pomo-zen-exit').addEventListener('click', function () {
+      closePomoZen();
+      if (isPhoneDevice() && state.focus) exitFocus();
+    });
     document.getElementById('pomo-zen-toggle').addEventListener('click', function () {
       if (!state.student && !pomo.running && !focusStartBlocked()) { closePomoZen(); pomoToggleRun(); return; }
       pomoToggleRun();
