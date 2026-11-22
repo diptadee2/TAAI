@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-22-5';
+  var CLIENT_VERSION = '2026-11-22-6';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1112,11 +1112,17 @@
         }
       }).catch(function () {});
   }
+  var PAUSED_POLL_STOP_MS = 10 * 60 * 1000;
   function startOwnerPoll() {
     if (ownerPollTimer) return;
     ownerPollTimer = setInterval(function () {
       if (document.hidden) return;
       if (!pomo.running && !state.pomoElsewhere && !pomoPausedMidway()) { clearInterval(ownerPollTimer); ownerPollTimer = null; return; }
+      // Paused for 10+ minutes and left open: stop asking (2026-11-22). The
+      // paused time is already on the server, so other devices still pick it
+      // up; this device checks again whenever it's brought back to the front,
+      // and the server refuses a Start here if another device is running it.
+      if (!pomo.running && !state.pomoElsewhere && Date.now() - pomoLastLocalWrite > PAUSED_POLL_STOP_MS) { clearInterval(ownerPollTimer); ownerPollTimer = null; return; }
       checkPomoOwner();
     }, 30000);
   }
