@@ -349,6 +349,16 @@
   // mix of rectangles, dots and thin streamers, and a fade at the end. Sharp
   // on retina, frame-rate independent, finite (removes its canvas). Skipped
   // under reduced motion.
+  // Keeps the drawing the same size as the canvas on screen. Safari's
+  // toolbars resize the viewport mid-animation on sideways phones, which
+  // used to stretch a fixed-size drawing and flatten the stars (2026-11-22).
+  function fitCanvas(canvas, ctx, dpr) {
+    var w = canvas.clientWidth || window.innerWidth, h = canvas.clientHeight || window.innerHeight;
+    var bw = Math.round(w * dpr), bh = Math.round(h * dpr);
+    if (canvas.width !== bw || canvas.height !== bh) { canvas.width = bw; canvas.height = bh; }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { w: w, h: h };
+  }
   function confetti() {
     if (reduced()) return;
     var W = window.innerWidth, H = window.innerHeight;
@@ -359,7 +369,7 @@
     canvas.height = Math.round(H * dpr);
     document.body.appendChild(canvas);
     var ctx = canvas.getContext('2d');
-    ctx.scale(dpr, dpr);
+    var sz = fitCanvas(canvas, ctx, dpr); W = sz.w; H = sz.h;
     var colors = ['#8B5CF6', '#A78BFA', '#FF7FB7', '#4D8BFF', '#FBBF24', '#34D399', '#FFFFFF'];
     var particles = [];
     var GRAVITY = 0.36, DRAG = 0.985, MAX_FALL = 3.2;
@@ -394,6 +404,7 @@
       if (start === null) { start = ts; last = ts; }
       var dt = Math.min(3, (ts - last) / 16.67);
       last = ts;
+      var fz = fitCanvas(canvas, ctx, dpr); W = fz.w; H = fz.h;
       ctx.clearRect(0, 0, W, H);
       particles = particles.filter(function (p) { return p.life < p.ttl && p.y < H + 60; });
       for (var i = 0; i < particles.length; i++) {
@@ -443,7 +454,7 @@
     canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
     document.body.appendChild(canvas);
     var ctx = canvas.getContext('2d');
-    ctx.scale(dpr, dpr);
+    var sz = fitCanvas(canvas, ctx, dpr); W = sz.w; H = sz.h;
     var GOLDS = ['#FDE68A', '#FBBF24', '#F59E0B', '#FFF7D6', '#FFFFFF', '#FCD34D'];
     var rockets = [], sparks = [], stars = [];
     var small = W < 600;
@@ -482,6 +493,7 @@
       if (start === null) { start = ts; last = ts; }
       var t = ts - start, dt = Math.min(3, (ts - last) / 16.67), ms = dt * 16.67;
       last = ts;
+      var fz = fitCanvas(canvas, ctx, dpr); W = fz.w; H = fz.h;
       ctx.clearRect(0, 0, W, H);
       ctx.globalCompositeOperation = 'lighter';
       rockets.forEach(function (r) {
