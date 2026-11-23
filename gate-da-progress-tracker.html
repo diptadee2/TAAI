@@ -3379,6 +3379,19 @@ html .pomo-zen.zen-phone.has-board .pomo-zen-board::before { height: 1.5px; opac
 .pomo-zen.zen-phone .zb-you-row::before { border-top-style: solid; border-top-color: rgba(255,255,255,.08); }
 .pomo-zen.zen-phone .zb-rank-you:not(#_) { width: 16px; height: 16px; font-size: 8.5px; background: var(--pomo-g2, #A78BFA); color: #120c26; }
 </style>
+<style>
+/* Shorter nav on laptops/desktops (full nav only), matching the other pages'
+   66px nav under the Mini FLT strip (2026-11-23, direct request). The narrow
+   laptop range keeps its own smaller logo. */
+@media (min-width:1025px) and (pointer:fine), (min-width:1301px) {
+  .nav-inner:not(#_) { height: 66px; }
+  .nav-spacer:not(#_) { height: 66px; }
+  .mobile-menu:not(#_) { top: 66px; }
+}
+@media (min-width:1280px) and (pointer:fine), (min-width:1301px) {
+  .nav-logo svg:not(#_), .nav-logo img:not(#_) { width: 150px; }
+}
+</style>
 </head>
 <body data-float-stack data-nav-no-autohide>
 
