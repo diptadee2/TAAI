@@ -7,6 +7,7 @@
 // paints (so the page doesn't jump down when the strip appears). The whole
 // strip is one link to the test. Topics, link and on/off come from /team
 // (Site data > Settings > Free Mini FLT promo) via /api/site-settings-public;
+// A tap opens the Mini FLT card (/mini-flt-popup.js, loaded on all six pages).
 // switched off, the strip is removed and the scroll progress bar is back.
 // MINI_FLT_DEFAULT is a hand copy of netlify/functions/lib/mini-flt.js.
 (function () {
@@ -65,6 +66,16 @@
       bar.className = 'mft';
       bar.setAttribute('aria-label', 'Free All India Mini FLT is live: ' + m.topics.join(', ') + '. Take the free test');
       document.body.insertBefore(bar, document.body.firstChild);
+      // A tap opens the Mini FLT card full screen first (2026-11-23, direct
+      // request); its "Take the free test" button then goes to the test.
+      // Ctrl/Cmd/middle clicks, or no popup script on the page, still follow
+      // the link directly.
+      bar.addEventListener('click', function (e) {
+        if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        if (!window.TAAIMiniFlt || !window.TAAIMiniFlt.show) return;
+        e.preventDefault();
+        window.TAAIMiniFlt.show(last);
+      });
     }
     bar.href = m.url;
     // Enough copies to fill twice the screen width, so the loop never shows a gap.
