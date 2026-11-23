@@ -156,17 +156,22 @@
 
   window.TAAIMiniFlt = { show: show, close: close, fetchSettings: fetchSettings, DEFAULT: MINI_FLT_DEFAULT };
 
-  // data-auto: every page load, 1.8s after the page opens; waits while the
-  // phone menu or another dialog is open, or the tab is in the background.
+  // data-auto: 1.8s after the page opens; waits while the phone menu or
+  // another dialog is open, or the tab is in the background.
+  // data-once="name" (2026-11-23, home and test series): shown only once per
+  // browser on that page (localStorage taai_mini_flt_popup_seen:<name>);
+  // without it, every page load.
   var me = document.currentScript;
-  if (me && me.hasAttribute('data-auto')) {
+  var onceKey = me && me.getAttribute('data-once') ? 'taai_mini_flt_popup_seen:' + me.getAttribute('data-once') : null;
+  function seenOnce() { try { return !!onceKey && localStorage.getItem(onceKey) === '1'; } catch (e) { return false; } }
+  if (me && me.hasAttribute('data-auto') && !seenOnce()) {
     fetchSettings().then(function (m) {
       if (!usable(m)) return;
       var tries = 0;
       function attempt() {
         var busy = document.hidden || document.querySelector('.mobile-menu.open, [aria-modal="true"]');
         if (busy && tries++ < 120) { setTimeout(attempt, 1000); return; }
-        if (!busy) show(m);
+        if (!busy && !seenOnce() && show(m) && onceKey) { try { localStorage.setItem(onceKey, '1'); } catch (e) { /* fine */ } }
       }
       setTimeout(attempt, 1800);
     });

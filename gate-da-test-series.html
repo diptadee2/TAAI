@@ -1978,8 +1978,57 @@ html body #root .ts-testi-card:hover:not(#_) { transform: none !important; trans
 html body #root .trust-item:hover:not(#_) { transform: none !important; translate: none !important; box-shadow: 6px 6px 0 #111 !important; filter: none !important; }
 html body #root .ts-included-note:not(#_), html body #root .ts-included-note:hover:not(#_) { box-shadow: none !important; transform: none !important; }
 </style>
-<!-- Free Mini FLT popup on every page load (2026-11-23); settings from /team. -->
-<script src="/mini-flt-popup.js" data-auto defer></script>
+<style>
+/* Free All India Mini FLT banner (2026-11-23). The colours are literal on
+   purpose: it keeps one look on every page. Selectors use :not(#_) to win
+   over the pages' neo-brutalist layers. */
+.mflt-section:not(#_){padding:56px 0 64px;background:#FFF6DE}
+.mflt:not(#_){position:relative;background:#FFE14D;border:3px solid #111;box-shadow:8px 8px 0 #111;padding:32px 36px;margin-top:30px;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:36px;align-items:center;color:#111;text-align:left;border-radius:0}
+.mflt-tag{display:inline-flex;gap:8px;align-items:center;background:#111;color:#FFE14D;font-family:'DM Mono',ui-monospace,monospace;font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding:5px 10px}
+.mflt-tag i{width:8px;height:8px;border-radius:50%;background:#E5372C;animation:mflt-blink 1.4s infinite}
+@keyframes mflt-blink{50%{opacity:.25}}
+.mflt .mflt-h:not(#_){font-family:'Poppins',Arial,sans-serif;font-size:clamp(28px,3.6vw,44px);line-height:1.08;margin:14px 0 16px;font-weight:700;color:#111;max-width:17ch;text-wrap:balance;letter-spacing:-.01em}
+.mflt .mflt-h span{background:#fff;border:3px solid #111;padding:0 8px;display:inline-block;transform:rotate(-1.5deg)}
+.mflt .mflt-lede:not(#_){font-size:16px;line-height:1.55;font-weight:500;max-width:46ch;margin:0 0 24px;color:#111}
+.mflt-cta{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px}
+.mflt .mflt-btn:not(#_){display:inline-flex;align-items:center;gap:10px;background:#111;color:#fff;text-decoration:none;font-weight:700;font-size:16px;padding:14px 22px;border:3px solid #111;box-shadow:4px 4px 0 #fff;border-radius:0;transition:transform .12s,box-shadow .12s}
+.mflt .mflt-btn:not(#_):hover{transform:translate(2px,2px);box-shadow:2px 2px 0 #fff}
+.mflt .mflt-btn:focus-visible{outline:3px solid #FF9EC7;outline-offset:3px}
+.mflt-sub{font-size:13.5px;font-weight:600}
+.mflt-paper{background:#fff;border:3px solid #111;box-shadow:6px 6px 0 #111;padding:18px 20px 20px;transform:rotate(1.5deg);margin-top:20px;min-width:0}
+.mflt-paper-head{display:flex;gap:10px;align-items:center;padding-right:70px;border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:6px}
+.mflt-paper-head b{font-size:18px;font-weight:700}
+.mflt-paper-head span{font-family:'DM Mono',ui-monospace,monospace;font-size:12px;border:2px solid #111;padding:2px 8px}
+.mflt-paper-head em{font-style:normal;font-family:'DM Mono',ui-monospace,monospace;font-size:11px;text-transform:uppercase;color:#D42E22;letter-spacing:.06em}
+.mflt-qs{list-style:none;margin:0 0 16px;padding:0}
+.mflt-qs li{display:grid;grid-template-columns:28px 128px minmax(0,1fr);gap:10px;align-items:center;padding:7px 0;border-bottom:1px dashed #bbb}
+.mflt-qn{font-family:'DM Mono',ui-monospace,monospace;font-size:12px;font-weight:500}
+.mflt-qt{font-size:11.5px;font-weight:700;border:2px solid #111;padding:2px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.mflt-ql{display:flex;flex-direction:column;gap:5px;min-width:0}
+.mflt-ql i{display:block;height:6px;background:#e3e3e3;border-radius:3px}
+.mflt-pink{background:#FF9EC7}.mflt-sky{background:#9ED8FF}.mflt-lime{background:#C8F169}.mflt-orange{background:#FFB36B}.mflt-lilac{background:#C9B6FF}.mflt-yellow{background:#FFE14D}
+.mflt .mflt-topics-h:not(#_){margin:0 0 8px;font-family:'DM Mono',ui-monospace,monospace;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#111}
+.mflt-topics{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.mflt-topics li{display:inline-flex;align-items:center;gap:7px;background:#fff;border:2px solid #111;padding:4px 9px;font-size:13px;font-weight:700;color:#111}
+.mflt-topics i{width:12px;height:12px;border:1.5px solid #111;box-sizing:border-box}
+.mflt-free{position:absolute;top:-42px;right:-30px;width:156px;height:156px;transform:rotate(12deg);z-index:2;pointer-events:none}
+.mflt-free > span{position:absolute;inset:0;clip-path:polygon(50.0% 0.0%,57.3% 8.6%,67.1% 3.0%,71.0% 13.6%,82.1% 11.7%,82.2% 23.0%,93.3% 25.0%,89.5% 35.6%,99.2% 41.3%,92.0% 50.0%,99.2% 58.7%,89.5% 64.4%,93.3% 75.0%,82.2% 77.0%,82.1% 88.3%,71.0% 86.4%,67.1% 97.0%,57.3% 91.4%,50.0% 100.0%,42.7% 91.4%,32.9% 97.0%,29.0% 86.4%,17.9% 88.3%,17.8% 77.0%,6.7% 75.0%,10.5% 64.4%,0.8% 58.7%,8.0% 50.0%,0.8% 41.3%,10.5% 35.6%,6.7% 25.0%,17.8% 23.0%,17.9% 11.7%,29.0% 13.6%,32.9% 3.0%,42.7% 8.6%)}
+.mflt-fs{background:#111;transform:translate(6px,6px)}
+.mflt-fb{background:#111}
+.mflt-free .mflt-fi{inset:5px;background:#FF9EC7;display:flex;align-items:center;justify-content:center;font-family:'Poppins',Arial,sans-serif;font-size:42px;font-weight:700;color:#111;letter-spacing:-.01em}
+@media (max-width:1320px){.mflt-free{right:-10px}}
+@media (max-width:900px){.mflt:not(#_){grid-template-columns:1fr;gap:28px;padding:26px 22px}.mflt-paper{margin-top:0}.mflt-paper-head{padding-right:0}}
+@media (max-width:600px){
+  .mflt-section:not(#_){padding:40px 0 48px}
+  .mflt-free{width:104px;height:104px;top:-34px;right:-2px}.mflt-free .mflt-fi{font-size:27px}
+  .mflt-tag{max-width:calc(100% - 96px)}
+  .mflt .mflt-btn:not(#_){width:100%;justify-content:center;box-sizing:border-box}
+  .mflt-qs li{grid-template-columns:22px 122px minmax(0,1fr);gap:8px}.mflt-qt{font-size:10px;padding:2px 4px}
+}
+@media (prefers-reduced-motion:reduce){.mflt-tag i{animation:none}.mflt .mflt-btn:not(#_){transition:none}}
+</style>
+<!-- Free Mini FLT popup, once per browser on this page (2026-11-23); settings from /team. -->
+<script src="/mini-flt-popup.js" data-auto data-once="test-series" defer></script>
 </head>
 <body data-float-stack>
 <div id="root"></div>
@@ -3165,6 +3214,65 @@ class ErrorBoundary extends React.Component {
   }
 }
 
+// Free All India Mini FLT card (2026-11-23), right below the hero on the test
+// series page, alongside the once-per-browser popup (/mini-flt-popup.js). Topics, test link and the
+// on/off switch come from /team (site_settings.mini_flt via
+// /api/site-settings-public); MINI_FLT_DEFAULT is a hand copy of
+// netlify/functions/lib/mini-flt.js and shows until the settings load, so the
+// banner doesn't pop in late.
+const MINI_FLT_DEFAULT = {
+  enabled: true,
+  topics: ['Linear Algebra', 'Python', 'Machine Learning'],
+  url: 'https://learn.taai.live/learn/home/Mixed-Subject-Wise-Test/section/766425/lesson/4936517?embedPlayer=1&disableLessonChange=true&visitorFlow=true',
+};
+const _mfltFetch = (typeof _siteSettingsFetch !== 'undefined')
+  ? _siteSettingsFetch
+  : fetch('/api/site-settings-public').then(r => r.json()).catch(() => ({}));
+const MFLT_TONES = ['pink', 'sky', 'lime', 'orange', 'lilac', 'yellow'];
+const MFLT_LINES = [[78, 52], [64], [82, 40], [58], [70, 46], [75]];
+function MiniFltBanner() {
+  const [m, setM] = React.useState(MINI_FLT_DEFAULT);
+  React.useEffect(() => { _mfltFetch.then(d => { if (d && d.miniFlt) setM(d.miniFlt); }); }, []);
+  if (!m || !m.enabled || !m.url || !(m.topics && m.topics.length)) return null;
+  const n = m.topics.length;
+  // Six sample questions with the topics shuffled, so the paper reads as mixed.
+  const rows = MFLT_LINES.map((lines, i) => ({ t: (i * (n > 2 ? 2 : 1) + Math.floor(i / n)) % n, lines }));
+  return (
+    <section className="mflt-section" id="mini-flt">
+      <div className="container">
+        <div className="mflt fade-in">
+          <div className="mflt-main">
+            <span className="mflt-tag"><i aria-hidden="true"></i>Live now · All India · Free</span>
+            <h2 className="mflt-h">Take the <span>Mini FLT</span> free, and see where you stand.</h2>
+            <p className="mflt-lede">Every Mini FLT is one 90-minute paper that mixes questions from a few subjects, the way the real GATE DA paper does. More are on the way, each with its own mix of subjects.</p>
+            <div className="mflt-cta">
+              <a className="mflt-btn" href={m.url}>Take the free test <span aria-hidden="true">→</span></a>
+              <span className="mflt-sub">No payment needed.</span>
+            </div>
+          </div>
+          <div className="mflt-paper">
+            <div className="mflt-paper-head"><b>Mini FLT</b><span>90 min</span><em>Live now</em></div>
+            <ol className="mflt-qs" aria-hidden="true">
+              {rows.map((r, i) => (
+                <li key={i}>
+                  <span className="mflt-qn">Q{i + 1}</span>
+                  <span className={'mflt-qt mflt-' + MFLT_TONES[r.t % MFLT_TONES.length]}>{m.topics[r.t]}</span>
+                  <span className="mflt-ql">{r.lines.map((w, j) => <i key={j} style={{ width: w + '%' }}></i>)}</span>
+                </li>
+              ))}
+            </ol>
+            <p className="mflt-topics-h">Topics in the live test</p>
+            <ul className="mflt-topics">
+              {m.topics.map((t, i) => <li key={i}><i className={'mflt-' + MFLT_TONES[i % MFLT_TONES.length]} aria-hidden="true"></i>{t}</li>)}
+            </ul>
+          </div>
+          <div className="mflt-free" aria-hidden="true"><span className="mflt-fs"></span><span className="mflt-fb"></span><span className="mflt-fi">FREE</span></div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function App() {
   const [pricingMap, setPricingMap] = React.useState({});
 
@@ -3207,6 +3315,7 @@ function App() {
       <Nav />
       <div className="nav-spacer" />
       <Hero />
+      <MiniFltBanner />
       <TSPricing pricingMap={pricingMap} />
       <Breakdown />
       <Features />
