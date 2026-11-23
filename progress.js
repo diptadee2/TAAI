@@ -1002,6 +1002,10 @@
     var d = state.pomoElsewhere && state.pomoElsewhere.device;
     var n = d && POMO_DEVICE_NAMES[d];
     if (!n) return 'another device';
+    // Two laptops look the same as two browsers on ONE laptop (each browser
+    // has its own storage, so the site can't tell them apart), so don't claim
+    // "your other laptop" (2026-11-23, from a screenshot of exactly that).
+    if (d === 'laptop' && pomoDeviceKind() === 'laptop') return 'another browser or laptop';
     return 'your ' + (d === pomoDeviceKind() ? 'other ' : '') + n;
   }
   function renderPomoElsewhereGateHtml() {
