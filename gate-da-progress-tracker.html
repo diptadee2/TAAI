@@ -3348,6 +3348,9 @@ html .pomo-zen.is-elsewhere.on-break .pomo-zen-switch:not(#_) { background: var(
 .pomo-zen-else-note { margin: 0; font-size: 12.5px; color: rgba(255,255,255,.78); text-shadow: 0 1px 6px rgba(0,0,0,.8); }
 .pomo-zen.is-elsewhere .pomo-zen-mode { color: #FCD34D; }
 .pomo-zen.is-elsewhere .pomo-zen-time { opacity: .9; }
+/* Smaller time here: it's the other device's session, not this phone's (2026-11-23). */
+.pomo-zen.zen-phone.is-elsewhere .pomo-zen-time:not(#_) { font-size: min(15vw, 8vh); }
+@media (orientation: landscape) and (max-height: 500px) { .pomo-zen.zen-phone.is-elsewhere .pomo-zen-time:not(#_) { font-size: min(10vw, 18vh); } }
 @media (orientation: landscape) and (max-height: 500px) { .pomo-zen.is-elsewhere .pomo-zen-else { gap: 5px; } .pomo-zen-else-note { font-size: 11.5px; } }
 </style>
 </head>
