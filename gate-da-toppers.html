@@ -1206,22 +1206,15 @@ html.has-mft .mobile-menu{margin-top:34px}
 html.has-mft body.nav-autohidden .nav{transform:translateY(calc(-100% - 34px))}
 html.has-mft body::before{content:'';position:fixed;top:0;left:0;right:0;height:34px;background:#FFE14D;border-bottom:2px solid #111;box-sizing:border-box;z-index:59}
 html.has-mft body.nav-autohidden::before{transform:translateY(-100%)}
-/* With the strip: a shorter nav on laptops/desktops (full nav only), and one
-   Sign In button with Sign Up dropping down under it on hover (2026-11-23). */
+/* With the strip: a shorter nav on laptops/desktops (full nav only), 2026-11-23.
+   (A one-button Sign In with Sign Up on hover was tried and taken back the same day.) */
 @media (min-width:1025px) and (pointer:fine), (min-width:1301px) {
   html.has-mft .nav-inner{height:66px!important}
   html.has-mft .nav-spacer{height:66px!important}
   html.has-mft .mobile-menu{top:66px!important}
-  html.has-mft .nav-logo svg, html.has-mft .nav-logo img{width:150px!important}
 }
-@media (min-width:1025px) and (hover:hover) and (pointer:fine) {
-  html.has-mft .nav-cta{position:relative}
-  html.has-mft .nav-cta .btn-nav-signup{position:absolute!important;left:0;top:calc(100% + 10px);min-width:var(--mft-signin-w,106px);justify-content:center;opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .18s ease,transform .18s ease,visibility 0s linear .18s!important;z-index:5}
-  html.has-mft .nav-cta .btn-nav-signup::before{content:'';position:absolute;left:0;right:0;top:-14px;height:14px}
-  html.has-mft .nav-cta .btn-nav-signin:hover ~ .btn-nav-signup,
-  html.has-mft .nav-cta .btn-nav-signup:hover,
-  html.has-mft .nav-cta .btn-nav-signup:focus-visible,
-  html.has-mft .nav-cta .btn-nav-signin:focus-visible ~ .btn-nav-signup{opacity:1;visibility:visible;transform:none;transition:opacity .18s ease,transform .18s ease,visibility 0s!important}
+@media (min-width:1280px) and (pointer:fine), (min-width:1301px) {
+  html.has-mft .nav-logo svg, html.has-mft .nav-logo img{width:150px!important}
 }
 html.has-mft body::before{transition:transform .28s cubic-bezier(.4,0,1,1)}
 </style>
