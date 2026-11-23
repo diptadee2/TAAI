@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-23-2';
+  var CLIENT_VERSION = '2026-11-23-3';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -788,6 +788,30 @@
     }
   }
 
+  // The identity the SERVER sees: one per browser, shared by all its tabs
+  // (2026-11-23). Tabs of one browser already coordinate among themselves
+  // (driver/follower below, by the per-tab token), so the server shouldn't
+  // treat them as different devices. Real bug: pausing in a mirroring tab
+  // sent that tab's own token, the server refused it ("another device owns
+  // the session") and both tabs then showed "running on another device".
+  // Seeded, on first use, from the tab currently driving the timer (that
+  // token is what the server holds as owner of a session running right
+  // now, e.g. across the deploy that ships this), else this tab's token.
+  function getPomoServerToken() {
+    try {
+      var t = localStorage.getItem('taai_pomo_browser_token');
+      if (!t) {
+        var d = null;
+        try { d = JSON.parse(localStorage.getItem('taai_pomo_driver') || 'null'); } catch (e) { d = null; }
+        t = (d && d.id && Date.now() - (d.at || 0) < 3 * 60 * 1000) ? d.id : getPomoDeviceToken();
+        if (t) localStorage.setItem('taai_pomo_browser_token', t);
+      }
+      return t || getPomoDeviceToken();
+    } catch (e) {
+      return getPomoDeviceToken();
+    }
+  }
+
   // One driving tab per browser (2026-10-18). Real bug, reproduced: with
   // the tracker open in two tabs (Focus Mode in one, the checklist in the
   // other), the second tab restored the running session at its own load
@@ -1024,7 +1048,7 @@
     var btnHtml = btn ? btn.innerHTML : '';
     if (btn) { btn.disabled = true; if (btn.id === 'pomo-zen-switch') btn.querySelector('span').textContent = 'Switching…'; else btn.textContent = 'Switching…'; }
     api('/pomo-active', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: state.student.email, mode: pomo.mode, action: 'takeover', deviceToken: getPomoDeviceToken(), deviceKind: pomoDeviceKind(), clientNow: Date.now() }) })
+      body: JSON.stringify({ email: state.student.email, mode: pomo.mode, action: 'takeover', deviceToken: getPomoServerToken(), deviceKind: pomoDeviceKind(), clientNow: Date.now() }) })
       .then(function (r) {
         var st = r && r.state;
         if (r && r.takenOver && st) {
@@ -1091,7 +1115,7 @@
     if (!force && !pomo.running && !state.pomoElsewhere && !pomoPausedMidway()) return;
     var askedAt = Date.now();
     api('/pomo-active', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: state.student.email, mode: pomo.mode, action: 'peek', deviceToken: getPomoDeviceToken(), deviceKind: pomoDeviceKind(), clientNow: Date.now() }) })
+      body: JSON.stringify({ email: state.student.email, mode: pomo.mode, action: 'peek', deviceToken: getPomoServerToken(), deviceKind: pomoDeviceKind(), clientNow: Date.now() }) })
       .then(function (r) {
         var st = r && r.state;
         if (pomoWritesInFlight > 0 || pomoLastWriteDone > askedAt) return; // its own change may not be stored yet
@@ -1177,7 +1201,7 @@
       totalSeconds: payload.totalSeconds,
       phaseEndAt: payload.phaseEndAt,
       completedSessions: payload.completedSessions,
-      deviceToken: getPomoDeviceToken(), deviceKind: pomoDeviceKind(),
+      deviceToken: getPomoServerToken(), deviceKind: pomoDeviceKind(),
       // This device's clock, so the server can correct for a fast/slow
       // device clock when comparing phaseEndAt (see clockSkewMs).
       clientNow: Date.now(),
@@ -1286,7 +1310,7 @@
       completedSessions: pomo.completedSessions,
       // Identifies this tab, so the server can ignore the beacon if another
       // tab/device owns the running session (see pomo-active.js).
-      deviceToken: getPomoDeviceToken(), deviceKind: pomoDeviceKind(),
+      deviceToken: getPomoServerToken(), deviceKind: pomoDeviceKind(),
       clientNow: Date.now(),
     });
     navigator.sendBeacon('/api/pomo-active', new Blob([body], { type: 'application/json' }));
