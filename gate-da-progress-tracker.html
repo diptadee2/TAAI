@@ -3357,6 +3357,26 @@ html .pomo-zen.is-elsewhere .pomo-zen-switch svg:not(#_) { background: rgba(13,1
 @media (orientation: landscape) and (max-height: 500px) { .pomo-zen.zen-phone.is-elsewhere .pomo-zen-time:not(#_) { font-size: min(10vw, 18vh); } }
 @media (orientation: landscape) and (max-height: 500px) { .pomo-zen.is-elsewhere .pomo-zen-else { gap: 5px; } .pomo-zen-else-note { font-size: 11.5px; } }
 </style>
+<style>
+/* Phone Top 5, minimal (2026-11-23, "can't the top five card be a bit more
+   minimal"): a plain dark panel, no trophy, no medal circles, no row washes
+   or dividers; ranks are plain numbers (top 3 tinted), your row is just
+   brighter text in the theme colour. Overrides the 2026-11-22 refinement. */
+html .pomo-zen.zen-phone.has-board .pomo-zen-board:not(#_) { background: rgba(10,7,24,.62); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; box-shadow: none; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+html .pomo-zen.zen-phone.has-board .pomo-zen-board::before { display: none; }
+.pomo-zen.zen-phone .zb-trophy-tile:not(#_) { display: none; }
+.pomo-zen.zen-phone .zb-title:not(#_) { font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.5); padding-bottom: 4px; margin-bottom: 0; border-bottom: 0; }
+.pomo-zen.zen-phone .zb-row:not(#_), .pomo-zen.zen-phone .zb-row:first-child:not(#_) { background: none; box-shadow: none; }
+.pomo-zen.zen-phone .zb-rank:not(#_), .pomo-zen.zen-phone .zb-r1:not(#_), .pomo-zen.zen-phone .zb-r2:not(#_), .pomo-zen.zen-phone .zb-r3:not(#_) { background: none; width: auto; height: auto; border-radius: 0; font-size: 11px; font-weight: 600; color: rgba(255,255,255,.4); }
+.pomo-zen.zen-phone .zb-r1:not(#_) { color: #FCD34D; }
+.pomo-zen.zen-phone .zb-r2:not(#_), .pomo-zen.zen-phone .zb-r3:not(#_) { color: rgba(255,255,255,.7); }
+.pomo-zen.zen-phone .zb-name:not(#_) { font-weight: 500; color: rgba(255,255,255,.85); }
+.pomo-zen.zen-phone .zb-time:not(#_) { font-weight: 600; }
+.pomo-zen.zen-phone .zb-row.zb-me:not(#_), .pomo-zen.zen-phone .zb-you-row:not(#_) { background: none; box-shadow: none; }
+.pomo-zen.zen-phone .zb-me .zb-name:not(#_), .pomo-zen.zen-phone .zb-you-row .zb-name:not(#_) { color: var(--pomo-g2, #A78BFA); font-weight: 700; }
+.pomo-zen.zen-phone .zb-you-row::before { border-top-style: solid; border-top-color: rgba(255,255,255,.08); }
+.pomo-zen.zen-phone .zb-rank-you:not(#_) { background: none; width: auto; height: auto; color: var(--pomo-g2, #A78BFA); font-size: 11px; }
+</style>
 </head>
 <body data-float-stack data-nav-no-autohide>
 
