@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-23-1';
+  var CLIENT_VERSION = '2026-11-23-2';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -948,11 +948,12 @@
     pomo.secondsLeft = Math.max(0, Math.round((localEnd - Date.now()) / 1000));
     var wasShowing = !!state.pomoElsewhere;
     state.pomoElsewhere = { mode: pomo.mode, phaseEndAt: st.phaseEndAt, localEnd: localEnd, totalSeconds: st.totalSeconds, device: st.device || null };
-    // Fullscreen closes so the box (on the card) is what they see. On phones
-    // it comes back by itself once the box goes away (Switch, or the other
-    // device pauses), since it wasn't the student who closed it.
-    if (typeof zenEl === 'function' && zenEl()) { closePomoZen(); zenAutoOpened = false; }
+    // Tablets and laptops: fullscreen closes so the box (on the card) is what
+    // they see. Phones keep the fullscreen timer and show it there instead
+    // (2026-11-23: on phones the fullscreen timer is all of Focus mode).
+    if (typeof zenEl === 'function' && zenEl() && !isPhoneDevice()) { closePomoZen(); zenAutoOpened = false; }
     if (!wasShowing && state.focus) renderCalendar();
+    updatePomoZen();
     startElsewhereTick();
     startOwnerPoll();
   }
@@ -968,6 +969,7 @@
       savePomoActiveLocalOnly();
     }
     if (state.focus) renderCalendar();
+    updatePomoZen();
   }
   function elsewhereLeftText() {
     var e = state.pomoElsewhere; if (!e) return '';
@@ -982,6 +984,7 @@
       if (!state.pomoElsewhere) { clearInterval(elsewhereTick); elsewhereTick = null; return; }
       var el = document.getElementById('pomo-elsewhere-left');
       if (el) el.innerHTML = elsewhereLeftText();
+      updatePomoZen();
       // The other device's phase is over: check what it's doing now.
       if ((state.pomoElsewhere.localEnd || state.pomoElsewhere.phaseEndAt) < Date.now() - 3000 && !state.pomoElsewhere.checked) { state.pomoElsewhere.checked = true; checkPomoOwner(); }
     }, 1000);
@@ -1014,7 +1017,8 @@
   function switchPomoHere(btn) {
     if (!state.student) return;
     if (tabletNeedsApp()) { showTabletInstall(); return; }
-    if (btn) { btn.disabled = true; btn.textContent = 'Switching…'; }
+    var btnHtml = btn ? btn.innerHTML : '';
+    if (btn) { btn.disabled = true; if (btn.id === 'pomo-zen-switch') btn.querySelector('span').textContent = 'Switching…'; else btn.textContent = 'Switching…'; }
     api('/pomo-active', { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: state.student.email, mode: pomo.mode, action: 'takeover', deviceToken: getPomoDeviceToken(), deviceKind: pomoDeviceKind(), clientNow: Date.now() }) })
       .then(function (r) {
@@ -1043,12 +1047,12 @@
         }
       })
       .catch(function () {
-        if (btn) { btn.disabled = false; btn.textContent = 'Switch to this device'; }
+        if (btn) { btn.disabled = false; btn.innerHTML = btnHtml; }
         showPomoToast('Couldn’t reach TAAI. Check your connection and try again.');
       });
   }
   document.addEventListener('click', function (e) {
-    var b = e.target.closest && e.target.closest('#pomo-elsewhere-switch');
+    var b = e.target.closest && e.target.closest('#pomo-elsewhere-switch, #pomo-zen-switch');
     if (b) switchPomoHere(b);
   });
   function showPomoToast(text) {
@@ -4759,7 +4763,7 @@
   function maybeAutoZen() {
     if (!state.focus) { zenAutoOpened = false; return; }
     if (zenEl()) { refreshZenBoard(); return; }
-    if (zenAutoOpened || !isPhoneDevice() || state.pomoElsewhere) return;
+    if (zenAutoOpened || !isPhoneDevice()) return;
     zenAutoOpened = true;
     openPomoZen();
   }
@@ -4793,6 +4797,15 @@
       '<button type="button" class="pomo-zen-side" id="pomo-zen-skip" aria-label="Skip">' + POMO_ICON_SKIP + '</button>' +
       '<button type="button" class="pomo-zen-side pomo-zen-gear" id="pomo-zen-settings" aria-label="Timer settings" title="Timer settings">' +
       '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>' +
+      // Phones, session running on another device (2026-11-23): shown in
+      // place of the buttons above (same row, so it sits where they do); the
+      // big time counts that session down.
+      '<div class="pomo-zen-else">' +
+      '<button type="button" class="pomo-zen-toggle pomo-zen-switch" id="pomo-zen-switch">' +
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>' +
+      '<span>Switch to this phone</span></button>' +
+      '<p class="pomo-zen-else-note">No time is lost, and it counts once.</p>' +
+      '</div>' +
       '</div>' +
       '<aside class="pomo-zen-board" id="pomo-zen-board" data-clarity-mask="true" aria-label="Today\'s top 10"></aside>';
     document.body.appendChild(el);
@@ -4944,6 +4957,32 @@
     var el = zenEl();
     if (!el) return;
     if (!state.focus) { closePomoZen(); return; }
+    // Phones: the session is running on another device. Same screen, but the
+    // time and bar follow that session and Switch replaces the buttons.
+    var away = state.pomoElsewhere;
+    if (away && !el.classList.contains('is-elsewhere')) {
+      var sw = document.getElementById('pomo-zen-switch');
+      if (sw) { sw.disabled = false; sw.querySelector('span').textContent = 'Switch to this phone'; }
+    }
+    el.classList.toggle('is-elsewhere', !!away);
+    if (away) {
+      var secLeft = Math.max(0, Math.round(((away.localEnd || away.phaseEndAt) - Date.now()) / 1000));
+      var tot = away.totalSeconds || pomo.totalSeconds || 1;
+      el.classList.toggle('on-break', away.mode === 'break');
+      el.classList.add('is-running');
+      var am = document.getElementById('pomo-zen-mode');
+      if (am) am.textContent = (away.mode === 'break' ? 'Break' : 'Focus') + ' · on ' + elsewhereDeviceName();
+      var at = document.getElementById('pomo-zen-time');
+      if (at) setZenTime(at, formatPomoTime(secLeft));
+      var af = document.getElementById('pomo-zen-bar-fill');
+      if (af) af.style.width = ((1 - secLeft / tot) * 100).toFixed(2) + '%';
+      var as = document.getElementById('pomo-zen-sessions');
+      if (as) as.textContent = secLeft ? 'Want to continue it here?' : 'Finishing on ' + elsewhereDeviceName() + '…';
+      var c0 = document.getElementById('pomo-zen-clock');
+      if (c0) c0.textContent = wallClockText();
+      if (VICE_NIGHT) updateViceHud();
+      return;
+    }
     el.classList.toggle('on-break', pomo.mode === 'break');
     el.classList.toggle('is-running', !!pomo.running);
     var m = document.getElementById('pomo-zen-mode');
