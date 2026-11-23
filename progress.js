@@ -4971,7 +4971,9 @@
       el.classList.toggle('on-break', away.mode === 'break');
       el.classList.add('is-running');
       var am = document.getElementById('pomo-zen-mode');
-      if (am) am.textContent = (away.mode === 'break' ? 'Break' : 'Focus') + ' · on ' + elsewhereDeviceName();
+      // Device name as its own bigger gold pill (2026-11-23, "should be bigger
+      // and more accentuated"). elsewhereDeviceName() is a fixed word list.
+      if (am) am.innerHTML = '<span>' + (away.mode === 'break' ? 'Break' : 'Focus') + '</span><span class="zen-else-dev">on ' + elsewhereDeviceName() + '</span>';
       var at = document.getElementById('pomo-zen-time');
       if (at) setZenTime(at, formatPomoTime(secLeft));
       var af = document.getElementById('pomo-zen-bar-fill');
