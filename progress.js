@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-22-10';
+  var CLIENT_VERSION = '2026-11-23-1';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1917,6 +1917,27 @@
     setTimeout(function () { d.remove(); }, 4800);
   }
 
+  // Free All India Mini FLT popup (2026-11-23; the popup itself is
+  // /mini-flt-popup.js). On the checklist and in Focus mode separately: the
+  // 2 AM Club winners come first, and on a later load, once they've been
+  // seen there (or when there's no announcement), the Mini FLT popup shows
+  // once and never again in that place. Called from checkClubWinner whenever
+  // it has no winner popup to show. Waits (doesn't mark it seen) while a
+  // focus session is running, the tab is hidden or another popup is open.
+  var MINI_FLT_SEEN = 'taai_mini_flt_popup_seen:';
+  function maybeShowMiniFlt() {
+    if (!window.TAAIMiniFlt) return;
+    var key = MINI_FLT_SEEN + (state.focus ? 'focus' : 'list');
+    try { if (localStorage.getItem(key) === '1') return; } catch (e) { return; }
+    window.TAAIMiniFlt.fetchSettings().then(function (m) {
+      if (!m || !m.enabled) return;
+      if (pomo.running && pomo.mode === 'work') return;
+      if (document.hidden || document.getElementById('club-winner-modal') || document.querySelector('[aria-modal="true"]')) return;
+      if (state.focus !== (key.slice(-5) === 'focus')) return; // switched view meanwhile
+      if (window.TAAIMiniFlt.show(m)) { try { localStorage.setItem(key, '1'); } catch (e) { /* fine */ } }
+    });
+  }
+
   function init() {
     state.student = readCookie();
     // Safari caps cookies written by JavaScript at 7 days from when they
@@ -2017,10 +2038,12 @@
           var w = res[0] && res[0].winner && res[0].winner.name ? res[0].winner : null;
           showClubWinner(w || SAMPLE_CLUB_WINNER, w ? res[1] && res[1].runners : null);
         }).catch(function () { showClubWinner(SAMPLE_CLUB_WINNER); });
+        if (!background) maybeShowMiniFlt(); // no announcement: Mini FLT popup
         return;
       }
       // One announcement (1st place plus the other places), one key.
-      if (!preview && clubWinnerSeen(meta.key)) return;
+      // Already seen here: the Mini FLT popup's turn (once).
+      if (!preview && clubWinnerSeen(meta.key)) { if (!background) maybeShowMiniFlt(); return; }
       return Promise.all([
         fetch('/api/club-winner-public?full=1').then(function (r) { return r.json(); }),
         meta.runners ? fetch('/api/club-winner-public?full=1&kind=runners').then(function (r) { return r.json(); }).catch(function () { return null; }) : null,
@@ -2032,6 +2055,7 @@
       });
     }).catch(function () {
       if (preview) showClubWinner(SAMPLE_CLUB_WINNER);
+      else if (!background) maybeShowMiniFlt();
     });
   }
   // Shown twice per browser: once on the checklist, once in the Pomodoro

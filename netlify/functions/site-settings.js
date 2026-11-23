@@ -8,6 +8,7 @@
 // one fixed settings row (id='main', see schema.sql), read publicly (no
 // auth) via the separate site-settings-public.js for the live page.
 import { getSupabase, json, requireAdmin, fetchScheduleRunout, SCHEDULE_BATCH_LABELS } from './lib/supabase.js';
+import { cleanMiniFlt } from './lib/mini-flt.js';
 
 const ROW_ID = 'main';
 
@@ -97,6 +98,12 @@ export async function handler(event, context) {
         else if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) next[b] = d;
       }
       patch.schedule_reminder_off = next;
+    }
+    // Free Mini FLT promo (2026-11-23), see lib/mini-flt.js.
+    if (body.mini_flt !== undefined) {
+      const c = cleanMiniFlt(body.mini_flt);
+      if (c.error) return json(400, { error: c.error });
+      patch.mini_flt = c.value;
     }
     if (typeof body.challenge_cutoff === 'string') {
       const c = body.challenge_cutoff.trim();

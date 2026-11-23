@@ -1442,3 +1442,8 @@ CREATE TABLE IF NOT EXISTS club_winner (
 );
 ALTER TABLE club_winner ENABLE ROW LEVEL SECURITY;
 GRANT SELECT, INSERT, UPDATE, DELETE ON club_winner TO service_role;
+
+-- Free All India Mini FLT promo (2026-11-23): topics, test link and an on/off
+-- switch, edited in /team > Site data > Settings. NULL = built-in default
+-- (netlify/functions/lib/mini-flt.js).
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS mini_flt JSONB;

@@ -354,6 +354,7 @@
       hideFinancialAssistance: false,
       scheduleRunout: [],
       runoutSaving: null,
+      miniFlt: null, mfltSaving: false, mfltMsg: null, mfltError: null,
     },
     // Site data > Challenge (2026-10-18): "100 pe 100% off" registrations
     // and the registration cutoff date.
@@ -3150,6 +3151,7 @@
     api('/site-settings').then(function (data) {
       ss.hideFinancialAssistance = !!(data.row && data.row.hide_financial_assistance);
       ss.scheduleRunout = data.scheduleRunout || [];
+      ss.miniFlt = (data.row && data.row.mini_flt) || MINI_FLT_DEFAULT;
       ss.loaded = true;
       ss.loading = false;
       render();
@@ -3649,6 +3651,61 @@
     );
   }
 
+
+  // Free All India Mini FLT promo (2026-11-23). Copy of
+  // netlify/functions/lib/mini-flt.js's MINI_FLT_DEFAULT, shown until a value
+  // has been saved.
+  var MINI_FLT_DEFAULT = {
+    enabled: true,
+    topics: ['Linear Algebra', 'Python', 'Machine Learning'],
+    url: 'https://learn.taai.live/learn/home/Mixed-Subject-Wise-Test/section/766425/lesson/4936517?embedPlayer=1&disableLessonChange=true&visitorFlow=true',
+  };
+
+  function miniFltPanelHtml() {
+    var ss = state.siteSettings;
+    var m = ss.miniFlt || MINI_FLT_DEFAULT;
+    var dis = ss.mfltSaving ? ' disabled' : '';
+    return '<h3 style="margin:28px 0 6px;font-size:16px;">Free Mini FLT promo</h3>' +
+      '<div class="field-hint" style="margin-bottom:10px;">The free test popup: on every visit to the home and test series pages, and once on the progress tracker (after the 2 AM Club winners). Change the topics and link when a new Mini FLT goes live. Changes show on the site within about a minute.</div>' +
+      (ss.mfltError ? '<div class="msg msg-error">' + escapeHtml(ss.mfltError) + '</div>' : '') +
+      (ss.mfltMsg ? '<div class="msg msg-ok">' + escapeHtml(ss.mfltMsg) + '</div>' : '') +
+      '<div class="site-setting-row">' +
+        '<div class="site-setting-info"><div class="site-setting-title">Show the Mini FLT promo</div>' +
+        '<div class="field-hint">Switch off to hide it everywhere, for example between tests.</div></div>' +
+        '<label class="site-setting-switch" for="mflt-enabled"><input type="checkbox" id="mflt-enabled"' + (m.enabled ? ' checked' : '') + dis + '><span class="site-setting-switch-track"></span></label>' +
+      '</div>' +
+      '<div class="field" style="margin-top:12px;"><label for="mflt-topics">Topics in the live test</label>' +
+        '<input type="text" id="mflt-topics" value="' + escapeHtml((m.topics || []).join(', ')) + '"' + dis + '>' +
+        '<div class="field-hint">Separate with commas, up to 6. Example: Linear Algebra, Python, Machine Learning</div></div>' +
+      '<div class="field" style="margin-top:12px;"><label for="mflt-url">Test link</label>' +
+        '<input type="url" id="mflt-url" value="' + escapeHtml(m.url || '') + '"' + dis + '>' +
+        '<div class="field-hint">Must start with https://learn.taai.live/</div></div>' +
+      '<div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">' +
+        '<button type="button" class="btn btn-primary" id="mflt-save"' + dis + '>' + (ss.mfltSaving ? 'Saving…' : 'Save Mini FLT promo') + '</button>' +
+        '<a class="btn" id="mflt-open" href="' + escapeHtml(m.url || '#') + '" target="_blank" rel="noopener">Open test link</a>' +
+      '</div>';
+  }
+
+  function saveMiniFlt() {
+    var ss = state.siteSettings;
+    var val = {
+      enabled: document.getElementById('mflt-enabled').checked,
+      topics: document.getElementById('mflt-topics').value.split(',').map(function (t) { return t.trim(); }).filter(Boolean),
+      url: document.getElementById('mflt-url').value.trim(),
+    };
+    ss.miniFlt = val; ss.mfltSaving = true; ss.mfltError = null; ss.mfltMsg = null;
+    render();
+    api('/site-settings', { method: 'PUT', body: JSON.stringify({ mini_flt: val }) }).then(function (data) {
+      ss.miniFlt = (data.row && data.row.mini_flt) || val;
+      ss.mfltSaving = false; ss.mfltMsg = 'Saved. The site shows it within about a minute.';
+      render();
+    }).catch(function (err) {
+      ss.mfltSaving = false;
+      ss.mfltError = /mini_flt/.test(err.message) ? 'The database column for this isn\'t set up yet (run the SQL at the end of supabase/schema.sql). Until then the site shows the built-in default.' : err.message;
+      render();
+    });
+  }
+
   function renderSiteSettingsPanel() {
     var ss = state.siteSettings;
     if (ss.loading && !ss.loaded) return '<div class="field-hint">Loading…</div>';
@@ -3666,6 +3723,7 @@
           '<span class="site-setting-switch-track"></span>' +
         '</label>' +
       '</div>' +
+      miniFltPanelHtml() +
       scheduleRunoutHtml()
     );
   }
@@ -4856,6 +4914,9 @@
         saveScheduleRunoutOff(input.getAttribute('data-runout-batch'), input.getAttribute('data-runout-last'), input.checked);
       });
     });
+
+    var mfltSave = document.getElementById('mflt-save');
+    if (mfltSave) mfltSave.addEventListener('click', saveMiniFlt);
 
     document.querySelectorAll('[data-setting-field]').forEach(function (input) {
       input.addEventListener('change', function () {
