@@ -46,7 +46,7 @@
   var bar = null;
   function itemHtml(m) {
     return '<span class="mft-item"><b>Free All India Mini FLT</b><span class="mft-sep">·</span>' +
-      esc(m.topics.join(', ')) + '<span class="mft-sep">·</span>90 minutes<span class="mft-sep">·</span>No payment needed' +
+      esc(m.topics.join(', ')) + '<span class="mft-sep">·</span>90 minutes<span class="mft-sep">·</span>Open to every GATE DA aspirant' +
       '<em>Take the free test →</em></span>';
   }
   function render(m) {
