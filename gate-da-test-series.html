@@ -2027,8 +2027,8 @@ html body #root .ts-included-note:not(#_), html body #root .ts-included-note:hov
 }
 @media (prefers-reduced-motion:reduce){.mflt-tag i{animation:none}.mflt .mflt-btn:not(#_){transition:none}}
 </style>
-<!-- Free Mini FLT popup, once per browser on this page (2026-11-23); settings from /team. -->
-<script src="/mini-flt-popup.js" data-auto data-once="test-series" defer></script>
+<!-- Mini FLT card script (2026-11-23): only opened by a tap on the top strip here; the automatic popup was removed from this page at direct request (the card is already on the page). -->
+<script src="/mini-flt-popup.js" defer></script>
 <!-- Mini FLT rolling strip at the top, in place of the scroll progress bar (2026-11-23, /mini-flt-ticker.js). These rules move the nav down from the first paint so the page doesn't jump; the script removes the class if the promo is switched off in /team. -->
 <style>
 html.has-mft .scroll-progress{display:none!important}
@@ -3239,7 +3239,7 @@ class ErrorBoundary extends React.Component {
 }
 
 // Free All India Mini FLT card (2026-11-23), right below the hero on the test
-// series page, alongside the once-per-browser popup (/mini-flt-popup.js). Topics, test link and the
+// series page (no automatic popup here; the top strip opens /mini-flt-popup.js's card). Topics, test link and the
 // on/off switch come from /team (site_settings.mini_flt via
 // /api/site-settings-public); MINI_FLT_DEFAULT is a hand copy of
 // netlify/functions/lib/mini-flt.js and shows until the settings load, so the
