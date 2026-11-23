@@ -8,7 +8,7 @@
 // one fixed settings row (id='main', see schema.sql), read publicly (no
 // auth) via the separate site-settings-public.js for the live page.
 import { getSupabase, json, requireAdmin, fetchScheduleRunout, SCHEDULE_BATCH_LABELS } from './lib/supabase.js';
-import { cleanMiniFlt } from './lib/mini-flt.js';
+import { cleanMiniFlt, cleanTopStrip } from './lib/mini-flt.js';
 
 const ROW_ID = 'main';
 
@@ -104,6 +104,12 @@ export async function handler(event, context) {
       const c = cleanMiniFlt(body.mini_flt);
       if (c.error) return json(400, { error: c.error });
       patch.mini_flt = c.value;
+    }
+    // The rolling strip at the top of the pages (2026-11-23).
+    if (body.top_strip !== undefined) {
+      const c = cleanTopStrip(body.top_strip);
+      if (c.error) return json(400, { error: c.error });
+      patch.top_strip = c.value;
     }
     if (typeof body.challenge_cutoff === 'string') {
       const c = body.challenge_cutoff.trim();

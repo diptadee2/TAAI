@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-23-5';
+  var CLIENT_VERSION = '2026-11-23-6';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1956,17 +1956,17 @@
   // once and never again in that place. Called from checkClubWinner whenever
   // it has no winner popup to show. Waits (doesn't mark it seen) while a
   // focus session is running, the tab is hidden or another popup is open.
-  var MINI_FLT_SEEN = 'taai_mini_flt_popup_seen:';
+  // "Once" is per test (TAAIMiniFlt.isSeen/markSeen, keyed by the test link),
+  // so a new test set in /team shows once more (2026-11-23).
   function maybeShowMiniFlt() {
-    if (!window.TAAIMiniFlt) return;
-    var key = MINI_FLT_SEEN + (state.focus ? 'focus' : 'list');
-    try { if (localStorage.getItem(key) === '1') return; } catch (e) { return; }
+    if (!window.TAAIMiniFlt || !window.TAAIMiniFlt.isSeen) return;
+    var place = state.focus ? 'focus' : 'list';
     window.TAAIMiniFlt.fetchSettings().then(function (m) {
-      if (!m || !m.enabled) return;
+      if (!m || !m.enabled || window.TAAIMiniFlt.isSeen(place, m)) return;
       if (pomo.running && pomo.mode === 'work') return;
       if (document.hidden || document.getElementById('club-winner-modal') || document.querySelector('[aria-modal="true"]')) return;
-      if (state.focus !== (key.slice(-5) === 'focus')) return; // switched view meanwhile
-      if (window.TAAIMiniFlt.show(m)) { try { localStorage.setItem(key, '1'); } catch (e) { /* fine */ } }
+      if ((state.focus ? 'focus' : 'list') !== place) return; // switched view meanwhile
+      if (window.TAAIMiniFlt.show(m)) window.TAAIMiniFlt.markSeen(place, m);
     });
   }
 

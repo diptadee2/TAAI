@@ -16,7 +16,8 @@
   var MINI_FLT_DEFAULT = {
     enabled: true,
     topics: ['Linear Algebra', 'Python', 'Machine Learning'],
-    url: 'https://learn.taai.live/learn/home/Mixed-Subject-Wise-Test/section/766425/lesson/4936517?embedPlayer=1&disableLessonChange=true&visitorFlow=true'
+    url: 'https://learn.taai.live/learn/home/Mixed-Subject-Wise-Test/section/766425/lesson/4936517?embedPlayer=1&disableLessonChange=true&visitorFlow=true',
+    minutes: 90
   };
   var TONES = ['pink', 'sky', 'lime', 'orange', 'lilac', 'yellow'];
   var LINES = [[78, 52], [64], [82, 40], [58], [70, 46], [75]];
@@ -103,6 +104,7 @@
     if (!document.getElementById('mfp-css')) {
       var st = document.createElement('style'); st.id = 'mfp-css'; st.textContent = CSS; document.head.appendChild(st);
     }
+    var mins = (m.minutes >= 10 && m.minutes <= 300) ? Math.round(m.minutes) : 90;
     var n = m.topics.length;
     var rows = LINES.map(function (lines, i) {
       var t = (i * (n > 2 ? 2 : 1) + Math.floor(i / n)) % n;
@@ -122,13 +124,13 @@
             '<div class="mfp-main">' +
               '<span class="mfp-tag"><i aria-hidden="true"></i>Live now · All India · Free</span>' +
               '<h2 class="mfp-h" id="mfp-title">Take the <span>Mini FLT</span> free, and see where you stand.</h2>' +
-              '<p class="mfp-lede">Every Mini FLT is one 90-minute paper that mixes questions from a few subjects, the way the real GATE DA paper does. More are on the way, each with its own mix of subjects.</p>' +
+              '<p class="mfp-lede">Every Mini FLT is one ' + mins + '-minute paper that mixes questions from a few subjects, the way the real GATE DA paper does. More are on the way, each with its own mix of subjects.</p>' +
               '<div class="mfp-topics-out">' + topics + '</div>' +
               '<div class="mfp-cta"><a class="mfp-btn" href="' + esc(m.url) + '">Take the free test <span aria-hidden="true">→</span></a>' +
                 '<button type="button" class="mfp-later">Maybe later</button></div>' +
             '</div>' +
             '<div class="mfp-paper" aria-hidden="true">' +
-              '<div class="mfp-head"><b>Mini FLT</b><span>90 min</span><em>Live now</em></div>' +
+              '<div class="mfp-head"><b>Mini FLT</b><span>' + mins + ' min</span><em>Live now</em></div>' +
               '<ol class="mfp-qs">' + rows + '</ol>' + topics +
             '</div>' +
           '</div>' +
@@ -154,24 +156,40 @@
       .catch(function () { return MINI_FLT_DEFAULT; });
   }
 
-  window.TAAIMiniFlt = { show: show, close: close, fetchSettings: fetchSettings, DEFAULT: MINI_FLT_DEFAULT };
+  // "Seen" is remembered per place AND per test (2026-11-23): the key carries
+  // a short hash of the test link, so changing the link in /team shows the
+  // popup once more everywhere. A "seen" saved before this (no hash) counts
+  // for the original test only, so nobody sees that one twice.
+  function testId(m) {
+    var u = String((m && m.url) || ''), h = 5381;
+    for (var i = 0; i < u.length; i++) h = ((h << 5) + h + u.charCodeAt(i)) >>> 0;
+    return h.toString(36);
+  }
+  var SEEN = 'taai_mini_flt_popup_seen:';
+  function isSeen(place, m) {
+    try {
+      if (localStorage.getItem(SEEN + place + ':' + testId(m)) === '1') return true;
+      return m && m.url === MINI_FLT_DEFAULT.url && localStorage.getItem(SEEN + place) === '1';
+    } catch (e) { return false; }
+  }
+  function markSeen(place, m) { try { localStorage.setItem(SEEN + place + ':' + testId(m), '1'); } catch (e) { /* fine */ } }
+
+  window.TAAIMiniFlt = { show: show, close: close, fetchSettings: fetchSettings, isSeen: isSeen, markSeen: markSeen, DEFAULT: MINI_FLT_DEFAULT };
 
   // data-auto: 1.8s after the page opens; waits while the phone menu or
   // another dialog is open, or the tab is in the background.
-  // data-once="name" (2026-11-23, home and test series): shown only once per
-  // browser on that page (localStorage taai_mini_flt_popup_seen:<name>);
-  // without it, every page load.
+  // data-once="name" (home): shown only once per browser on that page for
+  // each test (see isSeen); without it, every page load.
   var me = document.currentScript;
-  var onceKey = me && me.getAttribute('data-once') ? 'taai_mini_flt_popup_seen:' + me.getAttribute('data-once') : null;
-  function seenOnce() { try { return !!onceKey && localStorage.getItem(onceKey) === '1'; } catch (e) { return false; } }
-  if (me && me.hasAttribute('data-auto') && !seenOnce()) {
+  var place = me && me.getAttribute('data-once');
+  if (me && me.hasAttribute('data-auto')) {
     fetchSettings().then(function (m) {
-      if (!usable(m)) return;
+      if (!usable(m) || (place && isSeen(place, m))) return;
       var tries = 0;
       function attempt() {
         var busy = document.hidden || document.querySelector('.mobile-menu.open, [aria-modal="true"]');
         if (busy && tries++ < 120) { setTimeout(attempt, 1000); return; }
-        if (!busy && !seenOnce() && show(m) && onceKey) { try { localStorage.setItem(onceKey, '1'); } catch (e) { /* fine */ } }
+        if (!busy && !(place && isSeen(place, m)) && show(m) && place) markSeen(place, m);
       }
       setTimeout(attempt, 1800);
     });

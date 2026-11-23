@@ -2402,6 +2402,7 @@ html.has-mft .nav-spacer{margin-top:34px}
 html.has-mft .mobile-menu{margin-top:34px}
 html.has-mft body.nav-autohidden .nav{transform:translateY(calc(-100% - 34px))}
 html.has-mft body::before{content:'';position:fixed;top:0;left:0;right:0;height:34px;background:#FFE14D;border-bottom:2px solid #111;box-sizing:border-box;z-index:59}
+html.has-mft.has-mft-dark body::before{background:#15121f;border-bottom:1px solid rgba(255,255,255,.1)}
 html.has-mft body.nav-autohidden::before{transform:translateY(-100%)}
 /* With the strip: a shorter nav on laptops/desktops (full nav only), 2026-11-23.
    (A one-button Sign In with Sign Up on hover was tried and taken back the same day.) */
@@ -2415,7 +2416,7 @@ html.has-mft body.nav-autohidden::before{transform:translateY(-100%)}
 }
 html.has-mft body::before{transition:transform .28s cubic-bezier(.4,0,1,1)}
 </style>
-<script>try{if(localStorage.getItem('taai_mft_on')!=='0')document.documentElement.classList.add('has-mft')}catch(e){document.documentElement.classList.add('has-mft')}</script>
+<script>try{if(localStorage.getItem('taai_mft_on')!=='0'){document.documentElement.classList.add('has-mft');if(localStorage.getItem('taai_mft_style')==='dark')document.documentElement.classList.add('has-mft-dark')}}catch(e){document.documentElement.classList.add('has-mft')}</script>
 <script src="/mini-flt-ticker.js" defer></script>
 </head>
 <body data-float-stack>

@@ -355,6 +355,7 @@
       scheduleRunout: [],
       runoutSaving: null,
       miniFlt: null, mfltSaving: false, mfltMsg: null, mfltError: null,
+      topStrip: null, stripSaving: false, stripMsg: null, stripError: null,
     },
     // Site data > Challenge (2026-10-18): "100 pe 100% off" registrations
     // and the registration cutoff date.
@@ -3152,6 +3153,7 @@
       ss.hideFinancialAssistance = !!(data.row && data.row.hide_financial_assistance);
       ss.scheduleRunout = data.scheduleRunout || [];
       ss.miniFlt = (data.row && data.row.mini_flt) || MINI_FLT_DEFAULT;
+      ss.topStrip = (data.row && data.row.top_strip) || TOP_STRIP_DEFAULT;
       ss.loaded = true;
       ss.loading = false;
       render();
@@ -3659,6 +3661,7 @@
     enabled: true,
     topics: ['Linear Algebra', 'Python', 'Machine Learning'],
     url: 'https://learn.taai.live/learn/home/Mixed-Subject-Wise-Test/section/766425/lesson/4936517?embedPlayer=1&disableLessonChange=true&visitorFlow=true',
+    minutes: 90,
   };
 
   function miniFltPanelHtml() {
@@ -3666,7 +3669,7 @@
     var m = ss.miniFlt || MINI_FLT_DEFAULT;
     var dis = ss.mfltSaving ? ' disabled' : '';
     return '<h3 style="margin:28px 0 6px;font-size:16px;">Free Mini FLT promo</h3>' +
-      '<div class="field-hint" style="margin-bottom:10px;">The free test popup: on every visit to the home and test series pages, and once on the progress tracker (after the 2 AM Club winners). Change the topics and link when a new Mini FLT goes live. Changes show on the site within about a minute.</div>' +
+      '<div class="field-hint" style="margin-bottom:10px;">The free test popup (once per browser on the home page, and once on the progress tracker after the 2 AM Club winners), the card on the test series page, and the top strip when it\'s set to show the Mini FLT. Change the topics, link and length when a new Mini FLT goes live: a new link shows the popup once more to everyone. Changes show on the site within about a minute.</div>' +
       (ss.mfltError ? '<div class="msg msg-error">' + escapeHtml(ss.mfltError) + '</div>' : '') +
       (ss.mfltMsg ? '<div class="msg msg-ok">' + escapeHtml(ss.mfltMsg) + '</div>' : '') +
       '<div class="site-setting-row">' +
@@ -3680,6 +3683,9 @@
       '<div class="field" style="margin-top:12px;"><label for="mflt-url">Test link</label>' +
         '<input type="url" id="mflt-url" value="' + escapeHtml(m.url || '') + '"' + dis + '>' +
         '<div class="field-hint">Must start with https://learn.taai.live/</div></div>' +
+      '<div class="field" style="margin-top:12px;"><label for="mflt-minutes">Test length (minutes)</label>' +
+        '<input type="number" id="mflt-minutes" min="10" max="300" step="1" value="' + escapeHtml(String(m.minutes || 90)) + '" style="max-width:140px"' + dis + '>' +
+        '<div class="field-hint">Shown as "a 90-minute paper" and "90 min".</div></div>' +
       '<div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">' +
         '<button type="button" class="btn btn-primary" id="mflt-save"' + dis + '>' + (ss.mfltSaving ? 'Saving…' : 'Save Mini FLT promo') + '</button>' +
         '<a class="btn" id="mflt-open" href="' + escapeHtml(m.url || '#') + '" target="_blank" rel="noopener">Open test link</a>' +
@@ -3692,6 +3698,7 @@
       enabled: document.getElementById('mflt-enabled').checked,
       topics: document.getElementById('mflt-topics').value.split(',').map(function (t) { return t.trim(); }).filter(Boolean),
       url: document.getElementById('mflt-url').value.trim(),
+      minutes: Number(document.getElementById('mflt-minutes').value) || 90,
     };
     ss.miniFlt = val; ss.mfltSaving = true; ss.mfltError = null; ss.mfltMsg = null;
     render();
@@ -3702,6 +3709,70 @@
     }).catch(function (err) {
       ss.mfltSaving = false;
       ss.mfltError = /mini_flt/.test(err.message) ? 'The database column for this isn\'t set up yet (run the SQL at the end of supabase/schema.sql). Until then the site shows the built-in default.' : err.message;
+      render();
+    });
+  }
+
+  // The rolling strip at the top of the pages (2026-11-23). Copy of
+  // netlify/functions/lib/mini-flt.js's TOP_STRIP_DEFAULT.
+  var TOP_STRIP_DEFAULT = { enabled: true, mode: 'mini_flt', message: '', button: '', url: '', style: 'light' };
+  function topStripPanelHtml() {
+    var ss = state.siteSettings;
+    var t = ss.topStrip || TOP_STRIP_DEFAULT;
+    var dis = ss.stripSaving ? ' disabled' : '';
+    var custom = t.mode === 'custom';
+    return '<h3 style="margin:28px 0 6px;font-size:16px;">Top strip</h3>' +
+      '<div class="field-hint" style="margin-bottom:10px;">The rolling strip at the very top of every main page and the progress tracker (dark there). Show the Mini FLT, or your own announcement. Changes show on the site within about a minute.</div>' +
+      (ss.stripError ? '<div class="msg msg-error">' + escapeHtml(ss.stripError) + '</div>' : '') +
+      (ss.stripMsg ? '<div class="msg msg-ok">' + escapeHtml(ss.stripMsg) + '</div>' : '') +
+      '<div class="site-setting-row">' +
+        '<div class="site-setting-info"><div class="site-setting-title">Show the top strip</div>' +
+        '<div class="field-hint">Off: no strip, the thin scroll bar is back.</div></div>' +
+        '<label class="site-setting-switch" for="strip-enabled"><input type="checkbox" id="strip-enabled"' + (t.enabled ? ' checked' : '') + dis + '><span class="site-setting-switch-track"></span></label>' +
+      '</div>' +
+      '<div class="field" style="margin-top:12px;"><label for="strip-mode">What it shows</label>' +
+        '<select id="strip-mode"' + dis + '>' +
+          '<option value="mini_flt"' + (custom ? '' : ' selected') + '>The Mini FLT (from the setting above; a tap opens the Mini FLT card)</option>' +
+          '<option value="custom"' + (custom ? ' selected' : '') + '>My own announcement (a tap goes to the link)</option>' +
+        '</select></div>' +
+      '<div id="strip-custom-fields"' + (custom ? '' : ' hidden') + '>' +
+        '<div class="field" style="margin-top:12px;"><label for="strip-message">Message</label>' +
+          '<input type="text" id="strip-message" maxlength="200" value="' + escapeHtml(t.message || '') + '"' + dis + '>' +
+          '<div class="field-hint">The line that scrolls, up to 200 characters. Example: GATE 2028 Full Course early bird price ends Sunday</div></div>' +
+        '<div class="field" style="margin-top:12px;"><label for="strip-button">Button text (optional)</label>' +
+          '<input type="text" id="strip-button" maxlength="30" value="' + escapeHtml(t.button || '') + '" style="max-width:260px"' + dis + '>' +
+          '<div class="field-hint">Up to 30 characters, e.g. See the offer</div></div>' +
+        '<div class="field" style="margin-top:12px;"><label for="strip-url">Link</label>' +
+          '<input type="text" id="strip-url" value="' + escapeHtml(t.url || '') + '"' + dis + '>' +
+          '<div class="field-hint">A full link (https://…) or a page on this site like /gate-da-courses. Other websites open in a new tab.</div></div>' +
+      '</div>' +
+      '<div class="field" style="margin-top:12px;"><label for="strip-style">Style on the main pages</label>' +
+        '<select id="strip-style" style="max-width:260px"' + dis + '>' +
+          '<option value="light"' + (t.style === 'dark' ? '' : ' selected') + '>Yellow</option>' +
+          '<option value="dark"' + (t.style === 'dark' ? ' selected' : '') + '>Dark</option>' +
+        '</select><div class="field-hint">The progress tracker always uses the dark one.</div></div>' +
+      '<div style="margin-top:12px;"><button type="button" class="btn btn-primary" id="strip-save"' + dis + '>' + (ss.stripSaving ? 'Saving…' : 'Save top strip') + '</button></div>';
+  }
+
+  function saveTopStrip() {
+    var ss = state.siteSettings;
+    var val = {
+      enabled: document.getElementById('strip-enabled').checked,
+      mode: document.getElementById('strip-mode').value,
+      message: document.getElementById('strip-message').value.trim(),
+      button: document.getElementById('strip-button').value.trim(),
+      url: document.getElementById('strip-url').value.trim(),
+      style: document.getElementById('strip-style').value,
+    };
+    ss.topStrip = val; ss.stripSaving = true; ss.stripError = null; ss.stripMsg = null;
+    render();
+    api('/site-settings', { method: 'PUT', body: JSON.stringify({ top_strip: val }) }).then(function (data) {
+      ss.topStrip = (data.row && data.row.top_strip) || val;
+      ss.stripSaving = false; ss.stripMsg = 'Saved. The site shows it within about a minute.';
+      render();
+    }).catch(function (err) {
+      ss.stripSaving = false;
+      ss.stripError = /top_strip/.test(err.message) ? 'The database column for this isn\'t set up yet (run the SQL at the end of supabase/schema.sql). Until then the strip shows the Mini FLT.' : err.message;
       render();
     });
   }
@@ -3724,6 +3795,7 @@
         '</label>' +
       '</div>' +
       miniFltPanelHtml() +
+      topStripPanelHtml() +
       scheduleRunoutHtml()
     );
   }
@@ -4915,6 +4987,12 @@
       });
     });
 
+    var stripSave = document.getElementById('strip-save');
+    if (stripSave) stripSave.addEventListener('click', saveTopStrip);
+    var stripMode = document.getElementById('strip-mode');
+    if (stripMode) stripMode.addEventListener('change', function () {
+      var f = document.getElementById('strip-custom-fields'); if (f) f.hidden = stripMode.value !== 'custom';
+    });
     var mfltSave = document.getElementById('mflt-save');
     if (mfltSave) mfltSave.addEventListener('click', saveMiniFlt);
 

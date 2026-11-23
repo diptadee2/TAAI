@@ -1447,3 +1447,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON club_winner TO service_role;
 -- switch, edited in /team > Site data > Settings. NULL = built-in default
 -- (netlify/functions/lib/mini-flt.js).
 ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS mini_flt JSONB;
+
+-- Rolling strip at the top of the pages (2026-11-23): on/off, Mini FLT or a
+-- custom message, button text, link, light/dark. Edited in /team > Site data >
+-- Settings. NULL = built-in default (netlify/functions/lib/mini-flt.js).
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS top_strip JSONB;

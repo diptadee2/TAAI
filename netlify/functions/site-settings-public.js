@@ -6,7 +6,7 @@
 // are already meant to be visible as page behavior itself (whether a
 // section shows), nothing sensitive.
 import { getSupabase, json } from './lib/supabase.js';
-import { MINI_FLT_DEFAULT, publicMiniFlt } from './lib/mini-flt.js';
+import { MINI_FLT_DEFAULT, publicMiniFlt, TOP_STRIP_DEFAULT, publicTopStrip } from './lib/mini-flt.js';
 
 // Read on every page load of home, test series and the tracker, so it's cached
 // at Netlify's edge for 60s (browsers always revalidate). A /team change shows
@@ -25,6 +25,6 @@ export async function handler(event) {
   // pre-migration, a transient Supabase error, no row yet) — a broken
   // toggle must never be able to hide real content from the live site,
   // only an explicit, successfully-saved admin choice can.
-  if (error || !data) return out({ hideFinancialAssistance: false, miniFlt: MINI_FLT_DEFAULT });
-  return out({ hideFinancialAssistance: !!data.hide_financial_assistance, miniFlt: publicMiniFlt(data) });
+  if (error || !data) return out({ hideFinancialAssistance: false, miniFlt: MINI_FLT_DEFAULT, topStrip: TOP_STRIP_DEFAULT });
+  return out({ hideFinancialAssistance: !!data.hide_financial_assistance, miniFlt: publicMiniFlt(data), topStrip: publicTopStrip(data) });
 }

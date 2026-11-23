@@ -2038,6 +2038,7 @@ html.has-mft .nav-spacer{margin-top:34px}
 html.has-mft .mobile-menu{margin-top:34px}
 html.has-mft body.nav-autohidden .nav{transform:translateY(calc(-100% - 34px))}
 html.has-mft body::before{content:'';position:fixed;top:0;left:0;right:0;height:34px;background:#FFE14D;border-bottom:2px solid #111;box-sizing:border-box;z-index:59}
+html.has-mft.has-mft-dark body::before{background:#15121f;border-bottom:1px solid rgba(255,255,255,.1)}
 html.has-mft body.nav-autohidden::before{transform:translateY(-100%)}
 /* With the strip: a shorter nav on laptops/desktops (full nav only), 2026-11-23.
    (A one-button Sign In with Sign Up on hover was tried and taken back the same day.) */
@@ -2051,7 +2052,7 @@ html.has-mft body.nav-autohidden::before{transform:translateY(-100%)}
 }
 html.has-mft body::before{transition:transform .28s cubic-bezier(.4,0,1,1)}
 </style>
-<script>try{if(localStorage.getItem('taai_mft_on')!=='0')document.documentElement.classList.add('has-mft')}catch(e){document.documentElement.classList.add('has-mft')}</script>
+<script>try{if(localStorage.getItem('taai_mft_on')!=='0'){document.documentElement.classList.add('has-mft');if(localStorage.getItem('taai_mft_style')==='dark')document.documentElement.classList.add('has-mft-dark')}}catch(e){document.documentElement.classList.add('has-mft')}</script>
 <script src="/mini-flt-ticker.js" defer></script>
 </head>
 <body data-float-stack>
@@ -3248,6 +3249,7 @@ const MINI_FLT_DEFAULT = {
   enabled: true,
   topics: ['Linear Algebra', 'Python', 'Machine Learning'],
   url: 'https://learn.taai.live/learn/home/Mixed-Subject-Wise-Test/section/766425/lesson/4936517?embedPlayer=1&disableLessonChange=true&visitorFlow=true',
+  minutes: 90,
 };
 const _mfltFetch = (typeof _siteSettingsFetch !== 'undefined')
   ? _siteSettingsFetch
@@ -3258,6 +3260,7 @@ function MiniFltBanner() {
   const [m, setM] = React.useState(MINI_FLT_DEFAULT);
   React.useEffect(() => { _mfltFetch.then(d => { if (d && d.miniFlt) setM(d.miniFlt); }); }, []);
   if (!m || !m.enabled || !m.url || !(m.topics && m.topics.length)) return null;
+  const mins = (m.minutes >= 10 && m.minutes <= 300) ? Math.round(m.minutes) : 90;
   const n = m.topics.length;
   // Six sample questions with the topics shuffled, so the paper reads as mixed.
   const rows = MFLT_LINES.map((lines, i) => ({ t: (i * (n > 2 ? 2 : 1) + Math.floor(i / n)) % n, lines }));
@@ -3268,14 +3271,14 @@ function MiniFltBanner() {
           <div className="mflt-main">
             <span className="mflt-tag"><i aria-hidden="true"></i>Live now · All India · Free</span>
             <h2 className="mflt-h">Take the <span>Mini FLT</span> free, and see where you stand.</h2>
-            <p className="mflt-lede">Every Mini FLT is one 90-minute paper that mixes questions from a few subjects, the way the real GATE DA paper does. More are on the way, each with its own mix of subjects.</p>
+            <p className="mflt-lede">Every Mini FLT is one {mins}-minute paper that mixes questions from a few subjects, the way the real GATE DA paper does. More are on the way, each with its own mix of subjects.</p>
             <div className="mflt-cta">
               <a className="mflt-btn" href={m.url}>Take the free test <span aria-hidden="true">→</span></a>
               <span className="mflt-sub">Open to every GATE DA aspirant.</span>
             </div>
           </div>
           <div className="mflt-paper">
-            <div className="mflt-paper-head"><b>Mini FLT</b><span>90 min</span><em>Live now</em></div>
+            <div className="mflt-paper-head"><b>Mini FLT</b><span>{mins} min</span><em>Live now</em></div>
             <ol className="mflt-qs" aria-hidden="true">
               {rows.map((r, i) => (
                 <li key={i}>
