@@ -4412,6 +4412,20 @@ html body main .courses-grid .course-topic.course-topic-more { font-style: itali
 #combos .lang-tag:not(#_) { color: #111 !important; -webkit-text-fill-color: #111 !important; }
 #combos .lang-tag:not(#_) b { color: #6D28D9 !important; -webkit-text-fill-color: #6D28D9 !important; }
 </style>
+<!-- Mini FLT rolling strip at the top, in place of the scroll progress bar (2026-11-23, /mini-flt-ticker.js). These rules move the nav down from the first paint so the page doesn't jump; the script removes the class if the promo is switched off in /team. -->
+<style>
+html.has-mft .scroll-progress{display:none!important}
+html.has-mft{scroll-padding-top:34px}
+html.has-mft .nav{top:34px}
+html.has-mft .nav-spacer{margin-top:34px}
+html.has-mft .mobile-menu{margin-top:34px}
+html.has-mft body.nav-autohidden .nav{transform:translateY(calc(-100% - 34px))}
+html.has-mft body::before{content:'';position:fixed;top:0;left:0;right:0;height:34px;background:#FFE14D;border-bottom:2px solid #111;box-sizing:border-box;z-index:59}
+html.has-mft body.nav-autohidden::before{transform:translateY(-100%)}
+html.has-mft body::before{transition:transform .28s cubic-bezier(.4,0,1,1)}
+</style>
+<script>try{if(localStorage.getItem('taai_mft_on')!=='0')document.documentElement.classList.add('has-mft')}catch(e){document.documentElement.classList.add('has-mft')}</script>
+<script src="/mini-flt-ticker.js" defer></script>
 </head>
 <body data-float-stack>
 <div id="root"></div>
@@ -6252,7 +6266,11 @@ function ProjectsMap() {
           // Land just past the bundles intro paragraph, so no half-visible
           // line of it peeks out under the nav above the label.
           const sub = document.querySelector('#combos .section-sub');
-          const navH = (document.querySelector('nav') || { getBoundingClientRect: () => ({ height: 70 }) }).getBoundingClientRect().height;
+          // Where the nav's bottom sits when shown: its top (below the Mini FLT
+          // strip, 2026-11-23) plus its height. offsetTop ignores the transform
+          // that slides the nav away while scrolling, so this is right even then.
+          const navEl = document.querySelector('nav');
+          const navH = navEl ? navEl.offsetTop + navEl.offsetHeight : 70;
           const anchorY = sub ? sub.getBoundingClientRect().bottom + 8 : card.getBoundingClientRect().top - 60;
           const top = anchorY + window.scrollY - navH;
           window.scrollTo({ top, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
