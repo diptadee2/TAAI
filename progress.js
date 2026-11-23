@@ -4974,7 +4974,7 @@
       // One bold gold line naming the device (2026-11-23: bigger than the old
       // label, a pill version was "too clumsy"). elsewhereDeviceName() is a
       // fixed word list.
-      if (am) am.innerHTML = '<span class="zen-else-dev">' + (away.mode === 'break' ? 'Break' : 'Running') + ' on ' + elsewhereDeviceName() + '</span>';
+      if (am) am.innerHTML = '<span class="zen-else-dev">' + (away.mode === 'break' ? 'Break' : 'Focus') + ' on ' + elsewhereDeviceName() + '</span>';
       var at = document.getElementById('pomo-zen-time');
       if (at) setZenTime(at, formatPomoTime(secLeft));
       var af = document.getElementById('pomo-zen-bar-fill');
