@@ -3392,6 +3392,25 @@ html .pomo-zen.zen-phone.has-board .pomo-zen-board::before { height: 1.5px; opac
   .nav-logo svg:not(#_), .nav-logo img:not(#_) { width: 150px; }
 }
 </style>
+<!-- Mini FLT rolling strip, dark version (2026-11-23, /mini-flt-ticker.js
+     data-dark), same as on the other pages. Not in the installed app. -->
+<style>
+html.has-mft .scroll-progress{display:none!important}
+html.has-mft{scroll-padding-top:34px}
+html.has-mft .nav{top:34px}
+html.has-mft .nav-spacer{margin-top:34px}
+html.has-mft .mobile-menu{margin-top:34px}
+html.has-mft body::before{content:'';position:fixed;top:0;left:0;right:0;height:34px;background:#15121f;border-bottom:1px solid rgba(255,255,255,.1);box-sizing:border-box;z-index:59}
+/* Phones held sideways: the nav scrolls away there, so the strip does too. */
+@media (max-height: 500px) and (hover: none) and (pointer: coarse) {
+  html.has-mft body::before, html.has-mft .mft { position: absolute !important; }
+  /* the scrolling nav already sits below the strip there (it's placed in
+     the page flow after it), so no extra 34px */
+  html.has-mft .nav { top: 0 !important; }
+}
+</style>
+<script>try{var sa=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;if(!sa&&localStorage.getItem('taai_mft_on')!=='0')document.documentElement.classList.add('has-mft')}catch(e){document.documentElement.classList.add('has-mft')}</script>
+<script src="/mini-flt-ticker.js" data-dark defer></script>
 </head>
 <body data-float-stack data-nav-no-autohide>
 

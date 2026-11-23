@@ -37,6 +37,12 @@
     '.mft-item .mft-sep{opacity:.45}' +
     '.mft:focus-visible{outline:3px solid #FF4F9A;outline-offset:-3px}' +
     '@media (max-width:600px){.mft-item{font-size:12.5px;padding-right:32px}.mft-live{padding-right:10px;font-size:10px}}' +
+    // Dark version for the progress tracker (2026-11-23): <script ... data-dark>
+    '.mft.mft-dark{background:#15121f;color:rgba(255,255,255,.86);border-bottom:1px solid rgba(255,255,255,.1)}' +
+    '.mft-dark .mft-live{background:#0b0a12;color:#FCD34D;border-right:1px solid rgba(255,255,255,.08)}' +
+    '.mft-dark .mft-item b{color:#FCD34D}' +
+    '.mft-dark .mft-item em{background:#FCD34D;color:#15121f;border-radius:4px}' +
+    '.mft-dark .mft-item .mft-sep{opacity:.35}' +
     '@media (prefers-reduced-motion:reduce){.mft-track{animation:none}.mft-live i{animation:none}.mft{transition:none}}';
 
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -63,7 +69,7 @@
     document.documentElement.classList.add('has-mft');
     if (!bar) {
       bar = document.createElement('a');
-      bar.className = 'mft';
+      bar.className = 'mft' + (dark ? ' mft-dark' : '');
       bar.setAttribute('aria-label', 'Free All India Mini FLT is live: ' + m.topics.join(', ') + '. Take the free test');
       document.body.insertBefore(bar, document.body.firstChild);
       // A tap opens the Mini FLT card full screen first (2026-11-23, direct
@@ -91,6 +97,12 @@
     track.style.setProperty('--mft-dur', Math.round((w * copies) / 60) + 's');
   }
 
+  var me = document.currentScript;
+  var dark = !!(me && me.hasAttribute('data-dark'));
+  // Not in the installed app (Home Screen / Android app): it hides the nav
+  // and runs edge to edge under the status bar.
+  var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+  if (standalone) { document.documentElement.classList.remove('has-mft'); return; }
   var last = MINI_FLT_DEFAULT;
   var on = true;
   try { on = localStorage.getItem(ON_KEY) !== '0'; } catch (e) { /* fine */ }
