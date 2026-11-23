@@ -4971,15 +4971,16 @@
       el.classList.toggle('on-break', away.mode === 'break');
       el.classList.add('is-running');
       var am = document.getElementById('pomo-zen-mode');
-      // Device name as its own bigger gold pill (2026-11-23, "should be bigger
-      // and more accentuated"). elsewhereDeviceName() is a fixed word list.
-      if (am) am.innerHTML = '<span>' + (away.mode === 'break' ? 'Break' : 'Focus') + '</span><span class="zen-else-dev">on ' + elsewhereDeviceName() + '</span>';
+      // One bold gold line naming the device (2026-11-23: bigger than the old
+      // label, a pill version was "too clumsy"). elsewhereDeviceName() is a
+      // fixed word list.
+      if (am) am.innerHTML = '<span class="zen-else-dev">' + (away.mode === 'break' ? 'Break' : 'Running') + ' on ' + elsewhereDeviceName() + '</span>';
       var at = document.getElementById('pomo-zen-time');
       if (at) setZenTime(at, formatPomoTime(secLeft));
       var af = document.getElementById('pomo-zen-bar-fill');
       if (af) af.style.width = ((1 - secLeft / tot) * 100).toFixed(2) + '%';
       var as = document.getElementById('pomo-zen-sessions');
-      if (as) as.textContent = secLeft ? 'Want to continue it here?' : 'Finishing on ' + elsewhereDeviceName() + '…';
+      if (as) as.textContent = secLeft ? '' : 'Finishing on ' + elsewhereDeviceName() + '…';
       var c0 = document.getElementById('pomo-zen-clock');
       if (c0) c0.textContent = wallClockText();
       if (VICE_NIGHT) updateViceHud();
