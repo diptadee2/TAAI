@@ -3,6 +3,13 @@
 // /team > Piracy > Evidence shows them (admin only, links that expire).
 //
 //   node --env-file=.env scripts/upload-piracy-evidence.mjs <folder> [--dry]
+//   node --env-file=.env scripts/upload-piracy-evidence.mjs --reports <takedown-log.csv>
+//
+// --reports stores the takedown log CSV (Date drafted, Channel / group, Status,
+// Request, Channel link / ID, Infringing links, Associated accounts, Notes,
+// Network / operator, Evidence) as reports.csv, replacing the previous one,
+// plus a dated copy under reports/ so earlier versions are kept. /team files
+// each screenshot under the report rows it backs up.
 //
 // The folder is laid out like ~/Downloads/TAAI_Evidence:
 //   <NN_Network>/<YYYY-MM-DD>_<target>_<n>.png   one subfolder per operator network
@@ -21,6 +28,20 @@ import crypto from 'node:crypto';
 import { getSupabase } from '../netlify/functions/lib/supabase.js';
 
 const BUCKET = 'piracy-evidence';
+const ri = process.argv.indexOf('--reports');
+if (ri !== -1) {
+  const file = process.argv[ri + 1];
+  if (!file || !fs.existsSync(file)) { console.error('--reports needs a CSV file'); process.exit(1); }
+  const buf = fs.readFileSync(file);
+  const sb = getSupabase();
+  const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+  for (const dest of ['reports.csv', 'reports/' + day + '.csv']) {
+    const { error } = await sb.storage.from(BUCKET).upload(dest, buf, { contentType: 'text/csv', upsert: true });
+    if (error) throw error;
+  }
+  console.log('stored reports.csv (' + buf.length + ' bytes) and reports/' + day + '.csv');
+  process.exit(0);
+}
 const dir = process.argv[2];
 const DRY = process.argv.includes('--dry');
 if (!dir || !fs.existsSync(dir)) { console.error('usage: upload-piracy-evidence.mjs <folder> [--dry]'); process.exit(1); }

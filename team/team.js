@@ -362,7 +362,7 @@
     challenge: { loaded: false, loading: false, saving: false, error: null, rows: [], cutoff: null, open: true, msg: null, q: '' },
     // Piracy takedown log + notice generator (2026-11-12).
     piracy: { loaded: false, loading: false, error: null, msg: null, rows: [], signature: null, sub: 'log', filter: 'all', q: '', checking: false, saving: false, sigSaving: false, draft: null, candidates: [], candidatesReady: false, runs: [], terms: null, termsSaving: false, foundFilter: 'new',
-      ev: { loaded: false, loading: false, error: null, files: [], q: '', fetchedAt: 0, open: {} } },
+      ev: { loaded: false, loading: false, error: null, files: [], reports: [], reportsReady: false, unfiled: [], view: 'report', q: '', fetchedAt: 0, open: {} } },
     msg: null,
     msgType: null,
   };
@@ -4630,6 +4630,7 @@
     ev.loading = true; ev.error = null;
     api('/team-piracy-evidence').then(function (data) {
       ev.files = data.files || []; ev.error = data.ready === false ? null : (data.error || null);
+      ev.reports = data.reports || []; ev.reportsReady = !!data.reportsReady; ev.unfiled = data.unfiled || [];
       ev.loaded = true; ev.loading = false; ev.fetchedAt = Date.now();
       render();
     }).catch(function (err) { ev.loading = false; ev.loaded = true; ev.error = err.message; render(); });
@@ -4713,12 +4714,16 @@
         '<div class="chal-stat"><b>' + (dates.length ? escapeHtml(pirFmtDate(dates[0])) + ' to ' + escapeHtml(pirFmtDate(dates[dates.length - 1])) : '-') + '</b><span>captured</span></div>' +
       '</div>' +
       '<div class="field-hint" style="margin:12px 0;">Kept for legal action. The original files are stored unchanged in private storage, never on the public site. Links here stop working after an hour. Each file\'s SHA-256 fingerprint was recorded when it was stored, so anyone can check later that it hasn\'t been edited. Download the list and keep a copy with the files.</div>' +
+      (ev.reportsReady ? '<div class="tabs ev-view-tabs">' +
+        '<button type="button" class="tab-btn' + (ev.view === 'report' ? ' active' : '') + '" data-evview="report">By report</button>' +
+        '<button type="button" class="tab-btn' + (ev.view === 'network' ? ' active' : '') + '" data-evview="network">By network</button>' +
+      '</div>' : '') +
       '<div class="chal-toolbar">' +
         '<input type="search" id="ev-search" placeholder="Search channel, account, link, date or description" value="' + escapeHtml(ev.q || '') + '">' +
         (ev.q ? '<button type="button" class="btn" id="ev-clear">Show all</button>' : '') +
         '<button type="button" class="btn" id="ev-csv">⬇ Fingerprint list (CSV)</button>' +
       '</div>' +
-      (files.length ? order.map(function (g) {
+      (ev.reportsReady && ev.view === 'report' ? renderEvReports() : files.length ? order.map(function (g) {
         var open = openAll || ev.open[g];
         return '<details class="ev-group" data-evgroup="' + escapeHtml(g) + '"' + (open ? ' open' : '') + '>' +
           '<summary><span>' + escapeHtml(g) + '</span><span class="field-hint">' + groups[g].length + ' file' + (groups[g].length === 1 ? '' : 's') + '</span></summary>' +
@@ -4727,6 +4732,85 @@
       }).join('') : '<div class="field-hint" style="margin-top:12px;">Nothing matches.</div>')
     );
   }
+  // ── By report: one group per row of the takedown log (reports.csv), with
+  // the screenshots the server matched to it (team-piracy-evidence.js).
+  function evReportMatches(r, q) {
+    if (!q) return true;
+    var byPath = evByPath();
+    if (/t\.me\//i.test(q)) {
+      var hits = evForLink(q).map(function (f) { return f.path; });
+      if (r.files.some(function (pth) { return hits.indexOf(pth) !== -1; })) return true;
+    }
+    var ql = q.toLowerCase();
+    var text = [r.date, r.channel, r.status, r.request, r.channel_link, r.links, r.accounts, r.notes, r.network, r.evidence].join(' ');
+    r.files.forEach(function (pth) { var f = byPath[pth]; if (f) text += ' ' + [f.path, f.target, f.what, f.links, f.sha256].join(' '); });
+    return text.toLowerCase().indexOf(ql) !== -1;
+  }
+  function evByPath() {
+    var ev = state.piracy.ev;
+    if (!ev._byPath || ev._byPathFor !== ev.files) { ev._byPath = {}; ev.files.forEach(function (f) { ev._byPath[f.path] = f; }); ev._byPathFor = ev.files; }
+    return ev._byPath;
+  }
+  function evIso(r) { return r.iso || ''; }
+  function evReportText(r) {
+    var byPath = evByPath();
+    var lines = [
+      'TAAI takedown report #' + r.n,
+      'Date drafted: ' + (r.date || '-'),
+      'Channel / group: ' + (r.channel || '-'),
+      'Status: ' + (r.status || '-'),
+      'Request: ' + (r.request || '-'),
+      'Channel link / ID: ' + (r.channel_link || '-'),
+      'Infringing links: ' + (r.links || '-'),
+      'Associated accounts: ' + (r.accounts || '-'),
+      'Network / operator: ' + (r.network || '-'),
+      'Notes: ' + (r.notes || '-'),
+      'Evidence remarks: ' + (r.evidence || '-'),
+      '',
+      'Screenshots (' + r.files.length + '), stored unchanged in TAAI\'s private evidence storage:'
+    ];
+    r.files.forEach(function (pth, i) {
+      var f = byPath[pth] || { path: pth };
+      lines.push('', (i + 1) + '. ' + evName(pth), '   Captured: ' + (f.captured_on || '-'), '   Shows: ' + (f.what || '-'), '   Links: ' + (f.links || '-'), '   SHA-256: ' + (f.sha256 || '-'));
+    });
+    return lines.join('\n') + '\n';
+  }
+  function renderEvReports() {
+    var ev = state.piracy.ev, q = (ev.q || '').trim(), byPath = evByPath();
+    var list = ev.reports.filter(function (r) { return evReportMatches(r, q); });
+    var withFiles = ev.reports.filter(function (r) { return r.files.length; }).length;
+    var html = '<div class="field-hint" style="margin:12px 0 0;">' + ev.reports.length + ' reports from the takedown log, ' + withFiles + ' with screenshots. A screenshot is filed under a report when it shows one of the report\'s message links, or (for a channel, invite or account page) when it was captured the same day.</div>';
+    if (!list.length) return html + '<div class="field-hint" style="margin-top:12px;">Nothing matches.</div>';
+    html += list.map(function (r) {
+      var key = 'r' + r.n;
+      var open = !!q || ev.open[key];
+      var meta = [['Request', r.request], ['Status', r.status], ['Channel link / ID', r.channel_link], ['Infringing links', r.links], ['Associated accounts', r.accounts], ['Network / operator', r.network], ['Notes', r.notes], ['Evidence remarks', r.evidence]]
+        .filter(function (m) { return m[1]; })
+        .map(function (m) { return '<dt>' + escapeHtml(m[0]) + '</dt><dd>' + escapeHtml(m[1]) + '</dd>'; }).join('');
+      var cards = r.files.map(function (pth) {
+        var f = byPath[pth]; if (!f) return '';
+        var later = evIso(r) && f.captured_on && f.captured_on > evIso(r);
+        var earlier = evIso(r) && f.captured_on && f.captured_on < evIso(r);
+        return '<div class="ev-card-wrap">' + (later ? '<div class="ev-when">Captured later, ' + escapeHtml(pirFmtDate(f.captured_on)) + '</div>' : earlier ? '<div class="ev-when">From an earlier report, ' + escapeHtml(pirFmtDate(f.captured_on)) + '</div>' : '') + evCardHtml(f) + '</div>';
+      }).join('');
+      return '<details class="ev-group ev-report" data-evgroup="' + key + '"' + (open ? ' open' : '') + '>' +
+        '<summary><span><span class="ev-rep-n">#' + r.n + '</span> ' + escapeHtml(r.date || 'Undated') + ' · ' + escapeHtml(r.channel || '(no name)') +
+          '<span class="ev-rep-req">' + escapeHtml(r.request || '') + '</span></span>' +
+          '<span class="field-hint">' + (r.files.length ? r.files.length + ' screenshot' + (r.files.length === 1 ? '' : 's') : 'No screenshots') + '</span></summary>' +
+        '<div class="ev-rep-body">' +
+          '<dl class="ev-rep-meta">' + meta + '</dl>' +
+          '<div class="ev-actions" style="margin:0 0 12px;"><button type="button" class="btn btn-small js-ev-rep-dl" data-n="' + r.n + '">⬇ Report summary (text)</button></div>' +
+          (cards ? '<div class="ev-grid ev-grid-flush">' + cards + '</div>' : '<div class="field-hint">No screenshot in storage matches this report.</div>') +
+        '</div>' +
+      '</details>';
+    }).join('');
+    if (ev.unfiled.length && !q) {
+      html += '<details class="ev-group" data-evgroup="unfiled"' + (ev.open.unfiled ? ' open' : '') + '><summary><span>Not matched to any report</span><span class="field-hint">' + ev.unfiled.length + '</span></summary>' +
+        '<div class="ev-grid">' + ev.unfiled.map(function (pth) { return byPath[pth] ? evCardHtml(byPath[pth]) : ''; }).join('') + '</div></details>';
+    }
+    return html;
+  }
+
   function bindPiracyEvidence() {
     var ev = state.piracy.ev;
     var search = document.getElementById('ev-search');
@@ -4734,6 +4818,20 @@
       search.addEventListener('change', function () { ev.q = search.value.trim(); render(); });
       search.addEventListener('keydown', function (e) { if (e.key === 'Enter') { ev.q = search.value.trim(); render(); } });
     }
+    document.querySelectorAll('[data-evview]').forEach(function (b) {
+      b.addEventListener('click', function () { ev.view = b.getAttribute('data-evview'); render(); });
+    });
+    document.querySelectorAll('.js-ev-rep-dl').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var r = ev.reports.filter(function (x) { return String(x.n) === b.getAttribute('data-n'); })[0];
+        if (!r) return;
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([evReportText(r)], { type: 'text/plain' }));
+        a.download = 'taai-takedown-report-' + r.n + (r.iso ? '-' + r.iso : '') + '.txt';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+      });
+    });
     var clear = document.getElementById('ev-clear');
     if (clear) clear.addEventListener('click', function () { ev.q = ''; render(); });
     document.querySelectorAll('[data-evgroup]').forEach(function (d) {
