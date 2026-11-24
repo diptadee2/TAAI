@@ -3404,9 +3404,15 @@ html.has-mft body::before{content:'';position:fixed;top:0;left:0;right:0;height:
 /* Phones held sideways: the nav scrolls away there, so the strip does too. */
 @media (max-height: 500px) and (hover: none) and (pointer: coarse) {
   html.has-mft body::before, html.has-mft .mft { position: absolute !important; }
-  /* the scrolling nav already sits below the strip there (it's placed in
-     the page flow after it), so no extra 34px */
-  html.has-mft .nav { top: 0 !important; }
+  /* Both are measured from <body> here (it's position: relative). The
+     spacer's 34px margin used to collapse through body and push body down
+     34px, so the strip and the nav both landed at 34px, the strip covering
+     the logo and menu (2026-11-24). Padding on body doesn't collapse:
+     strip at 0, nav right under it at 34px. */
+  html.has-mft body { padding-top: 34px; }
+  html.has-mft .nav-spacer { margin-top: 0 !important; }
+  html.has-mft body::before, html.has-mft .mft { top: 0 !important; }
+  html.has-mft .nav { top: 34px !important; }
 }
 </style>
 <script>try{var sa=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;if(!sa&&localStorage.getItem('taai_mft_on')!=='0')document.documentElement.classList.add('has-mft')}catch(e){document.documentElement.classList.add('has-mft')}</script>
