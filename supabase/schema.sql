@@ -1452,3 +1452,83 @@ ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS mini_flt JSONB;
 -- custom message, button text, link, light/dark. Edited in /team > Site data >
 -- Settings. NULL = built-in default (netlify/functions/lib/mini-flt.js).
 ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS top_strip JSONB;
+
+-- ── Competitor YouTube monitor (2026-11-24) ──────────────────────────────
+-- /team > Competitors. netlify/functions/yt-monitor.js runs every 6 hours
+-- (and on "Refresh now" in /team) and records each channel's subscribers and
+-- every video's views/likes/comments, via the YouTube Data API when
+-- YOUTUBE_API_KEY is set, else the public RSS feeds (latest 15 videos only).
+CREATE TABLE IF NOT EXISTS yt_channels (
+  channel_id  TEXT PRIMARY KEY,
+  handle      TEXT,
+  title       TEXT,
+  label       TEXT,
+  is_us       BOOLEAN NOT NULL DEFAULT false,
+  active      BOOLEAN NOT NULL DEFAULT true,
+  sort        INTEGER NOT NULL DEFAULT 100,
+  thumbnail   TEXT,
+  uploads_playlist TEXT,
+  added_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+-- one row per channel per IST day (the last run of the day wins)
+CREATE TABLE IF NOT EXISTS yt_channel_stats (
+  channel_id  TEXT NOT NULL,
+  taken_on    DATE NOT NULL,
+  subscribers BIGINT,
+  total_views BIGINT,
+  video_count INTEGER,
+  taken_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (channel_id, taken_on)
+);
+CREATE TABLE IF NOT EXISTS yt_videos (
+  video_id     TEXT PRIMARY KEY,
+  channel_id   TEXT NOT NULL,
+  title        TEXT,
+  published_at TIMESTAMPTZ,
+  kind         TEXT,          -- 'video' | 'short' | 'live'
+  duration_s   INTEGER,
+  views        BIGINT,
+  likes        BIGINT,
+  comments     BIGINT,
+  views_24h    BIGINT,        -- views when first seen 24-30 h after publishing
+  views_7d     BIGINT,        -- views when first seen 7 days to 7 days 12 h after
+  first_seen   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS yt_videos_channel_pub ON yt_videos (channel_id, published_at DESC);
+-- every run's numbers for videos under 30 days old (pruned after 60 days)
+CREATE TABLE IF NOT EXISTS yt_video_stats (
+  video_id  TEXT NOT NULL,
+  taken_at  TIMESTAMPTZ NOT NULL,
+  views     BIGINT,
+  likes     BIGINT,
+  comments  BIGINT,
+  PRIMARY KEY (video_id, taken_at)
+);
+CREATE TABLE IF NOT EXISTS yt_runs (
+  id        BIGSERIAL PRIMARY KEY,
+  ran_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  source    TEXT,             -- 'api' | 'rss'
+  channels  INTEGER,
+  videos    INTEGER,
+  units     INTEGER,          -- YouTube API quota units used
+  error     TEXT
+);
+ALTER TABLE yt_channels ENABLE ROW LEVEL SECURITY;
+ALTER TABLE yt_channel_stats ENABLE ROW LEVEL SECURITY;
+ALTER TABLE yt_videos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE yt_video_stats ENABLE ROW LEVEL SECURITY;
+ALTER TABLE yt_runs ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON yt_channels, yt_channel_stats, yt_videos, yt_video_stats, yt_runs TO service_role;
+GRANT USAGE, SELECT ON SEQUENCE yt_runs_id_seq TO service_role;
+INSERT INTO yt_channels (channel_id, handle, label, is_us, sort) VALUES
+  ('UCqvokBUp6g-0NEt9TIsO2_A', 'Manojkumar_TAAI', 'TAAI', true, 0),
+  ('UCc6mOzNd6PxJkBsLPT8WEGA', 'GfG_GATE', 'GfG GATE', false, 10),
+  ('UCJ9CklGQK-b_iSSuFvEVDXg', 'GeeksforGeeksGATEEnglish', 'GfG GATE English', false, 11),
+  ('UCuGWIkiNaWjsCqybgxGuxfg', 'gatewallah_cse_da', 'GATE Wallah CSE & DA', false, 20),
+  ('UCOsV75fSUr8gnMbhx-Qh3Lg', 'gatewallahenglish', 'GATE Wallah English', false, 21),
+  ('UCyvbBJhLJ-5YqwPA884vj0Q', 'GOClassesforGATECS', 'GO Classes CS', false, 30),
+  ('UCkOaW747107QQNo-o0yhJGg', 'GOClassesforGATEDA', 'GO Classes DA', false, 31),
+  ('UCwrZjJwUFkHRZAej9MPCJgA', 'themlhub-ai', 'The ML Hub', false, 40),
+  ('UCSZ4B14ShWqkXiTHk-YOL_w', 'Gatecsit-dsai', 'Unacademy GATE CSIT & DA', false, 50)
+ON CONFLICT (channel_id) DO NOTHING;

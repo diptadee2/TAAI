@@ -560,6 +560,45 @@
   .pir-st-removed { color: #86efac; border-color: rgba(74,222,128,0.5); background: rgba(74,222,128,0.12); }
   .pir-st-moved { color: #fcd34d; border-color: rgba(251,191,36,0.5); background: rgba(251,191,36,0.12); }
   .pir-st-private, .pir-st-wait { color: var(--ink-soft, #aaa); }
+  /* Competitors (2026-11-24) */
+  .cmp-head { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .cmp-head > .field-hint { flex: 1 1 320px; }
+  .cmp-head-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .cmp-period { margin: 0; }
+  .cmp-table th { cursor: pointer; white-space: normal; vertical-align: bottom; min-width: 58px; line-height: 1.25; height: auto; padding-top: 8px; padding-bottom: 8px; }
+  .cmp-table th:first-child { min-width: 0; }
+  .cmp-table th.sorted { color: var(--ink); }
+  .cmp-per { font-weight: 400; color: var(--ink-soft, #888); }
+  .cmp-n { white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .cmp-best { color: #86efac; font-weight: 600; }
+  .cmp-ch { display: flex; gap: 10px; align-items: center; min-width: 170px; }
+  .cmp-ch img, .cmp-av { width: 32px; height: 32px; border-radius: 50%; flex: none; object-fit: cover; }
+  .cmp-av { display: inline-flex; align-items: center; justify-content: center; background: rgba(127,127,127,0.2); font-weight: 600; }
+  .cmp-you { font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: rgba(167,139,250,0.2); color: #c4b5fd; }
+  .cmp-us td { background: rgba(167,139,250,0.07); }
+  .cmp-top { min-width: 200px; max-width: 280px; white-space: normal; }
+  .cmp-ch { white-space: normal; }
+  .cmp-top a { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .cmp-h { margin: 22px 0 10px; font-size: 16px; display: flex; gap: 10px; align-items: baseline; }
+  .cmp-vtools select, .cmp-vtools input { min-width: 0; }
+  .cmp-vlist { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 10px; }
+  .cmp-v { display: flex; gap: 12px; padding: 10px; border: 1px solid var(--line); border-radius: 10px; color: inherit; text-decoration: none; min-width: 0; }
+  .cmp-v:hover { border-color: var(--ink-soft, #888); }
+  .cmp-v-us { background: rgba(167,139,250,0.07); }
+  .cmp-vthumb { position: relative; flex: none; width: 132px; height: 74px; border-radius: 6px; overflow: hidden; background: rgba(127,127,127,0.15); }
+  .cmp-vthumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .cmp-vthumb i { position: absolute; right: 4px; bottom: 4px; font-style: normal; font-size: 11px; font-weight: 600; padding: 0 5px; border-radius: 4px; background: rgba(0,0,0,0.78); color: #fff; }
+  .cmp-vthumb.is-short i { background: #e11d48; }
+  .cmp-vbody { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .cmp-vbody > b { font-weight: 600; font-size: 14px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .cmp-vstats { display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 12px; color: var(--ink-soft, #888); }
+  .cmp-vstats b { color: var(--ink); font-weight: 600; }
+  .cmp-manage { margin-top: 22px; border-top: 1px solid var(--line); padding-top: 14px; }
+  .cmp-manage > summary { cursor: pointer; font-weight: 600; }
+  .cmp-chlist { margin-top: 10px; display: flex; flex-direction: column; }
+  .cmp-chrow { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+  .cmp-chrow.is-off > span:first-child { opacity: .55; }
+  @media (max-width: 600px) { .cmp-vlist { grid-template-columns: 1fr; } .cmp-vthumb { width: 112px; height: 63px; } .cmp-head-actions { width: 100%; } .cmp-head-actions .btn { flex: 1; } }
   /* Piracy > Evidence (2026-11-24) */
   .ev-chip { display: inline-block; margin-top: 6px; font: inherit; font-size: 12px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; }
   .ev-chip:hover { border-color: var(--ink-soft, #888); }

@@ -43,6 +43,10 @@
 # weekly-rank-snapshot.js's own comment for why.
 # Daily check of reported Telegram piracy links (09:00 IST); the weekly
 # 'piracy_status' scheduled post in /team reads the results.
+# Competitor YouTube monitor for /team > Competitors (2026-11-24), every 6 hours.
+[functions."yt-monitor"]
+  schedule = "0 */6 * * *"
+
 [functions."piracy-check"]
   schedule = "30 3 * * *"
 

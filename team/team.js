@@ -360,6 +360,8 @@
     // Site data > Challenge (2026-10-18): "100 pe 100% off" registrations
     // and the registration cutoff date.
     challenge: { loaded: false, loading: false, saving: false, error: null, rows: [], cutoff: null, open: true, msg: null, q: '' },
+    // Competitor YouTube monitor (2026-11-24).
+    comp: { loaded: false, loading: false, error: null, data: null, period: 7, sort: 'subs', sortDir: -1, vsort: 'views', vchannel: 'all', vkind: 'all', vq: '', vlimit: 40, busy: false, msg: null, msgType: 'ok' },
     // Piracy takedown log + notice generator (2026-11-12).
     piracy: { loaded: false, loading: false, error: null, msg: null, rows: [], signature: null, sub: 'log', filter: 'all', q: '', checking: false, saving: false, sigSaving: false, draft: null, candidates: [], candidatesReady: false, runs: [], terms: null, termsSaving: false, foundFilter: 'new',
       ev: { loaded: false, loading: false, error: null, files: [], reports: [], reportsReady: false, unfiled: [], view: 'report', q: '', fetchedAt: 0, open: {} } },
@@ -1040,6 +1042,7 @@
         '<button class="tab-btn' + (isMarketing ? ' active' : '') + '" data-tab="marketing">🎨 Marketing</button>' +
         '<button class="tab-btn' + (state.tab === 'challenge' ? ' active' : '') + '" data-tab="challenge">🏆 Challenge' + (state.challenge.loaded ? ' (' + state.challenge.rows.length + ')' : '') + '</button>' +
         '<button class="tab-btn' + (state.tab === 'piracy' ? ' active' : '') + '" data-tab="piracy">🛡️ Piracy</button>' +
+        '<button class="tab-btn' + (state.tab === 'competitors' ? ' active' : '') + '" data-tab="competitors">📺 Competitors</button>' +
       '</div>';
 
     var actionsHtml = isAnnouncements
@@ -1077,6 +1080,8 @@
               ? renderChallengePanel()
               : state.tab === 'piracy'
                 ? renderPiracyPanel()
+              : state.tab === 'competitors'
+                ? renderCompetitors()
               : (msgHtml + renderSiteData());
 
     root.innerHTML =
@@ -1096,7 +1101,233 @@
     if (state.tab === 'day-card') bindDayCard();
     if (state.tab === 'offer-poster') bindOfferPoster();
     if (state.tab === 'piracy') bindPiracy();
+    if (state.tab === 'competitors') bindCompetitors();
     if (state.tab === 'club-winner') { bindClubWinner(); bindClubRunners(); }
+  }
+
+  // ── Competitors (2026-11-24) ─────────────────────────────────────────
+  // YouTube numbers for TAAI and competitor channels, recorded every 6 hours
+  // by yt-monitor.js (lib/yt-monitor.js). Everything below is worked out in
+  // the browser from the last 30 days of videos and 35 days of channel stats.
+  function loadCompetitors() {
+    var c = state.comp;
+    c.loading = true; c.error = null; render();
+    api('/team-competitors').then(function (d) {
+      c.data = d; c.loaded = true; c.loading = false;
+      c.error = d.ready === false ? d.error : null;
+      render();
+    }).catch(function (e) { c.loading = false; c.loaded = true; c.error = e.message; render(); });
+  }
+  function cmpMedian(a) {
+    a = a.filter(function (x) { return x != null; }).sort(function (x, y) { return x - y; });
+    if (!a.length) return null;
+    var m = Math.floor(a.length / 2);
+    return a.length % 2 ? a[m] : Math.round((a[m - 1] + a[m]) / 2);
+  }
+  function cmpNum(n) {
+    if (n == null) return '-';
+    if (n >= 10000000) return (n / 10000000).toFixed(n >= 100000000 ? 0 : 1) + ' Cr';
+    if (n >= 100000) return (n / 100000).toFixed(n >= 1000000 ? 0 : 1) + ' L';
+    if (n >= 1000) return (n / 1000).toFixed(n >= 10000 ? 0 : 1) + 'K';
+    return String(Math.round(n));
+  }
+  function cmpAgo(iso) {
+    var h = (Date.now() - Date.parse(iso)) / 3600000;
+    if (h < 1) return 'just now';
+    if (h < 24) return Math.floor(h) + 'h ago';
+    var d = Math.floor(h / 24);
+    return d + ' day' + (d === 1 ? '' : 's') + ' ago';
+  }
+  function cmpRows() {
+    var c = state.comp, d = c.data, now = Date.now(), from = now - c.period * 86400000;
+    var startDay = new Date(from + 5.5 * 3600000).toISOString().slice(0, 10);
+    return d.channels.filter(function (ch) { return ch.active; }).map(function (ch) {
+      var st = d.stats.filter(function (x) { return x.channel_id === ch.channel_id; });
+      var last = st[st.length - 1] || null;
+      var before = st.filter(function (x) { return x.taken_on <= startDay; }).pop() || null;
+      var base = before || st[0] || null;
+      var vids = d.videos.filter(function (v) { return v.channel_id === ch.channel_id && Date.parse(v.published_at) >= from; });
+      var longf = vids.filter(function (v) { return v.kind !== 'short'; });
+      var shorts = vids.filter(function (v) { return v.kind === 'short'; });
+      var views = vids.reduce(function (a, v) { return a + (v.views || 0); }, 0);
+      var eng = vids.filter(function (v) { return v.views; });
+      var engV = eng.reduce(function (a, v) { return a + v.views; }, 0);
+      var engL = eng.reduce(function (a, v) { return a + (v.likes || 0) + (v.comments || 0); }, 0);
+      var top = vids.slice().sort(function (a, b) { return (b.views || 0) - (a.views || 0); })[0] || null;
+      return {
+        ch: ch,
+        name: ch.label || ch.title || ch.handle,
+        subs: last ? last.subscribers : null,
+        gained: last && base && base.taken_on !== last.taken_on && last.subscribers != null && base.subscribers != null ? last.subscribers - base.subscribers : null,
+        gainedSince: before ? null : (base ? base.taken_on : null),
+        uploads: vids.length, nLong: longf.filter(function (v) { return v.kind !== 'live'; }).length, nLive: vids.filter(function (v) { return v.kind === 'live'; }).length, nShort: shorts.length,
+        views: views,
+        medLong: cmpMedian(longf.map(function (v) { return v.views; })),
+        medShort: cmpMedian(shorts.map(function (v) { return v.views; })),
+        med24: cmpMedian(longf.map(function (v) { return v.views_24h; })),
+        eng: engV ? engL / engV * 100 : null,
+        top: top
+      };
+    });
+  }
+  var CMP_COLS = [
+    ['name', 'Channel'], ['subs', 'Subs'], ['gained', 'Gained'], ['uploads', 'Uploads'], ['views', 'Views'],
+    ['medLong', 'Median / video'], ['medShort', 'Median / Short'], ['med24', 'Median day 1'], ['eng', 'Engagement']
+  ];
+  function renderCompetitors() {
+    var c = state.comp, d = c.data;
+    if (c.loading && !c.loaded) return '<div class="card"><div class="field-hint">Loading…</div></div>';
+    if (c.error && !d) return '<div class="card"><div class="msg msg-error">' + escapeHtml(c.error) + '</div></div>';
+    if (!d || d.ready === false) return '<div class="card"><div class="msg msg-error">Not set up yet: the developer needs to run the competitor monitor SQL first.' + (c.error ? ' (' + escapeHtml(c.error) + ')' : '') + '</div></div>';
+    var rows = cmpRows();
+    var k = c.sort, dir = c.sortDir;
+    rows.sort(function (a, b) {
+      if (k === 'name') return dir * String(a.name).localeCompare(String(b.name));
+      var x = a[k], y = b[k];
+      if (x == null && y == null) return 0; if (x == null) return 1; if (y == null) return -1;
+      return dir * (x - y);
+    });
+    var best = {};
+    ['subs', 'gained', 'uploads', 'views', 'medLong', 'medShort', 'med24', 'eng'].forEach(function (key) {
+      var vals = rows.map(function (r) { return r[key]; }).filter(function (v) { return v != null; });
+      best[key] = vals.length ? Math.max.apply(null, vals) : null;
+    });
+    var run = d.lastRun;
+    var head = '<div class="cmp-head">' +
+      '<div class="field-hint">' + (d.keyReady
+        ? 'Numbers from the YouTube API, recorded every 6 hours.'
+        : 'Running on YouTube\'s public feeds: only each channel\'s latest 15 videos, and no subscriber or comment counts. Add the YouTube API key in Netlify for the full picture.') +
+        (run ? ' Last update ' + escapeHtml(cmpAgo(run.ran_at)) + (run.error ? ' (some channels failed: ' + escapeHtml(run.error) + ')' : '') + '.' : ' No data recorded yet: press Refresh now.') + '</div>' +
+      '<div class="cmp-head-actions">' +
+        '<div class="tabs cmp-period">' + [[1, '24 hours'], [7, '7 days'], [30, '30 days']].map(function (p) {
+          return '<button type="button" class="tab-btn' + (c.period === p[0] ? ' active' : '') + '" data-cmpperiod="' + p[0] + '">' + p[1] + '</button>';
+        }).join('') + '</div>' +
+        '<button type="button" class="btn" id="cmp-refresh"' + (c.busy ? ' disabled' : '') + '>' + (c.busy ? 'Updating…' : '↻ Refresh now') + '</button>' +
+      '</div></div>';
+    var table = '<div class="students-table-wrap"><table class="students-table cmp-table"><thead><tr>' +
+      CMP_COLS.map(function (col) {
+        return '<th class="' + (col[0] === k ? 'sorted' : '') + '" data-cmpsort="' + col[0] + '">' + escapeHtml(col[1]) + (col[0] === 'gained' || col[0] === 'uploads' || col[0] === 'views' ? ' <span class="cmp-per">(' + (c.period === 1 ? '24h' : c.period + 'd') + ')</span>' : '') + (col[0] === k ? (dir < 0 ? ' ↓' : ' ↑') : '') + '</th>';
+      }).join('') + '</tr></thead><tbody>' +
+      rows.map(function (r) {
+        var cell = function (key, txt) { return '<td class="cmp-n' + (r[key] != null && r[key] === best[key] && rows.length > 1 ? ' cmp-best' : '') + '">' + txt + '</td>'; };
+        return '<tr class="' + (r.ch.is_us ? 'cmp-us' : '') + '">' +
+          '<td class="cmp-ch">' + (r.ch.thumbnail ? '<img src="' + escapeHtml(r.ch.thumbnail) + '" alt="" loading="lazy">' : '<span class="cmp-av">' + escapeHtml(String(r.name).charAt(0)) + '</span>') +
+            '<div><a href="https://www.youtube.com/' + (r.ch.handle ? '@' + escapeHtml(r.ch.handle) : 'channel/' + escapeHtml(r.ch.channel_id)) + '" target="_blank" rel="noopener">' + escapeHtml(r.name) + '</a>' + (r.ch.is_us ? ' <span class="cmp-you">You</span>' : '') +
+            (r.ch.handle ? '<div class="field-hint">@' + escapeHtml(r.ch.handle) + '</div>' : '') + '</div></td>' +
+          cell('subs', cmpNum(r.subs)) +
+          cell('gained', r.gained == null ? '-' : (r.gained > 0 ? '+' : '') + cmpNum(r.gained) + (r.gainedSince ? '<div class="field-hint">since ' + escapeHtml(pirFmtDate(r.gainedSince)) + '</div>' : '')) +
+          cell('uploads', r.uploads + '<div class="field-hint">' + r.nLong + ' video' + (r.nLong === 1 ? '' : 's') + ' · ' + r.nShort + ' short' + (r.nShort === 1 ? '' : 's') + (r.nLive ? ' · ' + r.nLive + ' live' : '') + '</div>') +
+          cell('views', cmpNum(r.views)) + cell('medLong', cmpNum(r.medLong)) + cell('medShort', cmpNum(r.medShort)) + cell('med24', cmpNum(r.med24)) +
+          cell('eng', r.eng == null ? '-' : r.eng.toFixed(1)) +
+        '</tr>';
+      }).join('') + '</tbody></table></div>' +
+      '<div class="field-hint" style="margin-top:8px;">Uploads, Views and the medians count only videos published in the chosen period. Median / video and Median / Short are the middle view counts of those uploads. Median day 1 is the views a video had about 24 hours after going up, so new and old videos compare fairly; it fills in as the monitor runs. Engagement is likes plus comments per 100 views. The best value in each column is highlighted.</div>';
+    return '<div class="card">' +
+      (c.msg ? '<div class="msg ' + (c.msgType === 'error' ? 'msg-error' : 'msg-ok') + '">' + escapeHtml(c.msg) + '</div>' : '') +
+      head + table + renderCmpVideos() + renderCmpChannels() +
+    '</div>';
+  }
+  function renderCmpVideos() {
+    var c = state.comp, d = c.data, now = Date.now(), from = now - c.period * 86400000;
+    var names = {}; d.channels.forEach(function (ch) { names[ch.channel_id] = ch; });
+    var q = (c.vq || '').toLowerCase();
+    var list = d.videos.filter(function (v) {
+      if (Date.parse(v.published_at) < from) return false;
+      if (!names[v.channel_id] || !names[v.channel_id].active) return false;
+      if (c.vchannel !== 'all' && v.channel_id !== c.vchannel) return false;
+      if (c.vkind !== 'all' && (v.kind || 'video') !== c.vkind) return false;
+      if (q && String(v.title).toLowerCase().indexOf(q) === -1) return false;
+      return true;
+    });
+    var perDay = function (v) { return (v.views || 0) / Math.max(1, (now - Date.parse(v.published_at)) / 86400000); }; // under a day old counts as one day, so a 10-hour-old video isn't scaled up
+    var sorters = {
+      views: function (a, b) { return (b.views || 0) - (a.views || 0); },
+      perday: function (a, b) { return perDay(b) - perDay(a); },
+      first: function (a, b) { return (b.views_24h == null ? -1 : b.views_24h) - (a.views_24h == null ? -1 : a.views_24h); },
+      comments: function (a, b) { return (b.comments || 0) - (a.comments || 0); },
+      newest: function (a, b) { return Date.parse(b.published_at) - Date.parse(a.published_at); }
+    };
+    list.sort(sorters[c.vsort] || sorters.views);
+    var shown = list.slice(0, c.vlimit);
+    var opt = function (v, l, cur) { return '<option value="' + v + '"' + (cur === v ? ' selected' : '') + '>' + l + '</option>'; };
+    return '<h3 class="cmp-h">Videos <span class="field-hint">' + list.length + ' in the last ' + (c.period === 1 ? '24 hours' : c.period + ' days') + '</span></h3>' +
+      '<div class="chal-toolbar cmp-vtools">' +
+        '<select id="cmp-vchannel">' + opt('all', 'All channels', c.vchannel) + d.channels.filter(function (ch) { return ch.active; }).map(function (ch) { return opt(ch.channel_id, escapeHtml(ch.label || ch.title), c.vchannel); }).join('') + '</select>' +
+        '<select id="cmp-vkind">' + opt('all', 'All types', c.vkind) + opt('video', 'Videos', c.vkind) + opt('short', 'Shorts', c.vkind) + opt('live', 'Live streams', c.vkind) + '</select>' +
+        '<select id="cmp-vsort">' + opt('views', 'Most views', c.vsort) + opt('perday', 'Most views per day', c.vsort) + opt('first', 'Most first-day views', c.vsort) + opt('comments', 'Most comments', c.vsort) + opt('newest', 'Newest', c.vsort) + '</select>' +
+        '<input type="search" id="cmp-vq" placeholder="Search titles" value="' + escapeHtml(c.vq || '') + '">' +
+      '</div>' +
+      (shown.length ? '<div class="cmp-vlist">' + shown.map(function (v) {
+        var ch = names[v.channel_id];
+        return '<a class="cmp-v' + (ch.is_us ? ' cmp-v-us' : '') + '" href="https://www.youtube.com/' + (v.kind === 'short' ? 'shorts/' : 'watch?v=') + escapeHtml(v.video_id) + '" target="_blank" rel="noopener">' +
+          '<span class="cmp-vthumb' + (v.kind === 'short' ? ' is-short' : '') + '"><img loading="lazy" alt="" src="https://i.ytimg.com/vi/' + escapeHtml(v.video_id) + '/mqdefault.jpg">' +
+            (v.kind === 'short' ? '<i>Short</i>' : v.kind === 'live' ? '<i>Live</i>' : v.duration_s ? '<i>' + (v.duration_s >= 3600 ? Math.floor(v.duration_s / 3600) + ':' + String(Math.floor(v.duration_s / 60) % 60).padStart(2, '0') : Math.floor(v.duration_s / 60)) + ':' + String(v.duration_s % 60).padStart(2, '0') + '</i>' : '') + '</span>' +
+          '<span class="cmp-vbody"><b>' + escapeHtml(v.title) + '</b>' +
+            '<span class="field-hint">' + escapeHtml(ch.label || ch.title) + (ch.is_us ? ' (you)' : '') + ' · ' + escapeHtml(cmpAgo(v.published_at)) + '</span>' +
+            '<span class="cmp-vstats"><span><b>' + cmpNum(v.views) + '</b> views</span><span><b>' + cmpNum(perDay(v)) + '</b>/day</span>' +
+              (v.views_24h != null ? '<span><b>' + cmpNum(v.views_24h) + '</b> first day</span>' : '') +
+              (v.likes != null ? '<span><b>' + cmpNum(v.likes) + '</b> likes</span>' : '') +
+              (v.comments != null ? '<span><b>' + cmpNum(v.comments) + '</b> comments</span>' : '') + '</span>' +
+          '</span></a>';
+      }).join('') + '</div>' + (list.length > shown.length ? '<button type="button" class="btn" id="cmp-more" style="margin-top:10px;">Show more (' + (list.length - shown.length) + ' left)</button>' : '')
+      : '<div class="field-hint">No videos match.</div>');
+  }
+  function renderCmpChannels() {
+    var c = state.comp, d = c.data;
+    return '<details class="cmp-manage"><summary>Channels monitored (' + d.channels.filter(function (ch) { return ch.active; }).length + ')</summary>' +
+      '<div class="cmp-chlist">' + d.channels.map(function (ch) {
+        return '<div class="cmp-chrow' + (ch.active ? '' : ' is-off') + '"><span>' + escapeHtml(ch.label || ch.title) + (ch.handle ? ' <span class="field-hint">@' + escapeHtml(ch.handle) + '</span>' : '') + (ch.active ? '' : ' <span class="field-hint">(stopped)</span>') + '</span>' +
+          (ch.is_us ? '<span class="field-hint">your channel</span>' : '<button type="button" class="btn btn-small js-cmp-toggle" data-id="' + escapeHtml(ch.channel_id) + '" data-on="' + (ch.active ? '1' : '0') + '">' + (ch.active ? 'Stop monitoring' : 'Monitor again') + '</button>') + '</div>';
+      }).join('') + '</div>' +
+      '<div class="chal-toolbar" style="margin-top:12px;"><input type="text" id="cmp-add-input" placeholder="Channel link or @handle"><input type="text" id="cmp-add-label" placeholder="Short name (optional)"><button type="button" class="btn btn-primary" id="cmp-add"' + (c.busy ? ' disabled' : '') + '>Add channel</button></div>' +
+      '<div class="field-hint">A new channel shows up after the next update (press Refresh now to update straight away). Stopping keeps its past numbers.</div>' +
+    '</details>';
+  }
+  function cmpPost(body, okMsg) {
+    var c = state.comp;
+    c.busy = true; c.msg = null; render();
+    return api('/team-competitors', { method: 'POST', body: JSON.stringify(body) }).then(function (r) {
+      c.busy = false; c.msg = typeof okMsg === 'function' ? okMsg(r) : okMsg; c.msgType = 'ok';
+      loadCompetitors();
+    }).catch(function (e) { c.busy = false; c.msg = e.message; c.msgType = 'error'; render(); });
+  }
+  function bindCompetitors() {
+    var c = state.comp;
+    document.querySelectorAll('[data-cmpperiod]').forEach(function (b) { b.addEventListener('click', function () { c.period = +b.getAttribute('data-cmpperiod'); c.vlimit = 40; render(); }); });
+    document.querySelectorAll('[data-cmpsort]').forEach(function (th) {
+      th.addEventListener('click', function () {
+        var key = th.getAttribute('data-cmpsort');
+        if (c.sort === key) c.sortDir = -c.sortDir; else { c.sort = key; c.sortDir = key === 'name' ? 1 : -1; }
+        render();
+      });
+    });
+    var refresh = document.getElementById('cmp-refresh');
+    if (refresh) refresh.addEventListener('click', function () {
+      cmpPost({ action: 'refresh' }, function (r) { return 'Updated ' + r.channels + ' channels and ' + r.videos + ' videos' + (r.error ? '. Problems: ' + r.error : '.'); });
+    });
+    [['cmp-vchannel', 'vchannel'], ['cmp-vkind', 'vkind'], ['cmp-vsort', 'vsort']].forEach(function (p) {
+      var el = document.getElementById(p[0]);
+      if (el) el.addEventListener('change', function () { c[p[1]] = el.value; c.vlimit = 40; render(); });
+    });
+    var vq = document.getElementById('cmp-vq');
+    if (vq) {
+      vq.addEventListener('change', function () { c.vq = vq.value.trim(); render(); });
+      vq.addEventListener('keydown', function (e) { if (e.key === 'Enter') { c.vq = vq.value.trim(); render(); } });
+    }
+    var more = document.getElementById('cmp-more');
+    if (more) more.addEventListener('click', function () { c.vlimit += 40; render(); });
+    document.querySelectorAll('.js-cmp-toggle').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var on = b.getAttribute('data-on') === '1';
+        cmpPost({ action: on ? 'remove' : 'restore', channel_id: b.getAttribute('data-id') }, on ? 'Stopped monitoring that channel.' : 'Monitoring that channel again.');
+      });
+    });
+    var add = document.getElementById('cmp-add');
+    if (add) add.addEventListener('click', function () {
+      var input = document.getElementById('cmp-add-input').value.trim();
+      if (!input) return;
+      cmpPost({ action: 'add', input: input, label: document.getElementById('cmp-add-label').value.trim() }, function (r) { return r.existed ? 'Already in the list, monitoring it.' : 'Added. Press Refresh now to fetch its numbers.'; });
+    });
   }
 
   // ── 2 AM Club winner popup (2026-11-18) ──────────────────────────────
@@ -5204,6 +5435,7 @@
         if (tab === 'club-winner') { render(); loadClubWinner(); loadClubRunners(); return; }
         if (tab === 'challenge') { if (!state.challenge.loaded && !state.challenge.loading) { loadChallenge(); return; } render(); return; }
         if (tab === 'piracy') { if (!state.piracy.loaded && !state.piracy.loading) { loadPiracy(); return; } render(); return; }
+        if (tab === 'competitors') { if (!state.comp.loaded && !state.comp.loading) { loadCompetitors(); return; } render(); return; }
         render();
       });
     });
