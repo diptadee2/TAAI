@@ -560,6 +560,28 @@
   .pir-st-removed { color: #86efac; border-color: rgba(74,222,128,0.5); background: rgba(74,222,128,0.12); }
   .pir-st-moved { color: #fcd34d; border-color: rgba(251,191,36,0.5); background: rgba(251,191,36,0.12); }
   .pir-st-private, .pir-st-wait { color: var(--ink-soft, #aaa); }
+  /* Piracy > Evidence (2026-11-24) */
+  .ev-chip { display: inline-block; margin-top: 6px; font: inherit; font-size: 12px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; }
+  .ev-chip:hover { border-color: var(--ink-soft, #888); }
+  .ev-group { border: 1px solid var(--line); border-radius: 10px; margin-top: 12px; }
+  .ev-group > summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; font-weight: 600; text-transform: capitalize; }
+  .ev-group > summary::-webkit-details-marker { display: none; }
+  .ev-group > summary::after { content: '▸'; color: var(--ink-soft, #888); margin-left: 6px; }
+  .ev-group[open] > summary::after { content: '▾'; }
+  .ev-group > summary > span:first-child { flex: 1; }
+  .ev-group > summary > .field-hint { text-transform: none; }
+  .ev-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; padding: 0 14px 14px; }
+  .ev-card { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
+  .ev-thumb { display: block; height: 170px; background: rgba(127,127,127,0.08); border-bottom: 1px solid var(--line); }
+  .ev-thumb img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+  .ev-doc { display: flex; align-items: center; justify-content: center; font-weight: 700; letter-spacing: .08em; color: var(--ink-soft, #888); text-decoration: none; }
+  .ev-meta { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .ev-title { font-weight: 600; overflow-wrap: anywhere; }
+  .ev-what { font-size: 13px; }
+  .ev-links { font-size: 12px; color: var(--ink-soft, #888); overflow-wrap: anywhere; }
+  .ev-hash { font-family: 'Geist Mono', ui-monospace, Menlo, monospace; font-size: 10.5px; color: var(--ink-soft, #888); overflow-wrap: anywhere; }
+  .ev-actions { display: flex; gap: 8px; margin-top: 6px; }
+  @media (max-width: 600px) { .ev-grid { grid-template-columns: 1fr; padding: 0 10px 10px; } .ev-thumb { height: 200px; } }
   .pir-form { display: flex; flex-direction: column; gap: 12px; }
   .pir-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
   .pir-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-size: 13px; }

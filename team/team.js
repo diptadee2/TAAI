@@ -361,7 +361,8 @@
     // and the registration cutoff date.
     challenge: { loaded: false, loading: false, saving: false, error: null, rows: [], cutoff: null, open: true, msg: null, q: '' },
     // Piracy takedown log + notice generator (2026-11-12).
-    piracy: { loaded: false, loading: false, error: null, msg: null, rows: [], signature: null, sub: 'log', filter: 'all', q: '', checking: false, saving: false, sigSaving: false, draft: null, candidates: [], candidatesReady: false, runs: [], terms: null, termsSaving: false, foundFilter: 'new' },
+    piracy: { loaded: false, loading: false, error: null, msg: null, rows: [], signature: null, sub: 'log', filter: 'all', q: '', checking: false, saving: false, sigSaving: false, draft: null, candidates: [], candidatesReady: false, runs: [], terms: null, termsSaving: false, foundFilter: 'new',
+      ev: { loaded: false, loading: false, error: null, files: [], q: '', fetchedAt: 0, open: {} } },
     msg: null,
     msgType: null,
   };
@@ -4487,7 +4488,8 @@
           '<td class="pir-link-cell">' + (r.channel_name ? '<div class="pir-name">' + escapeHtml(r.channel_name) + '</div>' : '') +
             '<a href="' + escapeHtml(r.link) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(r.link.replace('https://', '')) + '</a>' +
             (r.role ? '<div class="field-hint">' + escapeHtml(r.role) + '</div>' : '') +
-            (r.subscribers ? '<div class="field-hint">' + Number(r.subscribers).toLocaleString('en-IN') + ' subscribers</div>' : '') + '</td>' +
+            (r.subscribers ? '<div class="field-hint">' + Number(r.subscribers).toLocaleString('en-IN') + ' subscribers</div>' : '') +
+            (function () { var n = evForLink(r.link).length; return n ? '<button type="button" class="ev-chip js-pir-ev" data-link="' + escapeHtml(r.link) + '">📎 ' + n + ' screenshot' + (n === 1 ? '' : 's') + '</button>' : ''; })() + '</td>' +
           '<td>' + escapeHtml(kindLabel[r.kind] || r.kind) + (r.scope === 'whole' ? '<div class="field-hint">whole channel</div>' : r.scope === 'suspected' ? '<div class="field-hint">suspected</div>' : '') + '</td>' +
           '<td>' + escapeHtml(pirFmtDate(r.last_reported_on)) + (r.times_reported > 1 ? ' <span class="pir-times">×' + r.times_reported + '</span>' : '') +
             (r.notice_label ? '<div class="field-hint">' + escapeHtml(r.notice_label) + '</div>' : '') + '</td>' +
@@ -4610,11 +4612,144 @@
         '<button class="tab-btn' + (p.sub === 'log' ? ' active' : '') + '" data-pirtab="log">📋 Log</button>' +
         '<button class="tab-btn' + (p.sub === 'found' ? ' active' : '') + '" data-pirtab="found">🔎 Found' + (p.candidates.filter(function (c) { return c.status === 'new'; }).length ? ' (' + p.candidates.filter(function (c) { return c.status === 'new'; }).length + ' new)' : '') + '</button>' +
         '<button class="tab-btn' + (p.sub === 'notice' ? ' active' : '') + '" data-pirtab="notice">✍️ New notice</button>' +
+        '<button class="tab-btn' + (p.sub === 'evidence' ? ' active' : '') + '" data-pirtab="evidence">📁 Evidence' + (p.ev.files.length ? ' (' + p.ev.files.length + ')' : '') + '</button>' +
       '</div>' +
       (p.error ? '<div class="msg msg-error">' + escapeHtml(p.error) + '</div>' : '') +
       (p.msg ? '<div class="msg msg-ok">' + escapeHtml(p.msg) + '</div>' : '') +
-      (p.sub === 'notice' ? renderPiracyNotice() : p.sub === 'found' ? renderPiracyFound() : renderPiracyLog()) +
+      (p.sub === 'notice' ? renderPiracyNotice() : p.sub === 'found' ? renderPiracyFound() : p.sub === 'evidence' ? renderPiracyEvidence() : renderPiracyLog()) +
     '</div>';
+  }
+
+  // ── Evidence (2026-11-24) ───────────────────────────────────────────────
+  // Screenshots kept for possible legal action, in the PRIVATE storage bucket
+  // "piracy-evidence" (uploaded unchanged by scripts/upload-piracy-evidence.mjs
+  // with a SHA-256 fingerprint per file). team-piracy-evidence.js gives signed
+  // links that last an hour, so they're re-fetched after 50 minutes.
+  function loadPiracyEvidence() {
+    var ev = state.piracy.ev;
+    ev.loading = true; ev.error = null;
+    api('/team-piracy-evidence').then(function (data) {
+      ev.files = data.files || []; ev.error = data.ready === false ? null : (data.error || null);
+      ev.loaded = true; ev.loading = false; ev.fetchedAt = Date.now();
+      render();
+    }).catch(function (err) { ev.loading = false; ev.loaded = true; ev.error = err.message; render(); });
+  }
+  // The index's "Link(s)" column in its own shorthand: "https://t.me/x/55,70",
+  // "https://t.me/c/123/700-728", "https://t.me/c/123/2/4-17". Returns pirKey()s.
+  function evKeys(links) {
+    var out = [], prev = null;
+    String(links || '').split(/\s+·\s+|,/).forEach(function (tok) {
+      tok = tok.trim().replace(/^\//, '');
+      if (!tok) return;
+      var url;
+      if (/^(https?:\/\/)?(t\.me|telegram\.me)\//i.test(tok)) url = pirNorm(tok);
+      else if (/^\d+(-\d+)?$/.test(tok) && prev) url = prev.replace(/\/\d+(-\d+)?$/, '') + '/' + tok;
+      else return;
+      prev = url;
+      var r = url.match(/^(.*\/)(\d+)-(\d+)$/);
+      if (r) { for (var n = +r[2]; n <= +r[3] && n - +r[2] < 300; n++) out.push(pirKey(r[1] + n)); }
+      else out.push(pirKey(url));
+    });
+    return out;
+  }
+  function evRoot(k) { var m = k.match(/^(https:\/\/t\.me\/c\/\d+|https:\/\/t\.me\/[^\/]+)/); return m ? m[1] : k; }
+  // Screenshots that back up one logged link: the same link, or (for a whole
+  // channel / account) anything from that channel.
+  function evForLink(link) {
+    var key = pirKey(link);
+    if (!key) return [];
+    var isRoot = evRoot(key) === key;
+    return state.piracy.ev.files.filter(function (f) {
+      if (!f._keys) f._keys = evKeys(f.links);
+      return f._keys.some(function (k) { return k === key || (isRoot && evRoot(k) === key) || evRoot(key) === k; });
+    });
+  }
+  function evName(path) { return path.split('/').pop(); }
+  function evNetwork(f) { return f.path.indexOf('/') === -1 ? 'Combined files' : f.path.split('/')[0].replace(/^\d+_/, '').replace(/-/g, ' '); }
+  function evDownloadUrl(f) { return f.url + (f.url.indexOf('?') === -1 ? '?' : '&') + 'download=' + encodeURIComponent(evName(f.path)); }
+  function evCardHtml(f) {
+    var isImg = /^image\//.test(f.type || '');
+    return '<div class="ev-card">' +
+      (f.url
+        ? (isImg ? '<a class="ev-thumb" href="' + escapeHtml(f.url) + '" target="_blank" rel="noopener"><img loading="lazy" src="' + escapeHtml(f.url) + '" alt="' + escapeHtml((f.target || evName(f.path)) + ', ' + (f.what || 'screenshot')) + '"></a>'
+                 : '<a class="ev-thumb ev-doc" href="' + escapeHtml(f.url) + '" target="_blank" rel="noopener">' + (f.type === 'application/pdf' ? 'PDF' : 'FILE') + '</a>')
+        : '<div class="ev-thumb ev-doc">?</div>') +
+      '<div class="ev-meta">' +
+        '<div class="ev-title">' + escapeHtml(f.target ? f.target.replace(/_/g, ' ') : evName(f.path)) + '</div>' +
+        '<div class="field-hint">Captured ' + escapeHtml(f.captured_on ? pirFmtDate(f.captured_on) : 'date unknown') + (f.bytes ? ' · ' + Math.round(f.bytes / 1024).toLocaleString('en-IN') + ' KB' : '') + '</div>' +
+        (f.what ? '<div class="ev-what">' + escapeHtml(f.what) + '</div>' : '') +
+        (f.links ? '<div class="ev-links">' + escapeHtml(f.links) + '</div>' : '') +
+        '<div class="ev-hash" title="SHA-256 fingerprint of the original file">SHA-256 ' + escapeHtml(f.sha256 || '') + '</div>' +
+        (f.url ? '<div class="ev-actions"><a class="btn btn-small" href="' + escapeHtml(f.url) + '" target="_blank" rel="noopener">Open</a><a class="btn btn-small" href="' + escapeHtml(evDownloadUrl(f)) + '">Download</a></div>' : '') +
+      '</div>' +
+    '</div>';
+  }
+  function evFiltered() {
+    var ev = state.piracy.ev, q = (ev.q || '').trim();
+    if (!q) return ev.files;
+    if (/t\.me\//i.test(q)) {
+      var hits = evForLink(q);
+      if (hits.length) return hits;
+    }
+    var ql = q.toLowerCase();
+    return ev.files.filter(function (f) { return [f.path, f.network, f.target, f.links, f.what, f.captured_on, f.sha256].join(' ').toLowerCase().indexOf(ql) !== -1; });
+  }
+  function renderPiracyEvidence() {
+    var ev = state.piracy.ev;
+    if (!ev.loaded) return '<div class="field-hint">Loading evidence…</div>';
+    if (ev.error) return '<div class="msg msg-error">' + escapeHtml(ev.error) + '</div>';
+    if (!ev.files.length) return '<div class="field-hint">No evidence stored yet.</div>';
+    var files = evFiltered();
+    var groups = {}, order = [];
+    files.forEach(function (f) { var g = evNetwork(f); if (!groups[g]) { groups[g] = []; order.push(g); } groups[g].push(f); });
+    order.sort(function (a, b) { return (a === 'Combined files') - (b === 'Combined files') || groups[b].length - groups[a].length; });
+    var nets = {}; ev.files.forEach(function (f) { if (f.path.indexOf('/') !== -1) nets[evNetwork(f)] = 1; });
+    var dates = ev.files.map(function (f) { return f.captured_on; }).filter(Boolean).sort();
+    var openAll = !!(ev.q || '').trim();
+    return (
+      '<div class="chal-stats">' +
+        '<div class="chal-stat"><b>' + ev.files.length + '</b><span>files stored</span></div>' +
+        '<div class="chal-stat"><b>' + Object.keys(nets).length + '</b><span>operator networks</span></div>' +
+        '<div class="chal-stat"><b>' + (dates.length ? escapeHtml(pirFmtDate(dates[0])) + ' to ' + escapeHtml(pirFmtDate(dates[dates.length - 1])) : '-') + '</b><span>captured</span></div>' +
+      '</div>' +
+      '<div class="field-hint" style="margin:12px 0;">Kept for legal action. The original files are stored unchanged in private storage, never on the public site. Links here stop working after an hour. Each file\'s SHA-256 fingerprint was recorded when it was stored, so anyone can check later that it hasn\'t been edited. Download the list and keep a copy with the files.</div>' +
+      '<div class="chal-toolbar">' +
+        '<input type="search" id="ev-search" placeholder="Search channel, account, link, date or description" value="' + escapeHtml(ev.q || '') + '">' +
+        (ev.q ? '<button type="button" class="btn" id="ev-clear">Show all</button>' : '') +
+        '<button type="button" class="btn" id="ev-csv">⬇ Fingerprint list (CSV)</button>' +
+      '</div>' +
+      (files.length ? order.map(function (g) {
+        var open = openAll || ev.open[g];
+        return '<details class="ev-group" data-evgroup="' + escapeHtml(g) + '"' + (open ? ' open' : '') + '>' +
+          '<summary><span>' + escapeHtml(g) + '</span><span class="field-hint">' + groups[g].length + ' file' + (groups[g].length === 1 ? '' : 's') + '</span></summary>' +
+          '<div class="ev-grid">' + groups[g].sort(function (a, b) { return String(a.captured_on).localeCompare(String(b.captured_on)) || a.path.localeCompare(b.path); }).map(evCardHtml).join('') + '</div>' +
+        '</details>';
+      }).join('') : '<div class="field-hint" style="margin-top:12px;">Nothing matches.</div>')
+    );
+  }
+  function bindPiracyEvidence() {
+    var ev = state.piracy.ev;
+    var search = document.getElementById('ev-search');
+    if (search) {
+      search.addEventListener('change', function () { ev.q = search.value.trim(); render(); });
+      search.addEventListener('keydown', function (e) { if (e.key === 'Enter') { ev.q = search.value.trim(); render(); } });
+    }
+    var clear = document.getElementById('ev-clear');
+    if (clear) clear.addEventListener('click', function () { ev.q = ''; render(); });
+    document.querySelectorAll('[data-evgroup]').forEach(function (d) {
+      d.addEventListener('toggle', function () { if (!(ev.q || '').trim()) ev.open[d.getAttribute('data-evgroup')] = d.open; });
+    });
+    var csv = document.getElementById('ev-csv');
+    if (csv) csv.addEventListener('click', function () {
+      var cols = ['path', 'sha256', 'bytes', 'captured_on', 'network', 'target', 'links', 'what', 'uploaded_at'];
+      var q = function (v) { v = v == null ? '' : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+      var text = cols.join(',') + '\n' + ev.files.map(function (f) { return cols.map(function (c) { return q(f[c]); }).join(','); }).join('\n') + '\n';
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([text], { type: 'text/csv' }));
+      a.download = 'taai-piracy-evidence-fingerprints-' + pirToday() + '.csv';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+    });
   }
 
   function pirRefreshPreview() {
@@ -4673,6 +4808,11 @@
     document.querySelectorAll('[data-pirtab]').forEach(function (btn) {
       btn.addEventListener('click', function () { p.sub = btn.getAttribute('data-pirtab'); p.msg = null; render(); });
     });
+    if (!p.ev.loading && (!p.ev.loaded || (p.sub === 'evidence' && Date.now() - p.ev.fetchedAt > 50 * 60 * 1000))) loadPiracyEvidence();
+    document.querySelectorAll('.js-pir-ev').forEach(function (b) {
+      b.addEventListener('click', function () { p.sub = 'evidence'; p.ev.q = b.getAttribute('data-link'); p.msg = null; render(); window.scrollTo(0, 0); });
+    });
+    if (p.sub === 'evidence') bindPiracyEvidence();
     var filter = document.getElementById('pir-filter');
     if (filter) filter.addEventListener('change', function () { p.filter = filter.value; render(); });
     var search = document.getElementById('pir-search');
