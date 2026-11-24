@@ -152,6 +152,14 @@
   status = 302
   force = true
 
+# Short link to the live Mini FLT for posters (2026-11-24): the function
+# reads the current test link from /team, so the printed link never goes stale.
+[[redirects]]
+  from = "/mini-flt"
+  to = "/.netlify/functions/mini-flt-go"
+  status = 200
+  force = true
+
 # "100 pe 100% off" registration form (2026-10-18): serves challenge.html,
 # which carries the link-preview tags and forwards people to the courses
 # page with the form open (ChallengeRegister's #register-challenge check).
