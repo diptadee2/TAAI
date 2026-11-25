@@ -361,7 +361,7 @@
     // and the registration cutoff date.
     challenge: { loaded: false, loading: false, saving: false, error: null, rows: [], cutoff: null, open: true, msg: null, q: '' },
     // Competitor YouTube monitor (2026-11-24).
-    comp: { loaded: false, loading: false, error: null, data: null, period: 7, sort: 'subs', sortDir: -1, vsort: 'views', vchannel: 'all', vkind: 'all', vq: '', vlimit: 40, busy: false, msg: null, msgType: 'ok', view: 'youtube', ideas: {}, ideasBusy: false, ideasErr: null, bestKind: 'video' },
+    comp: { loaded: false, loading: false, error: null, data: null, period: 3, sort: 'subs', sortDir: -1, vsort: 'views', vchannel: 'all', vkind: 'all', vq: '', vlimit: 40, busy: false, msg: null, msgType: 'ok', view: 'youtube', ideas: {}, ideasBusy: false, ideasErr: null, bestKind: 'video' },
     // Competitor website watcher (2026-11-25), Competitors > Websites.
     web: { loaded: false, loading: false, error: null, data: null, busy: false, msg: null, msgType: 'ok', comp: 'all', kind: 'all', open: {}, details: {}, limit: 60 },
     // Piracy takedown log + notice generator (2026-11-12).
@@ -1235,7 +1235,7 @@
         : 'Running on YouTube\'s public feeds: only each channel\'s latest 15 videos, and no subscriber or comment counts. Add the YouTube API key in Netlify for the full picture.') +
         (run ? ' Last update ' + escapeHtml(cmpAgo(run.ran_at)) + (run.error ? ' (some channels failed: ' + escapeHtml(run.error) + ')' : '') + '.' : ' No data recorded yet: press Refresh now.') + '</div>' +
       '<div class="cmp-head-actions">' +
-        '<div class="tabs cmp-period">' + [[1, '24 hours'], [7, '7 days'], [30, '30 days']].map(function (p) {
+        '<div class="tabs cmp-period">' + [[1, '24 hours'], [3, '3 days'], [7, '7 days'], [30, '30 days']].map(function (p) {
           return '<button type="button" class="tab-btn' + (c.period === p[0] ? ' active' : '') + '" data-cmpperiod="' + p[0] + '">' + p[1] + '</button>';
         }).join('') + '</div>' +
         '<button type="button" class="btn" id="cmp-refresh"' + (c.busy ? ' disabled' : '') + '>' + (c.busy ? 'Updating…' : '↻ Refresh now') + '</button>' +
@@ -1284,16 +1284,27 @@
   function cmpScored() {
     var c = state.comp, d = c.data, now = Date.now(), from = now - c.period * 86400000;
     var names = {}; d.channels.forEach(function (ch) { names[ch.channel_id] = ch; });
-    var groups = {};
+    // Up to 3 days (2026-11-25, "3 day trending topics"): a 1-day-old video
+    // hasn't had time to collect its views, so short windows compare views
+    // per day with the channel's usual views per day instead of totals.
+    var perDay = c.period <= 3;
+    var val = function (v) { var age = Math.max(1, (now - Date.parse(v.published_at)) / 86400000); return perDay ? (v.views || 0) / age : (v.views || 0); };
+    // Per day, a new video is compared with the channel's other recent ones
+    // (1 to 7 days old): month-old videos' daily views have faded, which made
+    // ordinary new uploads look like 15× hits. Too few recent ones: all 30 days.
+    var groups = {}, recent = {};
     d.videos.forEach(function (v) {
-      if (now - Date.parse(v.published_at) < 86400000) return;
-      var k = v.channel_id + '|' + (v.kind || 'video'); (groups[k] = groups[k] || []).push(v.views || 0);
+      var age = now - Date.parse(v.published_at);
+      if (age < 86400000) return;
+      var k = v.channel_id + '|' + (v.kind || 'video'); (groups[k] = groups[k] || []).push(val(v));
+      if (age <= 7 * 86400000) (recent[k] = recent[k] || []).push(val(v));
     });
+    if (perDay) Object.keys(recent).forEach(function (k) { if (recent[k].length >= 3) groups[k] = recent[k]; });
     var base = {}; Object.keys(groups).forEach(function (k) { base[k] = cmpMedian(groups[k]); });
     return d.videos.filter(function (v) { return Date.parse(v.published_at) >= from && names[v.channel_id] && names[v.channel_id].active; }).map(function (v) {
       var b = base[v.channel_id + '|' + (v.kind || 'video')];
       var age = (now - Date.parse(v.published_at)) / 86400000;
-      return { v: v, ch: names[v.channel_id], score: b ? (v.views || 0) / b : null, age: age, settled: age >= 1 };
+      return { v: v, ch: names[v.channel_id], score: b ? val(v) / b : null, age: age, settled: age >= 1 };
     });
   }
   function cmpX(x) { return x == null ? '-' : (x >= 10 ? Math.round(x) : x.toFixed(1)) + '×'; }
@@ -1315,7 +1326,9 @@
     var list = best(kind === 'short' ? ['short'] : ['video', 'live']);
     var fresh = rows.filter(function (r) { return !r.settled; }).length;
     var bestHtml = '<h3 class="cmp-h">Best videos in the last ' + per + '</h3>' +
-      '<div class="field-hint" style="margin-bottom:10px;">Ranked by views against each channel\'s usual for that format: 3.0× means three times the views that channel normally gets, so a small channel\'s hit counts as much as a big channel\'s. ' + (fresh ? fresh + ' video' + (fresh === 1 ? ' is' : 's are') + ' under a day old and not ranked yet.' : '') + '</div>' +
+      '<div class="field-hint" style="margin-bottom:10px;">' + (c.period <= 3
+        ? 'Ranked by views per day against each channel\'s usual for that format, so a video posted yesterday competes fairly with one from three days ago: 3.0× means it is pulling three times the daily views that channel normally gets. '
+        : 'Ranked by views against each channel\'s usual for that format: 3.0× means three times the views that channel normally gets, so a small channel\'s hit counts as much as a big channel\'s. ') + (fresh ? fresh + ' video' + (fresh === 1 ? ' is' : 's are') + ' under a day old and not ranked yet.' : '') + '</div>' +
       '<div class="tabs subtabs" style="margin-bottom:10px;"><button type="button" class="tab-btn' + (kind !== 'short' ? ' active' : '') + '" data-cmpbest="video">Videos</button><button type="button" class="tab-btn' + (kind === 'short' ? ' active' : '') + '" data-cmpbest="short">Shorts</button></div>' +
       (list.length ? '<div class="cmp-best-list">' + list.map(cmpBestRow).join('') + '</div>' : '<div class="field-hint">Nothing to rank in this period yet' + (c.period === 1 ? ': try 7 days.' : '.') + '</div>');
     // Topics: each video goes to the first topic its title matches.

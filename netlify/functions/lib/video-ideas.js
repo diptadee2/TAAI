@@ -20,21 +20,30 @@ function median(a) {
 
 // Each channel's usual views per kind (long video / Short / live): the median
 // over its videos of the last 30 days that are at least a day old.
-export function channelBaselines(videos, now = Date.now()) {
-  const groups = {};
+// perDay (windows of 3 days or less): views per day instead of total views,
+// so a video posted yesterday isn't judged against week-old totals.
+const valueOf = (v, now, perDay) => perDay ? (v.views || 0) / Math.max(1, (now - Date.parse(v.published_at)) / 86400000) : (v.views || 0);
+export function channelBaselines(videos, now = Date.now(), perDay = false) {
+  // Per day, compare with the channel's other recent videos (1 to 7 days
+  // old; all 30 days if it has fewer than 3): older videos' daily views have
+  // faded, which would make ordinary new uploads look like big hits.
+  const groups = {}, recent = {};
   for (const v of videos) {
-    if (now - Date.parse(v.published_at) < 86400000) continue;
+    const age = now - Date.parse(v.published_at);
+    if (age < 86400000) continue;
     const k = v.channel_id + '|' + (v.kind || 'video');
-    (groups[k] = groups[k] || []).push(v.views || 0);
+    (groups[k] = groups[k] || []).push(valueOf(v, now, perDay));
+    if (age <= 7 * 86400000) (recent[k] = recent[k] || []).push(valueOf(v, now, perDay));
   }
+  if (perDay) for (const k in recent) if (recent[k].length >= 3) groups[k] = recent[k];
   const out = {};
   for (const k in groups) out[k] = median(groups[k]);
   return out;
 }
 
-export function videoScore(v, base) {
+export function videoScore(v, base, now = Date.now(), perDay = false) {
   const b = base[v.channel_id + '|' + (v.kind || 'video')];
-  return b ? (v.views || 0) / b : null;
+  return b ? valueOf(v, now, perDay) / b : null;
 }
 
 const SCHEMA = {
@@ -106,7 +115,8 @@ async function callClaude(userText) {
 }
 
 export async function buildVideoIdeas(s, days) {
-  days = [1, 7, 30].includes(Number(days)) ? Number(days) : 7;
+  days = [1, 3, 7, 30].includes(Number(days)) ? Number(days) : 3;
+  const perDay = days <= 3;
   const now = Date.now();
   const { data: channels, error } = await s.from('yt_channels').select('channel_id, label, title, is_us, active');
   if (error) throw error;
@@ -119,10 +129,10 @@ export async function buildVideoIdeas(s, days) {
     videos.push(...(data || []));
     if (!data || data.length < 1000) break;
   }
-  const base = channelBaselines(videos, now);
+  const base = channelBaselines(videos, now, perDay);
   const fromT = now - days * 86400000;
   const rows = videos.filter(v => chan[v.channel_id] && chan[v.channel_id].active && Date.parse(v.published_at) >= fromT)
-    .map(v => ({ v, score: videoScore(v, base), age: (now - Date.parse(v.published_at)) / 86400000 }));
+    .map(v => ({ v, score: videoScore(v, base, now, perDay), age: (now - Date.parse(v.published_at)) / 86400000 }));
   const ours = rows.filter(r => chan[r.v.channel_id].is_us);
   const theirs = rows.filter(r => !chan[r.v.channel_id].is_us).sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 60);
   if (!theirs.length) throw new Error('No competitor videos in this period yet');
@@ -131,7 +141,9 @@ export async function buildVideoIdeas(s, days) {
     days_old: Math.round(r.age * 10) / 10, views: r.v.views, score: r.score == null ? null : Math.round(r.score * 10) / 10,
     comments: r.v.comments,
   });
-  const userText = 'Period: the last ' + (days === 1 ? '24 hours' : days + ' days') + '. Videos under a day old have not settled yet, weigh their scores lightly.\n\n' +
+  const userText = 'Period: the last ' + (days === 1 ? '24 hours' : days + ' days') + '. ' +
+    (perDay ? 'This is a short window to catch what is trending right now: score compares each video\'s views per day with its channel\'s usual views per day. Suggest ideas TAAI can shoot and publish within the next 3 to 5 days, while these topics are still hot. ' : '') +
+    'Videos under a day old have not settled yet, weigh their scores lightly.\n\n' +
     'Competitor videos, best score first:\n' + theirs.map(line).join('\n') +
     '\n\nTAAI videos in the same period:\n' + (ours.length ? ours.map(line).join('\n') : '- none');
   const { result, model } = await callClaude(userText);

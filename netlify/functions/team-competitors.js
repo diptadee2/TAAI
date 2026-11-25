@@ -3,7 +3,7 @@
 //        stats: yt_channel_stats rows of the last 35 days; videos: published
 //        in the last 30 days (see lib/yt-monitor.js for what is recorded).
 // GET  /api/team-competitors?video=<id> -> { history: [{taken_at, views, likes, comments}] }
-// GET  /api/team-competitors?ideas=<1|7|30> -> { ideas } (last saved video ideas for that period)
+// GET  /api/team-competitors?ideas=<1|3|7|30> -> { ideas } (last saved video ideas for that period)
 // POST {action:'ideas', days}              -> starts new video ideas in the background ({started, at})
 // POST {action:'refresh'}                  -> starts a run in the background ({started, at})
 // POST {action:'add', input, label}        -> adds a channel (link, @handle or UC id)
@@ -51,7 +51,7 @@ export async function handler(event, context) {
     // ~10s request limit); the page waits for the new yt_runs row.
     if (body.action === 'refresh') { const at = new Date().toISOString(); await startCompetitorsRefresh(event, 'yt'); return json(200, { started: true, at }); }
     // Claude's read of the period and video ideas for TAAI (background, see lib/video-ideas.js).
-    if (body.action === 'ideas') { const at = new Date().toISOString(); await startCompetitorsRefresh(event, 'ideas', { days: Number(body.days) || 7 }); return json(200, { started: true, at }); }
+    if (body.action === 'ideas') { const at = new Date().toISOString(); await startCompetitorsRefresh(event, 'ideas', { days: Number(body.days) || 3 }); return json(200, { started: true, at }); }
     if (body.action === 'add') {
       const r = await resolveChannel(body.input);
       const label = String(body.label || '').trim().slice(0, 60) || r.handle || r.channel_id;

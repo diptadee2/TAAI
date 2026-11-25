@@ -27,7 +27,7 @@ export async function handler(event) {
     console.error('competitors-refresh-background', body.what, e);
     // An ideas run that fails leaves a note, so the page stops waiting and says why.
     if (body.what === 'ideas') {
-      const days = [1, 7, 30].includes(Number(body.days)) ? Number(body.days) : 7;
+      const days = [1, 3, 7, 30].includes(Number(body.days)) ? Number(body.days) : 3;
       await s.storage.from('competitor-insights').upload('ideas-' + days + '.json', JSON.stringify({ generatedAt: new Date().toISOString(), days, error: String(e.message || e).slice(0, 300) }), { contentType: 'application/json', upsert: true }).catch(() => {});
     }
   }
