@@ -1117,3 +1117,27 @@ Direct request: a /team tab comparing competitors' YouTube video performance, mo
   - **Copy:** pricing discount chips read "20% off" instead of "20", and em dashes in team.js UI strings became ": ".
   - **Verified:** in Chromium at 1440/1100 and WebKit touch at 820/390, every section had no overflow, one-line tabs that don't move between sections, and the selected tab visible. Every moved button was click-tested.
 - **Names containing "dipta" are flagged automatically, 2026-11-25** (after Puneet Koundal, puneetkoundal707@gmail.com, renamed himself "DUPLICATE  DIPTA"; he was renamed back to "Puneet Koundal" by hand, `last_flagged_name` kept). `reservedNameHit(name, email)` in `lib/name-check.js` runs first inside `checkNameAppropriate()` (no Claude call): the name is lowercased, accents stripped, look-alike letters and digits mapped (d1pta, dіpta, D.I.P.T.A) and everything but letters dropped; any match of `RESERVED_NAME_WORDS` (just "dipta") flags with reason "Poses as a TAAI team member". So a rename is saved and gated in the same request, a new signup is gated a few seconds after signing up (background check), and a gated student's fix attempt is refused. The team's own accounts are exempt via `RESERVED_NAME_OWNERS` (SHA-256 of the lowercased email, since the repo is public). It also catches real names that contain the letters (Sandipta, Diptanshu); none of the 497 students on 2026-11-25 matched. All four call sites now pass the email.
+- **Competitors > Through the year, 2026-11-25** (direct request: "next year, what kind of videos run well at which time of the year"). A sub-tab between YouTube and Websites.
+  - **Data kept:** `yt_videos` rows are never deleted. The 6-hourly run stops updating a video once it's 30 days old, so its views stay at about the 30-day mark. That makes the table a growing archive, and every year fills the months in more.
+  - **Endpoint:** `GET /api/team-competitors?season=1` returns every video at least 30 days old as compact rows `[channel_id, kind, date, views, title, video_id]`, plus the last backfill run.
+  - **Scoring:** the page compares each video with the same channel's same-format videos published within ±45 days of it (at least 4, else no score). It is only compared with videos of a similar age, which matters because backfilled videos carry views to date.
+  - **Page:**
+    - a month picker (Jan–Dec with video counts; defaults to next month, for planning ahead);
+    - a typical-GATE-year note per month (`SEASON_NOTES`, approximate);
+    - Videos/Shorts;
+    - the picked month's topic table (same `CMP_TOPICS`, competitors only) with the best one per topic;
+    - the top 10 videos that month;
+    - TAAI's own count and typical score;
+    - a topic × month grid (typical score where a topic has 3+ videos in that month; green when ≥1.1×; a "Posted" row).
+  - **"Load the past 12 months":**
+    - `POST {action:'backfill'}` starts `backfillYtHistory()` (`lib/yt-monitor.js`) through `competitors-refresh-background.js` (`what:'backfill'`). API key only.
+    - It walks each active channel's uploads back 365 days and inserts only videos not stored yet (`ignoreDuplicates`; existing rows are never touched).
+    - Type comes from duration, ≤180s = Short, with no /shorts/ check; live streams are marked live.
+    - Up to 80 playlist pages per channel; the run is logged in `yt_runs` with `source 'backfill'`.
+    - The main tab's "Last update" now ignores backfill runs (`.neq('source','backfill')`).
+    - The page polls every 6s for up to 9 minutes.
+  - **Tested:**
+    - The backfill logic against production with YouTube mocked and a throwaway channel (old video skipped, stored video untouched, Short detected; test rows and the run row deleted).
+    - The page with a synthetic year of data in WebKit at 1440/1180/820/390 (touch): seeded seasonal topics came out on top in the right months, no overflow, no errors.
+  - **Phone fix (same day):** on phones (≤600px) the topic tables in both YouTube and Through the year are stacked rows: topic, "N posted", score, then the best video under them. They used to squeeze to one letter per line. Those rules must come after the base `.cmp-topics` rules.
+  - **Not yet run for real:** the real backfill (the key is only in Netlify).

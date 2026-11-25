@@ -1203,12 +1203,12 @@
   ];
   function renderCompetitorsTabs() {
     var v = state.comp.view;
-    return '<div class="tabs subtabs">' + [['youtube', 'YouTube'], ['web', 'Websites']].map(function (x) {
+    return '<div class="tabs subtabs">' + [['youtube', 'YouTube'], ['season', 'Through the year'], ['web', 'Websites']].map(function (x) {
       return '<button type="button" class="tab-btn' + (v === x[0] ? ' active' : '') + '" data-cmpview="' + x[0] + '">' + x[1] + '</button>';
     }).join('') + '</div>';
   }
   function renderCompetitors() {
-    return state.comp.view === 'web' ? renderWebWatch() : renderCmpYoutube();
+    return state.comp.view === 'web' ? renderWebWatch() : state.comp.view === 'season' ? renderCmpSeason() : renderCmpYoutube();
   }
   function renderCmpYoutube() {
     var c = state.comp, d = c.data;
@@ -1450,6 +1450,153 @@
       '<div class="field-hint">A new channel shows up after the next update (press Refresh now to update straight away). Stopping keeps its past numbers.</div>' +
     '</details>';
   }
+
+  // ── Through the year (2026-11-25) ─────────────────────────────────────
+  // "Next year, what kind of videos run well at which time of the year."
+  // Every video 30+ days old (team-competitors.js ?season=1), grouped by the
+  // calendar month it went up in, any year. A video's score is its views
+  // against the same channel's videos of the same format published within
+  // 45 days either side of it, so a video is only compared with ones of a
+  // similar age: monitored videos stop at about 30 days of views, the ones
+  // loaded with "Load the past 12 months" have their views to date.
+  var SEASON_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var SEASON_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  // What the GATE year usually looks like in each month (typical pattern, dates move every year).
+  var SEASON_NOTES = [
+    'Last weeks before GATE: revision, admit cards, mocks', 'GATE exam month', 'Answer keys, results and scorecards',
+    'IIT / IISc M.Tech and MS applications, COAP', 'Admission rounds and offers', 'Admissions close, new batches start',
+    'Fresh start for the next GATE', 'GATE registration opens', 'Registration, syllabus and strategy',
+    'Registration closes, first full revisions', 'Mock tests and final stretch begins', 'Revision and full-length mocks'
+  ];
+  function loadCmpSeason() {
+    var c = state.comp;
+    c.season = c.season || {};
+    c.season.loading = true; render();
+    api('/team-competitors?season=1').then(function (d) {
+      c.season.data = d; c.season.loading = false; c.season.loaded = true; c.season.error = d.ready === false ? d.error : null; render();
+    }).catch(function (e) { c.season.loading = false; c.season.loaded = true; c.season.error = e.message; render(); });
+  }
+  function seasonScored() {
+    var c = state.comp, d = c.season.data;
+    if (c.season.cache && c.season.cache.d === d) return c.season.cache.rows;
+    var names = {}; d.channels.forEach(function (ch) { names[ch.channel_id] = ch; });
+    var vids = d.videos.map(function (a) { return { channel_id: a[0], kind: a[1], date: a[2], t: Date.parse(a[2]), views: a[3] || 0, title: a[4] || '', video_id: a[5] }; })
+      .filter(function (v) { return names[v.channel_id]; });
+    var groups = {};
+    vids.forEach(function (v) { var k = v.channel_id + '|' + v.kind; (groups[k] = groups[k] || []).push(v); });
+    var W = 45 * 86400000;
+    var rows = [];
+    Object.keys(groups).forEach(function (k) {
+      var g = groups[k].sort(function (a, b) { return a.t - b.t; });
+      var lo = 0, hi = 0;
+      g.forEach(function (v) {
+        while (g[lo].t < v.t - W) lo++;
+        while (hi < g.length && g[hi].t <= v.t + W) hi++;
+        var near = g.slice(lo, hi).map(function (x) { return x.views; });
+        var base = near.length >= 4 ? cmpMedian(near) : null;
+        rows.push({ v: v, ch: names[v.channel_id], score: base ? v.views / base : null, month: +v.date.slice(5, 7) - 1, year: +v.date.slice(0, 4) });
+      });
+    });
+    c.season.cache = { d: d, rows: rows };
+    return rows;
+  }
+  function seasonTopic(title) {
+    for (var i = 0; i < CMP_TOPICS.length; i++) if (CMP_TOPICS[i][1].test(title)) return i;
+    return CMP_TOPICS.length;
+  }
+  function renderCmpSeason() {
+    var c = state.comp, S = c.season || {}, d = S.data;
+    if (!S.loaded) return '<div class="card"><div class="field-hint">Loading…</div></div>';
+    if (S.error && !d) return '<div class="card"><div class="msg msg-error">' + escapeHtml(S.error) + '</div></div>';
+    if (!d || d.ready === false) return '<div class="card"><div class="msg msg-error">Not set up yet' + (S.error ? ': ' + escapeHtml(S.error) : '') + '</div></div>';
+    var all = seasonScored();
+    var kind = S.kind || 'video';
+    var rows = all.filter(function (r) { return r.score != null && (kind === 'short' ? r.v.kind === 'short' : r.v.kind !== 'short'); });
+    var theirs = rows.filter(function (r) { return !r.ch.is_us; });
+    var perMonth = SEASON_MONTHS.map(function (_, m) { return all.filter(function (r) { return r.month === m; }).length; });
+    var m = S.month != null ? S.month : (new Date(Date.now() + 5.5 * 3600000).getUTCMonth() + 1) % 12;
+    var years = {}; all.forEach(function (r) { years[r.year] = 1; });
+    var first = all.length ? all.reduce(function (a, r) { return r.v.t < a.v.t ? r : a; }) : null;
+    var last = all.length ? all.reduce(function (a, r) { return r.v.t > a.v.t ? r : a; }) : null;
+    var bf = d.lastBackfill;
+    var head = '<div class="field-hint" style="margin-bottom:12px;">' +
+      (all.length ? escapeHtml(all.length.toLocaleString('en-IN')) + ' videos from ' + escapeHtml(pirFmtDate(first.v.date)) + ' to ' + escapeHtml(pirFmtDate(last.v.date)) + '. ' : 'No videos old enough yet. ') +
+      'Each video is scored against the same channel\'s videos of the same format posted within about six weeks of it, so 2.0× means it got twice what that channel was getting at that time. Videos join this view once they are 30 days old, and every year the months fill in more.</div>' +
+      '<div class="season-load">' +
+        (bf && !bf.error ? '<span class="field-hint">The past 12 months were loaded ' + escapeHtml(cmpAgo(bf.ran_at)) + ' (' + bf.videos + ' videos added).</span>' :
+          '<span class="field-hint">' + (bf && bf.error ? 'Last load had a problem: ' + escapeHtml(bf.error) + '. ' : '') + 'Monitoring started in November 2026, so most months are empty until you load what the channels posted over the past year.</span>') +
+        (d.keyReady ? '<button type="button" class="btn" id="season-backfill"' + (S.busy ? ' disabled' : '') + '>' + (S.busy ? 'Loading the past year… (a few minutes)' : (bf && !bf.error ? '↻ Load again' : 'Load the past 12 months')) + '</button>' : '<span class="field-hint">Needs the YouTube API key.</span>') +
+      '</div>' + (S.msg ? '<div class="msg ' + (S.msgType === 'error' ? 'msg-error' : 'msg-ok') + '">' + escapeHtml(S.msg) + '</div>' : '');
+    var monthsBar = '<div class="season-months">' + SEASON_MONTHS.map(function (name, i) {
+      return '<button type="button" class="season-m' + (i === m ? ' active' : '') + (perMonth[i] ? '' : ' is-empty') + '" data-seasonm="' + i + '"><b>' + name + '</b><span>' + (perMonth[i] ? perMonth[i] : '-') + '</span></button>';
+    }).join('') + '</div>';
+    var kindTabs = '<div class="tabs subtabs" style="margin:10px 0;"><button type="button" class="tab-btn' + (kind !== 'short' ? ' active' : '') + '" data-seasonkind="video">Videos</button><button type="button" class="tab-btn' + (kind === 'short' ? ' active' : '') + '" data-seasonkind="short">Shorts</button></div>';
+    // The picked month
+    var inM = theirs.filter(function (r) { return r.month === m; });
+    var topics = CMP_TOPICS.map(function (t) { return { name: t[0], rows: [] }; }).concat([{ name: 'Other', rows: [] }]);
+    inM.forEach(function (r) { topics[seasonTopic(r.v.title)].rows.push(r); });
+    var trows = topics.filter(function (t) { return t.rows.length; }).map(function (t) {
+      t.med = cmpMedian(t.rows.map(function (r) { return Math.round(r.score * 100); })) / 100;
+      t.top = t.rows.slice().sort(function (a, b) { return b.score - a.score; })[0];
+      return t;
+    }).sort(function (a, b) { return b.med - a.med; });
+    var link = function (v) { return 'https://www.youtube.com/' + (v.kind === 'short' ? 'shorts/' : 'watch?v=') + escapeHtml(v.video_id); };
+    var when = function (r) { return SEASON_MONTHS[r.month] + ' ' + r.year; };
+    var monthHtml = '<h3 class="cmp-h">' + SEASON_FULL[m] + ' <span class="field-hint">' + escapeHtml(SEASON_NOTES[m]) + '</span></h3>' +
+      (trows.length ? '<table class="web-ptable cmp-topics"><thead><tr><th>Topic</th><th class="web-pr">Posted</th><th class="web-pr">Typical</th><th>Best one</th></tr></thead><tbody>' + trows.map(function (t) {
+        return '<tr><td><b>' + escapeHtml(t.name) + '</b></td><td class="web-pr">' + t.rows.length + '</td><td class="web-pr"><span class="cmp-x' + (t.med >= 1.5 ? ' is-hot' : t.med < 1 ? ' is-cold' : '') + '">' + cmpX(t.med) + '</span></td>' +
+          '<td class="cmp-topic-best"><a href="' + link(t.top.v) + '" target="_blank" rel="noopener">' + escapeHtml(t.top.v.title) + '</a><span class="field-hint"> · ' + escapeHtml(t.top.ch.label || t.top.ch.title) + ' · ' + when(t.top) + ' · ' + cmpX(t.top.score) + '</span></td></tr>';
+      }).join('') + '</tbody></table>' : '<div class="field-hint">No competitor ' + (kind === 'short' ? 'Shorts' : 'videos') + ' from ' + SEASON_FULL[m] + ' yet' + (perMonth[m] ? ' in this format.' : (d.keyReady ? ': load the past 12 months above.' : '.')) + '</div>');
+    var best = inM.slice().sort(function (a, b) { return b.score - a.score; }).slice(0, 10);
+    if (best.length) monthHtml += '<h3 class="cmp-h">Best in ' + SEASON_FULL[m] + '</h3><div class="cmp-best-list">' + best.map(function (r, i) {
+      return '<a class="cmp-best-row" href="' + link(r.v) + '" target="_blank" rel="noopener"><span class="cmp-best-n">' + (i + 1) + '</span>' +
+        '<img loading="lazy" alt="" src="https://i.ytimg.com/vi/' + escapeHtml(r.v.video_id) + '/mqdefault.jpg">' +
+        '<span class="cmp-best-body"><b>' + escapeHtml(r.v.title) + '</b><span class="field-hint">' + escapeHtml(r.ch.label || r.ch.title) + ' · ' + escapeHtml(pirFmtDate(r.v.date)) + ' · ' + cmpNum(r.v.views) + ' views</span></span>' +
+        '<span class="cmp-x' + (r.score >= 2 ? ' is-hot' : r.score < 1 ? ' is-cold' : '') + '">' + cmpX(r.score) + '</span></a>';
+    }).join('') + '</div>';
+    var ours = rows.filter(function (r) { return r.ch.is_us && r.month === m; });
+    if (ours.length) monthHtml += '<div class="field-hint" style="margin-top:8px;">Your ' + (kind === 'short' ? 'Shorts' : 'videos') + ' in ' + SEASON_FULL[m] + ': ' + ours.length + ', typically ' + cmpX(cmpMedian(ours.map(function (r) { return Math.round(r.score * 100); })) / 100) + '.</div>';
+    // Topic × month grid
+    var grid = topics.map(function (t, ti) {
+      var cells = SEASON_MONTHS.map(function (_, mi) {
+        var rs = theirs.filter(function (r) { return r.month === mi && seasonTopic(r.v.title) === ti; });
+        return { n: rs.length, med: rs.length >= 3 ? cmpMedian(rs.map(function (r) { return Math.round(r.score * 100); })) / 100 : null };
+      });
+      return { name: t.name, cells: cells, n: cells.reduce(function (a, x) { return a + x.n; }, 0) };
+    }).filter(function (t) { return t.n; });
+    var gridHtml = '<h3 class="cmp-h">Topics through the year <span class="field-hint">competitor ' + (kind === 'short' ? 'Shorts' : 'videos') + ', typical score per month (3 or more videos)</span></h3>' +
+      (grid.length ? '<div class="students-table-wrap"><table class="season-grid"><thead><tr><th>Topic</th>' + SEASON_MONTHS.map(function (n, i) { return '<th class="' + (i === m ? 'is-sel' : '') + '" data-seasonm="' + i + '">' + n + '</th>'; }).join('') + '</tr></thead><tbody>' +
+        grid.map(function (t) {
+          return '<tr><td><b>' + escapeHtml(t.name) + '</b></td>' + t.cells.map(function (x, i) {
+            var cls = x.med == null ? 'is-none' : x.med >= 1.5 ? 'is-hot' : x.med >= 1.1 ? 'is-warm' : x.med < 0.8 ? 'is-cold' : '';
+            return '<td class="' + cls + (i === m ? ' is-sel' : '') + '" title="' + x.n + ' video' + (x.n === 1 ? '' : 's') + '">' + (x.med == null ? (x.n ? '<span class="field-hint">' + x.n + '</span>' : '') : cmpX(x.med)) + '</td>';
+          }).join('') + '</tr>';
+        }).join('') +
+        '<tr class="season-total"><td>Posted</td>' + SEASON_MONTHS.map(function (_, i) { var n = theirs.filter(function (r) { return r.month === i; }).length; return '<td class="' + (i === m ? 'is-sel' : '') + '">' + (n || '') + '</td>'; }).join('') + '</tr>' +
+        '</tbody></table></div><div class="field-hint" style="margin-top:6px;">Green: that topic beats channels\' usual in that month; grey numbers are months with only 1 or 2 videos (too few to judge). Tap a month to see it above.</div>'
+        : '<div class="field-hint">Nothing yet.</div>');
+    return '<div class="card">' + head + monthsBar + kindTabs + monthHtml + gridHtml + '</div>';
+  }
+  function seasonBackfill() {
+    var c = state.comp, S = c.season;
+    S.busy = true; S.msg = null; render();
+    api('/team-competitors', { method: 'POST', body: JSON.stringify({ action: 'backfill' }) }).then(function (r) {
+      var since = Date.parse(r.at) - 5000, tries = 0;
+      (function poll() {
+        tries++;
+        api('/team-competitors?season=1').then(function (d) {
+          var bf = d.lastBackfill;
+          if (bf && Date.parse(bf.ran_at) >= since) {
+            S.data = d; S.cache = null; S.busy = false; S.msgType = bf.error ? 'error' : 'ok';
+            S.msg = bf.error ? 'Loaded ' + bf.videos + ' videos, with problems: ' + bf.error : 'Loaded ' + bf.videos + ' videos from the past year (' + bf.units + ' API units).';
+            render(); return;
+          }
+          if (tries >= 90) { S.busy = false; S.msgType = 'error'; S.msg = 'Still loading after 9 minutes. Reload the page in a bit.'; render(); return; }
+          setTimeout(poll, 6000);
+        }).catch(function () { if (tries < 90) setTimeout(poll, 6000); else { S.busy = false; render(); } });
+      })();
+    }).catch(function (e) { S.busy = false; S.msg = e.message; S.msgType = 'error'; render(); });
+  }
   function cmpPost(body, okMsg) {
     var c = state.comp;
     c.busy = true; c.msg = null; render();
@@ -1488,10 +1635,18 @@
       b.addEventListener('click', function () {
         c.view = b.getAttribute('data-cmpview');
         if (c.view === 'web' && !state.web.loaded && !state.web.loading) { loadWebWatch(); return; }
+        if (c.view === 'season' && !(c.season && (c.season.loaded || c.season.loading))) { loadCmpSeason(); return; }
         render();
       });
     });
     if (c.view === 'web') { bindWebWatch(); return; }
+    if (c.view === 'season') {
+      document.querySelectorAll('[data-seasonm]').forEach(function (b) { b.addEventListener('click', function () { c.season.month = +b.getAttribute('data-seasonm'); render(); }); });
+      document.querySelectorAll('[data-seasonkind]').forEach(function (b) { b.addEventListener('click', function () { c.season.kind = b.getAttribute('data-seasonkind'); render(); }); });
+      var bfb = document.getElementById('season-backfill');
+      if (bfb) bfb.addEventListener('click', seasonBackfill);
+      return;
+    }
     document.querySelectorAll('[data-cmpperiod]').forEach(function (b) { b.addEventListener('click', function () { c.period = +b.getAttribute('data-cmpperiod'); c.vlimit = 40; render(); }); });
     document.querySelectorAll('[data-cmpsort]').forEach(function (th) {
       th.addEventListener('click', function () {

@@ -3,6 +3,9 @@
 //        stats: yt_channel_stats rows of the last 35 days; videos: published
 //        in the last 30 days (see lib/yt-monitor.js for what is recorded).
 // GET  /api/team-competitors?video=<id> -> { history: [{taken_at, views, likes, comments}] }
+// GET  /api/team-competitors?season=1 -> { videos: [[channel_id, kind, published_at, views, title, video_id]], channels, lastBackfill, keyReady }
+//        every stored video at least 30 days old ("Through the year")
+// POST {action:'backfill'}                 -> loads the last 12 months of uploads in the background
 // GET  /api/team-competitors?ideas=<1|3|7|30> -> { ideas } (last saved video ideas for that period)
 // POST {action:'ideas', days}              -> starts new video ideas in the background ({started, at})
 // POST {action:'refresh'}                  -> starts a run in the background ({started, at})
@@ -21,6 +24,23 @@ export async function handler(event, context) {
   if (event.httpMethod === 'GET') {
     const q = event.queryStringParameters || {};
     if (q.ideas) return json(200, { ideas: await readVideoIdeas(s, Number(q.ideas)) });
+    // "Through the year" (2026-11-25): every video old enough to have settled
+    // (30+ days), as compact rows; the page groups them by month and topic.
+    if (q.season) {
+      const { data: channels, error } = await s.from('yt_channels').select('channel_id, label, title, handle, is_us, active, thumbnail').order('sort');
+      if (error) return json(200, { ready: false, error: error.message });
+      const before = new Date(Date.now() - YT_TRACK_DAYS * 86400000).toISOString();
+      const videos = [];
+      for (let from = 0; ; from += 1000) {
+        const { data, error: e2 } = await s.from('yt_videos').select('video_id, channel_id, title, published_at, kind, views')
+          .lt('published_at', before).order('published_at').range(from, from + 999);
+        if (e2) return json(500, { error: e2.message });
+        (data || []).forEach(v => videos.push([v.channel_id, v.kind || 'video', String(v.published_at).slice(0, 10), v.views, v.title, v.video_id]));
+        if (!data || data.length < 1000) break;
+      }
+      const { data: bf } = await s.from('yt_runs').select('*').eq('source', 'backfill').order('ran_at', { ascending: false }).limit(1);
+      return json(200, { ready: true, keyReady: !!ytKey(), channels, videos, lastBackfill: (bf || [])[0] || null });
+    }
     if (q.video) {
       const { data, error } = await s.from('yt_video_stats').select('taken_at, views, likes, comments')
         .eq('video_id', q.video).order('taken_at');
@@ -40,7 +60,7 @@ export async function handler(event, context) {
       videos.push(...(data || []));
       if (!data || data.length < 1000) break;
     }
-    const { data: runs } = await s.from('yt_runs').select('*').order('ran_at', { ascending: false }).limit(1);
+    const { data: runs } = await s.from('yt_runs').select('*').neq('source', 'backfill').order('ran_at', { ascending: false }).limit(1);
     return json(200, { ready: true, keyReady: !!ytKey(), channels, stats: stats || [], videos, lastRun: (runs || [])[0] || null });
   }
 
@@ -51,6 +71,10 @@ export async function handler(event, context) {
     // ~10s request limit); the page waits for the new yt_runs row.
     if (body.action === 'refresh') { const at = new Date().toISOString(); await startCompetitorsRefresh(event, 'yt'); return json(200, { started: true, at }); }
     // Claude's read of the period and video ideas for TAAI (background, see lib/video-ideas.js).
+    if (body.action === 'backfill') {
+      if (!ytKey()) return json(400, { error: 'Needs the YouTube API key in Netlify' });
+      const at = new Date().toISOString(); await startCompetitorsRefresh(event, 'backfill'); return json(200, { started: true, at });
+    }
     if (body.action === 'ideas') { const at = new Date().toISOString(); await startCompetitorsRefresh(event, 'ideas', { days: Number(body.days) || 3 }); return json(200, { started: true, at }); }
     if (body.action === 'add') {
       const r = await resolveChannel(body.input);

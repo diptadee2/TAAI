@@ -236,3 +236,89 @@ export async function runYtMonitor(supabase, { budgetMs = 22000 } = {}) {
   await supabase.from('yt_runs').insert(result);
   return result;
 }
+
+// ── Last 12 months of uploads, once (2026-11-25) ─────────────────────────
+// "We also want to know next year what kind of videos run well at which time
+// of the year." yt_videos keeps every video for good (the 6-hourly run stops
+// updating a video once it's 30 days old, so its views stay at about the
+// 30-day mark). This fills in the year before monitoring started: every
+// upload of the last `days` days that isn't stored yet, with its views as of
+// today. Existing rows are never touched. API key only. Each channel's
+// uploads are walked back page by page (1 quota unit per 50 videos, plus 1
+// per 50 for the numbers): a full year of 9 channels is a few hundred units.
+// Recorded in yt_runs with source 'backfill'.
+export async function backfillYtHistory(supabase, { days = 365, budgetMs = 600000 } = {}) {
+  if (!ytKey()) throw new Error('YOUTUBE_API_KEY is not set');
+  const started = Date.now();
+  const api = makeApi();
+  const cutoff = Date.now() - days * 86400000;
+  const { data: channels, error } = await supabase.from('yt_channels').select('*').eq('active', true).order('sort');
+  if (error) throw error;
+  const missingPl = channels.filter(c => !c.uploads_playlist);
+  if (missingPl.length) {
+    const d = await api.get('channels', { part: 'contentDetails', id: missingPl.map(c => c.channel_id).join(','), maxResults: 50 });
+    for (const it of d.items || []) {
+      const c = channels.find(x => x.channel_id === it.id);
+      if (c) c.uploads_playlist = it.contentDetails && it.contentDetails.relatedPlaylists && it.contentDetails.relatedPlaylists.uploads;
+    }
+  }
+  const errors = [];
+  let added = 0, seen = 0, stopped = false;
+  for (const c of channels) {
+    if (!c.uploads_playlist) continue;
+    if (Date.now() - started > budgetMs) { stopped = true; break; }
+    const ids = [];
+    let page = null;
+    for (let p = 0; p < 80; p++) {
+      const d = await api.get('playlistItems', Object.assign({ part: 'contentDetails', playlistId: c.uploads_playlist, maxResults: 50 }, page ? { pageToken: page } : {}))
+        .catch(e => { errors.push((c.label || c.channel_id) + ': ' + e.message); return null; });
+      if (!d) break;
+      let old = false;
+      for (const it of d.items || []) {
+        const pub = Date.parse(it.contentDetails.videoPublishedAt || '');
+        if (pub && pub < cutoff) { old = true; continue; }
+        ids.push(it.contentDetails.videoId);
+      }
+      page = d.nextPageToken;
+      if (old || !page) break;
+    }
+    seen += ids.length;
+    const have = new Set();
+    for (let i = 0; i < ids.length; i += 200) {
+      const { data } = await supabase.from('yt_videos').select('video_id').in('video_id', ids.slice(i, i + 200));
+      (data || []).forEach(r => have.add(r.video_id));
+    }
+    const todo = ids.filter(id => !have.has(id));
+    const nowIso = new Date().toISOString();
+    for (let i = 0; i < todo.length; i += 50) {
+      const d = await api.get('videos', { part: 'snippet,statistics,contentDetails,liveStreamingDetails', id: todo.slice(i, i + 50).join(','), maxResults: 50 })
+        .catch(e => { errors.push((c.label || c.channel_id) + ': ' + e.message); return null; });
+      if (!d) continue;
+      const rows = [];
+      for (const v of d.items || []) {
+        const sn = v.snippet || {}, st = v.statistics || {};
+        if (sn.liveBroadcastContent === 'upcoming' || sn.liveBroadcastContent === 'live') continue;
+        const live = !!(v.liveStreamingDetails && v.liveStreamingDetails.actualStartTime);
+        const dur = isoDuration(v.contentDetails && v.contentDetails.duration);
+        rows.push({
+          video_id: v.id, channel_id: c.channel_id, title: sn.title,
+          published_at: (v.liveStreamingDetails && v.liveStreamingDetails.actualStartTime) || sn.publishedAt,
+          // No /shorts/ check here (thousands of videos): 3 minutes or less is a Short.
+          kind: live ? 'live' : (dur != null && dur <= 180 ? 'short' : 'video'), duration_s: dur,
+          views: st.viewCount != null ? +st.viewCount : null, likes: st.likeCount != null ? +st.likeCount : null,
+          comments: st.commentCount != null ? +st.commentCount : null,
+          first_seen: nowIso, updated_at: nowIso,
+        });
+      }
+      if (rows.length) {
+        const { error: e1 } = await supabase.from('yt_videos').upsert(rows, { onConflict: 'video_id', ignoreDuplicates: true });
+        if (e1) throw e1;
+        added += rows.length;
+      }
+    }
+  }
+  if (stopped) errors.push('stopped early (time limit), press the button again to continue');
+  const result = { source: 'backfill', channels: channels.length, videos: added, units: api.units, error: errors.join('; ').slice(0, 1000) || null };
+  await supabase.from('yt_runs').insert(result);
+  return Object.assign({ seen }, result);
+}

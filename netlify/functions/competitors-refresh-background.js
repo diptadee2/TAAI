@@ -5,10 +5,10 @@
 // finished but the button stayed on "Updating…" (2026-11-25). Now
 // team-competitors.js / team-web-watch.js start this and the page waits for
 // the new run to show up in the database.
-// Body: { what: 'yt' | 'web' | 'ideas', days }. Internal only, same shared-secret check as
+// Body: { what: 'yt' | 'web' | 'ideas' | 'backfill', days }. Internal only, same shared-secret check as
 // check-name-background.js.
 import { getSupabase } from './lib/supabase.js';
-import { runYtMonitor } from './lib/yt-monitor.js';
+import { runYtMonitor, backfillYtHistory } from './lib/yt-monitor.js';
 import { runWebMonitor } from './lib/web-monitor.js';
 import { buildVideoIdeas } from './lib/video-ideas.js';
 
@@ -22,9 +22,11 @@ export async function handler(event) {
   try {
     if (body.what === 'web') await runWebMonitor(s, { budgetMs: 240000 });
     else if (body.what === 'ideas') await buildVideoIdeas(s, body.days);
+    else if (body.what === 'backfill') await backfillYtHistory(s, { days: 365, budgetMs: 780000 });
     else await runYtMonitor(s, { budgetMs: 240000 });
   } catch (e) {
     console.error('competitors-refresh-background', body.what, e);
+    if (body.what === 'backfill') await s.from('yt_runs').insert({ source: 'backfill', channels: 0, videos: 0, units: 0, error: String(e.message || e).slice(0, 300) }).then(() => {}, () => {});
     // An ideas run that fails leaves a note, so the page stops waiting and says why.
     if (body.what === 'ideas') {
       const days = [1, 3, 7, 30].includes(Number(body.days)) ? Number(body.days) : 3;
