@@ -5,11 +5,12 @@
 // finished but the button stayed on "Updating…" (2026-11-25). Now
 // team-competitors.js / team-web-watch.js start this and the page waits for
 // the new run to show up in the database.
-// Body: { what: 'yt' | 'web' }. Internal only, same shared-secret check as
+// Body: { what: 'yt' | 'web' | 'ideas', days }. Internal only, same shared-secret check as
 // check-name-background.js.
 import { getSupabase } from './lib/supabase.js';
 import { runYtMonitor } from './lib/yt-monitor.js';
 import { runWebMonitor } from './lib/web-monitor.js';
+import { buildVideoIdeas } from './lib/video-ideas.js';
 
 export async function handler(event) {
   if (event.httpMethod !== 'POST') return { statusCode: 405, body: '' };
@@ -20,21 +21,29 @@ export async function handler(event) {
   const s = getSupabase();
   try {
     if (body.what === 'web') await runWebMonitor(s, { budgetMs: 240000 });
+    else if (body.what === 'ideas') await buildVideoIdeas(s, body.days);
     else await runYtMonitor(s, { budgetMs: 240000 });
-  } catch (e) { console.error('competitors-refresh-background', body.what, e); }
+  } catch (e) {
+    console.error('competitors-refresh-background', body.what, e);
+    // An ideas run that fails leaves a note, so the page stops waiting and says why.
+    if (body.what === 'ideas') {
+      const days = [1, 7, 30].includes(Number(body.days)) ? Number(body.days) : 7;
+      await s.storage.from('competitor-insights').upload('ideas-' + days + '.json', JSON.stringify({ generatedAt: new Date().toISOString(), days, error: String(e.message || e).slice(0, 300) }), { contentType: 'application/json', upsert: true }).catch(() => {});
+    }
+  }
   return { statusCode: 200, body: '' };
 }
 
 // Starts the background run from a request handler; resolves once Netlify
 // has accepted it (immediate 202), not when the run finishes.
-export async function startCompetitorsRefresh(event, what) {
+export async function startCompetitorsRefresh(event, what, extra) {
   const proto = (event.headers && (event.headers['x-forwarded-proto'] || event.headers['X-Forwarded-Proto'])) || 'http';
   const host = event.headers && (event.headers.host || event.headers.Host);
   if (!host) throw new Error('no host header');
   const r = await fetch(proto + '://' + host + '/.netlify/functions/competitors-refresh-background', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-internal-secret': process.env.SUPABASE_SERVICE_KEY || '' },
-    body: JSON.stringify({ what }),
+    body: JSON.stringify(Object.assign({ what }, extra || {})),
   });
   if (r.status >= 400) throw new Error('could not start the update (HTTP ' + r.status + ')');
 }

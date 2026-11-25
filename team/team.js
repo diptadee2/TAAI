@@ -361,9 +361,9 @@
     // and the registration cutoff date.
     challenge: { loaded: false, loading: false, saving: false, error: null, rows: [], cutoff: null, open: true, msg: null, q: '' },
     // Competitor YouTube monitor (2026-11-24).
-    comp: { loaded: false, loading: false, error: null, data: null, period: 7, sort: 'subs', sortDir: -1, vsort: 'views', vchannel: 'all', vkind: 'all', vq: '', vlimit: 40, busy: false, msg: null, msgType: 'ok', view: 'youtube' },
+    comp: { loaded: false, loading: false, error: null, data: null, period: 7, sort: 'subs', sortDir: -1, vsort: 'views', vchannel: 'all', vkind: 'all', vq: '', vlimit: 40, busy: false, msg: null, msgType: 'ok', view: 'youtube', ideas: {}, ideasBusy: false, ideasErr: null, bestKind: 'video' },
     // Competitor website watcher (2026-11-25), Competitors > Websites.
-    web: { loaded: false, loading: false, error: null, data: null, busy: false, msg: null, msgType: 'ok', comp: 'all', kind: 'all', open: {}, details: {}, limit: 60, pricesAll: {} },
+    web: { loaded: false, loading: false, error: null, data: null, busy: false, msg: null, msgType: 'ok', comp: 'all', kind: 'all', open: {}, details: {}, limit: 60 },
     // Piracy takedown log + notice generator (2026-11-12).
     piracy: { loaded: false, loading: false, error: null, msg: null, rows: [], signature: null, sub: 'log', filter: 'all', q: '', checking: false, saving: false, sigSaving: false, draft: null, candidates: [], candidatesReady: false, runs: [], terms: null, termsSaving: false, foundFilter: 'new',
       ev: { loaded: false, loading: false, error: null, files: [], reports: [], reportsReady: false, unfiled: [], view: 'report', q: '', fetchedAt: 0, open: {} } },
@@ -1260,8 +1260,126 @@
       '<div class="field-hint" style="margin-top:8px;">Uploads, Views and the medians count only videos published in the chosen period. Median / video and Median / Short are the middle view counts of those uploads. Median day 1 is the views a video had about 24 hours after going up, so new and old videos compare fairly; it fills in as the monitor runs. Engagement is likes plus comments per 100 views. The best value in each column is highlighted.</div>';
     return '<div class="card">' +
       (c.msg ? '<div class="msg ' + (c.msgType === 'error' ? 'msg-error' : 'msg-ok') + '">' + escapeHtml(c.msg) + '</div>' : '') +
-      head + table + renderCmpVideos() + renderCmpChannels() +
+      head + table + renderCmpInsights() + renderCmpVideos() + renderCmpChannels() +
     '</div>';
+  }
+  // ── Best videos / what's working / ideas (2026-11-25) ──────────────
+  // "Not organized like which video performed the best in which time and
+  // what kind of videos we can make". A video is measured against its own
+  // channel's usual views for that format (median of the channel's videos
+  // over 30 days, at least a day old): 3.0× means three times what that
+  // channel normally gets, so a small channel's hit isn't buried under a big
+  // channel's ordinary upload.
+  var CMP_TOPICS = [
+    ['Exam strategy and time left', /last \d+ (days|months)|strategy|roadmap|\bplan\b|time (kam|left)|panic|revision|how to (prepare|crack|study)|preparation tips|kaise kare/i],
+    ['Mock tests and PYQs', /mock|test series|pyq|previous year|practice question|most expected/i],
+    ['Marks, rank and cutoffs', /marks|cutoff|cut-off|\brank\b|\bair\b|score|percentile/i],
+    ['Jobs, PSUs and careers', /psu|recruitment|\bjobs?\b|placement|salary|career|bhel|nsic|scientist|isro|drdo|product compan/i],
+    ['IIT, M.Tech and abroad', /\biit|m\.?tech|iisc|abroad|admission/i],
+    ['Toppers and stories', /topper|story|felicitation|interview|journey|success/i],
+    ['General Aptitude', /aptitude/i],
+    ['Subject lectures', /lecture|one shot|\b\d{1,2}\s*[:|]|\b0\d\b|algorithm|data structure|probability|statistic|linear algebra|calculus|machine learning|\bml\b|artificial intelligence|\bai\b|dbms|python|network|operating system|compiler|theory of computation|digital|inference/i],
+    ['Motivation and mindset', /motivat|mindset|focus|discipline|reels|mistake|reality|tier-?3|don'?t|study smarter|faster/i]
+  ];
+  function cmpScored() {
+    var c = state.comp, d = c.data, now = Date.now(), from = now - c.period * 86400000;
+    var names = {}; d.channels.forEach(function (ch) { names[ch.channel_id] = ch; });
+    var groups = {};
+    d.videos.forEach(function (v) {
+      if (now - Date.parse(v.published_at) < 86400000) return;
+      var k = v.channel_id + '|' + (v.kind || 'video'); (groups[k] = groups[k] || []).push(v.views || 0);
+    });
+    var base = {}; Object.keys(groups).forEach(function (k) { base[k] = cmpMedian(groups[k]); });
+    return d.videos.filter(function (v) { return Date.parse(v.published_at) >= from && names[v.channel_id] && names[v.channel_id].active; }).map(function (v) {
+      var b = base[v.channel_id + '|' + (v.kind || 'video')];
+      var age = (now - Date.parse(v.published_at)) / 86400000;
+      return { v: v, ch: names[v.channel_id], score: b ? (v.views || 0) / b : null, age: age, settled: age >= 1 };
+    });
+  }
+  function cmpX(x) { return x == null ? '-' : (x >= 10 ? Math.round(x) : x.toFixed(1)) + '×'; }
+  function cmpBestRow(r, i) {
+    var v = r.v;
+    return '<a class="cmp-best-row' + (r.ch.is_us ? ' is-us' : '') + '" href="https://www.youtube.com/' + (v.kind === 'short' ? 'shorts/' : 'watch?v=') + escapeHtml(v.video_id) + '" target="_blank" rel="noopener">' +
+      '<span class="cmp-best-n">' + (i + 1) + '</span>' +
+      '<img loading="lazy" alt="" src="https://i.ytimg.com/vi/' + escapeHtml(v.video_id) + '/mqdefault.jpg">' +
+      '<span class="cmp-best-body"><b>' + escapeHtml(v.title) + '</b><span class="field-hint">' + escapeHtml(r.ch.label || r.ch.title) + (r.ch.is_us ? ' (you)' : '') + ' · ' + escapeHtml(cmpAgo(v.published_at)) + ' · ' + cmpNum(v.views) + ' views</span></span>' +
+      '<span class="cmp-x' + (r.score >= 2 ? ' is-hot' : r.score < 1 ? ' is-cold' : '') + '" title="Views compared with this channel\'s usual for this format">' + cmpX(r.score) + '</span></a>';
+  }
+  function renderCmpInsights() {
+    var c = state.comp, per = c.period === 1 ? '24 hours' : c.period + ' days';
+    var rows = cmpScored(), ranked = rows.filter(function (r) { return r.settled && r.score != null; });
+    var best = function (kinds) {
+      return ranked.filter(function (r) { return kinds.indexOf(r.v.kind || 'video') !== -1; }).sort(function (a, b) { return b.score - a.score; }).slice(0, 8);
+    };
+    var kind = c.bestKind;
+    var list = best(kind === 'short' ? ['short'] : ['video', 'live']);
+    var fresh = rows.filter(function (r) { return !r.settled; }).length;
+    var bestHtml = '<h3 class="cmp-h">Best videos in the last ' + per + '</h3>' +
+      '<div class="field-hint" style="margin-bottom:10px;">Ranked by views against each channel\'s usual for that format: 3.0× means three times the views that channel normally gets, so a small channel\'s hit counts as much as a big channel\'s. ' + (fresh ? fresh + ' video' + (fresh === 1 ? ' is' : 's are') + ' under a day old and not ranked yet.' : '') + '</div>' +
+      '<div class="tabs subtabs" style="margin-bottom:10px;"><button type="button" class="tab-btn' + (kind !== 'short' ? ' active' : '') + '" data-cmpbest="video">Videos</button><button type="button" class="tab-btn' + (kind === 'short' ? ' active' : '') + '" data-cmpbest="short">Shorts</button></div>' +
+      (list.length ? '<div class="cmp-best-list">' + list.map(cmpBestRow).join('') + '</div>' : '<div class="field-hint">Nothing to rank in this period yet' + (c.period === 1 ? ': try 7 days.' : '.') + '</div>');
+    // Topics: each video goes to the first topic its title matches.
+    var topics = CMP_TOPICS.map(function (t) { return { name: t[0], re: t[1], rows: [] }; });
+    var other = { name: 'Other', rows: [] };
+    ranked.filter(function (r) { return !r.ch.is_us; }).forEach(function (r) {
+      var t = topics.filter(function (x) { return x.re.test(r.v.title); })[0] || other; t.rows.push(r);
+    });
+    var trows = topics.concat([other]).filter(function (t) { return t.rows.length; }).map(function (t) {
+      t.med = cmpMedian(t.rows.map(function (r) { return Math.round(r.score * 100); })) / 100;
+      t.top = t.rows.slice().sort(function (a, b) { return b.score - a.score; })[0];
+      return t;
+    }).sort(function (a, b) { return b.med - a.med; });
+    var topicsHtml = '<h3 class="cmp-h">What\'s working in the last ' + per + ' <span class="field-hint">competitor videos, grouped by title</span></h3>' +
+      (trows.length ? '<table class="web-ptable cmp-topics"><thead><tr><th>Topic</th><th class="web-pr">Videos</th><th class="web-pr">Typical</th><th>Best one</th></tr></thead><tbody>' + trows.map(function (t) {
+        return '<tr><td><b>' + escapeHtml(t.name) + '</b></td><td class="web-pr">' + t.rows.length + '</td><td class="web-pr"><span class="cmp-x' + (t.med >= 1.5 ? ' is-hot' : t.med < 1 ? ' is-cold' : '') + '">' + cmpX(t.med) + '</span></td>' +
+          '<td class="cmp-topic-best"><a href="https://www.youtube.com/' + (t.top.v.kind === 'short' ? 'shorts/' : 'watch?v=') + escapeHtml(t.top.v.video_id) + '" target="_blank" rel="noopener">' + escapeHtml(t.top.v.title) + '</a><span class="field-hint"> · ' + escapeHtml(t.top.ch.label || t.top.ch.title) + ' · ' + cmpX(t.top.score) + '</span></td></tr>';
+      }).join('') + '</tbody></table><div class="field-hint" style="margin-top:6px;">Typical is the middle score of the topic\'s videos: above 1.0× the topic beats channels\' usual, below 1.0× it does worse.</div>'
+        : '<div class="field-hint">Not enough settled videos in this period yet.</div>');
+    return bestHtml + topicsHtml + renderCmpIdeas();
+  }
+  function renderCmpIdeas() {
+    var c = state.comp, per = c.period === 1 ? '24 hours' : c.period + ' days';
+    var doc = c.ideas[c.period];
+    var btn = '<button type="button" class="btn btn-primary" id="cmp-ideas"' + (c.ideasBusy ? ' disabled' : '') + '>' + (c.ideasBusy ? 'Thinking… (about a minute)' : (doc && !doc.error ? '↻ New ideas from the last ' + per : '✨ Suggest videos from the last ' + per)) + '</button>';
+    var body = '';
+    if (doc === undefined) body = '<div class="field-hint">Loading…</div>';
+    else if (doc && doc.error) body = '<div class="msg msg-error">Couldn\'t make ideas: ' + escapeHtml(doc.error) + '</div>';
+    else if (doc) {
+      body = '<div class="field-hint">Made ' + escapeHtml(cmpAgo(doc.generatedAt)) + ' from ' + doc.videosConsidered + ' competitor videos by Claude. Check facts before you publish.</div>' +
+        '<p class="cmp-ideas-sum">' + escapeHtml(doc.summary) + '</p>' +
+        '<div class="cmp-ideas">' + (doc.ideas || []).map(function (it) {
+          return '<div class="cmp-idea"><div class="cmp-idea-top"><span class="cmp-idea-fmt">' + escapeHtml(it.format) + '</span><b>' + escapeHtml(it.title) + '</b></div>' +
+            '<div class="cmp-idea-hook">“' + escapeHtml(it.hook) + '”</div>' +
+            '<div class="cmp-idea-why">' + escapeHtml(it.why) + '</div>' +
+            ((it.based_on || []).length ? '<div class="field-hint">Based on: ' + it.based_on.map(escapeHtml).join(' · ') + '</div>' : '') + '</div>';
+        }).join('') + '</div>' +
+        ((doc.working || []).length ? '<details class="cmp-working"><summary>What Claude saw working (' + doc.working.length + ')</summary>' + doc.working.map(function (w) {
+          return '<div class="cmp-work"><b>' + escapeHtml(w.pattern) + '</b><div class="field-hint">' + escapeHtml(w.evidence) + '</div></div>';
+        }).join('') + '</details>' : '');
+    } else body = '<div class="field-hint">No ideas for this period yet. Press the button: Claude reads the competitor videos of the last ' + per + ', finds what beat their usual, and suggests GATE DA videos TAAI could make, each with a title, opening line and the evidence.</div>';
+    return '<div class="cmp-ideas-card"><div class="cmp-ideas-head"><h3 class="cmp-h" style="margin:0;">Video ideas for TAAI</h3>' + btn + '</div>' +
+      (c.ideasErr ? '<div class="msg msg-error">' + escapeHtml(c.ideasErr) + '</div>' : '') + body + '</div>';
+  }
+  function loadCmpIdeas(days) {
+    var c = state.comp;
+    if (c.ideas[days] !== undefined) return;
+    api('/team-competitors?ideas=' + days).then(function (r) { c.ideas[days] = r.ideas || null; render(); }).catch(function () { c.ideas[days] = null; render(); });
+  }
+  function cmpMakeIdeas() {
+    var c = state.comp, days = c.period;
+    c.ideasBusy = true; c.ideasErr = null; render();
+    api('/team-competitors', { method: 'POST', body: JSON.stringify({ action: 'ideas', days: days }) }).then(function (r) {
+      var since = Date.parse(r.at) - 5000, tries = 0;
+      (function poll() {
+        tries++;
+        api('/team-competitors?ideas=' + days).then(function (x) {
+          var doc = x.ideas;
+          if (doc && Date.parse(doc.generatedAt) >= since) { c.ideas[days] = doc; c.ideasBusy = false; render(); return; }
+          if (tries >= 40) { c.ideasBusy = false; c.ideasErr = 'Still working after 3 minutes. Reload the page in a bit.'; render(); return; }
+          setTimeout(poll, 5000);
+        }).catch(function () { if (tries < 40) setTimeout(poll, 5000); else { c.ideasBusy = false; render(); } });
+      })();
+    }).catch(function (e) { c.ideasBusy = false; c.ideasErr = e.message; render(); });
   }
   function renderCmpVideos() {
     var c = state.comp, d = c.data, now = Date.now(), from = now - c.period * 86400000;
@@ -1286,7 +1404,7 @@
     list.sort(sorters[c.vsort] || sorters.views);
     var shown = list.slice(0, c.vlimit);
     var opt = function (v, l, cur) { return '<option value="' + v + '"' + (cur === v ? ' selected' : '') + '>' + l + '</option>'; };
-    return '<h3 class="cmp-h">Videos <span class="field-hint">' + list.length + ' in the last ' + (c.period === 1 ? '24 hours' : c.period + ' days') + '</span></h3>' +
+    return '<h3 class="cmp-h">All videos <span class="field-hint">' + list.length + ' in the last ' + (c.period === 1 ? '24 hours' : c.period + ' days') + '</span></h3>' +
       '<div class="chal-toolbar cmp-vtools">' +
         '<select id="cmp-vchannel">' + opt('all', 'All channels', c.vchannel) + d.channels.filter(function (ch) { return ch.active; }).map(function (ch) { return opt(ch.channel_id, escapeHtml(ch.label || ch.title), c.vchannel); }).join('') + '</select>' +
         '<select id="cmp-vkind">' + opt('all', 'All types', c.vkind) + opt('video', 'Videos', c.vkind) + opt('short', 'Shorts', c.vkind) + opt('live', 'Live streams', c.vkind) + '</select>' +
@@ -1371,6 +1489,10 @@
     });
     var refresh = document.getElementById('cmp-refresh');
     if (refresh) refresh.addEventListener('click', cmpRefreshNow);
+    document.querySelectorAll('[data-cmpbest]').forEach(function (b) { b.addEventListener('click', function () { c.bestKind = b.getAttribute('data-cmpbest'); render(); }); });
+    var ideasBtn = document.getElementById('cmp-ideas');
+    if (ideasBtn) ideasBtn.addEventListener('click', cmpMakeIdeas);
+    if (c.loaded && c.data && c.data.ready !== false) loadCmpIdeas(c.period);
     [['cmp-vchannel', 'vchannel'], ['cmp-vkind', 'vkind'], ['cmp-vsort', 'vsort']].forEach(function (p) {
       var el = document.getElementById(p[0]);
       if (el) el.addEventListener('change', function () { c[p[1]] = el.value; c.vlimit = 40; render(); });
@@ -1474,30 +1596,43 @@
       (w.msg ? '<div class="msg ' + (w.msgType === 'error' ? 'msg-error' : 'msg-ok') + '">' + escapeHtml(w.msg) + '</div>' : '') +
       head + changes + renderWebPrices(pages, comps) + renderWebPages(comps) + '</div>';
   }
+  // One table per competitor: each course / batch with its plan and
+  // validity, the price they charge, the struck-out price and % off. The same
+  // plan shown on several of their pages is listed once. Prices only guessed
+  // from page text (no data on the page) are kept apart, folded away.
   function renderWebPrices(pages, comps) {
     var w = state.web, d = w.data;
     var blocks = comps.filter(function (c) { return w.comp === 'all' || w.comp === c; }).map(function (comp) {
-      var rows = [];
+      var seen = {}, rows = [], rough = [];
       d.pages.forEach(function (p) {
         if (p.competitor !== comp || !p.active || !d.offers[p.id]) return;
-        d.offers[p.id].list.forEach(function (o) { rows.push({ o: o, p: p }); });
+        d.offers[p.id].list.forEach(function (o) {
+          if (o.v !== 2) return;
+          if (o.source === 'text') { rough.push({ o: o, p: p }); return; }
+          // "GATE DA 2027 Core (Till Feb 2027)" and "GATE DA 2027 Core" at the same price are one plan.
+          var k = [String(o.product).replace(/\s*\([^)]*\)/g, ''), o.plan, o.price].join('|').toLowerCase();
+          if (seen[k]) { if (!seen[k].o.validity && o.validity) seen[k].o = o; return; }
+          seen[k] = { o: o, p: p }; rows.push(seen[k]);
+        });
       });
-      if (!rows.length) return '';
-      // Short price lines (plan cards) first; long ones are usually FAQ
-      // sentences that mention a price, folded away unless asked for.
-      rows.sort(function (a, b) { return (a.o.name.length > 120) - (b.o.name.length > 120); });
-      var all = !!w.pricesAll[comp], cap = 10, more = rows.length - cap;
-      if (!all && more > 0) rows = rows.slice(0, cap);
-      return '<div class="web-pcomp"><div class="web-pcomp-h">' + escapeHtml(comp) + '</div><table class="web-ptable"><tbody>' + rows.map(function (r) {
+      if (!rows.length && !rough.length) return '';
+      var row = function (r) {
         var o = r.o, off = o.price && o.mrp && o.mrp > o.price ? Math.round((1 - o.price / o.mrp) * 100) : null;
-        return '<tr><td>' + (o.url ? '<a href="' + escapeHtml(o.url) + '" target="_blank" rel="noopener">' + escapeHtml(o.name) + '</a>' : escapeHtml(o.name)) +
-          '<div class="field-hint">' + escapeHtml(r.p.label || r.p.url) + '</div></td>' +
-          '<td class="web-pr"><b>' + webRupees(o.price) + '</b>' + (o.mrp ? ' <s>' + webRupees(o.mrp) + '</s>' : '') + (off ? '<div class="field-hint">' + off + '% off</div>' : '') + '</td></tr>';
-      }).join('') + '</tbody></table>' + (more > 0 ? '<button type="button" class="link-btn js-web-pall" data-comp="' + escapeHtml(comp) + '">' + (all ? 'Show fewer' : 'Show all ' + (more + cap) + ' price mentions') + '</button>' : '') + '</div>';
+        var detail = [o.plan, o.validity].filter(Boolean).join(' · ');
+        return '<tr><td><div class="web-prod">' + (o.url ? '<a href="' + escapeHtml(o.url) + '" target="_blank" rel="noopener">' + escapeHtml(o.product) + '</a>' : escapeHtml(o.product)) + '</div>' +
+          (detail ? '<div class="web-plan">' + escapeHtml(detail) + '</div>' : '') + '</td>' +
+          '<td class="web-pr">' + (o.price ? '<b>' + webRupees(o.price) + '</b>' : o.price === 0 ? '<b>Free</b>' : '<span class="field-hint">Not listed</span>') +
+          (o.mrp ? '<div class="web-mrp"><s>' + webRupees(o.mrp) + '</s>' + (off ? ' <span class="web-off">' + off + '% off</span>' : '') + '</div>' : '') + '</td></tr>';
+      };
+      var srcPages = []; rows.forEach(function (r) { if (srcPages.indexOf(r.p) === -1) srcPages.push(r.p); });
+      return '<div class="web-pcomp"><div class="web-pcomp-h"><b>' + escapeHtml(comp) + '</b><span class="field-hint"> · from ' + srcPages.map(function (p) { return '<a href="' + escapeHtml(p.url) + '" target="_blank" rel="noopener">' + escapeHtml(p.label || p.url) + '</a>'; }).join(', ') + '</span></div>' +
+        (rows.length ? '<table class="web-ptable"><thead><tr><th>Course / batch and plan</th><th class="web-pr">Price</th></tr></thead><tbody>' + rows.map(row).join('') + '</tbody></table>' : '') +
+        (rough.length ? '<details class="web-rough"><summary>' + rough.length + ' other price mention' + (rough.length === 1 ? '' : 's') + ' found in page text (no course data on those pages)</summary><table class="web-ptable"><tbody>' + rough.map(row).join('') + '</tbody></table></details>' : '') +
+      '</div>';
     }).join('');
     return '<details class="cmp-manage" open><summary>Their prices now</summary>' +
-      (blocks || '<div class="field-hint">No prices read yet.</div>') +
-      '<div class="field-hint" style="margin-top:8px;">GfG and PW prices come from their own course data (what you pay, with the struck-out price). Other sites: every rupee amount on the page with the text next to it, so check the page itself when a label looks unclear.</div></details>';
+      '<div class="field-hint" style="margin-top:6px;">The price each competitor charges today, read from their own course data: GATE Wallah and GfG batch lists, GO Classes course plans, The ML Hub\'s published plans. Struck-out is their listed MRP. GO Classes and The ML Hub say their prices include GST.</div>' +
+      (blocks || '<div class="field-hint">No prices read yet: press Check now.</div>') + '</details>';
   }
   function renderWebPages(comps) {
     var w = state.web, d = w.data;
@@ -1579,9 +1714,6 @@
         }
         render();
       });
-    });
-    document.querySelectorAll('.js-web-pall').forEach(function (b) {
-      b.addEventListener('click', function () { var k = b.getAttribute('data-comp'); w.pricesAll[k] = !w.pricesAll[k]; render(); });
     });
     document.querySelectorAll('.js-web-checkone').forEach(function (b) {
       b.addEventListener('click', function () { webPost({ action: 'check', id: b.getAttribute('data-id') }, webCheckMsg); });

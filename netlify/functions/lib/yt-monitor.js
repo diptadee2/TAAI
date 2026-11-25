@@ -220,6 +220,9 @@ export async function runYtMonitor(supabase, { budgetMs = 22000 } = {}) {
     shortChecks.slice(i, i + 8).forEach((v, j) => {
       const row = rows.find(r => r.video_id === v.video_id);
       if (res[j] != null) row.kind = res[j] ? 'short' : 'video';
+      // YouTube didn't answer the check (it often doesn't from Netlify's
+      // servers): 3 minutes or less is a Short, YouTube's own limit (2026-11-25).
+      else if (row.duration_s != null) row.kind = row.duration_s <= 180 ? 'short' : 'video';
     });
   }
   for (let i = 0; i < rows.length; i += 200) {

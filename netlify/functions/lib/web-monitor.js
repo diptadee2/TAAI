@@ -148,13 +148,91 @@ function pwOffers(html, pageUrl, filter) {
   return out;
 }
 
+// The JSON array/object that starts at html[i] ('[' or '{'), or null.
+function jsonAt(html, i) {
+  let depth = 0, inStr = false, esc = false;
+  for (let j = i; j < html.length && j < i + 200000; j++) {
+    const ch = html[j];
+    if (inStr) { if (esc) esc = false; else if (ch === '\\') esc = true; else if (ch === '"') inStr = false; continue; }
+    if (ch === '"') inStr = true;
+    else if (ch === '[' || ch === '{') depth++;
+    else if (ch === ']' || ch === '}') { depth--; if (!depth) { try { return JSON.parse(html.slice(i, j + 1)); } catch { return null; } } }
+  }
+  return null;
+}
+
+// Spayee course pages (GO Classes): the course title and every plan
+// ("6-Month Validity", "1-Year Validity + 3 Months Extra"…) with its MRP,
+// price and validity are in the page's own data.
+function spayeeOffers(html, pageUrl) {
+  const t = html.match(/"spayee:title":"((?:[^"\\]|\\.)*)"/);
+  const at = html.indexOf('"spayee:productVariants":');
+  if (!t || at === -1) return [];
+  const product = JSON.parse('"' + t[1] + '"').trim();
+  const variants = jsonAt(html, html.indexOf('[', at)) || [];
+  const out = [];
+  for (const v of variants) {
+    if (!v || v.archived) continue;
+    for (const vv of v.validityVariants || []) {
+      const validity = vv.validityDate ? 'till ' + vv.validityDate : vv.validity ? vv.validity + ' ' + (vv.validityType || 'days') : (vv.label || '').trim();
+      out.push({ product, plan: (v.productType || '').trim() || null, validity: validity || null, price: vv.price != null ? Math.round(vv.price) : null, mrp: vv.mrp && vv.mrp !== vv.price ? Math.round(vv.mrp) : null, url: pageUrl, note: 'incl. GST' });
+    }
+  }
+  return out;
+}
+
+// schema.org offers in the page's JSON-LD (The ML Hub lists every plan this
+// way). An offer named "GATE DA 2027 Core (Till Feb 2027) — Till Feb 2027
+// (GATE DA 2027)" becomes product "GATE DA 2027 Core (Till Feb 2027)" with
+// validity "Till Feb 2027 (GATE DA 2027)".
+function jsonLdOffers(html, pageUrl) {
+  const out = [], seen = new Set();
+  for (const m of html.matchAll(/<script[^>]*application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)) {
+    let d; try { d = JSON.parse(m[1]); } catch { continue; }
+    (function walk(o, parentName) {
+      if (Array.isArray(o)) { o.forEach(x => walk(x, parentName)); return; }
+      if (!o || typeof o !== 'object') return;
+      const type = [].concat(o['@type'] || []).join(',');
+      if (/\bOffer\b/.test(type) && (o.price != null || o.lowPrice != null)) {
+        const full = String(o.name || parentName || '').trim();
+        const [product, validity] = full.split(/\s+[—–]\s+/);
+        const price = Math.round(Number(o.price != null ? o.price : o.lowPrice));
+        const key = (product || '') + '|' + (validity || '') + '|' + price;
+        if (!seen.has(key) && product && price > 0) { seen.add(key); out.push({ product: product.trim(), plan: null, validity: validity ? validity.trim() : null, price, mrp: null, url: o.url || pageUrl }); }
+        return;
+      }
+      if (/FAQPage|Question|Answer|Review|Organization|Person|BreadcrumbList/.test(type)) return;
+      for (const k in o) walk(o[k], o.name || parentName);
+    })(d, null);
+  }
+  // The same plan listed twice on one page (with and without a validity):
+  // keep the one that says how long it lasts.
+  return out.filter(o => o.validity || !out.some(x => x !== o && x.validity && x.product === o.product && x.price === o.price));
+}
+
+// Offers carry: product, plan, validity, price, mrp, url, and source
+// 'data' (read from the site's own data) or 'text' (a rupee amount found in
+// the page text, with a nearby line as its label; less reliable, kept only
+// when a page has no data at all). v:2 marks this format.
 export function extractPage(page, html, finalUrl) {
   const filter = page.match ? new RegExp(page.match, 'i') : null;
   const lines = htmlToLines(html);
+  const url = finalUrl || page.url;
   let offers;
-  if (page.extractor === 'gfg') offers = gfgOffers(html, filter);
-  else if (page.extractor === 'pw') offers = pwOffers(html, finalUrl || page.url, filter);
-  else offers = offersFromLines(stableLines(lines));
+  if (page.extractor === 'gfg') offers = gfgOffers(html, filter).map(o => ({ product: o.name, plan: null, validity: null, price: o.price, mrp: o.mrp, url: o.url }));
+  else if (page.extractor === 'pw') offers = pwOffers(html, url, filter).map(o => ({ product: o.name, plan: null, validity: null, price: o.price, mrp: o.mrp, url: o.url }));
+  else {
+    offers = spayeeOffers(html, url);
+    if (!offers.length) offers = jsonLdOffers(html, url);
+    if (!offers.length) {
+      offers = offersFromLines(stableLines(lines)).filter(o => o.name.length <= 100)
+        .map(o => ({ product: o.name, plan: null, validity: null, price: o.price, mrp: o.mrp, url: null, key: o.key, source: 'text' }));
+    }
+  }
+  offers = offers.map(o => Object.assign({ v: 2, source: 'data' }, o, {
+    name: o.product + (o.plan ? ' · ' + o.plan : '') + (o.validity ? ' · ' + o.validity : ''),
+    key: o.key || [o.product, o.plan, o.validity].map(x => String(x || '').toLowerCase().trim()).join('|'),
+  }));
   return { title: pageTitle(html), lines, offers };
 }
 
@@ -173,15 +251,18 @@ async function sitemapUrls(url, filter) {
   return [...new Set(locs.filter(u => !filter || filter.test(u)))].slice(0, 3000);
 }
 
-const offerKey = o => o.url || o.key || o.name.replace(/[0-9,.₹]+/g, '#').replace(/\s+/g, ' ').trim().toLowerCase();
+const offerKey = o => o.key || o.url || o.name.replace(/[0-9,.₹]+/g, '#').replace(/\s+/g, ' ').trim().toLowerCase();
 const fmt = n => n == null ? '-' : '₹' + Number(n).toLocaleString('en-IN');
 
 // What changed between two extractions of the same page.
 export function diffPage(prev, cur) {
   const changes = [];
   if (prev.title && cur.title && prev.title !== cur.title) changes.push({ kind: 'title', summary: 'Page title changed', detail: { from: prev.title, to: cur.title } });
-  const pm = new Map((prev.offers || []).map(o => [offerKey(o), o]));
-  const cm = new Map((cur.offers || []).map(o => [offerKey(o), o]));
+  // Snapshots from before the v:2 offer format (2026-11-25) can't be
+  // compared offer by offer; the first new read just becomes the baseline.
+  const comparable = !(prev.offers || []).length || (prev.offers || []).some(o => o.v === 2);
+  const pm = new Map(comparable ? (prev.offers || []).map(o => [offerKey(o), o]) : []);
+  const cm = new Map(comparable ? (cur.offers || []).map(o => [offerKey(o), o]) : []);
   for (const [k, o] of cm) {
     const was = pm.get(k);
     if (!was) changes.push({ kind: 'offer_new', summary: 'New: ' + o.name.slice(0, 140) + (o.price ? ' at ' + fmt(o.price) : ''), detail: { offer: o } });
@@ -191,11 +272,14 @@ export function diffPage(prev, cur) {
     }
   }
   for (const [k, o] of pm) if (!cm.has(k)) changes.push({ kind: 'offer_gone', summary: 'Gone: ' + o.name.slice(0, 140) + (o.price ? ' (was ' + fmt(o.price) + ')' : ''), detail: { offer: o } });
-  // Text: lines added / removed, ignoring countdowns and lines with a rupee
-  // amount (those are reported as offers above).
+  // Text: lines added / removed, ignoring countdowns. When a page's prices
+  // come from its text, its short price lines are reported as offers above,
+  // so they're left out here; longer sentences that mention a price stay in.
+  const fromText = (cur.offers || []).some(o => o.source === 'text');
+  const skip = l => fromText && amounts(l).length && l.length <= 100;
   const a = new Set(stableLines(prev.lines || [])), b = new Set(stableLines(cur.lines || []));
-  const added = [...b].filter(l => !a.has(l) && !amounts(l).length);
-  const removed = [...a].filter(l => !b.has(l) && !amounts(l).length);
+  const added = [...b].filter(l => !a.has(l) && !skip(l));
+  const removed = [...a].filter(l => !b.has(l) && !skip(l));
   if (added.length || removed.length) {
     const first = (added[0] || removed[0] || '').slice(0, 110);
     changes.push({ kind: 'text', summary: (added.length ? added.length + ' line' + (added.length === 1 ? '' : 's') + ' added' : '') + (added.length && removed.length ? ', ' : '') + (removed.length ? removed.length + ' removed' : '') + (first ? ': "' + first + '"' : ''), detail: { added: added.slice(0, 80), removed: removed.slice(0, 80) } });
@@ -251,7 +335,9 @@ export async function runWebMonitor(s, { ids = null, budgetMs = 22000 } = {}) {
       const { data: last } = await s.from('web_snapshots').select('id, title, lines, offers').eq('page_id', page.id).order('taken_at', { ascending: false }).limit(1).maybeSingle();
       let rows = [];
       if (last) rows = diffPage(last, cur).map(c => Object.assign({ page_id: page.id }, c));
-      if (!last || rows.length) {
+      // Also re-save when the stored snapshot predates the v:2 offer format.
+      const oldFormat = last && (last.offers || []).some(o => o.v !== 2);
+      if (!last || rows.length || oldFormat) {
         await s.from('web_snapshots').insert({ page_id: page.id, title: cur.title, lines: cur.lines, offers: cur.offers });
         if (rows.length) { await s.from('web_changes').insert(rows); changed++; }
       }
