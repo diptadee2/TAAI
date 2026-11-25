@@ -3414,6 +3414,14 @@ html.has-mft body::before{content:'';position:fixed;top:0;left:0;right:0;height:
   html.has-mft body::before, html.has-mft .mft { top: 0 !important; }
   html.has-mft .nav { top: 34px !important; }
 }
+/* Fullscreen timer under the status bar (2026-11-25: "faded out in the top
+   where the system time and status bar is"). In the app the status bar is
+   drawn over the page (black-translucent), so Exit, the clock and the HUD
+   sat under the system time. They now start below it, and a soft dark band
+   keeps the system time readable over the sky. */
+.pomo-zen-top, .pomo-zen > .zen-hud { margin-top: env(safe-area-inset-top); }
+.pomo-zen::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: env(safe-area-inset-top); z-index: 3; pointer-events: none;
+  background: linear-gradient(180deg, rgba(3,2,12,.85), rgba(3,2,12,.55)); }
 </style>
 <script>try{var sa=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;if(!sa&&localStorage.getItem('taai_mft_on')!=='0')document.documentElement.classList.add('has-mft')}catch(e){document.documentElement.classList.add('has-mft')}</script>
 <script src="/mini-flt-ticker.js" data-dark defer></script>
