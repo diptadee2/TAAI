@@ -1,11 +1,12 @@
 // /team > Competitors > Websites (2026-11-25). Admin only.
 // GET  /api/team-web-watch -> { ready, pages, changes (last 90 days), offers: {page_id: [...]}, newPages }
 // GET  /api/team-web-watch?change=<id> -> { change } with its full detail
-// POST {action:'check', id?}            -> reads every page now (or one)
+// POST {action:'check', id?}            -> one page now, or all pages in the background ({started, at})
 // POST {action:'add', url, competitor, label, extractor, match}
 // POST {action:'remove'|'restore', id}  -> stop / restart watching (history kept)
 import { getSupabase, json, requireAdmin } from './lib/supabase.js';
 import { runWebMonitor } from './lib/web-monitor.js';
+import { startCompetitorsRefresh } from './competitors-refresh-background.js';
 
 const EXTRACTORS = ['text', 'gfg', 'pw', 'sitemap'];
 
@@ -42,7 +43,12 @@ export async function handler(event, context) {
   try {
     if (body.action === 'check') {
       const id = body.id ? Number(body.id) : null;
-      return json(200, await runWebMonitor(s, { ids: id ? [id] : null, budgetMs: 20000 }));
+      // One page is quick; all of them can pass Netlify's ~10s request
+      // limit, so that runs in the background and the page waits for it.
+      if (id) return json(200, await runWebMonitor(s, { ids: [id], budgetMs: 8000 }));
+      const at = new Date().toISOString();
+      await startCompetitorsRefresh(event, 'web');
+      return json(200, { started: true, at });
     }
     if (body.action === 'add') {
       let url;
@@ -59,7 +65,7 @@ export async function handler(event, context) {
       const { data, error } = await s.from('web_pages').insert(row).select('id').single();
       if (error) throw error;
       // Read it once straight away, so it has a starting point.
-      const r = await runWebMonitor(s, { ids: [data.id], budgetMs: 15000 });
+      const r = await runWebMonitor(s, { ids: [data.id], budgetMs: 8000 });
       return json(200, { ok: true, id: data.id, check: r });
     }
     if (body.action === 'remove' || body.action === 'restore') {

@@ -1327,6 +1327,30 @@
       loadCompetitors();
     }).catch(function (e) { c.busy = false; c.msg = e.message; c.msgType = 'error'; render(); });
   }
+  // Refresh runs in the background (2026-11-25: as a normal request it ran
+  // past Netlify's ~10s limit and the button stuck on "Updating…"). Start
+  // it, then re-read every 4 seconds until a run newer than the click shows
+  // up, for at most 3 minutes.
+  function cmpRefreshNow() {
+    var c = state.comp;
+    c.busy = true; c.msg = null; render();
+    api('/team-competitors', { method: 'POST', body: JSON.stringify({ action: 'refresh' }) }).then(function (r) {
+      var since = Date.parse(r.at) - 5000, tries = 0;
+      (function poll() {
+        tries++;
+        api('/team-competitors').then(function (d) {
+          var run = d.lastRun;
+          if (run && Date.parse(run.ran_at) >= since) {
+            c.data = d; c.busy = false; c.msgType = run.error ? 'error' : 'ok';
+            c.msg = 'Updated ' + run.channels + ' channels and ' + run.videos + ' videos' + (run.source === 'rss' ? ' (public feeds only: no YouTube API key)' : '') + (run.error ? '. Problems: ' + run.error : '.');
+            render(); return;
+          }
+          if (tries >= 45) { c.busy = false; c.msgType = 'error'; c.msg = 'Still updating after 3 minutes. Reload the page in a bit to see the new numbers.'; render(); return; }
+          setTimeout(poll, 4000);
+        }).catch(function () { if (tries < 45) setTimeout(poll, 4000); else { c.busy = false; render(); } });
+      })();
+    }).catch(function (e) { c.busy = false; c.msg = e.message; c.msgType = 'error'; render(); });
+  }
   function bindCompetitors() {
     var c = state.comp;
     document.querySelectorAll('[data-cmpview]').forEach(function (b) {
@@ -1346,9 +1370,7 @@
       });
     });
     var refresh = document.getElementById('cmp-refresh');
-    if (refresh) refresh.addEventListener('click', function () {
-      cmpPost({ action: 'refresh' }, function (r) { return 'Updated ' + r.channels + ' channels and ' + r.videos + ' videos' + (r.error ? '. Problems: ' + r.error : '.'); });
-    });
+    if (refresh) refresh.addEventListener('click', cmpRefreshNow);
     [['cmp-vchannel', 'vchannel'], ['cmp-vkind', 'vkind'], ['cmp-vsort', 'vsort']].forEach(function (p) {
       var el = document.getElementById(p[0]);
       if (el) el.addEventListener('change', function () { c[p[1]] = el.value; c.vlimit = 40; render(); });
@@ -1512,10 +1534,35 @@
     return 'Checked ' + r.checked + ' page' + (r.checked === 1 ? '' : 's') + (r.changed ? ', ' + r.changed + ' with changes' : ', no changes') +
       (r.skipped ? '. ' + r.skipped + ' left for the next run' : '') + (r.error ? '. Problems: ' + r.error : '.');
   }
+  // All pages are read in the background (see cmpRefreshNow); wait until
+  // every active page has been checked since the click, at most 3 minutes.
+  function webCheckAll() {
+    var w = state.web;
+    w.busy = true; w.msg = null; render();
+    api('/team-web-watch', { method: 'POST', body: JSON.stringify({ action: 'check' }) }).then(function (r) {
+      var since = Date.parse(r.at) - 5000, tries = 0;
+      (function poll() {
+        tries++;
+        api('/team-web-watch').then(function (d) {
+          var act = d.pages.filter(function (p) { return p.active; });
+          var done = act.filter(function (p) { return p.last_checked_at && Date.parse(p.last_checked_at) >= since; });
+          if (done.length === act.length || tries >= 45) {
+            var changes = (d.changes || []).filter(function (c) { return Date.parse(c.detected_at) >= since && c.kind !== 'error'; }).length;
+            var failed = done.filter(function (p) { return p.last_error; });
+            w.data = d; w.busy = false; w.msgType = failed.length || done.length < act.length ? 'error' : 'ok';
+            w.msg = done.length < act.length ? 'Still checking after 3 minutes (' + done.length + ' of ' + act.length + ' pages done). Reload the page in a bit.'
+              : 'Checked ' + act.length + ' pages: ' + (changes ? changes + ' change' + (changes === 1 ? '' : 's') + ' found' : 'no changes') + (failed.length ? '. Could not read: ' + failed.map(function (p) { return p.label || p.url; }).join(', ') : '.');
+            render(); return;
+          }
+          setTimeout(poll, 4000);
+        }).catch(function () { if (tries < 45) setTimeout(poll, 4000); else { w.busy = false; render(); } });
+      })();
+    }).catch(function (e) { w.busy = false; w.msg = e.message; w.msgType = 'error'; render(); });
+  }
   function bindWebWatch() {
     var w = state.web;
     var chk = document.getElementById('web-check');
-    if (chk) chk.addEventListener('click', function () { webPost({ action: 'check' }, webCheckMsg); });
+    if (chk) chk.addEventListener('click', webCheckAll);
     [['web-comp', 'comp'], ['web-kind', 'kind']].forEach(function (p) {
       var el = document.getElementById(p[0]);
       if (el) el.addEventListener('change', function () { w[p[1]] = el.value; w.limit = 60; render(); });

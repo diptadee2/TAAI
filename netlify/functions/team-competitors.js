@@ -3,11 +3,12 @@
 //        stats: yt_channel_stats rows of the last 35 days; videos: published
 //        in the last 30 days (see lib/yt-monitor.js for what is recorded).
 // GET  /api/team-competitors?video=<id> -> { history: [{taken_at, views, likes, comments}] }
-// POST {action:'refresh'}                  -> runs the monitor now
+// POST {action:'refresh'}                  -> starts a run in the background ({started, at})
 // POST {action:'add', input, label}        -> adds a channel (link, @handle or UC id)
 // POST {action:'remove'|'restore', channel_id} -> stop / restart monitoring (data kept)
 import { getSupabase, json, requireAdmin } from './lib/supabase.js';
-import { runYtMonitor, resolveChannel, ytKey, YT_TRACK_DAYS } from './lib/yt-monitor.js';
+import { resolveChannel, ytKey, YT_TRACK_DAYS } from './lib/yt-monitor.js';
+import { startCompetitorsRefresh } from './competitors-refresh-background.js';
 
 export async function handler(event, context) {
   const auth = requireAdmin(context);
@@ -42,7 +43,9 @@ export async function handler(event, context) {
   let body;
   try { body = JSON.parse(event.body || '{}'); } catch { return json(400, { error: 'invalid JSON' }); }
   try {
-    if (body.action === 'refresh') return json(200, await runYtMonitor(s, { budgetMs: 18000 }));
+    // Runs in the background (a full refresh takes longer than Netlify's
+    // ~10s request limit); the page waits for the new yt_runs row.
+    if (body.action === 'refresh') { const at = new Date().toISOString(); await startCompetitorsRefresh(event, 'yt'); return json(200, { started: true, at }); }
     if (body.action === 'add') {
       const r = await resolveChannel(body.input);
       const label = String(body.label || '').trim().slice(0, 60) || r.handle || r.channel_id;
