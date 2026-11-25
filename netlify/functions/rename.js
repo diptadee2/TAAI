@@ -111,7 +111,7 @@ export async function handler(event) {
       // softened reword of THIS student's own prior flagged name is
       // still caught (see checkNameAppropriate's own comment).
       try {
-        const result = await checkNameAppropriate(displayName, existing.last_flagged_name || null);
+        const result = await checkNameAppropriate(displayName, existing.last_flagged_name || null, email);
         if (!result.skipped) {
           voluntaryChecked = true;
           voluntaryFlagged = !!result.flagged;
@@ -189,7 +189,7 @@ export async function handler(event) {
         // Getting this wrong costs a real student a genuine attempt at
         // the 3-try cap over nothing they actually did.
         const priorContext = existing.needs_rename_source === 'ai_scan' ? existing.display_name : null;
-        const result = await checkNameAppropriate(displayName, priorContext);
+        const result = await checkNameAppropriate(displayName, priorContext, email);
         // Declared here, not inside the block below, specifically so the
         // triesLeft calculation further down (a real bug caught by
         // testing, not assumed away: a first version declared this with

@@ -85,7 +85,29 @@ const TOOL = {
 // continuation/theme itself, rather than this file trying to detect the
 // pattern via string-similarity, which can't judge meaning the way an
 // actual comparison can.
-export async function checkNameAppropriate(name, priorFlaggedName) {
+// Names that pose as the team (2026-11-25, after a student renamed himself
+// "DUPLICATE DIPTA"): any name containing "dipta", in any case, spacing,
+// accents, look-alike letters or digit swaps (d1pta, D.I.P.T.A, dіpta), is
+// flagged without asking Claude. The team's own accounts are exempt; they're
+// listed by the SHA-256 of their email because the repo is public.
+import crypto from 'node:crypto';
+const RESERVED_NAME_WORDS = ['dipta'];
+const RESERVED_NAME_OWNERS = new Set([
+  '079d22295f1218b60d454a125d77ba80de1f525968b6211fc78fd336cf6a77b6',
+]);
+const LOOKALIKE = { '0': 'o', '1': 'i', '!': 'i', '|': 'i', '3': 'e', '4': 'a', '@': 'a', '5': 's', '$': 's', '7': 't', '+': 't',
+  'а': 'a', 'е': 'e', 'і': 'i', 'о': 'o', 'р': 'p', 'с': 'c', 'т': 't', 'ԁ': 'd', 'ı': 'i', 'ⅾ': 'd' };
+export function reservedNameHit(name, email) {
+  if (email && RESERVED_NAME_OWNERS.has(crypto.createHash('sha256').update(String(email).trim().toLowerCase()).digest('hex'))) return null;
+  const flat = String(name || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .split('').map(c => LOOKALIKE[c] || c).join('').replace(/[^a-z]/g, '');
+  return RESERVED_NAME_WORDS.find(w => flat.includes(w)) || null;
+}
+
+export async function checkNameAppropriate(name, priorFlaggedName, email) {
+  if (reservedNameHit(name, email)) {
+    return { flagged: true, reason: 'Poses as a TAAI team member' };
+  }
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     // No key configured yet — fail OPEN (never flagged), same

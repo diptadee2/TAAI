@@ -50,7 +50,7 @@ export async function handler(event) {
 
   let result;
   try {
-    result = await checkNameAppropriate(displayName, priorFlaggedName);
+    result = await checkNameAppropriate(displayName, priorFlaggedName, email);
   } catch (e) {
     console.error('check-name-background.js: Claude check failed for', email, e);
     // Deliberately no write here at all — leaving name_last_checked

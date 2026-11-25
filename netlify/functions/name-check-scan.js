@@ -76,7 +76,7 @@ export async function handler() {
 
   for (const student of candidates || []) {
     try {
-      const result = await checkNameAppropriate(student.display_name, student.last_flagged_name);
+      const result = await checkNameAppropriate(student.display_name, student.last_flagged_name, student.email);
       if (result.skipped) break; // no API key configured — stop the whole run, not just this student, nothing else will succeed either
 
       // A student can rename again between when this candidate list was
