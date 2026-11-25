@@ -599,6 +599,37 @@
   .cmp-chrow { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); }
   .cmp-chrow.is-off > span:first-child { opacity: .55; }
   @media (max-width: 600px) { .cmp-vlist { grid-template-columns: 1fr; } .cmp-vthumb { width: 112px; height: 63px; } .cmp-head-actions { width: 100%; } .cmp-head-actions .btn { flex: 1; } }
+  /* Competitors > Websites (2026-11-25) */
+  .cmp-view { margin: 0 0 14px; }
+  .web-feed { display: flex; flex-direction: column; }
+  .web-day { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-soft); margin: 14px 0 4px; }
+  .web-chg { display: flex; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); min-width: 0; }
+  .web-ico { flex: 0 0 22px; font-size: 16px; line-height: 1.3; }
+  .web-chg-main { flex: 1; min-width: 0; }
+  .web-chg-top { font-size: 13px; overflow-wrap: anywhere; }
+  .web-comp { font-weight: 700; }
+  .web-sum { margin-top: 2px; overflow-wrap: anywhere; }
+  .web-k-price .web-sum { font-weight: 600; }
+  .web-k-error .web-sum { color: var(--ink-soft); }
+  .link-btn { background: none; border: 0; padding: 0; margin-top: 4px; color: var(--sc-primary, #a78bfa); text-decoration: underline; cursor: pointer; font: inherit; font-size: 13px; }
+  .web-diff { margin-top: 8px; font-size: 13px; display: flex; flex-direction: column; gap: 3px; max-height: 320px; overflow: auto; }
+  .web-add, .web-del { padding: 3px 8px; border-radius: 6px; overflow-wrap: anywhere; }
+  .web-add { background: rgba(34,197,94,.12); }
+  .web-add::before { content: '+ '; font-weight: 700; color: #22c55e; }
+  .web-del { background: rgba(239,68,68,.10); text-decoration: line-through; text-decoration-color: rgba(239,68,68,.6); }
+  .web-del::before { content: '− '; font-weight: 700; color: #ef4444; }
+  .web-pcomp { margin-top: 12px; }
+  .web-pcomp-h { font-weight: 700; margin-bottom: 4px; }
+  .web-ptable { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .web-ptable td { padding: 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; overflow-wrap: anywhere; }
+  .web-ptable td.web-pr { text-align: right; white-space: nowrap; padding-left: 12px; }
+  .web-ptable s { color: var(--ink-soft); }
+  .web-err { color: #f59e0b; font-size: 12.5px; }
+  .web-row-btns { display: flex; gap: 6px; flex-shrink: 0; }
+  .cmp-chrow > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+  .web-add-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+  .web-add-form #web-add-url { grid-column: span 2; }
+  @media (max-width: 600px) { .web-add-form { grid-template-columns: 1fr; } .web-add-form #web-add-url { grid-column: auto; } .cmp-chrow { flex-wrap: wrap; } }
   /* Piracy > Evidence (2026-11-24) */
   .ev-chip { display: inline-block; margin-top: 6px; font: inherit; font-size: 12px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; }
   .ev-chip:hover { border-color: var(--ink-soft, #888); }

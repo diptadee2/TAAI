@@ -47,6 +47,12 @@
 [functions."yt-monitor"]
   schedule = "0 */6 * * *"
 
+# Competitor website watcher for /team > Competitors > Websites (2026-11-25):
+# prices, offers, text and new pages on their sites, twice a day (08:45 and
+# 20:45 IST).
+[functions."web-monitor"]
+  schedule = "15 3,15 * * *"
+
 [functions."piracy-check"]
   schedule = "30 3 * * *"
 

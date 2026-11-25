@@ -1532,3 +1532,75 @@ INSERT INTO yt_channels (channel_id, handle, label, is_us, sort) VALUES
   ('UCwrZjJwUFkHRZAej9MPCJgA', 'themlhub-ai', 'The ML Hub', false, 40),
   ('UCSZ4B14ShWqkXiTHk-YOL_w', 'Gatecsit-dsai', 'Unacademy GATE CSIT & DA', false, 50)
 ON CONFLICT (channel_id) DO NOTHING;
+
+-- ── Competitor website watcher (2026-11-25) ──────────────────────────────
+-- /team > Competitors > Websites. web-monitor.js (every 12 hours) reads each
+-- page in web_pages; a snapshot is stored only when something changed, and
+-- each change is a row in web_changes. See netlify/functions/lib/web-monitor.js.
+-- extractor: 'text' (any page: readable text + every rupee amount),
+--            'gfg' (GeeksforGeeks course list data), 'pw' (PW batch list data),
+--            'sitemap' (a sitemap.xml: reports new and removed pages).
+-- match: optional regex; only offers (gfg/pw) or URLs (sitemap) matching it.
+CREATE TABLE IF NOT EXISTS web_pages (
+  id              BIGSERIAL PRIMARY KEY,
+  competitor      TEXT NOT NULL,
+  label           TEXT,
+  url             TEXT NOT NULL UNIQUE,
+  extractor       TEXT NOT NULL DEFAULT 'text',
+  match           TEXT,
+  active          BOOLEAN NOT NULL DEFAULT true,
+  sort            INT NOT NULL DEFAULT 50,
+  last_checked_at TIMESTAMPTZ,
+  last_status     INT,
+  last_error      TEXT,
+  last_count      INT,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS web_snapshots (
+  id        BIGSERIAL PRIMARY KEY,
+  page_id   BIGINT NOT NULL REFERENCES web_pages(id) ON DELETE CASCADE,
+  taken_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  title     TEXT,
+  lines     JSONB NOT NULL DEFAULT '[]',
+  offers    JSONB NOT NULL DEFAULT '[]'
+);
+CREATE INDEX IF NOT EXISTS web_snapshots_page ON web_snapshots (page_id, taken_at DESC);
+CREATE TABLE IF NOT EXISTS web_changes (
+  id          BIGSERIAL PRIMARY KEY,
+  page_id     BIGINT NOT NULL REFERENCES web_pages(id) ON DELETE CASCADE,
+  detected_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  kind        TEXT NOT NULL,   -- price | offer_new | offer_gone | text | title | page_new | page_gone | error
+  summary     TEXT NOT NULL,
+  detail      JSONB NOT NULL DEFAULT '{}'
+);
+CREATE INDEX IF NOT EXISTS web_changes_time ON web_changes (detected_at DESC);
+CREATE TABLE IF NOT EXISTS web_sitemap_urls (
+  page_id    BIGINT NOT NULL REFERENCES web_pages(id) ON DELETE CASCADE,
+  url        TEXT NOT NULL,
+  first_seen TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_seen  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  gone_at    TIMESTAMPTZ,
+  PRIMARY KEY (page_id, url)
+);
+ALTER TABLE web_pages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE web_snapshots ENABLE ROW LEVEL SECURITY;
+ALTER TABLE web_changes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE web_sitemap_urls ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON web_pages, web_snapshots, web_changes, web_sitemap_urls TO service_role;
+GRANT USAGE, SELECT ON SEQUENCE web_pages_id_seq, web_snapshots_id_seq, web_changes_id_seq TO service_role;
+INSERT INTO web_pages (competitor, label, url, extractor, match, sort) VALUES
+  ('GATE Wallah', 'GATE DA batches', 'https://www.pw.live/gate/data-science-ai/batches', 'pw', NULL, 10),
+  ('GfG GATE', 'GATE courses (DA only)', 'https://www.geeksforgeeks.org/courses/category/gate', 'gfg', '\bDA\b|data science', 20),
+  ('GO Classes', 'GATE DA Complete Course', 'https://www.goclasses.in/courses/GATE-DA-Course', 'text', NULL, 30),
+  ('GO Classes', 'CSE + DA combo', 'https://www.goclasses.in/courses/GATE-CSE--DA-Complete-Course-Combo-65cccbdae4b0d6798976d67f', 'text', NULL, 31),
+  ('GO Classes', 'DA weekly quizzes', 'https://www.goclasses.in/s/pages/gate-da-weekly-quizzes', 'text', NULL, 32),
+  ('GO Classes', 'Test series', 'https://www.goclasses.in/s/pages/testseries', 'text', NULL, 33),
+  ('GO Classes', 'Linear Algebra course', 'https://www.goclasses.in/courses/Linear-Algebra-65e16b97e4b0650d691ca473', 'text', NULL, 34),
+  ('GO Classes', 'Probability & Statistics course', 'https://www.goclasses.in/courses/Probability-and-Statistics-65e7127e5b1a1c153eaf970d', 'text', NULL, 35),
+  ('The ML Hub', 'Course fees', 'https://themlhub.ai/gate-da-course-fees', 'text', NULL, 40),
+  ('The ML Hub', 'GATE DA course', 'https://themlhub.ai/gate-da-course', 'text', NULL, 41),
+  ('The ML Hub', 'Elite course', 'https://themlhub.ai/gate-da-course-elite', 'text', NULL, 42),
+  ('The ML Hub', 'Test series', 'https://themlhub.ai/gate-da-test-series', 'text', NULL, 43),
+  ('The ML Hub', 'DA schedule', 'https://themlhub.ai/schedule-gate-da', 'text', NULL, 44),
+  ('The ML Hub', 'All pages (sitemap)', 'https://themlhub.ai/sitemap.xml', 'sitemap', NULL, 45)
+ON CONFLICT (url) DO NOTHING;

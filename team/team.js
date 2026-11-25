@@ -361,7 +361,9 @@
     // and the registration cutoff date.
     challenge: { loaded: false, loading: false, saving: false, error: null, rows: [], cutoff: null, open: true, msg: null, q: '' },
     // Competitor YouTube monitor (2026-11-24).
-    comp: { loaded: false, loading: false, error: null, data: null, period: 7, sort: 'subs', sortDir: -1, vsort: 'views', vchannel: 'all', vkind: 'all', vq: '', vlimit: 40, busy: false, msg: null, msgType: 'ok' },
+    comp: { loaded: false, loading: false, error: null, data: null, period: 7, sort: 'subs', sortDir: -1, vsort: 'views', vchannel: 'all', vkind: 'all', vq: '', vlimit: 40, busy: false, msg: null, msgType: 'ok', view: 'youtube' },
+    // Competitor website watcher (2026-11-25), Competitors > Websites.
+    web: { loaded: false, loading: false, error: null, data: null, busy: false, msg: null, msgType: 'ok', comp: 'all', kind: 'all', open: {}, details: {}, limit: 60, pricesAll: {} },
     // Piracy takedown log + notice generator (2026-11-12).
     piracy: { loaded: false, loading: false, error: null, msg: null, rows: [], signature: null, sub: 'log', filter: 'all', q: '', checking: false, saving: false, sigSaving: false, draft: null, candidates: [], candidatesReady: false, runs: [], terms: null, termsSaving: false, foundFilter: 'new',
       ev: { loaded: false, loading: false, error: null, files: [], reports: [], reportsReady: false, unfiled: [], view: 'report', q: '', fetchedAt: 0, open: {} } },
@@ -1175,6 +1177,13 @@
     ['medLong', 'Median / video'], ['medShort', 'Median / Short'], ['med24', 'Median day 1'], ['eng', 'Engagement']
   ];
   function renderCompetitors() {
+    var v = state.comp.view;
+    var sw = '<div class="tabs cmp-view">' + [['youtube', '📺 YouTube'], ['web', '🌐 Websites']].map(function (x) {
+      return '<button type="button" class="tab-btn' + (v === x[0] ? ' active' : '') + '" data-cmpview="' + x[0] + '">' + x[1] + '</button>';
+    }).join('') + '</div>';
+    return sw + (v === 'web' ? renderWebWatch() : renderCmpYoutube());
+  }
+  function renderCmpYoutube() {
     var c = state.comp, d = c.data;
     if (c.loading && !c.loaded) return '<div class="card"><div class="field-hint">Loading…</div></div>';
     if (c.error && !d) return '<div class="card"><div class="msg msg-error">' + escapeHtml(c.error) + '</div></div>';
@@ -1293,6 +1302,14 @@
   }
   function bindCompetitors() {
     var c = state.comp;
+    document.querySelectorAll('[data-cmpview]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        c.view = b.getAttribute('data-cmpview');
+        if (c.view === 'web' && !state.web.loaded && !state.web.loading) { loadWebWatch(); return; }
+        render();
+      });
+    });
+    if (c.view === 'web') { bindWebWatch(); return; }
     document.querySelectorAll('[data-cmpperiod]').forEach(function (b) { b.addEventListener('click', function () { c.period = +b.getAttribute('data-cmpperiod'); c.vlimit = 40; render(); }); });
     document.querySelectorAll('[data-cmpsort]').forEach(function (th) {
       th.addEventListener('click', function () {
@@ -1327,6 +1344,187 @@
       var input = document.getElementById('cmp-add-input').value.trim();
       if (!input) return;
       cmpPost({ action: 'add', input: input, label: document.getElementById('cmp-add-label').value.trim() }, function (r) { return r.existed ? 'Already in the list, monitoring it.' : 'Added. Press Refresh now to fetch its numbers.'; });
+    });
+  }
+
+  // ── Competitor websites (2026-11-25) ─────────────────────────────────
+  // Their course pages are read twice a day by web-monitor.js
+  // (lib/web-monitor.js): prices and offers, text added or removed, and new
+  // pages in a sitemap. This shows what changed, today's prices and the list
+  // of pages watched.
+  var WEB_KINDS = {
+    price: ['💰', 'Price'], offer_new: ['🆕', 'New offer'], offer_gone: ['❌', 'Offer removed'], text: ['✏️', 'Text'],
+    title: ['🏷️', 'Title'], page_new: ['📄', 'New page'], page_gone: ['🗑️', 'Page removed'], error: ['⚠️', 'Problem']
+  };
+  var WEB_KIND_FILTERS = { all: null, price: ['price'], offers: ['offer_new', 'offer_gone'], text: ['text', 'title'], pages: ['page_new', 'page_gone'], error: ['error'] };
+  var WEB_EXTRACTORS = [['text', 'Any page (text and ₹ prices)'], ['gfg', 'GeeksforGeeks course list'], ['pw', 'PW batch list'], ['sitemap', 'Sitemap (new and removed pages)']];
+  function loadWebWatch() {
+    var w = state.web;
+    w.loading = true; w.error = null; render();
+    api('/team-web-watch').then(function (d) {
+      w.data = d; w.loaded = true; w.loading = false; w.error = d.ready === false ? d.error : null; render();
+    }).catch(function (e) { w.loading = false; w.loaded = true; w.error = e.message; render(); });
+  }
+  function webDay(iso) {
+    return new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(iso));
+  }
+  function webTime(iso) {
+    return new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', hour: 'numeric', minute: '2-digit' }).format(new Date(iso));
+  }
+  function webRupees(n) { return n == null ? '-' : '₹' + Number(n).toLocaleString('en-IN'); }
+  function renderWebWatch() {
+    var w = state.web, d = w.data;
+    if (w.loading && !w.loaded) return '<div class="card"><div class="field-hint">Loading…</div></div>';
+    if (!d || d.ready === false) return '<div class="card"><div class="msg msg-error">Not set up yet: the developer needs to run the website watcher SQL first.' + (w.error ? ' (' + escapeHtml(w.error) + ')' : '') + '</div></div>';
+    var pages = {}; d.pages.forEach(function (p) { pages[p.id] = p; });
+    var comps = []; d.pages.forEach(function (p) { if (comps.indexOf(p.competitor) === -1) comps.push(p.competitor); });
+    var lastCheck = d.pages.reduce(function (a, p) { return p.last_checked_at && (!a || p.last_checked_at > a) ? p.last_checked_at : a; }, null);
+    var head = '<div class="cmp-head"><div class="field-hint">Their course pages are read twice a day. Prices, new or removed offers, text changes and new pages show up below.' +
+      (lastCheck ? ' Last check ' + escapeHtml(cmpAgo(lastCheck)) + '.' : ' Not checked yet: press Check now.') + '</div>' +
+      '<div class="cmp-head-actions"><button type="button" class="btn" id="web-check"' + (w.busy ? ' disabled' : '') + '>' + (w.busy ? 'Checking…' : '↻ Check now') + '</button></div></div>';
+    var opt = function (v, l, cur) { return '<option value="' + escapeHtml(v) + '"' + (cur === v ? ' selected' : '') + '>' + escapeHtml(l) + '</option>'; };
+    var kinds = WEB_KIND_FILTERS[w.kind];
+    var list = d.changes.filter(function (c) {
+      var p = pages[c.page_id];
+      if (!p) return false;
+      if (w.comp !== 'all' && p.competitor !== w.comp) return false;
+      if (kinds && kinds.indexOf(c.kind) === -1) return false;
+      return true;
+    });
+    var shown = list.slice(0, w.limit), lastDay = null;
+    var feed = shown.map(function (c) {
+      var p = pages[c.page_id], k = WEB_KINDS[c.kind] || ['•', c.kind];
+      var day = webDay(c.detected_at), dh = '';
+      if (day !== lastDay) { dh = '<div class="web-day">' + escapeHtml(day) + '</div>'; lastDay = day; }
+      var canOpen = c.kind === 'text' || c.kind === 'title';
+      var det = w.details[c.id], open = w.open[c.id];
+      var body = '';
+      if (open) {
+        if (!det) body = '<div class="field-hint">Loading…</div>';
+        else if (det.error) body = '<div class="msg msg-error">' + escapeHtml(det.error) + '</div>';
+        else {
+          var x = det.detail || {};
+          if (c.kind === 'title') body = '<div class="web-diff"><div class="web-del">' + escapeHtml(x.from || '') + '</div><div class="web-add">' + escapeHtml(x.to || '') + '</div></div>';
+          else body = '<div class="web-diff">' + (x.added || []).map(function (l) { return '<div class="web-add">' + escapeHtml(l) + '</div>'; }).join('') +
+            (x.removed || []).map(function (l) { return '<div class="web-del">' + escapeHtml(l) + '</div>'; }).join('') + '</div>';
+        }
+      }
+      return dh + '<div class="web-chg web-k-' + escapeHtml(c.kind) + '">' +
+        '<span class="web-ico" title="' + escapeHtml(k[1]) + '">' + k[0] + '</span>' +
+        '<div class="web-chg-main"><div class="web-chg-top"><span class="web-comp">' + escapeHtml(p.competitor) + '</span> · <a href="' + escapeHtml(p.url) + '" target="_blank" rel="noopener">' + escapeHtml(p.label || p.url) + '</a><span class="field-hint"> · ' + escapeHtml(webTime(c.detected_at)) + '</span></div>' +
+        '<div class="web-sum">' + escapeHtml(c.summary) + '</div>' +
+        (canOpen ? '<button type="button" class="link-btn js-web-open" data-id="' + c.id + '">' + (open ? 'Hide' : 'Show what changed') + '</button>' : '') + body +
+        '</div></div>';
+    }).join('');
+    var changes = '<h3 class="cmp-h">What changed <span class="field-hint">last 90 days</span></h3>' +
+      '<div class="chal-toolbar cmp-vtools"><select id="web-comp">' + opt('all', 'All competitors', w.comp) + comps.map(function (c) { return opt(c, c, w.comp); }).join('') + '</select>' +
+      '<select id="web-kind">' + opt('all', 'All changes', w.kind) + opt('price', 'Prices', w.kind) + opt('offers', 'New and removed offers', w.kind) + opt('text', 'Text', w.kind) + opt('pages', 'New and removed pages', w.kind) + opt('error', 'Problems', w.kind) + '</select></div>' +
+      (shown.length ? '<div class="web-feed">' + feed + '</div>' + (list.length > shown.length ? '<button type="button" class="btn" id="web-more" style="margin-top:10px;">Show more (' + (list.length - shown.length) + ' left)</button>' : '')
+        : '<div class="field-hint">Nothing yet. Each page\'s first check is its starting point; changes show up from the next check on.</div>');
+    return '<div class="card">' +
+      (w.msg ? '<div class="msg ' + (w.msgType === 'error' ? 'msg-error' : 'msg-ok') + '">' + escapeHtml(w.msg) + '</div>' : '') +
+      head + changes + renderWebPrices(pages, comps) + renderWebPages(comps) + '</div>';
+  }
+  function renderWebPrices(pages, comps) {
+    var w = state.web, d = w.data;
+    var blocks = comps.filter(function (c) { return w.comp === 'all' || w.comp === c; }).map(function (comp) {
+      var rows = [];
+      d.pages.forEach(function (p) {
+        if (p.competitor !== comp || !p.active || !d.offers[p.id]) return;
+        d.offers[p.id].list.forEach(function (o) { rows.push({ o: o, p: p }); });
+      });
+      if (!rows.length) return '';
+      // Short price lines (plan cards) first; long ones are usually FAQ
+      // sentences that mention a price, folded away unless asked for.
+      rows.sort(function (a, b) { return (a.o.name.length > 120) - (b.o.name.length > 120); });
+      var all = !!w.pricesAll[comp], cap = 10, more = rows.length - cap;
+      if (!all && more > 0) rows = rows.slice(0, cap);
+      return '<div class="web-pcomp"><div class="web-pcomp-h">' + escapeHtml(comp) + '</div><table class="web-ptable"><tbody>' + rows.map(function (r) {
+        var o = r.o, off = o.price && o.mrp && o.mrp > o.price ? Math.round((1 - o.price / o.mrp) * 100) : null;
+        return '<tr><td>' + (o.url ? '<a href="' + escapeHtml(o.url) + '" target="_blank" rel="noopener">' + escapeHtml(o.name) + '</a>' : escapeHtml(o.name)) +
+          '<div class="field-hint">' + escapeHtml(r.p.label || r.p.url) + '</div></td>' +
+          '<td class="web-pr"><b>' + webRupees(o.price) + '</b>' + (o.mrp ? ' <s>' + webRupees(o.mrp) + '</s>' : '') + (off ? '<div class="field-hint">' + off + '% off</div>' : '') + '</td></tr>';
+      }).join('') + '</tbody></table>' + (more > 0 ? '<button type="button" class="link-btn js-web-pall" data-comp="' + escapeHtml(comp) + '">' + (all ? 'Show fewer' : 'Show all ' + (more + cap) + ' price mentions') + '</button>' : '') + '</div>';
+    }).join('');
+    return '<details class="cmp-manage" open><summary>Their prices now</summary>' +
+      (blocks || '<div class="field-hint">No prices read yet.</div>') +
+      '<div class="field-hint" style="margin-top:8px;">GfG and PW prices come from their own course data (what you pay, with the struck-out price). Other sites: every rupee amount on the page with the text next to it, so check the page itself when a label looks unclear.</div></details>';
+  }
+  function renderWebPages(comps) {
+    var w = state.web, d = w.data;
+    var kindLabel = {}; WEB_EXTRACTORS.forEach(function (x) { kindLabel[x[0]] = x[1]; });
+    return '<details class="cmp-manage"><summary>Pages watched (' + d.pages.filter(function (p) { return p.active; }).length + ')</summary>' +
+      '<div class="cmp-chlist">' + d.pages.map(function (p) {
+        return '<div class="cmp-chrow' + (p.active ? '' : ' is-off') + '"><span><b>' + escapeHtml(p.competitor) + '</b> · <a href="' + escapeHtml(p.url) + '" target="_blank" rel="noopener">' + escapeHtml(p.label || p.url) + '</a>' +
+          '<span class="field-hint"> · ' + escapeHtml(kindLabel[p.extractor] || p.extractor) +
+          (p.last_checked_at ? ' · checked ' + escapeHtml(cmpAgo(p.last_checked_at)) + (p.last_count != null ? ' · ' + p.last_count + (p.extractor === 'sitemap' ? ' pages' : ' prices') : '') : ' · not checked yet') + '</span>' +
+          (p.last_error ? '<span class="web-err"> ⚠️ ' + escapeHtml(p.last_error) + '</span>' : '') + (p.active ? '' : ' <span class="field-hint">(stopped)</span>') + '</span>' +
+          '<span class="web-row-btns">' + (p.active ? '<button type="button" class="btn btn-small js-web-checkone" data-id="' + p.id + '"' + (w.busy ? ' disabled' : '') + '>Check</button>' : '') +
+          '<button type="button" class="btn btn-small js-web-toggle" data-id="' + p.id + '" data-on="' + (p.active ? '1' : '0') + '">' + (p.active ? 'Stop' : 'Watch again') + '</button></span></div>';
+      }).join('') + '</div>' +
+      '<div class="web-add-form">' +
+        '<input type="text" id="web-add-comp" list="web-comp-list" placeholder="Whose page (e.g. GO Classes)"><datalist id="web-comp-list">' + comps.map(function (c) { return '<option value="' + escapeHtml(c) + '">'; }).join('') + '</datalist>' +
+        '<input type="text" id="web-add-label" placeholder="Short name (optional)">' +
+        '<input type="url" id="web-add-url" placeholder="https://… page link">' +
+        '<select id="web-add-kind">' + WEB_EXTRACTORS.map(function (x) { return '<option value="' + x[0] + '">' + escapeHtml(x[1]) + '</option>'; }).join('') + '</select>' +
+        '<input type="text" id="web-add-match" placeholder="Only names containing (optional)">' +
+        '<button type="button" class="btn btn-primary" id="web-add"' + (w.busy ? ' disabled' : '') + '>Add page</button>' +
+      '</div>' +
+      '<div class="field-hint">A new page is read once straight away to get its starting point. "Only names containing" is for course lists and sitemaps, e.g. DA or gate-da. Some sites (Unacademy) block automated visits and can\'t be watched. Stopping keeps the history.</div>' +
+    '</details>';
+  }
+  function webPost(body, okMsg) {
+    var w = state.web;
+    w.busy = true; w.msg = null; render();
+    return api('/team-web-watch', { method: 'POST', body: JSON.stringify(body) }).then(function (r) {
+      w.busy = false; w.msg = typeof okMsg === 'function' ? okMsg(r) : okMsg; w.msgType = 'ok';
+      loadWebWatch();
+    }).catch(function (e) { w.busy = false; w.msg = e.message; w.msgType = 'error'; render(); });
+  }
+  function webCheckMsg(r) {
+    return 'Checked ' + r.checked + ' page' + (r.checked === 1 ? '' : 's') + (r.changed ? ', ' + r.changed + ' with changes' : ', no changes') +
+      (r.skipped ? '. ' + r.skipped + ' left for the next run' : '') + (r.error ? '. Problems: ' + r.error : '.');
+  }
+  function bindWebWatch() {
+    var w = state.web;
+    var chk = document.getElementById('web-check');
+    if (chk) chk.addEventListener('click', function () { webPost({ action: 'check' }, webCheckMsg); });
+    [['web-comp', 'comp'], ['web-kind', 'kind']].forEach(function (p) {
+      var el = document.getElementById(p[0]);
+      if (el) el.addEventListener('change', function () { w[p[1]] = el.value; w.limit = 60; render(); });
+    });
+    var more = document.getElementById('web-more');
+    if (more) more.addEventListener('click', function () { w.limit += 60; render(); });
+    document.querySelectorAll('.js-web-open').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var id = b.getAttribute('data-id');
+        w.open[id] = !w.open[id];
+        if (w.open[id] && !w.details[id]) {
+          api('/team-web-watch?change=' + encodeURIComponent(id)).then(function (r) { w.details[id] = r.change || { error: 'Not found' }; render(); })
+            .catch(function (e) { w.details[id] = { error: e.message }; render(); });
+        }
+        render();
+      });
+    });
+    document.querySelectorAll('.js-web-pall').forEach(function (b) {
+      b.addEventListener('click', function () { var k = b.getAttribute('data-comp'); w.pricesAll[k] = !w.pricesAll[k]; render(); });
+    });
+    document.querySelectorAll('.js-web-checkone').forEach(function (b) {
+      b.addEventListener('click', function () { webPost({ action: 'check', id: b.getAttribute('data-id') }, webCheckMsg); });
+    });
+    document.querySelectorAll('.js-web-toggle').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var on = b.getAttribute('data-on') === '1';
+        webPost({ action: on ? 'remove' : 'restore', id: b.getAttribute('data-id') }, on ? 'Stopped watching that page.' : 'Watching that page again.');
+      });
+    });
+    var add = document.getElementById('web-add');
+    if (add) add.addEventListener('click', function () {
+      var url = document.getElementById('web-add-url').value.trim();
+      var comp = document.getElementById('web-add-comp').value.trim();
+      if (!url || !comp) { w.msg = 'Fill in whose page it is and its link.'; w.msgType = 'error'; render(); return; }
+      webPost({ action: 'add', url: url, competitor: comp, label: document.getElementById('web-add-label').value.trim(), extractor: document.getElementById('web-add-kind').value, match: document.getElementById('web-add-match').value.trim() },
+        function (r) { return r.existed ? 'Already in the list, watching it.' : 'Added and read once' + (r.check && r.check.error ? ', but: ' + r.check.error : '.'); });
     });
   }
 

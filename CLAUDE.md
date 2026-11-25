@@ -1062,4 +1062,27 @@ Direct request: a /team tab comparing competitors' YouTube video performance, mo
 - **Tables** (manual SQL at the end of `schema.sql`, which also seeds the 9 channels): `yt_channels`, `yt_channel_stats` (one row per channel per IST day), `yt_videos` (videos of the last 30 days, updated each run; `views_24h` / `views_7d` are captured once when a run lands 24-30 h / 7 days-7 days 12 h after publishing), `yt_video_stats` (every run's numbers per video, pruned after 60 days; `GET ?video=<id>` returns one video's history, not used by the UI yet), `yt_runs`.
 - **Tab**: period 24 hours / 7 days / 30 days; a sortable table per channel (Subs, Gained in the period from `yt_channel_stats`, Uploads split videos/shorts/live, Views on the period's uploads, Median / video, Median / Short, Median day 1 (= views_24h), Engagement = (likes+comments)/views x100; best value per column in green; TAAI row tinted), then a video list (channel / type / sort: most views, views per day (under a day old counts as a day), first-day views, comments, newest / title search; 40 at a time). Numbers in Indian style (L, Cr). /team is capped at 900px wide, so the table has no "top upload" column and wraps its headings; it fits at 1280+ and scrolls inside its own box on phones. Tested in WebKit at 1440/1280/1100/820/390 with real feed data in a mocked response (tables not created yet at the time).
 - **Setup still needed**: run the SQL, and add `YOUTUBE_API_KEY` in Netlify (Google Cloud: enable "YouTube Data API v3", create an API key, restrict it to that API). Until the key is there the tab says it's on public feeds.
+- **Competitor website watcher: /team > 📺 Competitors > 🌐 Websites, 2026-11-25** (follow-up to the YouTube monitor; user asked for "their websites and all of the pages"). `lib/web-monitor.js` `runWebMonitor()` is run by the scheduled `web-monitor.js` twice a day (`15 3,15 * * *` = 08:45 / 20:45 IST) and by "Check now" / per-page "Check" (`team-web-watch.js`, admin GET/POST). It reads each page in `web_pages` and extracts:
+  - the readable text, one line per block (no scripts, styles, nav or footer; countdown and "seats left" lines are ignored when comparing);
+  - offers `{name, price, mrp, url}`, with one extractor per site type:
+    - `gfg`: GfG's `__NEXT_DATA__` course list (`batch_fee` is what you pay, `promotional_fee` the struck-out price; `match` filters course names);
+    - `pw`: PW's batch data (`"fees":{"price":MRP,"total":pay}`, paired with the nearest batch name and slug before it);
+    - `text`: every line with a ₹ amount, with a nearby text line as its label when the line is just a number;
+    - `sitemap`: lists the site's URLs instead and reports new and removed pages; the first read is only a starting point.
+
+  A snapshot is stored only when something changed. Each change is a `web_changes` row: price, offer_new, offer_gone, text (lines added/removed), title, page_new, page_gone, or error (logged once when a page starts failing and once when it recovers).
+
+  The tab has a "What changed" feed grouped by IST day, with filters by competitor and type; text changes open to show green added / red removed lines. It also shows "Their prices now" (the first 10 per competitor, short plan-card lines first, the rest under "Show all") and "Pages watched" (status, Check, Stop, and an add form with competitor, label, link, type and an optional name filter; a new page is read once straight away).
+
+  Seeded 14 pages, found 2026-11-25:
+  - PW: the DA batches list;
+  - GfG: the GATE course list, filtered to DA;
+  - GO Classes: DA course, CSE+DA combo, DA weekly quizzes, test series, Linear Algebra, P&S;
+  - The ML Hub: fees, course, elite, test series, DA schedule, and its sitemap.
+
+  All 14 read fine from Node (each under 1s). Unacademy blocks automated visits (500 even to a real browser), so it isn't covered. Some GO Classes plan prices come without plan names, because their validity picker isn't plain text.
+
+  **Needs the SQL at the end of `supabase/schema.sql`** (tables `web_pages`, `web_snapshots`, `web_changes`, `web_sitemap_urls`, plus the seed rows). Until it's run, the tab says it isn't set up and the scheduled job skips quietly.
+
+  Verified: extraction and change detection on saved pages (a GO Classes price edit reports "₹9,999 → ₹10,999"), and the UI with mocked data in Chromium at 1440 and WebKit touch at 390/820 (feed, filters, show-diff, prices, Check now, no overflow). The full database path is untested until the SQL runs.
 - **Names containing "dipta" are flagged automatically, 2026-11-25** (after Puneet Koundal, puneetkoundal707@gmail.com, renamed himself "DUPLICATE  DIPTA"; he was renamed back to "Puneet Koundal" by hand, `last_flagged_name` kept). `reservedNameHit(name, email)` in `lib/name-check.js` runs first inside `checkNameAppropriate()` (no Claude call): the name is lowercased, accents stripped, look-alike letters and digits mapped (d1pta, dіpta, D.I.P.T.A) and everything but letters dropped; any match of `RESERVED_NAME_WORDS` (just "dipta") flags with reason "Poses as a TAAI team member". So a rename is saved and gated in the same request, a new signup is gated a few seconds after signing up (background check), and a gated student's fix attempt is refused. The team's own accounts are exempt via `RESERVED_NAME_OWNERS` (SHA-256 of the lowercased email, since the repo is public). It also catches real names that contain the letters (Sandipta, Diptanshu); none of the 497 students on 2026-11-25 matched. All four call sites now pass the email.
