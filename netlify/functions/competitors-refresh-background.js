@@ -5,12 +5,13 @@
 // finished but the button stayed on "Updating…" (2026-11-25). Now
 // team-competitors.js / team-web-watch.js start this and the page waits for
 // the new run to show up in the database.
-// Body: { what: 'yt' | 'web' | 'ideas' | 'backfill', days }. Internal only, same shared-secret check as
+// Body: { what: 'yt' | 'web' | 'ideas' | 'backfill' | 'market', days }. Internal only, same shared-secret check as
 // check-name-background.js.
 import { getSupabase } from './lib/supabase.js';
 import { runYtMonitor, backfillYtHistory } from './lib/yt-monitor.js';
 import { runWebMonitor } from './lib/web-monitor.js';
 import { buildVideoIdeas } from './lib/video-ideas.js';
+import { runYtMarket } from './lib/yt-market.js';
 
 export async function handler(event) {
   if (event.httpMethod !== 'POST') return { statusCode: 405, body: '' };
@@ -22,6 +23,7 @@ export async function handler(event) {
   try {
     if (body.what === 'web') await runWebMonitor(s, { budgetMs: 240000 });
     else if (body.what === 'ideas') await buildVideoIdeas(s, body.days);
+    else if (body.what === 'market') await runYtMarket(s);
     else if (body.what === 'backfill') await backfillYtHistory(s, { days: 365, budgetMs: 780000 });
     else await runYtMonitor(s, { budgetMs: 240000 });
   } catch (e) {

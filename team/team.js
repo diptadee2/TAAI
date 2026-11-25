@@ -1203,12 +1203,12 @@
   ];
   function renderCompetitorsTabs() {
     var v = state.comp.view;
-    return '<div class="tabs subtabs">' + [['youtube', 'YouTube'], ['season', 'Through the year'], ['web', 'Websites']].map(function (x) {
+    return '<div class="tabs subtabs">' + [['youtube', 'YouTube'], ['market', 'Whole market'], ['season', 'Through the year'], ['web', 'Websites']].map(function (x) {
       return '<button type="button" class="tab-btn' + (v === x[0] ? ' active' : '') + '" data-cmpview="' + x[0] + '">' + x[1] + '</button>';
     }).join('') + '</div>';
   }
   function renderCompetitors() {
-    return state.comp.view === 'web' ? renderWebWatch() : state.comp.view === 'season' ? renderCmpSeason() : renderCmpYoutube();
+    return state.comp.view === 'web' ? renderWebWatch() : state.comp.view === 'season' ? renderCmpSeason() : state.comp.view === 'market' ? renderCmpMarket() : renderCmpYoutube();
   }
   function renderCmpYoutube() {
     var c = state.comp, d = c.data;
@@ -1597,6 +1597,122 @@
       })();
     }).catch(function (e) { S.busy = false; S.msg = e.message; S.msgType = 'error'; render(); });
   }
+
+  // ── Whole market (2026-11-25) ─────────────────────────────────────────
+  // "A general idea about GATE CSE and GATE DA except our competitors and what
+  // is working." Once a day yt-market.js searches YouTube for GATE CSE / DA
+  // videos of the last 30 days from any channel (lib/yt-market.js); the
+  // channels already tracked here (TAAI included) are left out.
+  function loadCmpMarket() {
+    var c = state.comp;
+    c.market = c.market || { exam: 'all', period: 30, kind: 'video' };
+    c.market.loading = true; render();
+    api('/team-competitors?market=1').then(function (d) {
+      c.market.data = d; c.market.loading = false; c.market.loaded = true; c.market.error = null; render();
+    }).catch(function (e) { c.market.loading = false; c.market.loaded = true; c.market.error = e.message; render(); });
+  }
+  var MKT_EXAMS = [['all', 'GATE CSE + DA'], ['cse', 'GATE CSE'], ['da', 'GATE DA']];
+  function mktRows() {
+    var M = state.comp.market, d = M.data, mk = d.market, now = Date.now();
+    var tracked = {}; (d.tracked || []).forEach(function (id) { tracked[id] = 1; });
+    var from = now - M.period * 86400000;
+    return mk.videos.filter(function (v) {
+      if (tracked[v.channel_id] || Date.parse(v.published_at) < from) return false;
+      if (M.exam === 'cse' && v.exam !== 'cse' && v.exam !== 'both') return false;
+      if (M.exam === 'da' && v.exam !== 'da' && v.exam !== 'both') return false;
+      return M.kind === 'short' ? v.kind === 'short' : v.kind !== 'short';
+    }).map(function (v) {
+      var ch = mk.channels[v.channel_id] || {};
+      var age = Math.max(1, (now - Date.parse(v.published_at)) / 86400000);
+      return { v: v, ch: ch, perDay: (v.views || 0) / age, ratio: ch.subs ? (v.views || 0) / ch.subs : null };
+    });
+  }
+  function mktVideoRow(r, i, badge) {
+    var v = r.v;
+    return '<a class="cmp-best-row" href="https://www.youtube.com/' + (v.kind === 'short' ? 'shorts/' : 'watch?v=') + escapeHtml(v.id) + '" target="_blank" rel="noopener">' +
+      '<span class="cmp-best-n">' + (i + 1) + '</span>' +
+      '<img loading="lazy" alt="" src="https://i.ytimg.com/vi/' + escapeHtml(v.id) + '/mqdefault.jpg">' +
+      '<span class="cmp-best-body"><b>' + escapeHtml(v.title) + '</b><span class="field-hint">' + escapeHtml(r.ch.title || 'Unknown channel') + (r.ch.subs != null ? ' (' + cmpNum(r.ch.subs) + ' subs)' : '') + ' · ' + escapeHtml(cmpAgo(v.published_at)) + ' · ' + cmpNum(v.views) + ' views</span></span>' +
+      badge + '</a>';
+  }
+  function renderCmpMarket() {
+    var c = state.comp, M = c.market || {}, d = M.data;
+    if (!M.loaded) return '<div class="card"><div class="field-hint">Loading…</div></div>';
+    if (M.error && !d) return '<div class="card"><div class="msg msg-error">' + escapeHtml(M.error) + '</div></div>';
+    var mk = d && d.market;
+    var scanBtn = d && d.keyReady ? '<button type="button" class="btn" id="mkt-scan"' + (M.busy ? ' disabled' : '') + '>' + (M.busy ? 'Scanning… (under a minute)' : '↻ Scan now') + '</button>' : '<span class="field-hint">Needs the YouTube API key.</span>';
+    var msg = M.msg ? '<div class="msg ' + (M.msgType === 'error' ? 'msg-error' : 'msg-ok') + '">' + escapeHtml(M.msg) + '</div>' : '';
+    if (!mk) return '<div class="card">' + msg + '<div class="season-load"><span class="field-hint">Every day this searches YouTube for GATE CSE and GATE DA videos from the last 30 days, from every channel except the ones you already track, so you can see what is working across the whole space. No scan yet.</span>' + scanBtn + '</div></div>';
+    var rows = mktRows();
+    var chans = {}; rows.forEach(function (r) { chans[r.v.channel_id] = 1; });
+    var head = '<div class="season-load"><span class="field-hint">' + rows.length + ' ' + (M.kind === 'short' ? 'Shorts' : 'videos') + ' from ' + Object.keys(chans).length + ' channels that you don\'t track, found by YouTube searches for GATE CSE and GATE DA (' + mk.queries.length + ' searches, most viewed first, Indian results). Scanned ' + escapeHtml(cmpAgo(mk.scannedAt)) + '.' + (mk.errors && mk.errors.length ? ' Some searches failed: ' + escapeHtml(mk.errors.join('; ')) : '') + '</span>' + scanBtn + '</div>' + msg;
+    var filters = '<div class="mkt-filters">' +
+      '<div class="tabs subtabs">' + MKT_EXAMS.map(function (x) { return '<button type="button" class="tab-btn' + (M.exam === x[0] ? ' active' : '') + '" data-mktexam="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div>' +
+      '<div class="tabs subtabs">' + [[7, '7 days'], [30, '30 days']].map(function (x) { return '<button type="button" class="tab-btn' + (M.period === x[0] ? ' active' : '') + '" data-mktperiod="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div>' +
+      '<div class="tabs subtabs"><button type="button" class="tab-btn' + (M.kind !== 'short' ? ' active' : '') + '" data-mktkind="video">Videos</button><button type="button" class="tab-btn' + (M.kind === 'short' ? ' active' : '') + '" data-mktkind="short">Shorts</button></div>' +
+    '</div>';
+    if (!rows.length) return '<div class="card">' + head + filters + '<div class="field-hint">Nothing found for this filter.</div></div>';
+    var link = function (v) { return 'https://www.youtube.com/' + (v.kind === 'short' ? 'shorts/' : 'watch?v=') + escapeHtml(v.id); };
+    // Topics, by typical views per day; "vs audience" is views compared with the channel's subscribers.
+    var topics = CMP_TOPICS.map(function (t) { return { name: t[0], rows: [] }; }).concat([{ name: 'Other', rows: [] }]);
+    rows.forEach(function (r) { topics[seasonTopic(r.v.title)].rows.push(r); });
+    var trows = topics.filter(function (t) { return t.rows.length; }).map(function (t) {
+      t.med = cmpMedian(t.rows.map(function (r) { return r.perDay; }));
+      var ratios = t.rows.map(function (r) { return r.ratio == null ? null : Math.round(r.ratio * 1000); }).filter(function (x) { return x != null; });
+      t.ratio = ratios.length ? cmpMedian(ratios) / 1000 : null;
+      t.top = t.rows.slice().sort(function (a, b) { return b.perDay - a.perDay; })[0];
+      return t;
+    }).sort(function (a, b) { return b.med - a.med; });
+    var topicHtml = '<h3 class="cmp-h">What\'s working <span class="field-hint">grouped by title, best first</span></h3>' +
+      '<table class="web-ptable cmp-topics"><thead><tr><th>Topic</th><th class="web-pr">Videos</th><th class="web-pr">Views / day</th><th>Best one</th></tr></thead><tbody>' + trows.map(function (t) {
+        return '<tr><td><b>' + escapeHtml(t.name) + '</b>' + (t.ratio != null ? '<div class="field-hint">typically ' + (t.ratio >= 1 ? cmpX(t.ratio) + ' their subscribers' : Math.round(t.ratio * 100) + '% of their subscribers') + '</div>' : '') + '</td><td class="web-pr">' + t.rows.length + '</td><td class="web-pr"><b>' + cmpNum(t.med) + '</b></td>' +
+          '<td class="cmp-topic-best"><a href="' + link(t.top.v) + '" target="_blank" rel="noopener">' + escapeHtml(t.top.v.title) + '</a><span class="field-hint"> · ' + escapeHtml(t.top.ch.title || '') + ' · ' + cmpNum(t.top.v.views) + ' views</span></td></tr>';
+      }).join('') + '</tbody></table>' +
+      '<div class="field-hint" style="margin-top:6px;">Views / day is the middle value for the topic\'s videos (views since upload, divided by days online). Under the topic: how those views compare with each channel\'s subscribers.</div>';
+    var top = rows.slice().sort(function (a, b) { return b.perDay - a.perDay; }).slice(0, 12);
+    var topHtml = '<h3 class="cmp-h">Most watched <span class="field-hint">by views per day</span></h3><div class="cmp-best-list">' + top.map(function (r, i) {
+      return mktVideoRow(r, i, '<span class="cmp-x">' + cmpNum(r.perDay) + '/day</span>');
+    }).join('') + '</div>';
+    var small = rows.filter(function (r) { return r.ch.subs != null && r.ch.subs >= 500 && r.ch.subs <= 200000 && r.ratio >= 0.3; })
+      .sort(function (a, b) { return b.ratio - a.ratio; }).slice(0, 10);
+    var smallHtml = '<h3 class="cmp-h">Beating their size <span class="field-hint">channels under 2 L subscribers whose video reached far more people than usual</span></h3>' +
+      (small.length ? '<div class="cmp-best-list">' + small.map(function (r, i) {
+        return mktVideoRow(r, i, '<span class="cmp-x' + (r.ratio >= 1 ? ' is-hot' : '') + '" title="Views compared with the channel\'s subscribers">' + (r.ratio >= 1 ? cmpX(r.ratio) : Math.round(r.ratio * 100) + '%') + ' subs</span>');
+      }).join('') + '</div><div class="field-hint" style="margin-top:6px;">A video whose views pass the channel\'s own subscriber count was pushed by YouTube to new people: the topic or title did the work, not the channel\'s size.</div>' : '<div class="field-hint">None in this filter.</div>');
+    // Channels
+    var byCh = {};
+    rows.forEach(function (r) { var k = r.v.channel_id; (byCh[k] = byCh[k] || { id: k, ch: r.ch, rows: [], views: 0 }); byCh[k].rows.push(r); byCh[k].views += r.v.views || 0; });
+    var chList = Object.keys(byCh).map(function (k) { return byCh[k]; }).sort(function (a, b) { return b.views - a.views; }).slice(0, 15);
+    var chHtml = '<h3 class="cmp-h">Channels getting views <span class="field-hint">not tracked yet</span></h3>' +
+      '<div class="students-table-wrap"><table class="students-table mkt-ch"><thead><tr><th>Channel</th><th class="cmp-n">Subs</th><th class="cmp-n">Videos</th><th class="cmp-n">Views</th><th></th></tr></thead><tbody>' + chList.map(function (x) {
+        var best = x.rows.slice().sort(function (a, b) { return (b.v.views || 0) - (a.v.views || 0); })[0];
+        return '<tr><td class="cmp-ch">' + (x.ch.thumbnail ? '<img src="' + escapeHtml(x.ch.thumbnail) + '" alt="" loading="lazy">' : '<span class="cmp-av">' + escapeHtml(String(x.ch.title || '?').charAt(0)) + '</span>') +
+          '<div><a href="https://www.youtube.com/' + (x.ch.handle ? '@' + escapeHtml(x.ch.handle) : 'channel/' + escapeHtml(x.id)) + '" target="_blank" rel="noopener">' + escapeHtml(x.ch.title || x.id) + '</a><div class="field-hint">Top: ' + escapeHtml(best.v.title) + '</div></div></td>' +
+          '<td class="cmp-n">' + cmpNum(x.ch.subs) + '</td><td class="cmp-n">' + x.rows.length + '</td><td class="cmp-n">' + cmpNum(x.views) + '</td>' +
+          '<td><button type="button" class="btn btn-sm js-mkt-track" data-id="' + escapeHtml(x.id) + '" data-label="' + escapeHtml(x.ch.title || '') + '">+ Track</button></td></tr>';
+      }).join('') + '</tbody></table></div><div class="field-hint" style="margin-top:6px;">+ Track adds the channel to the YouTube tab, so its videos are recorded from the next update and it drops out of this list.</div>';
+    return '<div class="card">' + head + filters + topicHtml + topHtml + smallHtml + chHtml + '</div>';
+  }
+  function mktScan() {
+    var M = state.comp.market;
+    M.busy = true; M.msg = null; render();
+    var before = M.data && M.data.market ? Date.parse(M.data.market.scannedAt) : 0;
+    api('/team-competitors', { method: 'POST', body: JSON.stringify({ action: 'market' }) }).then(function () {
+      var tries = 0;
+      (function poll() {
+        tries++;
+        api('/team-competitors?market=1').then(function (d) {
+          if (d.market && Date.parse(d.market.scannedAt) > before) {
+            M.data = d; M.busy = false; M.msgType = 'ok';
+            M.msg = 'Scanned: ' + d.market.videos.length + ' videos from ' + Object.keys(d.market.channels).length + ' channels (' + d.market.units + ' API units).';
+            render(); return;
+          }
+          if (tries >= 40) { M.busy = false; M.msgType = 'error'; M.msg = 'Still scanning after 2 minutes. Reload the page in a bit.'; render(); return; }
+          setTimeout(poll, 3000);
+        }).catch(function () { if (tries < 40) setTimeout(poll, 3000); else { M.busy = false; render(); } });
+      })();
+    }).catch(function (e) { M.busy = false; M.msg = e.message; M.msgType = 'error'; render(); });
+  }
   function cmpPost(body, okMsg) {
     var c = state.comp;
     c.busy = true; c.msg = null; render();
@@ -1636,10 +1752,30 @@
         c.view = b.getAttribute('data-cmpview');
         if (c.view === 'web' && !state.web.loaded && !state.web.loading) { loadWebWatch(); return; }
         if (c.view === 'season' && !(c.season && (c.season.loaded || c.season.loading))) { loadCmpSeason(); return; }
+        if (c.view === 'market' && !(c.market && (c.market.loaded || c.market.loading))) { loadCmpMarket(); return; }
         render();
       });
     });
     if (c.view === 'web') { bindWebWatch(); return; }
+    if (c.view === 'market') {
+      var M = c.market;
+      document.querySelectorAll('[data-mktexam]').forEach(function (b) { b.addEventListener('click', function () { M.exam = b.getAttribute('data-mktexam'); render(); }); });
+      document.querySelectorAll('[data-mktperiod]').forEach(function (b) { b.addEventListener('click', function () { M.period = +b.getAttribute('data-mktperiod'); render(); }); });
+      document.querySelectorAll('[data-mktkind]').forEach(function (b) { b.addEventListener('click', function () { M.kind = b.getAttribute('data-mktkind'); render(); }); });
+      var scan = document.getElementById('mkt-scan');
+      if (scan) scan.addEventListener('click', mktScan);
+      document.querySelectorAll('.js-mkt-track').forEach(function (b) {
+        b.addEventListener('click', function () {
+          b.disabled = true; b.textContent = 'Adding…';
+          api('/team-competitors', { method: 'POST', body: JSON.stringify({ action: 'add', input: b.getAttribute('data-id'), label: b.getAttribute('data-label') }) }).then(function () {
+            M.msg = 'Now tracking ' + b.getAttribute('data-label') + '. It shows in the YouTube tab after the next update.'; M.msgType = 'ok';
+            if (M.data) M.data.tracked = (M.data.tracked || []).concat([b.getAttribute('data-id')]);
+            render(); loadCompetitors();
+          }).catch(function (e) { M.msg = e.message; M.msgType = 'error'; render(); });
+        });
+      });
+      return;
+    }
     if (c.view === 'season') {
       document.querySelectorAll('[data-seasonm]').forEach(function (b) { b.addEventListener('click', function () { c.season.month = +b.getAttribute('data-seasonm'); render(); }); });
       document.querySelectorAll('[data-seasonkind]').forEach(function (b) { b.addEventListener('click', function () { c.season.kind = b.getAttribute('data-seasonkind'); render(); }); });

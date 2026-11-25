@@ -6,6 +6,8 @@
 // GET  /api/team-competitors?season=1 -> { videos: [[channel_id, kind, published_at, views, title, video_id]], channels, lastBackfill, keyReady }
 //        every stored video at least 30 days old ("Through the year")
 // POST {action:'backfill'}                 -> loads the last 12 months of uploads in the background
+// GET  /api/team-competitors?market=1 -> { market, tracked, keyReady } (whole GATE CSE/DA YouTube market, lib/yt-market.js)
+// POST {action:'market'}                   -> scans the market now, in the background
 // GET  /api/team-competitors?ideas=<1|3|7|30> -> { ideas } (last saved video ideas for that period)
 // POST {action:'ideas', days}              -> starts new video ideas in the background ({started, at})
 // POST {action:'refresh'}                  -> starts a run in the background ({started, at})
@@ -15,6 +17,7 @@ import { getSupabase, json, requireAdmin } from './lib/supabase.js';
 import { resolveChannel, ytKey, YT_TRACK_DAYS } from './lib/yt-monitor.js';
 import { startCompetitorsRefresh } from './competitors-refresh-background.js';
 import { readVideoIdeas } from './lib/video-ideas.js';
+import { readYtMarket } from './lib/yt-market.js';
 
 export async function handler(event, context) {
   const auth = requireAdmin(context);
@@ -24,6 +27,10 @@ export async function handler(event, context) {
   if (event.httpMethod === 'GET') {
     const q = event.queryStringParameters || {};
     if (q.ideas) return json(200, { ideas: await readVideoIdeas(s, Number(q.ideas)) });
+    if (q.market) {
+      const { data: tracked } = await s.from('yt_channels').select('channel_id');
+      return json(200, { keyReady: !!ytKey(), tracked: (tracked || []).map(c => c.channel_id), market: await readYtMarket(s) });
+    }
     // "Through the year" (2026-11-25): every video old enough to have settled
     // (30+ days), as compact rows; the page groups them by month and topic.
     if (q.season) {
@@ -71,6 +78,10 @@ export async function handler(event, context) {
     // ~10s request limit); the page waits for the new yt_runs row.
     if (body.action === 'refresh') { const at = new Date().toISOString(); await startCompetitorsRefresh(event, 'yt'); return json(200, { started: true, at }); }
     // Claude's read of the period and video ideas for TAAI (background, see lib/video-ideas.js).
+    if (body.action === 'market') {
+      if (!ytKey()) return json(400, { error: 'Needs the YouTube API key in Netlify' });
+      const at = new Date().toISOString(); await startCompetitorsRefresh(event, 'market'); return json(200, { started: true, at });
+    }
     if (body.action === 'backfill') {
       if (!ytKey()) return json(400, { error: 'Needs the YouTube API key in Netlify' });
       const at = new Date().toISOString(); await startCompetitorsRefresh(event, 'backfill'); return json(200, { started: true, at });

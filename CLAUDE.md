@@ -1141,3 +1141,20 @@ Direct request: a /team tab comparing competitors' YouTube video performance, mo
     - The page with a synthetic year of data in WebKit at 1440/1180/820/390 (touch): seeded seasonal topics came out on top in the right months, no overflow, no errors.
   - **Phone fix (same day):** on phones (≤600px) the topic tables in both YouTube and Through the year are stacked rows: topic, "N posted", score, then the best video under them. They used to squeeze to one letter per line. Those rules must come after the base `.cmp-topics` rules.
   - **Not yet run for real:** the real backfill (the key is only in Netlify).
+- **Competitors > Whole market, 2026-11-25** (direct request: "a general idea about GATE CSE and GATE DA, except our competitors, and what is working"). It's a sub-tab after YouTube.
+  - **Collection.** `lib/yt-market.js` `runYtMarket()` runs 7 YouTube searches (`MARKET_QUERIES`: 3 CSE, 3 DA, 1 general GATE 2027). Each search covers the last 30 days, most viewed first, with `regionCode IN` and 50 results.
+    - Each video's numbers are fetched, and videos with no "GATE" in the title, description or tags are dropped.
+    - Each video is classified as CSE, DA, both or general GATE (`examOf()`), and Hindi titles are flagged.
+    - The channels' subscriber counts are fetched too.
+  - **Storage and schedule.**
+    - Results are saved as `market/latest.json` plus `market/<IST date>.json` (a daily history) in the private bucket `competitor-insights`. No SQL is needed.
+    - Runs daily at 06:30 IST (`yt-market.js`, `schedule = "0 1 * * *"`) and from "Scan now" (`POST {action:'market'}` → background `what:'market'`).
+  - **Quota.** It uses the free YouTube quota only: about 715 units a run, since a search costs 100. `makeApi` now counts searches as 100 units.
+  - **Reading it.** `GET ?market=1` returns the scan plus the tracked channel ids.
+  - **What the page shows.** It leaves out every tracked channel, TAAI included. Filters: exam (CSE + DA / CSE / DA), 7 or 30 days, Videos/Shorts.
+    - "What's working": topics (same `CMP_TOPICS`) ranked by median views per day, each with "typically N× / N% of their subscribers" and its best video.
+    - "Most watched": the top 12 by views per day.
+    - "Beating their size": channels between 500 subscribers and 2 lakh whose video reached 30%+ of their subscriber count, best ratio first.
+    - "Channels getting views": the top 15 by views, each with "+ Track", which adds it to the YouTube tab.
+  - **Tested.** The scan logic was tested with YouTube and storage mocked: off-topic videos dropped, exam tags right, both files written. The page was tested with that output in WebKit at 1440, 1180, 820 and 390 (touch): filters work, Track works, tracked channels are hidden, no overflow, no errors.
+  - **Not yet run against real YouTube** (the key is only in Netlify).

@@ -32,13 +32,13 @@ async function fetchT(url, opts = {}, ms = 10000) {
   finally { clearTimeout(t); }
 }
 
-function makeApi() {
+export function makeApi() {
   const key = ytKey();
   const ctx = { units: 0 };
   ctx.get = async (path, params) => {
     const q = new URLSearchParams(Object.assign({}, params, { key }));
     const r = await fetchT(API + path + '?' + q.toString());
-    ctx.units += 1;
+    ctx.units += path === 'search' ? 100 : 1;
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error('YouTube API ' + path + ': ' + ((d.error && d.error.message) || r.status));
     return d;
@@ -47,7 +47,7 @@ function makeApi() {
 }
 
 // "PT1H2M3S" -> 3723
-function isoDuration(s) {
+export function isoDuration(s) {
   const m = String(s || '').match(/^P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/);
   if (!m) return null;
   return (+m[1] || 0) * 86400 + (+m[2] || 0) * 3600 + (+m[3] || 0) * 60 + (+m[4] || 0);
