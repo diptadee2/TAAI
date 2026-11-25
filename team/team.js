@@ -21,14 +21,14 @@
   var DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   var SOURCE_LABELS = {
     custom: 'Custom message (also used for weekly batch schedules)',
-    daily_leader: 'Daily — Top Focus Student',
-    daily_leaderboard: 'Daily — Top 3',
-    weekly_leaderboard: 'Weekly — Top 5 Leaderboard',
-    weekly_batch_trend: 'Weekly — Batch Median Trend',
-    monthly_consistency: 'Monthly — Most Consistent Student',
-    schedule_runout: 'Daily — Schedule running out (team reminder)',
-    weekly_schedule_post: 'Weekly — Post the schedule pictures (team reminder)',
-    piracy_status: 'Weekly — Piracy takedown status (team)',
+    daily_leader: 'Daily: Top Focus Student',
+    daily_leaderboard: 'Daily: Top 3',
+    weekly_leaderboard: 'Weekly: Top 5 Leaderboard',
+    weekly_batch_trend: 'Weekly: Batch Median Trend',
+    monthly_consistency: 'Monthly: Most Consistent Student',
+    schedule_runout: 'Daily: Schedule running out (team reminder)',
+    weekly_schedule_post: 'Weekly: Post the schedule pictures (team reminder)',
+    piracy_status: 'Weekly: Piracy takedown status (team)',
   };
   // Sources whose Body is a plain optional intro line with no
   // placeholders at all — unlike LIST_SOURCES (an intro above a computed
@@ -92,8 +92,8 @@
   // doesn't say which of the two cards a new row is even for.
   var SITE_PRICING_ID_GROUPS = [
     { label: 'Bundled courses', options: [
-      { id: 'full-course-2028', label: 'Full Course — 2028 (full-course-2028)' },
-      { id: 'full-course', label: 'Full Course — 2027 (full-course)' },
+      { id: 'full-course-2028', label: 'Full Course: 2028 (full-course-2028)' },
+      { id: 'full-course', label: 'Full Course: 2027 (full-course)' },
       { id: 'maths-ml-bundle', label: 'Mathematics & ML Bundle (maths-ml-bundle)' },
       { id: 'maths-bundle', label: 'Mathematics Bundle (maths-bundle)' },
     ] },
@@ -138,11 +138,11 @@
       // non-technical admin sees "Basic info / Pricing / Enrollment &
       // dates" instead of one long undifferentiated list of 10 fields.
       fields: [
-        { name: 'id', label: 'Course', type: 'select', optionGroups: SITE_PRICING_ID_GROUPS, required: true, lockedOnEdit: true, hint: 'Which course/bundle on the live site this row is for — can\'t be changed once created.', section: 'Basic info' },
+        { name: 'id', label: 'Course', type: 'select', optionGroups: SITE_PRICING_ID_GROUPS, required: true, lockedOnEdit: true, hint: 'Which course/bundle on the live site this row is for: can\'t be changed once created.', section: 'Basic info' },
         { name: 'type', label: 'Type', type: 'select', options: [{ id: 'combo', label: 'Combo/bundle' }, { id: 'individual', label: 'Individual course' }, { id: 'test-series', label: 'Test series' }], required: true, hint: 'Combo/bundle courses show up under "Bundled courses" below; individual subjects under "Individual courses"; test series under "Test series". Drag a card to reorder within its own group.', section: 'Basic info' },
         { name: 'name', label: 'Display name', type: 'text', required: true, section: 'Basic info' },
         { name: 'price', label: 'Price (₹)', type: 'number', section: 'Pricing' },
-        { name: 'price_old', label: 'Old price (₹, optional — shown struck through)', type: 'number', section: 'Pricing' },
+        { name: 'price_old', label: 'Old price (₹, optional: shown struck through)', type: 'number', section: 'Pricing' },
         { name: 'discount', label: 'Discount label (optional, e.g. "30% OFF")', type: 'text', section: 'Pricing' },
         { name: 'discount_reason', label: 'Discount reason (optional)', type: 'text', section: 'Pricing' },
         { name: 'discount_deadline', label: 'Discount deadline', type: 'date', section: 'Enrollment & dates' },
@@ -157,7 +157,7 @@
         // no button rendered regardless of this field) reads as
         // "Coming Soon" — that's driven by the card's own code, not by
         // this field being empty.
-        { name: 'enroll_url', label: 'Enrol now link (overrides the button — blank keeps the course\'s existing link)', type: 'url', hint: 'The real enrolment URL (e.g. https://learn.taai.live/learn/batch/GATE-2027/content). Live on taai.live immediately.', section: 'Enrollment & dates' },
+        { name: 'enroll_url', label: 'Enrol now link (overrides the button: blank keeps the course\'s existing link)', type: 'url', hint: 'The real enrolment URL (e.g. https://learn.taai.live/learn/batch/GATE-2027/content). Live on taai.live immediately.', section: 'Enrollment & dates' },
         // LIVE since 2026-09-23, same cutover — any combo (bundle) can
         // now have a real sold-out cutover date, not just full-course
         // (that restriction was only ever a /team form limit; the live
@@ -224,8 +224,8 @@
   // common choice. Keep these two strings in sync with lib/supabase.js by
   // hand if that wording ever changes.
   var DEFAULT_BODY_BY_SOURCE = {
-    daily_leader: '**{{name}}** logged the most focus time yesterday — **{{hours}}**!',
-    monthly_consistency: '**{{name}}** was the most consistent student this month — a **typical day of {{hours}}** of focused study, day after day, all month long.',
+    daily_leader: '**{{name}}** logged the most focus time yesterday: **{{hours}}**!',
+    monthly_consistency: '**{{name}}** was the most consistent student this month: a **typical day of {{hours}}** of focused study, day after day, all month long.',
   };
 
   // Direct feedback on a real screenshot: a built-in source's Title box
@@ -295,7 +295,7 @@
     return '<div class="placeholder-chips">' +
       '<span class="placeholder-chips-label">Click to insert:</span> ' +
       placeholders.map(function (ph) {
-        return '<button type="button" class="chip js-insert-placeholder" data-token="' + escapeHtml(ph.token) + '" title="Inserts ' + escapeHtml(ph.token) + ' — ' + escapeHtml(ph.desc) + '">' + escapeHtml(ph.token) + '</button>';
+        return '<button type="button" class="chip js-insert-placeholder" data-token="' + escapeHtml(ph.token) + '" title="Inserts ' + escapeHtml(ph.token) + ': ' + escapeHtml(ph.desc) + '">' + escapeHtml(ph.token) + '</button>';
       }).join('') +
     '</div>';
   }
@@ -429,11 +429,11 @@
     if (p.source === 'custom') {
       var sections = Array.isArray(p.sections) ? p.sections : [];
       var dayCount = sections.reduce(function (n, s) { return n + (Array.isArray(s.rows) ? s.rows.length : 0); }, 0);
-      if (dayCount) return '(no body text — ' + sections.length + ' section(s), ' + dayCount + ' day row(s) below)';
-      return '(empty — click Edit to add text)';
+      if (dayCount) return '(no body text: ' + sections.length + ' section(s), ' + dayCount + ' day row(s) below)';
+      return '(empty: click Edit to add text)';
     }
     if (DEFAULT_BODY_BY_SOURCE[p.source]) return '(using the default wording) ' + DEFAULT_BODY_BY_SOURCE[p.source];
-    return '(no intro line — just the computed number/list)';
+    return '(no intro line: just the computed number/list)';
   }
   function renderPostRow(p, isFirst, isLast) {
     var isBuiltIn = p.source !== 'custom';
@@ -548,7 +548,7 @@
     return (
       '<div class="field"><label>Load a saved channel</label>' +
         '<select id="f-channel-select"><option value="">-- Enter a new webhook below --</option>' + options + '</select>' +
-        '<div class="field-hint">Fills in the channel name and webhook URL from a post you\'ve already set up — still editable below.</div>' +
+        '<div class="field-hint">Fills in the channel name and webhook URL from a post you\'ve already set up: still editable below.</div>' +
       '</div>'
     );
   }
@@ -653,9 +653,9 @@
         '<h3 class="post-list-heading">Custom announcements</h3>' +
         '<button type="button" class="btn btn-small" id="new-custom-btn">+ New announcement / schedule</button>' +
       '</div>' +
-      '<div class="field-hint" style="margin-bottom:10px;">A weekly batch schedule is a Custom message with its "Extra sections" filled in below — pick a Subject and fill in one Date/Topic/Duration row per class.</div>' +
+      '<div class="field-hint" style="margin-bottom:10px;">A weekly batch schedule is a Custom message with its "Extra sections" filled in below: pick a Subject and fill in one Date/Topic/Duration row per class.</div>' +
       (customPosts.length ? renderPostGroups(customPosts)
-        : '<div class="empty">No announcements or schedules yet — click "+ New announcement / schedule" above to add next week\'s.</div>');
+        : '<div class="empty">No announcements or schedules yet: click "+ New announcement / schedule" above to add next week\'s.</div>');
 
     // With no custom posts, the automatic ones are all there is, so show them
     // instead of an empty-looking page (2026-10-22). The toggle still works.
@@ -792,8 +792,8 @@
       : isList
         ? 'Optional intro line shown above the medal list (the list itself always shows regardless). {{name}}/{{hours}} = 1st place, {{name2}}/{{hours2}} = 2nd, {{name3}}/{{hours3}} = 3rd (up to {{name5}}/{{hours5}} for the weekly top 5).'
         : isPlainIntro
-          ? 'Optional intro line shown above the trend number (the number itself always shows regardless). No placeholders — plain text only, or leave blank for no intro line.'
-          : 'Pre-filled with the current default wording below — edit it directly, or clear the box entirely to fall back to this same default. Supports {{name}} and {{hours}} placeholders.';
+          ? 'Optional intro line shown above the trend number (the number itself always shows regardless). No placeholders: plain text only, or leave blank for no intro line.'
+          : 'Pre-filled with the current default wording below: edit it directly, or clear the box entirely to fall back to this same default. Supports {{name}} and {{hours}} placeholders.';
     // Only pre-fill when there's no real custom body saved (never overwrite
     // one that is) and only for sources that have a default sentence at
     // all. An empty body is treated the same as null here on purpose —
@@ -822,7 +822,7 @@
     var titlePlaceholder = '';
     if (!titleValue && source !== 'custom') {
       if (DEFAULT_TITLE_BY_SOURCE[source]) titleValue = DEFAULT_TITLE_BY_SOURCE[source];
-      else if (source === 'monthly_consistency') titlePlaceholder = '🏅 Most Consistent Student — ' + previousMonthLabelApprox() + ' (the month name updates itself automatically)';
+      else if (source === 'monthly_consistency') titlePlaceholder = '🏅 Most Consistent Student: ' + previousMonthLabelApprox() + ' (the month name updates itself automatically)';
     }
 
     var platform = p.platform === 'telegram' ? 'telegram' : 'discord';
@@ -843,12 +843,12 @@
       ? (
         '<div class="field"><label>Telegram Bot API URL</label><input type="url" name="webhook_url" placeholder="https://api.telegram.org/bot&lt;YOUR_BOT_TOKEN&gt;" value="' + escapeHtml(p.webhook_url) + '" required><div class="field-hint">From @BotFather: create a bot, copy its token, and use it here as https://api.telegram.org/bot&lt;TOKEN&gt; (with the word "bot" directly before the token, no space). The bot must be added as an admin of the target channel.</div></div>' +
         '<div class="field"><label>Chat ID</label><input type="text" name="telegram_chat_id" placeholder="@your_channel_username or a numeric chat id" value="' + escapeHtml(p.telegram_chat_id) + '" required><div class="field-hint">A public channel\'s @username works directly. A private channel needs its numeric chat id instead (forward a message from it to @userinfobot, or check the bot API\'s getUpdates response, to find it).</div></div>' +
-        '<div class="field"><label>Test bot API URL (optional)</label><input type="url" name="test_webhook_url" placeholder="A different bot\'s API URL, only if you want a separate test bot" value="' + escapeHtml(p.test_webhook_url) + '"><div class="field-hint">Leave blank to reuse the same bot above for testing — only the Test Chat ID below needs to actually differ.</div></div>' +
-        '<div class="field"><label>Test Chat ID</label><input type="text" name="telegram_test_chat_id" placeholder="A private test channel/chat this bot is also admin of" value="' + escapeHtml(p.telegram_test_chat_id) + '"><div class="field-hint">Never used by the real schedule — only "Send Test" below posts here, on demand. Point this at a private test chat, not the real channel.</div></div>'
+        '<div class="field"><label>Test bot API URL (optional)</label><input type="url" name="test_webhook_url" placeholder="A different bot\'s API URL, only if you want a separate test bot" value="' + escapeHtml(p.test_webhook_url) + '"><div class="field-hint">Leave blank to reuse the same bot above for testing: only the Test Chat ID below needs to actually differ.</div></div>' +
+        '<div class="field"><label>Test Chat ID</label><input type="text" name="telegram_test_chat_id" placeholder="A private test channel/chat this bot is also admin of" value="' + escapeHtml(p.telegram_test_chat_id) + '"><div class="field-hint">Never used by the real schedule: only "Send Test" below posts here, on demand. Point this at a private test chat, not the real channel.</div></div>'
       )
       : (
         '<div class="field"><label>Webhook URL</label><input type="url" name="webhook_url" placeholder="https://discord.com/api/webhooks/..." value="' + escapeHtml(p.webhook_url) + '" required></div>' +
-        '<div class="field"><label>Test webhook URL (optional)</label><input type="url" name="test_webhook_url" placeholder="A separate test-channel webhook, for the Send Test button below" value="' + escapeHtml(p.test_webhook_url) + '"><div class="field-hint">Never used by the real schedule — only "Send Test" below posts here, on demand. Point this at a private test channel, not the real one.</div></div>'
+        '<div class="field"><label>Test webhook URL (optional)</label><input type="url" name="test_webhook_url" placeholder="A separate test-channel webhook, for the Send Test button below" value="' + escapeHtml(p.test_webhook_url) + '"><div class="field-hint">Never used by the real schedule: only "Send Test" below posts here, on demand. Point this at a private test channel, not the real one.</div></div>'
       );
 
     return (
@@ -891,11 +891,11 @@
             '<div class="field-row">' +
               '<div class="field"><label>Frequency</label><select name="schedule_type" id="f-schedule-type">' + scheduleOptions + '</select></div>' +
               '<div class="field"><label>Time (IST)</label><input type="time" name="schedule_time" value="' + escapeHtml(p.schedule_time || '10:00') + '" required>' +
-              '<div class="field-hint">Posts are checked every 15 minutes (:00, :15, :30, :45), not continuously — a time in between (like 10:31) won\'t fire until the next check after it, so it\'d actually go out at 10:45. Pick a time ending in :00/:15/:30/:45 to fire on the exact minute.</div>' +
+              '<div class="field-hint">Posts are checked every 15 minutes (:00, :15, :30, :45), not continuously: a time in between (like 10:31) won\'t fire until the next check after it, so it\'d actually go out at 10:45. Pick a time ending in :00/:15/:30/:45 to fire on the exact minute.</div>' +
               '</div>' +
             '</div>' +
             '<div id="f-schedule-extra">' +
-              (scheduleType === 'once' ? '<div class="field"><label>Date</label><input type="date" name="schedule_date" value="' + escapeHtml(p.schedule_date) + '" required><div class="field-hint">Fires exactly once, then pauses itself automatically (shows as "Paused" in the list below — it\'s not deleted, you can still open and resume it).</div></div>' : '') +
+              (scheduleType === 'once' ? '<div class="field"><label>Date</label><input type="date" name="schedule_date" value="' + escapeHtml(p.schedule_date) + '" required><div class="field-hint">Fires exactly once, then pauses itself automatically (shows as "Paused" in the list below: it\'s not deleted, you can still open and resume it).</div></div>' : '') +
               (scheduleType === 'weekly' ? '<div class="field"><label>Day of week</label><select name="schedule_day_of_week">' + dayOfWeekOptions + '</select></div>' : '') +
               (scheduleType === 'monthly' ? '<div class="field"><label>Day of month</label><input type="number" name="schedule_day_of_month" min="1" max="31" value="' + (p.schedule_day_of_month || 1) + '" required></div>' : '') +
             '</div>' +
@@ -909,9 +909,9 @@
           // click" actually happens, not documented elsewhere and hoped
           // someone finds it first.
           '<div class="field-hint" style="margin-top:-6px;">' +
-            '<strong>Preview</strong> shows what would post right now — nothing is sent or saved. ' +
+            '<strong>Preview</strong> shows what would post right now: nothing is sent or saved. ' +
             '<strong>Send Test</strong> actually posts, for real, to the Test webhook/chat above (never the real one). ' +
-            '<strong>' + (isNew ? 'Create' : 'Save') + '</strong> stores this post\'s settings — it doesn\'t post anything by itself, it just schedules it for its own next fire time.' +
+            '<strong>' + (isNew ? 'Create' : 'Save') + '</strong> stores this post\'s settings: it doesn\'t post anything by itself, it just schedules it for its own next fire time.' +
           '</div>' +
           renderPreviewBox() +
           renderTestStatus() +
@@ -989,7 +989,7 @@
     if (state.testStatus.loading) return '<div class="msg" style="background:var(--purple-soft);color:var(--purple);">Sending test post…</div>';
     if (state.testStatus.error) return '<div class="msg msg-error">' + escapeHtml(state.testStatus.error) + '</div>';
     if (state.testStatus.posted === false) return '<div class="msg" style="background:var(--amber-soft);color:var(--amber);">' + escapeHtml(state.testStatus.reason || 'Nothing was sent.') + '</div>';
-    return '<div class="msg msg-ok">Test post sent — check your test channel.</div>';
+    return '<div class="msg msg-ok">Test post sent: check your test channel.</div>';
   }
 
   function render() {
@@ -1022,10 +1022,10 @@
     // 'offer-poster') so each poster's own loaders keep working unchanged.
     var isMarketing = state.tab === 'day-card' || state.tab === 'offer-poster' || state.tab === 'club-winner';
     var marketingTabs = isMarketing
-      ? '<div class="tabs" style="margin:0 0 14px;">' +
-          '<button class="tab-btn' + (state.tab === 'day-card' ? ' active' : '') + '" data-mktab="day-card">📸 Day card</button>' +
-          '<button class="tab-btn' + (state.tab === 'offer-poster' ? ' active' : '') + '" data-mktab="offer-poster">🔥 Offer poster</button>' +
-          '<button class="tab-btn' + (state.tab === 'club-winner' ? ' active' : '') + '" data-mktab="club-winner">🏆 2 AM winner</button>' +
+      ? '<div class="tabs subtabs">' +
+          '<button class="tab-btn' + (state.tab === 'day-card' ? ' active' : '') + '" data-mktab="day-card">Day card</button>' +
+          '<button class="tab-btn' + (state.tab === 'offer-poster' ? ' active' : '') + '" data-mktab="offer-poster">Offer poster</button>' +
+          '<button class="tab-btn' + (state.tab === 'club-winner' ? ' active' : '') + '" data-mktab="club-winner">2 AM winner</button>' +
         '</div>'
       : '';
     // Counts right on the tab itself — knowing "there are 12 announcements,
@@ -1034,18 +1034,23 @@
     // other landing content otherwise has zero of. Students' count is
     // blank until actually loaded (null, not 0) rather than showing a
     // misleading "(0)" before the first fetch resolves.
-    var postsCountLabel = state.posts.length ? ' (' + state.posts.length + ')' : '';
-    var studentsCountLabel = state.students ? ' (' + state.students.length + ')' : '';
+    // 2026-11-25 ("it looks too haphazard"): plain labels with a small count
+    // badge, one line each, no emoji. Counts are left out of the main bar
+    // (they appeared after loading and pushed the labels onto 2-3 lines);
+    // each section shows its own numbers.
+    var mainTab = function (key, label, active) {
+      return '<button class="tab-btn' + (active ? ' active' : '') + '" data-tab="' + key + '">' + label + '</button>';
+    };
     var tabsHtml =
-      '<div class="tabs tabs-main">' +
-        '<button class="tab-btn' + (isAnnouncements ? ' active' : '') + '" data-tab="announcements">📣 Announcements' + postsCountLabel + '</button>' +
-        '<button class="tab-btn' + (isStudents ? ' active' : '') + '" data-tab="students">👥 Students' + studentsCountLabel + '</button>' +
-        '<button class="tab-btn' + (isSiteData ? ' active' : '') + '" data-tab="site-data">🗂️ Site data</button>' +
-        '<button class="tab-btn' + (isMarketing ? ' active' : '') + '" data-tab="marketing">🎨 Marketing</button>' +
-        '<button class="tab-btn' + (state.tab === 'challenge' ? ' active' : '') + '" data-tab="challenge">🏆 Challenge' + (state.challenge.loaded ? ' (' + state.challenge.rows.length + ')' : '') + '</button>' +
-        '<button class="tab-btn' + (state.tab === 'piracy' ? ' active' : '') + '" data-tab="piracy">🛡️ Piracy</button>' +
-        '<button class="tab-btn' + (state.tab === 'competitors' ? ' active' : '') + '" data-tab="competitors">📺 Competitors</button>' +
-      '</div>';
+      '<nav class="tabs tabs-main" aria-label="Sections">' +
+        mainTab('announcements', 'Announcements', isAnnouncements) +
+        mainTab('students', 'Students', isStudents) +
+        mainTab('site-data', 'Site data', isSiteData) +
+        mainTab('marketing', 'Marketing', isMarketing) +
+        mainTab('challenge', 'Challenge', state.tab === 'challenge') +
+        mainTab('piracy', 'Piracy', state.tab === 'piracy') +
+        mainTab('competitors', 'Competitors', state.tab === 'competitors') +
+      '</nav>';
 
     var actionsHtml = isAnnouncements
       ? ('<button class="btn" id="reference-toggle">' + (state.showReference ? 'Hide syntax reference' : '? Syntax reference') + '</button>' +
@@ -1073,11 +1078,11 @@
       : isStudents
         ? renderStudents()
         : state.tab === 'day-card'
-          ? marketingTabs + renderDayCard()
+          ? renderDayCard()
           : state.tab === 'offer-poster'
-            ? marketingTabs + renderOfferPoster()
+            ? renderOfferPoster()
           : state.tab === 'club-winner'
-            ? marketingTabs + renderClubWinner() + renderClubRunners()
+            ? renderClubWinner() + renderClubRunners()
             : state.tab === 'challenge'
               ? renderChallengePanel()
               : state.tab === 'piracy'
@@ -1086,19 +1091,39 @@
                 ? renderCompetitors()
               : (msgHtml + renderSiteData());
 
+    // One bar under the main tabs for every section: its sub-tabs on the
+    // left, its buttons on the right (they used to sit in the page header
+    // and inside the cards, in a different place per section).
+    var subTabsHtml = isMarketing ? marketingTabs
+      : isSiteData ? '<div class="tabs subtabs">' + renderSiteDataTabs() + '</div>'
+      : state.tab === 'piracy' ? renderPiracyTabs()
+      : state.tab === 'competitors' ? renderCompetitorsTabs()
+      : '';
+    if (isSiteData) actionsHtml = siteDataNewButtonHtml();
+    var barHtml = subTabsHtml || actionsHtml
+      ? '<div class="section-bar"><div class="section-bar-tabs">' + subTabsHtml + '</div><div class="section-bar-actions">' + actionsHtml + '</div></div>'
+      : '';
+
     root.innerHTML =
       '<div class="wrap">' +
         '<header>' +
-          '<div><h1>Team Console</h1><div class="sub">' + (DEV_BYPASS ? 'Local dev mode — auth bypassed, not signed in' : 'Signed in as ' + escapeHtml(user.email)) + '</div></div>' +
-          '<div style="display:flex;gap:10px;">' +
-            actionsHtml +
-            (DEV_BYPASS ? '' : '<button class="btn" id="logout-btn">Log out</button>') +
-          '</div>' +
+          '<div><h1>Team Console</h1><div class="sub">' + (DEV_BYPASS ? 'Local dev mode: sign-in skipped' : 'Signed in as ' + escapeHtml(user.email)) + '</div></div>' +
+          (DEV_BYPASS ? '' : '<button class="btn" id="logout-btn">Log out</button>') +
         '</header>' +
         tabsHtml +
+        barHtml +
         bodyHtml +
       '</div>';
 
+    // Phones: the tab strips scroll sideways, so bring the selected tab into
+    // view (it could sit off-screen, e.g. Piracy past the right edge).
+    document.querySelectorAll('.tabs-main, .tabs.subtabs').forEach(function (strip) {
+      var act = strip.querySelector('.tab-btn.active');
+      if (!act || strip.scrollWidth <= strip.clientWidth + 1) return;
+      var off = act.getBoundingClientRect().left - strip.getBoundingClientRect().left + strip.scrollLeft;
+      var left = off - (strip.clientWidth - act.offsetWidth) / 2;
+      strip.scrollLeft = Math.max(0, Math.min(left, strip.scrollWidth - strip.clientWidth));
+    });
     bindEvents();
     if (state.tab === 'day-card') bindDayCard();
     if (state.tab === 'offer-poster') bindOfferPoster();
@@ -1176,12 +1201,14 @@
     ['name', 'Channel'], ['subs', 'Subs'], ['gained', 'Gained'], ['uploads', 'Uploads'], ['views', 'Views'],
     ['medLong', 'Median / video'], ['medShort', 'Median / Short'], ['med24', 'Median day 1'], ['eng', 'Engagement']
   ];
-  function renderCompetitors() {
+  function renderCompetitorsTabs() {
     var v = state.comp.view;
-    var sw = '<div class="tabs cmp-view">' + [['youtube', '📺 YouTube'], ['web', '🌐 Websites']].map(function (x) {
+    return '<div class="tabs subtabs">' + [['youtube', 'YouTube'], ['web', 'Websites']].map(function (x) {
       return '<button type="button" class="tab-btn' + (v === x[0] ? ' active' : '') + '" data-cmpview="' + x[0] + '">' + x[1] + '</button>';
     }).join('') + '</div>';
-    return sw + (v === 'web' ? renderWebWatch() : renderCmpYoutube());
+  }
+  function renderCompetitors() {
+    return state.comp.view === 'web' ? renderWebWatch() : renderCmpYoutube();
   }
   function renderCmpYoutube() {
     var c = state.comp, d = c.data;
@@ -3060,34 +3087,34 @@
         '<h2 style="font-size:15px;margin-bottom:12px;">Syntax reference</h2>' +
 
         '<div class="ref-section"><div class="ref-heading">Sources</div>' +
-          '<div class="ref-row"><strong>Custom message</strong> — whatever you type in Title/Body, posted as-is. No live data. Optionally add "Extra sections" below the Body — one per subject, each a Date/Topic/Duration table. All subjects\' rows merge into one date-ordered list in the final post (grouped by day, with the weekday shown), not shown subject-by-subject — everything still posts as a single card.</div>' +
-          '<div class="ref-row"><strong>Daily — Top Focus Student</strong> — yesterday\'s single top student. Body fully replaces the default sentence if set.</div>' +
-          '<div class="ref-row"><strong>Daily — Top 3</strong> / <strong>Weekly — Top 5 Leaderboard</strong> — a computed, freshly-ranked list every time it fires. Body (if set) is an intro line shown ABOVE the medal list — the list itself always shows regardless, you can\'t remove it.</div>' +
-          '<div class="ref-row"><strong>Weekly — Batch Median Trend</strong> — a separate post from the Top 5 leaderboard (schedule it a few minutes after that one so it lands as a follow-up message). Reports whether the whole active cohort\'s median focus time rose or fell vs. the week before — one computed number, no ranked list.</div>' +
-          '<div class="ref-row"><strong>Monthly — Most Consistent Student</strong> — reports on the month that just closed, ranked by median daily minutes (not average). Body fully replaces the default sentence if set.</div>' +
+          '<div class="ref-row"><strong>Custom message</strong>: whatever you type in Title/Body, posted as-is. No live data. Optionally add "Extra sections" below the Body: one per subject, each a Date/Topic/Duration table. All subjects\' rows merge into one date-ordered list in the final post (grouped by day, with the weekday shown), not shown subject-by-subject: everything still posts as a single card.</div>' +
+          '<div class="ref-row"><strong>Daily: Top Focus Student</strong>: yesterday\'s single top student. Body fully replaces the default sentence if set.</div>' +
+          '<div class="ref-row"><strong>Daily: Top 3</strong> / <strong>Weekly: Top 5 Leaderboard</strong>: a computed, freshly-ranked list every time it fires. Body (if set) is an intro line shown ABOVE the medal list: the list itself always shows regardless, you can\'t remove it.</div>' +
+          '<div class="ref-row"><strong>Weekly: Batch Median Trend</strong>: a separate post from the Top 5 leaderboard (schedule it a few minutes after that one so it lands as a follow-up message). Reports whether the whole active cohort\'s median focus time rose or fell vs. the week before: one computed number, no ranked list.</div>' +
+          '<div class="ref-row"><strong>Monthly: Most Consistent Student</strong>: reports on the month that just closed, ranked by median daily minutes (not average). Body fully replaces the default sentence if set.</div>' +
         '</div>' +
 
         '<div class="ref-section"><div class="ref-heading">Body placeholders</div>' +
           '<div class="ref-row">Single-student sources (Daily Top Focus Student, Monthly Consistency): <code>{{name}}</code> and <code>{{hours}}</code> only.</div>' +
           '<div class="ref-row">Ranked-list sources (Daily Top 3, Weekly Top 5): <code>{{name}}</code>/<code>{{hours}}</code> = 1st place, <code>{{name2}}</code>/<code>{{hours2}}</code> = 2nd, <code>{{name3}}</code>/<code>{{hours3}}</code> = 3rd, up through <code>{{name5}}</code>/<code>{{hours5}}</code> on the weekly one. An unused one (e.g. <code>{{name4}}</code> on a top-3 post) just renders blank.</div>' +
-          '<div class="ref-row">Weekly — Batch Median Trend: no placeholders — Body, if set, is just a plain intro line shown above the number.</div>' +
-          '<div class="ref-row">Custom messages: no placeholders — Body is posted exactly as typed.</div>' +
+          '<div class="ref-row">Weekly: Batch Median Trend: no placeholders: Body, if set, is just a plain intro line shown above the number.</div>' +
+          '<div class="ref-row">Custom messages: no placeholders: Body is posted exactly as typed.</div>' +
         '</div>' +
 
         '<div class="ref-section"><div class="ref-heading">Mentions</div>' +
-          '<div class="ref-row"><strong>Tag @everyone</strong> checkbox — pings the whole server.</div>' +
-          '<div class="ref-row"><strong>Additional mentions</strong> field — free text for anything else: <code>@here</code> for online members only, <code>&lt;@&amp;ROLE_ID&gt;</code> to ping a role, <code>&lt;@USER_ID&gt;</code> to ping one person. Both fields combine (e.g. @everyone + a role ping both fire together).</div>' +
+          '<div class="ref-row"><strong>Tag @everyone</strong> checkbox: pings the whole server.</div>' +
+          '<div class="ref-row"><strong>Additional mentions</strong> field: free text for anything else: <code>@here</code> for online members only, <code>&lt;@&amp;ROLE_ID&gt;</code> to ping a role, <code>&lt;@USER_ID&gt;</code> to ping one person. Both fields combine (e.g. @everyone + a role ping both fire together).</div>' +
           '<div class="ref-row">Getting an ID: in Discord, turn on Developer Mode (User Settings → Advanced), then right-click a role or person → Copy ID.</div>' +
         '</div>' +
 
         '<div class="ref-section"><div class="ref-heading">Other fields</div>' +
-          '<div class="ref-row"><strong>Channel name</strong> — just a label for this list, purely for telling rows apart at a glance. Doesn\'t affect where the post actually goes — that\'s the Webhook URL.</div>' +
-          '<div class="ref-row"><strong>Load a saved channel</strong> — picks from webhooks already used by an existing post and fills in the Channel name/Webhook URL fields for you. Still just a starting point — edit either field afterward if needed.</div>' +
-          '<div class="ref-row"><strong>Preview</strong> button — shows exactly what would post right now, using real live data, before you save. Doesn\'t post anything or save your changes.</div>' +
-          '<div class="ref-row"><strong>Send Test</strong> button — actually posts a real message right now, to whatever\'s in the "Test webhook URL" field above it (never the real Webhook URL, and never saves your changes). Point that at a private test channel so you can see the real rendered message in an actual Discord client before trusting it with the real one.</div>' +
-          '<div class="ref-row"><strong>Once</strong> schedule — fires exactly one time at the date/time you set, then automatically pauses itself (doesn\'t delete, just switches to disabled).</div>' +
-          '<div class="ref-row"><strong>▲/▼ buttons</strong> on each post — set which post fires first when two posts in the same channel are due at the same time (e.g. the weekly leaderboard before the weekly trend post). Only matters within one channel; has no effect on posts going to a different destination.</div>' +
-          '<div class="ref-row"><strong>Posts are checked every 15 minutes</strong> (:00/:15/:30/:45), not continuously — a Time that doesn\'t land exactly on one of those fires at the next check after it, not the minute you typed.</div>' +
+          '<div class="ref-row"><strong>Channel name</strong>: just a label for this list, purely for telling rows apart at a glance. Doesn\'t affect where the post actually goes: that\'s the Webhook URL.</div>' +
+          '<div class="ref-row"><strong>Load a saved channel</strong>: picks from webhooks already used by an existing post and fills in the Channel name/Webhook URL fields for you. Still just a starting point: edit either field afterward if needed.</div>' +
+          '<div class="ref-row"><strong>Preview</strong> button: shows exactly what would post right now, using real live data, before you save. Doesn\'t post anything or save your changes.</div>' +
+          '<div class="ref-row"><strong>Send Test</strong> button: actually posts a real message right now, to whatever\'s in the "Test webhook URL" field above it (never the real Webhook URL, and never saves your changes). Point that at a private test channel so you can see the real rendered message in an actual Discord client before trusting it with the real one.</div>' +
+          '<div class="ref-row"><strong>Once</strong> schedule: fires exactly one time at the date/time you set, then automatically pauses itself (doesn\'t delete, just switches to disabled).</div>' +
+          '<div class="ref-row"><strong>▲/▼ buttons</strong> on each post: set which post fires first when two posts in the same channel are due at the same time (e.g. the weekly leaderboard before the weekly trend post). Only matters within one channel; has no effect on posts going to a different destination.</div>' +
+          '<div class="ref-row"><strong>Posts are checked every 15 minutes</strong> (:00/:15/:30/:45), not continuously: a Time that doesn\'t land exactly on one of those fires at the next check after it, not the minute you typed.</div>' +
         '</div>' +
       '</div>'
     );
@@ -3320,13 +3347,13 @@
     if (s.gate_escalated) {
       var status = state.clearBlockStatus[s.email];
       var working = status === 'saving';
-      html += '<div class="name-flag-badge name-flag-badge--escalated">⛔ Blocked — needs manual clear</div>';
+      html += '<div class="name-flag-badge name-flag-badge--escalated">⛔ Blocked: needs manual clear</div>';
       html += '<div class="name-clear-actions">' +
         '<input type="text" class="js-clear-rename-input" data-email="' + escapeHtml(s.email) + '" placeholder="New name (optional)">' +
         '<button type="button" class="btn btn-small js-clear-rename" data-email="' + escapeHtml(s.email) + '"' + (working ? ' disabled' : '') + '>' + (working ? 'Working…' : 'Rename') + '</button>' +
         '<button type="button" class="btn btn-small js-clear-block" data-email="' + escapeHtml(s.email) + '"' + (working ? ' disabled' : '') + '>Clear block</button>' +
         '</div>';
-      if (status === 'error') html += '<div class="field-hint" style="color:#f87171;">Action failed — try again.</div>';
+      if (status === 'error') html += '<div class="field-hint" style="color:#f87171;">Action failed: try again.</div>';
     }
     // Advisory-only — see schema.sql's own comment on name_review_note.
     // Shown regardless of needs_rename/gate_escalated above, since the
@@ -3687,16 +3714,24 @@
     return true;
   }
 
+  // "+ New note" / "+ New lecture" in the section bar (none for Pricing,
+  // Settings, or while a form is open).
+  function siteDataNewButtonHtml() {
+    var sd = state.siteData, type = sd.subTab;
+    var editingThis = sd.editing && sd.editing.type === type ? sd.editing.row : null;
+    if (editingThis || type === 'pricing' || type === 'settings') return '';
+    return '<button class="btn btn-primary" id="sitedata-new">' + SITE_DATA_NEW_LABEL[type] + '</button>';
+  }
   function renderSiteDataTabs() {
     var html = Object.keys(SITE_DATA_RESOURCES).map(function (type) {
       var cfg = SITE_DATA_RESOURCES[type];
       var active = state.siteData.subTab === type;
       var rows = state.siteData.rows[type];
-      var countLabel = rows ? ' (' + rows.length + ')' : '';
+      var countLabel = rows ? ' <span class="tab-count">' + rows.length + '</span>' : '';
       return '<button class="tab-btn' + (active ? ' active' : '') + '" data-sitetab="' + type + '">' + cfg.label + countLabel + '</button>';
     }).join('');
     var settingsActive = state.siteData.subTab === 'settings';
-    html += '<button class="tab-btn' + (settingsActive ? ' active' : '') + '" data-sitetab="settings">⚙️ Settings</button>';
+    html += '<button class="tab-btn' + (settingsActive ? ' active' : '') + '" data-sitetab="settings">Settings</button>';
     return html;
   }
 
@@ -3718,7 +3753,7 @@
     var rows = sd.rows[type];
     if (!rows || !rows.length) {
       return type === 'pricing'
-        ? '<div class="empty">No pricing rows yet — these are added directly (with their matching course card), not through this page.</div>'
+        ? '<div class="empty">No pricing rows yet: these are added directly (with their matching course card), not through this page.</div>'
         : '<div class="empty">No rows yet. Click "+ New' + (type === 'notes' ? ' note' : ' lecture') + '" above to add one.</div>';
     }
     return type === 'pricing' ? renderLmsSyncPanel() + renderPricingGroups(rows) : renderResourceStatsPanel() + renderResourceSections(type, rows);
@@ -3851,7 +3886,7 @@
     var priceHtml = row.price != null
       ? '<span class="pricing-card-price-main">₹' + escapeHtml(row.price) + '</span>' + (row.price_old != null ? '<span class="pricing-card-price-old">₹' + escapeHtml(row.price_old) + '</span>' : '')
       : '<span class="pricing-card-price-none">No price set</span>';
-    var discountHtml = row.discount ? '<span class="pricing-card-discount">' + escapeHtml(row.discount) + (row.discount_reason ? ' — ' + escapeHtml(row.discount_reason) : '') + '</span>' : '';
+    var discountHtml = row.discount ? '<span class="pricing-card-discount">' + escapeHtml(/^\d+(\.\d+)?$/.test(String(row.discount).trim()) ? row.discount + '% off' : row.discount) + (row.discount_reason ? ' · ' + escapeHtml(row.discount_reason) : '') + '</span>' : '';
     var metaRows = [];
     if (row.validity) metaRows.push('<div><b>Valid until</b> ' + escapeHtml(row.validity) + '</div>');
     if (row.discount_deadline) metaRows.push('<div><b>Discount ends</b> ' + escapeHtml(row.discount_deadline) + '</div>');
@@ -3895,14 +3930,14 @@
         (ownRow
           ? 'On the live page, the featured bundle currently gets its own full-width row above the rest (4+ bundled courses).'
           : 'On the live page, the featured bundle currently sits in the plain grid with the others (3 or fewer bundled courses).') +
-        (comboRows.length > 1 ? ' Drag a card by its ⠿ handle to reorder — this order is live on taai.live.' : '') +
+        (comboRows.length > 1 ? ' Drag a card by its ⠿ handle to reorder: this order is live on taai.live.' : '') +
         '</div>';
     }
     var individualHintHtml = individualRows.length > 1
-      ? '<div class="pricing-group-hint">Drag a card by its ⠿ handle to reorder — this order is live on taai.live.</div>'
+      ? '<div class="pricing-group-hint">Drag a card by its ⠿ handle to reorder: this order is live on taai.live.</div>'
       : '';
     var testSeriesHintHtml = testSeriesRows.length > 1
-      ? '<div class="pricing-group-hint">Drag a card by its ⠿ handle to reorder — admin-only preview for now, the test series page doesn\'t read this order yet.</div>'
+      ? '<div class="pricing-group-hint">Drag a card by its ⠿ handle to reorder: admin-only preview for now, the test series page doesn\'t read this order yet.</div>'
       : '';
 
     // dragGroup is a plain string key ('combo'/'individual'/'test-series')
@@ -4037,7 +4072,7 @@
   // never seen a database table, explaining in one sentence what this
   // list is and whether it's actually live yet.
   var SITE_DATA_INTRO = {
-    pricing: 'Every course, bundle, and test series shown on the site — its price, discount, validity, sold-out date, enrolment link, and order. Grouped below into Bundled courses, Individual courses, and Test series.',
+    pricing: 'Every course, bundle, and test series shown on the site: its price, discount, validity, sold-out date, enrolment link, and order. Grouped below into Bundled courses, Individual courses, and Test series.',
     notes: 'Downloadable PDF notes, organized by subject.',
     lectures: 'Video lectures and their slides, organized by subject.',
     settings: 'Site-wide switches for what shows on taai.live.',
@@ -4048,10 +4083,10 @@
   // per-type sentence rather than one blanket line so this stays
   // accurate if/when Notes/Lectures ever get their own cutover later.
   var SITE_DATA_LIVE_NOTE = {
-    pricing: 'Changes here go live on taai.live immediately — no deploy needed.',
+    pricing: 'Changes here go live on taai.live immediately: no deploy needed.',
     notes: 'Changes here show on the taai.live Resources page within about a minute. No deploy needed.',
     lectures: 'Changes here show on the taai.live Resources page within about a minute. No deploy needed.',
-    settings: 'Changes here go live on taai.live immediately — no deploy needed.',
+    settings: 'Changes here go live on taai.live immediately: no deploy needed.',
   };
   var SITE_DATA_NEW_LABEL = { pricing: '+ New course', notes: '+ New note', lectures: '+ New lecture' };
   var SITE_DATA_SINGULAR = { pricing: 'course', notes: 'note', lectures: 'lecture' };
@@ -4073,10 +4108,6 @@
 
     return (
       '<div class="card">' +
-        '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px;">' +
-          '<div class="tabs sitedata-tabs" style="margin:0;">' + renderSiteDataTabs() + '</div>' +
-          (editingThis || !showNewButton ? '' : '<button class="btn btn-primary" id="sitedata-new">' + SITE_DATA_NEW_LABEL[type] + '</button>') +
-        '</div>' +
         '<div class="field-hint" style="margin-bottom:16px;">' + SITE_DATA_INTRO[type] + ' ' + SITE_DATA_LIVE_NOTE[type] + '</div>' +
         (type === 'settings' ? renderSiteSettingsPanel() : (editingThis ? renderSiteDataForm(type, editingThis) : renderSiteDataList(type))) +
       '</div>'
@@ -4217,7 +4248,7 @@
       '<div class="site-setting-row">' +
         '<div class="site-setting-info">' +
           '<div class="site-setting-title">Hide the "Can\'t afford it right now?" card</div>' +
-          '<div class="field-hint">Hides the financial-assistance section near the bottom of the homepage. Nothing else on the page changes — the mobile "Take a Trial" bar stays as-is.</div>' +
+          '<div class="field-hint">Hides the financial-assistance section near the bottom of the homepage. Nothing else on the page changes: the mobile "Take a Trial" bar stays as-is.</div>' +
         '</div>' +
         '<label class="site-setting-switch' + (ss.saving ? ' is-saving' : '') + '" for="setting-hide-financial-assistance">' +
           '<input type="checkbox" id="setting-hide-financial-assistance" data-setting-field="hideFinancialAssistance"' + (checked ? ' checked' : '') + (ss.saving ? ' disabled' : '') + '>' +
@@ -4554,7 +4585,7 @@
         // Forward: price + old price known → check/offer discount.
         var computedPct = Math.round((priceOld - price) / priceOld * 100);
         if (discountRaw === '') {
-          hintEl.innerHTML = 'Price implies <strong>' + computedPct + '% off</strong> — <button type="button" class="chip" id="discount-fill-btn">Use ' + computedPct + '%</button>';
+          hintEl.innerHTML = 'Price implies <strong>' + computedPct + '% off</strong>: <button type="button" class="chip" id="discount-fill-btn">Use ' + computedPct + '%</button>';
           document.getElementById('discount-fill-btn').addEventListener('click', function () {
             discountEl.value = String(computedPct);
             update();
@@ -4564,9 +4595,9 @@
           hintEl.textContent = '✓ Matches the price math (' + computedPct + '% off).';
         } else if (enteredIsNumeric) {
           hintEl.classList.add('field-hint--warn');
-          hintEl.textContent = '⚠ Doesn\'t match the price math — price implies ' + computedPct + '% off, this field says ' + enteredPct + '%.';
+          hintEl.textContent = '⚠ Doesn\'t match the price math: price implies ' + computedPct + '% off, this field says ' + enteredPct + '%.';
         } else {
-          hintEl.innerHTML = 'Price implies <strong>' + computedPct + '% off</strong> (this field has custom text, not a plain % — nothing to check it against).';
+          hintEl.innerHTML = 'Price implies <strong>' + computedPct + '% off</strong> (this field has custom text, not a plain %: nothing to check it against).';
         }
       } else if (!priceValid && enteredIsNumeric && enteredPct > 0 && enteredPct < 100) {
         // Reverse: discount % + old price known, price still blank →
@@ -4575,7 +4606,7 @@
         // takes over and treats that price as the thing to check the
         // discount against, not the other way around.
         var computedPrice = Math.round(priceOld * (1 - enteredPct / 100));
-        hintEl.innerHTML = enteredPct + '% off ₹' + priceOld.toLocaleString('en-IN') + ' is <strong>₹' + computedPrice.toLocaleString('en-IN') + '</strong> — <button type="button" class="chip" id="price-fill-btn">Use ₹' + computedPrice + '</button>';
+        hintEl.innerHTML = enteredPct + '% off ₹' + priceOld.toLocaleString('en-IN') + ' is <strong>₹' + computedPrice.toLocaleString('en-IN') + '</strong>: <button type="button" class="chip" id="price-fill-btn">Use ₹' + computedPrice + '</button>';
         document.getElementById('price-fill-btn').addEventListener('click', function () {
           priceEl.value = String(computedPrice);
           update();
@@ -4872,8 +4903,8 @@
               ' <span class="field-hint">' + r.links + ' link' + (r.links === 1 ? '' : 's') + (r.added ? ', ' + r.added + ' new' : '') + '</span></li>';
           }).join('') + '</ul>'
         : '<div class="field-hint">Nothing logged from Gmail yet.</div>';
-    return '<details class="pir-ingest"' + (g.ready && !recent.length ? ' open' : '') + '>' +
-      '<summary>📧 Auto-log notices by BCC' + (recent.length ? ' <span class="pir-ingest-on">On</span>' : '') + '</summary>' +
+    return '<details class="pir-ingest">' +
+      '<summary>📧 Auto-log notices by BCC' + (recent.length ? ' <span class="pir-ingest-on">On</span>' : ' <span class="field-hint">not set up yet</span>') + '</summary>' +
       '<div class="pir-ingest-body">' +
         status +
         '<p>Write the notice anywhere (Claude chat is fine), send it from support@taai.live with "Infringement" or "Takedown" in the subject, and <b>BCC the log inbox</b>. Within 15 minutes every Telegram link in it is added to this log. The script only reads that separate inbox, never the official mailbox, and only mail from support@taai.live. The same email is never counted twice.</p>' +
@@ -4907,6 +4938,10 @@
     });
     var last = pirLastChecked(p.rows);
     var kindLabel = { channel: 'Channel', message: 'Message', invite: 'Invite link', private: 'Private', account: 'Account' };
+    // 50 at a time (2026-11-25): the whole log at once made this tab
+    // over 20,000px tall.
+    var total = rows.length, limit = p.logLimit || 50;
+    rows = rows.slice(0, limit);
     var table = rows.length ? (
       '<div class="students-table-wrap"><table class="students-table sitedata-table pir-table"><thead><tr>' +
         '<th>Link</th><th>Type</th><th>Reported</th><th>Status</th><th></th>' +
@@ -4931,7 +4966,8 @@
           '</td>' +
         '</tr>';
       }).join('') +
-      '</tbody></table></div>'
+      '</tbody></table></div>' +
+      (total > rows.length ? '<div class="list-more"><button type="button" class="btn" id="pir-more">Show 50 more</button><span class="field-hint">Showing ' + rows.length + ' of ' + total + '</span></div>' : '')
     ) : '<div class="field-hint">' + (p.rows.length ? 'Nothing matches.' : 'No links logged yet. Draft a notice and press "Add to log", or set up the Gmail auto-log above.') + '</div>';
     return (
       '<div class="chal-stats">' +
@@ -5032,17 +5068,19 @@
       '<div class="field-hint">Send it yourself (with screenshots and ownership documents attached), then press the button so the links are checked daily.</div>';
   }
 
+  function renderPiracyTabs() {
+    var p = state.piracy;
+    var fresh = p.candidates.filter(function (c) { return c.status === 'new'; }).length;
+    var t = function (key, label, count) {
+      return '<button class="tab-btn' + (p.sub === key ? ' active' : '') + '" data-pirtab="' + key + '">' + label + (count ? ' <span class="tab-count">' + count + '</span>' : '') + '</button>';
+    };
+    return '<div class="tabs subtabs">' + t('log', 'Log', p.rows.length) + t('found', 'Found', fresh ? fresh + ' new' : 0) + t('notice', 'New notice', 0) + t('evidence', 'Evidence', p.ev.files.length) + '</div>';
+  }
   function renderPiracyPanel() {
     var p = state.piracy;
     if (!p.draft) p.draft = pirLoadDraft();
     if (p.loading && !p.loaded) return '<div class="card"><div class="field-hint">Loading…</div></div>';
     return '<div class="card">' +
-      '<div class="tabs" style="margin:0 0 14px;">' +
-        '<button class="tab-btn' + (p.sub === 'log' ? ' active' : '') + '" data-pirtab="log">📋 Log</button>' +
-        '<button class="tab-btn' + (p.sub === 'found' ? ' active' : '') + '" data-pirtab="found">🔎 Found' + (p.candidates.filter(function (c) { return c.status === 'new'; }).length ? ' (' + p.candidates.filter(function (c) { return c.status === 'new'; }).length + ' new)' : '') + '</button>' +
-        '<button class="tab-btn' + (p.sub === 'notice' ? ' active' : '') + '" data-pirtab="notice">✍️ New notice</button>' +
-        '<button class="tab-btn' + (p.sub === 'evidence' ? ' active' : '') + '" data-pirtab="evidence">📁 Evidence' + (p.ev.files.length ? ' (' + p.ev.files.length + ')' : '') + '</button>' +
-      '</div>' +
       (p.error ? '<div class="msg msg-error">' + escapeHtml(p.error) + '</div>' : '') +
       (p.msg ? '<div class="msg msg-ok">' + escapeHtml(p.msg) + '</div>' : '') +
       (p.sub === 'notice' ? renderPiracyNotice() : p.sub === 'found' ? renderPiracyFound() : p.sub === 'evidence' ? renderPiracyEvidence() : renderPiracyLog()) +
@@ -5341,10 +5379,12 @@
     });
     if (p.sub === 'evidence') bindPiracyEvidence();
     var filter = document.getElementById('pir-filter');
-    if (filter) filter.addEventListener('change', function () { p.filter = filter.value; render(); });
+    if (filter) filter.addEventListener('change', function () { p.filter = filter.value; p.logLimit = 50; render(); });
     var search = document.getElementById('pir-search');
-    if (search) search.addEventListener('change', function () { p.q = search.value.trim(); render(); });
-    if (search) search.addEventListener('keydown', function (e) { if (e.key === 'Enter') { p.q = search.value.trim(); render(); } });
+    if (search) search.addEventListener('change', function () { p.q = search.value.trim(); p.logLimit = 50; render(); });
+    if (search) search.addEventListener('keydown', function (e) { if (e.key === 'Enter') { p.q = search.value.trim(); p.logLimit = 50; render(); } });
+    var pirMore = document.getElementById('pir-more');
+    if (pirMore) pirMore.addEventListener('click', function () { p.logLimit = (p.logLimit || 50) + 50; render(); });
     var ingestCopy = document.getElementById('pir-ingest-copy');
     if (ingestCopy) ingestCopy.addEventListener('click', function () { pirCopy('pir-ingest-script', ingestCopy); });
     var check = document.getElementById('pir-check');

@@ -745,6 +745,33 @@
 .cr-slot textarea { width: 100%; resize: vertical; }
 .cw-dl { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .cw-dl select { height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: inherit; font: inherit; font-size: 13px; }
+
+  /* ── Layout cleanup (2026-11-25, "it looks too haphazard") ──────────────
+     Main tabs: one line each, no emoji, equal widths on desktop and a
+     sideways-scrolling strip on narrow screens. Under them, one section bar
+     for every section: its sub-tabs on the left, its buttons on the right. */
+  .tabs-main { display: flex; width: 100%; gap: 2px; padding: 4px; margin: 0 0 12px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .tabs-main::-webkit-scrollbar { display: none; }
+  .tabs-main .tab-btn { flex: 1 1 0; min-width: max-content; height: 36px; min-height: 0; padding: 0 14px; font-size: 13.5px; font-weight: 500; line-height: 1; white-space: nowrap; justify-content: center; text-align: center; }
+  @media (max-width: 760px) { .tabs-main .tab-btn { flex: 0 0 auto; } }
+  .section-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px 12px; flex-wrap: wrap; margin: 0 0 16px; }
+  .section-bar-tabs { min-width: 0; max-width: 100%; }
+  .section-bar-tabs:empty { display: none; }
+  .section-bar-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+  .section-bar-actions:empty { display: none; }
+  .tabs.subtabs { display: inline-flex; max-width: 100%; margin: 0; overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap; }
+  .tabs.subtabs::-webkit-scrollbar { display: none; }
+  .tabs.subtabs .tab-btn { flex: 0 0 auto; white-space: nowrap; }
+  .tab-count { display: inline-block; margin-left: 2px; padding: 2px 6px; border-radius: 999px; background: rgba(255,255,255,0.09); color: var(--ink-soft); font-size: 11px; font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; }
+  .tab-btn.active .tab-count { background: rgba(255,255,255,0.16); color: var(--ink); }
+  .list-more { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+  @media (max-width: 600px) {
+    .section-bar { align-items: stretch; }
+    .section-bar-tabs { width: 100%; }
+    .section-bar-actions { width: 100%; margin-left: 0; }
+    .section-bar-actions .btn { flex: 1; }
+    header { flex-wrap: wrap; }
+  }
 </style>
 </head>
 <body>
