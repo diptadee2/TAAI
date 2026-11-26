@@ -4439,12 +4439,16 @@ html.has-mft body::before{transition:transform .28s cubic-bezier(.4,0,1,1)}
 <script src="/mini-flt-popup.js" defer></script>
 <script src="/mini-flt-ticker.js" defer></script>
 <style>
-/* GATE 2028 card: countdown to GATE 2027 (2026-11-26), a quiet one-line strip */
-html body main #combos #full-course-2028 .c28-gcd { margin-top: 12px; display: flex; align-items: baseline; justify-content: center; flex-wrap: wrap; gap: 2px 7px; padding: 8px 10px; border-radius: 10px; background: #F5F3FC; border: 1px solid #E4E0F3; font-family: 'Poppins', sans-serif; }
-html body main #combos #full-course-2028 .c28-gcd-label { font-size: 12px; color: #6B6880 !important; -webkit-text-fill-color: #6B6880 !important; white-space: nowrap; }
-html body main #combos #full-course-2028 .c28-gcd-time { font-size: 11.5px; white-space: nowrap; color: #8A879C !important; -webkit-text-fill-color: #8A879C !important; }
-html body main #combos #full-course-2028 .c28-gcd-time b { display: inline-block; min-width: 1.35em; text-align: right; font-size: 13.5px; font-weight: 600; color: #1B1A22 !important; -webkit-text-fill-color: #1B1A22 !important; }
-html body main #combos #full-course-2028 .c28-gcd-time b.c28-gcd-sec { color: #DC2626 !important; -webkit-text-fill-color: #DC2626 !important; }
+/* GATE 2028 card: countdown to GATE 2027 (2026-11-26): a red-tinted panel, serious but lighter than the black Enrol now button */
+html body main #combos #full-course-2028 .c28-gcd { margin-top: 12px; padding: 9px 10px 10px; border-radius: 12px; background: #FFF4F4; border: 1.5px solid #F7B4B4; font-family: 'Poppins', sans-serif; }
+html body main #combos #full-course-2028 .c28-gcd-label { display: block; text-align: center; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: #B91C1C !important; -webkit-text-fill-color: #B91C1C !important; margin-bottom: 6px; }
+html body main #combos #full-course-2028 .c28-gcd-cells { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+html body main #combos #full-course-2028 .c28-gcd-cell { display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+html body main #combos #full-course-2028 .c28-gcd-cell + .c28-gcd-cell { border-left: 1px solid #F7C9C9; }
+html body main #combos #full-course-2028 .c28-gcd-cell b { font-size: 21px; font-weight: 700; letter-spacing: -0.01em; color: #1B1A22 !important; -webkit-text-fill-color: #1B1A22 !important; }
+html body main #combos #full-course-2028 .c28-gcd-cell small { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .04em; margin-top: 2px; color: #8A6B6B !important; -webkit-text-fill-color: #8A6B6B !important; }
+html body main #combos #full-course-2028 .c28-gcd-sec b { color: #DC2626 !important; -webkit-text-fill-color: #DC2626 !important; }
+@media (max-width: 360px) { html body main #combos #full-course-2028 .c28-gcd-cell b { font-size: 18px; } html body main #combos #full-course-2028 .c28-gcd-label { font-size: 10px; letter-spacing: .01em; white-space: nowrap; } }
 /* even spacing: price, countdown, offer/button and validity 12px apart */
 html body main #combos #full-course-2028 .c28-gcd + .combo-live-cta { margin-top: 0 !important; }
 html body main #combos #full-course-2028 .c28-gcd + .combo-live-cta > :first-child { margin-top: 12px !important; }
@@ -5640,8 +5644,12 @@ function Gate2028Countdown() {
   const pad = n => String(n).padStart(2, '0');
   return (
     <div className="c28-gcd" role="timer" aria-live="off" aria-label={'GATE 2027 in ' + d + ' days'}>
-      <span className="c28-gcd-label" aria-hidden="true">GATE 2027 in</span>
-      <span className="c28-gcd-time" aria-hidden="true"><b>{d}</b>d <b>{pad(h)}</b>h <b>{pad(m)}</b>m <b className="c28-gcd-sec">{pad(sec)}</b>s</span>
+      <span className="c28-gcd-label" aria-hidden="true">Time left till GATE 2027</span>
+      <span className="c28-gcd-cells" aria-hidden="true">
+        {[[d, d === 1 ? 'day' : 'days'], [pad(h), 'hrs'], [pad(m), 'min'], [pad(sec), 'sec']].map(([v, l], i) => (
+          <span key={l} className={'c28-gcd-cell' + (i === 3 ? ' c28-gcd-sec' : '')}><b>{v}</b><small>{l}</small></span>
+        ))}
+      </span>
     </div>
   );
 }
