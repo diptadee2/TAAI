@@ -23,6 +23,7 @@ import { getSupabase, json, clockSkewMs } from './lib/supabase.js';
 // Stored times come back two ways: phase_started_at is epoch milliseconds (a
 // number) and updated_at is a TIMESTAMP without a time zone, written as UTC
 // but returned without a "Z", which Date.parse would read as local time.
+const LATE_START_CAP_MS = 3 * 60 * 1000;
 function tsMs(v) {
   if (v == null) return NaN;
   if (typeof v === 'number') return v;
@@ -266,7 +267,24 @@ export async function handler(event) {
     }
   }
 
-  const phaseStartedAt = isNewPhase ? Date.now() : (existing.phase_started_at ?? Date.now());
+  // A new running phase is normally dated "now". But the write that tells us
+  // about it can arrive late: this device holds it while the previous
+  // session's credit claim is still going through, or the network retries.
+  // Then "now" is later than the real start, the finished session looks short
+  // and is never credited (Mohan Keshav, 2026-11-26: a 60-minute session
+  // dated 57s late, skipped). So date it back by the time the device says it
+  // has already run (totalSeconds - secondsLeft), at most LATE_START_CAP_MS,
+  // and never before the previous running phase's own end (no overlap).
+  let phaseStartedAt = isNewPhase ? Date.now() : (existing.phase_started_at ?? Date.now());
+  if (isNewPhase && running && secondsLeft < totalSeconds) {
+    const ranMs = Math.min(LATE_START_CAP_MS, (totalSeconds - secondsLeft) * 1000);
+    let start = Date.now() - ranMs;
+    if (existing && existing.running) {
+      const prevEnd = tsMs(existing.updated_at) + (Number.isFinite(existing.seconds_left) ? existing.seconds_left * 1000 : 0);
+      if (Number.isFinite(prevEnd)) start = Math.max(start, prevEnd);
+    }
+    phaseStartedAt = Math.min(Date.now(), Math.round(start));
+  }
 
   const upsertPayload = {
     email,
