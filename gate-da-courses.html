@@ -4438,6 +4438,19 @@ html.has-mft body::before{transition:transform .28s cubic-bezier(.4,0,1,1)}
 <script>try{if(localStorage.getItem('taai_mft_on')!=='0'){document.documentElement.classList.add('has-mft');if(localStorage.getItem('taai_mft_style')==='dark')document.documentElement.classList.add('has-mft-dark')}}catch(e){document.documentElement.classList.add('has-mft')}</script>
 <script src="/mini-flt-popup.js" defer></script>
 <script src="/mini-flt-ticker.js" defer></script>
+<style>
+/* GATE 2028 card: countdown to Feb 4, 2028 (2026-11-26) */
+html body main #combos #full-course-2028 .c28-gcd { margin-top: 12px; padding: 10px 10px 11px; border-radius: 14px; background: #111; }
+html body main #combos #full-course-2028 .c28-gcd-label { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; text-align: center; color: rgba(255,255,255,.72) !important; -webkit-text-fill-color: rgba(255,255,255,.72) !important; margin-bottom: 7px; }
+html body main #combos #full-course-2028 .c28-gcd-label b { color: #FFE14D !important; -webkit-text-fill-color: #FFE14D !important; font-weight: 600; }
+html body main #combos #full-course-2028 .c28-gcd-cells { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+html body main #combos #full-course-2028 .c28-gcd-cell { display: flex; flex-direction: column; align-items: center; padding: 6px 2px 5px; border-radius: 9px; background: rgba(255,255,255,.08); }
+html body main #combos #full-course-2028 .c28-gcd-cell b { font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 20px; line-height: 1.1; font-variant-numeric: tabular-nums; color: #fff !important; -webkit-text-fill-color: #fff !important; }
+html body main #combos #full-course-2028 .c28-gcd-cell small { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10px; text-transform: uppercase; letter-spacing: .04em; color: rgba(255,255,255,.6) !important; -webkit-text-fill-color: rgba(255,255,255,.6) !important; }
+html body main #combos #full-course-2028 .c28-gcd-label b { white-space: nowrap; }
+@media (max-width: 360px) { html body main #combos #full-course-2028 .c28-gcd-label { font-size: 10px; letter-spacing: .02em; } html body main #combos #full-course-2028 .c28-gcd-cell b { font-size: 18px; } }
+html body main #combos #full-course-2028 .c28-gcd-sec b { color: #FF8A8A !important; -webkit-text-fill-color: #FF8A8A !important; }
+</style>
 </head>
 <body data-float-stack>
 <div id="root"></div>
@@ -5612,6 +5625,32 @@ function OfferCountdown({ deadline }) {
   );
 }
 
+// Countdown to Feb 4, 2028 on the GATE 2028 card (2026-11-26, direct request:
+// "a countdown ... till feb 4th 2028 so that it evokes urgency"). Days, hours,
+// minutes and seconds, ticking every second; gone once the date has passed.
+function Gate2028Countdown() {
+  const end = React.useMemo(() => new Date('2028-02-04T00:00:00+05:30').getTime(), []);
+  const [now, setNow] = React.useState(() => Date.now());
+  React.useEffect(() => {
+    if (end - Date.now() <= 0) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [end]);
+  const left = Math.max(0, Math.floor((end - now) / 1000));
+  if (left <= 0) return null;
+  const d = Math.floor(left / 86400), h = Math.floor((left % 86400) / 3600), m = Math.floor((left % 3600) / 60), sec = left % 60;
+  const pad = n => String(n).padStart(2, '0');
+  const cells = [[d, d === 1 ? 'day' : 'days'], [pad(h), 'hrs'], [pad(m), 'min'], [pad(sec), 'sec']];
+  return (
+    <div className="c28-gcd" role="timer" aria-live="off" aria-label={d + ' days left until 4 February 2028'}>
+      <div className="c28-gcd-label" aria-hidden="true">Time left till <b>Feb 4, 2028</b></div>
+      <div className="c28-gcd-cells" aria-hidden="true">
+        {cells.map(([v, l], i) => <span key={l} className={'c28-gcd-cell' + (i === 3 ? ' c28-gcd-sec' : '')}><b>{v}</b><small>{l}</small></span>)}
+      </div>
+    </div>
+  );
+}
+
 const ComboCard = React.memo(function ComboCard({ c, pricing }) {
   const p = pricing;
   // Phones only: long includes lists show the first few items behind a
@@ -5844,6 +5883,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
               <span className="c28-mrp-rise-row" aria-hidden="true"><span className="c28-mrp-rise-num">{fmtPrice(c.mrpRiseTo)}</span><span className="c28-mrp-rise-arrow">↑</span></span>
               <span className="c28-mrp-rise-when" aria-hidden="true">{c.mrpRiseWhen}</span>
             </div>}
+            {c.id === 'full-course-2028' && !comingSoon && !isSoldOut && <Gate2028Countdown />}
             {c.priceNote && <div className={'combo-price-note' + (comingSoon ? ' combo-includes-blurred' : '')} aria-hidden={comingSoon || undefined}>{c.priceNote}</div>}
             {comingSoon ? (
               <span className="btn btn-full combo-soon-btn" aria-disabled="true">{launchUpcoming ? (daysUntilLaunch === 0 ? 'Launching today' : `Launching ${launchShort}`) : 'Coming soon'}</span>
