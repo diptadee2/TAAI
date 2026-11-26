@@ -5629,7 +5629,7 @@ function OfferCountdown({ deadline }) {
 // "a countdown ... till feb 4th 2028 so that it evokes urgency"). Days, hours,
 // minutes and seconds, ticking every second; gone once the date has passed.
 function Gate2028Countdown() {
-  const end = React.useMemo(() => new Date('2028-02-04T00:00:00+05:30').getTime(), []);
+  const end = React.useMemo(() => new Date('2027-02-04T00:00:00+05:30').getTime(), []);
   const [now, setNow] = React.useState(() => Date.now());
   React.useEffect(() => {
     if (end - Date.now() <= 0) return;
@@ -5642,8 +5642,8 @@ function Gate2028Countdown() {
   const pad = n => String(n).padStart(2, '0');
   const cells = [[d, d === 1 ? 'day' : 'days'], [pad(h), 'hrs'], [pad(m), 'min'], [pad(sec), 'sec']];
   return (
-    <div className="c28-gcd" role="timer" aria-live="off" aria-label={d + ' days left until 4 February 2028'}>
-      <div className="c28-gcd-label" aria-hidden="true">Time left till <b>Feb 4, 2028</b></div>
+    <div className="c28-gcd" role="timer" aria-live="off" aria-label={d + ' days left until GATE 2027, 4 February 2027'}>
+      <div className="c28-gcd-label" aria-hidden="true">Time left till <b>GATE 2027</b></div>
       <div className="c28-gcd-cells" aria-hidden="true">
         {cells.map(([v, l], i) => <span key={l} className={'c28-gcd-cell' + (i === 3 ? ' c28-gcd-sec' : '')}><b>{v}</b><small>{l}</small></span>)}
       </div>
