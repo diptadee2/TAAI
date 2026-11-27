@@ -1604,3 +1604,23 @@ INSERT INTO web_pages (competitor, label, url, extractor, match, sort) VALUES
   ('The ML Hub', 'DA schedule', 'https://themlhub.ai/schedule-gate-da', 'text', NULL, 44),
   ('The ML Hub', 'All pages (sitemap)', 'https://themlhub.ai/sitemap.xml', 'sitemap', NULL, 45)
 ON CONFLICT (url) DO NOTHING;
+
+
+-- Resources survey emails (2026-11-27): at the end of the one-time survey on
+-- /gate-da-free-notes a visitor may leave an email to be sent a discount code.
+-- Kept with their three answers so the code can fit them (e.g. GATE 2028 for
+-- 3rd years). One row per email (a repeat updates the answers). Written only by
+-- resource-lead.js (service role), read by team-resource-leads.js (admin).
+CREATE TABLE IF NOT EXISTS resource_leads (
+  id         BIGSERIAL PRIMARY KEY,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  email      TEXT NOT NULL UNIQUE,
+  year       TEXT,
+  prep       TEXT,
+  source     TEXT,
+  sent_at    TIMESTAMPTZ
+);
+ALTER TABLE resource_leads ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON resource_leads TO service_role;
+GRANT USAGE, SELECT ON SEQUENCE resource_leads_id_seq TO service_role;

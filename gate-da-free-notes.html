@@ -2006,6 +2006,16 @@ ReactDOM.createRoot(document.getElementById('root')).render(<ErrorBoundary><App 
 .rsv-opt[aria-pressed="true"] { background: #C4B5FD; }
 .rsv-opt.rsv-wide { grid-column: 1 / -1; }
 .rsv-other { margin-top: 12px; display: none; }
+.rsv-email { margin-top: 16px; padding-top: 14px; border-top: 2px dashed #111; display: none; }
+.rsv-email.on { display: block; }
+.rsv-email label { display: block; font-weight: 700; font-size: 14px; margin-bottom: 8px; }
+.rsv-email label span { display: block; font-weight: 500; font-size: 12.5px; color: #555; margin-top: 2px; }
+.rsv-email input[type=email] { width: 100%; box-sizing: border-box; font: 500 16px 'Poppins', system-ui, sans-serif; color: #111; background: #fff; border: 2px solid #111; padding: 12px; outline: none; }
+.rsv-email input[type=email]:focus { box-shadow: 3px 3px 0 #111; }
+.rsv-email .rsv-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.rsv-email-err { display: none; margin-top: 6px; font-size: 12.5px; color: #B91C1C; font-weight: 600; }
+.rsv-email.bad .rsv-email-err { display: block; }
+.rsv-email.bad input[type=email] { border-color: #B91C1C; }
 .rsv-other.on { display: block; }
 .rsv-other input { width: 100%; box-sizing: border-box; font: 500 16px 'Poppins', system-ui, sans-serif; color: #111; background: #fff; border: 2px solid #111; padding: 12px; outline: none; }
 .rsv-other input:focus { box-shadow: 3px 3px 0 #111; }
@@ -2057,13 +2067,19 @@ body.rsv-open .mobile-enroll-bar, body.rsv-open .mobile-contact-bar, body.rsv-op
       '<div class="rsv-body"><p class="rsv-why">' + (isVideo ? 'Your video plays right after this.' : 'Your PDF opens right after this.') + ' Tell us a little about you, so we know which free notes to make next.</p>' +
       '<div class="rsv-prog"><i></i><i></i><i></i></div><div class="rsv-step"></div><div class="rsv-q" id="rsv-q"></div>' +
       '<div class="rsv-opts"></div><div class="rsv-other"><input type="text" maxlength="40" placeholder="Where did you hear about us?" aria-label="Where did you hear about us?"></div>' +
+      '<div class="rsv-email"><label for="rsv-mail">Want a discount code sent to you? <span>Leave your email (optional)</span></label>' +
+      '<input id="rsv-mail" type="email" inputmode="email" autocomplete="email" maxlength="200" placeholder="you@example.com">' +
+      '<input class="rsv-hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true"><div class="rsv-email-err">That email doesn\'t look right.</div></div>' +
       '<div class="rsv-foot"><button type="button" class="rsv-back-btn">Back</button><button type="button" class="rsv-go">' + (isVideo ? 'Done, play the video' : 'Done, open my PDF') + '</button></div>' +
-      '<p class="rsv-note">Anonymous · asked only once</p></div></div>';
+      '<p class="rsv-note">Asked only once · your answers stay anonymous unless you leave your email</p></div></div>';
     document.body.appendChild(back);
     document.body.classList.add('rsv-open');
     var card = back.querySelector('.rsv-card'), opts = back.querySelector('.rsv-opts'), otherBox = back.querySelector('.rsv-other'), input = otherBox.querySelector('input');
     var go = back.querySelector('.rsv-go'), backBtn = back.querySelector('.rsv-back-btn');
-    function ready() { return Q.every(function (q) { return picked[q[0]]; }) && (picked.sv_src !== 'other' || other.trim().length >= 2); }
+    var emailBox = back.querySelector('.rsv-email'), mail = emailBox.querySelector('#rsv-mail'), hp = emailBox.querySelector('.rsv-hp');
+    var MAIL_RE = /^[^\s@<>"']{1,64}@[^\s@<>"']{1,190}\.[a-z]{2,24}$/i;
+    function mailOk() { var v = mail.value.trim(); return !v || MAIL_RE.test(v); }
+    function ready() { return Q.every(function (q) { return picked[q[0]]; }) && (picked.sv_src !== 'other' || other.trim().length >= 2) && mailOk(); }
     function draw() {
       var q = Q[step];
       back.querySelectorAll('.rsv-prog i').forEach(function (i, n) { i.className = n <= step ? 'on' : ''; });
@@ -2075,6 +2091,7 @@ body.rsv-open .mobile-enroll-bar, body.rsv-open .mobile-contact-bar, body.rsv-op
       }).join('');
       var last = step === Q.length - 1;
       otherBox.className = 'rsv-other' + (last && picked.sv_src === 'other' ? ' on' : '');
+      emailBox.className = 'rsv-email' + (last && picked.sv_src ? ' on' : '') + (mailOk() ? '' : ' bad');
       go.className = 'rsv-go' + (last ? ' on' : '');
       go.disabled = !ready();
       backBtn.className = 'rsv-back-btn' + (step ? ' on' : '');
@@ -2089,6 +2106,10 @@ body.rsv-open .mobile-enroll-bar, body.rsv-open .mobile-contact-bar, body.rsv-op
       else if (picked.sv_src === 'other') setTimeout(function () { input.focus(); }, 30);
     });
     input.addEventListener('input', function () { other = input.value; go.disabled = !ready(); });
+    // the error shows when they leave the box, not while they're still typing
+    mail.addEventListener('input', function () { emailBox.classList.remove('bad'); go.disabled = !ready(); });
+    mail.addEventListener('blur', function () { emailBox.classList.toggle('bad', !mailOk()); });
+    mail.addEventListener('keydown', function (e) { if (e.key === 'Enter' && ready()) finish(); });
     input.addEventListener('keydown', function (e) { if (e.key === 'Enter' && ready()) finish(); });
     backBtn.addEventListener('click', function () { if (step) { step--; draw(); } });
     function close() { document.removeEventListener('keydown', onKey); back.remove(); document.body.classList.remove('rsv-open'); }
@@ -2098,6 +2119,11 @@ body.rsv-open .mobile-enroll-bar, body.rsv-open .mobile-contact-bar, body.rsv-op
       send('sv_year', picked.sv_year); send('sv_gate', picked.sv_gate);
       send('sv_src', picked.sv_src === 'other' ? 'other:' + other.trim().slice(0, 40) : picked.sv_src);
       send('sv_done', 'answered');
+      var em = mail.value.trim();
+      if (em && (location.hostname === 'taai.live' || location.hostname === 'www.taai.live')) {
+        var lead = JSON.stringify({ email: em, year: picked.sv_year, prep: picked.sv_gate, src: picked.sv_src === 'other' ? 'other:' + other.trim().slice(0, 40) : picked.sv_src, website: hp.value });
+        try { if (!(navigator.sendBeacon && navigator.sendBeacon('/api/resource-lead', lead))) fetch('/api/resource-lead', { method: 'POST', body: lead, keepalive: true }).catch(function () {}); } catch (e) {}
+      }
       close();
       link.click(); // the click they made goes ahead now (still inside their tap)
     }

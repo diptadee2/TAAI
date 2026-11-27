@@ -4324,6 +4324,7 @@
     }).catch(function (err) {
       rs.loading = false; rs.error = err.message; render();
     });
+    api('/team-resource-leads').then(function (d) { rs.leads = d; render(); }).catch(function (e) { rs.leads = { ready: false, error: e.message }; render(); });
   }
 
   // One-time survey answers from the Resources page (2026-11-27). Labels
@@ -4355,6 +4356,41 @@
       }).join('') + (typed.length ? '<div class="res-sq-typed">"Other" answers: ' + typed.slice(0, 12).map(function (x) { return escapeHtml(x.t) + (x.n > 1 ? ' (' + x.n + ')' : ''); }).join(', ') + (typed.length > 12 ? ' and ' + (typed.length - 12) + ' more' : '') + '</div>' : '') + '</div>';
     }).join('') + '</div></div>';
   }
+  // Emails left at the end of the survey (2026-11-27): "Want a discount code
+  // sent to you?". Answers shown with each, a "code sent" tick, CSV download.
+  function resLabel(kind, v) {
+    if (!v) return '';
+    if (v.indexOf('other:') === 0) return 'Other: ' + v.slice(6);
+    var q = RES_SURVEY.filter(function (x) { return x[0] === kind; })[0];
+    var o = q && q[2].filter(function (x) { return x[0] === v; })[0];
+    return o ? o[1] : v;
+  }
+  function resLeadsHtml(L) {
+    var head = '<div class="res-survey-head" style="margin-top:18px;"><b>Emails for a discount code</b>';
+    if (!L) return '<div class="res-survey">' + head + '</div><div class="field-hint" style="margin:0;">Loading…</div></div>';
+    if (L.ready === false) return '<div class="res-survey">' + head + '</div><div class="field-hint" style="margin:0;">Not set up yet: the resource_leads table is missing (run the SQL at the end of supabase/schema.sql). ' + escapeHtml(L.error || '') + '</div></div>';
+    var rows = L.leads || [], sent = rows.filter(function (r) { return r.sent_at; }).length;
+    head += '<span class="field-hint"> · ' + rows.length + ' left their email' + (rows.length ? ', ' + sent + ' sent a code' : '') + '</span>' +
+      (rows.length ? ' <button type="button" class="btn btn-small" id="res-leads-csv">Download CSV</button>' : '') + '</div>';
+    if (!rows.length) return '<div class="res-survey">' + head + '<div class="field-hint" style="margin:0;">None yet. People who answer the survey can leave their email to be sent a discount code; they show up here with their answers.</div></div>';
+    return '<div class="res-survey">' + head + '<div class="students-table-wrap"><table class="students-table res-leads"><thead><tr><th>Email</th><th>Year</th><th>Preparing for</th><th>Found us via</th><th>Left on</th><th>Code sent</th></tr></thead><tbody>' +
+      rows.map(function (r) {
+        return '<tr><td><a href="mailto:' + escapeHtml(r.email) + '">' + escapeHtml(r.email) + '</a></td><td>' + escapeHtml(resLabel('sv_year', r.year)) + '</td><td>' + escapeHtml(resLabel('sv_gate', r.prep)) + '</td><td>' + escapeHtml(resLabel('sv_src', r.source)) + '</td>' +
+          '<td>' + escapeHtml(fmtPostedOn(new Date(Date.parse(r.created_at) + 5.5 * 3600000).toISOString().slice(0, 10))) + '</td>' +
+          '<td><label class="res-sent"><input type="checkbox" class="js-lead-sent" data-email="' + escapeHtml(r.email) + '"' + (r.sent_at ? ' checked' : '') + '> ' + (r.sent_at ? 'Sent' : 'Not yet') + '</label></td></tr>';
+      }).join('') + '</tbody></table></div></div>';
+  }
+  function resLeadsCsv() {
+    var rows = (state.resourceStats.leads || {}).leads || [];
+    var q = function (v) { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+    var csv = ['Email,Year,Preparing for,Found us via,Left on (IST),Code sent'].concat(rows.map(function (r) {
+      return [r.email, resLabel('sv_year', r.year), resLabel('sv_gate', r.prep), resLabel('sv_src', r.source), new Date(Date.parse(r.created_at) + 5.5 * 3600000).toISOString().slice(0, 16).replace('T', ' '), r.sent_at ? 'yes' : 'no'].map(q).join(',');
+    })).join('\n');
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    a.download = 'taai-free-notes-emails.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+  }
   // Visits summary shown above Notes and Lectures.
   function renderResourceStatsPanel() {
     var rs = state.resourceStats;
@@ -4377,7 +4413,7 @@
         '<div class="res-vbars" aria-label="Visits per day, last 30 days">' + bars + '</div>' +
         '<div class="field-hint" style="margin:6px 0 0;">Visits per day, last 30 days; the brighter part of each bar is new visitors. A visit counts once per browser tab; a new visitor is a browser opening the page for the first time (a new phone, another browser or cleared site data counts again). Downloads and plays count once per item per 10 minutes. Counting started 8 Nov 2026.</div>';
     }
-    if (rs.data && rs.data.ready !== false) body += resSurveyHtml(rs.data.survey || {});
+    if (rs.data && rs.data.ready !== false) body += resSurveyHtml(rs.data.survey || {}) + resLeadsHtml(rs.leads);
     return '<section class="pricing-group res-stats-panel"><div class="res-section-head"><div class="pricing-group-heading">Resources page visits</div>' + refresh + '</div>' + body + '</section>';
   }
 
@@ -6634,6 +6670,18 @@
 
     var resStatsBtn = document.getElementById('res-stats-refresh');
     if (resStatsBtn) resStatsBtn.addEventListener('click', loadResourceStats);
+    var leadsCsv = document.getElementById('res-leads-csv');
+    if (leadsCsv) leadsCsv.addEventListener('click', resLeadsCsv);
+    document.querySelectorAll('.js-lead-sent').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        var email = cb.getAttribute('data-email'), on = cb.checked;
+        var L = state.resourceStats.leads, row = L && (L.leads || []).filter(function (r) { return r.email === email; })[0];
+        cb.disabled = true;
+        api('/team-resource-leads', { method: 'POST', body: JSON.stringify({ email: email, sent: on }) }).then(function () {
+          if (row) row.sent_at = on ? new Date().toISOString() : null; render();
+        }).catch(function (e) { cb.checked = !on; cb.disabled = false; alert('Could not save: ' + e.message); });
+      });
+    });
 
     var lmsCheckBtn = document.getElementById('lms-check-now');
     if (lmsCheckBtn) lmsCheckBtn.addEventListener('click', function () { loadLmsSync(true); });
