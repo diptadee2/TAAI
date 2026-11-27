@@ -1612,14 +1612,38 @@
     }).catch(function (e) { c.market.loading = false; c.market.loaded = true; c.market.error = e.message; render(); });
   }
   var MKT_EXAMS = [['all', 'GATE CSE + DA'], ['cse', 'GATE CSE'], ['da', 'GATE DA']];
+  // Mirrors marketRelevant()/examOf() in netlify/functions/lib/yt-market.js
+  // (title only here, which also cleans scans saved before the server filter).
+  var MKT_DA = /\bDA\b|\bDS\s*&?\s*AI\b|\bDSAI\b|data science/;
+  var MKT_DA_I = /data science/i, MKT_CSE = /\bCSE?\b|\bCS\s*[\/&-]?\s*IT\b|\bCSIT\b/, MKT_CSE_I = /computer science/i;
+  var MKT_EXAMW = /\bGATE\s*['’]?\s*(20\d\d|\d\d)\b|\b(exam|preparation|prep|strategy|syllabus|IIT|M\.?\s?Tech|AIR|rank|mock|PYQs?|marks?|score|cutoff|lectures?|one\s*shot|topper|revision|test series|weightage|paper|admit card|result|crack|admission|PhD|PSU|aspirants?|worth it)\b/i;
+  var MKT_OTHER = /\b(EE|ECE|EC|ME|CE|ESE|IES|AAI|JE|AE|ICAR|SSC|RRB|DSSSB|TGT|PGT)\b/;
+  var MKT_OTHER_I = /\b(Civil|Mechanical|Electrical|Electronics|Chemical|Instrumentation|Signals|Control Systems?|Network Theory|Thermodynamics|Fluid Mechanics|Surveying|Agriculture|Biotechnology|Physics|Chemistry)\b/i;
+  function mktExamOf(t) {
+    var da = MKT_DA.test(t) || MKT_DA_I.test(t), cse = MKT_CSE.test(t) || MKT_CSE_I.test(t);
+    return da && cse ? 'both' : da ? 'da' : cse ? 'cse' : 'gate';
+  }
+  function mktRelevant(v) {
+    var t = v.title || '';
+    if (!/\bGATE\b/.test(t)) return false;
+    var ex = mktExamOf(t);
+    if (ex === 'gate' && !MKT_EXAMW.test(t)) return false;
+    if ((MKT_OTHER.test(t) || MKT_OTHER_I.test(t)) && ex === 'gate') return false;
+    return true;
+  }
   function mktRows() {
     var M = state.comp.market, d = M.data, mk = d.market, now = Date.now();
     var tracked = {}; (d.tracked || []).forEach(function (id) { tracked[id] = 1; });
     var from = now - M.period * 86400000;
     return mk.videos.filter(function (v) {
       if (tracked[v.channel_id] || Date.parse(v.published_at) < from) return false;
-      if (M.exam === 'cse' && v.exam !== 'cse' && v.exam !== 'both') return false;
-      if (M.exam === 'da' && v.exam !== 'da' && v.exam !== 'both') return false;
+      if (!mktRelevant(v)) return false;
+      // Exam from the title; scans saved before 2026-11-27 matched a lowercase
+      // "da" in descriptions, so only their CSE tag is trusted as a fallback.
+      var ex = mktExamOf(v.title || '');
+      if (ex === 'gate' && v.exam === 'cse') ex = 'cse';
+      if (M.exam === 'cse' && ex !== 'cse' && ex !== 'both') return false;
+      if (M.exam === 'da' && ex !== 'da' && ex !== 'both') return false;
       return M.kind === 'short' ? v.kind === 'short' : v.kind !== 'short';
     }).map(function (v) {
       var ch = mk.channels[v.channel_id] || {};

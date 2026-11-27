@@ -18,13 +18,34 @@ export const MARKET_QUERIES = [
   'GATE DA', 'GATE data science and AI', 'GATE DA 2027',
   'GATE 2027 preparation strategy',
 ];
-const DA_RE = /\bDA\b|data science|\bDS\s*&?\s*AI\b|\bDSAI\b|\bDS\s*AI\b|data\s*science\s*(and|&)\s*(ai|artificial)/i;
-const CSE_RE = /\bCSE?\b|computer science|\bCS\s*[\/&-]?\s*IT\b|\bCSIT\b/i;
+// "DA" is matched case-sensitively: lowercase "da" is a common word in
+// Punjabi/Hindi/Spanish titles ("Home da Gate", 2026-11-27).
+const DA_RE = /\bDA\b|\bDS\s*&?\s*AI\b|\bDSAI\b/;
+const DA_RE_I = /data science|data\s*science\s*(and|&)\s*(ai|artificial)/i;
+const CSE_RE = /\bCSE?\b|\bCS\s*[\/&-]?\s*IT\b|\bCSIT\b/;
+const CSE_RE_I = /computer science/i;
+// Relevance (2026-11-27, "so many irrelevant videos"): plain "gate" also
+// means a door (Nankana Sahib, Amritsar's gates) and other exams' videos
+// mention GATE too. Keep a video only if GATE is written in capitals with an
+// exam word nearby, and drop other branches / recruitment exams unless the
+// title is about CSE or DA. Mirrored by mktRelevant() in team/team.js.
+export const EXAM_WORD_RE = /\bGATE\s*['’]?\s*(20\d\d|\d\d)\b|\b(exam|preparation|prep|strategy|syllabus|IIT|M\.?\s?Tech|AIR|rank|mock|PYQs?|marks?|score|cutoff|lectures?|one\s*shot|topper|revision|test series|weightage|paper|admit card|result|crack|admission|PhD|PSU|aspirants?|worth it)\b/i;
+// Abbreviations are case-sensitive ("Got Me" is not ME); words are not.
+export const OTHER_RE = /\b(EE|ECE|EC|ME|CE|ESE|IES|AAI|JE|AE|ICAR|SSC|RRB|DSSSB|TGT|PGT)\b|\b(Civil|Mechanical|Electrical|Electronics|Chemical|Instrumentation|Signals|Control Systems?|Network Theory|Thermodynamics|Fluid Mechanics|Surveying|Agriculture|Biotechnology|Physics|Chemistry)\b/;
+export const OTHER_RE_I = /\b(Civil|Mechanical|Electrical|Electronics|Chemical|Instrumentation|Signals|Control Systems?|Network Theory|Thermodynamics|Fluid Mechanics|Surveying|Agriculture|Biotechnology|Physics|Chemistry)\b/i;
+export function marketRelevant(title, text) {
+  const t = title || '';
+  if (!/\bGATE\b/.test(t + ' ' + text)) return false;
+  const ex = examOf(t + ' ' + text);
+  if (ex === 'gate' && !EXAM_WORD_RE.test(t)) return false;
+  if ((OTHER_RE.test(t) || OTHER_RE_I.test(t)) && examOf(t) === 'gate') return false;
+  return true;
+}
 
 function todayIST() { return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date()); }
 
 export function examOf(text) {
-  const da = DA_RE.test(text), cse = CSE_RE.test(text);
+  const da = DA_RE.test(text) || DA_RE_I.test(text), cse = CSE_RE.test(text) || CSE_RE_I.test(text);
   return da && cse ? 'both' : da ? 'da' : cse ? 'cse' : 'gate';
 }
 
@@ -51,7 +72,7 @@ export async function runYtMarket(supabase, { days = 30 } = {}) {
       if (sn.liveBroadcastContent === 'upcoming' || sn.liveBroadcastContent === 'live') continue;
       const text = (sn.title || '') + ' ' + (sn.description || '').slice(0, 600) + ' ' + (sn.tags || []).join(' ');
       // Search also returns loosely related videos: keep only ones that are about GATE.
-      if (!/\bgate\b/i.test(text)) continue;
+      if (!marketRelevant(sn.title, text)) continue;
       const live = !!(v.liveStreamingDetails && v.liveStreamingDetails.actualStartTime);
       const dur = isoDuration(v.contentDetails && v.contentDetails.duration);
       videos.push({
