@@ -2054,6 +2054,12 @@ html.has-mft body::before{transition:transform .28s cubic-bezier(.4,0,1,1)}
 </style>
 <script>try{if(localStorage.getItem('taai_mft_on')!=='0'){document.documentElement.classList.add('has-mft');if(localStorage.getItem('taai_mft_style')==='dark')document.documentElement.classList.add('has-mft-dark')}}catch(e){document.documentElement.classList.add('has-mft')}</script>
 <script src="/mini-flt-ticker.js" defer></script>
+<style>
+/* Price drop animation (2026-11-27): fixed-width digits so the price doesn't
+   shift sideways while it counts down; the second copy is for screen readers. */
+.price-drop { font-variant-numeric: tabular-nums; }
+.price-drop-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+</style>
 </head>
 <body data-float-stack>
 <div id="root"></div>
@@ -3063,6 +3069,49 @@ const QUIZ_SUBJECTS = [
   { name: 'DBMS + DWH', count: 6 },
 ];
 
+// Price drop (2026-11-27, "decrease animation of course prices from MRP when
+// they are scrolled into view"; slower, softer ending the same day): the price
+// starts at the MRP and counts down to the real price once per page visit,
+// the first time it's at least 60% on screen. 1.8s with an ease-out-quint
+// curve, so most of the drop happens early and the last rupees settle slowly.
+// No MRP, an MRP not above the price, or reduced motion: just the price.
+// `id` remembers it already ran, so a re-render (e.g. picking a plan) never
+// replays it. Screen readers get the final price only.
+const PRICE_DROP_DONE = {};
+function PriceDrop({ to, from, id }) {
+  const ref = React.useRef(null);
+  const a = Number(from), b = Number(to);
+  const key = (id || '') + '|' + a + '|' + b;
+  const can = b > 0 && a > b && !PRICE_DROP_DONE[key];
+  const [val, setVal] = React.useState(can ? a : b);
+  React.useEffect(() => {
+    if (!can) { setVal(b); return; }
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce || !('IntersectionObserver' in window) || !ref.current) { PRICE_DROP_DONE[key] = 1; setVal(b); return; }
+    let raf = 0;
+    const io = new IntersectionObserver((es) => {
+      if (!es.some(e => e.isIntersecting)) return;
+      io.disconnect();
+      PRICE_DROP_DONE[key] = 1;
+      const t0 = performance.now(), D = 1800;
+      const step = (now) => {
+        const k = Math.min(1, (now - t0) / D), e = 1 - Math.pow(1 - k, 5);
+        setVal(Math.round(a + (b - a) * e));
+        if (k < 1) raf = requestAnimationFrame(step);
+      };
+      raf = requestAnimationFrame(step);
+    }, { threshold: 0.6 });
+    io.observe(ref.current);
+    return () => { io.disconnect(); cancelAnimationFrame(raf); };
+  }, [key]);
+  return (
+    <span ref={ref} className="price-drop">
+      <span aria-hidden="true">{fmtPrice(val)}</span>
+      <span className="price-drop-sr">{fmtPrice(b)}</span>
+    </span>
+  );
+}
+
 function TSPricing({ pricingMap }) {
   const [selected, setSelected] = React.useState(null);
   const pick = (id) => setSelected(s => s === id ? null : id);
@@ -3072,12 +3121,12 @@ function TSPricing({ pricingMap }) {
     const priceOld    = pd.priceOld ? fmtPrice(pd.priceOld) : null;
     const discountRaw = pd.discount || null;
     const discount    = discountRaw ? (isNaN(discountRaw) ? discountRaw : discountRaw + '% off') : null;
-    return { price: fmtPrice(pd.price) || '—', priceOld, discount, live: !!pd.price };
+    return { price: fmtPrice(pd.price) || '—', priceOld, discount, live: !!pd.price, id, num: pd.price, old: pd.priceOld };
   };
 
-  const PriceBlock = ({ price, priceOld, discount, live }) => (
+  const PriceBlock = ({ price, priceOld, discount, live, id, num, old }) => (
     <>
-      <div className={`ts-plan-price${live ? ' data-fade-in' : ''}`} style={(priceOld || discount) ? { marginBottom: 0 } : undefined}>{price}</div>
+      <div className={`ts-plan-price${live ? ' data-fade-in' : ''}`} style={(priceOld || discount) ? { marginBottom: 0 } : undefined}>{live ? <PriceDrop to={num} from={old} id={id} /> : price}</div>
       {(priceOld || discount) && (
         <div className="ts-plan-price-meta data-fade-in">
           {priceOld && <span className="ts-plan-price-old">{priceOld}</span>}
