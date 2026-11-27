@@ -1983,35 +1983,60 @@ ReactDOM.createRoot(document.getElementById('root')).render(<ErrorBoundary><App 
 <script src="/nav-autohide.js" defer></script>
   <script src="/clarity.js" defer></script>
 <style>
-/* One-time survey before the first download (2026-11-27): 3 tap questions,
-   skippable, once per browser. Anonymous totals only. */
-.rsv-back { position: fixed; inset: 0; z-index: 100000; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(17,17,17,.45); }
-.rsv-card { width: 100%; max-width: 520px; max-height: calc(100vh - 32px); overflow-y: auto; background: #FFFBEF; color: #111; border: 3px solid #111; box-shadow: 6px 6px 0 #111; padding: 22px 22px 18px; font-family: 'Poppins', system-ui, sans-serif; }
-.rsv-tag { display: inline-block; background: #FDE047; border: 2px solid #111; padding: 2px 8px; font: 600 11px/1.4 'DM Mono', ui-monospace, monospace; text-transform: uppercase; letter-spacing: .04em; }
-.rsv-card h2 { margin: 10px 0 4px; font-size: 21px; line-height: 1.25; font-weight: 800; }
-.rsv-sub { margin: 0 0 14px; font-size: 13.5px; color: #444; }
-.rsv-q { margin: 12px 0 6px; font-weight: 700; font-size: 14px; }
-.rsv-opts { display: flex; flex-wrap: wrap; gap: 7px; }
-.rsv-opt { appearance: none; font: 500 13px/1 'Poppins', system-ui, sans-serif; color: #111; background: #fff; border: 2px solid #111; padding: 8px 11px; cursor: pointer; box-shadow: 2px 2px 0 #111; }
-.rsv-opt[aria-pressed="true"] { background: #C4B5FD; box-shadow: none; transform: translate(2px, 2px); }
-.rsv-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; }
-.rsv-go { appearance: none; font: 700 14px/1 'Poppins', system-ui, sans-serif; color: #111; background: #FDE047; border: 3px solid #111; padding: 12px 16px; box-shadow: 4px 4px 0 #111; cursor: pointer; }
-.rsv-go:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #111; }
-.rsv-skip { appearance: none; background: none; border: 0; padding: 6px 2px; font: 500 13px 'Poppins', system-ui, sans-serif; color: #444; text-decoration: underline; cursor: pointer; }
-@media (max-width: 480px) { .rsv-card { padding: 18px 16px 14px; } .rsv-card h2 { font-size: 19px; } .rsv-opt { padding: 8px 9px; font-size: 12.5px; } .rsv-actions { flex-direction: column-reverse; align-items: stretch; } .rsv-go { width: 100%; } .rsv-skip { align-self: center; } }
+/* One-time survey before the first download or video (2026-11-27; redesigned
+   the same day: one question at a time, no skip, "Other" asks for a word). */
+.rsv-back { position: fixed; inset: 0; z-index: 100000; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(17,17,17,.5); animation: rsv-fade .18s ease-out; }
+@keyframes rsv-fade { from { opacity: 0; } to { opacity: 1; } }
+.rsv-card { position: relative; width: 100%; max-width: 460px; max-height: calc(100vh - 32px); overflow-y: auto; background: #FFFBEF; color: #111; border: 3px solid #111; box-shadow: 8px 8px 0 #111; font-family: 'Poppins', system-ui, sans-serif; animation: rsv-pop .22s cubic-bezier(.34,1.4,.64,1); }
+@keyframes rsv-pop { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: none; } }
+.rsv-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px 12px 18px; background: #FDE047; border-bottom: 3px solid #111; }
+.rsv-tag { font: 600 11.5px/1 'DM Mono', ui-monospace, monospace; text-transform: uppercase; letter-spacing: .05em; }
+.rsv-x { appearance: none; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; background: #fff; border: 2px solid #111; cursor: pointer; padding: 0; }
+.rsv-x svg { width: 14px; height: 14px; }
+.rsv-body { padding: 18px 20px 20px; }
+.rsv-prog { display: flex; gap: 6px; margin-bottom: 14px; }
+.rsv-prog i { flex: 1; height: 6px; background: #fff; border: 2px solid #111; }
+.rsv-prog i.on { background: #111; }
+.rsv-step { font: 600 11px/1 'DM Mono', ui-monospace, monospace; color: #555; text-transform: uppercase; letter-spacing: .05em; }
+.rsv-q { margin: 6px 0 14px; font-size: 21px; line-height: 1.25; font-weight: 800; }
+.rsv-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.rsv-opt { appearance: none; text-align: left; font: 600 14px/1.25 'Poppins', system-ui, sans-serif; color: #111; background: #fff; border: 2px solid #111; padding: 13px 12px; cursor: pointer; box-shadow: 3px 3px 0 #111; transition: transform .08s, box-shadow .08s, background-color .12s; display: flex; align-items: center; gap: 8px; min-height: 48px; }
+.rsv-opt:hover { background: #F3EEFF; }
+.rsv-opt:active, .rsv-opt[aria-pressed="true"] { transform: translate(3px, 3px); box-shadow: none; }
+.rsv-opt[aria-pressed="true"] { background: #C4B5FD; }
+.rsv-opt .rsv-ic { font-size: 17px; line-height: 1; }
+.rsv-opt.rsv-wide { grid-column: 1 / -1; }
+.rsv-other { margin-top: 12px; display: none; }
+.rsv-other.on { display: block; }
+.rsv-other input { width: 100%; box-sizing: border-box; font: 500 16px 'Poppins', system-ui, sans-serif; color: #111; background: #fff; border: 2px solid #111; padding: 12px; outline: none; }
+.rsv-other input:focus { box-shadow: 3px 3px 0 #111; }
+.rsv-foot { display: none; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; }
+.rsv-foot.on { display: flex; }
+/* the phone bars and floating buttons step aside while the card is open */
+body.rsv-open .mobile-enroll-bar, body.rsv-open .mobile-contact-bar, body.rsv-open .back-to-top, body.rsv-open .dn-fab { visibility: hidden !important; }
+.rsv-back-btn { appearance: none; background: none; border: 0; padding: 6px 0; font: 600 13px 'Poppins', system-ui, sans-serif; color: #444; cursor: pointer; visibility: hidden; }
+.rsv-back-btn.on { visibility: visible; }
+.rsv-go { appearance: none; font: 700 14.5px/1 'Poppins', system-ui, sans-serif; color: #111; background: #FDE047; border: 3px solid #111; padding: 13px 16px; box-shadow: 4px 4px 0 #111; cursor: pointer; display: none; }
+.rsv-go.on { display: inline-block; }
+.rsv-go:disabled { background: #eee; color: #888; box-shadow: none; cursor: not-allowed; }
+.rsv-go:not(:disabled):active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #111; }
+.rsv-note { margin: 14px 0 0; font-size: 12px; color: #666; }
+@media (max-width: 420px) { .rsv-body { padding: 16px 14px 16px; } .rsv-q { font-size: 19px; } .rsv-opt { font-size: 13.5px; padding: 12px 10px; } .rsv-foot { flex-direction: column-reverse; align-items: stretch; } .rsv-go { width: 100%; } .rsv-back-btn { align-self: center; } }
+@media (prefers-reduced-motion: reduce) { .rsv-back, .rsv-card { animation: none; } .rsv-opt { transition: none; } }
 </style>
 <script>
-// One-time survey (2026-11-27): the first Download PDF / Play / Slides click
-// in this browser is paused while three tap questions show (all optional,
-// skippable); then that same click goes ahead. Answers are sent as anonymous
-// totals to /api/resource-event (kinds sv_year / sv_gate / sv_src / sv_done);
-// results show in /team Site data > Notes. Never sends on localhost.
+// One-time survey (2026-11-27). The first left-click on a Download PDF, Play
+// or Slides link in this browser is paused; three tap questions show one at a
+// time (all three needed, no skip; "Other" asks for a word or two), then that
+// same click goes ahead. Closing with x cancels that click; the survey shows
+// again on the next one. Answers go to /api/resource-event as anonymous
+// totals (sv_year / sv_gate / sv_src, sv_done). Never sends on localhost.
 (function () {
   var KEY = 'taai_res_survey_v1';
   var Q = [
-    ['sv_year', 'Which year are you in?', [['y2', '2nd year or earlier'], ['y3', '3rd year'], ['final', 'Final year'], ['grad', 'Graduated, working'], ['full', 'Preparing full-time']]],
-    ['sv_gate', 'Which GATE are you writing?', [['da27', 'GATE DA 2027'], ['da28', 'GATE DA 2028'], ['cse', 'GATE CSE'], ['both', 'CSE and DA'], ['undecided', 'Not decided']]],
-    ['sv_src', 'How did you find us?', [['youtube', 'YouTube'], ['telegram', 'Telegram'], ['whatsapp', 'WhatsApp group'], ['friend', 'A friend'], ['google', 'Google'], ['discord', 'Discord'], ['other', 'Other']]]
+    ['sv_year', 'Which year are you in?', [['y2', '2nd year or earlier', '🎒'], ['y3', '3rd year', '📘'], ['final', 'Final year', '🎓'], ['grad', 'Graduated, working', '💼'], ['full', 'Preparing full-time', '📚', 1]]],
+    ['sv_gate', 'Which GATE are you writing?', [['da27', 'GATE DA 2027', '🎯'], ['da28', 'GATE DA 2028', '🗓️'], ['cse', 'GATE CSE', '💻'], ['both', 'CSE and DA', '➕'], ['undecided', 'Not decided yet', '🤔', 1]]],
+    ['sv_src', 'How did you find us?', [['youtube', 'YouTube', '▶️'], ['telegram', 'Telegram', '✈️'], ['whatsapp', 'WhatsApp group', '💬'], ['friend', 'A friend', '🤝'], ['google', 'Google', '🔎'], ['discord', 'Discord', '🎧'], ['other', 'Other', '✏️', 1]]]
   ];
   function done() { try { return !!localStorage.getItem(KEY); } catch (e) { return true; } }
   function send(kind, id) {
@@ -2020,45 +2045,66 @@ ReactDOM.createRoot(document.getElementById('root')).render(<ErrorBoundary><App 
     try { if (navigator.sendBeacon && navigator.sendBeacon('/api/resource-event', body)) return; } catch (e) {}
     try { fetch('/api/resource-event', { method: 'POST', body: body, keepalive: true }).catch(function () {}); } catch (e) {}
   }
+  function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function open(link) {
-    var picked = {};
+    var isVideo = link.classList.contains('btn-watch');
+    var picked = {}, other = '', step = 0;
     var back = document.createElement('div');
     back.className = 'rsv-back';
-    back.innerHTML = '<div class="rsv-card" role="dialog" aria-modal="true" aria-labelledby="rsv-h">' +
-      '<span class="rsv-tag">Before your download</span>' +
-      '<h2 id="rsv-h">Three quick taps to help us help you</h2>' +
-      '<p class="rsv-sub">It takes five seconds and helps us make more free notes for people like you. Every question is optional.</p>' +
-      Q.map(function (q) {
-        return '<div class="rsv-q">' + q[1] + '</div><div class="rsv-opts" data-q="' + q[0] + '">' +
-          q[2].map(function (o) { return '<button type="button" class="rsv-opt" aria-pressed="false" data-v="' + o[0] + '">' + o[1] + '</button>'; }).join('') + '</div>';
-      }).join('') +
-      '<div class="rsv-actions"><button type="button" class="rsv-skip">Skip</button><button type="button" class="rsv-go">Continue to your download</button></div></div>';
+    back.innerHTML = '<div class="rsv-card" role="dialog" aria-modal="true" aria-labelledby="rsv-q">' +
+      '<div class="rsv-top"><span class="rsv-tag">' + (isVideo ? 'Before your video' : 'Before your download') + '</span>' +
+      '<button type="button" class="rsv-x" aria-label="Close"><svg viewBox="0 0 14 14" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div>' +
+      '<div class="rsv-body"><div class="rsv-prog"><i></i><i></i><i></i></div><div class="rsv-step"></div><div class="rsv-q" id="rsv-q"></div>' +
+      '<div class="rsv-opts"></div><div class="rsv-other"><input type="text" maxlength="40" placeholder="Where did you hear about us?" aria-label="Where did you hear about us?"></div>' +
+      '<div class="rsv-foot"><button type="button" class="rsv-back-btn">← Back</button><button type="button" class="rsv-go">' + (isVideo ? 'Continue to the video' : 'Continue to your download') + '</button></div>' +
+      '<p class="rsv-note">Three taps, once. Your answers stay anonymous and help us decide which free notes to make next.</p></div></div>';
     document.body.appendChild(back);
-    back.querySelectorAll('.rsv-opts').forEach(function (g) {
-      g.addEventListener('click', function (e) {
-        var b = e.target.closest('.rsv-opt'); if (!b) return;
-        var q = g.getAttribute('data-q'), v = b.getAttribute('data-v');
-        var on = picked[q] !== v;
-        g.querySelectorAll('.rsv-opt').forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });
-        if (on) { picked[q] = v; b.setAttribute('aria-pressed', 'true'); } else delete picked[q];
-      });
-    });
-    function finish(answered) {
-      try { localStorage.setItem(KEY, answered ? 'answered' : 'skipped'); } catch (e) {}
-      var any = false;
-      if (answered) Object.keys(picked).forEach(function (q) { any = true; send(q, picked[q]); });
-      send('sv_done', answered && any ? 'answered' : 'skipped');
-      document.removeEventListener('keydown', onKey);
-      back.remove();
-      // the click they made goes ahead now (still inside their tap, so a new tab is allowed)
-      link.click();
+    document.body.classList.add('rsv-open');
+    var card = back.querySelector('.rsv-card'), opts = back.querySelector('.rsv-opts'), otherBox = back.querySelector('.rsv-other'), input = otherBox.querySelector('input');
+    var go = back.querySelector('.rsv-go'), backBtn = back.querySelector('.rsv-back-btn');
+    function ready() { return Q.every(function (q) { return picked[q[0]]; }) && (picked.sv_src !== 'other' || other.trim().length >= 2); }
+    function draw() {
+      var q = Q[step];
+      back.querySelectorAll('.rsv-prog i').forEach(function (i, n) { i.className = n <= step ? 'on' : ''; });
+      back.querySelector('.rsv-step').textContent = 'Question ' + (step + 1) + ' of ' + Q.length;
+      back.querySelector('.rsv-q').textContent = q[1];
+      opts.innerHTML = q[2].map(function (o) {
+        return '<button type="button" class="rsv-opt' + (o[3] ? ' rsv-wide' : '') + '" aria-pressed="' + (picked[q[0]] === o[0]) + '" data-v="' + o[0] + '"><span class="rsv-ic" aria-hidden="true">' + o[2] + '</span>' + esc(o[1]) + '</button>';
+      }).join('');
+      var last = step === Q.length - 1;
+      otherBox.className = 'rsv-other' + (last && picked.sv_src === 'other' ? ' on' : '');
+      go.className = 'rsv-go' + (last ? ' on' : '');
+      go.disabled = !ready();
+      backBtn.className = 'rsv-back-btn' + (step ? ' on' : '');
+      back.querySelector('.rsv-foot').className = 'rsv-foot' + (step ? ' on' : '');
     }
-    function onKey(e) { if (e.key === 'Escape') finish(false); }
-    back.querySelector('.rsv-go').addEventListener('click', function () { finish(true); });
-    back.querySelector('.rsv-skip').addEventListener('click', function () { finish(false); });
-    back.addEventListener('click', function (e) { if (e.target === back) finish(false); });
+    opts.addEventListener('click', function (e) {
+      var b = e.target.closest('.rsv-opt'); if (!b) return;
+      var q = Q[step][0];
+      picked[q] = b.getAttribute('data-v');
+      draw();
+      if (step < Q.length - 1) setTimeout(function () { step++; draw(); }, 220);
+      else if (picked.sv_src === 'other') setTimeout(function () { input.focus(); }, 30);
+    });
+    input.addEventListener('input', function () { other = input.value; go.disabled = !ready(); });
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter' && ready()) finish(); });
+    backBtn.addEventListener('click', function () { if (step) { step--; draw(); } });
+    function close() { document.removeEventListener('keydown', onKey); back.remove(); document.body.classList.remove('rsv-open'); }
+    function finish() {
+      if (!ready()) return;
+      try { localStorage.setItem(KEY, 'answered'); } catch (e) {}
+      send('sv_year', picked.sv_year); send('sv_gate', picked.sv_gate);
+      send('sv_src', picked.sv_src === 'other' ? 'other:' + other.trim().slice(0, 40) : picked.sv_src);
+      send('sv_done', 'answered');
+      close();
+      link.click(); // the click they made goes ahead now (still inside their tap)
+    }
+    go.addEventListener('click', finish);
+    back.querySelector('.rsv-x').addEventListener('click', close);
+    function onKey(e) { if (e.key === 'Escape') close(); }
     document.addEventListener('keydown', onKey);
-    var first = back.querySelector('.rsv-opt'); if (first) first.focus({ preventScroll: true });
+    draw();
+    var first = opts.querySelector('.rsv-opt'); if (first) first.focus({ preventScroll: true });
   }
   document.addEventListener('click', function (e) {
     if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;

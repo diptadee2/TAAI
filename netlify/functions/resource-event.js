@@ -19,7 +19,7 @@ export const SURVEY = {
   sv_year: ['y2', 'y3', 'final', 'grad', 'full'],
   sv_gate: ['da27', 'da28', 'cse', 'both', 'undecided'],
   sv_src: ['youtube', 'telegram', 'whatsapp', 'friend', 'google', 'discord', 'other'],
-  sv_done: ['answered', 'skipped'],
+  sv_done: ['answered', 'skipped'], // skipped: only from the first version (no skip since the same day)
 };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const done = { statusCode: 204, headers: { 'Cache-Control': 'no-store' }, body: '' };
@@ -32,7 +32,13 @@ export async function handler(event) {
   let item = '';
   if (SURVEY[kind]) {
     item = String(body.id || '');
-    if (!SURVEY[kind].includes(item)) return done;
+    // "Other" on how they found us comes with a word or two, kept as
+    // 'other:<text>' (lowercase letters, digits and spaces only, 40 chars max).
+    const m = kind === 'sv_src' && /^other:(.*)$/i.exec(item);
+    if (m) {
+      const t = m[1].normalize('NFKC').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 40).trim();
+      item = t.length >= 2 ? 'other:' + t : 'other';
+    } else if (!SURVEY[kind].includes(item)) return done;
   } else if (!KINDS.has(kind)) return done;
   else if (kind !== 'visit' && kind !== 'new') {
     item = String(body.id || '');

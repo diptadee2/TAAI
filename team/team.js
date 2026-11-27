@@ -4336,16 +4336,23 @@
   function resSurveyHtml(sv) {
     var done = sv.sv_done || {};
     var ans = (done.answered || {}).total || 0, skip = (done.skipped || {}).total || 0;
-    var head = '<div class="res-survey-head"><b>Who uses the page</b><span class="field-hint"> · one-time survey before the first download: ' + ans + ' answered, ' + skip + ' skipped' + (ans + skip ? ' (' + Math.round(ans / (ans + skip) * 100) + '% answer)' : '') + '</span></div>';
-    if (!ans) return '<div class="res-survey">' + head + '<div class="field-hint" style="margin:0;">No answers yet. Each new visitor is asked once, right before their first PDF, lecture or slides, and can skip.</div></div>';
+    var head = '<div class="res-survey-head"><b>Who uses the page</b><span class="field-hint"> · one-time survey before the first download or video: ' + ans + ' answered' + (skip ? ', ' + skip + ' skipped (an early version allowed skipping)' : '') + '</span></div>';
+    if (!ans) return '<div class="res-survey">' + head + '<div class="field-hint" style="margin:0;">No answers yet. Each new visitor is asked once, right before their first PDF, video or slides.</div></div>';
     return '<div class="res-survey">' + head + '<div class="res-survey-grid">' + RES_SURVEY.map(function (q) {
-      var data = sv[q[0]] || {};
+      var data = Object.assign({}, sv[q[0]] || {}), typed = [];
+      Object.keys(data).forEach(function (k) {
+        if (k.indexOf('other:') !== 0) return;
+        typed.push({ t: k.slice(6), n: data[k].total || 0 });
+        data.other = { total: ((data.other || {}).total || 0) + (data[k].total || 0) };
+        delete data[k];
+      });
+      typed.sort(function (a, b) { return b.n - a.n; });
       var tot = q[2].reduce(function (a, o) { return a + ((data[o[0]] || {}).total || 0); }, 0);
       var rows = q[2].map(function (o) { return { label: o[1], n: (data[o[0]] || {}).total || 0 }; }).sort(function (a, b) { return b.n - a.n; });
       return '<div class="res-sq"><div class="res-sq-title">' + escapeHtml(q[1]) + ' <span class="field-hint">(' + tot + ')</span></div>' + rows.map(function (r) {
         var pc = tot ? Math.round(r.n / tot * 100) : 0;
         return '<div class="res-sq-row"><span class="res-sq-label">' + escapeHtml(r.label) + '</span><span class="res-sq-bar"><i style="width:' + pc + '%"></i></span><span class="res-sq-n">' + r.n + (tot ? ' · ' + pc + '%' : '') + '</span></div>';
-      }).join('') + '</div>';
+      }).join('') + (typed.length ? '<div class="res-sq-typed">"Other" answers: ' + typed.slice(0, 12).map(function (x) { return escapeHtml(x.t) + (x.n > 1 ? ' (' + x.n + ')' : ''); }).join(', ') + (typed.length > 12 ? ' and ' + (typed.length - 12) + ' more' : '') + '</div>' : '') + '</div>';
     }).join('') + '</div></div>';
   }
   // Visits summary shown above Notes and Lectures.
