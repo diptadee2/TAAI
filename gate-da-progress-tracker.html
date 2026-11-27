@@ -3425,6 +3425,34 @@ html.has-mft body::before{content:'';position:fixed;top:0;left:0;right:0;height:
 </style>
 <script>try{var sa=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;if(!sa&&localStorage.getItem('taai_mft_on')!=='0')document.documentElement.classList.add('has-mft')}catch(e){document.documentElement.classList.add('has-mft')}</script>
 <script src="/mini-flt-ticker.js" data-dark defer></script>
+<style>
+/* Phone website/app held upright, fullscreen timer polish (2026-11-27, from
+   an iPhone SE screenshot): the Top 5 card no longer touches the HUD stars,
+   "0 / 4 sessions today" moves up under FOCUS (as on sideways phones) so it
+   doesn't sit on the buttons, the bar gets room above the buttons, and the
+   small blue planet that clipped the card's edge is hidden. */
+@media (orientation: portrait) and (max-width: 600px) {
+  html body .pomo-zen.zen-phone.has-board .pomo-zen-board { margin-top: 66px; }
+  html body .pomo-zen.zen-phone.has-board .pomo-zen-center { padding-top: 24px; }
+  html.vice-night .pomo-zen.zen-phone .zs-blue, .pomo-zen.zen-phone .zs-blue { display: none; }
+  .pomo-zen.zen-phone #pomo-zen-mode { order: 0; }
+  .pomo-zen.zen-phone #pomo-zen-sessions { order: 1; margin-top: -10px; padding: 0; background: none; -webkit-backdrop-filter: none; backdrop-filter: none; color: rgba(255,255,255,.6); font-size: 12.5px; letter-spacing: .02em; }
+  .pomo-zen.zen-phone #pomo-zen-time { order: 2; margin-top: -6px; }
+  .pomo-zen.zen-phone .pomo-zen-bar { order: 3; }
+  html body .pomo-zen.zen-phone .pomo-zen-bottom { margin-top: 20px; }
+}
+/* Very short screens (old iPhone SE in Safari): two rows of the Top 5 and a
+   smaller time, so the buttons stay clear of the Vice City sign. */
+@media (orientation: portrait) and (max-width: 600px) and (max-height: 560px) {
+  .pomo-zen.zen-phone .zb-row:nth-child(n+3) { display: none; }
+  html body .pomo-zen.zen-phone.has-board .pomo-zen-board { margin-top: 48px; }
+  html body .pomo-zen.zen-phone.has-board .pomo-zen-time { font-size: min(17vw, 9vh); }
+  html.vice-night body .pomo-zen.zen-phone .pomo-zen-bottom { margin-bottom: 96px; }
+  html body .pomo-zen.zen-phone.has-board .pomo-zen-center { padding-top: 4px; }
+}
+@media (orientation: portrait) and (max-width: 600px) and (min-width: 420px) { html body .pomo-zen.zen-phone.has-board .pomo-zen-board { margin-top: 88px; } }
+@media (orientation: portrait) and (max-width: 600px) and (max-height: 700px) { html body .pomo-zen.zen-phone.has-board .pomo-zen-board { margin-top: 64px; } }
+</style>
 </head>
 <body data-float-stack data-nav-no-autohide>
 
