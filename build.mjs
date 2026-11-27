@@ -854,7 +854,7 @@ function generateRefundPolicy() {
         <p><strong>The 100 pe 100% off challenge.</strong> On the GATE DA 2028 Full Course, an AIR under 100 in GATE DA 2027 gets your course fee refunded, as described on the <a href="/gate-da-courses">courses page</a>. It follows its own terms and does not apply to any other purchase. In short:</p>
         <ul>
           <li>You must enrol in the GATE 2028 Full Course <em>and</em> register for the challenge on the courses page by the GATE DA 2027 admit card day (4 January 2027, or the date shown on the courses page if IIT Madras changes it). Enrolments or registrations after that, including after the GATE DA 2027 exam or results, are not eligible.</li>
-          <li>Only a GATE DA 2027 result counts. A GATE 2028 or later result can't be used to claim it.</li>
+          <li>Only a GATE DA 2027 result counts. A result from an earlier GATE (2026, 2025 or 2024) can't be used to claim it.</li>
           <li>One registration per person and per GATE enrollment ID. Registration details are locked once submitted.</li>
           <li>To claim, you need an AIR under 100 (AIR 1 to 99). You must show the scorecard from the GOAPS account with the enrollment ID you registered, with matching name and date of birth, and a government photo ID. We may verify on a video call.</li>
           <li>Claims are made by emailing support@taai.live within 30 days of the GATE DA 2027 results, from the email you enrolled with. The refund is the course fee you paid, sent to the UPI ID given in the challenge form, and you keep access to the course.</li>
