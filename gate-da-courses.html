@@ -4453,6 +4453,12 @@ html body main #combos #full-course-2028 .c28-gcd-sec b { color: #DC2626 !import
 html body main #combos #full-course-2028 .c28-gcd + .combo-live-cta { margin-top: 0 !important; }
 html body main #combos #full-course-2028 .c28-gcd + .combo-live-cta > :first-child { margin-top: 12px !important; }
 </style>
+<style>
+/* Price drop animation (2026-11-27): fixed-width digits so the price doesn't
+   shift sideways while it counts down; the second copy is for screen readers. */
+.price-drop { font-variant-numeric: tabular-nums; }
+.price-drop-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+</style>
 </head>
 <body data-float-stack>
 <div id="root"></div>
@@ -5630,6 +5636,45 @@ function OfferCountdown({ deadline }) {
 // Countdown to Feb 4, 2028 on the GATE 2028 card (2026-11-26, direct request:
 // "a countdown ... till feb 4th 2028 so that it evokes urgency"). Days, hours,
 // minutes and seconds, ticking every second; gone once the date has passed.
+// Price drop (2026-11-27, "decrease animation of course prices from MRP when
+// they are scrolled into view"): the price starts at the MRP and counts down
+// to the real price once, the first time it's at least 60% on screen (1.1s,
+// easing out). No MRP, or an MRP not above the price: just the price. Reduced
+// motion: just the price. Screen readers get the final price only.
+function PriceDrop({ to, from }) {
+  const ref = React.useRef(null);
+  const ran = React.useRef(false);
+  const a = Number(from), b = Number(to);
+  const can = b > 0 && a > b;
+  const [val, setVal] = React.useState(can && !ran.current ? a : b);
+  React.useEffect(() => {
+    if (!can || ran.current) { setVal(b); return; }
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce || !('IntersectionObserver' in window) || !ref.current) { ran.current = true; setVal(b); return; }
+    let raf = 0;
+    const io = new IntersectionObserver((es) => {
+      if (!es.some(e => e.isIntersecting)) return;
+      io.disconnect();
+      ran.current = true;
+      const t0 = performance.now(), D = 1100;
+      const step = (now) => {
+        const k = Math.min(1, (now - t0) / D), e = 1 - Math.pow(1 - k, 3);
+        setVal(Math.round(a + (b - a) * e));
+        if (k < 1) raf = requestAnimationFrame(step);
+      };
+      raf = requestAnimationFrame(step);
+    }, { threshold: 0.6 });
+    io.observe(ref.current);
+    return () => { io.disconnect(); cancelAnimationFrame(raf); };
+  }, [a, b]);
+  return (
+    <span ref={ref} className="price-drop">
+      <span aria-hidden="true">{fmtPrice(val)}</span>
+      <span className="price-drop-sr">{fmtPrice(b)}</span>
+    </span>
+  );
+}
+
 function Gate2028Countdown() {
   const end = React.useMemo(() => new Date('2027-02-04T00:00:00+05:30').getTime(), []);
   const [now, setNow] = React.useState(() => Date.now());
@@ -5837,7 +5882,7 @@ const ComboCard = React.memo(function ComboCard({ c, pricing }) {
           ? (c.soldOutPrice
               ? <div className="combo-final-price"><span>MRP</span><div className="combo-price">{fmtPrice(c.soldOutPrice)}</div></div>
               : <div className="combo-price combo-price-blurred" aria-hidden="true">{price}</div>)
-          : <div className="combo-price">{price}</div>}
+          : <div className="combo-price">{pd.price ? <PriceDrop to={pd.price} from={pd.priceOld} /> : price}</div>}
       {!comingSoon && !isSoldOut && priceOld && <div className="combo-price-old">{priceOld}</div>}
       {!comingSoon && !isSoldOut && discount && <div className="combo-discount">{discount}</div>}
     </div>
@@ -6059,7 +6104,7 @@ const CourseCard = React.memo(function CourseCard({ c, pricing }) {
       {c.note && <div className="course-note"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.6"/><path d="M8 7.2v4M8 4.6v.1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg><span>{c.note}</span></div>}
       <div className={`course-price-row${p.price ? ' price-loaded' : ''}`}>
         {soon ? <div className="course-price course-price-soon">Coming soon</div> : <>
-          <div className="course-price">{price}</div>
+          <div className="course-price">{p.price ? <PriceDrop to={p.price} from={p.priceOld} /> : price}</div>
           {priceOld && <div className="course-price-old">{priceOld}</div>}
           {pct && <div className="course-pct">{pct}% off</div>}
         </>}
