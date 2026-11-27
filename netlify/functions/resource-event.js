@@ -18,7 +18,7 @@ const KINDS = new Set(['visit', 'new', 'note', 'play', 'slides']);
 export const SURVEY = {
   sv_year: ['y2', 'y3', 'final', 'grad', 'full'],
   sv_gate: ['da27', 'da28', 'cse', 'both', 'undecided'],
-  sv_src: ['youtube', 'instagram', 'telegram', 'whatsapp', 'friend', 'google', 'discord', 'other'],
+  sv_src: ['youtube', 'telegram', 'whatsapp', 'friend', 'google', 'discord', 'other'],
   sv_done: ['answered', 'skipped'],
 };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

@@ -4331,7 +4331,7 @@
   var RES_SURVEY = [
     ['sv_year', 'Year', [['y2', '2nd year or earlier'], ['y3', '3rd year'], ['final', 'Final year'], ['grad', 'Graduated, working'], ['full', 'Preparing full-time']]],
     ['sv_gate', 'Writing', [['da27', 'GATE DA 2027'], ['da28', 'GATE DA 2028'], ['cse', 'GATE CSE'], ['both', 'CSE and DA'], ['undecided', 'Not decided']]],
-    ['sv_src', 'Found us via', [['youtube', 'YouTube'], ['instagram', 'Instagram'], ['telegram', 'Telegram'], ['whatsapp', 'WhatsApp group'], ['friend', 'A friend'], ['google', 'Google'], ['discord', 'Discord'], ['other', 'Other']]]
+    ['sv_src', 'Found us via', [['youtube', 'YouTube'], ['telegram', 'Telegram'], ['whatsapp', 'WhatsApp group'], ['friend', 'A friend'], ['google', 'Google'], ['discord', 'Discord'], ['other', 'Other']]]
   ];
   function resSurveyHtml(sv) {
     var done = sv.sv_done || {};
