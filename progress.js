@@ -2077,8 +2077,8 @@
       // Already seen here: the Mini FLT popup's turn (once).
       if (!preview && clubWinnerSeen(meta.key)) { if (!background) maybeShowMiniFlt(); return; }
       return Promise.all([
-        fetch('/api/club-winner-public?full=1').then(function (r) { return r.json(); }),
-        meta.runners ? fetch('/api/club-winner-public?full=1&kind=runners').then(function (r) { return r.json(); }).catch(function () { return null; }) : null,
+        fetch('/api/club-winner-public?full=1&k=' + encodeURIComponent(meta.key)).then(function (r) { return r.json(); }),
+        meta.runners ? fetch('/api/club-winner-public?full=1&kind=runners&k=' + encodeURIComponent(meta.key)).then(function (r) { return r.json(); }).catch(function () { return null; }) : null,
       ]).then(function (res) {
         var d = res[0];
         if (!d || !d.winner) return;

@@ -593,8 +593,8 @@
     fetch('/api/club-winner-public').then(function (r) { return r.ok ? r.json() : { active: false }; }).then(function (meta) {
       if (!meta || !meta.active || seenAnywhere(meta.key)) return;
       return Promise.all([
-        fetch('/api/club-winner-public?full=1').then(function (r) { return r.json(); }),
-        meta.runners ? fetch('/api/club-winner-public?full=1&kind=runners').then(function (r) { return r.json(); }).catch(function () { return null; }) : null,
+        fetch('/api/club-winner-public?full=1&k=' + encodeURIComponent(meta.key)).then(function (r) { return r.json(); }),
+        meta.runners ? fetch('/api/club-winner-public?full=1&kind=runners&k=' + encodeURIComponent(meta.key)).then(function (r) { return r.json(); }).catch(function () { return null; }) : null,
       ]).then(function (res) {
         if (!res[0] || !res[0].winner) return;
         // a few seconds in, so the page itself is seen first

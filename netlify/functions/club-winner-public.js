@@ -10,14 +10,18 @@
 import { getSupabase } from './lib/supabase.js';
 import { winnerActive } from './lib/club-winner.js';
 
-function reply(body) {
+// long: the ?full answers carry the photos (~0.5 MB each). The page adds the
+// announcement's key (&k=, the save time) to those URLs, so a new save is a
+// new URL and they can be cached for a day in Netlify's shared ("durable")
+// cache instead of reading Supabase for every new visitor (2026-11-27).
+function reply(body, long) {
   return {
     statusCode: 200,
     headers: {
       'Content-Type': 'application/json',
       'Cache-Control': 'public, max-age=0, must-revalidate',
-      'Netlify-CDN-Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
-      'Netlify-Vary': 'query=full|kind',
+      'Netlify-CDN-Cache-Control': long ? 'public, durable, s-maxage=86400' : 'public, s-maxage=60, stale-while-revalidate=120',
+      'Netlify-Vary': 'query=full|kind|k',
     },
     body: JSON.stringify(body),
   };
@@ -46,22 +50,31 @@ export async function handler(event) {
       const k = String(Math.max(new Date(m.updated_at).getTime(), hasOthers ? new Date(rr.updated_at).getTime() : 0));
       return reply({ active: true, key: k, items: [{ kind: 'winner', key: k }], runners: hasOthers });
     }
-    const { data, error } = await supabase.from('club_winner').select('id, data, updated_at').in('id', ['main', 'runners']);
-    if (error || !data) return reply({ active: false });
-    const main = data.find(r => r.id === 'main');
-    const run = data.find(r => r.id === 'runners');
+    // Full answers read only the row they return (1st place, or the others);
+    // the other row is read with the small fields only.
+    const wantRun = q.kind === 'runners';
+    const LIGHT_MAIN = 'id, updated_at, enabled:data->enabled, name:data->>name, show_until:data->>show_until';
+    const LIGHT_RUN = 'id, updated_at, n0:data->people->0->>name, n1:data->people->1->>name, n2:data->people->2->>name, n3:data->people->3->>name';
+    const [mr, rr] = await Promise.all([
+      supabase.from('club_winner').select(wantRun ? LIGHT_MAIN : 'id, data, updated_at').eq('id', 'main').maybeSingle(),
+      supabase.from('club_winner').select(wantRun ? 'id, data, updated_at' : LIGHT_RUN).eq('id', 'runners').maybeSingle(),
+    ]);
+    if (mr.error || !mr.data) return reply({ active: false });
+    const main = mr.data, run = rr.data;
     // One announcement (2026-11-21): 1st place's switch and dates decide;
     // the other places (runners row) are shown in the same popup.
-    if (!main || !winnerActive(main.data)) return reply({ active: false });
-    const others = run && run.data && Array.isArray(run.data.people) ? run.data.people.filter(p => p && p.name) : [];
-    const t = Math.max(new Date(main.updated_at).getTime(), others.length ? new Date(run.updated_at).getTime() : 0);
-    const key = String(t);
-    if (q.kind === 'runners') return reply({ active: true, key, runners: { month: run.data.month, note: run.data.note || '', people: others } });
+    const mainState = wantRun ? { enabled: main.enabled === true, name: main.name, photos: [1], show_until: main.show_until } : main.data;
+    if (!winnerActive(mainState)) return reply({ active: false });
+    const others = wantRun ? (run && run.data && Array.isArray(run.data.people) ? run.data.people.filter(p => p && p.name) : []) : [];
+    const hasOthers = wantRun ? others.length > 0 : !!(run && (run.n0 || run.n1 || run.n2 || run.n3));
+    const key = String(Math.max(new Date(main.updated_at).getTime(), hasOthers ? new Date(run.updated_at).getTime() : 0));
+    const long = !!q.k && q.k === key;
+    if (wantRun) return reply({ active: true, key, runners: { month: run.data.month, note: run.data.note || '', people: others } }, long);
     const d = main.data;
     return reply({
       active: true, key,
       winner: { name: d.name, month: d.month, prize: d.prize, photos: d.photos, linkedin_text: d.linkedin_text, linkedin_url: d.linkedin_url, headline: d.headline || '', avatar: d.avatar || null },
-    });
+    }, long);
   } catch (e) {
     return reply({ active: false });
   }
