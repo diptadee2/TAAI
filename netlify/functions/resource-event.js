@@ -17,7 +17,7 @@ const KINDS = new Set(['visit', 'new', 'note', 'play', 'slides']);
 // nothing typed by a visitor is ever stored.
 export const SURVEY = {
   sv_year: ['y2', 'y3', 'final', 'grad', 'full'],
-  sv_gate: ['da27', 'da28', 'cse', 'both', 'undecided'],
+  sv_gate: ['da27', 'da28', 'cse', 'both', 'jobs', 'undecided'],
   sv_src: ['youtube', 'telegram', 'whatsapp', 'friend', 'google', 'discord', 'other'],
   sv_done: ['answered', 'skipped'], // skipped: only from the first version (no skip since the same day)
 };

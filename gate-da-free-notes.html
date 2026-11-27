@@ -2000,11 +2000,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(<ErrorBoundary><App 
 .rsv-step { font: 600 11px/1 'DM Mono', ui-monospace, monospace; color: #555; text-transform: uppercase; letter-spacing: .05em; }
 .rsv-q { margin: 6px 0 14px; font-size: 21px; line-height: 1.25; font-weight: 800; }
 .rsv-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
-.rsv-opt { appearance: none; text-align: left; font: 600 14px/1.25 'Poppins', system-ui, sans-serif; color: #111; background: #fff; border: 2px solid #111; padding: 13px 12px; cursor: pointer; box-shadow: 3px 3px 0 #111; transition: transform .08s, box-shadow .08s, background-color .12s; display: flex; align-items: center; gap: 8px; min-height: 48px; }
+.rsv-opt { appearance: none; text-align: center; justify-content: center; font: 600 14px/1.25 'Poppins', system-ui, sans-serif; color: #111; background: #fff; border: 2px solid #111; padding: 13px 12px; cursor: pointer; box-shadow: 3px 3px 0 #111; transition: transform .08s, box-shadow .08s, background-color .12s; display: flex; align-items: center; gap: 8px; min-height: 48px; }
 .rsv-opt:hover { background: #F3EEFF; }
 .rsv-opt:active, .rsv-opt[aria-pressed="true"] { transform: translate(3px, 3px); box-shadow: none; }
 .rsv-opt[aria-pressed="true"] { background: #C4B5FD; }
-.rsv-opt .rsv-ic { font-size: 17px; line-height: 1; }
 .rsv-opt.rsv-wide { grid-column: 1 / -1; }
 .rsv-other { margin-top: 12px; display: none; }
 .rsv-other.on { display: block; }
@@ -2022,9 +2021,6 @@ body.rsv-open .mobile-enroll-bar, body.rsv-open .mobile-contact-bar, body.rsv-op
 .rsv-go:not(:disabled):active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #111; }
 .rsv-note { margin: 14px 0 0; font-size: 12px; color: #666; text-align: center; }
 .rsv-why { margin: 0 0 14px; padding: 10px 12px; background: #fff; border: 2px dashed #111; font-size: 13.5px; line-height: 1.45; }
-.rsv-clock { display: inline-block; margin-right: 2px; animation: rsv-tick 1s steps(2, end) infinite; }
-@keyframes rsv-tick { 50% { transform: rotate(12deg); } }
-@media (prefers-reduced-motion: reduce) { .rsv-clock { animation: none; } }
 @media (max-width: 420px) { .rsv-body { padding: 16px 14px 16px; } .rsv-q { font-size: 19px; } .rsv-opt { font-size: 13.5px; padding: 12px 10px; } .rsv-foot { flex-direction: column-reverse; align-items: stretch; } .rsv-go { width: 100%; } .rsv-back-btn { align-self: center; } }
 @media (prefers-reduced-motion: reduce) { .rsv-back, .rsv-card { animation: none; } .rsv-opt { transition: none; } }
 </style>
@@ -2038,9 +2034,9 @@ body.rsv-open .mobile-enroll-bar, body.rsv-open .mobile-contact-bar, body.rsv-op
 (function () {
   var KEY = 'taai_res_survey_v1';
   var Q = [
-    ['sv_year', 'Which year are you in?', [['y2', '2nd year or earlier', '🎒'], ['y3', '3rd year', '📘'], ['final', 'Final year', '🎓'], ['grad', 'Graduated, working', '💼'], ['full', 'Preparing full-time', '📚', 1]]],
-    ['sv_gate', 'Which GATE are you writing?', [['da27', 'GATE DA 2027', '🎯'], ['da28', 'GATE DA 2028', '🗓️'], ['cse', 'GATE CSE', '💻'], ['both', 'CSE and DA', '➕'], ['undecided', 'Not decided yet', '🤔', 1]]],
-    ['sv_src', 'How did you find us?', [['youtube', 'YouTube', '▶️'], ['telegram', 'Telegram', '✈️'], ['whatsapp', 'WhatsApp group', '💬'], ['friend', 'A friend', '🤝'], ['google', 'Google', '🔎'], ['discord', 'Discord', '🎧'], ['other', 'Other', '✏️', 1]]]
+    ['sv_year', 'Which year are you in?', [['y2', '2nd year or earlier'], ['y3', '3rd year'], ['final', 'Final year'], ['grad', 'Graduated, working'], ['full', 'Preparing full-time', 1]]],
+    ['sv_gate', 'What are you preparing for?', [['da27', 'GATE DA 2027'], ['da28', 'GATE DA 2028'], ['cse', 'GATE CSE'], ['both', 'GATE CSE and DA'], ['jobs', 'Job interviews (DS/AI)'], ['undecided', 'Not decided yet']]],
+    ['sv_src', 'How did you find us?', [['youtube', 'YouTube'], ['telegram', 'Telegram'], ['whatsapp', 'WhatsApp group'], ['friend', 'A friend'], ['google', 'Google'], ['discord', 'Discord'], ['other', 'Other', 1]]]
   ];
   function done() { try { return !!localStorage.getItem(KEY); } catch (e) { return true; } }
   function send(kind, id) {
@@ -2056,13 +2052,13 @@ body.rsv-open .mobile-enroll-bar, body.rsv-open .mobile-contact-bar, body.rsv-op
     var back = document.createElement('div');
     back.className = 'rsv-back';
     back.innerHTML = '<div class="rsv-card" role="dialog" aria-modal="true" aria-labelledby="rsv-q">' +
-      '<div class="rsv-top"><span class="rsv-tag"><span class="rsv-clock" aria-hidden="true">⏱</span> 15 seconds · 3 taps</span>' +
+      '<div class="rsv-top"><span class="rsv-tag">15 seconds · 3 taps</span>' +
       '<button type="button" class="rsv-x" aria-label="Close"><svg viewBox="0 0 14 14" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div>' +
       '<div class="rsv-body"><p class="rsv-why">' + (isVideo ? 'Your video plays right after this.' : 'Your PDF opens right after this.') + ' Tell us a little about you, so we know which free notes to make next.</p>' +
       '<div class="rsv-prog"><i></i><i></i><i></i></div><div class="rsv-step"></div><div class="rsv-q" id="rsv-q"></div>' +
       '<div class="rsv-opts"></div><div class="rsv-other"><input type="text" maxlength="40" placeholder="Where did you hear about us?" aria-label="Where did you hear about us?"></div>' +
-      '<div class="rsv-foot"><button type="button" class="rsv-back-btn">← Back</button><button type="button" class="rsv-go">' + (isVideo ? 'Done, play the video →' : 'Done, open my PDF →') + '</button></div>' +
-      '<p class="rsv-note">🔒 Anonymous · asked only once</p></div></div>';
+      '<div class="rsv-foot"><button type="button" class="rsv-back-btn">Back</button><button type="button" class="rsv-go">' + (isVideo ? 'Done, play the video' : 'Done, open my PDF') + '</button></div>' +
+      '<p class="rsv-note">Anonymous · asked only once</p></div></div>';
     document.body.appendChild(back);
     document.body.classList.add('rsv-open');
     var card = back.querySelector('.rsv-card'), opts = back.querySelector('.rsv-opts'), otherBox = back.querySelector('.rsv-other'), input = otherBox.querySelector('input');
@@ -2075,7 +2071,7 @@ body.rsv-open .mobile-enroll-bar, body.rsv-open .mobile-contact-bar, body.rsv-op
       back.querySelector('.rsv-why').style.display = step ? 'none' : '';
       back.querySelector('.rsv-q').textContent = q[1];
       opts.innerHTML = q[2].map(function (o) {
-        return '<button type="button" class="rsv-opt' + (o[3] ? ' rsv-wide' : '') + '" aria-pressed="' + (picked[q[0]] === o[0]) + '" data-v="' + o[0] + '"><span class="rsv-ic" aria-hidden="true">' + o[2] + '</span>' + esc(o[1]) + '</button>';
+        return '<button type="button" class="rsv-opt' + (o[2] ? ' rsv-wide' : '') + '" aria-pressed="' + (picked[q[0]] === o[0]) + '" data-v="' + o[0] + '">' + esc(o[1]) + '</button>';
       }).join('');
       var last = step === Q.length - 1;
       otherBox.className = 'rsv-other' + (last && picked.sv_src === 'other' ? ' on' : '');

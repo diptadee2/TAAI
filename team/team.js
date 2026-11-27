@@ -4330,7 +4330,7 @@
   // mirror the survey card in gate-da-free-notes.html.
   var RES_SURVEY = [
     ['sv_year', 'Year', [['y2', '2nd year or earlier'], ['y3', '3rd year'], ['final', 'Final year'], ['grad', 'Graduated, working'], ['full', 'Preparing full-time']]],
-    ['sv_gate', 'Writing', [['da27', 'GATE DA 2027'], ['da28', 'GATE DA 2028'], ['cse', 'GATE CSE'], ['both', 'CSE and DA'], ['undecided', 'Not decided']]],
+    ['sv_gate', 'Preparing for', [['da27', 'GATE DA 2027'], ['da28', 'GATE DA 2028'], ['cse', 'GATE CSE'], ['both', 'GATE CSE and DA'], ['jobs', 'Job interviews (DS/AI)'], ['undecided', 'Not decided']]],
     ['sv_src', 'Found us via', [['youtube', 'YouTube'], ['telegram', 'Telegram'], ['whatsapp', 'WhatsApp group'], ['friend', 'A friend'], ['google', 'Google'], ['discord', 'Discord'], ['other', 'Other']]]
   ];
   function resSurveyHtml(sv) {
