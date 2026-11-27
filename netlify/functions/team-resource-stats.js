@@ -1,6 +1,7 @@
 // GET /api/team-resource-stats -> { today, visits: {total, d7, d30, today, daily: [{day, count, fresh}]},
 //                                   newVisitors: {total, d7, d30, today},
-//                                   items: { <id>: { note|play|slides: {total, d7, d30} } } }
+//                                   items: { <id>: { note|play|slides: {total, d7, d30} } },
+//                                   survey: { sv_year|sv_gate|sv_src|sv_done: { <answer>: {total, d30} } } }
 //
 // Admin-only read of the Resources page counters (resource_stats, written by
 // resource-event.js), shown in /team Site data > Notes and Lectures.
@@ -31,8 +32,15 @@ export async function handler(event, context) {
   const fresh = { total: 0, d7: 0, d30: 0, today: 0 };
   const newByDay = {};
   const items = {};
+  const survey = {};
   for (const r of rows) {
     const c = r.count || 0;
+    if (r.kind.startsWith('sv_')) {
+      const q = survey[r.kind] = survey[r.kind] || {};
+      const a = q[r.item_id] = q[r.item_id] || { total: 0, d30: 0 };
+      a.total += c; if (r.day >= from30) a.d30 += c;
+      continue;
+    }
     if (r.kind === 'new') {
       fresh.total += c;
       if (r.day >= from7) fresh.d7 += c;
@@ -56,5 +64,5 @@ export async function handler(event, context) {
     if (r.day >= from30) k.d30 += c;
   }
   for (let i = 29; i >= 0; i--) { const d = addDays(today, -i); visits.daily.push({ day: d, count: byDay[d] || 0, fresh: newByDay[d] || 0 }); }
-  return json(200, { ready: true, today, visits, newVisitors: fresh, items });
+  return json(200, { ready: true, today, visits, newVisitors: fresh, items, survey });
 }

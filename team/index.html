@@ -926,6 +926,18 @@
   .web-up { color: #fca5a5; }
   .web-minor { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 999px; font-size: 11px; background: rgba(255,255,255,0.08); color: var(--ink-soft); }
   .web-hidden-note { margin: -4px 0 10px; }
+
+  /* Resources survey results (2026-11-27) */
+  .res-survey { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .res-survey-head { margin-bottom: 10px; font-size: 14px; }
+  .res-survey-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 18px; }
+  .res-sq-title { font-weight: 600; font-size: 13.5px; margin-bottom: 6px; }
+  .res-sq-row { display: grid; grid-template-columns: 132px minmax(0,1fr) 64px; gap: 8px; align-items: center; font-size: 12.5px; padding: 2px 0; }
+  .res-sq-label { color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .res-sq-bar { height: 8px; border-radius: 999px; background: rgba(255,255,255,0.06); overflow: hidden; }
+  .res-sq-bar i { display: block; height: 100%; border-radius: 999px; background: #a78bfa; }
+  .res-sq-n { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink-soft); }
+  @media (max-width: 760px) { .res-survey-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>

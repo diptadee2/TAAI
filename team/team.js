@@ -4326,6 +4326,28 @@
     });
   }
 
+  // One-time survey answers from the Resources page (2026-11-27). Labels
+  // mirror the survey card in gate-da-free-notes.html.
+  var RES_SURVEY = [
+    ['sv_year', 'Year', [['y2', '2nd year or earlier'], ['y3', '3rd year'], ['final', 'Final year'], ['grad', 'Graduated, working'], ['full', 'Preparing full-time']]],
+    ['sv_gate', 'Writing', [['da27', 'GATE DA 2027'], ['da28', 'GATE DA 2028'], ['cse', 'GATE CSE'], ['both', 'CSE and DA'], ['undecided', 'Not decided']]],
+    ['sv_src', 'Found us via', [['youtube', 'YouTube'], ['instagram', 'Instagram'], ['telegram', 'Telegram'], ['whatsapp', 'WhatsApp group'], ['friend', 'A friend'], ['google', 'Google'], ['discord', 'Discord'], ['other', 'Other']]]
+  ];
+  function resSurveyHtml(sv) {
+    var done = sv.sv_done || {};
+    var ans = (done.answered || {}).total || 0, skip = (done.skipped || {}).total || 0;
+    var head = '<div class="res-survey-head"><b>Who uses the page</b><span class="field-hint"> · one-time survey before the first download: ' + ans + ' answered, ' + skip + ' skipped' + (ans + skip ? ' (' + Math.round(ans / (ans + skip) * 100) + '% answer)' : '') + '</span></div>';
+    if (!ans) return '<div class="res-survey">' + head + '<div class="field-hint" style="margin:0;">No answers yet. Each new visitor is asked once, right before their first PDF, lecture or slides, and can skip.</div></div>';
+    return '<div class="res-survey">' + head + '<div class="res-survey-grid">' + RES_SURVEY.map(function (q) {
+      var data = sv[q[0]] || {};
+      var tot = q[2].reduce(function (a, o) { return a + ((data[o[0]] || {}).total || 0); }, 0);
+      var rows = q[2].map(function (o) { return { label: o[1], n: (data[o[0]] || {}).total || 0 }; }).sort(function (a, b) { return b.n - a.n; });
+      return '<div class="res-sq"><div class="res-sq-title">' + escapeHtml(q[1]) + ' <span class="field-hint">(' + tot + ')</span></div>' + rows.map(function (r) {
+        var pc = tot ? Math.round(r.n / tot * 100) : 0;
+        return '<div class="res-sq-row"><span class="res-sq-label">' + escapeHtml(r.label) + '</span><span class="res-sq-bar"><i style="width:' + pc + '%"></i></span><span class="res-sq-n">' + r.n + (tot ? ' · ' + pc + '%' : '') + '</span></div>';
+      }).join('') + '</div>';
+    }).join('') + '</div></div>';
+  }
   // Visits summary shown above Notes and Lectures.
   function renderResourceStatsPanel() {
     var rs = state.resourceStats;
@@ -4348,6 +4370,7 @@
         '<div class="res-vbars" aria-label="Visits per day, last 30 days">' + bars + '</div>' +
         '<div class="field-hint" style="margin:6px 0 0;">Visits per day, last 30 days; the brighter part of each bar is new visitors. A visit counts once per browser tab; a new visitor is a browser opening the page for the first time (a new phone, another browser or cleared site data counts again). Downloads and plays count once per item per 10 minutes. Counting started 8 Nov 2026.</div>';
     }
+    if (rs.data && rs.data.ready !== false) body += resSurveyHtml(rs.data.survey || {});
     return '<section class="pricing-group res-stats-panel"><div class="res-section-head"><div class="pricing-group-heading">Resources page visits</div>' + refresh + '</div>' + body + '</section>';
   }
 
