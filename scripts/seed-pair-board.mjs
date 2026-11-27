@@ -77,7 +77,8 @@ if (notes.some(n => /^cumulative revision$/i.test(n.label))) {
         subj = k; from = sec.tasks[j - 1];
       } else {
         subj = finished[n % finished.length];
-        const list = sections[subj].tasks;
+        // Catch-up days have no topic of their own, so they're never revised.
+        const list = sections[subj].tasks.filter(x => !/^catch-up/i.test(x.text));
         pointer[subj] = pointer[subj] || 0;
         from = list[pointer[subj] % list.length];
         pointer[subj] += 1;
