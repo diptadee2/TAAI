@@ -2045,7 +2045,8 @@ body.rsv-open .mobile-enroll-bar, body.rsv-open .mobile-contact-bar, body.rsv-op
   var KEY = 'taai_res_survey_v1';
   var Q = [
     ['sv_year', 'Which year are you in?', [['y2', '2nd year or earlier'], ['y3', '3rd year'], ['final', 'Final year'], ['grad', 'Graduated, working'], ['full', 'Preparing full-time', 1]]],
-    ['sv_gate', 'What are you preparing for?', [['da27', 'GATE DA 2027'], ['da28', 'GATE DA 2028'], ['cse', 'GATE CSE'], ['both', 'GATE CSE and DA'], ['jobs', 'Job interviews (DS/AI)'], ['undecided', 'Not decided yet']]],
+    // GATE DA 2027 is offered until the exam day, Feb 4, 2027 (IST); from Feb 5 it's gone.
+    ['sv_gate', 'What are you preparing for?', [['da27', 'GATE DA 2027', 0, '2027-02-04'], ['da28', 'GATE DA 2028'], ['cse', 'GATE CSE'], ['both', 'GATE CSE and DA'], ['jobs', 'Job interviews (DS/AI)'], ['undecided', 'Not decided yet']]],
     ['sv_src', 'How did you find us?', [['youtube', 'YouTube'], ['telegram', 'Telegram'], ['whatsapp', 'WhatsApp group'], ['friend', 'A friend'], ['google', 'Google'], ['discord', 'Discord'], ['other', 'Other', 1]]]
   ];
   function done() { try { return !!localStorage.getItem(KEY); } catch (e) { return true; } }
@@ -2086,8 +2087,12 @@ body.rsv-open .mobile-enroll-bar, body.rsv-open .mobile-contact-bar, body.rsv-op
       back.querySelector('.rsv-step').textContent = (step + 1) + ' of ' + Q.length + (step === Q.length - 1 ? ' · last one' : '');
       back.querySelector('.rsv-why').style.display = step ? 'none' : '';
       back.querySelector('.rsv-q').textContent = q[1];
-      opts.innerHTML = q[2].map(function (o) {
-        return '<button type="button" class="rsv-opt' + (o[2] ? ' rsv-wide' : '') + '" aria-pressed="' + (picked[q[0]] === o[0]) + '" data-v="' + o[0] + '">' + esc(o[1]) + '</button>';
+      var todayIST = new Date(Date.now() + 5.5 * 3600000).toISOString().slice(0, 10);
+      var list = q[2].filter(function (o) { return !o[3] || todayIST <= o[3]; });
+      opts.innerHTML = list.map(function (o, i) {
+        // an odd last tile takes the full row instead of sitting alone in half of it
+        var wide = o[2] || (i === list.length - 1 && list.length % 2 === 1);
+        return '<button type="button" class="rsv-opt' + (wide ? ' rsv-wide' : '') + '" aria-pressed="' + (picked[q[0]] === o[0]) + '" data-v="' + o[0] + '">' + esc(o[1]) + '</button>';
       }).join('');
       var last = step === Q.length - 1;
       otherBox.className = 'rsv-other' + (last && picked.sv_src === 'other' ? ' on' : '');
