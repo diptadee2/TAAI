@@ -116,7 +116,7 @@ function gfgOffers(html, filter) {
       if (!seen.has(o.course_slug) && (!filter || filter.test(o.course_name))) {
         seen.add(o.course_slug);
         const p = o.price || {};
-        out.push({ name: o.course_name.trim(), price: p.batch_fee || null, mrp: p.promotional_fee && p.promotional_fee !== p.batch_fee ? p.promotional_fee : null, url: 'https://www.geeksforgeeks.org/courses/' + o.course_slug });
+        out.push({ name: o.course_name.trim(), price: p.batch_fee || null, mrp: p.promotional_fee && p.promotional_fee !== p.batch_fee ? p.promotional_fee : null, url: 'https://www.geeksforgeeks.org/courses/' + o.course_slug, currency: o.currency_symbol || null });
       }
       return;
     }
@@ -219,7 +219,7 @@ export function extractPage(page, html, finalUrl) {
   const lines = htmlToLines(html);
   const url = finalUrl || page.url;
   let offers;
-  if (page.extractor === 'gfg') offers = gfgOffers(html, filter).map(o => ({ product: o.name, plan: null, validity: null, price: o.price, mrp: o.mrp, url: o.url }));
+  if (page.extractor === 'gfg') offers = gfgOffers(html, filter).map(o => ({ product: o.name, plan: null, validity: null, price: o.price, mrp: o.mrp, url: o.url, currency: o.currency && o.currency !== '₹' ? o.currency : undefined }));
   else if (page.extractor === 'pw') offers = pwOffers(html, url, filter).map(o => ({ product: o.name, plan: null, validity: null, price: o.price, mrp: o.mrp, url: o.url }));
   else {
     offers = spayeeOffers(html, url);
@@ -252,7 +252,46 @@ async function sitemapUrls(url, filter) {
 }
 
 const offerKey = o => o.key || o.url || o.name.replace(/[0-9,.₹]+/g, '#').replace(/\s+/g, ' ').trim().toLowerCase();
-const fmt = n => n == null ? '-' : '₹' + Number(n).toLocaleString('en-IN');
+const fmt = (n, cur) => n == null ? '-' : (cur || '₹') + Number(n).toLocaleString(cur && cur !== '₹' ? 'en-US' : 'en-IN');
+// Old GfG readings (before 2026-11-27) have no currency field; dollar prices
+// have cents (119.98), rupee prices never do.
+export const offerCurrency = o => (o && o.currency) || (o && o.price != null && o.price % 1 !== 0 ? '$' : '₹');
+
+// Accuracy rules (2026-11-27, "are the website changes accurate?"):
+// - a star rating or review count ticking over ("4.9", "(47 ratings)") and
+//   long navigation menus ("UPSC Online Coaching UPSC Offline ...") are not
+//   changes worth reporting;
+// - offers guessed from page text are too unstable to report as new/gone
+//   (they produced a burst of 74 bogus entries on 2026-11-26);
+// - small menu-word edits ("Jobs" -> "Interview Prep") are kept but marked minor.
+const RATING_RE = /^\(?\s*\d+(\.\d+)?\s*(k\+?|\+)?\s*(ratings?|reviews?|students?|learners?|enrolled|views?|learners enrolled)?\s*\)?$/i;
+export function isTrivialLine(l) {
+  l = String(l || '').trim();
+  if (!l || RATING_RE.test(l)) return true;
+  if (l.length >= 100) {
+    const words = l.toLowerCase().match(/[a-z]{5,}/g) || [];
+    const count = {}; let top = 0;
+    words.forEach(w => { count[w] = (count[w] || 0) + 1; if (count[w] > top) top = count[w]; });
+    if (top >= 4 && !/[.!?]/.test(l)) return true; // a menu: the same word over and over, no sentences
+  }
+  return false;
+}
+const MEANINGFUL_RE = /₹|\$|%|\b(sale|offer|discount|coupon|off|launch|new|batch|free|live|price|fee|starts?|deadline|last date|validity|enrol|admission|mock|test series|course)\b/i;
+export function isMinorText(added, removed) {
+  const all = (added || []).concat(removed || []);
+  return !all.some(l => l.length >= 25 || MEANINGFUL_RE.test(l));
+}
+// For rows already stored: true when the change is one of the noise kinds above.
+export function isNoiseChange(c) {
+  const d = c.detail || {};
+  if ((c.kind === 'offer_new' || c.kind === 'offer_gone') && d.offer && d.offer.source === 'text') return true;
+  if (c.kind === 'price' && d.from && d.to && offerCurrency(d.from) !== offerCurrency(d.to)) return true;
+  if (c.kind === 'text') {
+    const added = (d.added || []).filter(l => !isTrivialLine(l)), removed = (d.removed || []).filter(l => !isTrivialLine(l));
+    if (!added.length && !removed.length) return true;
+  }
+  return false;
+}
 
 // What changed between two extractions of the same page.
 export function diffPage(prev, cur) {
@@ -260,29 +299,34 @@ export function diffPage(prev, cur) {
   if (prev.title && cur.title && prev.title !== cur.title) changes.push({ kind: 'title', summary: 'Page title changed', detail: { from: prev.title, to: cur.title } });
   // Snapshots from before the v:2 offer format (2026-11-25) can't be
   // compared offer by offer; the first new read just becomes the baseline.
-  const comparable = !(prev.offers || []).length || (prev.offers || []).some(o => o.v === 2);
-  const pm = new Map(comparable ? (prev.offers || []).map(o => [offerKey(o), o]) : []);
-  const cm = new Map(comparable ? (cur.offers || []).map(o => [offerKey(o), o]) : []);
+  // Offers are compared only when both readings come from the site's own
+  // data, in the same currency.
+  const dataOnly = list => (list || []).filter(o => o.source !== 'text');
+  const curs = list => [...new Set(dataOnly(list).map(offerCurrency))].sort().join(',');
+  const comparable = (!(prev.offers || []).length || (prev.offers || []).some(o => o.v === 2)) && curs(prev.offers) === curs(cur.offers);
+  const pm = new Map(comparable ? dataOnly(prev.offers).map(o => [offerKey(o), o]) : []);
+  const cm = new Map(comparable && dataOnly(prev.offers).length ? dataOnly(cur.offers).map(o => [offerKey(o), o]) : []);
   for (const [k, o] of cm) {
     const was = pm.get(k);
-    if (!was) changes.push({ kind: 'offer_new', summary: 'New: ' + o.name.slice(0, 140) + (o.price ? ' at ' + fmt(o.price) : ''), detail: { offer: o } });
+    if (!was) changes.push({ kind: 'offer_new', summary: 'New: ' + o.name.slice(0, 140) + (o.price ? ' at ' + fmt(o.price, offerCurrency(o)) : ''), detail: { offer: o } });
     else if (was.price !== o.price || was.mrp !== o.mrp) {
       const dir = o.price != null && was.price != null ? (o.price > was.price ? 'up' : o.price < was.price ? 'down' : 'same') : 'same';
-      changes.push({ kind: 'price', summary: o.name.slice(0, 120) + ': ' + fmt(was.price) + ' → ' + fmt(o.price) + (o.mrp !== was.mrp ? ' (MRP ' + fmt(was.mrp) + ' → ' + fmt(o.mrp) + ')' : ''), detail: { from: was, to: o, dir } });
+      const cu = offerCurrency(o);
+      changes.push({ kind: 'price', summary: o.name.slice(0, 120) + ': ' + fmt(was.price, cu) + ' → ' + fmt(o.price, cu) + (o.mrp !== was.mrp ? ' (MRP ' + fmt(was.mrp, cu) + ' → ' + fmt(o.mrp, cu) + ')' : ''), detail: { from: was, to: o, dir } });
     }
   }
-  for (const [k, o] of pm) if (!cm.has(k)) changes.push({ kind: 'offer_gone', summary: 'Gone: ' + o.name.slice(0, 140) + (o.price ? ' (was ' + fmt(o.price) + ')' : ''), detail: { offer: o } });
+  if (cm.size) for (const [k, o] of pm) if (!cm.has(k)) changes.push({ kind: 'offer_gone', summary: 'Gone: ' + o.name.slice(0, 140) + (o.price ? ' (was ' + fmt(o.price, offerCurrency(o)) + ')' : ''), detail: { offer: o } });
   // Text: lines added / removed, ignoring countdowns. When a page's prices
   // come from its text, its short price lines are reported as offers above,
   // so they're left out here; longer sentences that mention a price stay in.
   const fromText = (cur.offers || []).some(o => o.source === 'text');
   const skip = l => fromText && amounts(l).length && l.length <= 100;
   const a = new Set(stableLines(prev.lines || [])), b = new Set(stableLines(cur.lines || []));
-  const added = [...b].filter(l => !a.has(l) && !skip(l));
-  const removed = [...a].filter(l => !b.has(l) && !skip(l));
+  const added = [...b].filter(l => !a.has(l) && !skip(l) && !isTrivialLine(l));
+  const removed = [...a].filter(l => !b.has(l) && !skip(l) && !isTrivialLine(l));
   if (added.length || removed.length) {
     const first = (added[0] || removed[0] || '').slice(0, 110);
-    changes.push({ kind: 'text', summary: (added.length ? added.length + ' line' + (added.length === 1 ? '' : 's') + ' added' : '') + (added.length && removed.length ? ', ' : '') + (removed.length ? removed.length + ' removed' : '') + (first ? ': "' + first + '"' : ''), detail: { added: added.slice(0, 80), removed: removed.slice(0, 80) } });
+    changes.push({ kind: 'text', summary: (added.length ? added.length + ' line' + (added.length === 1 ? '' : 's') + ' added' : '') + (added.length && removed.length ? ', ' : '') + (removed.length ? removed.length + ' removed' : '') + (first ? ': "' + first + '"' : ''), detail: { added: added.slice(0, 80), removed: removed.slice(0, 80), minor: isMinorText(added, removed) } });
   }
   return changes;
 }
@@ -333,6 +377,12 @@ export async function runWebMonitor(s, { ids = null, budgetMs = 22000 } = {}) {
       const cur = extractPage(page, r.text, r.finalUrl);
       if (!cur.lines.length && !cur.offers.length) throw new Error('page came back empty');
       const { data: last } = await s.from('web_snapshots').select('id, title, lines, offers').eq('page_id', page.id).order('taken_at', { ascending: false }).limit(1).maybeSingle();
+      // A page that had prices in its own data and now shows none is far more
+      // likely a bad read than every course being removed at once
+      // (2026-11-27: GO Classes' free Linear Algebra course was reported
+      // "gone" this way). Keep the last reading and report a problem instead.
+      const hadData = last && (last.offers || []).some(o => o.v === 2 && o.source !== 'text');
+      if (hadData && !cur.offers.some(o => o.source !== 'text')) throw new Error('no prices found on this read (kept the last reading)');
       let rows = [];
       if (last) rows = diffPage(last, cur).map(c => Object.assign({ page_id: page.id }, c));
       // Also re-save when the stored snapshot predates the v:2 offer format.

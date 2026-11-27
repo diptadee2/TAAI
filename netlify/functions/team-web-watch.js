@@ -5,7 +5,7 @@
 // POST {action:'add', url, competitor, label, extractor, match}
 // POST {action:'remove'|'restore', id}  -> stop / restart watching (history kept)
 import { getSupabase, json, requireAdmin } from './lib/supabase.js';
-import { runWebMonitor } from './lib/web-monitor.js';
+import { runWebMonitor, isNoiseChange, isMinorText, isTrivialLine, offerCurrency } from './lib/web-monitor.js';
 import { startCompetitorsRefresh } from './competitors-refresh-background.js';
 
 const EXTRACTORS = ['text', 'gfg', 'pw', 'sitemap'];
@@ -41,15 +41,43 @@ export async function handler(event, context) {
     const since = new Date(Date.now() - 90 * 86400000).toISOString();
     // Details (added/removed lines) are fetched one change at a time, so the
     // list stays small; offers and short details come along.
-    const { data: changes } = await s.from('web_changes').select('id, page_id, detected_at, kind, summary')
+    // detail is read to classify each change (noise / minor) and to send the
+    // price pair, but the text lines themselves stay on the server.
+    const { data: rawChanges } = await s.from('web_changes').select('id, page_id, detected_at, kind, summary, detail')
       .gte('detected_at', since).order('detected_at', { ascending: false }).limit(600);
+    // A check that compared offers read two different ways (older code read
+    // prices without the v:2 format, e.g. the 2026-11-26 run) reports every
+    // offer as new or gone: all offer rows from that page and moment are noise.
+    const mixed = new Set();
+    (rawChanges || []).forEach(c => { if (c.kind === 'offer_new' && c.detail && c.detail.offer && c.detail.offer.v !== 2) mixed.add(c.page_id + '|' + c.detected_at); });
+    // A check where offers only disappeared and nothing appeared, and the page
+    // then showed no prices at all, was a bad read (see runWebMonitor).
+    const newAt = new Set((rawChanges || []).filter(c => c.kind === 'offer_new' || c.kind === 'price').map(c => c.page_id + '|' + c.detected_at));
+    const goneAt = [...new Set((rawChanges || []).filter(c => c.kind === 'offer_gone').map(c => c.page_id + '|' + c.detected_at))].filter(k => !newAt.has(k));
+    if (goneAt.length) {
+      const { data: snaps } = await s.from('web_snapshots').select('page_id, taken_at, offers').gte('taken_at', since).in('page_id', [...new Set(goneAt.map(k => +k.split('|')[0]))]);
+      goneAt.forEach(k => {
+        const [pid, at] = k.split('|');
+        const snap = (snaps || []).filter(x => String(x.page_id) === pid && Math.abs(Date.parse(x.taken_at) - Date.parse(at)) < 120000)[0];
+        if (snap && !(snap.offers || []).some(o => o.source !== 'text')) mixed.add(k);
+      });
+    }
+    const changes = (rawChanges || []).map(c => {
+      const d = c.detail || {};
+      const burst = (c.kind === 'offer_new' || c.kind === 'offer_gone') && mixed.has(c.page_id + '|' + c.detected_at);
+      const out = { id: c.id, page_id: c.page_id, detected_at: c.detected_at, kind: c.kind, summary: c.summary, noise: burst || isNoiseChange(c) };
+      if (c.kind === 'text') out.minor = d.minor != null ? !!d.minor : isMinorText((d.added || []).filter(l => !isTrivialLine(l)), (d.removed || []).filter(l => !isTrivialLine(l)));
+      if (c.kind === 'price' && d.from && d.to) out.price = { from: d.from.price, to: d.to.price, mrp: d.to.mrp, cur: offerCurrency(d.to), name: d.to.name || d.to.product, dir: d.dir };
+      if ((c.kind === 'offer_new' || c.kind === 'offer_gone') && d.offer) out.offer = { name: d.offer.name || d.offer.product, price: d.offer.price, cur: offerCurrency(d.offer) };
+      return out;
+    });
     // Latest offers per page (from its newest snapshot).
     const offers = {};
     await Promise.all((pages || []).filter(p => p.extractor !== 'sitemap').map(async (p) => {
       const { data } = await s.from('web_snapshots').select('offers, taken_at').eq('page_id', p.id).order('taken_at', { ascending: false }).limit(1).maybeSingle();
       if (data) offers[p.id] = { list: data.offers || [], since: data.taken_at };
     }));
-    return json(200, { ready: true, pages: pages || [], changes: changes || [], offers });
+    return json(200, { ready: true, pages: pages || [], changes, offers });
   }
 
   let body;

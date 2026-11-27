@@ -1719,7 +1719,7 @@
         var k = p.competitor + '|' + [String(o.product).replace(/\s*\([^)]*\)/g, ''), o.plan, o.validity].join('|').toLowerCase();
         var t = tracks[k] = tracks[k] || { comp: p.competitor, o: o, pts: [] };
         var last = t.pts[t.pts.length - 1];
-        if (!last || last.price !== o.price || last.mrp !== o.mrp) t.pts.push({ at: snap.taken_at, price: o.price, mrp: o.mrp });
+        if (!last || last.price !== o.price || last.mrp !== o.mrp) t.pts.push({ at: snap.taken_at, price: o.price, mrp: o.mrp, cur: webCur(o) });
         t.o = o;
       });
     });
@@ -1729,7 +1729,8 @@
       for (var i = 1; i < t.pts.length; i++) {
         var a = t.pts[i - 1], b = t.pts[i];
         if (a.price === b.price) continue;
-        events.push({ t: t, at: b.at, from: a.price, to: b.price, mrp: b.mrp, pct: a.price ? (b.price - a.price) / a.price * 100 : null });
+        if (a.cur !== b.cur) continue; // a rupee reading vs a dollar one is not a price change
+        events.push({ t: t, at: b.at, from: a.price, to: b.price, mrp: b.mrp, cur: b.cur, pct: a.price ? (b.price - a.price) / a.price * 100 : null });
       }
     });
     events.sort(function (a, b) { return Date.parse(b.at) - Date.parse(a.at); });
@@ -1743,7 +1744,7 @@
         var down = e.to < e.from;
         return '<div class="ins-pchg"><span class="ins-pdate">' + escapeHtml(pirFmtDate(new Date(Date.parse(e.at) + 5.5 * 3600000).toISOString().slice(0, 10))) + '</span>' +
           '<span class="ins-pwho"><b>' + escapeHtml(e.t.comp) + '</b> · ' + escapeHtml(o.product) + (detail ? ' <span class="field-hint">(' + escapeHtml(detail) + ')</span>' : '') + '</span>' +
-          '<span class="ins-pmove ' + (down ? 'is-down' : 'is-up') + '">' + webRupees(e.from) + ' → <b>' + webRupees(e.to) + '</b>' + (e.pct != null ? ' (' + (down ? '' : '+') + e.pct.toFixed(0) + '%)' : '') + (down ? ' sale' : ' up') + '</span></div>';
+          '<span class="ins-pmove ' + (down ? 'is-down' : 'is-up') + '">' + webRupees(e.from, e.cur) + ' → <b>' + webRupees(e.to, e.cur) + '</b>' + (e.pct != null ? ' (' + (down ? '' : '+') + e.pct.toFixed(0) + '%)' : '') + (down ? ' sale' : ' up') + '</span></div>';
       }).join('');
     }).join('') : '<div class="field-hint">No price changes recorded yet' + (firstSnap ? ' since ' + escapeHtml(pirFmtDate(firstSnap.slice(0, 10))) : '') + '. Prices are checked twice a day; every rise and drop will be listed here by month, so over the year this becomes their sale calendar (Diwali, New Year, results day).</div>';
     var changed = Object.keys(tracks).filter(function (k) { return tracks[k].pts.length > 1; }).length;
@@ -2155,7 +2156,59 @@
   function webTime(iso) {
     return new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', hour: 'numeric', minute: '2-digit' }).format(new Date(iso));
   }
-  function webRupees(n) { return n == null ? '-' : '₹' + Number(n).toLocaleString('en-IN'); }
+  function webRupees(n, cur) { cur = cur || '₹'; return n == null ? '-' : cur + Number(n).toLocaleString(cur === '₹' ? 'en-IN' : 'en-US'); }
+  // GfG serves prices in the visitor's currency, and the checks run on
+  // Netlify's US servers, so its prices are in dollars (cents give old
+  // readings away: 119.98). Rupee prices never have cents.
+  function webCur(o) { return (o && o.currency) || (o && o.price != null && o.price % 1 !== 0 ? '$' : '₹'); }
+  // "At a glance" (2026-11-27, "a brief overview of what changed"): per
+  // competitor, the period's price cuts and rises, new and removed offers,
+  // and text edits, from the same cleaned feed (no noise, no minor edits).
+  function renderWebGlance(d, pages, comps) {
+    var w = state.web, days = w.glance || 7, from = Date.now() - days * 86400000;
+    var dayOf = function (iso) { return pirFmtDate(new Date(Date.parse(iso) + 5.5 * 3600000).toISOString().slice(0, 10)); };
+    var by = {};
+    d.changes.forEach(function (c) {
+      var p = pages[c.page_id];
+      if (!p || c.noise || c.minor || Date.parse(c.detected_at) < from) return;
+      var g = by[p.competitor] = by[p.competitor] || { cuts: [], rises: [], added: [], removed: [], text: 0, textPages: {}, days: {} };
+      g.days[dayOf(c.detected_at)] = 1;
+      if (c.kind === 'price' && c.price) (c.price.to < c.price.from ? g.cuts : g.rises).push(c.price);
+      else if (c.kind === 'offer_new') g.added.push(c.offer || { name: c.summary.replace(/^New: /, '') });
+      else if (c.kind === 'offer_gone') g.removed.push(c.offer || { name: c.summary.replace(/^Gone: /, '') });
+      else if (c.kind === 'text' || c.kind === 'title') { g.text++; g.textPages[p.label || p.url] = 1; }
+    });
+    var pct = function (x) { return x.from ? Math.round(Math.abs(x.to - x.from) / x.from * 100) : null; };
+    var priceLine = function (arr, word) {
+      var ps = arr.map(pct).filter(function (v) { return v != null; });
+      var lo = Math.min.apply(null, ps), hi = Math.max.apply(null, ps);
+      var range = !ps.length ? '' : lo === hi ? ' by ' + hi + '%' : ' by ' + lo + '-' + hi + '%';
+      var ex = arr[0];
+      return word + ' ' + arr.length + ' price' + (arr.length === 1 ? '' : 's') + range + ' (e.g. ' + escapeHtml(ex.name) + ': ' + webRupees(ex.from, ex.cur) + ' → ' + webRupees(ex.to, ex.cur) + ')';
+    };
+    var names = function (arr) { return arr.slice(0, 3).map(function (o) { return escapeHtml(o.name); }).join('; ') + (arr.length > 3 ? ' and ' + (arr.length - 3) + ' more' : ''); };
+    var active = comps.filter(function (c) { return by[c]; });
+    var quiet = comps.filter(function (c) { return !by[c]; });
+    var problems = d.pages.filter(function (p) { return p.active && p.last_error; });
+    var body = active.map(function (c) {
+      var g = by[c], bits = [];
+      if (g.cuts.length) bits.push('<span class="web-down">' + priceLine(g.cuts, 'Cut') + '</span>');
+      if (g.rises.length) bits.push('<span class="web-up">' + priceLine(g.rises, 'Raised') + '</span>');
+      if (g.added.length) bits.push('New: ' + names(g.added));
+      if (g.removed.length) bits.push('Removed: ' + names(g.removed));
+      if (g.text) bits.push('Wording changed on ' + Object.keys(g.textPages).map(escapeHtml).join(', '));
+      var when = Object.keys(g.days);
+      return '<div class="web-glance-row"><b>' + escapeHtml(c) + '</b><span class="field-hint"> · ' + escapeHtml(when.length > 2 ? when.length + ' days' : when.join(', ')) + '</span><ul>' + bits.map(function (b) { return '<li>' + b + '</li>'; }).join('') + '</ul></div>';
+    }).join('');
+    var usd = d.changes.some(function (c) { return !c.noise && c.price && c.price.cur && c.price.cur !== '₹' && Date.parse(c.detected_at) >= from; });
+    return '<div class="web-glance"><div class="ins-sec-head" style="margin-top:0;"><h3 class="cmp-h">At a glance</h3><div class="tabs cmp-period">' +
+      [[7, '7 days'], [30, '30 days'], [90, '90 days']].map(function (x) { return '<button type="button" class="tab-btn' + (days === x[0] ? ' active' : '') + '" data-webglance="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div></div>' +
+      (active.length ? body : '<div class="field-hint">Nothing changed on their pages in the last ' + days + ' days.</div>') +
+      (active.length && quiet.length ? '<div class="field-hint" style="margin-top:6px;">No changes: ' + quiet.map(escapeHtml).join(', ') + '.</div>' : '') +
+      (problems.length ? '<div class="field-hint web-glance-prob">⚠️ Couldn\'t read: ' + problems.map(function (p) { return escapeHtml(p.competitor + ' ' + (p.label || '')) + ' (' + escapeHtml(p.last_error) + ')'; }).join('; ') + '</div>' : '') +
+      (usd ? '<div class="field-hint" style="margin-top:6px;">GfG shows prices in US dollars to our checker (it runs on servers outside India); the % changes are the same in rupees.</div>' : '') +
+      '</div>';
+  }
   function renderWebWatch() {
     var w = state.web, d = w.data;
     if (w.loading && !w.loaded) return '<div class="card"><div class="field-hint">Loading…</div></div>';
@@ -2168,9 +2221,12 @@
       '<div class="cmp-head-actions"><button type="button" class="btn" id="web-check"' + (w.busy ? ' disabled' : '') + '>' + (w.busy ? 'Checking…' : '↻ Check now') + '</button></div></div>';
     var opt = function (v, l, cur) { return '<option value="' + escapeHtml(v) + '"' + (cur === v ? ' selected' : '') + '>' + escapeHtml(l) + '</option>'; };
     var kinds = WEB_KIND_FILTERS[w.kind];
+    var hiddenNoise = 0, hiddenMinor = 0;
     var list = d.changes.filter(function (c) {
       var p = pages[c.page_id];
       if (!p) return false;
+      if (c.noise) { hiddenNoise++; return false; }
+      if (c.minor && !w.showMinor) { hiddenMinor++; return false; }
       if (w.comp !== 'all' && p.competitor !== w.comp) return false;
       if (kinds && kinds.indexOf(c.kind) === -1) return false;
       return true;
@@ -2196,14 +2252,19 @@
       return dh + '<div class="web-chg web-k-' + escapeHtml(c.kind) + '">' +
         '<span class="web-ico" title="' + escapeHtml(k[1]) + '">' + k[0] + '</span>' +
         '<div class="web-chg-main"><div class="web-chg-top"><span class="web-comp">' + escapeHtml(p.competitor) + '</span> · <a href="' + escapeHtml(p.url) + '" target="_blank" rel="noopener">' + escapeHtml(p.label || p.url) + '</a><span class="field-hint"> · ' + escapeHtml(webTime(c.detected_at)) + '</span></div>' +
-        '<div class="web-sum">' + escapeHtml(c.summary) + '</div>' +
+        '<div class="web-sum">' + (c.price ? escapeHtml(c.price.name) + ': ' + webRupees(c.price.from, c.price.cur) + ' → <b>' + webRupees(c.price.to, c.price.cur) + '</b>' +
+          (c.price.from ? ' <span class="' + (c.price.to < c.price.from ? 'web-down' : 'web-up') + '">(' + (c.price.to < c.price.from ? '' : '+') + Math.round((c.price.to - c.price.from) / c.price.from * 100) + '%)</span>' : '') : escapeHtml(c.summary)) +
+          (c.minor ? ' <span class="web-minor">minor</span>' : '') + '</div>' +
         (canOpen ? '<button type="button" class="link-btn js-web-open" data-id="' + c.id + '">' + (open ? 'Hide' : 'Show what changed') + '</button>' : '') + body +
         '</div></div>';
     }).join('');
-    var changes = '<h3 class="cmp-h">What changed <span class="field-hint">last 90 days</span></h3>' +
+    var hiddenNote = (hiddenNoise || hiddenMinor) ? '<div class="field-hint web-hidden-note">' +
+      (hiddenNoise ? hiddenNoise + ' unreliable entr' + (hiddenNoise === 1 ? 'y' : 'ies') + ' hidden (bad reads, rating counts, menus). ' : '') +
+      (hiddenMinor ? '<button type="button" class="link-btn" id="web-minor">Show ' + hiddenMinor + ' minor edit' + (hiddenMinor === 1 ? '' : 's') + '</button>' : (w.showMinor ? '<button type="button" class="link-btn" id="web-minor">Hide minor edits</button>' : '')) + '</div>' : '';
+    var changes = renderWebGlance(d, pages, comps) + '<h3 class="cmp-h">What changed <span class="field-hint">last 90 days</span></h3>' +
       '<div class="chal-toolbar cmp-vtools"><select id="web-comp">' + opt('all', 'All competitors', w.comp) + comps.map(function (c) { return opt(c, c, w.comp); }).join('') + '</select>' +
       '<select id="web-kind">' + opt('all', 'All changes', w.kind) + opt('price', 'Prices', w.kind) + opt('offers', 'New and removed offers', w.kind) + opt('text', 'Text', w.kind) + opt('pages', 'New and removed pages', w.kind) + opt('error', 'Problems', w.kind) + '</select></div>' +
-      (shown.length ? '<div class="web-feed">' + feed + '</div>' + (list.length > shown.length ? '<button type="button" class="btn" id="web-more" style="margin-top:10px;">Show more (' + (list.length - shown.length) + ' left)</button>' : '')
+      hiddenNote + (shown.length ? '<div class="web-feed">' + feed + '</div>' + (list.length > shown.length ? '<button type="button" class="btn" id="web-more" style="margin-top:10px;">Show more (' + (list.length - shown.length) + ' left)</button>' : '')
         : '<div class="field-hint">Nothing yet. Each page\'s first check is its starting point; changes show up from the next check on.</div>');
     return '<div class="card">' +
       (w.msg ? '<div class="msg ' + (w.msgType === 'error' ? 'msg-error' : 'msg-ok') + '">' + escapeHtml(w.msg) + '</div>' : '') +
@@ -2234,8 +2295,8 @@
         var detail = [o.plan, o.validity].filter(Boolean).join(' · ');
         return '<tr><td><div class="web-prod">' + (o.url ? '<a href="' + escapeHtml(o.url) + '" target="_blank" rel="noopener">' + escapeHtml(o.product) + '</a>' : escapeHtml(o.product)) + '</div>' +
           (detail ? '<div class="web-plan">' + escapeHtml(detail) + '</div>' : '') + '</td>' +
-          '<td class="web-pr">' + (o.price ? '<b>' + webRupees(o.price) + '</b>' : o.price === 0 ? '<b>Free</b>' : '<span class="field-hint">Not listed</span>') +
-          (o.mrp ? '<div class="web-mrp"><s>' + webRupees(o.mrp) + '</s>' + (off ? ' <span class="web-off">' + off + '% off</span>' : '') + '</div>' : '') + '</td></tr>';
+          '<td class="web-pr">' + (o.price ? '<b>' + webRupees(o.price, webCur(o)) + '</b>' : o.price === 0 ? '<b>Free</b>' : '<span class="field-hint">Not listed</span>') +
+          (o.mrp ? '<div class="web-mrp"><s>' + webRupees(o.mrp, webCur(o)) + '</s>' + (off ? ' <span class="web-off">' + off + '% off</span>' : '') + '</div>' : '') + '</td></tr>';
       };
       var srcPages = []; rows.forEach(function (r) { if (srcPages.indexOf(r.p) === -1) srcPages.push(r.p); });
       return '<div class="web-pcomp"><div class="web-pcomp-h"><b>' + escapeHtml(comp) + '</b><span class="field-hint"> · from ' + srcPages.map(function (p) { return '<a href="' + escapeHtml(p.url) + '" target="_blank" rel="noopener">' + escapeHtml(p.label || p.url) + '</a>'; }).join(', ') + '</span></div>' +
@@ -2315,6 +2376,9 @@
       var el = document.getElementById(p[0]);
       if (el) el.addEventListener('change', function () { w[p[1]] = el.value; w.limit = 60; render(); });
     });
+    document.querySelectorAll('[data-webglance]').forEach(function (b) { b.addEventListener('click', function () { state.web.glance = +b.getAttribute('data-webglance'); render(); }); });
+    var minorBtn = document.getElementById('web-minor');
+    if (minorBtn) minorBtn.addEventListener('click', function () { state.web.showMinor = !state.web.showMinor; render(); });
     var more = document.getElementById('web-more');
     if (more) more.addEventListener('click', function () { w.limit += 60; render(); });
     document.querySelectorAll('.js-web-open').forEach(function (b) {
