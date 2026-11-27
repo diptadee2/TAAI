@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-27-1';
+  var CLIENT_VERSION = '2026-11-27-2';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -4801,7 +4801,10 @@
     if (zenEl()) return;
     var el = document.createElement('div');
     el.id = 'pomo-zen';
-    el.className = 'pomo-zen' + (isPhoneDevice() ? ' zen-phone' : '');
+    // zen-web (2026-11-27): the phone WEBSITE, where sessions can't run (Start
+    // shows the install-the-app steps), so its fullscreen view is a plain
+    // preview without the game extras. The installed app keeps them.
+    el.className = 'pomo-zen' + (isPhoneDevice() ? ' zen-phone' + (isStandaloneApp() ? '' : ' zen-web') : '');
     el.setAttribute('role', 'dialog');
     el.setAttribute('aria-label', 'Fullscreen timer');
     el.innerHTML =

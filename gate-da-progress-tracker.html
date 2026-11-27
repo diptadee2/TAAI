@@ -3453,6 +3453,17 @@ html.has-mft body::before{content:'';position:fixed;top:0;left:0;right:0;height:
 @media (orientation: portrait) and (max-width: 600px) and (min-width: 420px) { html body .pomo-zen.zen-phone.has-board .pomo-zen-board { margin-top: 88px; } }
 @media (orientation: portrait) and (max-width: 600px) and (max-height: 700px) { html body .pomo-zen.zen-phone.has-board .pomo-zen-board { margin-top: 64px; } }
 </style>
+<style>
+/* Phone website fullscreen timer is a preview (2026-11-27): sessions only run
+   in the installed app, so the wanted stars, the daily-target bar and its
+   "N to go", the pencil, and Reset/Skip/Settings are hidden here. The clock,
+   today's focus time, Top 5, the timer and Start (which shows the install
+   steps) stay. */
+.pomo-zen.zen-web .zh-health, .pomo-zen.zen-web .zh-cap, .pomo-zen.zen-web .zh-stars, .pomo-zen.zen-web .zh-weapon,
+.pomo-zen.zen-web #pomo-zen-reset, .pomo-zen.zen-web #pomo-zen-skip, .pomo-zen.zen-web #pomo-zen-settings { display: none !important; }
+/* With the HUD down to two lines, the Top 5 card moves up under it. */
+@media (orientation: portrait) { html body .pomo-zen.zen-phone.zen-web.has-board .pomo-zen-board { margin-top: 24px; } }
+</style>
 </head>
 <body data-float-stack data-nav-no-autohide>
 
