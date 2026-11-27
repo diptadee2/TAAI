@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-27-3';
+  var CLIENT_VERSION = '2026-11-27-4';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1665,21 +1665,62 @@
     return '<svg class="vice-palm ' + cls + '" viewBox="0 0 220 320" aria-hidden="true">' +
       '<path d="M98 320 C 100 236, 116 170, 108 96 L 117 96 C 126 172, 110 236, 110 320 Z"/>' + leaves + '</svg>';
   }
+  // Skyline (redrawn 2026-11-27, "can the buildings look better?"): a hazy
+  // back row for depth, then front buildings with varied rooftops (setbacks,
+  // antennas with a red light, water tanks, spires, slanted tops), a thin pink
+  // rim where the sky glow catches the roofs, and windows lit in clusters of
+  // floors in warm and a few neon tints. Fixed numbers, so it's the same on
+  // every load. Nothing animates.
   function viceSkylineSvg() {
-    // fixed, hand-picked building heights so it looks the same every load
-    var hs = [38, 62, 46, 90, 54, 120, 70, 48, 104, 64, 140, 58, 82, 44, 112, 66, 50, 96, 72, 40, 128, 60, 86, 52];
-    var x = 0, out = '', win = '';
-    hs.forEach(function (h, i) {
-      var w = 34 + (i * 7) % 18;
-      out += '<rect x="' + x + '" y="' + (160 - h) + '" width="' + w + '" height="' + h + '"/>';
-      for (var yy = 160 - h + 10; yy < 150; yy += 14) {
-        for (var xx = x + 6; xx < x + w - 6; xx += 10) {
-          if (((xx * 7 + yy * 3 + i) % 11) === 0) win += '<rect x="' + xx + '" y="' + yy + '" width="3" height="4"/>';
+    var H = 160, back = '', front = '', rim = '', win = '', red = '';
+    // back row: taller, lighter, no detail
+    var bh = [96, 128, 84, 142, 110, 92, 150, 104, 120, 88, 136, 98, 116, 146, 90, 124, 102, 132];
+    var x = -10;
+    bh.forEach(function (h, i) {
+      var w = 52 + (i * 13) % 30;
+      back += '<rect x="' + x + '" y="' + (H - h) + '" width="' + w + '" height="' + h + '"/>';
+      if (i % 4 === 1) back += '<rect x="' + (x + w / 2 - 1) + '" y="' + (H - h - 14) + '" width="2" height="14"/>';
+      x += w - 6;
+    });
+    var backW = x;
+    // front row: [height, width, roof] roof: 0 flat+parapet, 1 setback, 2 antenna, 3 water tank, 4 spire, 5 slant
+    var fr = [[44, 40, 0], [70, 34, 2], [52, 46, 3], [96, 38, 1], [58, 44, 0], [118, 36, 4], [74, 48, 5], [50, 40, 3], [104, 42, 1],
+              [66, 36, 2], [132, 40, 4], [60, 50, 0], [86, 38, 3], [46, 44, 5], [112, 40, 2], [70, 46, 1], [54, 38, 0], [98, 44, 4],
+              [76, 40, 3], [44, 36, 5], [122, 42, 1], [62, 46, 2], [88, 40, 0], [56, 38, 3]];
+    x = 0;
+    fr.forEach(function (f, i) {
+      var h = f[0], w = f[1], r = f[2], top = H - h;
+      var body = '<rect x="' + x + '" y="' + top + '" width="' + w + '" height="' + h + '"/>';
+      var roofTop = top;
+      if (r === 0) { body += '<rect x="' + (x - 2) + '" y="' + (top - 3) + '" width="' + (w + 4) + '" height="3"/>'; roofTop = top - 3; }
+      if (r === 1) { body += '<rect x="' + (x + w * 0.2) + '" y="' + (top - 16) + '" width="' + (w * 0.6) + '" height="16"/><rect x="' + (x + w * 0.35) + '" y="' + (top - 26) + '" width="' + (w * 0.3) + '" height="10"/>'; roofTop = top - 26; }
+      if (r === 2) { body += '<rect x="' + (x + w * 0.62) + '" y="' + (top - 22) + '" width="2" height="22"/>'; red += '<circle cx="' + (x + w * 0.62 + 1) + '" cy="' + (top - 23) + '" r="1.6"/>'; }
+      if (r === 3) { body += '<rect x="' + (x + w * 0.18) + '" y="' + (top - 11) + '" width="11" height="8" rx="2"/><rect x="' + (x + w * 0.18 + 2) + '" y="' + (top - 3) + '" width="1.5" height="3"/><rect x="' + (x + w * 0.18 + 7.5) + '" y="' + (top - 3) + '" width="1.5" height="3"/>'; }
+      if (r === 4) { body += '<polygon points="' + (x + w * 0.3) + ',' + top + ' ' + (x + w * 0.5) + ',' + (top - 30) + ' ' + (x + w * 0.7) + ',' + top + '"/><rect x="' + (x + w * 0.5 - 0.75) + '" y="' + (top - 40) + '" width="1.5" height="10"/>'; red += '<circle cx="' + (x + w * 0.5) + '" cy="' + (top - 41) + '" r="1.6"/>'; roofTop = top - 30; }
+      if (r === 5) { body = '<polygon points="' + x + ',' + H + ' ' + x + ',' + (top + 10) + ' ' + (x + w) + ',' + top + ' ' + (x + w) + ',' + H + '"/>'; }
+      front += body;
+      // pink rim on the main roof line (the sky glow from behind)
+      rim += r === 5 ? '<line x1="' + x + '" y1="' + (top + 10) + '" x2="' + (x + w) + '" y2="' + top + '"/>' : '<line x1="' + x + '" y1="' + top + '" x2="' + (x + w) + '" y2="' + top + '"/>';
+      // windows: a few lit floors per building, mostly warm, some neon
+      for (var yy = top + 8, floor = 0; yy < H - 8; yy += 9, floor++) {
+        var litFloor = ((floor * 5 + i * 3) % 7) < 2;
+        for (var xx = x + 5, col = 0; xx < x + w - 6; xx += 7, col++) {
+          var on = litFloor ? ((col + floor + i) % 3 !== 0) : (((xx * 7 + yy * 3 + i) % 23) === 0);
+          if (!on) continue;
+          var tint = ((i + floor + col) % 13 === 0) ? 'vs-wc' : ((i + col) % 11 === 0) ? 'vs-wp' : 'vs-ww';
+          win += '<rect class="' + tint + '" x="' + xx + '" y="' + yy + '" width="3" height="3.5"/>';
         }
       }
-      x += w + 4;
+      x += w + 3;
     });
-    return '<svg class="vice-skyline" viewBox="0 0 ' + x + ' 160" preserveAspectRatio="none" aria-hidden="true"><g class="vs-b">' + out + '</g><g class="vs-w">' + win + '</g></svg>';
+    var W = Math.max(x, backW);
+    return '<svg class="vice-skyline" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">' +
+      '<defs><linearGradient id="vs-backg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a1745"/><stop offset="1" stop-color="#160b28"/></linearGradient>' +
+      '<linearGradient id="vs-frontg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#140a24"/><stop offset="1" stop-color="#06020d"/></linearGradient></defs>' +
+      '<g class="vs-back" fill="url(#vs-backg)">' + back + '</g>' +
+      '<g class="vs-b" fill="url(#vs-frontg)">' + front + '</g>' +
+      '<g class="vs-rim">' + rim + '</g>' +
+      '<g class="vs-w">' + win + '</g><g class="vs-red">' + red + '</g></svg>';
   }
   function viceSceneHtml() {
     if (!VICE_NIGHT) return '';

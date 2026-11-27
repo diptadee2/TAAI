@@ -3480,6 +3480,28 @@ html.vice-night .vice-tower .vt-sign { margin: 0 9px; }
 .vt-roof { align-self: stretch; height: 5px; background: #170b29; border-top: 1px solid rgba(255,122,217,.3); }
 html.vice-night .vice-tower .vt-body { width: auto !important; align-self: stretch; clip-path: polygon(2% 0, 98% 0, 100% 100%, 0 100%); }
 </style>
+<style>
+/* Skyline redraw + billboard on a low building (2026-11-27, "keep the sign on
+   top of a building where it's unintrusive; can the buildings look better").
+   The billboard's building is about as tall as the skyline's taller ones, so
+   the sign sits just above the roofline instead of reaching up toward the
+   controls; in desktop fullscreen it stands off to the right. */
+html.vice-night .vice-skyline .vs-b { fill: url(#vs-frontg); }
+.vice-skyline .vs-back { opacity: .55; }
+.vice-skyline .vs-rim line { stroke: rgba(255,122,217,.45); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.vice-skyline .vs-w .vs-ww { fill: rgba(255,196,140,.55); }
+.vice-skyline .vs-w .vs-wc { fill: rgba(126,243,245,.6); }
+.vice-skyline .vs-w .vs-wp { fill: rgba(255,122,217,.55); }
+.vice-skyline .vs-red circle { fill: #ff4d5e; }
+html.vice-night .vice-scene .vice-tower .vt-body { height: 74px !important; background-color: #0b0518; }
+html.vice-night .pomo-zen .vice-scene .vice-tower .vt-body { height: 92px !important; }
+html.vice-night .pomo-zen.zen-phone .vice-scene .vice-tower .vt-body { height: max(24px, min(calc(var(--zen-city-h, 150px) * .5), calc(var(--zen-tower-room, 200px) - 70px))) !important; }
+@media (min-width: 900px) { html.vice-night .pomo-zen:not(.zen-phone) .vice-tower { left: 84% !important; } }
+/* On the Focus card the skyline sits behind the leaderboard and tips, so it stays quieter there. */
+#focus-card .vice-skyline .vs-back { opacity: .3; }
+#focus-card .vice-skyline .vs-w { opacity: .45; }
+#focus-card .vice-skyline .vs-rim { opacity: .55; }
+</style>
 </head>
 <body data-float-stack data-nav-no-autohide>
 
