@@ -27,6 +27,25 @@ export async function handler(event) {
   if (event.httpMethod !== 'GET') return { statusCode: 405, body: '' };
   try {
     const supabase = getSupabase();
+    const q = event.queryStringParameters || {};
+    // Every tracker load and 10-minute poll asks the light question (no
+    // ?full). The rows hold the photos as data URLs (~1 MB together), so that
+    // question reads only the few small fields it needs: reading whole rows
+    // on every call cost ~1.5 GB of Supabase egress a day (2026-11-27).
+    // cleanWinner only lets the switch be on with a photo, so the light check
+    // doesn't need the photo itself.
+    if (!q.full) {
+      const { data: rows, error: e1 } = await supabase.from('club_winner')
+        .select('id, updated_at, enabled:data->enabled, name:data->>name, show_until:data->>show_until, n0:data->people->0->>name, n1:data->people->1->>name, n2:data->people->2->>name, n3:data->people->3->>name')
+        .in('id', ['main', 'runners']);
+      if (e1 || !rows) return reply({ active: false });
+      const m = rows.find(r => r.id === 'main');
+      const rr = rows.find(r => r.id === 'runners');
+      if (!m || !winnerActive({ enabled: m.enabled === true, name: m.name, photos: [1], show_until: m.show_until })) return reply({ active: false });
+      const hasOthers = !!(rr && (rr.n0 || rr.n1 || rr.n2 || rr.n3));
+      const k = String(Math.max(new Date(m.updated_at).getTime(), hasOthers ? new Date(rr.updated_at).getTime() : 0));
+      return reply({ active: true, key: k, items: [{ kind: 'winner', key: k }], runners: hasOthers });
+    }
     const { data, error } = await supabase.from('club_winner').select('id, data, updated_at').in('id', ['main', 'runners']);
     if (error || !data) return reply({ active: false });
     const main = data.find(r => r.id === 'main');
@@ -37,8 +56,6 @@ export async function handler(event) {
     const others = run && run.data && Array.isArray(run.data.people) ? run.data.people.filter(p => p && p.name) : [];
     const t = Math.max(new Date(main.updated_at).getTime(), others.length ? new Date(run.updated_at).getTime() : 0);
     const key = String(t);
-    const q = event.queryStringParameters || {};
-    if (!q.full) return reply({ active: true, key, items: [{ kind: 'winner', key }], runners: others.length > 0 });
     if (q.kind === 'runners') return reply({ active: true, key, runners: { month: run.data.month, note: run.data.note || '', people: others } });
     const d = main.data;
     return reply({
