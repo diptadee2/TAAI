@@ -362,7 +362,7 @@
   // Must match CLIENT_VERSION in netlify/functions/lib/supabase.js exactly
   // — bump both together whenever a client/server contract change ships
   // (see checkClientVersion below for why this exists).
-  var CLIENT_VERSION = '2026-11-27-2';
+  var CLIENT_VERSION = '2026-11-27-3';
   var VERSION_CHECK_MS = 120000;
 
   // A tab left open across a deploy that changes the request shape a
@@ -1817,7 +1817,7 @@
   }
   if (VICE_NIGHT && !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) setInterval(function () { viceCarsTick(); viceBlimpTick(); }, 1000);
   function viceTowerHtml() {
-    return '<div class="vice-tower"><div class="vt-sign"><span>Vi<b class="vt-dead">c</b>e</span><span>Ci<b class="vt-dead vt-dead--2">t</b>y</span></div><div class="vt-mast"></div><div class="vt-body"></div></div>';
+    return '<div class="vice-tower"><div class="vt-sign"><span>Vi<b class="vt-dead">c</b>e</span><span>Ci<b class="vt-dead vt-dead--2">t</b>y</span></div><div class="vt-legs"><i></i><i></i><i class="vt-lamp"></i><i class="vt-lamp vt-lamp--r"></i></div><div class="vt-roof"></div><div class="vt-body"></div></div>';
   }
   // Airship drifting across the fullscreen sky, drawn nose-right (it travels
   // left to right): shaded hull, tail fins, lit gondola, blinking nav lights

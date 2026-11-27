@@ -3464,6 +3464,22 @@ html.has-mft body::before{content:'';position:fixed;top:0;left:0;right:0;height:
 /* With the HUD down to two lines, the Top 5 card moves up under it. */
 @media (orientation: portrait) { html body .pomo-zen.zen-phone.zen-web.has-board .pomo-zen-board { margin-top: 24px; } }
 </style>
+<style>
+/* Vice City sign as a rooftop billboard (2026-11-27, "should be on top of a
+   building like a billboard"): the building is as wide as the sign plus a
+   ledge, the sign stands on two legs over a catwalk with two small lamps
+   lighting it from below, and the roof is flat. Nothing here animates. */
+html.vice-night .vice-tower { width: max-content !important; }
+html.vice-night .vice-tower .vt-sign { margin: 0 9px; }
+.vt-legs { position: relative; align-self: stretch; height: 13px; margin: 0 16px; border-top: 2px solid #4a3270; }
+.vt-legs i { position: absolute; top: 0; bottom: 0; width: 2px; background: #3d2860; }
+.vt-legs i:nth-child(1) { left: 14%; }
+.vt-legs i:nth-child(2) { right: 14%; }
+.vt-legs .vt-lamp { top: -4px; bottom: auto; width: 4px; height: 3px; border-radius: 1px; background: #ffe7b3; box-shadow: 0 -3px 7px 1px rgba(255,214,150,.55); left: 34%; }
+.vt-legs .vt-lamp--r { left: auto; right: 34%; }
+.vt-roof { align-self: stretch; height: 5px; background: #170b29; border-top: 1px solid rgba(255,122,217,.3); }
+html.vice-night .vice-tower .vt-body { width: auto !important; align-self: stretch; clip-path: polygon(2% 0, 98% 0, 100% 100%, 0 100%); }
+</style>
 </head>
 <body data-float-stack data-nav-no-autohide>
 
