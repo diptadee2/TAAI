@@ -573,8 +573,14 @@
   var cta = null;
   function whenFree(fn, tries) {
     if (!pageBusy()) return fn();
-    if ((tries || 0) < 24) setTimeout(function () { whenFree(fn, (tries || 0) + 1); }, 5000);
+    if ((tries || 0) < 120) setTimeout(function () { whenFree(fn, (tries || 0) + 1); }, 1000);
   }
+  // Shown 2s after the page opens (2026-11-27, "comes too late": it used to
+  // wait 6s after the photos had downloaded, so 7-9s in practice). The
+  // photos start downloading at once; if they take longer than 2s it shows
+  // as soon as they arrive.
+  var SHOW_AFTER_MS = 2000;
+  var t0 = Date.now();
   function start() {
     // localhost, or a phone on the same Wi-Fi opening the Mac's address
     // (192.168.x / 10.x / 172.16-31.x); never true on taai.live
@@ -597,7 +603,7 @@
         meta.runners ? fetch('/api/club-winner-public?full=1&kind=runners&k=' + encodeURIComponent(meta.key)).then(function (r) { return r.json(); }).catch(function () { return null; }) : null,
       ]).then(function (res) {
         if (!res[0] || !res[0].winner) return;
-        // a few seconds in, so the page itself is seen first
+        // a moment in, so the page itself is seen first
         setTimeout(function () {
           whenFree(function () {
             if (seenAnywhere(meta.key)) return;
@@ -605,7 +611,7 @@
               try { localStorage.setItem(SEEN + meta.key + ':site', '1'); } catch (e) { /* fine */ }
             }
           });
-        }, 6000);
+        }, Math.max(0, SHOW_AFTER_MS - (Date.now() - t0)));
       });
     }).catch(function () {});
   }
