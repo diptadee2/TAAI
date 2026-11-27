@@ -1203,12 +1203,12 @@
   ];
   function renderCompetitorsTabs() {
     var v = state.comp.view;
-    return '<div class="tabs subtabs">' + [['youtube', 'YouTube'], ['market', 'Whole market'], ['season', 'Through the year'], ['web', 'Websites']].map(function (x) {
+    return '<div class="tabs subtabs">' + [['youtube', 'YouTube'], ['insights', 'Insights'], ['market', 'Whole market'], ['season', 'Through the year'], ['web', 'Websites']].map(function (x) {
       return '<button type="button" class="tab-btn' + (v === x[0] ? ' active' : '') + '" data-cmpview="' + x[0] + '">' + x[1] + '</button>';
     }).join('') + '</div>';
   }
   function renderCompetitors() {
-    return state.comp.view === 'web' ? renderWebWatch() : state.comp.view === 'season' ? renderCmpSeason() : state.comp.view === 'market' ? renderCmpMarket() : renderCmpYoutube();
+    return state.comp.view === 'web' ? renderWebWatch() : state.comp.view === 'insights' ? renderCmpInsightsTab() : state.comp.view === 'season' ? renderCmpSeason() : state.comp.view === 'market' ? renderCmpMarket() : renderCmpYoutube();
   }
   function renderCmpYoutube() {
     var c = state.comp, d = c.data;
@@ -1281,13 +1281,13 @@
     ['Subject lectures', /lecture|one shot|\b\d{1,2}\s*[:|]|\b0\d\b|algorithm|data structure|probability|statistic|linear algebra|calculus|machine learning|\bml\b|artificial intelligence|\bai\b|dbms|python|network|operating system|compiler|theory of computation|digital|inference/i],
     ['Motivation and mindset', /motivat|mindset|focus|discipline|reels|mistake|reality|tier-?3|don'?t|study smarter|faster/i]
   ];
-  function cmpScored() {
-    var c = state.comp, d = c.data, now = Date.now(), from = now - c.period * 86400000;
+  function cmpScored(periodDays) {
+    var c = state.comp, d = c.data, now = Date.now(), period = periodDays || c.period, from = now - period * 86400000;
     var names = {}; d.channels.forEach(function (ch) { names[ch.channel_id] = ch; });
     // Up to 3 days (2026-11-25, "3 day trending topics"): a 1-day-old video
     // hasn't had time to collect its views, so short windows compare views
     // per day with the channel's usual views per day instead of totals.
-    var perDay = c.period <= 3;
+    var perDay = period <= 3;
     var val = function (v) { var age = Math.max(1, (now - Date.parse(v.published_at)) / 86400000); return perDay ? (v.views || 0) / age : (v.views || 0); };
     // Per day, a new video is compared with the channel's other recent ones
     // (1 to 7 days old): month-old videos' daily views have faded, which made
@@ -1468,6 +1468,289 @@
     'Fresh start for the next GATE', 'GATE registration opens', 'Registration, syllabus and strategy',
     'Registration closes, first full revisions', 'Mock tests and final stretch begins', 'Revision and full-length mocks'
   ];
+  // ── Insights tab (2026-11-27): alerts, topic gaps, posting times,
+  // subscriber growth, thumbnail wall, what students ask in comments. All
+  // worked out in the browser from the data the YouTube tab already loads,
+  // plus small extra reads (?alerts, ?growth ~2 KB, ?comments).
+  function insState() {
+    var c = state.comp;
+    c.ins = c.ins || { gapDays: 30, wallDays: 7, wallKind: 'video', cdays: 7, comments: {}, alerts: null, growth: null, loaded: false };
+    return c.ins;
+  }
+  function loadCmpInsights() {
+    var c = state.comp, I = insState();
+    if (!c.loaded && !c.loading) loadCompetitors();
+    if (I.loading || I.loaded) return;
+    I.loading = true;
+    Promise.all([
+      api('/team-competitors?alerts=1').catch(function () { return { sent: [] }; }),
+      api('/team-competitors?growth=1').catch(function () { return { growth: [] }; })
+    ]).then(function (r) { I.alerts = r[0].sent || []; I.growth = r[1].growth || []; I.loading = false; I.loaded = true; render(); });
+    loadCmpComments(I.cdays);
+  }
+  function loadCmpComments(days) {
+    var I = insState();
+    if (I.comments[days] !== undefined) return;
+    api('/team-competitors?comments=' + days).then(function (r) { I.comments[days] = r.comments || null; render(); }).catch(function () { I.comments[days] = null; render(); });
+  }
+  function insWeekdayHourIST(iso) {
+    var d = new Date(Date.parse(iso) + 5.5 * 3600000);
+    return { wd: (d.getUTCDay() + 6) % 7, h: d.getUTCHours() };
+  }
+  var INS_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  var INS_BLOCKS = [[6, 9, '6-9 AM'], [9, 12, '9-12'], [12, 15, '12-3 PM'], [15, 18, '3-6'], [18, 21, '6-9 PM'], [21, 24, '9-12'], [0, 6, 'Night']];
+  function insBlock(h) { for (var i = 0; i < INS_BLOCKS.length; i++) if (h >= INS_BLOCKS[i][0] && h < INS_BLOCKS[i][1]) return i; return 6; }
+  function insVideoLink(id, kind) { return 'https://www.youtube.com/' + (kind === 'short' ? 'shorts/' : 'watch?v=') + id; }
+  function renderCmpInsightsTab() {
+    var c = state.comp, I = insState(), d = c.data;
+    if ((c.loading && !c.loaded) || !I.loaded) return '<div class="card"><div class="field-hint">Loading…</div></div>';
+    if (!d || d.ready === false) return '<div class="card"><div class="msg msg-error">Not set up yet: the developer needs to run the competitor monitor SQL first.</div></div>';
+    return '<div class="card">' +
+      (I.msg ? '<div class="msg ' + (I.msgType === 'error' ? 'msg-error' : 'msg-ok') + '">' + escapeHtml(I.msg) + '</div>' : '') +
+      insAlertsHtml() + insGapsHtml() + insWhenHtml() + insGrowthHtml() + insWallHtml() + insCommentsHtml() +
+    '</div>';
+  }
+  // 1. Breakout alerts already sent to Discord.
+  function insAlertsHtml() {
+    var I = insState(), list = (I.alerts || []).slice(0, 15);
+    return '<h3 class="cmp-h" style="margin-top:0;">🔥 Breakout alerts</h3>' +
+      '<div class="field-hint" style="margin-bottom:10px;">After every 6-hourly update, a competitor video that is 3 to 48 hours old, about the exam, has 1,000+ views and is pulling 3× or more its channel\'s usual daily views is posted once to the team reminders channel on Discord, so you can make a TAAI take while the topic is hot.</div>' +
+      (list.length ? '<div class="ins-alerts">' + list.map(function (a) {
+        return '<a class="ins-alert" href="' + escapeHtml(insVideoLink(a.video_id, a.kind)) + '" target="_blank" rel="noopener">' +
+          '<img loading="lazy" alt="" src="https://i.ytimg.com/vi/' + escapeHtml(a.video_id) + '/mqdefault.jpg">' +
+          '<span><b>' + escapeHtml(a.title) + '</b><span class="field-hint">' + escapeHtml(a.channel) + ' · ' + cmpNum(a.views) + ' views when spotted · ' + escapeHtml(cmpAgo(a.at)) +
+          (a.posted ? ' · sent to Discord' : a.postError ? ' · not sent: ' + escapeHtml(a.postError) : '') + '</span></span>' +
+          '<span class="cmp-x is-hot">' + a.score + '×</span></a>';
+      }).join('') + '</div>' : '<div class="field-hint">None yet. The first ones arrive with the next update after this goes live.</div>');
+  }
+  // 3. Topic gaps: which topics each channel covered, and where competitors
+  // are getting views on something TAAI hasn't posted about.
+  function insGapsHtml() {
+    var c = state.comp, I = insState(), days = I.gapDays, d = c.data, now = Date.now(), from = now - days * 86400000;
+    var chans = d.channels.filter(function (ch) { return ch.active; });
+    var rows = cmpScored(30).filter(function (r) { return r.settled; });
+    if (days > 30) {
+      if (!(c.season && c.season.loaded)) { if (!(c.season && c.season.loading)) setTimeout(loadCmpSeason, 0); return insGapsShell('<div class="field-hint">Loading older videos…</div>'); }
+      seasonScored().forEach(function (r) {
+        if (r.v.t >= from && r.ch.active) rows.push({ v: { channel_id: r.v.channel_id, title: r.v.title, kind: r.v.kind }, ch: r.ch, score: r.score, settled: true });
+      });
+    }
+    var T = CMP_TOPICS.map(function (t, i) { return { name: t[0], i: i, by: {}, scores: [], us: 0, them: 0 }; });
+    T.push({ name: 'Everything else', i: CMP_TOPICS.length, by: {}, scores: [], us: 0, them: 0 });
+    rows.forEach(function (r) {
+      var t = T[seasonTopic(r.v.title || '')];
+      t.by[r.v.channel_id] = (t.by[r.v.channel_id] || 0) + 1;
+      if (r.ch.is_us) t.us++; else { t.them++; if (r.score != null) t.scores.push(r.score); }
+    });
+    T.forEach(function (t) { t.med = t.scores.length >= 3 ? cmpMedian(t.scores.map(function (x) { return Math.round(x * 100); })) / 100 : null; t.gap = t.them >= 3 && t.us === 0 && t.i < CMP_TOPICS.length; });
+    T.sort(function (a, b) { return (b.gap - a.gap) || ((b.med || 0) - (a.med || 0)); });
+    var us = chans.filter(function (ch) { return ch.is_us; }), them = chans.filter(function (ch) { return !ch.is_us; });
+    var cols = us.concat(them);
+    var table = '<div class="students-table-wrap"><table class="students-table ins-gaps"><thead><tr><th>Topic</th><th title="Median score of competitor videos on this topic">Works?</th>' +
+      cols.map(function (ch) { return '<th class="' + (ch.is_us ? 'ins-us' : '') + '">' + escapeHtml(ch.label || ch.title) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      T.map(function (t) {
+        return '<tr class="' + (t.gap ? 'ins-gap-row' : '') + '"><td><b>' + escapeHtml(t.name) + '</b>' + (t.gap ? ' <span class="ins-gap-tag">Gap</span>' : '') + '</td>' +
+          '<td class="cmp-n"><span class="cmp-x' + (t.med >= 1.2 ? ' is-hot' : t.med != null && t.med < 0.8 ? ' is-cold' : '') + '">' + (t.med == null ? '-' : cmpX(t.med)) + '</span></td>' +
+          cols.map(function (ch) { var n = t.by[ch.channel_id] || 0; return '<td class="cmp-n' + (ch.is_us ? ' ins-us' : '') + (n ? '' : ' ins-zero') + '">' + (n || '·') + '</td>'; }).join('') + '</tr>';
+      }).join('') + '</tbody></table></div>' +
+      '<div class="field-hint" style="margin-top:8px;">Videos per topic per channel (topics are guessed from titles). "Works?" is how competitor videos on that topic usually did against their own channel\'s normal views. <b>Gap</b> = at least 3 competitor videos and none from TAAI.</div>';
+    return insGapsShell(table);
+  }
+  function insGapsShell(inner) {
+    var I = insState();
+    return '<div class="ins-sec-head"><h3 class="cmp-h">Topic gaps</h3><div class="tabs cmp-period">' + [[30, '30 days'], [90, '90 days']].map(function (p) {
+      return '<button type="button" class="tab-btn' + (I.gapDays === p[0] ? ' active' : '') + '" data-insgap="' + p[0] + '">' + p[1] + '</button>';
+    }).join('') + '</div></div>' + inner;
+  }
+  // 4. When they post (IST), and which posting times do best.
+  function insWhenHtml() {
+    var c = state.comp, d = c.data;
+    var chans = d.channels.filter(function (ch) { return ch.active; });
+    var rows = cmpScored(30);
+    var per = chans.map(function (ch) {
+      var vids = rows.filter(function (r) { return r.v.channel_id === ch.channel_id && r.v.kind !== 'short'; });
+      var shorts = rows.filter(function (r) { return r.v.channel_id === ch.channel_id && r.v.kind === 'short'; }).length;
+      var wd = [0, 0, 0, 0, 0, 0, 0], bl = INS_BLOCKS.map(function () { return 0; });
+      vids.forEach(function (r) { var t = insWeekdayHourIST(r.v.published_at); wd[t.wd]++; bl[insBlock(t.h)]++; });
+      var top = function (arr, names) { var m = Math.max.apply(null, arr); return m ? names[arr.indexOf(m)] : '-'; };
+      return { ch: ch, perWeek: vids.length / (30 / 7), shortsWeek: shorts / (30 / 7), day: top(wd, INS_DAYS), block: top(bl, INS_BLOCKS.map(function (b) { return b[2]; })) };
+    }).sort(function (a, b) { return b.perWeek - a.perWeek; });
+    var grid = INS_DAYS.map(function () { return INS_BLOCKS.map(function () { return []; }); });
+    rows.forEach(function (r) {
+      if (r.ch.is_us || !r.settled || r.score == null || r.v.kind === 'short') return;
+      var t = insWeekdayHourIST(r.v.published_at); grid[t.wd][insBlock(t.h)].push(r.score);
+    });
+    var cell = function (arr) {
+      if (arr.length < 2) return '<td class="ins-heat ins-heat-0">' + (arr.length ? '<span class="field-hint">1</span>' : '') + '</td>';
+      var m = cmpMedian(arr.map(function (x) { return Math.round(x * 100); })) / 100;
+      var lvl = m >= 1.5 ? 4 : m >= 1.15 ? 3 : m >= 0.85 ? 2 : 1;
+      return '<td class="ins-heat ins-heat-' + lvl + '" title="' + arr.length + ' videos, typically ' + cmpX(m) + ' their usual">' + cmpX(m) + '<span>' + arr.length + '</span></td>';
+    };
+    return '<h3 class="cmp-h">When they post</h3>' +
+      '<div class="students-table-wrap"><table class="students-table ins-when"><thead><tr><th>Channel</th><th>Videos / week</th><th>Shorts / week</th><th>Usual day</th><th>Usual time (IST)</th></tr></thead><tbody>' +
+      per.map(function (p) {
+        return '<tr class="' + (p.ch.is_us ? 'cmp-us' : '') + '"><td>' + escapeHtml(p.ch.label || p.ch.title) + (p.ch.is_us ? ' <span class="cmp-you">You</span>' : '') + '</td><td class="cmp-n">' + p.perWeek.toFixed(1) + '</td><td class="cmp-n">' + p.shortsWeek.toFixed(1) + '</td><td>' + p.day + '</td><td>' + p.block + '</td></tr>';
+      }).join('') + '</tbody></table></div>' +
+      '<div class="field-hint" style="margin:14px 0 6px;">Which posting times did best: competitor videos (not Shorts) of the last 30 days by the day and time they went up, each cell showing how they did against their own channel\'s usual and how many there were. Green is better than usual.</div>' +
+      '<div class="students-table-wrap"><table class="ins-heatmap"><thead><tr><th></th>' + INS_BLOCKS.map(function (b) { return '<th>' + b[2] + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      INS_DAYS.map(function (dn, i) { return '<tr><th>' + dn + '</th>' + grid[i].map(cell).join('') + '</tr>'; }).join('') + '</tbody></table></div>';
+  }
+  // 6. Subscriber growth: daily counts the monitor records.
+  function insGrowthHtml() {
+    var c = state.comp, I = insState(), d = c.data;
+    var names = {}; d.channels.forEach(function (ch) { names[ch.channel_id] = ch; });
+    var by = {};
+    (I.growth || []).forEach(function (r) { if (names[r[0]] && names[r[0]].active) (by[r[0]] = by[r[0]] || []).push({ day: r[1], subs: r[2] }); });
+    var ids = Object.keys(by);
+    var days = {}; ids.forEach(function (id) { by[id].forEach(function (p) { days[p.day] = 1; }); });
+    var dayList = Object.keys(days).sort();
+    var head = '<h3 class="cmp-h">Subscriber growth</h3>';
+    if (dayList.length < 2) return head + '<div class="field-hint">Recorded once a day since the monitor started; the chart appears after two days of data.</div>';
+    var gainIn = function (pts, n) {
+      var last = pts[pts.length - 1], cut = new Date(Date.parse(last.day) - n * 86400000).toISOString().slice(0, 10);
+      var base = null; pts.forEach(function (p) { if (p.day <= cut) base = p; });
+      if (!base) base = pts[0];
+      return base === last ? null : { gain: last.subs - base.subs, pct: base.subs ? (last.subs - base.subs) / base.subs * 100 : null, since: base.day };
+    };
+    var colors = ['#7C3AED', '#DB2777', '#2563EB', '#059669', '#D97706', '#0891B2', '#DC2626', '#4F46E5', '#65A30D', '#9333EA', '#EA580C', '#0D9488'];
+    var series = ids.map(function (id, i) { return { ch: names[id], pts: by[id], color: names[id].is_us ? '#111' : colors[i % colors.length] }; });
+    // % change since each channel's first recorded day, so big and small channels share one chart.
+    var W = 640, H = 220, padL = 44, padB = 22, padT = 10, x0 = Date.parse(dayList[0]), x1 = Date.parse(dayList[dayList.length - 1]) || x0 + 1;
+    var maxP = 0.5, minP = 0;
+    series.forEach(function (s) { var b = s.pts[0].subs; s.pts.forEach(function (p) { p.pct = b ? (p.subs - b) / b * 100 : 0; maxP = Math.max(maxP, p.pct); minP = Math.min(minP, p.pct); }); });
+    var X = function (day) { return padL + (Date.parse(day) - x0) / Math.max(1, x1 - x0) * (W - padL - 10); };
+    var Y = function (p) { return padT + (maxP - p) / Math.max(0.01, maxP - minP) * (H - padT - padB); };
+    var ticks = [minP, (minP + maxP) / 2, maxP];
+    var svg = '<svg class="ins-growth-svg" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Subscriber growth">' +
+      ticks.map(function (t) { return '<line x1="' + padL + '" x2="' + (W - 10) + '" y1="' + Y(t) + '" y2="' + Y(t) + '" class="ins-grid"/><text x="' + (padL - 6) + '" y="' + (Y(t) + 4) + '" text-anchor="end" class="ins-axis">' + (t >= 0 ? '+' : '') + t.toFixed(t >= 10 ? 0 : 1) + '%</text>'; }).join('') +
+      '<text x="' + padL + '" y="' + (H - 4) + '" class="ins-axis">' + escapeHtml(pirFmtDate(dayList[0])) + '</text><text x="' + (W - 10) + '" y="' + (H - 4) + '" text-anchor="end" class="ins-axis">' + escapeHtml(pirFmtDate(dayList[dayList.length - 1])) + '</text>' +
+      series.map(function (s) { return '<polyline fill="none" stroke="' + s.color + '" stroke-width="' + (s.ch.is_us ? 3 : 2) + '" points="' + s.pts.map(function (p) { return X(p.day).toFixed(1) + ',' + Y(p.pct).toFixed(1); }).join(' ') + '"/>'; }).join('') + '</svg>';
+    var table = series.map(function (s) {
+      var last = s.pts[s.pts.length - 1], g7 = gainIn(s.pts, 7), g30 = gainIn(s.pts, 30);
+      var f = function (g) { return g ? (g.gain >= 0 ? '+' : '') + cmpNum(g.gain) + (g.pct != null ? ' <span class="field-hint">(' + (g.pct >= 0 ? '+' : '') + g.pct.toFixed(2) + '%)</span>' : '') : '-'; };
+      return { s: s, last: last, g7: g7, row: '<tr class="' + (s.ch.is_us ? 'cmp-us' : '') + '"><td><span class="ins-swatch" style="background:' + s.color + '"></span>' + escapeHtml(s.ch.label || s.ch.title) + '</td><td class="cmp-n">' + cmpNum(last.subs) + '</td><td class="cmp-n">' + f(g7) + '</td><td class="cmp-n">' + f(g30) + '</td></tr>' };
+    }).sort(function (a, b) { return ((b.g7 && b.g7.pct) || 0) - ((a.g7 && a.g7.pct) || 0); });
+    return head + '<div class="ins-growth">' + svg + '</div>' +
+      '<div class="students-table-wrap"><table class="students-table"><thead><tr><th>Channel</th><th>Subscribers</th><th>Last 7 days</th><th>Last 30 days</th></tr></thead><tbody>' + table.map(function (t) { return t.row; }).join('') + '</tbody></table></div>' +
+      '<div class="field-hint" style="margin-top:6px;">Lines show % growth since each channel\'s first recorded day (TAAI in black), so a small and a big channel can be compared. YouTube rounds public subscriber counts, so small channels move in steps. Data since ' + escapeHtml(pirFmtDate(dayList[0])) + '.</div>';
+  }
+  // 7. Thumbnail wall: the competitor videos that beat their usual the most.
+  function insWallHtml() {
+    var I = insState(), now = Date.now(), from = now - I.wallDays * 86400000;
+    var list = cmpScored(30).filter(function (r) {
+      return !r.ch.is_us && r.settled && r.score != null && Date.parse(r.v.published_at) >= from && (I.wallKind === 'short' ? r.v.kind === 'short' : r.v.kind !== 'short');
+    }).sort(function (a, b) { return b.score - a.score; }).slice(0, 24);
+    return '<div class="ins-sec-head"><h3 class="cmp-h">Thumbnail wall</h3><div class="ins-sec-tools">' +
+      '<div class="tabs cmp-period">' + [['video', 'Videos'], ['short', 'Shorts']].map(function (p) { return '<button type="button" class="tab-btn' + (I.wallKind === p[0] ? ' active' : '') + '" data-inswallk="' + p[0] + '">' + p[1] + '</button>'; }).join('') + '</div>' +
+      '<div class="tabs cmp-period">' + [[7, '7 days'], [30, '30 days']].map(function (p) { return '<button type="button" class="tab-btn' + (I.wallDays === p[0] ? ' active' : '') + '" data-inswall="' + p[0] + '">' + p[1] + '</button>'; }).join('') + '</div></div></div>' +
+      '<div class="field-hint" style="margin-bottom:10px;">The competitor thumbnails behind the videos that most beat their channel\'s usual views: look for what they share (faces, text size, colours, numbers).</div>' +
+      (list.length ? '<div class="ins-wall">' + list.map(function (r) {
+        return '<a class="ins-thumb' + (r.v.kind === 'short' ? ' is-short' : '') + '" href="' + escapeHtml(insVideoLink(r.v.video_id, r.v.kind)) + '" target="_blank" rel="noopener" title="' + escapeHtml(r.v.title) + '">' +
+          '<img loading="lazy" alt="" src="https://i.ytimg.com/vi/' + escapeHtml(r.v.video_id) + '/' + (r.v.kind === 'short' ? 'hqdefault' : 'mqdefault') + '.jpg">' +
+          '<span class="ins-thumb-x">' + cmpX(r.score) + '</span><span class="ins-thumb-cap">' + escapeHtml(r.ch.label || r.ch.title) + ' · ' + cmpNum(r.v.views) + '</span></a>';
+      }).join('') + '</div>' : '<div class="field-hint">No settled competitor videos in this period yet.</div>');
+  }
+  // 5. What students ask in competitor comments (Claude, on button press).
+  function insCommentsHtml() {
+    var I = insState(), days = I.cdays, doc = I.comments[days];
+    var per = days === 1 ? '24 hours' : days + ' days';
+    var btn = '<button type="button" class="btn btn-primary" id="ins-comments"' + (I.cBusy ? ' disabled' : '') + '>' + (I.cBusy ? 'Reading comments… (about a minute)' : (doc && !doc.error ? '↻ Read again' : '💬 Read their comments')) + '</button>';
+    var body;
+    if (doc === undefined) body = '<div class="field-hint">Loading…</div>';
+    else if (doc && doc.error) body = '<div class="msg msg-error">Couldn\'t read comments: ' + escapeHtml(doc.error) + '</div>';
+    else if (doc) {
+      var kinds = { question: 'Questions', complaint: 'Complaints', request: 'Requests', praise: 'What they like' };
+      body = '<div class="field-hint">Read ' + escapeHtml(cmpAgo(doc.generatedAt)) + ': ' + doc.comments + ' comments on ' + (doc.videos || []).length + ' competitor videos, grouped by Claude. Quotes are real comments.</div>' +
+        '<p class="cmp-ideas-sum">' + escapeHtml(doc.summary) + '</p>' +
+        '<div class="ins-cgroups">' + (doc.groups || []).slice().sort(function (a, b) { return b.mentions - a.mentions; }).map(function (g) {
+          return '<div class="ins-cg ins-cg-' + escapeHtml(g.kind) + '"><div class="ins-cg-top"><span class="ins-cg-kind">' + escapeHtml(kinds[g.kind] || g.kind) + '</span><b>' + escapeHtml(g.theme) + '</b><span class="field-hint">~' + g.mentions + ' comments</span></div>' +
+            (g.examples || []).map(function (e) { return '<div class="ins-cg-q">“' + escapeHtml(e) + '”</div>'; }).join('') +
+            '<div class="ins-cg-angle"><b>For TAAI:</b> ' + escapeHtml(g.taai_angle) + '</div></div>';
+        }).join('') + '</div>' +
+        ((doc.videos || []).length ? '<details class="cmp-working"><summary>Videos read (' + doc.videos.length + ')</summary>' + doc.videos.map(function (v) { return '<div class="field-hint"><a href="https://www.youtube.com/watch?v=' + escapeHtml(v.video_id) + '" target="_blank" rel="noopener">' + escapeHtml(v.title) + '</a> · ' + escapeHtml(v.channel) + '</div>'; }).join('') + '</details>' : '');
+    } else body = '<div class="field-hint">Press the button: it reads up to 40 top comments on each of the 15 competitor videos that did best in the last ' + per + ' and groups the repeated questions, complaints and requests, with how TAAI could answer each. Runs only when pressed (one Claude call).</div>';
+    return '<div class="cmp-ideas-card"><div class="cmp-ideas-head"><h3 class="cmp-h" style="margin:0;">What students ask in their comments</h3><div class="ins-sec-tools">' +
+      '<div class="tabs cmp-period">' + [[7, '7 days'], [30, '30 days']].map(function (p) { return '<button type="button" class="tab-btn' + (days === p[0] ? ' active' : '') + '" data-inscdays="' + p[0] + '">' + p[1] + '</button>'; }).join('') + '</div>' + btn + '</div></div>' +
+      (I.cErr ? '<div class="msg msg-error">' + escapeHtml(I.cErr) + '</div>' : '') + body + '</div>';
+  }
+  function insReadComments() {
+    var I = insState(), days = I.cdays;
+    I.cBusy = true; I.cErr = null; render();
+    api('/team-competitors', { method: 'POST', body: JSON.stringify({ action: 'comments', days: days }) }).then(function (r) {
+      var since = Date.parse(r.at) - 5000, tries = 0;
+      (function poll() {
+        tries++;
+        api('/team-competitors?comments=' + days).then(function (x) {
+          var doc = x.comments;
+          if (doc && Date.parse(doc.generatedAt) >= since) { I.comments[days] = doc; I.cBusy = false; render(); return; }
+          if (tries >= 40) { I.cBusy = false; I.cErr = 'Still working after 3 minutes. Reload the page in a bit.'; render(); return; }
+          setTimeout(poll, 5000);
+        }).catch(function () { if (tries < 40) setTimeout(poll, 5000); else { I.cBusy = false; render(); } });
+      })();
+    }).catch(function (e) { I.cBusy = false; I.cErr = e.message; render(); });
+  }
+  function bindCmpInsights() {
+    var I = insState();
+    document.querySelectorAll('[data-insgap]').forEach(function (b) { b.addEventListener('click', function () { I.gapDays = +b.getAttribute('data-insgap'); render(); }); });
+    document.querySelectorAll('[data-inswall]').forEach(function (b) { b.addEventListener('click', function () { I.wallDays = +b.getAttribute('data-inswall'); render(); }); });
+    document.querySelectorAll('[data-inswallk]').forEach(function (b) { b.addEventListener('click', function () { I.wallKind = b.getAttribute('data-inswallk'); render(); }); });
+    document.querySelectorAll('[data-inscdays]').forEach(function (b) { b.addEventListener('click', function () { I.cdays = +b.getAttribute('data-inscdays'); loadCmpComments(I.cdays); render(); }); });
+    var cb = document.getElementById('ins-comments');
+    if (cb) cb.addEventListener('click', insReadComments);
+  }
+  // 2. Price history and sale calendar (Websites tab): every saved snapshot's
+  // offers; a plan's price is followed over time and each change listed.
+  function loadWebHistory() {
+    var w = state.web;
+    if (w.hist || w.histLoading) return;
+    w.histLoading = true;
+    api('/team-web-watch?history=1').then(function (r) { w.hist = r.history || []; w.histLoading = false; render(); }).catch(function (e) { w.hist = []; w.histErr = e.message; w.histLoading = false; render(); });
+  }
+  function renderWebHistory(comps) {
+    var w = state.web, d = w.data;
+    if (!w.hist) { setTimeout(loadWebHistory, 0); return '<details class="cmp-manage" open><summary>Price history and sales</summary><div class="field-hint">Loading…</div></details>'; }
+    var pageById = {}; d.pages.forEach(function (p) { pageById[p.id] = p; });
+    var tracks = {};
+    w.hist.forEach(function (snap) {
+      var p = pageById[snap.page_id]; if (!p) return;
+      if (w.comp !== 'all' && p.competitor !== w.comp) return;
+      (snap.offers || []).forEach(function (o) {
+        if (o.v !== 2 || o.source === 'text' || o.price == null) return;
+        var k = p.competitor + '|' + [String(o.product).replace(/\s*\([^)]*\)/g, ''), o.plan, o.validity].join('|').toLowerCase();
+        var t = tracks[k] = tracks[k] || { comp: p.competitor, o: o, pts: [] };
+        var last = t.pts[t.pts.length - 1];
+        if (!last || last.price !== o.price || last.mrp !== o.mrp) t.pts.push({ at: snap.taken_at, price: o.price, mrp: o.mrp });
+        t.o = o;
+      });
+    });
+    var events = [];
+    Object.keys(tracks).forEach(function (k) {
+      var t = tracks[k];
+      for (var i = 1; i < t.pts.length; i++) {
+        var a = t.pts[i - 1], b = t.pts[i];
+        if (a.price === b.price) continue;
+        events.push({ t: t, at: b.at, from: a.price, to: b.price, mrp: b.mrp, pct: a.price ? (b.price - a.price) / a.price * 100 : null });
+      }
+    });
+    events.sort(function (a, b) { return Date.parse(b.at) - Date.parse(a.at); });
+    var firstSnap = w.hist.length ? w.hist[0].taken_at : null;
+    var monthOf = function (iso) { return new Date(Date.parse(iso) + 5.5 * 3600000).toLocaleString('en-IN', { month: 'long', year: 'numeric', timeZone: 'UTC' }); };
+    var byMonth = {}, order = [];
+    events.forEach(function (e) { var m = monthOf(e.at); if (!byMonth[m]) { byMonth[m] = []; order.push(m); } byMonth[m].push(e); });
+    var body = events.length ? order.map(function (m) {
+      return '<div class="web-dayh">' + escapeHtml(m) + '</div>' + byMonth[m].map(function (e) {
+        var o = e.t.o, detail = [o.plan, o.validity].filter(Boolean).join(' · ');
+        var down = e.to < e.from;
+        return '<div class="ins-pchg"><span class="ins-pdate">' + escapeHtml(pirFmtDate(new Date(Date.parse(e.at) + 5.5 * 3600000).toISOString().slice(0, 10))) + '</span>' +
+          '<span class="ins-pwho"><b>' + escapeHtml(e.t.comp) + '</b> · ' + escapeHtml(o.product) + (detail ? ' <span class="field-hint">(' + escapeHtml(detail) + ')</span>' : '') + '</span>' +
+          '<span class="ins-pmove ' + (down ? 'is-down' : 'is-up') + '">' + webRupees(e.from) + ' → <b>' + webRupees(e.to) + '</b>' + (e.pct != null ? ' (' + (down ? '' : '+') + e.pct.toFixed(0) + '%)' : '') + (down ? ' sale' : ' up') + '</span></div>';
+      }).join('');
+    }).join('') : '<div class="field-hint">No price changes recorded yet' + (firstSnap ? ' since ' + escapeHtml(pirFmtDate(firstSnap.slice(0, 10))) : '') + '. Prices are checked twice a day; every rise and drop will be listed here by month, so over the year this becomes their sale calendar (Diwali, New Year, results day).</div>';
+    var changed = Object.keys(tracks).filter(function (k) { return tracks[k].pts.length > 1; }).length;
+    return '<details class="cmp-manage" open><summary>Price history and sales</summary>' +
+      '<div class="field-hint" style="margin:6px 0 8px;">Every change in what they charge, newest first, grouped by month. ' + Object.keys(tracks).length + ' plans followed' + (changed ? ', ' + changed + ' changed' : '') + '. Drops are marked as sales.</div>' +
+      (w.histErr ? '<div class="msg msg-error">' + escapeHtml(w.histErr) + '</div>' : '') + body + '</details>';
+  }
   function loadCmpSeason() {
     var c = state.comp;
     c.season = c.season || {};
@@ -1777,10 +2060,12 @@
         if (c.view === 'web' && !state.web.loaded && !state.web.loading) { loadWebWatch(); return; }
         if (c.view === 'season' && !(c.season && (c.season.loaded || c.season.loading))) { loadCmpSeason(); return; }
         if (c.view === 'market' && !(c.market && (c.market.loaded || c.market.loading))) { loadCmpMarket(); return; }
+        if (c.view === 'insights') { loadCmpInsights(); render(); return; }
         render();
       });
     });
     if (c.view === 'web') { bindWebWatch(); return; }
+    if (c.view === 'insights') { bindCmpInsights(); return; }
     if (c.view === 'market') {
       var M = c.market;
       document.querySelectorAll('[data-mktexam]').forEach(function (b) { b.addEventListener('click', function () { M.exam = b.getAttribute('data-mktexam'); render(); }); });
@@ -1922,7 +2207,7 @@
         : '<div class="field-hint">Nothing yet. Each page\'s first check is its starting point; changes show up from the next check on.</div>');
     return '<div class="card">' +
       (w.msg ? '<div class="msg ' + (w.msgType === 'error' ? 'msg-error' : 'msg-ok') + '">' + escapeHtml(w.msg) + '</div>' : '') +
-      head + changes + renderWebPrices(pages, comps) + renderWebPages(comps) + '</div>';
+      head + changes + renderWebPrices(pages, comps) + renderWebHistory(comps) + renderWebPages(comps) + '</div>';
   }
   // One table per competitor: each course / batch with its plan and
   // validity, the price they charge, the struck-out price and % off. The same

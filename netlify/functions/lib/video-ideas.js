@@ -85,7 +85,7 @@ Return:
 
 Write in plain English, no em dashes.`;
 
-async function callClaude(userText) {
+export async function callClaude(userText, system = SYSTEM, schema = SCHEMA) {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) throw new Error('ANTHROPIC_API_KEY is not set');
   const r = await fetch('https://api.anthropic.com/v1/messages', {
@@ -100,9 +100,9 @@ async function callClaude(userText) {
       model: MODEL,
       max_tokens: 16000,
       thinking: { type: 'adaptive' },
-      output_config: { effort: 'medium', format: { type: 'json_schema', schema: SCHEMA } },
+      output_config: { effort: 'medium', format: { type: 'json_schema', schema } },
       fallbacks: 'default',
-      system: SYSTEM,
+      system,
       messages: [{ role: 'user', content: userText }],
     }),
   });

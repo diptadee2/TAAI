@@ -10,6 +10,8 @@
 // POST {action:'market'}                   -> scans the market now, in the background
 // GET  /api/team-competitors?ideas=<1|3|7|30> -> { ideas } (last saved video ideas for that period)
 // POST {action:'ideas', days}              -> starts new video ideas in the background ({started, at})
+// GET  /api/team-competitors?alerts=1 | ?comments=<days> | ?growth=1 -> Insights tab (2026-11-27)
+// POST {action:'comments', days}          -> reads competitor comments + Claude themes (background)
 // POST {action:'refresh'}                  -> starts a run in the background ({started, at})
 // POST {action:'add', input, label}        -> adds a channel (link, @handle or UC id)
 // POST {action:'remove'|'restore', channel_id} -> stop / restart monitoring (data kept)
@@ -18,6 +20,8 @@ import { resolveChannel, ytKey, YT_TRACK_DAYS } from './lib/yt-monitor.js';
 import { startCompetitorsRefresh } from './competitors-refresh-background.js';
 import { readVideoIdeas } from './lib/video-ideas.js';
 import { readYtMarket } from './lib/yt-market.js';
+import { readAlerts } from './lib/yt-alerts.js';
+import { readCommentInsights } from './lib/yt-comments.js';
 
 export async function handler(event, context) {
   const auth = requireAdmin(context);
@@ -27,6 +31,21 @@ export async function handler(event, context) {
   if (event.httpMethod === 'GET') {
     const q = event.queryStringParameters || {};
     if (q.ideas) return json(200, { ideas: await readVideoIdeas(s, Number(q.ideas)) });
+    // Insights tab (2026-11-27): breakout alerts already sent, students'
+    // comment themes, and subscriber counts over time (~10 KB for 180 days).
+    if (q.alerts) return json(200, await readAlerts(s));
+    if (q.comments) return json(200, { comments: await readCommentInsights(s, Number(q.comments)) });
+    if (q.growth) {
+      const since = new Date(Date.now() - 180 * 86400000).toISOString().slice(0, 10);
+      const rows = [];
+      for (let from = 0; ; from += 1000) {
+        const { data, error: ge } = await s.from('yt_channel_stats').select('channel_id, taken_on, subscribers').gte('taken_on', since).order('taken_on').range(from, from + 999);
+        if (ge) return json(500, { error: ge.message });
+        (data || []).forEach(r => { if (r.subscribers != null) rows.push([r.channel_id, r.taken_on, r.subscribers]); });
+        if (!data || data.length < 1000) break;
+      }
+      return json(200, { growth: rows });
+    }
     if (q.market) {
       const { data: tracked } = await s.from('yt_channels').select('channel_id');
       return json(200, { keyReady: !!ytKey(), tracked: (tracked || []).map(c => c.channel_id), market: await readYtMarket(s) });
@@ -85,6 +104,10 @@ export async function handler(event, context) {
     if (body.action === 'backfill') {
       if (!ytKey()) return json(400, { error: 'Needs the YouTube API key in Netlify' });
       const at = new Date().toISOString(); await startCompetitorsRefresh(event, 'backfill'); return json(200, { started: true, at });
+    }
+    if (body.action === 'comments') {
+      if (!ytKey()) return json(400, { error: 'Needs the YouTube API key in Netlify' });
+      const at = new Date().toISOString(); await startCompetitorsRefresh(event, 'comments', { days: Number(body.days) || 7 }); return json(200, { started: true, at });
     }
     if (body.action === 'ideas') { const at = new Date().toISOString(); await startCompetitorsRefresh(event, 'ideas', { days: Number(body.days) || 3 }); return json(200, { started: true, at }); }
     if (body.action === 'add') {

@@ -22,6 +22,20 @@ export async function handler(event, context) {
       if (error) return json(500, { error: error.message });
       return json(200, { change: data });
     }
+    // Price history (2026-11-27): every saved snapshot's offers (a snapshot
+    // is only saved when something on the page changed), without the page
+    // text, for the price chart and sale calendar.
+    if (q.history) {
+      const since = new Date(Date.now() - 365 * 86400000).toISOString();
+      const rows = [];
+      for (let from = 0; ; from += 1000) {
+        const { data, error: he } = await s.from('web_snapshots').select('page_id, taken_at, offers').gte('taken_at', since).order('taken_at').range(from, from + 999);
+        if (he) return json(500, { error: he.message });
+        rows.push(...(data || []));
+        if (!data || data.length < 1000) break;
+      }
+      return json(200, { history: rows });
+    }
     const { data: pages, error } = await s.from('web_pages').select('*').order('sort').order('id');
     if (error) return json(200, { ready: false, error: error.message });
     const since = new Date(Date.now() - 90 * 86400000).toISOString();
