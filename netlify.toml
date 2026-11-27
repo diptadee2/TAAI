@@ -175,13 +175,6 @@
   status = 200
   force = true
 
-# Same thing under a second name, used in social posts (2026-11-27).
-[[redirects]]
-  from = "/mixed-subject-test"
-  to = "/.netlify/functions/mini-flt-go"
-  status = 200
-  force = true
-
 # "100 pe 100% off" registration form (2026-10-18): serves challenge.html,
 # which carries the link-preview tags and forwards people to the courses
 # page with the form open (ChallengeRegister's #register-challenge check).
