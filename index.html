@@ -3237,20 +3237,28 @@ function WhyStrip() {
   // The drawings play once the cards are genuinely on screen. The shared
   // reveal fires 200px early on desktop, and this section sits right
   // under the hero, so it would have played before anyone saw it.
+  //
+  // Per card, not per grid (2026-11-27): on phones the three cards are
+  // stacked and the grid is taller than the screen, so "40% of the grid
+  // visible" never happened and the Proven Results badges stayed invisible
+  // (an empty blue card on real iPhones). Each card now gets .bd-play itself
+  // once its top is a fifth of the way up the screen.
   const gridRef = React.useRef(null);
-  const [play, setPlay] = React.useState(false);
   React.useEffect(() => {
     const el = gridRef.current; if (!el) return;
-    if (!('IntersectionObserver' in window)) { setPlay(true); return; }
-    const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { setPlay(true); io.disconnect(); } }, { threshold: 0.4 });
-    io.observe(el); return () => io.disconnect();
+    const cards = Array.from(el.children);
+    if (!('IntersectionObserver' in window)) { cards.forEach(c => c.classList.add('bd-play')); return; }
+    const io = new IntersectionObserver(es => {
+      es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('bd-play'); io.unobserve(e.target); } });
+    }, { threshold: 0, rootMargin: '0px 0px -20% 0px' });
+    cards.forEach(c => io.observe(c)); return () => io.disconnect();
   }, []);
   return (
     <div className="why-strip" id="why">
       <div className="container">
         <h2 className="why-strip-h2 fade-in">Built differently. <em>For GATE DA.</em></h2>
         <p className="why-strip-sub fade-in">Every choice we made, from content to pedagogy, was made with one exam in mind.</p>
-        <div className={'bd-grid' + (play ? ' bd-play' : '')} ref={gridRef}>
+        <div className="bd-grid" ref={gridRef}>
           <div className="bd-card bd-card--spec fade-in" style={{ transitionDelay: '0ms', '--ac': '#7C3AED', '--ac-rgb': '124,58,237' }}>
             <div className="bd-head"><span className="bd-icon">{spec.icon}</span><h3>{spec.heading}</h3></div>
             <p className="bd-sub">{spec.sub}</p>
