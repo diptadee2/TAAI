@@ -1701,7 +1701,14 @@ function App() {
       const notesMap    = groupBy(notesRows, 'subject');
       const lecturesMap = groupBy(lectureRows, 'subject');
       Object.values(notesMap).forEach(a => a.sort((a, b) => new Date(b.postedOn) - new Date(a.postedOn)));
-      Object.values(lecturesMap).forEach(a => a.sort((a, b) => (Number(a.lectureNumber) || 0) - (Number(b.lectureNumber) || 0)));
+      // Numbered lectures first, in order; videos without a number (practice
+      // sets like "30 Most Expected ... Part 1") after them, oldest first
+      // (2026-11-27: they used to sort as 0 and land before Lecture 1).
+      Object.values(lecturesMap).forEach(a => a.sort((a, b) => {
+        const na = Number(a.lectureNumber) || Infinity, nb = Number(b.lectureNumber) || Infinity;
+        if (na !== nb) return na - nb;
+        return (Date.parse(a.postedOn) || 0) - (Date.parse(b.postedOn) || 0);
+      }));
       // A subject can be split into titled groups; each group reads its own sheet "subject" value (2026-10-15).
       const subjects = meta.subjects.map(s => {
         const groupDefs = SUBJECT_GROUPS[s.id];
