@@ -3501,6 +3501,12 @@ html.vice-night .pomo-zen.zen-phone .vice-scene .vice-tower .vt-body { height: m
 #focus-card .vice-skyline .vs-back { opacity: .3; }
 #focus-card .vice-skyline .vs-w { opacity: .45; }
 #focus-card .vice-skyline .vs-rim { opacity: .55; }
+/* Phones held sideways: little height to spare, so a short billboard building in the corner. */
+@media (orientation: landscape) and (max-height: 500px) {
+  html.vice-night .pomo-zen.zen-phone .vice-scene .vice-tower .vt-body { height: 30px !important; }
+  html.vice-night .pomo-zen.zen-phone .vice-tower { left: 6% !important; }
+  html.vice-night .pomo-zen.zen-phone .vt-sign span { font-size: 11px; }
+}
 </style>
 </head>
 <body data-float-stack data-nav-no-autohide>
