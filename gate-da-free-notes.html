@@ -1990,7 +1990,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(<ErrorBoundary><App 
 .rsv-card { position: relative; width: 100%; max-width: 460px; max-height: calc(100vh - 32px); overflow-y: auto; background: #FFFBEF; color: #111; border: 3px solid #111; box-shadow: 8px 8px 0 #111; font-family: 'Poppins', system-ui, sans-serif; animation: rsv-pop .22s cubic-bezier(.34,1.4,.64,1); }
 @keyframes rsv-pop { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: none; } }
 .rsv-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px 12px 18px; background: #FDE047; border-bottom: 3px solid #111; }
-.rsv-tag { font: 600 11.5px/1 'DM Mono', ui-monospace, monospace; text-transform: uppercase; letter-spacing: .05em; }
+.rsv-tag { font: 700 13px/1 'DM Mono', ui-monospace, monospace; text-transform: uppercase; letter-spacing: .04em; }
 .rsv-x { appearance: none; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; background: #fff; border: 2px solid #111; cursor: pointer; padding: 0; }
 .rsv-x svg { width: 14px; height: 14px; }
 .rsv-body { padding: 18px 20px 20px; }
@@ -2020,7 +2020,11 @@ body.rsv-open .mobile-enroll-bar, body.rsv-open .mobile-contact-bar, body.rsv-op
 .rsv-go.on { display: inline-block; }
 .rsv-go:disabled { background: #eee; color: #888; box-shadow: none; cursor: not-allowed; }
 .rsv-go:not(:disabled):active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #111; }
-.rsv-note { margin: 14px 0 0; font-size: 12px; color: #666; }
+.rsv-note { margin: 14px 0 0; font-size: 12px; color: #666; text-align: center; }
+.rsv-why { margin: 0 0 14px; padding: 10px 12px; background: #fff; border: 2px dashed #111; font-size: 13.5px; line-height: 1.45; }
+.rsv-clock { display: inline-block; margin-right: 2px; animation: rsv-tick 1s steps(2, end) infinite; }
+@keyframes rsv-tick { 50% { transform: rotate(12deg); } }
+@media (prefers-reduced-motion: reduce) { .rsv-clock { animation: none; } }
 @media (max-width: 420px) { .rsv-body { padding: 16px 14px 16px; } .rsv-q { font-size: 19px; } .rsv-opt { font-size: 13.5px; padding: 12px 10px; } .rsv-foot { flex-direction: column-reverse; align-items: stretch; } .rsv-go { width: 100%; } .rsv-back-btn { align-self: center; } }
 @media (prefers-reduced-motion: reduce) { .rsv-back, .rsv-card { animation: none; } .rsv-opt { transition: none; } }
 </style>
@@ -2052,12 +2056,13 @@ body.rsv-open .mobile-enroll-bar, body.rsv-open .mobile-contact-bar, body.rsv-op
     var back = document.createElement('div');
     back.className = 'rsv-back';
     back.innerHTML = '<div class="rsv-card" role="dialog" aria-modal="true" aria-labelledby="rsv-q">' +
-      '<div class="rsv-top"><span class="rsv-tag">' + (isVideo ? 'Before your video' : 'Before your download') + '</span>' +
+      '<div class="rsv-top"><span class="rsv-tag"><span class="rsv-clock" aria-hidden="true">⏱</span> 15 seconds · 3 taps</span>' +
       '<button type="button" class="rsv-x" aria-label="Close"><svg viewBox="0 0 14 14" fill="none" stroke="#111" stroke-width="2.4" stroke-linecap="round"><path d="M2 2l10 10M12 2L2 12"/></svg></button></div>' +
-      '<div class="rsv-body"><div class="rsv-prog"><i></i><i></i><i></i></div><div class="rsv-step"></div><div class="rsv-q" id="rsv-q"></div>' +
+      '<div class="rsv-body"><p class="rsv-why">' + (isVideo ? 'Your video plays right after this.' : 'Your PDF opens right after this.') + ' Tell us a little about you, so we know which free notes to make next.</p>' +
+      '<div class="rsv-prog"><i></i><i></i><i></i></div><div class="rsv-step"></div><div class="rsv-q" id="rsv-q"></div>' +
       '<div class="rsv-opts"></div><div class="rsv-other"><input type="text" maxlength="40" placeholder="Where did you hear about us?" aria-label="Where did you hear about us?"></div>' +
-      '<div class="rsv-foot"><button type="button" class="rsv-back-btn">← Back</button><button type="button" class="rsv-go">' + (isVideo ? 'Continue to the video' : 'Continue to your download') + '</button></div>' +
-      '<p class="rsv-note">Three taps, once. Your answers stay anonymous and help us decide which free notes to make next.</p></div></div>';
+      '<div class="rsv-foot"><button type="button" class="rsv-back-btn">← Back</button><button type="button" class="rsv-go">' + (isVideo ? 'Done, play the video →' : 'Done, open my PDF →') + '</button></div>' +
+      '<p class="rsv-note">🔒 Anonymous · asked only once</p></div></div>';
     document.body.appendChild(back);
     document.body.classList.add('rsv-open');
     var card = back.querySelector('.rsv-card'), opts = back.querySelector('.rsv-opts'), otherBox = back.querySelector('.rsv-other'), input = otherBox.querySelector('input');
@@ -2066,7 +2071,8 @@ body.rsv-open .mobile-enroll-bar, body.rsv-open .mobile-contact-bar, body.rsv-op
     function draw() {
       var q = Q[step];
       back.querySelectorAll('.rsv-prog i').forEach(function (i, n) { i.className = n <= step ? 'on' : ''; });
-      back.querySelector('.rsv-step').textContent = 'Question ' + (step + 1) + ' of ' + Q.length;
+      back.querySelector('.rsv-step').textContent = (step + 1) + ' of ' + Q.length + (step === Q.length - 1 ? ' · last one' : '');
+      back.querySelector('.rsv-why').style.display = step ? 'none' : '';
       back.querySelector('.rsv-q').textContent = q[1];
       opts.innerHTML = q[2].map(function (o) {
         return '<button type="button" class="rsv-opt' + (o[3] ? ' rsv-wide' : '') + '" aria-pressed="' + (picked[q[0]] === o[0]) + '" data-v="' + o[0] + '"><span class="rsv-ic" aria-hidden="true">' + o[2] + '</span>' + esc(o[1]) + '</button>';
