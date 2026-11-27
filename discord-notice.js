@@ -24,6 +24,9 @@
     '.dn-icon{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:rgba(88,101,242,.12);color:#5865F2;flex-shrink:0}' +
     '.dn-title{font-size:17px;font-weight:700;line-height:1.3;margin:0}' +
     '.dn-body{font-size:14.5px;line-height:1.6;color:#4A4270;margin:0 0 18px}' +
+    '.dn-body mark{background:#FDE68A;color:#14102B;font-weight:700;padding:1px 5px;border-radius:5px}' +
+    '.dn-body+.dn-body{margin-top:-8px}' +
+    '.dn-why{font-size:13.5px;color:#14102B;font-weight:600}' +
     '.dn-body code{font-family:inherit;font-weight:700;color:#5865F2;background:rgba(88,101,242,.1);padding:1px 6px;border-radius:6px;white-space:nowrap}' +
     '.dn-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}' +
     '.dn-btn{font:inherit;font-size:14px;font-weight:600;border-radius:10px;padding:10px 16px;cursor:pointer;border:1px solid transparent}' +
@@ -78,7 +81,8 @@
     wrap.innerHTML =
       '<div class="dn-card" role="dialog" aria-modal="true" aria-labelledby="dn-title">' +
         '<div class="dn-head"><span class="dn-icon">' + ICON + '</span><h2 class="dn-title" id="dn-title">Before you join</h2></div>' +
-        '<p class="dn-body">Directly after joining, post your email address and enrollment type in the <code>#introduce-yourself</code> channel. Our team will then grant you access to the relevant private discussion channels.</p>' +
+        '<p class="dn-body">Directly after joining, post your <mark>registered email address</mark> (the one you enrolled with on learn.taai.live) and your enrollment type in the <code>#introduce-yourself</code> channel.</p>' +
+        '<p class="dn-body dn-why">That\'s the only way our team can verify you and add you to the private discussion channels.</p>' +
         '<div class="dn-actions"><button type="button" class="dn-btn dn-cancel">Cancel</button><button type="button" class="dn-btn dn-go">Continue to Discord</button></div>' +
       '</div>';
     document.body.appendChild(wrap);
