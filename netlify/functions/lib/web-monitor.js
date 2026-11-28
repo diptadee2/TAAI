@@ -125,6 +125,52 @@ function gfgOffers(html, filter) {
   return out;
 }
 
+// GfG shows prices in the visitor's currency, decided by its CDN from the
+// visitor's country; our checks run on US servers, so the page itself came
+// back in dollars. Its course API takes the country as a "cdn-country-code"
+// header (found 2026-11-28), so ask it for India directly. Same course
+// objects as the page's own data, so gfgOffers reads them unchanged. Returns
+// null on any problem, and the page's own data is used instead.
+export async function gfgIndiaCourses(pageUrl) {
+  const m = String(pageUrl).match(/\/courses\/category\/([a-z0-9-]+)/i);
+  if (!m) return null;
+  const all = [];
+  for (let page = 1; page <= 10; page++) {
+    const ac = new AbortController(), t = setTimeout(() => ac.abort(), 12000);
+    try {
+      const r = await fetch('https://practiceapi.geeksforgeeks.org/api/vr/courses/?category=' + m[1] + '&course_fee_type=1&page=' + page,
+        { headers: { 'user-agent': UA, accept: 'application/json', 'cdn-country-code': 'IN' }, signal: ac.signal });
+      if (!r.ok) return all.length ? all : null;
+      const d = await r.json();
+      const res = d.results || [];
+      all.push(...res);
+      if (!res.length || all.length >= (d.count || 0)) break;
+    } catch { return all.length ? all : null; } finally { clearTimeout(t); }
+  }
+  // GATE's own landing list holds a few courses the list above doesn't
+  // (e.g. Mission 100), priced per batch; add those, first batch's price.
+  if (m[1] === 'gate') {
+    const ac = new AbortController(), t = setTimeout(() => ac.abort(), 12000);
+    try {
+      const r = await fetch('https://practiceapi.geeksforgeeks.org/api/v1/gate-courses/list/', { headers: { 'user-agent': UA, accept: 'application/json', 'cdn-country-code': 'IN' }, signal: ac.signal });
+      if (r.ok) {
+        const have = new Set(all.map(c => c.course_slug));
+        (function walk(o) {
+          if (Array.isArray(o)) { o.forEach(walk); return; }
+          if (!o || typeof o !== 'object') return;
+          if (typeof o.course_name === 'string' && o.course_slug) {
+            const b = (o.batches || [])[0];
+            if (b && !have.has(o.course_slug)) { have.add(o.course_slug); all.push({ course_name: o.course_name, course_slug: o.course_slug, currency_symbol: '₹', price: { batch_fee: b.batch_fee, promotional_fee: b.promotional_fee } }); }
+            return;
+          }
+          for (const k in o) walk(o[k]);
+        })(await r.json());
+      }
+    } catch { /* the main list is enough */ } finally { clearTimeout(t); }
+  }
+  return all.length ? all : null;
+}
+
 // PW (GATE Wallah) batch lists: each batch's data has
 // "fees":{"price":MRP,"total":what you pay,"discount":%} after its name/slug.
 function pwOffers(html, pageUrl, filter) {
@@ -214,12 +260,12 @@ function jsonLdOffers(html, pageUrl) {
 // 'data' (read from the site's own data) or 'text' (a rupee amount found in
 // the page text, with a nearby line as its label; less reliable, kept only
 // when a page has no data at all). v:2 marks this format.
-export function extractPage(page, html, finalUrl) {
+export function extractPage(page, html, finalUrl, extra = {}) {
   const filter = page.match ? new RegExp(page.match, 'i') : null;
   const lines = htmlToLines(html);
   const url = finalUrl || page.url;
   let offers;
-  if (page.extractor === 'gfg') offers = gfgOffers(html, filter).map(o => ({ product: o.name, plan: null, validity: null, price: o.price, mrp: o.mrp, url: o.url, currency: o.currency && o.currency !== '₹' ? o.currency : undefined }));
+  if (page.extractor === 'gfg') offers = (extra.gfgCourses ? gfgOffers('<script id="__NEXT_DATA__">' + JSON.stringify(extra.gfgCourses) + '</script>', filter) : gfgOffers(html, filter)).map(o => ({ product: o.name, plan: null, validity: null, price: o.price, mrp: o.mrp, url: o.url, currency: o.currency && o.currency !== '₹' ? o.currency : undefined }));
   else if (page.extractor === 'pw') offers = pwOffers(html, url, filter).map(o => ({ product: o.name, plan: null, validity: null, price: o.price, mrp: o.mrp, url: o.url }));
   else {
     offers = spayeeOffers(html, url);
@@ -374,7 +420,8 @@ export async function runWebMonitor(s, { ids = null, budgetMs = 22000 } = {}) {
       }
       const r = await fetchText(page.url);
       if (r.status >= 400) throw new Error('HTTP ' + r.status);
-      const cur = extractPage(page, r.text, r.finalUrl);
+      const gfgCourses = page.extractor === 'gfg' ? await gfgIndiaCourses(page.url) : null;
+      const cur = extractPage(page, r.text, r.finalUrl, { gfgCourses });
       if (!cur.lines.length && !cur.offers.length) throw new Error('page came back empty');
       const { data: last } = await s.from('web_snapshots').select('id, title, lines, offers').eq('page_id', page.id).order('taken_at', { ascending: false }).limit(1).maybeSingle();
       // A page that had prices in its own data and now shows none is far more
