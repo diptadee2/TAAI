@@ -4392,6 +4392,55 @@
     a.download = 'taai-free-notes-emails.csv';
     document.body.appendChild(a); a.click(); a.remove();
   }
+  // Downloads and plays across the whole page (2026-11-28, "downloads and
+  // videos played and all the metrics"): totals, a daily chart, per subject,
+  // and the most used items. Titles come from the Notes and Lectures lists.
+  var RES_KINDS = [['note', 'PDF downloads', '#A78BFA'], ['play', 'Video plays', '#F87171'], ['slides', 'Slides downloads', '#60A5FA']];
+  function resActionsHtml(d) {
+    var A = d.actions || {}, z = { total: 0, d7: 0, d30: 0, today: 0 };
+    ['notes', 'lectures'].forEach(function (t) { if (state.siteData.rows[t] === null && !state.siteData.loading[t]) setTimeout(function () { ensureSiteDataLoaded(t); }, 0); });
+    var h = '<div class="res-survey"><div class="res-survey-head"><b>Downloads and plays</b></div>';
+    h += '<div class="res-atable-wrap"><table class="students-table res-atable"><thead><tr><th></th><th>Today</th><th>7 days</th><th>30 days</th><th>All time</th></tr></thead><tbody>' +
+      RES_KINDS.map(function (k) { var c = A[k[0]] || z; return '<tr><td><i class="res-dot" style="background:' + k[2] + '"></i>' + k[1] + '</td><td>' + c.today + '</td><td>' + c.d7 + '</td><td>' + c.d30 + '</td><td><b>' + c.total + '</b></td></tr>'; }).join('');
+    var v = d.visits || z, all = function (key) { return RES_KINDS.reduce(function (s, k) { return s + ((A[k[0]] || z)[key] || 0); }, 0); };
+    var per = function (key) { var n = v[key] || 0; return n ? (all(key) / n).toFixed(1) : '–'; };
+    h += '<tr class="res-arow-sum"><td>Per visit</td><td>' + per('today') + '</td><td>' + per('d7') + '</td><td>' + per('d30') + '</td><td>' + per('total') + '</td></tr></tbody></table></div>';
+    // daily stacked bars
+    var days = d.actionsDaily || [], max = Math.max.apply(null, days.map(function (x) { return x.note + x.play + x.slides; }).concat([1]));
+    h += '<div class="res-vbars res-abars" aria-label="Downloads and plays per day, last 30 days">' + days.map(function (x) {
+      var t = x.note + x.play + x.slides;
+      return '<span class="res-abar" style="height:' + Math.max(2, Math.round(t / max * 100)) + '%" title="' + escapeHtml(fmtPostedOn(x.day) + ': ' + x.note + ' PDF, ' + x.play + ' plays, ' + x.slides + ' slides') + '">' +
+        RES_KINDS.map(function (k) { return x[k[0]] ? '<i style="flex:' + x[k[0]] + ';background:' + k[2] + '"></i>' : ''; }).join('') + '</span>';
+    }).join('') + '</div><div class="res-alegend">' + RES_KINDS.map(function (k) { return '<span><i class="res-dot" style="background:' + k[2] + '"></i>' + k[1] + '</span>'; }).join('') + '<span class="field-hint" style="margin:0;">per day, last 30 days</span></div>';
+    // items with titles
+    var rows = [], items = d.items || {};
+    [['notes', state.siteData.rows.notes], ['lectures', state.siteData.rows.lectures]].forEach(function (p) {
+      (p[1] || []).forEach(function (r) {
+        var it = items[String(r.id).toLowerCase()] || {};
+        var kinds = p[0] === 'notes' ? ['note'] : ['play', 'slides'];
+        var tot = 0, w = 0; kinds.forEach(function (k) { tot += (it[k] || z).total; w += (it[k] || z).d7; });
+        rows.push({ title: r.title || '(untitled)', subject: r.subject, type: p[0] === 'notes' ? 'PDF note' : (r.section === 'practice' ? 'Practice video' : 'Lecture'), it: it, kinds: kinds, total: tot, d7: w });
+      });
+    });
+    if (!state.siteData.rows.notes || !state.siteData.rows.lectures) return h + '<div class="field-hint">Loading titles…</div></div>';
+    // per subject
+    var subj = {};
+    rows.forEach(function (r) { var s = subj[r.subject] = subj[r.subject] || { note: 0, play: 0, slides: 0, items: 0 }; s.items++; r.kinds.forEach(function (k) { s[k] += (r.it[k] || z).total; }); });
+    var sk = Object.keys(subj).sort(function (a, b) { var A2 = subj[a], B2 = subj[b]; return (B2.note + B2.play + B2.slides) - (A2.note + A2.play + A2.slides); });
+    h += '<div class="res-survey-head" style="margin-top:18px;"><b>By subject</b><span class="field-hint"> · all time</span></div><div class="res-atable-wrap"><table class="students-table res-atable"><thead><tr><th>Subject</th><th>Items</th><th>PDF</th><th>Plays</th><th>Slides</th><th>Total</th></tr></thead><tbody>' +
+      sk.map(function (k) { var s = subj[k]; return '<tr><td>' + escapeHtml(subjectLabel(k)) + '</td><td>' + s.items + '</td><td>' + s.note + '</td><td>' + s.play + '</td><td>' + s.slides + '</td><td><b>' + (s.note + s.play + s.slides) + '</b></td></tr>'; }).join('') + '</tbody></table></div>';
+    // all items, most used first
+    rows.sort(function (a, b) { return b.total - a.total || b.d7 - a.d7; });
+    var shown = state.resourceStats.showAllItems ? rows : rows.slice(0, 10);
+    h += '<div class="res-survey-head" style="margin-top:18px;"><b>Most used</b><span class="field-hint"> · ' + (function (n) { return n ? n + ' of ' + rows.length + ' items not used yet' : 'all ' + rows.length + ' items used at least once'; })(rows.filter(function (r) { return !r.total; }).length) + '</span></div><div class="res-atable-wrap"><table class="students-table res-atable res-aitems"><thead><tr><th>Item</th><th>Subject</th><th>7 days</th><th>All time</th></tr></thead><tbody>' +
+      shown.map(function (r) {
+        var bits = r.kinds.map(function (k) { var c = (r.it[k] || z).total; return c ? c + ' ' + (k === 'note' ? 'download' : k === 'play' ? 'play' : 'slides download') + (c === 1 ? '' : 's') : ''; }).filter(Boolean).join(', ');
+        return '<tr><td><b>' + escapeHtml(r.title) + '</b><span class="field-hint" style="display:block;margin:0;">' + escapeHtml(r.type) + (bits ? ' · ' + escapeHtml(bits) : '') + '</span></td><td>' + escapeHtml(subjectLabel(r.subject)) + '</td><td>' + r.d7 + '</td><td><b>' + r.total + '</b></td></tr>';
+      }).join('') + '</tbody></table></div>' +
+      (rows.length > 10 ? '<button type="button" class="btn btn-small" id="res-items-all" style="margin-top:10px;">' + (state.resourceStats.showAllItems ? 'Show top 10' : 'Show all ' + rows.length) + '</button>' : '');
+    return h + '</div>';
+  }
+
   // Visits summary shown above Notes and Lectures.
   function renderResourceStatsPanel() {
     var rs = state.resourceStats;
@@ -4412,10 +4461,11 @@
       var stat = function (n, f, label) { return '<div class="res-vstat"><b>' + n.toLocaleString('en-IN') + '</b><span>' + label + '</span><em>' + f.toLocaleString('en-IN') + ' new</em></div>'; };
       body = '<div class="res-vstats">' + stat(v.today, nv.today, 'visits today') + stat(v.d7, nv.d7, 'last 7 days') + stat(v.d30, nv.d30, 'last 30 days') + stat(v.total, nv.total, 'all time') + '</div>' +
         '<div class="res-vbars" aria-label="Visits per day, last 30 days">' + bars + '</div>' +
-        '<div class="field-hint" style="margin:6px 0 0;">Visits per day, last 30 days; the brighter part of each bar is new visitors. A visit counts once per browser tab; a new visitor is a browser opening the page for the first time (a new phone, another browser or cleared site data counts again). Downloads and plays count once per item per 10 minutes. Counting started 8 Nov 2026.</div>';
+        '<div class="field-hint" style="margin:6px 0 0;">Visits per day, last 30 days; the brighter part of each bar is new visitors. A visit counts once per browser tab; a new visitor is a browser opening the page for the first time (a new phone, another browser or cleared site data counts again). Downloads and plays count once per item per 10 minutes.' + (rs.data.firstDay ? ' Counting started ' + escapeHtml(fmtPostedOn(rs.data.firstDay)) + '.' : '') + '</div>';
+      body += resActionsHtml(rs.data);
     }
     if (rs.data && rs.data.ready !== false) body += resSurveyHtml(rs.data.survey || {}) + resLeadsHtml(rs.leads);
-    return '<section class="pricing-group res-stats-panel"><div class="res-section-head"><div class="pricing-group-heading">Resources page visits</div>' + refresh + '</div>' + body + '</section>';
+    return '<section class="pricing-group res-stats-panel"><div class="res-section-head"><div class="pricing-group-heading">Resources page: visits, downloads and plays</div>' + refresh + '</div>' + body + '</section>';
   }
 
   // "12 downloads · 3 this week" line on a note/lecture card.
@@ -6671,6 +6721,8 @@
 
     var resStatsBtn = document.getElementById('res-stats-refresh');
     if (resStatsBtn) resStatsBtn.addEventListener('click', loadResourceStats);
+    var resAllBtn = document.getElementById('res-items-all');
+    if (resAllBtn) resAllBtn.addEventListener('click', function () { state.resourceStats.showAllItems = !state.resourceStats.showAllItems; render(); });
     var leadsCsv = document.getElementById('res-leads-csv');
     if (leadsCsv) leadsCsv.addEventListener('click', resLeadsCsv);
     document.querySelectorAll('.js-lead-sent').forEach(function (cb) {
