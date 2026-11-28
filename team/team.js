@@ -1514,12 +1514,12 @@
   function insAlertsHtml() {
     var I = insState(), list = (I.alerts || []).slice(0, 15);
     return '<h3 class="cmp-h" style="margin-top:0;">🔥 Breakout alerts</h3>' +
-      '<div class="field-hint" style="margin-bottom:10px;">After every 6-hourly update, a competitor video that is 3 to 48 hours old, about the exam, has 1,000+ views and is pulling 3× or more its channel\'s usual daily views is posted once to the team reminders channel on Discord, so you can make a TAAI take while the topic is hot.</div>' +
+      '<div class="field-hint" style="margin-bottom:10px;">After every 6-hourly update, a competitor video that is 3 to 48 hours old, about the exam, has 1,000+ views and is pulling 3× or more its channel\'s usual daily views is added here. Every Monday at 9 AM the week\'s list goes to the team reminders channel on Discord as one message (top 10).</div>' +
       (list.length ? '<div class="ins-alerts">' + list.map(function (a) {
         return '<a class="ins-alert" href="' + escapeHtml(insVideoLink(a.video_id, a.kind)) + '" target="_blank" rel="noopener">' +
           '<img loading="lazy" alt="" src="https://i.ytimg.com/vi/' + escapeHtml(a.video_id) + '/mqdefault.jpg">' +
           '<span><b>' + escapeHtml(a.title) + '</b><span class="field-hint">' + escapeHtml(a.channel) + ' · ' + cmpNum(a.views) + ' views when spotted · ' + escapeHtml(cmpAgo(a.at)) +
-          (a.posted ? ' · sent to Discord' : a.postError ? ' · not sent: ' + escapeHtml(a.postError) : '') + '</span></span>' +
+          (a.posted ? ' · sent to Discord' : a.postError ? ' · not sent: ' + escapeHtml(a.postError) : ' · goes out Monday') + '</span></span>' +
           '<span class="cmp-x is-hot">' + a.score + '×</span></a>';
       }).join('') + '</div>' : '<div class="field-hint">None yet. The first ones arrive with the next update after this goes live.</div>');
   }

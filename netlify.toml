@@ -47,6 +47,10 @@
 [functions."yt-monitor"]
   schedule = "0 */6 * * *"
 
+# Weekly Discord digest of competitor breakout videos, Monday 09:00 IST.
+[functions."yt-alerts-weekly"]
+  schedule = "30 3 * * 1"
+
 # Whole GATE CSE / DA YouTube market (2026-11-25), once a day at 06:30 IST:
 # YouTube searches only (free API quota, no paid API). See lib/yt-market.js.
 [functions."yt-market"]

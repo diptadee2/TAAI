@@ -1,10 +1,13 @@
 // Competitor breakout alerts (2026-11-27): /team > Competitors > Insights.
 // After each 6-hourly YouTube update (yt-monitor.js), any competitor video
 // that is 3 to 48 hours old and pulling at least 3x its channel's usual daily
-// views (and has 1,000+ views) is posted once to the team's Discord channel,
-// so a hot topic is seen while there's still time to make a TAAI video on it.
+// views (and has 1,000+ views) is recorded once in the list.
+// Since 2026-11-28 ("the discord youtube messages can be weekly") nothing is
+// posted then: once a week (Monday 09:00 IST, yt-alerts-weekly.js) the week's
+// recorded videos go to Discord as one digest, top 10 by score, with their
+// current views.
 //
-// Sent alerts are kept as alerts/sent.json in the private bucket
+// Recorded alerts are kept as alerts/sent.json in the private bucket
 // "competitor-insights" (the last 200), which also feeds the page's list.
 // Discord channel: the webhook of the scheduled post in the "team reminders"
 // channel (the same place the schedule reminders go); no channel, no post.
@@ -34,7 +37,7 @@ async function alertWebhook(s) {
 }
 
 // dry: only report what would be sent (for testing); nothing posted or saved.
-export async function runYtAlerts(s, { post = true, dry = false } = {}) {
+export async function runYtAlerts(s, { post = false, dry = false } = {}) {
   const now = Date.now();
   const { data: channels, error } = await s.from('yt_channels').select('channel_id, label, title, is_us, active');
   if (error) throw error;
@@ -88,4 +91,41 @@ export async function runYtAlerts(s, { post = true, dry = false } = {}) {
   await s.storage.createBucket(BUCKET, { public: false }).catch(() => {});
   await s.storage.from(BUCKET).upload(PATH, JSON.stringify({ sent }), { contentType: 'application/json', upsert: true });
   return { alerts: fresh.length, posted, postError };
+}
+
+// Weekly digest: every recorded alert from the last 7 days that hasn't been
+// posted yet, top 10 by score, with views as they are now. Marks them posted.
+export async function runYtAlertsDigest(s, { dry = false } = {}) {
+  const now = Date.now();
+  const log = await readAlerts(s);
+  const sent = log.sent || [];
+  const week = sent.filter(a => !a.posted && Date.parse(a.at) >= now - 7 * 86400000);
+  if (!week.length) return { digest: 0 };
+  const ids = week.map(a => a.video_id);
+  const { data: cur } = await s.from('yt_videos').select('video_id, views').in('video_id', ids);
+  const views = {}; for (const v of cur || []) views[v.video_id] = v.views;
+  const top = week.slice().sort((a, b) => b.score - a.score).slice(0, 10);
+  const lines = top.map(a => {
+    const url = 'https://www.youtube.com/' + (a.kind === 'short' ? 'shorts/' : 'watch?v=') + a.video_id;
+    const v = views[a.video_id] || a.views;
+    return '**[' + a.title.replace(/[[\]]/g, '') + '](' + url + ')**\n' + a.channel + ' · ' + v.toLocaleString('en-IN') + ' views now · **' + a.score + '×** their usual when spotted';
+  });
+  if (dry) return { digest: week.length, lines };
+  const hook = await alertWebhook(s);
+  let posted = false, postError = null;
+  if (hook) {
+    try {
+      await postToDiscordWebhook([{
+        title: '🔥 This week\'s competitor videos that took off',
+        description: lines.join('\n\n') + (week.length > top.length ? '\n\n+' + (week.length - top.length) + ' more' : '') +
+          '\n\nIdeas for TAAI videos. Full list on /team > Competitors > Insights.',
+        color: 0xF59E0B,
+      }], '', hook);
+      posted = true;
+    } catch (e) { postError = String(e.message || e).slice(0, 200); }
+  } else postError = 'no Discord channel named "team reminders" found';
+  const done = new Set(week.map(a => a.video_id));
+  const next = sent.map(a => done.has(a.video_id) && !a.posted ? Object.assign({}, a, { posted, postError, digest_at: new Date(now).toISOString() }) : a);
+  await s.storage.from(BUCKET).upload(PATH, JSON.stringify({ sent: next }), { contentType: 'application/json', upsert: true });
+  return { digest: week.length, posted, postError };
 }
