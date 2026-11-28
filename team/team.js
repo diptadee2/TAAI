@@ -190,7 +190,7 @@
       label: 'Lectures',
       endpoint: '/site-lectures',
       idKey: 'id',
-      newRow: { subject: SITE_SUBJECT_OPTIONS[0].id, lecture_number: '', title: '', youtube_url: '', slides_url: '', posted_on: '' },
+      newRow: { subject: SITE_SUBJECT_OPTIONS[0].id, section: 'lecture', lecture_number: '', title: '', youtube_url: '', slides_url: '', posted_on: '' },
       columns: [
         { name: 'subject', label: 'Subject', format: function (r) { return subjectLabel(r.subject); } },
         { name: 'lecture_number', label: '#' },
@@ -199,6 +199,7 @@
       ],
       fields: [
         { name: 'subject', label: 'Subject', type: 'select', options: SITE_SUBJECT_OPTIONS, required: true },
+        { name: 'section', label: 'Shows under', type: 'select', options: [{ id: 'lecture', label: 'Lectures' }, { id: 'practice', label: 'Practice (e.g. most expected questions)' }] },
         { name: 'lecture_number', label: 'Lecture #', type: 'number' },
         { name: 'title', label: 'Title', type: 'text' },
         { name: 'youtube_url', label: 'YouTube URL', type: 'url' },
@@ -4708,7 +4709,7 @@
       else links.push('<span class="res-missing">No slides</span>');
       return '<div class="pricing-card res-card">' + thumb +
         '<div class="res-card-body">' +
-          (r.lecture_number != null && r.lecture_number !== '' ? '<div class="res-kicker">Lecture ' + escapeHtml(r.lecture_number) + '</div>' : '') +
+          (r.section === 'practice' ? '<div class="res-kicker">Practice</div>' : r.lecture_number != null && r.lecture_number !== '' ? '<div class="res-kicker">Lecture ' + escapeHtml(r.lecture_number) + '</div>' : '') +
           '<div class="pricing-card-name">' + escapeHtml(r.title || '(untitled)') + '</div>' + date +
           '<div class="res-links">' + links.join('') + '</div>' + resourceCountsHtml(type, r.id) +
         '</div>' + actions + '</div>';

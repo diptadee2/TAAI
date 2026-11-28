@@ -1624,3 +1624,9 @@ CREATE TABLE IF NOT EXISTS resource_leads (
 ALTER TABLE resource_leads ENABLE ROW LEVEL SECURITY;
 GRANT SELECT, INSERT, UPDATE, DELETE ON resource_leads TO service_role;
 GRANT USAGE, SELECT ON SEQUENCE resource_leads_id_seq TO service_role;
+
+-- Practice videos on the Resources page (2026-11-28): each video in
+-- site_lectures is either a lecture or a practice video (e.g. "30 Most
+-- Expected Linear Algebra Questions"); practice ones show under their own
+-- "Practice" heading after the lectures. Set in /team > Site data > Lectures.
+ALTER TABLE site_lectures ADD COLUMN IF NOT EXISTS section TEXT NOT NULL DEFAULT 'lecture';

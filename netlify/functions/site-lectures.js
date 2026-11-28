@@ -31,8 +31,12 @@ function rowFromBody(body) {
     youtube_url: body.youtube_url || null,
     slides_url: body.slides_url || null,
     posted_on: sanitizeDate(body.posted_on),
+    section: body.section === 'practice' ? 'practice' : 'lecture',
   };
 }
+// Before the section column exists (manual SQL), save without it.
+const noSection = (e) => e && /section/.test(e.message || '') && /column|schema/i.test(e.message || '');
+function withoutSection(row) { const r = { ...row }; delete r.section; return r; }
 
 export async function handler(event, context) {
   const auth = requireAdmin(context);
@@ -52,7 +56,8 @@ export async function handler(event, context) {
     const err = validateBody(body);
     if (err) return json(400, { error: err });
 
-    const { data, error } = await supabase.from('site_lectures').insert(rowFromBody(body)).select().maybeSingle();
+    let { data, error } = await supabase.from('site_lectures').insert(rowFromBody(body)).select().maybeSingle();
+    if (noSection(error)) ({ data, error } = await supabase.from('site_lectures').insert(withoutSection(rowFromBody(body))).select().maybeSingle());
     if (error) return json(500, { error: error.message });
     return json(200, { row: data });
   }
@@ -65,7 +70,8 @@ export async function handler(event, context) {
     if (err) return json(400, { error: err });
 
     const row = { ...rowFromBody(body), updated_at: new Date().toISOString() };
-    const { data, error } = await supabase.from('site_lectures').update(row).eq('id', body.id).select().maybeSingle();
+    let { data, error } = await supabase.from('site_lectures').update(row).eq('id', body.id).select().maybeSingle();
+    if (noSection(error)) ({ data, error } = await supabase.from('site_lectures').update(withoutSection(row)).eq('id', body.id).select().maybeSingle());
     if (error) return json(500, { error: error.message });
     if (!data) return json(404, { error: 'not found' });
     return json(200, { row: data });

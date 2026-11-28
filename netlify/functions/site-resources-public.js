@@ -12,11 +12,11 @@ export async function handler(event) {
   const supabase = getSupabase();
   const [n, l] = await Promise.all([
     supabase.from('site_notes').select('id, subject, title, description, file_url, posted_on'),
-    supabase.from('site_lectures').select('id, subject, lecture_number, title, youtube_url, slides_url, posted_on'),
+    supabase.from('site_lectures').select('*'),
   ]);
   if (n.error || l.error) return json(500, { error: (n.error || l.error).message });
   const notes = (n.data || []).map(r => ({ id: r.id, subject: r.subject, title: r.title || '', desc: r.description || '', file: r.file_url || '', postedOn: r.posted_on || '' }));
-  const lectures = (l.data || []).map(r => ({ id: r.id, subject: r.subject, lectureNumber: r.lecture_number == null ? '' : String(r.lecture_number), title: r.title || '', youtubeUrl: r.youtube_url || '', slidesFile: r.slides_url || '', postedOn: r.posted_on || '' }));
+  const lectures = (l.data || []).map(r => ({ id: r.id, subject: r.subject, lectureNumber: r.lecture_number == null ? '' : String(r.lecture_number), title: r.title || '', youtubeUrl: r.youtube_url || '', slidesFile: r.slides_url || '', postedOn: r.posted_on || '', section: r.section === 'practice' ? 'practice' : (r.section ? 'lecture' : (/most expected/i.test(r.title || '') ? 'practice' : 'lecture')) }));
   // Cached at Netlify's edge for 60s (browsers always revalidate): a /team edit shows within about a minute.
   const res = json(200, { notes, lectures });
   res.headers['Netlify-CDN-Cache-Control'] = 'public, s-maxage=60, stale-while-revalidate=300';
